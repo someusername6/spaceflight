@@ -15,7 +15,7 @@
 // ============================================================================
 
 const CUBE_SIZE = 200;
-const PARTICLES_PER_CUBE = 80;
+const PARTICLES_PER_CUBE = 25;  // Sparse - fighter cockpit feel
 const RENDER_DISTANCE = 600;
 const PLAYER_SPEED = 250;
 const DT = 1 / 60;
@@ -197,13 +197,13 @@ function runDeterminismTests(quiet) {
 
   // Test 4: Extreme distances
   const farPos = getParticlesNearPosition(1000000, -500000, 2000000);
-  const test4 = farPos.length > 8000 && farPos.length < 10000;
+  const test4 = farPos.length > 2500 && farPos.length < 3500;
   if (!quiet) console.log(`  ${test4 ? '✓' : '✗'} Works at extreme distances (${farPos.length} particles)`);
   if (!test4) allPass = false;
 
   // Test 5: Negative positions
   const negPos = getParticlesNearPosition(-1234, -5678, -9012);
-  const test5 = negPos.length > 8000 && negPos.length < 10000;
+  const test5 = negPos.length > 2500 && negPos.length < 3500;
   if (!quiet) console.log(`  ${test5 ? '✓' : '✗'} Works with negative coordinates (${negPos.length} particles)`);
   if (!test5) allPass = false;
 

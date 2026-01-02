@@ -15,20 +15,20 @@ import * as THREE from 'three';
 
 /** Dust system configuration */
 const CUBE_SIZE = 200;
-const PARTICLES_PER_CUBE = 80;
+const PARTICLES_PER_CUBE = 25;  // Sparse - fighter cockpit feel
 const RENDER_DISTANCE = 600;
-const PARTICLE_SIZE = 18.0;   // Base size (world units, attenuated by distance)
-const PARTICLE_COLOR = new THREE.Color(0x778899);  // Muted blue-gray
+const PARTICLE_SIZE = 35.0;     // Larger motes
+const PARTICLE_COLOR = new THREE.Color(0x889999);  // Muted cyan-gray
 
 // Distance-based fading
-const FADE_NEAR_START = 15;   // Start fading when closer than this
-const FADE_NEAR_END = 40;     // Fully visible at this distance
-const FADE_FAR_START = 380;   // Start fading at this distance
+const FADE_NEAR_START = 20;   // Start fading when closer than this
+const FADE_NEAR_END = 50;     // Fully visible at this distance
+const FADE_FAR_START = 400;   // Start fading at this distance
 const FADE_FAR_END = 580;     // Fully faded before render boundary
 
 // Size limits (in screen pixels after attenuation)
-const MAX_POINT_SIZE = 5.0;   // Moderate size cap
-const MIN_POINT_SIZE = 0.8;   // Minimum visibility
+const MAX_POINT_SIZE = 8.0;   // Allow larger particles
+const MIN_POINT_SIZE = 1.5;   // Visible minimum
 
 // Pre-generate the "template" cube of particle offsets
 const TEMPLATE_OFFSETS: Array<{ x: number; y: number; z: number }> = [];
