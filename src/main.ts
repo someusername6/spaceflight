@@ -6,11 +6,11 @@ import { Vector3 } from 'three';
 import { createGame, startGame } from './game';
 import { initInput } from './systems/input';
 import { resetMission } from './systems/mission';
-import { createRenderer, syncScene, render, followEntity } from './rendering/renderer';
-// import { createDustSystem, updateDustSystem } from './rendering/dust';
+import { createRenderer, syncScene, render, followEntity, getScene } from './rendering/renderer';
+import { createDustSystem, updateDustSystem } from './rendering/dust';
 import { createPlayerShip } from './factories/ship';
-import { findEntity } from './core/ecs';
-// import type { Transform } from './components/transform';
+import { findEntity, getComponent } from './core/ecs';
+import type { Transform } from './components/transform';
 
 /** Initialize and start the game */
 function main(): void {
@@ -29,8 +29,8 @@ function main(): void {
   // Create renderer
   const renderer = createRenderer(container);
 
-  // Create dust particle system (disabled for skybox testing)
-  // const dustSystem = createDustSystem(getScene(renderer));
+  // Create dust particle system
+  const dustSystem = createDustSystem(getScene(renderer));
 
   // Setup Slice 1 test scene
   setupSlice1Scene(game);
@@ -45,11 +45,11 @@ function main(): void {
     if (player !== undefined) {
       followEntity(renderer, world, player);
 
-      // Update dust particles around player position (disabled for skybox testing)
-      // const transform = getComponent<Transform>(world, player, 'transform');
-      // if (transform) {
-      //   updateDustSystem(dustSystem, transform.position);
-      // }
+      // Update dust particles around player position
+      const transform = getComponent<Transform>(world, player, 'transform');
+      if (transform) {
+        updateDustSystem(dustSystem, transform.position);
+      }
     }
 
     // Render
