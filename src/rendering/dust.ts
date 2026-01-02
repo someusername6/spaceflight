@@ -8,10 +8,10 @@
 import * as THREE from 'three';
 
 /** Dust system configuration */
-const PARTICLE_COUNT = 2000;
-const SPAWN_RADIUS_MIN = 50;   // Minimum distance from player (avoid dense center)
-const SPAWN_RADIUS_MAX = 800;  // Maximum spawn distance
-const DESPAWN_RADIUS = 900;    // Particles despawn beyond this - gives buffer for turning
+const PARTICLE_COUNT = 2500;
+const SPAWN_RADIUS_MIN = 60;   // Minimum distance from player (avoid dense center)
+const SPAWN_RADIUS_MAX = 600;  // Maximum spawn distance from spawn center
+const DESPAWN_RADIUS = 1200;   // Particles despawn beyond this from player
 const PARTICLE_SIZE = 0.5;
 const PARTICLE_COLOR = 0x888899;
 
@@ -77,10 +77,11 @@ export function updateDustSystem(
   playerVelocity?: THREE.Vector3
 ): void {
   // Bias spawn center forward based on velocity to prevent outrunning particles
+  // At 250 m/s with 1.5s bias: spawn center 375m ahead
+  // Max spawn: 375 + 600 = 975m from player (< 1200m despawn) ✓
   const spawnCenter = playerPosition.clone();
   if (playerVelocity && playerVelocity.lengthSq() > 0) {
-    // Offset spawn center forward by ~2 seconds of travel
-    spawnCenter.addScaledVector(playerVelocity, 2.0);
+    spawnCenter.addScaledVector(playerVelocity, 1.5);
   }
   const { positions, geometry } = dust;
   let needsUpdate = false;
