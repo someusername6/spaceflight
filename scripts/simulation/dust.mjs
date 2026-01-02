@@ -14,9 +14,9 @@
 // Configuration (must match src/rendering/dust.ts)
 // ============================================================================
 
-const CUBE_SIZE = 120;          // Smaller cubes = more frequent particles
-const PARTICLES_PER_CUBE = 8;   // Fewer per cube, but cubes are smaller
-const RENDER_DISTANCE = 400;
+const CUBE_SIZE = 100;
+const PARTICLES_PER_CUBE = 3;
+const RENDER_DISTANCE = 600;
 const PLAYER_SPEED = 250;
 const DT = 1 / 60;
 const VIEW_DISTANCE = 500;
@@ -26,22 +26,17 @@ const VIEW_ANGLE = Math.PI / 3;
 // Shared Utilities
 // ============================================================================
 
-function seededRandom(seed) {
-  return () => {
-    seed = (seed * 1103515245 + 12345) & 0x7fffffff;
-    return seed / 0x7fffffff;
-  };
+/** Hash cube coordinates to a seed - each cube gets unique but deterministic particles */
+function hashCubeCoords(cx, cy, cz) {
+  let h = cx * 374761393 + cy * 668265263 + cz * 1274126177;
+  h = ((h ^ (h >> 13)) * 1274126177) >>> 0;
+  return h;
 }
 
-// Generate template offsets (same algorithm as dust.ts)
-const TEMPLATE_OFFSETS = [];
-const random = seededRandom(42);
-for (let i = 0; i < PARTICLES_PER_CUBE; i++) {
-  TEMPLATE_OFFSETS.push({
-    x: random() * CUBE_SIZE,
-    y: random() * CUBE_SIZE,
-    z: random() * CUBE_SIZE,
-  });
+/** Generate a random value from seed, returns [newSeed, value] */
+function nextRandom(seed) {
+  seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+  return [seed, seed / 0x7fffffff];
 }
 
 function getParticlesNearPosition(px, py, pz) {
@@ -55,10 +50,23 @@ function getParticlesNearPosition(px, py, pz) {
   for (let cx = playerCubeX - cubeRadius; cx <= playerCubeX + cubeRadius; cx++) {
     for (let cy = playerCubeY - cubeRadius; cy <= playerCubeY + cubeRadius; cy++) {
       for (let cz = playerCubeZ - cubeRadius; cz <= playerCubeZ + cubeRadius; cz++) {
-        for (const offset of TEMPLATE_OFFSETS) {
-          const worldX = cx * CUBE_SIZE + offset.x;
-          const worldY = cy * CUBE_SIZE + offset.y;
-          const worldZ = cz * CUBE_SIZE + offset.z;
+        const cubeOriginX = cx * CUBE_SIZE;
+        const cubeOriginY = cy * CUBE_SIZE;
+        const cubeOriginZ = cz * CUBE_SIZE;
+
+        // Each cube gets unique particle positions based on its coordinates
+        let seed = hashCubeCoords(cx, cy, cz);
+
+        for (let i = 0; i < PARTICLES_PER_CUBE; i++) {
+          let ox, oy, oz;
+          [seed, ox] = nextRandom(seed);
+          [seed, oy] = nextRandom(seed);
+          [seed, oz] = nextRandom(seed);
+
+          const worldX = cubeOriginX + ox * CUBE_SIZE;
+          const worldY = cubeOriginY + oy * CUBE_SIZE;
+          const worldZ = cubeOriginZ + oz * CUBE_SIZE;
+
           const dx = worldX - px;
           const dy = worldY - py;
           const dz = worldZ - pz;
@@ -197,13 +205,13 @@ function runDeterminismTests(quiet) {
 
   // Test 4: Extreme distances
   const farPos = getParticlesNearPosition(1000000, -500000, 2000000);
-  const test4 = farPos.length > 1000 && farPos.length < 1600;
+  const test4 = farPos.length > 2000 && farPos.length < 5000;
   if (!quiet) console.log(`  ${test4 ? '✓' : '✗'} Works at extreme distances (${farPos.length} particles)`);
   if (!test4) allPass = false;
 
   // Test 5: Negative positions
   const negPos = getParticlesNearPosition(-1234, -5678, -9012);
-  const test5 = negPos.length > 1000 && negPos.length < 1600;
+  const test5 = negPos.length > 2000 && negPos.length < 5000;
   if (!quiet) console.log(`  ${test5 ? '✓' : '✗'} Works with negative coordinates (${negPos.length} particles)`);
   if (!test5) allPass = false;
 

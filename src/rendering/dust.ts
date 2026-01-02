@@ -4,107 +4,67 @@
  * Uses a "tiled cube" approach: particles exist at deterministic positions
  * throughout infinite space. We tile a single cube of random positions
  * and only render particles within range of the player.
- *
- * Visual improvements:
- * - Circular particles with soft edges (shader-based)
- * - Fade out when too close to camera (prevents huge blocking particles)
- * - Fade out at distance (smooth transition at render boundary)
  */
 
 import * as THREE from 'three';
 
 /** Dust system configuration */
-const CUBE_SIZE = 120;          // Smaller cubes = more frequent particles
-const PARTICLES_PER_CUBE = 8;   // Fewer per cube, but cubes are smaller
-const RENDER_DISTANCE = 400;    // Tighter field, faster turnover
-const PARTICLE_COLOR = new THREE.Color(0x777777);  // Darker grey
+const CUBE_SIZE = 100;
+const PARTICLES_PER_CUBE = 3;
+const RENDER_DISTANCE = 600;
+const PARTICLE_SIZE = 8;
+const PARTICLE_COLOR = new THREE.Color(0x888888);
 
-// Size attenuation parameters
-const SIZE_BASE = 10.0;       // Size at reference distance
-const SIZE_REF_DIST = 150.0;  // Reference distance for size calc
-const MAX_POINT_SIZE = 8.0;   // Cap for very close particles
-const MIN_POINT_SIZE = 2.0;   // Minimum visibility
+// Fade distances (ship is ~40-50 units from camera)
+const FADE_NEAR = 50;       // Fully faded at ship distance
+const FADE_MID = 150;       // Fully visible here
+const FADE_FAR = 500;       // Start fading out
+const FADE_END = 600;       // Fully faded at render distance
 
-// Distance-based fading
-const FADE_NEAR_START = 20;   // Start fading when closer than this
-const FADE_NEAR_END = 50;     // Fully visible at this distance
-const FADE_FAR_START = 280;   // Start fading at this distance
-const FADE_FAR_END = 380;     // Fully faded before render boundary
-
-// Pre-generate the "template" cube of particle offsets
-const TEMPLATE_OFFSETS: Array<{ x: number; y: number; z: number }> = [];
-
-function seededRandom(seed: number): () => number {
-  return () => {
-    seed = (seed * 1103515245 + 12345) & 0x7fffffff;
-    return seed / 0x7fffffff;
-  };
+/** Hash cube coordinates to a seed - each cube gets unique but deterministic particles */
+function hashCubeCoords(cx: number, cy: number, cz: number): number {
+  let h = cx * 374761393 + cy * 668265263 + cz * 1274126177;
+  h = ((h ^ (h >> 13)) * 1274126177) >>> 0;
+  return h;
 }
 
-const random = seededRandom(42);
-for (let i = 0; i < PARTICLES_PER_CUBE; i++) {
-  TEMPLATE_OFFSETS.push({
-    x: random() * CUBE_SIZE,
-    y: random() * CUBE_SIZE,
-    z: random() * CUBE_SIZE,
-  });
+/** Generate a random value from seed, returns new seed and value */
+function nextRandom(seed: number): [number, number] {
+  seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+  return [seed, seed / 0x7fffffff];
 }
 
-/** Vertex shader - handles size attenuation and passes distance to fragment */
+/** Simple vertex shader - just size attenuation and pass distance */
 const vertexShader = /* glsl */ `
-  uniform float uSizeBase;
-  uniform float uSizeRefDist;
-  uniform float uMaxSize;
-  uniform float uMinSize;
-
+  uniform float uSize;
   varying float vDistance;
 
   void main() {
     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
     vDistance = -mvPosition.z;
-
-    // Size attenuation: uSizeBase is size at uSizeRefDist distance
-    // Closer = larger, farther = smaller (natural perspective)
-    float size = uSizeBase * (uSizeRefDist / max(vDistance, 1.0));
-
-    // Clamp to prevent extremes
-    gl_PointSize = clamp(size, uMinSize, uMaxSize);
-
+    gl_PointSize = uSize * (150.0 / vDistance);
     gl_Position = projectionMatrix * mvPosition;
   }
 `;
 
-/** Fragment shader - circular shape with distance-based fading */
+/** Simple fragment shader - square with distance-based fading */
 const fragmentShader = /* glsl */ `
-  precision mediump float;
-
   uniform vec3 uColor;
-  uniform float uOpacity;
-  uniform float uFadeNearStart;
-  uniform float uFadeNearEnd;
-  uniform float uFadeFarStart;
-  uniform float uFadeFarEnd;
+  uniform float uFadeNear;
+  uniform float uFadeMid;
+  uniform float uFadeFar;
+  uniform float uFadeEnd;
 
   varying float vDistance;
 
   void main() {
-    // Circular shape: distance from center of point sprite
-    float dist = length(gl_PointCoord - vec2(0.5));
+    // Near fade: 0 at uFadeNear, 1 at uFadeMid
+    float nearFade = smoothstep(uFadeNear, uFadeMid, vDistance);
 
-    // Discard pixels outside circle
-    if (dist > 0.5) discard;
+    // Far fade: 1 at uFadeFar, 0 at uFadeEnd
+    float farFade = 1.0 - smoothstep(uFadeFar, uFadeEnd, vDistance);
 
-    // Soft edge falloff (fully opaque center, fade at edges)
-    float edgeAlpha = 1.0 - smoothstep(0.2, 0.5, dist);
-
-    // Near camera fade (fade out when too close to prevent huge particles)
-    float nearFade = smoothstep(uFadeNearStart, uFadeNearEnd, vDistance);
-
-    // Far distance fade (smooth transition at render boundary)
-    float farFade = 1.0 - smoothstep(uFadeFarStart, uFadeFarEnd, vDistance);
-
-    // Combine all alpha factors
-    float alpha = uOpacity * edgeAlpha * nearFade * farFade;
+    float alpha = nearFade * farFade * 0.7;
 
     gl_FragColor = vec4(uColor, alpha);
   }
@@ -130,16 +90,12 @@ export function createDustSystem(scene: THREE.Scene): DustSystem {
 
   const material = new THREE.ShaderMaterial({
     uniforms: {
-      uSizeBase: { value: SIZE_BASE },
-      uSizeRefDist: { value: SIZE_REF_DIST },
-      uMaxSize: { value: MAX_POINT_SIZE },
-      uMinSize: { value: MIN_POINT_SIZE },
+      uSize: { value: PARTICLE_SIZE },
       uColor: { value: PARTICLE_COLOR },
-      uOpacity: { value: 0.75 },
-      uFadeNearStart: { value: FADE_NEAR_START },
-      uFadeNearEnd: { value: FADE_NEAR_END },
-      uFadeFarStart: { value: FADE_FAR_START },
-      uFadeFarEnd: { value: FADE_FAR_END },
+      uFadeNear: { value: FADE_NEAR },
+      uFadeMid: { value: FADE_MID },
+      uFadeFar: { value: FADE_FAR },
+      uFadeEnd: { value: FADE_END },
     },
     vertexShader,
     fragmentShader,
@@ -156,8 +112,7 @@ export function createDustSystem(scene: THREE.Scene): DustSystem {
 /** Updates dust particles based on player position */
 export function updateDustSystem(
   dust: DustSystem,
-  playerPosition: THREE.Vector3,
-  _playerVelocity?: THREE.Vector3
+  playerPosition: THREE.Vector3
 ): void {
   const { positions, geometry } = dust;
 
@@ -176,10 +131,18 @@ export function updateDustSystem(
         const cubeOriginY = cy * CUBE_SIZE;
         const cubeOriginZ = cz * CUBE_SIZE;
 
-        for (const offset of TEMPLATE_OFFSETS) {
-          const worldX = cubeOriginX + offset.x;
-          const worldY = cubeOriginY + offset.y;
-          const worldZ = cubeOriginZ + offset.z;
+        // Each cube gets unique particle positions based on its coordinates
+        let seed = hashCubeCoords(cx, cy, cz);
+
+        for (let i = 0; i < PARTICLES_PER_CUBE; i++) {
+          let ox, oy, oz;
+          [seed, ox] = nextRandom(seed);
+          [seed, oy] = nextRandom(seed);
+          [seed, oz] = nextRandom(seed);
+
+          const worldX = cubeOriginX + ox * CUBE_SIZE;
+          const worldY = cubeOriginY + oy * CUBE_SIZE;
+          const worldZ = cubeOriginZ + oz * CUBE_SIZE;
 
           const dx = worldX - playerPosition.x;
           const dy = worldY - playerPosition.y;
