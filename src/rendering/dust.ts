@@ -17,18 +17,18 @@ import * as THREE from 'three';
 const CUBE_SIZE = 200;
 const PARTICLES_PER_CUBE = 80;
 const RENDER_DISTANCE = 600;
-const PARTICLE_SIZE = 1.2;
-const PARTICLE_COLOR = new THREE.Color(0x8888aa);
+const PARTICLE_SIZE = 25.0;   // Base size (world units, attenuated by distance)
+const PARTICLE_COLOR = new THREE.Color(0x9999bb);
 
 // Distance-based fading
-const FADE_NEAR_START = 20;   // Start fading when closer than this
-const FADE_NEAR_END = 50;     // Fully visible at this distance
-const FADE_FAR_START = 450;   // Start fading at this distance
+const FADE_NEAR_START = 15;   // Start fading when closer than this
+const FADE_NEAR_END = 40;     // Fully visible at this distance
+const FADE_FAR_START = 400;   // Start fading at this distance
 const FADE_FAR_END = 600;     // Fully faded at render distance
 
-// Size limits (in pixels after attenuation)
-const MAX_POINT_SIZE = 8.0;
-const MIN_POINT_SIZE = 0.5;
+// Size limits (in screen pixels after attenuation)
+const MAX_POINT_SIZE = 6.0;   // Prevent huge particles
+const MIN_POINT_SIZE = 1.0;   // Ensure visibility
 
 // Pre-generate the "template" cube of particle offsets
 const TEMPLATE_OFFSETS: Array<{ x: number; y: number; z: number }> = [];
@@ -50,7 +50,7 @@ for (let i = 0; i < PARTICLES_PER_CUBE; i++) {
 }
 
 /** Vertex shader - handles size attenuation and passes distance to fragment */
-const vertexShader = `
+const vertexShader = /* glsl */ `
   uniform float uSize;
   uniform float uMaxSize;
   uniform float uMinSize;
@@ -61,10 +61,11 @@ const vertexShader = `
     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
     vDistance = -mvPosition.z;
 
-    // Size attenuation (similar to PointsMaterial)
-    float size = uSize * (300.0 / vDistance);
+    // Size attenuation: larger uSize = bigger particles
+    // 300.0 is a reference distance where size equals uSize
+    float size = uSize * (300.0 / max(vDistance, 1.0));
 
-    // Clamp size to prevent huge or invisible particles
+    // Clamp to prevent extremes
     gl_PointSize = clamp(size, uMinSize, uMaxSize);
 
     gl_Position = projectionMatrix * mvPosition;
@@ -72,7 +73,9 @@ const vertexShader = `
 `;
 
 /** Fragment shader - circular shape with distance-based fading */
-const fragmentShader = `
+const fragmentShader = /* glsl */ `
+  precision mediump float;
+
   uniform vec3 uColor;
   uniform float uOpacity;
   uniform float uFadeNearStart;
@@ -83,26 +86,23 @@ const fragmentShader = `
   varying float vDistance;
 
   void main() {
-    // Circular shape: distance from center of point
-    vec2 center = gl_PointCoord - vec2(0.5);
-    float dist = length(center);
+    // Circular shape: distance from center of point sprite
+    float dist = length(gl_PointCoord - vec2(0.5));
 
     // Discard pixels outside circle
     if (dist > 0.5) discard;
 
-    // Soft edge falloff
-    float edgeAlpha = 1.0 - smoothstep(0.3, 0.5, dist);
+    // Soft edge falloff (fully opaque center, fade at edges)
+    float edgeAlpha = 1.0 - smoothstep(0.2, 0.5, dist);
 
-    // Near camera fade (fade out when too close)
+    // Near camera fade (fade out when too close to prevent huge particles)
     float nearFade = smoothstep(uFadeNearStart, uFadeNearEnd, vDistance);
 
-    // Far distance fade (fade out at render boundary)
+    // Far distance fade (smooth transition at render boundary)
     float farFade = 1.0 - smoothstep(uFadeFarStart, uFadeFarEnd, vDistance);
 
     // Combine all alpha factors
     float alpha = uOpacity * edgeAlpha * nearFade * farFade;
-
-    if (alpha < 0.01) discard;
 
     gl_FragColor = vec4(uColor, alpha);
   }
@@ -132,7 +132,7 @@ export function createDustSystem(scene: THREE.Scene): DustSystem {
       uMaxSize: { value: MAX_POINT_SIZE },
       uMinSize: { value: MIN_POINT_SIZE },
       uColor: { value: PARTICLE_COLOR },
-      uOpacity: { value: 0.7 },
+      uOpacity: { value: 0.85 },
       uFadeNearStart: { value: FADE_NEAR_START },
       uFadeNearEnd: { value: FADE_NEAR_END },
       uFadeFarStart: { value: FADE_FAR_START },
@@ -142,7 +142,6 @@ export function createDustSystem(scene: THREE.Scene): DustSystem {
     fragmentShader,
     transparent: true,
     depthWrite: false,
-    blending: THREE.NormalBlending,
   });
 
   const points = new THREE.Points(geometry, material);
