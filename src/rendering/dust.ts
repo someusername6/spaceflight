@@ -17,18 +17,18 @@ import * as THREE from 'three';
 const CUBE_SIZE = 200;
 const PARTICLES_PER_CUBE = 80;
 const RENDER_DISTANCE = 600;
-const PARTICLE_SIZE = 25.0;   // Base size (world units, attenuated by distance)
-const PARTICLE_COLOR = new THREE.Color(0x9999bb);
+const PARTICLE_SIZE = 15.0;   // Base size (world units, attenuated by distance)
+const PARTICLE_COLOR = new THREE.Color(0x666677);  // Subtle gray-blue
 
 // Distance-based fading
 const FADE_NEAR_START = 15;   // Start fading when closer than this
 const FADE_NEAR_END = 40;     // Fully visible at this distance
-const FADE_FAR_START = 400;   // Start fading at this distance
-const FADE_FAR_END = 600;     // Fully faded at render distance
+const FADE_FAR_START = 350;   // Start fading at this distance
+const FADE_FAR_END = 550;     // Fully faded before render boundary
 
 // Size limits (in screen pixels after attenuation)
-const MAX_POINT_SIZE = 6.0;   // Prevent huge particles
-const MIN_POINT_SIZE = 1.0;   // Ensure visibility
+const MAX_POINT_SIZE = 4.0;   // Keep particles small
+const MIN_POINT_SIZE = 0.8;   // Minimum visibility
 
 // Pre-generate the "template" cube of particle offsets
 const TEMPLATE_OFFSETS: Array<{ x: number; y: number; z: number }> = [];
@@ -132,7 +132,7 @@ export function createDustSystem(scene: THREE.Scene): DustSystem {
       uMaxSize: { value: MAX_POINT_SIZE },
       uMinSize: { value: MIN_POINT_SIZE },
       uColor: { value: PARTICLE_COLOR },
-      uOpacity: { value: 0.85 },
+      uOpacity: { value: 0.4 },
       uFadeNearStart: { value: FADE_NEAR_START },
       uFadeNearEnd: { value: FADE_NEAR_END },
       uFadeFarStart: { value: FADE_FAR_START },
