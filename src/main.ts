@@ -11,6 +11,7 @@ import { createDustSystem, updateDustSystem } from './rendering/dust';
 import { createPlayerShip } from './factories/ship';
 import { findEntity, getComponent } from './core/ecs';
 import type { Transform } from './components/transform';
+import type { Physics } from './components/physics';
 
 /** Initialize and start the game */
 function main(): void {
@@ -45,10 +46,11 @@ function main(): void {
     if (player !== undefined) {
       followEntity(renderer, world, player);
 
-      // Update dust particles around player position
+      // Update dust particles around player position, biased by velocity
       const transform = getComponent<Transform>(world, player, 'transform');
+      const physics = getComponent<Physics>(world, player, 'physics');
       if (transform) {
-        updateDustSystem(dustSystem, transform.position);
+        updateDustSystem(dustSystem, transform.position, physics?.velocity);
       }
     }
 

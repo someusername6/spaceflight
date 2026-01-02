@@ -70,11 +70,18 @@ function spawnParticle(
   positions[idx + 2] = centerZ + r * Math.cos(phi);
 }
 
-/** Updates dust particles based on player position */
+/** Updates dust particles based on player position and velocity */
 export function updateDustSystem(
   dust: DustSystem,
-  playerPosition: THREE.Vector3
+  playerPosition: THREE.Vector3,
+  playerVelocity?: THREE.Vector3
 ): void {
+  // Bias spawn center forward based on velocity to prevent outrunning particles
+  const spawnCenter = playerPosition.clone();
+  if (playerVelocity && playerVelocity.lengthSq() > 0) {
+    // Offset spawn center forward by ~2 seconds of travel
+    spawnCenter.addScaledVector(playerVelocity, 2.0);
+  }
   const { positions, geometry } = dust;
   let needsUpdate = false;
 
@@ -96,7 +103,8 @@ export function updateDustSystem(
     const uninitialized = distSq === 0;
 
     if (tooFar || tooClose || uninitialized) {
-      spawnParticle(positions, idx, playerPosition.x, playerPosition.y, playerPosition.z);
+      // Spawn around biased center (ahead of player when moving)
+      spawnParticle(positions, idx, spawnCenter.x, spawnCenter.y, spawnCenter.z);
       needsUpdate = true;
     }
   }
