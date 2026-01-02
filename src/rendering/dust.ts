@@ -20,10 +20,10 @@ const RENDER_DISTANCE = 500;    // Shorter range, tighter field
 const PARTICLE_COLOR = new THREE.Color(0x8899aa);  // Subtle blue-gray
 
 // Size attenuation parameters
-const SIZE_BASE = 6.0;        // Size at reference distance
-const SIZE_REF_DIST = 120.0;  // Reference distance for size calc
-const MAX_POINT_SIZE = 5.0;   // Cap for very close particles
-const MIN_POINT_SIZE = 1.2;   // Minimum visibility
+const SIZE_BASE = 10.0;       // Size at reference distance
+const SIZE_REF_DIST = 150.0;  // Reference distance for size calc
+const MAX_POINT_SIZE = 8.0;   // Cap for very close particles
+const MIN_POINT_SIZE = 2.0;   // Minimum visibility
 
 // Distance-based fading
 const FADE_NEAR_START = 25;   // Start fading when closer than this
@@ -135,7 +135,7 @@ export function createDustSystem(scene: THREE.Scene): DustSystem {
       uMaxSize: { value: MAX_POINT_SIZE },
       uMinSize: { value: MIN_POINT_SIZE },
       uColor: { value: PARTICLE_COLOR },
-      uOpacity: { value: 0.6 },
+      uOpacity: { value: 0.75 },
       uFadeNearStart: { value: FADE_NEAR_START },
       uFadeNearEnd: { value: FADE_NEAR_END },
       uFadeFarStart: { value: FADE_FAR_START },
