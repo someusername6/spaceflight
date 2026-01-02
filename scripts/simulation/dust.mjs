@@ -14,9 +14,9 @@
 // Configuration (must match src/rendering/dust.ts)
 // ============================================================================
 
-const CUBE_SIZE = 200;
-const PARTICLES_PER_CUBE = 12;  // Very sparse - fighter cockpit feel
-const RENDER_DISTANCE = 500;
+const CUBE_SIZE = 120;          // Smaller cubes = more frequent particles
+const PARTICLES_PER_CUBE = 8;   // Fewer per cube, but cubes are smaller
+const RENDER_DISTANCE = 400;
 const PLAYER_SPEED = 250;
 const DT = 1 / 60;
 const VIEW_DISTANCE = 500;
@@ -197,13 +197,13 @@ function runDeterminismTests(quiet) {
 
   // Test 4: Extreme distances
   const farPos = getParticlesNearPosition(1000000, -500000, 2000000);
-  const test4 = farPos.length > 600 && farPos.length < 1200;
+  const test4 = farPos.length > 1000 && farPos.length < 1600;
   if (!quiet) console.log(`  ${test4 ? '✓' : '✗'} Works at extreme distances (${farPos.length} particles)`);
   if (!test4) allPass = false;
 
   // Test 5: Negative positions
   const negPos = getParticlesNearPosition(-1234, -5678, -9012);
-  const test5 = negPos.length > 600 && negPos.length < 1200;
+  const test5 = negPos.length > 1000 && negPos.length < 1600;
   if (!quiet) console.log(`  ${test5 ? '✓' : '✗'} Works with negative coordinates (${negPos.length} particles)`);
   if (!test5) allPass = false;
 
