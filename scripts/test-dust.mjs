@@ -1,134 +1,198 @@
 /**
- * Simulation to test dust particle behavior when flying straight.
+ * Simulation to test tiled cube dust particle behavior in various flight scenarios.
  * Run with: node scripts/test-dust.mjs
  */
 
-// NEW dust configuration - despawn behind player faster
-const PARTICLE_COUNT = 2500;
-const SPAWN_RADIUS_MIN = 60;
-const SPAWN_RADIUS_MAX = 600;
-const DESPAWN_RADIUS = 1200;
-const DESPAWN_BEHIND = 300; // Despawn if this far BEHIND player (along velocity)
-const VELOCITY_BIAS = 1.5;
+// Dust configuration (must match dust.ts)
+const CUBE_SIZE = 200;
+const PARTICLES_PER_CUBE = 80;
+const RENDER_DISTANCE = 600;
 
 // Player config
-const PLAYER_SPEED = 250; // m/s (max speed)
-const DT = 1 / 60; // 60 fps
-const SIMULATION_SECONDS = 30;
+const PLAYER_SPEED = 250;
+const DT = 1 / 60;
 
-// View frustum approximation: cone in front of player
-const VIEW_DISTANCE = 500; // How far ahead we consider "visible"
-const VIEW_ANGLE = Math.PI / 3; // 60 degree cone
+// View frustum approximation
+const VIEW_DISTANCE = 500;
+const VIEW_ANGLE = Math.PI / 3;
 
-function spawnParticle(spawnCenterZ) {
-  const theta = Math.random() * Math.PI * 2;
-  const phi = Math.acos(2 * Math.random() - 1);
-  const r = SPAWN_RADIUS_MIN + Math.random() * (SPAWN_RADIUS_MAX - SPAWN_RADIUS_MIN);
-  return {
-    x: r * Math.sin(phi) * Math.cos(theta),
-    y: r * Math.sin(phi) * Math.sin(theta),
-    z: spawnCenterZ + r * Math.cos(phi),
+// Seeded random (same as dust.ts)
+function seededRandom(seed) {
+  return () => {
+    seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+    return seed / 0x7fffffff;
   };
 }
 
-function isInViewCone(p, playerZ) {
-  const dz = p.z - playerZ;
-  if (dz < 0 || dz > VIEW_DISTANCE) return false; // Behind or too far
+// Generate template offsets (same as dust.ts)
+const TEMPLATE_OFFSETS = [];
+const random = seededRandom(42);
+for (let i = 0; i < PARTICLES_PER_CUBE; i++) {
+  TEMPLATE_OFFSETS.push({
+    x: random() * CUBE_SIZE,
+    y: random() * CUBE_SIZE,
+    z: random() * CUBE_SIZE,
+  });
+}
 
-  const lateralDist = Math.sqrt(p.x * p.x + p.y * p.y);
-  const angle = Math.atan2(lateralDist, dz);
+// Get all particles within render distance of a position
+function getParticlesNearPosition(px, py, pz) {
+  const particles = [];
+  const playerCubeX = Math.floor(px / CUBE_SIZE);
+  const playerCubeY = Math.floor(py / CUBE_SIZE);
+  const playerCubeZ = Math.floor(pz / CUBE_SIZE);
+  const cubeRadius = Math.ceil(RENDER_DISTANCE / CUBE_SIZE);
+  const renderDistSq = RENDER_DISTANCE * RENDER_DISTANCE;
+
+  for (let cx = playerCubeX - cubeRadius; cx <= playerCubeX + cubeRadius; cx++) {
+    for (let cy = playerCubeY - cubeRadius; cy <= playerCubeY + cubeRadius; cy++) {
+      for (let cz = playerCubeZ - cubeRadius; cz <= playerCubeZ + cubeRadius; cz++) {
+        const cubeOriginX = cx * CUBE_SIZE;
+        const cubeOriginY = cy * CUBE_SIZE;
+        const cubeOriginZ = cz * CUBE_SIZE;
+
+        for (const offset of TEMPLATE_OFFSETS) {
+          const worldX = cubeOriginX + offset.x;
+          const worldY = cubeOriginY + offset.y;
+          const worldZ = cubeOriginZ + offset.z;
+
+          const dx = worldX - px;
+          const dy = worldY - py;
+          const dz = worldZ - pz;
+          const distSq = dx * dx + dy * dy + dz * dz;
+
+          if (distSq <= renderDistSq) {
+            particles.push({ x: worldX, y: worldY, z: worldZ });
+          }
+        }
+      }
+    }
+  }
+  return particles;
+}
+
+// Check if particle is in view cone along a direction
+function isInViewCone3D(p, playerPos, viewDir) {
+  const dx = p.x - playerPos.x;
+  const dy = p.y - playerPos.y;
+  const dz = p.z - playerPos.z;
+
+  const alongView = dx * viewDir.x + dy * viewDir.y + dz * viewDir.z;
+  if (alongView < 0 || alongView > VIEW_DISTANCE) return false;
+
+  const latX = dx - alongView * viewDir.x;
+  const latY = dy - alongView * viewDir.y;
+  const latZ = dz - alongView * viewDir.z;
+  const latDist = Math.sqrt(latX*latX + latY*latY + latZ*latZ);
+
+  const angle = Math.atan2(latDist, alongView);
   return angle < VIEW_ANGLE;
 }
 
-function simulate() {
-  console.log("=== Dust Particle Simulation ===");
-  console.log(`Config: ${PARTICLE_COUNT} particles, spawn ${SPAWN_RADIUS_MIN}-${SPAWN_RADIUS_MAX}m, despawn ${DESPAWN_RADIUS}m`);
-  console.log(`Velocity bias: ${VELOCITY_BIAS}s (${VELOCITY_BIAS * PLAYER_SPEED}m at max speed)`);
-  console.log(`Player speed: ${PLAYER_SPEED} m/s`);
-  console.log(`View cone: ${VIEW_DISTANCE}m distance, ${(VIEW_ANGLE * 180 / Math.PI).toFixed(0)}° angle`);
-  console.log("");
+function runScenario(name, getVelocityAtTime) {
+  console.log(`\n=== Scenario: ${name} ===`);
 
-  let playerZ = 0;
-  const particles = [];
+  const playerPos = { x: 0, y: 0, z: 0 };
 
-  // Initialize particles around starting position
-  const initialSpawnCenter = VELOCITY_BIAS * PLAYER_SPEED;
-  for (let i = 0; i < PARTICLE_COUNT; i++) {
-    particles.push(spawnParticle(initialSpawnCenter));
-  }
-
-  // Track statistics
   let minInView = Infinity;
   let maxInView = 0;
   let totalInView = 0;
   let sampleCount = 0;
-  let zeroViewFrames = 0;
-  let lowViewFrames = 0; // Less than 50 particles
+  let minTotalParticles = Infinity;
+  let maxTotalParticles = 0;
 
-  const totalFrames = SIMULATION_SECONDS * 60;
+  const totalFrames = 30 * 60; // 30 seconds
 
   for (let frame = 0; frame < totalFrames; frame++) {
+    const t = frame * DT;
+    const vel = getVelocityAtTime(t);
+    const speed = Math.sqrt(vel.x*vel.x + vel.y*vel.y + vel.z*vel.z);
+
     // Move player
-    playerZ += PLAYER_SPEED * DT;
+    playerPos.x += vel.x * DT;
+    playerPos.y += vel.y * DT;
+    playerPos.z += vel.z * DT;
 
-    const spawnCenterZ = playerZ + VELOCITY_BIAS * PLAYER_SPEED;
+    // Get particles using tiled cube approach
+    const particles = getParticlesNearPosition(playerPos.x, playerPos.y, playerPos.z);
 
-    // Update particles
-    let respawnCount = 0;
-    for (let i = 0; i < particles.length; i++) {
-      const p = particles[i];
-      const dx = p.x;
-      const dy = p.y;
-      const dz = p.z - playerZ;
-      const distSq = dx * dx + dy * dy + dz * dz;
+    // Track total particle count (should be ~constant)
+    minTotalParticles = Math.min(minTotalParticles, particles.length);
+    maxTotalParticles = Math.max(maxTotalParticles, particles.length);
 
-      const tooFar = distSq > DESPAWN_RADIUS * DESPAWN_RADIUS;
-      const tooClose = distSq < SPAWN_RADIUS_MIN * SPAWN_RADIUS_MIN;
-      const tooBehind = dz < -DESPAWN_BEHIND; // Behind player by more than threshold
+    // View direction (normalized velocity, or forward if stationary)
+    const viewDir = speed > 1
+      ? { x: vel.x/speed, y: vel.y/speed, z: vel.z/speed }
+      : { x: 0, y: 0, z: 1 };
 
-      if (tooFar || tooClose || tooBehind) {
-        particles[i] = spawnParticle(spawnCenterZ);
-        respawnCount++;
-      }
-    }
-
-    // Count particles in view
+    // Count in view
     let inView = 0;
     for (const p of particles) {
-      if (isInViewCone(p, playerZ)) {
-        inView++;
-      }
+      if (isInViewCone3D(p, playerPos, viewDir)) inView++;
     }
 
-    // Track stats every frame
     minInView = Math.min(minInView, inView);
     maxInView = Math.max(maxInView, inView);
     totalInView += inView;
     sampleCount++;
 
-    if (inView === 0) zeroViewFrames++;
-    if (inView < 50) lowViewFrames++;
-
-    // Log every second
-    if (frame > 0 && frame % 60 === 0) {
-      const second = frame / 60;
-      console.log(`t=${second.toString().padStart(2)}s: ${inView.toString().padStart(4)} in view, ${respawnCount.toString().padStart(4)} respawned this frame`);
+    // Log key moments
+    if (frame % (5 * 60) === 0) {
+      console.log(`  t=${(t).toFixed(0).padStart(2)}s: ${inView.toString().padStart(4)} in view, ${particles.length.toString().padStart(5)} total nearby`);
     }
   }
 
-  console.log("");
-  console.log("=== Results ===");
-  console.log(`Min particles in view: ${minInView}`);
-  console.log(`Max particles in view: ${maxInView}`);
-  console.log(`Avg particles in view: ${(totalInView / sampleCount).toFixed(1)}`);
-  console.log(`Frames with 0 in view: ${zeroViewFrames} (${(100 * zeroViewFrames / totalFrames).toFixed(2)}%)`);
-  console.log(`Frames with <50 in view: ${lowViewFrames} (${(100 * lowViewFrames / totalFrames).toFixed(2)}%)`);
+  const avgInView = totalInView / sampleCount;
+  const variance = maxInView - minInView;
+  const variancePercent = (100 * variance / avgInView).toFixed(1);
 
-  if (minInView < 20) {
-    console.log("\n⚠️  WARNING: Very low particle count detected - player can outrun particles!");
-  } else {
-    console.log("\n✓ Particle coverage looks stable");
-  }
+  console.log(`  Result: min=${minInView}, max=${maxInView}, avg=${avgInView.toFixed(0)}, variance=${variancePercent}%`);
+  console.log(`  Total particles: min=${minTotalParticles}, max=${maxTotalParticles}`);
+
+  // Pass if variance is less than 20% and min > 100
+  const pass = variance / avgInView < 0.20 && minInView > 100;
+  return pass;
 }
 
-simulate();
+// Scenario 1: Straight flight
+const scenario1 = runScenario("Straight flight +Z", (t) => ({ x: 0, y: 0, z: PLAYER_SPEED }));
+
+// Scenario 2: Fly 10s, 180° turn, fly 10s
+const scenario2 = runScenario("Fly +Z 10s, 180° turn, fly -Z", (t) => {
+  if (t < 10) return { x: 0, y: 0, z: PLAYER_SPEED };
+  return { x: 0, y: 0, z: -PLAYER_SPEED };
+});
+
+// Scenario 3: Fly 10s, 90° turn up, fly 10s
+const scenario3 = runScenario("Fly +Z 10s, 90° turn up (+Y), fly", (t) => {
+  if (t < 10) return { x: 0, y: 0, z: PLAYER_SPEED };
+  return { x: 0, y: PLAYER_SPEED, z: 0 };
+});
+
+// Scenario 4: Continuous turning (spiral)
+const scenario4 = runScenario("Spiral (continuous turn)", (t) => {
+  const angle = t * 0.5; // Slow turn
+  return { x: Math.sin(angle) * PLAYER_SPEED, y: 0, z: Math.cos(angle) * PLAYER_SPEED };
+});
+
+// Scenario 5: Stationary
+const scenario5 = runScenario("Stationary", (t) => ({ x: 0, y: 0, z: 0 }));
+
+// Scenario 6: Random direction changes
+const scenario6 = runScenario("Random direction changes every 2s", (t) => {
+  const segment = Math.floor(t / 2);
+  const angles = [0, Math.PI/2, Math.PI, -Math.PI/2, Math.PI/4, -Math.PI/4];
+  const angle = angles[segment % angles.length];
+  return { x: Math.sin(angle) * PLAYER_SPEED, y: 0, z: Math.cos(angle) * PLAYER_SPEED };
+});
+
+console.log("\n=== Summary ===");
+console.log(`Scenario 1 (Straight):     ${scenario1 ? "✓ PASS" : "⚠️ FAIL"}`);
+console.log(`Scenario 2 (180° turn):    ${scenario2 ? "✓ PASS" : "⚠️ FAIL"}`);
+console.log(`Scenario 3 (90° turn):     ${scenario3 ? "✓ PASS" : "⚠️ FAIL"}`);
+console.log(`Scenario 4 (Spiral):       ${scenario4 ? "✓ PASS" : "⚠️ FAIL"}`);
+console.log(`Scenario 5 (Stationary):   ${scenario5 ? "✓ PASS" : "⚠️ FAIL"}`);
+console.log(`Scenario 6 (Random):       ${scenario6 ? "✓ PASS" : "⚠️ FAIL"}`);
+
+const allPass = scenario1 && scenario2 && scenario3 && scenario4 && scenario5 && scenario6;
+console.log(`\nOverall: ${allPass ? "✓ ALL TESTS PASS" : "⚠️ SOME TESTS FAILED"}`);

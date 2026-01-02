@@ -1,37 +1,61 @@
 /**
  * Dust Particles - Provides visual reference for movement in space.
  *
- * Particles are stationary in world space. As the player moves,
- * they stream past, giving a sense of speed and direction.
+ * Uses a "tiled cube" approach: particles exist at deterministic positions
+ * throughout infinite space. We tile a single cube of random positions
+ * and only render particles within range of the player.
+ *
+ * This ensures uniform density regardless of movement direction or speed,
+ * and turning around reveals the same particles you just passed.
  */
 
 import * as THREE from 'three';
 
 /** Dust system configuration */
-const PARTICLE_COUNT = 2500;
-const SPAWN_RADIUS_MIN = 60;   // Minimum distance from player (avoid dense center)
-const SPAWN_RADIUS_MAX = 600;  // Maximum spawn distance from spawn center
-const DESPAWN_RADIUS = 1200;   // Particles despawn beyond this from player
-const DESPAWN_BEHIND = 300;    // Despawn if this far behind player (along velocity)
+const CUBE_SIZE = 200;         // Size of the repeating cube
+const PARTICLES_PER_CUBE = 80; // Particles in each cube instance
+const RENDER_DISTANCE = 600;   // How far to render particles
 const PARTICLE_SIZE = 0.5;
 const PARTICLE_COLOR = 0x888899;
+
+// Pre-generate the "template" cube of particle offsets
+// These are deterministic random positions within a unit cube
+const TEMPLATE_OFFSETS: Array<{ x: number; y: number; z: number }> = [];
+
+// Use a seeded random for deterministic template generation
+function seededRandom(seed: number): () => number {
+  return () => {
+    seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+    return seed / 0x7fffffff;
+  };
+}
+
+// Initialize template with seeded random
+const random = seededRandom(42);
+for (let i = 0; i < PARTICLES_PER_CUBE; i++) {
+  TEMPLATE_OFFSETS.push({
+    x: random() * CUBE_SIZE,
+    y: random() * CUBE_SIZE,
+    z: random() * CUBE_SIZE,
+  });
+}
 
 /** Dust particle system state */
 export interface DustSystem {
   points: THREE.Points;
   positions: Float32Array;
   geometry: THREE.BufferGeometry;
+  maxParticles: number;
 }
 
 /** Creates the dust particle system */
 export function createDustSystem(scene: THREE.Scene): DustSystem {
-  const geometry = new THREE.BufferGeometry();
-  const positions = new Float32Array(PARTICLE_COUNT * 3);
+  // Calculate how many cubes we need to cover render distance
+  const cubesPerAxis = Math.ceil((RENDER_DISTANCE * 2) / CUBE_SIZE) + 1;
+  const maxParticles = cubesPerAxis * cubesPerAxis * cubesPerAxis * PARTICLES_PER_CUBE;
 
-  // Initialize particles at origin (will be repositioned on first update)
-  for (let i = 0; i < PARTICLE_COUNT * 3; i++) {
-    positions[i] = 0;
-  }
+  const geometry = new THREE.BufferGeometry();
+  const positions = new Float32Array(maxParticles * 3);
 
   geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
 
@@ -50,80 +74,72 @@ export function createDustSystem(scene: THREE.Scene): DustSystem {
     points,
     positions,
     geometry,
+    maxParticles,
   };
 }
 
-/** Spawns a particle at random position in shell around a point */
-function spawnParticle(
-  positions: Float32Array,
-  idx: number,
-  centerX: number,
-  centerY: number,
-  centerZ: number
-): void {
-  const theta = Math.random() * Math.PI * 2;
-  const phi = Math.acos(2 * Math.random() - 1);
-  // Uniform distribution in spherical shell (not biased toward center)
-  const r = SPAWN_RADIUS_MIN + Math.random() * (SPAWN_RADIUS_MAX - SPAWN_RADIUS_MIN);
-
-  positions[idx] = centerX + r * Math.sin(phi) * Math.cos(theta);
-  positions[idx + 1] = centerY + r * Math.sin(phi) * Math.sin(theta);
-  positions[idx + 2] = centerZ + r * Math.cos(phi);
-}
-
-/** Updates dust particles based on player position and velocity */
+/** Updates dust particles based on player position */
 export function updateDustSystem(
   dust: DustSystem,
   playerPosition: THREE.Vector3,
-  playerVelocity?: THREE.Vector3
+  _playerVelocity?: THREE.Vector3
 ): void {
-  // Bias spawn center forward based on velocity
-  const spawnCenter = playerPosition.clone();
-  const hasVelocity = playerVelocity && playerVelocity.lengthSq() > 1;
-
-  if (hasVelocity) {
-    spawnCenter.addScaledVector(playerVelocity, 1.5);
-  }
-
   const { positions, geometry } = dust;
-  let needsUpdate = false;
 
-  for (let i = 0; i < PARTICLE_COUNT; i++) {
+  // Find which cube the player is in
+  const playerCubeX = Math.floor(playerPosition.x / CUBE_SIZE);
+  const playerCubeY = Math.floor(playerPosition.y / CUBE_SIZE);
+  const playerCubeZ = Math.floor(playerPosition.z / CUBE_SIZE);
+
+  // Calculate how many cubes to render in each direction
+  const cubeRadius = Math.ceil(RENDER_DISTANCE / CUBE_SIZE);
+
+  let particleIndex = 0;
+  const renderDistSq = RENDER_DISTANCE * RENDER_DISTANCE;
+
+  // Iterate over nearby cubes
+  for (let cx = playerCubeX - cubeRadius; cx <= playerCubeX + cubeRadius; cx++) {
+    for (let cy = playerCubeY - cubeRadius; cy <= playerCubeY + cubeRadius; cy++) {
+      for (let cz = playerCubeZ - cubeRadius; cz <= playerCubeZ + cubeRadius; cz++) {
+        // World position of this cube's origin
+        const cubeOriginX = cx * CUBE_SIZE;
+        const cubeOriginY = cy * CUBE_SIZE;
+        const cubeOriginZ = cz * CUBE_SIZE;
+
+        // Add all particles from this cube
+        for (const offset of TEMPLATE_OFFSETS) {
+          const worldX = cubeOriginX + offset.x;
+          const worldY = cubeOriginY + offset.y;
+          const worldZ = cubeOriginZ + offset.z;
+
+          // Distance check
+          const dx = worldX - playerPosition.x;
+          const dy = worldY - playerPosition.y;
+          const dz = worldZ - playerPosition.z;
+          const distSq = dx * dx + dy * dy + dz * dz;
+
+          if (distSq <= renderDistSq && particleIndex < dust.maxParticles) {
+            const idx = particleIndex * 3;
+            positions[idx] = worldX;
+            positions[idx + 1] = worldY;
+            positions[idx + 2] = worldZ;
+            particleIndex++;
+          }
+        }
+      }
+    }
+  }
+
+  // Zero out remaining positions (move them far away)
+  for (let i = particleIndex; i < dust.maxParticles; i++) {
     const idx = i * 3;
-    const px = positions[idx]!;
-    const py = positions[idx + 1]!;
-    const pz = positions[idx + 2]!;
-
-    // Calculate offset from player
-    const dx = px - playerPosition.x;
-    const dy = py - playerPosition.y;
-    const dz = pz - playerPosition.z;
-    const distSq = dx * dx + dy * dy + dz * dz;
-
-    // Check if too far behind along velocity direction
-    let tooBehind = false;
-    if (hasVelocity) {
-      // Dot product of (particle - player) with velocity direction
-      // Negative means particle is behind player
-      const behindDist = -(dx * playerVelocity.x + dy * playerVelocity.y + dz * playerVelocity.z)
-        / playerVelocity.length();
-      tooBehind = behindDist > DESPAWN_BEHIND;
-    }
-
-    // Respawn if too far, too close, too far behind, or uninitialized
-    const tooFar = distSq > DESPAWN_RADIUS * DESPAWN_RADIUS;
-    const tooClose = distSq < SPAWN_RADIUS_MIN * SPAWN_RADIUS_MIN;
-    const uninitialized = distSq === 0;
-
-    if (tooFar || tooClose || tooBehind || uninitialized) {
-      spawnParticle(positions, idx, spawnCenter.x, spawnCenter.y, spawnCenter.z);
-      needsUpdate = true;
-    }
+    positions[idx] = 0;
+    positions[idx + 1] = 0;
+    positions[idx + 2] = -999999;
   }
 
-  if (needsUpdate) {
-    geometry.attributes.position!.needsUpdate = true;
-  }
+  geometry.attributes.position!.needsUpdate = true;
+  geometry.setDrawRange(0, particleIndex);
 }
 
 /** Removes dust system from scene */
