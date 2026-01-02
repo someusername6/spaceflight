@@ -17,7 +17,7 @@ import * as THREE from 'three';
 const CUBE_SIZE = 200;
 const PARTICLES_PER_CUBE = 12;  // Very sparse - fighter cockpit feel
 const RENDER_DISTANCE = 500;    // Shorter range, tighter field
-const PARTICLE_COLOR = new THREE.Color(0x999999);  // Neutral grey
+const PARTICLE_COLOR = new THREE.Color(0x777777);  // Darker grey
 
 // Size attenuation parameters
 const SIZE_BASE = 10.0;       // Size at reference distance
