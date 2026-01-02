@@ -6,9 +6,11 @@ import { Vector3 } from 'three';
 import { createGame, startGame, MissionResult } from './game';
 import { initInput } from './systems/input';
 import { resetMission } from './systems/mission';
-import { createRenderer, syncScene, render, followEntity } from './rendering/renderer';
+import { createRenderer, syncScene, render, followEntity, getScene } from './rendering/renderer';
+import { createDustSystem, updateDustSystem } from './rendering/dust';
 import { createPlayerShip, createEnemyShip } from './factories/ship';
-import { findEntity } from './core/ecs';
+import { findEntity, getComponent } from './core/ecs';
+import type { Transform } from './components/transform';
 
 /** Initialize and start the game */
 function main(): void {
@@ -27,6 +29,9 @@ function main(): void {
   // Create renderer
   const renderer = createRenderer(container);
 
+  // Create dust particle system
+  const dustSystem = createDustSystem(getScene(renderer));
+
   // Setup Slice 1 test scene
   setupSlice1Scene(game);
 
@@ -35,10 +40,16 @@ function main(): void {
     // Sync scene with ECS
     syncScene(renderer, world);
 
-    // Follow player
+    // Follow player and update dust
     const player = findEntity(world, ['playerControlled', 'transform']);
     if (player !== undefined) {
       followEntity(renderer, world, player);
+
+      // Update dust particles around player position
+      const transform = getComponent<Transform>(world, player, 'transform');
+      if (transform) {
+        updateDustSystem(dustSystem, transform.position);
+      }
     }
 
     // Render
