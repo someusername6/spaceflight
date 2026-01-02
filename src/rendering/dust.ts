@@ -12,6 +12,7 @@ const PARTICLE_COUNT = 2500;
 const SPAWN_RADIUS_MIN = 60;   // Minimum distance from player (avoid dense center)
 const SPAWN_RADIUS_MAX = 600;  // Maximum spawn distance from spawn center
 const DESPAWN_RADIUS = 1200;   // Particles despawn beyond this from player
+const DESPAWN_BEHIND = 300;    // Despawn if this far behind player (along velocity)
 const PARTICLE_SIZE = 0.5;
 const PARTICLE_COLOR = 0x888899;
 
@@ -76,13 +77,14 @@ export function updateDustSystem(
   playerPosition: THREE.Vector3,
   playerVelocity?: THREE.Vector3
 ): void {
-  // Bias spawn center forward based on velocity to prevent outrunning particles
-  // At 250 m/s with 1.5s bias: spawn center 375m ahead
-  // Max spawn: 375 + 600 = 975m from player (< 1200m despawn) ✓
+  // Bias spawn center forward based on velocity
   const spawnCenter = playerPosition.clone();
-  if (playerVelocity && playerVelocity.lengthSq() > 0) {
+  const hasVelocity = playerVelocity && playerVelocity.lengthSq() > 1;
+
+  if (hasVelocity) {
     spawnCenter.addScaledVector(playerVelocity, 1.5);
   }
+
   const { positions, geometry } = dust;
   let needsUpdate = false;
 
@@ -92,19 +94,28 @@ export function updateDustSystem(
     const py = positions[idx + 1]!;
     const pz = positions[idx + 2]!;
 
-    // Calculate distance from player
+    // Calculate offset from player
     const dx = px - playerPosition.x;
     const dy = py - playerPosition.y;
     const dz = pz - playerPosition.z;
     const distSq = dx * dx + dy * dy + dz * dz;
 
-    // Respawn if too far, too close, or uninitialized
+    // Check if too far behind along velocity direction
+    let tooBehind = false;
+    if (hasVelocity) {
+      // Dot product of (particle - player) with velocity direction
+      // Negative means particle is behind player
+      const behindDist = -(dx * playerVelocity.x + dy * playerVelocity.y + dz * playerVelocity.z)
+        / playerVelocity.length();
+      tooBehind = behindDist > DESPAWN_BEHIND;
+    }
+
+    // Respawn if too far, too close, too far behind, or uninitialized
     const tooFar = distSq > DESPAWN_RADIUS * DESPAWN_RADIUS;
     const tooClose = distSq < SPAWN_RADIUS_MIN * SPAWN_RADIUS_MIN;
     const uninitialized = distSq === 0;
 
-    if (tooFar || tooClose || uninitialized) {
-      // Spawn around biased center (ahead of player when moving)
+    if (tooFar || tooClose || tooBehind || uninitialized) {
       spawnParticle(positions, idx, spawnCenter.x, spawnCenter.y, spawnCenter.z);
       needsUpdate = true;
     }
