@@ -73,13 +73,9 @@ export function physicsSystem(world: World, dt: number): void {
         physics.currentSpeed - physics.acceleration * dt,
         0
       );
-    } else {
-      // Apply drag when not accelerating/decelerating
-      physics.currentSpeed = Math.max(
-        physics.currentSpeed - physics.drag * physics.maxSpeed * dt,
-        0
-      );
     }
+    // No drag when coasting - ship maintains current speed
+    // Drag only applies to cap speed at maxSpeed (handled in accelerating branch)
 
     // Calculate forward vector from rotation
     forward.set(0, 0, -1);

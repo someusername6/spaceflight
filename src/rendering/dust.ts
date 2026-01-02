@@ -8,11 +8,11 @@
 import * as THREE from 'three';
 
 /** Dust system configuration */
-const PARTICLE_COUNT = 800;
-const SPAWN_RADIUS_MIN = 30;   // Minimum distance from player (avoid dense center)
-const SPAWN_RADIUS_MAX = 200;  // Maximum spawn distance
-const DESPAWN_RADIUS = 250;    // Particles despawn beyond this radius
-const PARTICLE_SIZE = 0.4;
+const PARTICLE_COUNT = 1200;
+const SPAWN_RADIUS_MIN = 40;   // Minimum distance from player (avoid dense center)
+const SPAWN_RADIUS_MAX = 500;  // Maximum spawn distance (must exceed max speed * ~2 sec)
+const DESPAWN_RADIUS = 600;    // Particles despawn beyond this radius
+const PARTICLE_SIZE = 0.5;
 const PARTICLE_COLOR = 0x888899;
 
 /** Dust particle system state */
