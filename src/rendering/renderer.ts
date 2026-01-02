@@ -59,6 +59,7 @@ export function createRenderer(container: HTMLElement): Renderer {
   // Procedural skybox (fully deterministic from seed)
   scene.background = generateSkyboxTexture(webglRenderer, {
     seed: skyboxSeed,
+    resolution: 1024,
   });
 
   // Handle resize
