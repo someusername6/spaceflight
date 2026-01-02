@@ -1,0 +1,63 @@
+/**
+ * Mersenne Twister PRNG - exact implementation matching 'rng' npm package.
+ *
+ * Used for compatibility with wwwtyro/space-2d procedural generation.
+ * For general game randomness, use prng.ts (mulberry32) instead.
+ */
+
+export class MersenneTwister {
+  private _state: number[] = new Array(624);
+  private _index = 0;
+
+  constructor(seed: number) {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    this._state[0] = seed != null ? seed : (Math.random() * 0xffffffff) | 0;
+
+    for (let i = 1; i < 624; i++) {
+      this._state[i] = this._state[i - 1]! ^ (this._state[i - 1]! >>> 30);
+      this._state[i] = 0x6c078965 * this._state[i]! + i;
+      this._state[i] = this._state[i]! & ((this._state[i]! << 32) - 1);
+    }
+  }
+
+  private _generateNumbers(): void {
+    const MT = this._state;
+    for (let i = 0; i < 624; i++) {
+      let y = MT[i]! & 0x80000000;
+      y = y + (MT[(i + 1) % 624]! & 0x7fffffff);
+      MT[i] = MT[(i + 397) % 624]! ^ (y >>> 1);
+      if ((y % 2) !== 0) {
+        MT[i] = MT[i]! ^ 0x9908b0df;
+      }
+    }
+  }
+
+  random(): number {
+    if (this._index === 0) {
+      this._generateNumbers();
+    }
+
+    let y = this._state[this._index]!;
+    y = y ^ (y >>> 11);
+    y = y ^ ((y << 7) & 0x9d2c5680);
+    y = y ^ ((y << 15) & 0xefc60000);
+    y = y ^ (y >>> 18);
+
+    this._index = (this._index + 1) % 624;
+    return (y >>> 0) * (1.0 / 4294967296.0);
+  }
+}
+
+/** Hash a string to a number (matches space-2d random.js) */
+export function hashcode(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash += (i + 1) * str.charCodeAt(i);
+  }
+  return hash;
+}
+
+/** Create seeded MT RNG from string seed and offset */
+export function createMT(seed: string, offset: number): MersenneTwister {
+  return new MersenneTwister(hashcode(seed) + offset);
+}

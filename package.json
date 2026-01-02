@@ -12,10 +12,13 @@
     "sim:dust": "node scripts/simulation/dust.mjs"
   },
   "dependencies": {
+    "canvas": "^3.2.0",
+    "rng": "^0.2.2",
     "three": "^0.170.0"
   },
   "devDependencies": {
     "@types/three": "^0.170.0",
+    "puppeteer": "^24.34.0",
     "typescript": "^5.7.0",
     "vite": "^6.0.0"
   }

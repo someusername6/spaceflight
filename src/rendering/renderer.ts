@@ -7,6 +7,7 @@ import type { World, Entity } from '../core/types';
 import { queryEntities, getComponent } from '../core/ecs';
 import type { Transform } from '../components/transform';
 import { Faction, type FactionComponent } from '../components/faction';
+import { generateSkyboxTexture, getSunDirectionFromSeed } from './skybox';
 
 /** Renderer state */
 export interface Renderer {
@@ -14,7 +15,6 @@ export interface Renderer {
   camera: THREE.PerspectiveCamera;
   webglRenderer: THREE.WebGLRenderer;
   entityMeshes: Map<Entity, THREE.Object3D>;
-  stars: THREE.Points; // Starfield that follows camera
 }
 
 /** Colors for factions */
@@ -26,13 +26,12 @@ const FACTION_COLORS = {
 
 /** Creates the renderer and attaches to container */
 export function createRenderer(container: HTMLElement): Renderer {
-  // Scene
+  // Scene (no background - skybox provides it)
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x000011);
 
-  // Camera
+  // Camera (60° vertical FOV - standard for space combat games, avoids fish-eye)
   const camera = new THREE.PerspectiveCamera(
-    75,
+    60,
     container.clientWidth / container.clientHeight,
     0.1,
     10000
@@ -44,31 +43,23 @@ export function createRenderer(container: HTMLElement): Renderer {
   webglRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   container.appendChild(webglRenderer.domElement);
 
+  // Skybox seed (use string seed for reproducible results)
+  const skyboxSeed = '7alzyiphy3k0';
+
   // Basic lighting
   const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
   scene.add(ambientLight);
 
+  // Directional light from sun direction (derived from skybox seed)
+  const sunDir = getSunDirectionFromSeed(skyboxSeed);
   const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-  directionalLight.position.set(1, 1, 1);
+  directionalLight.position.copy(sunDir);
   scene.add(directionalLight);
 
-  // Starfield on a large sphere (follows camera for infinite distance effect)
-  const starGeometry = new THREE.BufferGeometry();
-  const starCount = 2000;
-  const starPositions = new Float32Array(starCount * 3);
-  for (let i = 0; i < starCount; i++) {
-    // Distribute on a sphere surface
-    const theta = Math.random() * Math.PI * 2;
-    const phi = Math.acos(2 * Math.random() - 1);
-    const r = 4000; // Large radius - will follow camera anyway
-    starPositions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-    starPositions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
-    starPositions[i * 3 + 2] = r * Math.cos(phi);
-  }
-  starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
-  const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 2 });
-  const stars = new THREE.Points(starGeometry, starMaterial);
-  scene.add(stars);
+  // Procedural skybox (fully deterministic from seed)
+  scene.background = generateSkyboxTexture(webglRenderer, {
+    seed: skyboxSeed,
+  });
 
   // Handle resize
   window.addEventListener('resize', () => {
@@ -82,7 +73,6 @@ export function createRenderer(container: HTMLElement): Renderer {
     camera,
     webglRenderer,
     entityMeshes: new Map(),
-    stars,
   };
 }
 
@@ -134,9 +124,6 @@ export function syncScene(renderer: Renderer, world: World): void {
 
 /** Renders the scene */
 export function render(renderer: Renderer): void {
-  // Make stars follow camera (infinite distance effect)
-  renderer.stars.position.copy(renderer.camera.position);
-
   renderer.webglRenderer.render(renderer.scene, renderer.camera);
 }
 
