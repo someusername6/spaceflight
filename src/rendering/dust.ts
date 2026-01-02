@@ -13,7 +13,7 @@ const CUBE_SIZE = 100;
 const PARTICLES_PER_CUBE = 3;
 const RENDER_DISTANCE = 600;
 const PARTICLE_SIZE = 8;
-const PARTICLE_COLOR = new THREE.Color(0x888888);
+const PARTICLE_COLOR = new THREE.Color(0xffffff);
 
 // Fade distances (ship is ~40-50 units from camera)
 const FADE_NEAR = 50;       // Fully faded at ship distance
