@@ -8,10 +8,11 @@
 import * as THREE from 'three';
 
 /** Dust system configuration */
-const PARTICLE_COUNT = 1000;
-const SPAWN_RADIUS = 150;      // Particles spawn within this radius of player
-const DESPAWN_RADIUS = 200;    // Particles despawn beyond this radius
-const PARTICLE_SIZE = 0.5;
+const PARTICLE_COUNT = 800;
+const SPAWN_RADIUS_MIN = 30;   // Minimum distance from player (avoid dense center)
+const SPAWN_RADIUS_MAX = 200;  // Maximum spawn distance
+const DESPAWN_RADIUS = 250;    // Particles despawn beyond this radius
+const PARTICLE_SIZE = 0.4;
 const PARTICLE_COLOR = 0x888899;
 
 /** Dust particle system state */
@@ -51,6 +52,24 @@ export function createDustSystem(scene: THREE.Scene): DustSystem {
   };
 }
 
+/** Spawns a particle at random position in shell around a point */
+function spawnParticle(
+  positions: Float32Array,
+  idx: number,
+  centerX: number,
+  centerY: number,
+  centerZ: number
+): void {
+  const theta = Math.random() * Math.PI * 2;
+  const phi = Math.acos(2 * Math.random() - 1);
+  // Uniform distribution in spherical shell (not biased toward center)
+  const r = SPAWN_RADIUS_MIN + Math.random() * (SPAWN_RADIUS_MAX - SPAWN_RADIUS_MIN);
+
+  positions[idx] = centerX + r * Math.sin(phi) * Math.cos(theta);
+  positions[idx + 1] = centerY + r * Math.sin(phi) * Math.sin(theta);
+  positions[idx + 2] = centerZ + r * Math.cos(phi);
+}
+
 /** Updates dust particles based on player position */
 export function updateDustSystem(
   dust: DustSystem,
@@ -71,16 +90,13 @@ export function updateDustSystem(
     const dz = pz - playerPosition.z;
     const distSq = dx * dx + dy * dy + dz * dz;
 
-    // If too far, respawn near player
-    if (distSq > DESPAWN_RADIUS * DESPAWN_RADIUS || distSq === 0) {
-      // Spawn at random position within spawn radius
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(2 * Math.random() - 1);
-      const r = Math.random() * SPAWN_RADIUS;
+    // Respawn if too far, too close, or uninitialized
+    const tooFar = distSq > DESPAWN_RADIUS * DESPAWN_RADIUS;
+    const tooClose = distSq < SPAWN_RADIUS_MIN * SPAWN_RADIUS_MIN;
+    const uninitialized = distSq === 0;
 
-      positions[idx] = playerPosition.x + r * Math.sin(phi) * Math.cos(theta);
-      positions[idx + 1] = playerPosition.y + r * Math.sin(phi) * Math.sin(theta);
-      positions[idx + 2] = playerPosition.z + r * Math.cos(phi);
+    if (tooFar || tooClose || uninitialized) {
+      spawnParticle(positions, idx, playerPosition.x, playerPosition.y, playerPosition.z);
       needsUpdate = true;
     }
   }
