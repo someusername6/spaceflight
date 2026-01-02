@@ -7,8 +7,9 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "check-size": "bash scripts/check-file-size.sh",
-    "precommit": "npm run check-size"
+    "check-size": "bash scripts/build/check-file-size.sh",
+    "sim": "node scripts/simulation/run-all.mjs",
+    "sim:dust": "node scripts/simulation/dust.mjs"
   },
   "dependencies": {
     "three": "^0.170.0"
