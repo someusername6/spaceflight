@@ -15,20 +15,21 @@ import * as THREE from 'three';
 
 /** Dust system configuration */
 const CUBE_SIZE = 200;
-const PARTICLES_PER_CUBE = 25;  // Sparse - fighter cockpit feel
-const RENDER_DISTANCE = 600;
-const PARTICLE_SIZE = 35.0;     // Larger motes
-const PARTICLE_COLOR = new THREE.Color(0x889999);  // Muted cyan-gray
+const PARTICLES_PER_CUBE = 12;  // Very sparse - fighter cockpit feel
+const RENDER_DISTANCE = 500;    // Shorter range, tighter field
+const PARTICLE_COLOR = new THREE.Color(0x8899aa);  // Subtle blue-gray
+
+// Size attenuation parameters
+const SIZE_BASE = 6.0;        // Size at reference distance
+const SIZE_REF_DIST = 120.0;  // Reference distance for size calc
+const MAX_POINT_SIZE = 5.0;   // Cap for very close particles
+const MIN_POINT_SIZE = 1.2;   // Minimum visibility
 
 // Distance-based fading
-const FADE_NEAR_START = 20;   // Start fading when closer than this
-const FADE_NEAR_END = 50;     // Fully visible at this distance
-const FADE_FAR_START = 400;   // Start fading at this distance
-const FADE_FAR_END = 580;     // Fully faded before render boundary
-
-// Size limits (in screen pixels after attenuation)
-const MAX_POINT_SIZE = 8.0;   // Allow larger particles
-const MIN_POINT_SIZE = 1.5;   // Visible minimum
+const FADE_NEAR_START = 25;   // Start fading when closer than this
+const FADE_NEAR_END = 60;     // Fully visible at this distance
+const FADE_FAR_START = 350;   // Start fading at this distance
+const FADE_FAR_END = 480;     // Fully faded before render boundary
 
 // Pre-generate the "template" cube of particle offsets
 const TEMPLATE_OFFSETS: Array<{ x: number; y: number; z: number }> = [];
@@ -51,7 +52,8 @@ for (let i = 0; i < PARTICLES_PER_CUBE; i++) {
 
 /** Vertex shader - handles size attenuation and passes distance to fragment */
 const vertexShader = /* glsl */ `
-  uniform float uSize;
+  uniform float uSizeBase;
+  uniform float uSizeRefDist;
   uniform float uMaxSize;
   uniform float uMinSize;
 
@@ -61,9 +63,9 @@ const vertexShader = /* glsl */ `
     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
     vDistance = -mvPosition.z;
 
-    // Size attenuation: larger uSize = bigger particles
-    // 300.0 is a reference distance where size equals uSize
-    float size = uSize * (300.0 / max(vDistance, 1.0));
+    // Size attenuation: uSizeBase is size at uSizeRefDist distance
+    // Closer = larger, farther = smaller (natural perspective)
+    float size = uSizeBase * (uSizeRefDist / max(vDistance, 1.0));
 
     // Clamp to prevent extremes
     gl_PointSize = clamp(size, uMinSize, uMaxSize);
@@ -128,11 +130,12 @@ export function createDustSystem(scene: THREE.Scene): DustSystem {
 
   const material = new THREE.ShaderMaterial({
     uniforms: {
-      uSize: { value: PARTICLE_SIZE },
+      uSizeBase: { value: SIZE_BASE },
+      uSizeRefDist: { value: SIZE_REF_DIST },
       uMaxSize: { value: MAX_POINT_SIZE },
       uMinSize: { value: MIN_POINT_SIZE },
       uColor: { value: PARTICLE_COLOR },
-      uOpacity: { value: 0.55 },
+      uOpacity: { value: 0.6 },
       uFadeNearStart: { value: FADE_NEAR_START },
       uFadeNearEnd: { value: FADE_NEAR_END },
       uFadeFarStart: { value: FADE_FAR_START },
