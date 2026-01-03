@@ -8,6 +8,7 @@ import { initInput } from './systems/input';
 import { resetMission } from './systems/mission';
 import { createRenderer, syncScene, render, followEntity, getScene } from './rendering/renderer';
 import { createDustSystem, updateDustSystem } from './rendering/dust';
+import { createHUD, updateHUD } from './rendering/hud';
 import { createPlayerShip, createEnemyShip } from './factories/ship';
 import { findEntity, getComponent } from './core/ecs';
 import type { Transform } from './components/transform';
@@ -32,6 +33,9 @@ function main(): void {
   // Create dust particle system
   const dustSystem = createDustSystem(getScene(renderer));
 
+  // Create HUD
+  const hud = createHUD(container);
+
   // Setup Slice 1 test scene
   setupSlice1Scene(game);
 
@@ -51,6 +55,9 @@ function main(): void {
         updateDustSystem(dustSystem, transform.position);
       }
     }
+
+    // Update HUD
+    updateHUD(hud, world, renderer.camera, container.clientWidth, container.clientHeight);
 
     // Render
     render(renderer);
@@ -72,8 +79,8 @@ function main(): void {
 
   console.log('Spaceflight Slice 2 - Combat Basics');
   console.log('Flight: WASD = Pitch/Yaw, QE = Roll, Shift = Accelerate, Ctrl = Decelerate');
-  console.log('Targeting: T = Nearest enemy, < > = Cycle targets');
-  console.log('Objective: Destroy all enemy ships (ram them!)');
+  console.log('Combat: Space = Fire, T = Target nearest, < > = Cycle targets');
+  console.log('Objective: Destroy all enemy ships!');
 }
 
 /** Setup the Slice 1 test scene */
