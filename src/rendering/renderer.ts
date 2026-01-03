@@ -47,13 +47,13 @@ export function createRenderer(container: HTMLElement): Renderer {
   // Skybox seed (use Date.now() for variety, or a fixed string for reproducibility)
   const skyboxSeed = Date.now().toString();
 
-  // Basic lighting
-  const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+  // Basic lighting - ambient so ships are visible from all angles
+  const ambientLight = new THREE.AmbientLight(0x505050, 0.6);
   scene.add(ambientLight);
 
   // Directional light from sun direction (derived from skybox seed)
   const sunDir = getSunDirectionFromSeed(skyboxSeed);
-  const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 1.4);
   directionalLight.position.copy(sunDir);
   scene.add(directionalLight);
 

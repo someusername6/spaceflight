@@ -25,7 +25,7 @@ export interface SkyboxConfig {
 
 export const DEFAULT_SKYBOX_CONFIG: SkyboxConfig = {
   seed: '7alzyiphy3k0',
-  resolution: 1024,
+  resolution: 2048,
 };
 
 const skyboxFragmentShader = /* glsl */ `
@@ -70,11 +70,13 @@ void main() {
     float d = 1.0 - clamp(dot(dir, uHaloDirections[i]), 0.0, 1.0);
     color += uHaloColors[i] * exp(-(d - uHaloSizes[i]) * uHaloFalloffs[i]);
   }
-  // Sun
+  // Sun: sharp disc with anti-aliased edge + tight halo
   float sunDot = clamp(dot(dir, uSunDirection), 0.0, 1.0);
-  float sunC = smoothstep(1.0 - uSunSize * 32.0, 1.0 - uSunSize, sunDot);
-  sunC += pow(sunDot, uSunFalloff) * 0.5;
-  vec3 sunColor = mix(uSunColor, vec3(1.0, 1.0, 1.0), sunC);
+  float edge = 1.0 - uSunSize;
+  float sunDisc = smoothstep(edge - 0.0003, edge, sunDot); // Tight AA edge
+  float sunHalo = pow(sunDot, uSunFalloff) * 0.25; // Small glow
+  float sunC = max(sunDisc, sunHalo);
+  vec3 sunColor = mix(uSunColor, vec3(1.0), sunDisc); // White core
   color += sunColor * sunC;
 
   gl_FragColor = vec4(color, 1.0);
@@ -110,9 +112,15 @@ function generateParams(seed: string): SkyboxParams {
     const scaleRange = NEBULA_SCALE_MAX - NEBULA_SCALE_MIN;
     const intensityRange = NEBULA_INTENSITY_MAX - NEBULA_INTENSITY_MIN;
     const falloffRange = NEBULA_FALLOFF_MAX - NEBULA_FALLOFF_MIN;
+    // Bias colors toward dark (pow 2.5 gives avg ~0.28 instead of 0.5)
+    const colorBias = 2.5;
     nebulae.push({
       scale: rngN.random() * scaleRange + NEBULA_SCALE_MIN,
-      color: new THREE.Vector3(rngN.random(), rngN.random(), rngN.random()),
+      color: new THREE.Vector3(
+        Math.pow(rngN.random(), colorBias),
+        Math.pow(rngN.random(), colorBias),
+        Math.pow(rngN.random(), colorBias)
+      ),
       intensity: rngN.random() * intensityRange + NEBULA_INTENSITY_MIN,
       falloff: rngN.random() * falloffRange + NEBULA_FALLOFF_MIN,
       offset: new THREE.Vector3(
@@ -191,16 +199,9 @@ export function generateSkyboxTexture(
   // Create cube camera (near=0.1, far=256 matches bundle.js exactly)
   const cubeCamera = new THREE.CubeCamera(0.1, 256, cubeRT);
 
-  // Create scene
   const skyboxScene = new THREE.Scene();
 
-  // Render order matches bundle.js:
-  // 1. Point stars (multiple rotation layers)
-  // 2. Star halos
-  // 3. Nebulae
-  // 4. Sun
-
-  // Point stars with custom shader matching bundle.js point-stars.glsl
+  // Point stars
   const starGeometry = createStarGeometry(cfg.seed);
   const starVert = `attribute vec3 color; varying vec3 vColor;
     void main() { gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); vColor = color; }`;
@@ -208,8 +209,7 @@ export function generateSkyboxTexture(
     void main() { gl_FragColor = vec4(vColor, 1.0); }`;
   const starMaterial = new THREE.ShaderMaterial({ vertexShader: starVert, fragmentShader: starFrag });
 
-  // Render star layers with accumulated rotations (matches bundle.js exactly)
-  // bundle.js: glm.mat4.mul(model, ps.rotation, model) accumulates each rotation
+  // Render star layers with accumulated rotations
   let renderOrder = 0;
   const accumulatedRotation = new THREE.Matrix4();
   for (const rotation of params.starRotations) {
