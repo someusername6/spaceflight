@@ -180,15 +180,16 @@ export function generateSkyboxTexture(
   const resolution = cfg.resolution ?? 1024;
   const params = generateParams(cfg.seed);
 
-  // Create cube render target
+  // Create cube render target (no mipmaps to preserve small star detail)
   const cubeRT = new THREE.WebGLCubeRenderTarget(resolution, {
     format: THREE.RGBAFormat,
-    generateMipmaps: true,
-    minFilter: THREE.LinearMipmapLinearFilter,
+    generateMipmaps: false,
+    minFilter: THREE.LinearFilter,
+    magFilter: THREE.LinearFilter,
   });
 
-  // Create cube camera
-  const cubeCamera = new THREE.CubeCamera(0.1, 1000, cubeRT);
+  // Create cube camera (near=0.1, far=256 matches bundle.js exactly)
+  const cubeCamera = new THREE.CubeCamera(0.1, 256, cubeRT);
 
   // Create scene
   const skyboxScene = new THREE.Scene();
@@ -199,17 +200,22 @@ export function generateSkyboxTexture(
   // 3. Nebulae
   // 4. Sun
 
-  // Add point stars with multiple rotation layers (matches bundle.js pStarParams)
+  // Point stars with custom shader matching bundle.js point-stars.glsl
   const starGeometry = createStarGeometry(cfg.seed);
-  const starMaterial = new THREE.MeshBasicMaterial({
-    vertexColors: true,
-    side: THREE.DoubleSide,
-  });
+  const starVert = `attribute vec3 color; varying vec3 vColor;
+    void main() { gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); vColor = color; }`;
+  const starFrag = `precision highp float; varying vec3 vColor;
+    void main() { gl_FragColor = vec4(vColor, 1.0); }`;
+  const starMaterial = new THREE.ShaderMaterial({ vertexShader: starVert, fragmentShader: starFrag });
 
+  // Render star layers with accumulated rotations (matches bundle.js exactly)
+  // bundle.js: glm.mat4.mul(model, ps.rotation, model) accumulates each rotation
   let renderOrder = 0;
+  const accumulatedRotation = new THREE.Matrix4();
   for (const rotation of params.starRotations) {
+    accumulatedRotation.premultiply(rotation);
     const starMesh = new THREE.Mesh(starGeometry, starMaterial);
-    starMesh.applyMatrix4(rotation);
+    starMesh.applyMatrix4(accumulatedRotation.clone());
     starMesh.renderOrder = renderOrder++;
     skyboxScene.add(starMesh);
   }
