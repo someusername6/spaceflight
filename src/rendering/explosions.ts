@@ -12,6 +12,7 @@ import { queryEntities, getComponent } from '../core/ecs';
 import type { Transform } from '../components/transform';
 import type { Explosion } from '../components/explosion';
 import { getExplosionProgress } from '../components/explosion';
+import { createPRNG, random } from '../core/prng';
 
 /** Particles per explosion */
 const PARTICLES_PER_EXPLOSION = 24;
@@ -33,7 +34,6 @@ interface ExplosionVisual {
 export interface ExplosionRenderer {
   visuals: Map<Entity, ExplosionVisual>;
   sphereGeometry: THREE.SphereGeometry;
-  particleGeometry: THREE.BufferGeometry;
 }
 
 /** Sphere material - additive blending for glow */
@@ -60,14 +60,15 @@ function createParticleMaterial(color: THREE.Color): THREE.PointsMaterial {
   });
 }
 
-/** Create random unit vectors for particle velocities */
-function createParticleVelocities(): Float32Array {
+/** Create random unit vectors for particle velocities (seeded by entity ID) */
+function createParticleVelocities(entitySeed: Entity): Float32Array {
   const velocities = new Float32Array(PARTICLES_PER_EXPLOSION * 3);
+  const prng = createPRNG(entitySeed * 31337); // Deterministic seed from entity ID
 
   for (let i = 0; i < PARTICLES_PER_EXPLOSION; i++) {
     // Random direction on unit sphere
-    const theta = Math.random() * Math.PI * 2;
-    const phi = Math.acos(2 * Math.random() - 1);
+    const theta = random(prng) * Math.PI * 2;
+    const phi = Math.acos(2 * random(prng) - 1);
 
     const idx = i * 3;
     velocities[idx] = Math.sin(phi) * Math.cos(theta);
@@ -80,18 +81,12 @@ function createParticleVelocities(): Float32Array {
 
 /** Creates the explosion renderer */
 export function createExplosionRenderer(_scene: THREE.Scene): ExplosionRenderer {
-  // Shared geometries
+  // Shared sphere geometry (cloned per explosion)
   const sphereGeometry = new THREE.SphereGeometry(1, 16, 12);
-
-  // Particle template geometry (positions set per explosion)
-  const particleGeometry = new THREE.BufferGeometry();
-  const positions = new Float32Array(PARTICLES_PER_EXPLOSION * 3);
-  particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
 
   return {
     visuals: new Map(),
     sphereGeometry,
-    particleGeometry,
   };
 }
 
@@ -118,6 +113,7 @@ export function updateExplosionRenderer(
       visual = createExplosionVisual(
         renderer,
         scene,
+        entity,
         explosion.color,
         transform.position
       );
@@ -146,6 +142,7 @@ export function updateExplosionRenderer(
 function createExplosionVisual(
   renderer: ExplosionRenderer,
   scene: THREE.Scene,
+  entity: Entity,
   color: THREE.Color,
   position: THREE.Vector3
 ): ExplosionVisual {
@@ -171,8 +168,8 @@ function createExplosionVisual(
   const particles = new THREE.Points(particleGeometry, particleMaterial);
   scene.add(particles);
 
-  // Random velocities for particles
-  const particleVelocities = createParticleVelocities();
+  // Random velocities for particles (seeded by entity ID for determinism)
+  const particleVelocities = createParticleVelocities(entity);
 
   return { sphere, particles, particleVelocities };
 }
@@ -230,5 +227,4 @@ export function disposeExplosionRenderer(
   }
   renderer.visuals.clear();
   renderer.sphereGeometry.dispose();
-  renderer.particleGeometry.dispose();
 }
