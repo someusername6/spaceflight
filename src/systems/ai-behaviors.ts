@@ -20,7 +20,7 @@ const toTarget = new Vector3();
 const forward = new Vector3();
 const rotationAxis = new Vector3();
 const deltaQuat = new Quaternion();
-const interceptDir = new Vector3(); // For Protect state
+const localUp = new Vector3(); // For ship-relative calculations
 
 const DEG_TO_RAD = Math.PI / 180;
 
@@ -42,7 +42,7 @@ export function shouldEvade(shields: Shields | undefined): boolean {
 export function shouldRegroup(shields: Shields | undefined, heat: Heat | undefined): boolean {
   const veryLowShields = shields && shields.current / shields.max < VERY_LOW_SHIELDS_PERCENT;
   const overheated = heat && heat.current / heat.max > 0.9;
-  return veryLowShields || overheated || false;
+  return !!(veryLowShields || overheated);
 }
 
 /** Check if AI has recovered enough to re-engage */
@@ -109,9 +109,10 @@ export function updateEvade(
     }
   }
 
-  // Add erratic movement (barrel roll effect via slight yaw oscillation)
+  // Add erratic movement (barrel roll effect around ship's forward axis)
   const wobble = Math.sin(ai.stateTimer * 8) * 0.3;
-  const wobbleQuat = deltaQuat.setFromAxisAngle(forward.set(0, 0, -1), wobble * dt);
+  forward.set(0, 0, -1).applyQuaternion(transform.rotation);
+  const wobbleQuat = deltaQuat.setFromAxisAngle(forward, wobble * dt);
   transform.rotation.multiply(wobbleQuat);
   transform.rotation.normalize();
 
@@ -119,7 +120,7 @@ export function updateEvade(
   physics.currentSpeed = Math.min(physics.currentSpeed + physics.acceleration * dt, physics.maxSpeed);
 }
 
-/** Protect state - guard an ally */
+/** Protect state - aggressively engage threats to the protectee */
 export function updateProtect(
   world: World,
   _entity: Entity,
@@ -136,38 +137,36 @@ export function updateProtect(
     return;
   }
 
-  const protecteeTransform = getComponent<Transform>(world, ai.protectTarget, 'transform');
-  if (!protecteeTransform) {
-    ai.state = AIState.Idle;
-    ai.stateTimer = 0;
-    return;
-  }
-
-  // Find nearest threat to protectee
+  // Find nearest threat to protectee and engage it directly
   const threat = findNearestEnemy(world, ai.protectTarget, faction);
   if (threat) {
+    ai.target = threat;
     const threatTransform = getComponent<Transform>(world, threat, 'transform');
     if (threatTransform) {
-      // Position between protectee and threat
-      toTarget.copy(protecteeTransform.position).add(threatTransform.position).multiplyScalar(0.5);
-      // Offset slightly toward threat
-      toTarget.lerp(threatTransform.position, 0.3);
-
-      interceptDir.copy(toTarget).sub(transform.position);
-      if (interceptDir.lengthSq() > 100) { // More than 10m away from intercept point
-        interceptDir.normalize();
-        turnToward(transform, physics, interceptDir, dt);
-        physics.currentSpeed = Math.min(physics.currentSpeed + physics.acceleration * dt, physics.maxSpeed);
-      } else {
-        // At intercept point - engage the threat
-        ai.target = threat;
-        ai.state = AIState.Engage;
-        ai.stateTimer = 0;
+      // Pursue the threat aggressively to force it into evasive state
+      toTarget.copy(threatTransform.position).sub(transform.position);
+      if (toTarget.lengthSq() > 0.001) {
+        toTarget.normalize();
+        turnToward(transform, physics, toTarget, dt);
       }
+      // Full speed pursuit
+      physics.currentSpeed = Math.min(physics.currentSpeed + physics.acceleration * dt, physics.maxSpeed);
     }
   } else {
-    // No threats - orbit protectee
-    physics.currentSpeed = physics.maxSpeed * 0.5;
+    // No threats - stay near protectee at reduced speed
+    const protecteeTransform = getComponent<Transform>(world, ai.protectTarget, 'transform');
+    if (protecteeTransform) {
+      const distToProtectee = transform.position.distanceTo(protecteeTransform.position);
+      if (distToProtectee > 200) {
+        // Too far from protectee - move closer
+        toTarget.copy(protecteeTransform.position).sub(transform.position).normalize();
+        turnToward(transform, physics, toTarget, dt);
+        physics.currentSpeed = Math.min(physics.currentSpeed + physics.acceleration * dt, physics.maxSpeed * 0.7);
+      } else {
+        // Close enough - slow down and orbit
+        physics.currentSpeed = Math.max(physics.currentSpeed - physics.acceleration * dt, physics.maxSpeed * 0.3);
+      }
+    }
   }
 }
 
@@ -197,8 +196,9 @@ export function updateRegroup(
       toTarget.copy(transform.position).sub(targetTransform.position);
       if (toTarget.lengthSq() > 0.001) {
         toTarget.normalize();
-        // Add upward curve for looping effect
-        toTarget.y += 0.3;
+        // Add upward curve for looping effect (ship-relative up)
+        localUp.set(0, 1, 0).applyQuaternion(transform.rotation);
+        toTarget.addScaledVector(localUp, 0.3);
         toTarget.normalize();
         turnToward(transform, physics, toTarget, dt);
       }
