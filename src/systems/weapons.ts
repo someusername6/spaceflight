@@ -15,6 +15,8 @@ import type { Targeting } from '../components/targeting';
 import { AIState, type AIControlled } from '../components/ai';
 import type { AimError } from '../components/aim-error';
 import { spawnProjectile, spawnProjectileWithAimError, spawnMissile } from './weapon-spawning';
+import type { Health } from '../components/health';
+import { isDying } from '../components/health';
 
 /** Game time accumulator */
 let gameTime = 0;
@@ -32,6 +34,10 @@ export function weaponSystem(world: World, dt: number): void {
 
   // Process entities with primary weapons
   for (const entity of queryEntities(world, ['transform', 'primaryWeapons', 'heat'])) {
+    // Skip dying entities (can't fire while exploding)
+    const health = getComponent<Health>(world, entity, 'health');
+    if (health && isDying(health)) continue;
+
     const transform = getComponent<Transform>(world, entity, 'transform')!;
     const weapons = getComponent<PrimaryWeapons>(world, entity, 'primaryWeapons')!;
     const heat = getComponent<Heat>(world, entity, 'heat')!;
@@ -51,6 +57,10 @@ export function weaponSystem(world: World, dt: number): void {
 
   // Process entities with secondary weapons
   for (const entity of queryEntities(world, ['transform', 'secondaryWeapons'])) {
+    // Skip dying entities (can't fire while exploding)
+    const health = getComponent<Health>(world, entity, 'health');
+    if (health && isDying(health)) continue;
+
     const transform = getComponent<Transform>(world, entity, 'transform')!;
     const weapons = getComponent<SecondaryWeapons>(world, entity, 'secondaryWeapons')!;
     const faction = getComponent<FactionComponent>(world, entity, 'faction');

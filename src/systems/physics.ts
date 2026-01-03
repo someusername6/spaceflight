@@ -10,6 +10,8 @@ import type { Physics } from '../components/physics';
 import type { PlayerControlled } from '../components/player';
 import type { AIControlled } from '../components/ai';
 import type { Heat } from '../components/heat';
+import type { Health } from '../components/health';
+import { isDying } from '../components/health';
 
 // Reusable objects to avoid allocations
 const tempEuler = new Euler();
@@ -29,6 +31,10 @@ function moveToward(current: number, target: number, maxDelta: number): number {
 /** Physics system - updates positions and velocities */
 export function physicsSystem(world: World, dt: number): void {
   for (const entity of queryEntities(world, ['transform', 'physics'])) {
+    // Skip dying entities (they freeze in place during death animation)
+    const health = getComponent<Health>(world, entity, 'health');
+    if (health && isDying(health)) continue;
+
     const transform = getComponent<Transform>(world, entity, 'transform')!;
     const physics = getComponent<Physics>(world, entity, 'physics')!;
 

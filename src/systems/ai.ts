@@ -11,6 +11,8 @@ import type { Transform } from '../components/transform';
 import type { Physics } from '../components/physics';
 import { AIState, type AIControlled } from '../components/ai';
 import { Faction, type FactionComponent, areEnemies } from '../components/faction';
+import type { Health } from '../components/health';
+import { isDying } from '../components/health';
 
 // Reusable vectors
 const toTarget = new Vector3();
@@ -49,6 +51,10 @@ function isPlayer(world: World, entity: Entity): boolean {
 /** AI system - updates AI state and movement */
 export function aiSystem(world: World, dt: number): void {
   for (const entity of queryEntities(world, ['aiControlled', 'transform', 'physics', 'faction'])) {
+    // Skip dying entities (they freeze during death animation)
+    const health = getComponent<Health>(world, entity, 'health');
+    if (health && isDying(health)) continue;
+
     const ai = getComponent<AIControlled>(world, entity, 'aiControlled')!;
     const transform = getComponent<Transform>(world, entity, 'transform')!;
     const physics = getComponent<Physics>(world, entity, 'physics')!;
@@ -182,6 +188,10 @@ export function findNearestEnemy(
 
   for (const other of queryEntities(world, ['transform', 'faction', 'health'])) {
     if (other === self) continue;
+
+    // Skip dying enemies (already exploding)
+    const otherHealth = getComponent<Health>(world, other, 'health')!;
+    if (isDying(otherHealth)) continue;
 
     const otherFaction = getComponent<FactionComponent>(world, other, 'faction');
     if (!otherFaction || !areEnemies(selfFaction, otherFaction.faction)) continue;

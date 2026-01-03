@@ -11,7 +11,7 @@ import {
   processRemovals,
   createEntity,
   addComponent,
-  hasComponent,
+  isShip,
 } from '../core/ecs';
 import type { Health } from '../components/health';
 import { isDead } from '../components/health';
@@ -22,7 +22,14 @@ import type { Collision } from './collision';
 import type { FactionComponent } from '../components/faction';
 import { Faction } from '../components/faction';
 
-/** How long ships stay visible after death (for explosion to engulf them) */
+/**
+ * How long ships stay visible after death (for explosion to engulf them).
+ * At 0.15s into a 0.8s explosion with ease-out animation:
+ * - progress = 0.15/0.8 = 0.19
+ * - easedProgress = 1 - (1-0.19)^2 = 0.34
+ * - sphereScale = size * (0.5 + 0.34*3) = 1.5x ship size
+ * This ensures the explosion sphere fully covers the ship before removal.
+ */
 const SHIP_DEATH_DELAY = 0.15;
 
 /** Faction colors for explosions */
@@ -40,12 +47,7 @@ export function cleanupSystem(world: World, dt: number): void {
 
     if (!isDead(health)) continue;
 
-    // Check if this is a ship (has collision but not projectile/missile)
-    const isShip = hasComponent(world, entity, 'collision') &&
-                   !hasComponent(world, entity, 'projectile') &&
-                   !hasComponent(world, entity, 'missile');
-
-    if (isShip) {
+    if (isShip(world, entity)) {
       // Ships have a death delay so explosion can engulf them
       if (health.deathDelay === undefined) {
         // First frame of death: spawn explosion and start delay
