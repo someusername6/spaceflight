@@ -30,6 +30,8 @@ export interface SecondaryWeapon {
   damage: number;
   count: number; // Missiles remaining
   maxCount: number;
+  fireRate: number; // Seconds between shots
+  lockSpeed: number; // Lock acquisition speed (0-1 per second, 0 = no lock needed)
 }
 
 /** Primary weapons component */
@@ -103,6 +105,35 @@ export const WEAPON_DEFS = {
     damage: 80,
     ammo: 20,
     maxAmmo: 20,
+  },
+
+  // Beam weapons (projectileSpeed=0 means instant hit, damage is per second)
+  redLaser: {
+    name: 'Red Laser',
+    category: 'beam' as WeaponCategory,
+    heatPerShot: 15, // Per second
+    projectileSpeed: 0, // Instant
+    fireRate: 0, // Continuous
+    range: 400,
+    damage: 60, // Per second
+  },
+  greenLaser: {
+    name: 'Green Laser',
+    category: 'beam' as WeaponCategory,
+    heatPerShot: 12,
+    projectileSpeed: 0,
+    fireRate: 0,
+    range: 800,
+    damage: 40,
+  },
+  blueLaser: {
+    name: 'Blue Laser',
+    category: 'beam' as WeaponCategory,
+    heatPerShot: 10,
+    projectileSpeed: 0,
+    fireRate: 0,
+    range: 1200,
+    damage: 25,
   },
 } as const;
 

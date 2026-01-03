@@ -12,10 +12,12 @@ import { createFaction } from '../components/faction';
 import { createPlayerControlled } from '../components/player';
 import { createAIControlled } from '../components/ai';
 import { createTargeting } from '../components/targeting';
-import { createPrimaryWeapons } from '../components/weapons';
+import { createPrimaryWeapons, createSecondaryWeapons } from '../components/weapons';
+import { createSecondaryWeaponFromDef } from '../components/missile';
 import { createHeat } from '../components/heat';
 import { createShields } from '../components/shields';
 import { createCollision } from '../systems/collision';
+import { createAimError } from '../components/aim-error';
 import { Vector3, Quaternion } from 'three';
 
 /** Ship archetype stats */
@@ -32,6 +34,7 @@ export interface ShipStats {
   maxHeat: number;
   coolingRate: number;
   primaryWeapons: string[];
+  secondaryWeapons?: { name: string; count: number }[];
 }
 
 /** Predefined ship archetypes (Slice 1: basic only) */
@@ -47,8 +50,12 @@ export const SHIP_ARCHETYPES: Record<string, ShipStats> = {
     rollRate: 150,
     collisionRadius: 5,
     maxHeat: 100,
-    coolingRate: 20, // Heat units per second
-    primaryWeapons: ['plasma'],
+    coolingRate: 20,
+    primaryWeapons: ['plasma', 'greenLaser'],
+    secondaryWeapons: [
+      { name: 'seeker', count: 8 },
+      { name: 'rocket', count: 12 },
+    ],
   },
   scout: {
     hull: 50,
@@ -63,6 +70,7 @@ export const SHIP_ARCHETYPES: Record<string, ShipStats> = {
     maxHeat: 80,
     coolingRate: 25,
     primaryWeapons: ['pulse'],
+    secondaryWeapons: [{ name: 'dart', count: 6 }],
   },
 };
 
@@ -101,6 +109,15 @@ export function createPlayerShip(
   addComponent(world, entity, createTargeting());
   addComponent(world, entity, createHeat(stats.maxHeat, stats.coolingRate));
   addComponent(world, entity, createPrimaryWeapons(stats.primaryWeapons));
+
+  // Add secondary weapons if defined
+  if (stats.secondaryWeapons && stats.secondaryWeapons.length > 0) {
+    const secondaryWeapons = stats.secondaryWeapons.map(
+      (w) => createSecondaryWeaponFromDef(w.name, w.count)
+    );
+    addComponent(world, entity, createSecondaryWeapons(secondaryWeapons));
+  }
+
   addComponent(world, entity, createCollision(stats.collisionRadius));
 
   return entity;
@@ -139,6 +156,7 @@ export function createAIShip(
   addComponent(world, entity, createShields(stats.shields, stats.shieldRegen, stats.shieldDelay));
   addComponent(world, entity, createFaction(faction));
   addComponent(world, entity, createAIControlled());
+  addComponent(world, entity, createAimError()); // AI has imperfect aim
   addComponent(world, entity, createCollision(stats.collisionRadius * 1.5)); // AI has larger hitbox
 
   return entity;

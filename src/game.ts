@@ -12,9 +12,12 @@ import { createPRNG, type PRNGState } from './core/prng';
 import { inputSystem } from './systems/input';
 import { targetingSystem } from './systems/targeting';
 import { aiSystem } from './systems/ai';
+import { aimErrorSystem } from './systems/aim-error';
 import { weaponSystem } from './systems/weapons';
+import { beamSystem } from './systems/beams';
 import { physicsSystem } from './systems/physics';
 import { projectileSystem } from './systems/projectiles';
+import { missileSystem } from './systems/missiles';
 import { collisionSystem } from './systems/collision';
 import { damageSystem } from './systems/damage';
 import { shieldSystem } from './systems/shields';
@@ -34,29 +37,35 @@ const TICK_SEC = 1 / TICK_RATE;
  * 1. input - Read player intent first
  * 2. targeting - Process target selection from input
  * 3. ai - AI decisions based on current state
- * 4. weapons - Handle firing, spawn projectiles
- * 5. physics - Apply movement from input/AI
- * 6. projectiles - Move projectiles (separate from ship physics)
- * 7. collision - Detect collisions after movement
- * 8. damage - Apply damage from collisions/projectiles
- * 9. shields - Regenerate shields after damage delay
- * 10. heat - Cool down weapon heat
- * 11. cleanup - Remove dead entities
- * 12. mission - Check win/lose after cleanup
+ * 4. aimError - Update AI aim drift (before weapons fire)
+ * 5. weapons - Handle firing, spawn projectiles/missiles
+ * 6. beams - Handle continuous beam damage (after weapons, same frame)
+ * 7. physics - Apply movement from input/AI
+ * 8. projectiles - Move projectiles (separate from ship physics)
+ * 9. missiles - Move missiles with tracking (after projectiles)
+ * 10. collision - Detect collisions after movement
+ * 11. damage - Apply damage from collisions/projectiles/missiles
+ * 12. shields - Regenerate shields after damage delay
+ * 13. heat - Cool down weapon heat
+ * 14. cleanup - Remove dead entities
+ * 15. mission - Check win/lose after cleanup
  */
 const SYSTEM_ORDER: SystemFn[] = [
   inputSystem,       // 1. Read player input
   targetingSystem,   // 2. Process target selection
   aiSystem,          // 3. AI decision making
-  weaponSystem,      // 4. Handle firing
-  physicsSystem,     // 5. Apply movement
-  projectileSystem,  // 6. Move projectiles
-  collisionSystem,   // 7. Detect collisions
-  damageSystem,      // 8. Apply damage
-  shieldSystem,      // 9. Regenerate shields
-  heatSystem,        // 10. Cool heat
-  cleanupSystem,     // 11. Remove dead entities
-  missionSystem,     // 12. Check win/lose
+  aimErrorSystem,    // 4. Update aim drift
+  weaponSystem,      // 5. Handle firing
+  beamSystem,        // 6. Handle beam damage
+  physicsSystem,     // 7. Apply movement
+  projectileSystem,  // 8. Move projectiles
+  missileSystem,     // 9. Move missiles with tracking
+  collisionSystem,   // 10. Detect collisions
+  damageSystem,      // 11. Apply damage
+  shieldSystem,      // 12. Regenerate shields
+  heatSystem,        // 13. Cool heat
+  cleanupSystem,     // 14. Remove dead entities
+  missionSystem,     // 15. Check win/lose
 ];
 
 /** Game instance state */

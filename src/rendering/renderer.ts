@@ -9,6 +9,7 @@ import type { Transform } from '../components/transform';
 import { Faction, type FactionComponent } from '../components/faction';
 import { getSunDirectionFromSeed, generateSkyboxTexture } from './skybox';
 import { hasComponent } from '../core/ecs';
+import { getActiveBeams } from '../systems/beams';
 
 /** Renderer state */
 export interface Renderer {
@@ -16,6 +17,7 @@ export interface Renderer {
   camera: THREE.PerspectiveCamera;
   webglRenderer: THREE.WebGLRenderer;
   entityMeshes: Map<Entity, THREE.Object3D>;
+  beamLines: Map<Entity, THREE.Line>;
 }
 
 /** Colors for factions */
@@ -72,6 +74,7 @@ export function createRenderer(container: HTMLElement): Renderer {
     camera,
     webglRenderer,
     entityMeshes: new Map(),
+    beamLines: new Map(),
   };
 }
 
@@ -97,9 +100,20 @@ function createProjectileMesh(faction: Faction): THREE.Mesh {
   return new THREE.Mesh(geometry, material);
 }
 
+/** Creates a missile mesh */
+function createMissileMesh(faction: Faction): THREE.Mesh {
+  // Elongated cone pointing in -Z
+  const geometry = new THREE.ConeGeometry(0.5, 3, 6);
+  geometry.rotateX(Math.PI / 2);
+  const color = FACTION_COLORS[faction] ?? 0xffff00;
+  const material = new THREE.MeshBasicMaterial({ color });
+
+  return new THREE.Mesh(geometry, material);
+}
+
 /** Syncs Three.js scene with ECS world */
 export function syncScene(renderer: Renderer, world: World): void {
-  const { scene, entityMeshes } = renderer;
+  const { scene, entityMeshes, beamLines } = renderer;
   const seenEntities = new Set<Entity>();
 
   // Update or create meshes for entities with transforms
@@ -108,6 +122,7 @@ export function syncScene(renderer: Renderer, world: World): void {
     const transform = getComponent<Transform>(world, entity, 'transform')!;
     const faction = getComponent<FactionComponent>(world, entity, 'faction');
     const isProjectile = hasComponent(world, entity, 'projectile');
+    const isMissile = hasComponent(world, entity, 'missile');
 
     let mesh = entityMeshes.get(entity);
 
@@ -115,6 +130,8 @@ export function syncScene(renderer: Renderer, world: World): void {
       // Create appropriate mesh based on entity type
       if (isProjectile) {
         mesh = createProjectileMesh(faction?.faction ?? Faction.Neutral);
+      } else if (isMissile) {
+        mesh = createMissileMesh(faction?.faction ?? Faction.Neutral);
       } else {
         mesh = createShipMesh(faction?.faction ?? Faction.Neutral);
       }
@@ -132,6 +149,54 @@ export function syncScene(renderer: Renderer, world: World): void {
     if (!seenEntities.has(entity)) {
       scene.remove(mesh);
       entityMeshes.delete(entity);
+    }
+  }
+
+  // Update beam lines
+  updateBeamLines(scene, beamLines);
+}
+
+/** Updates beam line visuals */
+function updateBeamLines(scene: THREE.Scene, beamLines: Map<Entity, THREE.Line>): void {
+  const activeBeams = getActiveBeams();
+  const seenBeams = new Set<Entity>();
+
+  for (const [entity, beam] of activeBeams) {
+    if (!beam.active || !beam.hitPoint) continue;
+    seenBeams.add(entity);
+
+    let line = beamLines.get(entity);
+    if (!line) {
+      // Create new beam line
+      const geometry = new THREE.BufferGeometry();
+      const material = new THREE.LineBasicMaterial({
+        color: beam.color,
+        linewidth: 2,
+        transparent: true,
+        opacity: 0.8,
+      });
+      line = new THREE.Line(geometry, material);
+      scene.add(line);
+      beamLines.set(entity, line);
+    }
+
+    // Update line geometry
+    const positions = new Float32Array([
+      beam.origin.x, beam.origin.y, beam.origin.z,
+      beam.hitPoint.x, beam.hitPoint.y, beam.hitPoint.z,
+    ]);
+    const posAttr = new THREE.BufferAttribute(positions, 3);
+    line.geometry.setAttribute('position', posAttr);
+    line.visible = true;
+
+    // Update color if changed
+    (line.material as THREE.LineBasicMaterial).color.copy(beam.color);
+  }
+
+  // Hide inactive beams
+  for (const [entity, line] of beamLines) {
+    if (!seenBeams.has(entity)) {
+      line.visible = false;
     }
   }
 }

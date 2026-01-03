@@ -7,11 +7,13 @@ Every system must be listed here with a one-line purpose description.
 | inputSystem | input.ts | Reads keyboard state, sets player intent flags | 1 (player) |
 | targetingSystem | targeting.ts | Handles target cycling, lock-on progress for player | 1 (player) |
 | aiSystem | ai.ts | AI state machine, target selection, behavior | 3-20 (AI ships) |
-| physicsSystem | physics.ts | Applies velocity, drag, rotation to transforms | ~30 (all moving) |
-| collisionSystem | collision.ts | Detects ship-to-ship and projectile collisions | ~50 |
+| aimErrorSystem | aim-error.ts | Updates AI aim drift over time | 3-20 (AI ships) |
 | weaponSystem | weapons.ts | Handles firing, heat generation, ammo consumption | ~10 (armed ships) |
+| beamSystem | beams.ts | Handles continuous beam damage and rendering | ~10 (armed ships) |
+| physicsSystem | physics.ts | Applies velocity, drag, rotation to transforms | ~30 (all moving) |
 | projectileSystem | projectiles.ts | Moves projectiles, checks hits, despawns | ~100 |
 | missileSystem | missiles.ts | Missile tracking, turning, lock-on progress | ~20 |
+| collisionSystem | collision.ts | Detects ship-to-ship and projectile collisions | ~50 |
 | damageSystem | damage.ts | Applies damage to hull/shields from hits | ~30 |
 | shieldSystem | shields.ts | Regenerates shields when not taking damage | ~10 |
 | heatSystem | heat.ts | Cools down heat over time | ~10 |
