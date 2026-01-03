@@ -18,11 +18,6 @@ import { spawnProjectile, spawnProjectileWithAimError, spawnMissile } from './we
 import type { Health } from '../components/health';
 import { isDying } from '../components/health';
 
-/** Get current game time (for external use, e.g., HUD cooldown display) */
-export function getGameTime(world: World): number {
-  return world.systemState.gameTime;
-}
-
 /** Weapon system - handles firing and heat */
 export function weaponSystem(world: World, dt: number): void {
   const state = world.systemState.weapons;

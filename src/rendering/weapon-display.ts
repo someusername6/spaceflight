@@ -7,7 +7,6 @@ import { getComponent } from '../core/ecs';
 import type { PrimaryWeapons, SecondaryWeapons, PrimaryWeapon } from '../components/weapons';
 import type { Targeting } from '../components/targeting';
 import type { Heat } from '../components/heat';
-import { getGameTime } from '../systems/weapons';
 import {
   type WeaponBankCache,
   createBankElement,
@@ -145,7 +144,7 @@ export function updateWeaponDisplay(
     const heatPct = heat ? Math.round((heat.current / heat.max) * 100) : 0;
     const heatStr = `${heatPct}%`;
     const isHot = heatPct > 80;
-    const currentTime = getGameTime(world);
+    const currentTime = world.systemState.gameTime;
     const timeSinceFire = currentTime - primary.lastFireTime;
 
     // In linked mode, calculate slowest projectile fire rate (for cooldown display)
@@ -220,7 +219,7 @@ export function updateWeaponDisplay(
 
     const lockProgress = secondary.lockProgress ?? 0;
     const hasTarget = targeting?.currentTarget !== undefined;
-    const currentTime = getGameTime(world);
+    const currentTime = world.systemState.gameTime;
 
     updateSecondaryDisplay(
       display,

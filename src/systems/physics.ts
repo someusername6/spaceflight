@@ -163,11 +163,11 @@ export function physicsSystem(world: World, dt: number): void {
   }
 }
 
-/** Get the forward direction of an entity */
+/** Get the forward direction of an entity (returns reusable vector - clone if storing) */
 export function getForward(transform: Transform): Vector3 {
-  const fwd = new Vector3(0, 0, -1);
-  fwd.applyQuaternion(transform.rotation);
-  return fwd;
+  forward.set(0, 0, -1);
+  forward.applyQuaternion(transform.rotation);
+  return forward;
 }
 
 /** Get distance between two transforms */

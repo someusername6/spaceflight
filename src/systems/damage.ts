@@ -12,7 +12,6 @@ import type { Shields } from '../components/shields';
 import { damageShields } from '../components/shields';
 import type { Collision } from './collision';
 import { type FactionComponent, areEnemies } from '../components/faction';
-import { getGameTime } from './shields';
 
 /** Damage dealt on ship-to-ship collision */
 const COLLISION_DAMAGE = 10;
@@ -47,7 +46,7 @@ function applyDamageWithShields(world: World, entity: Entity, amount: number): n
 
   // Shields absorb first
   if (shields) {
-    remaining = damageShields(shields, remaining, getGameTime(world));
+    remaining = damageShields(shields, remaining, world.systemState.gameTime);
   }
 
   // Remaining damage goes to hull
