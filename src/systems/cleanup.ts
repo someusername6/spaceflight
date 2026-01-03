@@ -22,6 +22,9 @@ import type { Collision } from './collision';
 import type { FactionComponent } from '../components/faction';
 import { Faction } from '../components/faction';
 
+/** How long ships stay visible after death (for explosion to engulf them) */
+const SHIP_DEATH_DELAY = 0.15;
+
 /** Faction colors for explosions */
 const EXPLOSION_COLORS: Record<Faction, THREE.Color> = {
   [Faction.Player]: new THREE.Color(0x00ff66),  // Green
@@ -30,20 +33,33 @@ const EXPLOSION_COLORS: Record<Faction, THREE.Color> = {
 };
 
 /** Cleanup system - marks dead entities for removal and processes queue */
-export function cleanupSystem(world: World, _dt: number): void {
-  // Mark dead entities for removal, spawn explosions for ships
+export function cleanupSystem(world: World, dt: number): void {
+  // Handle dead entities
   for (const entity of queryEntities(world, ['health'])) {
     const health = getComponent<Health>(world, entity, 'health')!;
-    if (isDead(health)) {
-      // Spawn explosion for ships (entities with collision but not projectile/missile)
-      const isShip = hasComponent(world, entity, 'collision') &&
-                     !hasComponent(world, entity, 'projectile') &&
-                     !hasComponent(world, entity, 'missile');
 
-      if (isShip) {
+    if (!isDead(health)) continue;
+
+    // Check if this is a ship (has collision but not projectile/missile)
+    const isShip = hasComponent(world, entity, 'collision') &&
+                   !hasComponent(world, entity, 'projectile') &&
+                   !hasComponent(world, entity, 'missile');
+
+    if (isShip) {
+      // Ships have a death delay so explosion can engulf them
+      if (health.deathDelay === undefined) {
+        // First frame of death: spawn explosion and start delay
         spawnExplosion(world, entity);
+        health.deathDelay = SHIP_DEATH_DELAY;
+      } else {
+        // Decrement delay
+        health.deathDelay -= dt;
+        if (health.deathDelay <= 0) {
+          removeEntity(world, entity);
+        }
       }
-
+    } else {
+      // Non-ships (projectiles, missiles) are removed immediately
       removeEntity(world, entity);
     }
   }

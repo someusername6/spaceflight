@@ -8,6 +8,8 @@ export interface Health extends ComponentBase {
   readonly type: 'health';
   hull: number;
   maxHull: number;
+  /** Time remaining before entity is removed after death (undefined = not dying yet) */
+  deathDelay?: number;
 }
 
 /** Creates a Health component */
