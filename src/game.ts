@@ -17,6 +17,7 @@ import { physicsSystem } from './systems/physics';
 import { projectileSystem } from './systems/projectiles';
 import { collisionSystem } from './systems/collision';
 import { damageSystem } from './systems/damage';
+import { shieldSystem } from './systems/shields';
 import { heatSystem } from './systems/heat';
 import { cleanupSystem } from './systems/cleanup';
 import { missionSystem, getMissionResult, MissionResult } from './systems/mission';
@@ -38,9 +39,10 @@ const TICK_SEC = 1 / TICK_RATE;
  * 6. projectiles - Move projectiles (separate from ship physics)
  * 7. collision - Detect collisions after movement
  * 8. damage - Apply damage from collisions/projectiles
- * 9. heat - Cool down weapon heat
- * 10. cleanup - Remove dead entities
- * 11. mission - Check win/lose after cleanup
+ * 9. shields - Regenerate shields after damage delay
+ * 10. heat - Cool down weapon heat
+ * 11. cleanup - Remove dead entities
+ * 12. mission - Check win/lose after cleanup
  */
 const SYSTEM_ORDER: SystemFn[] = [
   inputSystem,       // 1. Read player input
@@ -51,9 +53,10 @@ const SYSTEM_ORDER: SystemFn[] = [
   projectileSystem,  // 6. Move projectiles
   collisionSystem,   // 7. Detect collisions
   damageSystem,      // 8. Apply damage
-  heatSystem,        // 9. Cool heat
-  cleanupSystem,     // 10. Remove dead entities
-  missionSystem,     // 11. Check win/lose
+  shieldSystem,      // 9. Regenerate shields
+  heatSystem,        // 10. Cool heat
+  cleanupSystem,     // 11. Remove dead entities
+  missionSystem,     // 12. Check win/lose
 ];
 
 /** Game instance state */

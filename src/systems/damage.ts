@@ -1,15 +1,18 @@
 /**
- * Damage System - Applies damage from collisions.
+ * Damage System - Applies damage from collisions and weapons.
  *
- * Slice 1: Collision damage only.
+ * Damage flows: Shields first, then hull.
  */
 
-import type { World } from '../core/types';
+import type { World, Entity } from '../core/types';
 import { queryEntities, getComponent } from '../core/ecs';
 import type { Health } from '../components/health';
 import { applyDamage } from '../components/health';
+import type { Shields } from '../components/shields';
+import { damageShields } from '../components/shields';
 import type { Collision } from './collision';
 import { type FactionComponent, areEnemies } from '../components/faction';
+import { getGameTime } from './shields';
 
 /** Damage dealt on ship-to-ship collision */
 const COLLISION_DAMAGE = 10;
@@ -18,7 +21,6 @@ const COLLISION_DAMAGE = 10;
 export function damageSystem(world: World, _dt: number): void {
   // Process collision damage
   for (const entity of queryEntities(world, ['health', 'collision', 'faction'])) {
-    const health = getComponent<Health>(world, entity, 'health')!;
     const collision = getComponent<Collision>(world, entity, 'collision')!;
     const faction = getComponent<FactionComponent>(world, entity, 'faction')!;
 
@@ -30,15 +32,33 @@ export function damageSystem(world: World, _dt: number): void {
         continue;
       }
 
-      // Apply collision damage
-      applyDamage(health, COLLISION_DAMAGE);
+      // Apply collision damage (through shields first)
+      applyDamageWithShields(world, entity, COLLISION_DAMAGE);
     }
   }
 }
 
-/** Apply direct damage to an entity (for weapons) */
-export function dealDamage(world: World, entity: number, amount: number): number {
+/** Apply damage through shields, then hull */
+function applyDamageWithShields(world: World, entity: Entity, amount: number): number {
+  const shields = getComponent<Shields>(world, entity, 'shields');
   const health = getComponent<Health>(world, entity, 'health');
-  if (!health) return 0;
-  return applyDamage(health, amount);
+
+  let remaining = amount;
+
+  // Shields absorb first
+  if (shields) {
+    remaining = damageShields(shields, remaining, getGameTime());
+  }
+
+  // Remaining damage goes to hull
+  if (remaining > 0 && health) {
+    return applyDamage(health, remaining);
+  }
+
+  return amount - remaining;
+}
+
+/** Apply direct damage to an entity (for weapons) */
+export function dealDamage(world: World, entity: Entity, amount: number): number {
+  return applyDamageWithShields(world, entity, amount);
 }

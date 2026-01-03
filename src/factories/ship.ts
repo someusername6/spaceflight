@@ -14,12 +14,16 @@ import { createAIControlled } from '../components/ai';
 import { createTargeting } from '../components/targeting';
 import { createPrimaryWeapons } from '../components/weapons';
 import { createHeat } from '../components/heat';
+import { createShields } from '../components/shields';
 import { createCollision } from '../systems/collision';
 import { Vector3, Quaternion } from 'three';
 
 /** Ship archetype stats */
 export interface ShipStats {
   hull: number;
+  shields: number;
+  shieldRegen: number;
+  shieldDelay: number;
   maxSpeed: number;
   acceleration: number;
   turnRate: number;
@@ -34,6 +38,9 @@ export interface ShipStats {
 export const SHIP_ARCHETYPES: Record<string, ShipStats> = {
   interceptor: {
     hull: 80,
+    shields: 60,
+    shieldRegen: 10,
+    shieldDelay: 3,
     maxSpeed: 250,
     acceleration: 100,
     turnRate: 100,
@@ -45,6 +52,9 @@ export const SHIP_ARCHETYPES: Record<string, ShipStats> = {
   },
   scout: {
     hull: 50,
+    shields: 30,
+    shieldRegen: 8,
+    shieldDelay: 2,
     maxSpeed: 300,
     acceleration: 150,
     turnRate: 120,
@@ -85,6 +95,7 @@ export function createPlayerShip(
   }));
 
   addComponent(world, entity, createHealth(stats.hull));
+  addComponent(world, entity, createShields(stats.shields, stats.shieldRegen, stats.shieldDelay));
   addComponent(world, entity, createFaction(Faction.Player));
   addComponent(world, entity, createPlayerControlled());
   addComponent(world, entity, createTargeting());
@@ -125,6 +136,7 @@ export function createAIShip(
   }));
 
   addComponent(world, entity, createHealth(stats.hull));
+  addComponent(world, entity, createShields(stats.shields, stats.shieldRegen, stats.shieldDelay));
   addComponent(world, entity, createFaction(faction));
   addComponent(world, entity, createAIControlled());
   addComponent(world, entity, createCollision(stats.collisionRadius * 1.5)); // AI has larger hitbox
