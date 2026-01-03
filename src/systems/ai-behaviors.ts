@@ -8,6 +8,11 @@ import { Quaternion, Vector3 } from 'three';
 import { type AIControlled, AIState } from '../components/ai';
 import type { Faction } from '../components/faction';
 import type { Heat } from '../components/heat';
+import {
+  AFTERBURNER_UNLOCK_THRESHOLD,
+  getHeatPercent,
+  isHeatWarning,
+} from '../components/heat';
 import type { Physics } from '../components/physics';
 import type { Shields } from '../components/shields';
 import type { Transform } from '../components/transform';
@@ -28,7 +33,7 @@ const DEG_TO_RAD = Math.PI / 180;
 const LOW_SHIELDS_PERCENT = 0.2; // 20% - trigger evade
 const VERY_LOW_SHIELDS_PERCENT = 0.1; // 10% - trigger regroup
 const RECOVER_SHIELDS_PERCENT = 0.5; // 50% - exit regroup
-const RECOVER_HEAT_PERCENT = 0.5; // 50% - exit regroup
+// RECOVER_HEAT_PERCENT uses AFTERBURNER_UNLOCK_THRESHOLD from heat.ts (0.5)
 const EVADE_COOLDOWN = 5.0; // 5s before can exit evade
 const REGROUP_MIN_TIME = 3.0; // Minimum time in regroup
 const PROTECT_CHASE_RANGE = 400; // Max distance from protectee to chase threats
@@ -47,7 +52,7 @@ export function shouldRegroup(
 ): boolean {
   const veryLowShields =
     shields && shields.current / shields.max < VERY_LOW_SHIELDS_PERCENT;
-  const overheated = heat && heat.current / heat.max > 0.9;
+  const overheated = heat && isHeatWarning(heat);
   return !!(veryLowShields || overheated);
 }
 
@@ -58,7 +63,7 @@ function hasRecovered(
 ): boolean {
   const shieldsOk =
     !shields || shields.current / shields.max >= RECOVER_SHIELDS_PERCENT;
-  const heatOk = !heat || heat.current / heat.max <= RECOVER_HEAT_PERCENT;
+  const heatOk = !heat || getHeatPercent(heat) <= AFTERBURNER_UNLOCK_THRESHOLD;
   return shieldsOk && heatOk;
 }
 

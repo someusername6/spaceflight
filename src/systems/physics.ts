@@ -7,6 +7,11 @@ import type { AIControlled } from '../components/ai';
 import type { Health } from '../components/health';
 import { isDying } from '../components/health';
 import type { Heat } from '../components/heat';
+import {
+  AFTERBURNER_LOCK_THRESHOLD,
+  AFTERBURNER_UNLOCK_THRESHOLD,
+  getHeatPercent,
+} from '../components/heat';
 import type { Physics } from '../components/physics';
 import type { PlayerControlled } from '../components/player';
 import type { Transform } from '../components/transform';
@@ -121,14 +126,15 @@ export function physicsSystem(world: World, dt: number): void {
 
     // Afterburner heat lockout with hysteresis (prevents oscillation)
     if (heat) {
+      const heatPct = getHeatPercent(heat);
       if (physics.afterburnerLocked) {
         // Must cool to 50% to unlock
-        if (heat.current <= heat.max * 0.5) {
+        if (heatPct <= AFTERBURNER_UNLOCK_THRESHOLD) {
           physics.afterburnerLocked = false;
         }
       } else {
         // Lock at 95% heat
-        if (heat.current >= heat.max * 0.95) {
+        if (heatPct >= AFTERBURNER_LOCK_THRESHOLD) {
           physics.afterburnerLocked = true;
         }
       }

@@ -1,7 +1,7 @@
 # Implementation Progress
 
 Tracks actual implementation status with file references as evidence.
-**Last updated:** 2026-01-03 (Bank size scaling)
+**Last updated:** 2026-01-03 (Heat locking hysteresis + ship heat differentiation)
 
 ---
 
@@ -44,6 +44,8 @@ Tracks actual implementation status with file references as evidence.
 - [x] Missile destructibility → `src/systems/weapon-spawning.ts:290` (1 HP, destroyed by any hit)
 - [x] Nuke AoE destroys projectiles → `src/systems/missiles.ts:366-400`
 - [x] Bank size scaling → `src/components/weapons.ts:21,42,184-188,225-227` (bankSize field, WeaponBankSpec, getEffectiveHeat), `src/systems/weapons.ts:202` (projectile heat scaling), `src/systems/beams.ts:125,170` (beam heat scaling), `src/components/missile.ts:149-159` (missile count scaling)
+- [x] Heat locking with hysteresis → `src/components/heat.ts:12-17` (threshold constants), `src/components/heat.ts:24` (weaponsLocked flag), `src/components/heat.ts:54-63` (weapon lock at 100%, unlock at 95%), `src/systems/physics.ts:127-141` (afterburner lock at 95%, unlock at 50%)
+- [x] Per-ship heat differentiation → `src/factories/ship.ts:52` (afterburnerHeatRate in ShipStats), `src/factories/ship.ts:57-226` (7 ship archetypes with unique heat profiles)
 
 ### 3.3 Shield System
 - [x] Shields component → `src/components/shields.ts:7-29`
@@ -117,11 +119,11 @@ Tracks actual implementation status with file references as evidence.
 | Section | Done | Total | % |
 |---------|------|-------|---|
 | 3.1 Weapon Components | 5 | 5 | 100% |
-| 3.2 Weapon Systems | 10 | 10 | 100% |
+| 3.2 Weapon Systems | 12 | 12 | 100% |
 | 3.3 Shield System | 3 | 3 | 100% |
 | 3.4 AI Implementation | 12 | 12 | 100% |
 | 3.5 Targeting System | 4 | 4 | 100% |
 | 3.6 HUD Implementation | 13 | 13 | 100% |
 | 3.7 Visual Effects | 14 | 14 | 100% |
 | 3.8 Dust Particles | 1 | 1 | 100% |
-| **Phase 3 Total** | **62** | **62** | **100%** |
+| **Phase 3 Total** | **64** | **64** | **100%** |

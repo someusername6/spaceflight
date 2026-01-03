@@ -341,6 +341,21 @@ Each weapon bank has a size (1, 2, or 3) that affects weapon performance:
 
 This creates equipment-fitting decisions: which weapon goes in which bank?
 
+#### 3.2.3 Heat Locking Thresholds
+Heat affects both weapons and afterburner with graduated thresholds:
+
+| Threshold | Value | System | Unlock At |
+|-----------|-------|--------|-----------|
+| Warning | 90% | HUD indicator | <90% |
+| Afterburner Lock | 95% | Afterburner disabled | ≤50% |
+| Weapon Lock | 100% | Weapons disabled | ≤95% |
+
+Both use hysteresis to prevent oscillation:
+- Afterburner: 45% gap (locks at 95%, unlocks at 50%)
+- Weapons: 5% gap (locks at 100%, unlocks at 95%)
+
+Constants centralized in `heat.ts` for consistency.
+
 ### 3.3 Shield System
 - `Shields`: current, max, regenRate, regenDelay, lastDamageTime
 - `ShieldSystem` - Regeneration logic

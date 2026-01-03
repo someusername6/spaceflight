@@ -19,6 +19,7 @@ Ships are small, single-pilot fighters. Each has distinct characteristics making
 | Angular Accel | How fast rotation spins up/down (deg/sec²) | 400-1200 |
 | Max Heat | Heat capacity before overheating | 80-150 |
 | Cooling | Heat dissipated per second | 10-25 |
+| AB Heat Rate | Heat generated per second while afterburning | 25-60 |
 | Primary Banks | Number of primary weapon slots | 1-5 |
 | Secondary Banks | Number of secondary weapon slots | 1-6 |
 
@@ -68,11 +69,13 @@ Fast, fragile gun platform.
 | Angular Accel | 1100 |
 | Max Heat | 80 |
 | Cooling | 15 |
+| AB Heat Rate | 25 |
 | Primary Banks | 2 (size 1, 1) |
 | Secondary Banks | 1 (size 1) |
 
 **Role:** Gun-focused hit and run. Minimal missiles, relies on speed and guns.
 **Focus:** GUNS
+**Heat Profile:** Low capacity but cheap afterburner - can boost frequently for hit-and-run tactics.
 
 ### Interceptor
 
@@ -91,11 +94,13 @@ Balanced fighter, jack of all trades.
 | Angular Accel | 800 |
 | Max Heat | 100 |
 | Cooling | 18 |
+| AB Heat Rate | 40 |
 | Primary Banks | 3 (size 1, 1, 2) |
 | Secondary Banks | 2 (size 1, 2) |
 
 **Role:** Default starting ship. Good at everything, great at nothing.
 **Focus:** BALANCED
+**Heat Profile:** Balanced capacity and afterburner cost - the baseline for comparison.
 
 ### Striker
 
@@ -114,11 +119,13 @@ Heavy gun platform, maximum primary firepower.
 | Angular Accel | 600 |
 | Max Heat | 150 |
 | Cooling | 25 |
+| AB Heat Rate | 60 |
 | Primary Banks | 5 (size 2, 2, 2, 1, 1) |
 | Secondary Banks | 1 (size 1) |
 
 **Role:** Gun-focused assault ship. Overwhelming primary firepower, single missile slot for emergencies.
 **Focus:** GUNS
+**Heat Profile:** Huge capacity for 5 gun banks, but expensive afterburner - save heat for guns.
 
 ### Bomber
 
@@ -137,11 +144,13 @@ Dedicated missile boat.
 | Angular Accel | 500 |
 | Max Heat | 80 |
 | Cooling | 12 |
+| AB Heat Rate | 55 |
 | Primary Banks | 1 (size 2) |
 | Secondary Banks | 6 (size 2, 2, 2, 1, 1, 1) |
 
 **Role:** Missile-focused. Delivers massive ordnance, weak gun for cleanup only.
 **Focus:** MISSILES
+**Heat Profile:** Low capacity, slow cooling, expensive afterburner - deliberate and methodical.
 
 ### Defender
 
@@ -160,11 +169,13 @@ Tanky missile platform.
 | Angular Accel | 550 |
 | Max Heat | 100 |
 | Cooling | 18 |
+| AB Heat Rate | 50 |
 | Primary Banks | 2 (size 2, 1) |
 | Secondary Banks | 4 (size 2, 2, 1, 1) |
 
 **Role:** Missile-focused tank. Absorbs damage while launching missiles. Light guns.
 **Focus:** MISSILES
+**Heat Profile:** Balanced capacity, standard afterburner cost - survives through shields, not speed.
 
 ### Raider
 
@@ -183,11 +194,13 @@ Glass cannon gun platform.
 | Angular Accel | 1000 |
 | Max Heat | 140 |
 | Cooling | 22 |
+| AB Heat Rate | 35 |
 | Primary Banks | 4 (size 2, 2, 1, 1) |
 | Secondary Banks | 2 (size 1, 1) |
 
 **Role:** Gun-focused glass cannon. Fast, deadly, fragile. Limited missiles.
 **Focus:** GUNS
+**Heat Profile:** High capacity for 4 gun banks, cheap afterburner - commits hard to speed and aggression.
 
 ### Sentinel
 
@@ -206,11 +219,13 @@ Long-range support with beam focus.
 | Angular Accel | 700 |
 | Max Heat | 130 |
 | Cooling | 22 |
+| AB Heat Rate | 45 |
 | Primary Banks | 3 (size 3, 2, 1) |
 | Secondary Banks | 4 (size 2, 2, 1, 1) |
 
 **Role:** Balanced support. Large primary banks favor beam weapons. Good missile capacity.
 **Focus:** BALANCED (beam-optimized)
+**Heat Profile:** High capacity for sustained beams, moderate afterburner cost - maintains range, doesn't rush.
 
 ## Starting Squadron
 

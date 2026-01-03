@@ -203,6 +203,37 @@ All weapons have friendly fire enabled:
 - Nuke end-of-range explosion only *triggers* when enemies are in AoE
 - But once triggered, the resulting damage affects all ships
 
+## Heat Management
+
+Heat is a shared resource between weapons and afterburner. Both systems draw from and are limited by the same heat pool.
+
+### Heat Thresholds
+
+| Threshold | Value | Effect |
+|-----------|-------|--------|
+| Warning | 90% | HUD warning indicator, AI considers regrouping |
+| Afterburner Lock | 95% | Afterburner disabled until heat ≤ 50% |
+| Weapon Lock | 100% | Weapons disabled until heat ≤ 95% |
+
+### Hysteresis
+
+Both afterburner and weapons use hysteresis to prevent rapid on/off oscillation:
+
+- **Afterburner:** Locks at 95%, unlocks at 50% (45% gap)
+- **Weapons:** Lock at 100%, unlock at 95% (5% gap)
+
+The large afterburner gap ensures meaningful disengagement when overheated. The small weapon gap prevents micro-firing exploits while allowing quick recovery.
+
+### Cascade Effect
+
+At high heat, systems degrade in sequence:
+1. **90%+** - Warning state (AI disengages, player should be cautious)
+2. **95%+** - Afterburner locks (reduced mobility, can still fight)
+3. **100%** - Weapons lock (must cool to 95% to fire again)
+4. **≤50%** - Afterburner unlocks (full mobility restored)
+
+This creates tactical decisions: pushing heat for damage output vs. maintaining mobility.
+
 ## Balance Philosophy
 
 - Energy weapons: Infinite but heat-limited
