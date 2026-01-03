@@ -5,29 +5,25 @@
  */
 
 import type { World } from '../core/types';
+import { MissionResult } from '../core/types';
 import { queryEntities, getComponent, countEntities } from '../core/ecs';
 import { Faction, type FactionComponent } from '../components/faction';
 
-/** Mission result */
-export const enum MissionResult {
-  InProgress = 'inProgress',
-  Victory = 'victory',
-  Defeat = 'defeat',
-}
-
-/** Current mission state (mutable singleton for simplicity) */
-let currentResult: MissionResult = MissionResult.InProgress;
+// Re-export MissionResult for consumers
+export { MissionResult };
 
 /** Mission system - checks win/lose conditions */
 export function missionSystem(world: World, _dt: number): void {
-  if (currentResult !== MissionResult.InProgress) {
+  const mission = world.systemState.mission;
+
+  if (mission.result !== MissionResult.InProgress) {
     return; // Already ended
   }
 
   // Check for player death (defeat)
   const playerCount = countEntities(world, ['playerControlled', 'health']);
   if (playerCount === 0) {
-    currentResult = MissionResult.Defeat;
+    mission.result = MissionResult.Defeat;
     return;
   }
 
@@ -41,21 +37,16 @@ export function missionSystem(world: World, _dt: number): void {
   }
 
   if (enemyCount === 0) {
-    currentResult = MissionResult.Victory;
+    mission.result = MissionResult.Victory;
   }
 }
 
 /** Get current mission result */
-export function getMissionResult(): MissionResult {
-  return currentResult;
-}
-
-/** Reset mission state (call when starting new mission) */
-export function resetMission(): void {
-  currentResult = MissionResult.InProgress;
+export function getMissionResult(world: World): MissionResult {
+  return world.systemState.mission.result;
 }
 
 /** Check if mission is still in progress */
-export function isMissionInProgress(): boolean {
-  return currentResult === MissionResult.InProgress;
+export function isMissionInProgress(world: World): boolean {
+  return world.systemState.mission.result === MissionResult.InProgress;
 }

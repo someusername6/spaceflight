@@ -7,6 +7,7 @@
 
 import * as THREE from 'three';
 import type { ComponentBase } from '../core/types';
+import { random, randomRange, type PRNGState } from '../core/prng';
 
 export interface AimError extends ComponentBase {
   readonly type: 'aimError';
@@ -24,6 +25,7 @@ export interface AimError extends ComponentBase {
 
 /** Creates an AimError component with default values */
 export function createAimError(
+  prng: PRNGState,
   maxError = 0.05, // ~3 degrees
   driftSpeed = 0.02 // ~1 degree per second
 ): AimError {
@@ -32,29 +34,29 @@ export function createAimError(
     offset: new THREE.Vector2(0, 0),
     maxError,
     driftSpeed,
-    driftDirection: randomDirection(),
-    driftTimer: randomDriftTime(),
+    driftDirection: randomDirection(prng),
+    driftTimer: randomDriftTime(prng),
   };
 }
 
 /** Get a random normalized direction for drift */
-function randomDirection(): THREE.Vector2 {
-  const angle = Math.random() * Math.PI * 2;
+function randomDirection(prng: PRNGState): THREE.Vector2 {
+  const angle = random(prng) * Math.PI * 2;
   return new THREE.Vector2(Math.cos(angle), Math.sin(angle));
 }
 
 /** Get random time until next drift direction change */
-function randomDriftTime(): number {
-  return 0.5 + Math.random() * 1.5; // 0.5-2 seconds
+function randomDriftTime(prng: PRNGState): number {
+  return randomRange(prng, 0.5, 2.0); // 0.5-2 seconds
 }
 
 /** Update aim error drift */
-export function updateAimError(error: AimError, dt: number): void {
+export function updateAimError(error: AimError, prng: PRNGState, dt: number): void {
   // Update drift timer
   error.driftTimer -= dt;
   if (error.driftTimer <= 0) {
-    error.driftDirection = randomDirection();
-    error.driftTimer = randomDriftTime();
+    error.driftDirection = randomDirection(prng);
+    error.driftTimer = randomDriftTime(prng);
   }
 
   // Apply drift

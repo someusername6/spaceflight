@@ -153,12 +153,12 @@ export function syncScene(renderer: Renderer, world: World): void {
   }
 
   // Update beam lines
-  updateBeamLines(scene, beamLines);
+  updateBeamLines(world, scene, beamLines);
 }
 
 /** Updates beam line visuals */
-function updateBeamLines(scene: THREE.Scene, beamLines: Map<string, THREE.Line>): void {
-  const activeBeams = getActiveBeams();
+function updateBeamLines(world: World, scene: THREE.Scene, beamLines: Map<string, THREE.Line>): void {
+  const activeBeams = getActiveBeams(world);
   const seenBeams = new Set<string>();
 
   for (const [entity, beams] of activeBeams) {

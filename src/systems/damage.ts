@@ -47,7 +47,7 @@ function applyDamageWithShields(world: World, entity: Entity, amount: number): n
 
   // Shields absorb first
   if (shields) {
-    remaining = damageShields(shields, remaining, getGameTime());
+    remaining = damageShields(shields, remaining, getGameTime(world));
   }
 
   // Remaining damage goes to hull

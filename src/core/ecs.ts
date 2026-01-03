@@ -9,14 +9,34 @@
  */
 
 import type { Entity, ComponentBase, ComponentType, ComponentMap, World } from './types';
+import { MissionResult } from './types';
+import { createPRNG } from './prng';
 
-/** Creates a new empty world */
-export function createWorld(): World {
+/** Creates a new empty world with given seed for PRNG */
+export function createWorld(seed: number = 0): World {
   return {
     entities: new Set(),
     components: new Map(),
     nextEntityId: 1,
     toRemove: new Set(),
+    systemState: {
+      gameTime: 0,
+      weapons: {
+        prevInput: {
+          cycleWeaponNext: false,
+          cycleWeaponPrev: false,
+          fireSecondary: false,
+          toggleLink: false,
+        },
+      },
+      beams: {
+        activeBeams: new Map(),
+      },
+      mission: {
+        result: MissionResult.InProgress,
+      },
+    },
+    prng: createPRNG(seed),
   };
 }
 

@@ -5,7 +5,6 @@
 import { Vector3 } from 'three';
 import { createGame, startGame } from './game';
 import { initInput } from './systems/input';
-import { resetMission } from './systems/mission';
 import { createRenderer, syncScene, render, followEntity, getScene } from './rendering/renderer';
 import { createDustSystem, updateDustSystem } from './rendering/dust';
 import { createExplosionRenderer, updateExplosionRenderer } from './rendering/explosions';
@@ -93,9 +92,6 @@ function main(): void {
 /** Setup the Slice 1 test scene */
 function setupSlice1Scene(game: ReturnType<typeof createGame>): void {
   const { world } = game;
-
-  // Reset mission state
-  resetMission();
 
   // Create player ship at origin
   createPlayerShip(world, 'interceptor', new Vector3(0, 0, 0));

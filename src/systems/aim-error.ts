@@ -11,6 +11,6 @@ import { updateAimError } from '../components/aim-error';
 export function aimErrorSystem(world: World, dt: number): void {
   for (const entity of queryEntities(world, ['aimError'])) {
     const aimError = getComponent<AimError>(world, entity, 'aimError')!;
-    updateAimError(aimError, dt);
+    updateAimError(aimError, world.prng, dt);
   }
 }

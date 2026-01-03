@@ -22,12 +22,46 @@ export type ComponentType = string;
 /** Map of component type to component data for an entity */
 export type ComponentMap = Map<ComponentType, ComponentBase>;
 
+/** Mission result values */
+export const enum MissionResult {
+  InProgress = 'inProgress',
+  Victory = 'victory',
+  Defeat = 'defeat',
+}
+
+/** System-specific state stored in World (not module-level) */
+export interface SystemState {
+  /** Shared game time (used by weapons, shields, damage) */
+  gameTime: number;
+  /** Weapon system state */
+  weapons: {
+    prevInput: {
+      cycleWeaponNext: boolean;
+      cycleWeaponPrev: boolean;
+      fireSecondary: boolean;
+      toggleLink: boolean;
+    };
+  };
+  /** Beam system state - stores active beams for renderer */
+  beams: {
+    activeBeams: Map<Entity, import('../systems/beams').ActiveBeam[]>;
+  };
+  /** Mission system state */
+  mission: {
+    result: MissionResult;
+  };
+}
+
 /** Forward declaration - full definition in ecs.ts */
 export interface World {
   entities: Set<Entity>;
   components: Map<Entity, ComponentMap>;
   nextEntityId: Entity;
   toRemove: Set<Entity>;
+  /** System-specific state (replaces module-level variables) */
+  systemState: SystemState;
+  /** Seeded PRNG for deterministic randomness */
+  prng: import('../core/prng').PRNGState;
 }
 
 /** Team/faction identifiers */

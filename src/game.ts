@@ -6,7 +6,6 @@
 
 import type { World, SystemFn } from './core/types';
 import { createWorld } from './core/ecs';
-import { createPRNG, type PRNGState } from './core/prng';
 
 // Systems (in execution order)
 import { inputSystem } from './systems/input';
@@ -74,7 +73,6 @@ const SYSTEM_ORDER: SystemFn[] = [
 /** Game instance state */
 export interface Game {
   world: World;
-  prng: PRNGState;
   accumulator: number;
   lastTime: number;
   running: boolean;
@@ -86,8 +84,7 @@ export interface Game {
 /** Creates a new game instance */
 export function createGame(seed = 12345): Game {
   return {
-    world: createWorld(),
-    prng: createPRNG(seed),
+    world: createWorld(seed),
     accumulator: 0,
     lastTime: 0,
     running: false,
@@ -98,13 +95,16 @@ export function createGame(seed = 12345): Game {
 export function tick(game: Game): void {
   const { world } = game;
 
+  // Update game time (used by weapons, shields, etc.)
+  world.systemState.gameTime += TICK_SEC;
+
   // Run all systems in order
   for (const system of SYSTEM_ORDER) {
     system(world, TICK_SEC);
   }
 
   // Check for mission end
-  const result = getMissionResult();
+  const result = getMissionResult(world);
   if (result !== MissionResult.InProgress && game.onMissionEnd) {
     game.onMissionEnd(result);
   }
@@ -166,11 +166,6 @@ export function stopGame(game: Game): void {
 /** Get the world from game (convenience) */
 export function getWorld(game: Game): World {
   return game.world;
-}
-
-/** Get the PRNG from game (convenience) */
-export function getPRNG(game: Game): PRNGState {
-  return game.prng;
 }
 
 export { MissionResult };

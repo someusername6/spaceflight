@@ -29,9 +29,6 @@ export interface ActiveBeam {
   weaponIndex: number; // Which weapon slot this beam is from
 }
 
-// Active beams per entity (multiple beams possible in linked mode)
-const activeBeams = new Map<Entity, ActiveBeam[]>();
-
 // Reusable objects
 const rayOrigin = new THREE.Vector3();
 const rayDirection = new THREE.Vector3();
@@ -42,6 +39,8 @@ const MIN_FALLOFF_DISTANCE = 100;
 
 /** Beam system - handles continuous beam damage */
 export function beamSystem(world: World, dt: number): void {
+  const activeBeams = world.systemState.beams.activeBeams;
+
   // Clear all beam states first
   for (const beams of activeBeams.values()) {
     for (const beam of beams) {
@@ -73,7 +72,7 @@ export function beamSystem(world: World, dt: number): void {
     // Determine which beams to fire based on linked mode
     if (weapons.linked) {
       // Linked mode: fire all beams simultaneously
-      fireLinkedBeams(world, entity, transform, weapons, heat, faction, dt);
+      fireLinkedBeams(world, entity, transform, weapons, heat, faction, dt, activeBeams);
     } else {
       // Single mode: only fire if current weapon is a beam
       const weapon = getCurrentPrimary(weapons);
@@ -84,7 +83,7 @@ export function beamSystem(world: World, dt: number): void {
       if (!addHeat(heat, heatToAdd)) continue; // Overheated
 
       // Fire single beam
-      fireBeam(world, entity, transform, weapon, weapons.currentIndex, faction, dt);
+      fireBeam(world, entity, transform, weapon, weapons.currentIndex, faction, dt, activeBeams);
     }
   }
 }
@@ -97,7 +96,8 @@ function fireLinkedBeams(
   weapons: PrimaryWeapons,
   heat: Heat,
   faction: FactionComponent | undefined,
-  dt: number
+  dt: number,
+  activeBeams: Map<Entity, ActiveBeam[]>
 ): void {
   // Find all beam weapons
   const beamWeapons: { weapon: PrimaryWeapon; index: number }[] = [];
@@ -119,7 +119,7 @@ function fireLinkedBeams(
 
   // Fire all beams
   for (const { weapon, index } of beamWeapons) {
-    fireBeam(world, owner, transform, weapon, index, faction, dt);
+    fireBeam(world, owner, transform, weapon, index, faction, dt, activeBeams);
   }
 }
 
@@ -131,7 +131,8 @@ function fireBeam(
   weapon: PrimaryWeapon,
   weaponIndex: number,
   faction: FactionComponent | undefined,
-  dt: number
+  dt: number,
+  activeBeams: Map<Entity, ActiveBeam[]>
 ): void {
   const forward = getForward(transform);
   rayOrigin.copy(transform.position);
@@ -265,11 +266,6 @@ function getBeamColor(name: string): THREE.Color {
 }
 
 /** Get all active beams for rendering */
-export function getActiveBeams(): Map<Entity, ActiveBeam[]> {
-  return activeBeams;
-}
-
-/** Reset beam system state */
-export function resetBeamSystem(): void {
-  activeBeams.clear();
+export function getActiveBeams(world: World): Map<Entity, ActiveBeam[]> {
+  return world.systemState.beams.activeBeams;
 }

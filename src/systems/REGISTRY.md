@@ -17,12 +17,19 @@ Every system must be listed here with a one-line purpose description.
 | damageSystem | damage.ts | Applies damage to hull/shields from hits | ~30 |
 | shieldSystem | shields.ts | Regenerates shields when not taking damage | ~10 |
 | heatSystem | heat.ts | Cools down heat over time | ~10 |
-| cleanupSystem | cleanup.ts | Removes entities marked for deletion | all |
+| cleanupSystem | cleanup.ts | Removes entities marked for deletion, spawns explosions | all |
+| explosionSystem | explosions.ts | Updates explosion effect lifetimes | ~5 |
 | missionSystem | mission.ts | Checks win/lose conditions | all |
+
+## Helper Modules (Not Systems)
+
+| Module | Purpose |
+|--------|---------|
+| weapon-spawning.ts | Projectile/missile creation helpers for weaponSystem |
 
 ## Adding a New System
 
-1. Add entry to this table
+1. Add entry to the system table above
 2. Create file in `src/systems/`
 3. Export system function: `(world: World, dt: number) => void`
 4. Add to `SYSTEM_ORDER` in `src/game.ts`
