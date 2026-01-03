@@ -5,6 +5,7 @@ Every system must be listed here with a one-line purpose description.
 | System | File | Purpose | Typical Entities |
 |--------|------|---------|------------------|
 | inputSystem | input.ts | Reads keyboard state, sets player intent flags | 1 (player) |
+| targetingSystem | targeting.ts | Handles target cycling, lock-on progress for player | 1 (player) |
 | aiSystem | ai.ts | AI state machine, target selection, behavior | 3-20 (AI ships) |
 | physicsSystem | physics.ts | Applies velocity, drag, rotation to transforms | ~30 (all moving) |
 | collisionSystem | collision.ts | Detects ship-to-ship and projectile collisions | ~50 |

@@ -33,6 +33,11 @@ export function removeEntity(world: World, entity: Entity): void {
   world.toRemove.add(entity);
 }
 
+/** Checks if an entity exists in the world */
+export function entityExists(world: World, entity: Entity): boolean {
+  return world.entities.has(entity) && !world.toRemove.has(entity);
+}
+
 /** Actually removes all entities marked for removal */
 export function processRemovals(world: World): void {
   for (const entity of world.toRemove) {

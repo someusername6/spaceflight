@@ -11,6 +11,7 @@ import { createHealth } from '../components/health';
 import { createFaction } from '../components/faction';
 import { createPlayerControlled } from '../components/player';
 import { createAIControlled } from '../components/ai';
+import { createTargeting } from '../components/targeting';
 import { createCollision } from '../systems/collision';
 import { Vector3, Quaternion } from 'three';
 
@@ -75,6 +76,7 @@ export function createPlayerShip(
   addComponent(world, entity, createHealth(stats.hull));
   addComponent(world, entity, createFaction(Faction.Player));
   addComponent(world, entity, createPlayerControlled());
+  addComponent(world, entity, createTargeting());
   addComponent(world, entity, createCollision(stats.collisionRadius));
 
   return entity;

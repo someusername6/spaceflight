@@ -8,7 +8,7 @@ import { initInput } from './systems/input';
 import { resetMission } from './systems/mission';
 import { createRenderer, syncScene, render, followEntity, getScene } from './rendering/renderer';
 import { createDustSystem, updateDustSystem } from './rendering/dust';
-import { createPlayerShip } from './factories/ship';
+import { createPlayerShip, createEnemyShip } from './factories/ship';
 import { findEntity, getComponent } from './core/ecs';
 import type { Transform } from './components/transform';
 
@@ -70,8 +70,9 @@ function main(): void {
   // Start game loop
   startGame(game);
 
-  console.log('Spaceflight Slice 1 - Basic Flight');
-  console.log('Controls: WASD = Pitch/Yaw, QE = Roll, Shift = Accelerate, Ctrl = Decelerate');
+  console.log('Spaceflight Slice 2 - Combat Basics');
+  console.log('Flight: WASD = Pitch/Yaw, QE = Roll, Shift = Accelerate, Ctrl = Decelerate');
+  console.log('Targeting: T = Nearest enemy, < > = Cycle targets');
   console.log('Objective: Destroy all enemy ships (ram them!)');
 }
 
@@ -85,10 +86,10 @@ function setupSlice1Scene(game: ReturnType<typeof createGame>): void {
   // Create player ship at origin
   createPlayerShip(world, 'interceptor', new Vector3(0, 0, 0));
 
-  // Enemies disabled for flight testing
-  // createEnemyShip(world, 'scout', new Vector3(100, 20, -200));
-  // createEnemyShip(world, 'scout', new Vector3(-80, -10, -150));
-  // createEnemyShip(world, 'interceptor', new Vector3(50, 30, -300));
+  // Create some enemies for testing targeting
+  createEnemyShip(world, 'scout', new Vector3(100, 20, -200));
+  createEnemyShip(world, 'scout', new Vector3(-80, -10, -150));
+  createEnemyShip(world, 'interceptor', new Vector3(50, 30, -300));
 }
 
 // Start when DOM is ready

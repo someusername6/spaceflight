@@ -10,6 +10,7 @@ import { createPRNG, type PRNGState } from './core/prng';
 
 // Systems (in execution order)
 import { inputSystem } from './systems/input';
+import { targetingSystem } from './systems/targeting';
 import { aiSystem } from './systems/ai';
 import { physicsSystem } from './systems/physics';
 import { collisionSystem } from './systems/collision';
@@ -27,21 +28,23 @@ const TICK_SEC = 1 / TICK_RATE;
  *
  * Order rationale:
  * 1. input - Read player intent first
- * 2. ai - AI decisions based on current state
- * 3. physics - Apply movement from input/AI
- * 4. collision - Detect collisions after movement
- * 5. damage - Apply damage from collisions
- * 6. cleanup - Remove dead entities
- * 7. mission - Check win/lose after cleanup
+ * 2. targeting - Process target selection from input
+ * 3. ai - AI decisions based on current state
+ * 4. physics - Apply movement from input/AI
+ * 5. collision - Detect collisions after movement
+ * 6. damage - Apply damage from collisions
+ * 7. cleanup - Remove dead entities
+ * 8. mission - Check win/lose after cleanup
  */
 const SYSTEM_ORDER: SystemFn[] = [
   inputSystem,      // 1. Read player input
-  aiSystem,         // 2. AI decision making
-  physicsSystem,    // 3. Apply movement
-  collisionSystem,  // 4. Detect collisions
-  damageSystem,     // 5. Apply damage
-  cleanupSystem,    // 6. Remove dead entities
-  missionSystem,    // 7. Check win/lose
+  targetingSystem,  // 2. Process target selection
+  aiSystem,         // 3. AI decision making
+  physicsSystem,    // 4. Apply movement
+  collisionSystem,  // 5. Detect collisions
+  damageSystem,     // 6. Apply damage
+  cleanupSystem,    // 7. Remove dead entities
+  missionSystem,    // 8. Check win/lose
 ];
 
 /** Game instance state */

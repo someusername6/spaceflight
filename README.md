@@ -24,16 +24,24 @@ npm run dev
 - `npm run build` - Build for production
 - `npm run check-size` - Verify no file exceeds 300 lines
 
-## Controls (Slice 1)
+## Controls
 
+**Flight:**
 - W/S - Pitch up/down
 - A/D - Turn left/right
 - Q/E - Roll
 - Shift - Accelerate
 - Ctrl - Decelerate
-- Space - Fire primary weapon
+
+**Targeting:**
 - T - Target nearest enemy
-- <, > - Cycle targets
+- < (comma) - Previous target
+- > (period) - Next target
+
+**Combat:**
+- Space - Fire primary weapon
+- F - Fire secondary weapon
+- X - Fire decoy
 
 ## Architecture
 
