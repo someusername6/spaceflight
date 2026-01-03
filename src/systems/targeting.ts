@@ -11,6 +11,8 @@ import type { Transform } from '../components/transform';
 import type { PlayerControlled } from '../components/player';
 import type { Targeting } from '../components/targeting';
 import { type FactionComponent, areEnemies, Faction } from '../components/faction';
+import type { Health } from '../components/health';
+import { isDying } from '../components/health';
 
 /** Track previous input state for edge detection (only trigger on key press, not hold) */
 const prevInput = {
@@ -72,6 +74,10 @@ function updateValidTargets(
 
   for (const other of queryEntities(world, ['transform', 'faction', 'health'])) {
     if (other === self) continue;
+
+    // Skip dying enemies (already exploding)
+    const otherHealth = getComponent<Health>(world, other, 'health')!;
+    if (isDying(otherHealth)) continue;
 
     const otherFaction = getComponent<FactionComponent>(world, other, 'faction');
     if (!otherFaction || !areEnemies(selfFaction, otherFaction.faction)) continue;

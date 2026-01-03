@@ -16,6 +16,8 @@ import { areEnemies } from '../components/faction';
 import type { Collision } from './collision';
 import { dealDamage } from './damage';
 import { getForward } from './physics';
+import type { Health } from '../components/health';
+import { isDying } from '../components/health';
 
 /** Active beam state for rendering */
 export interface ActiveBeam {
@@ -45,6 +47,10 @@ export function beamSystem(world: World, dt: number): void {
 
   // Process each entity with primary weapons
   for (const entity of queryEntities(world, ['transform', 'primaryWeapons', 'heat'])) {
+    // Skip dying entities (can't fire while exploding)
+    const health = getComponent<Health>(world, entity, 'health');
+    if (health && isDying(health)) continue;
+
     const transform = getComponent<Transform>(world, entity, 'transform')!;
     const weapons = getComponent<PrimaryWeapons>(world, entity, 'primaryWeapons')!;
     const heat = getComponent<Heat>(world, entity, 'heat')!;
@@ -68,7 +74,7 @@ export function beamSystem(world: World, dt: number): void {
     if (!addHeat(heat, heatToAdd)) continue; // Overheated
 
     // Fire beam
-    fireBeam(world, entity, transform, weapon, faction);
+    fireBeam(world, entity, transform, weapon, faction, dt);
   }
 }
 
@@ -78,7 +84,8 @@ function fireBeam(
   owner: Entity,
   transform: Transform,
   weapon: PrimaryWeapon,
-  faction: FactionComponent | undefined
+  faction: FactionComponent | undefined,
+  dt: number
 ): void {
   const forward = getForward(transform);
   rayOrigin.copy(transform.position);
@@ -110,6 +117,10 @@ function fireBeam(
     if (hasComponent(world, other, 'projectile')) continue;
     if (hasComponent(world, other, 'missile')) continue;
 
+    // Skip dying targets (already exploding)
+    const otherHealth = getComponent<Health>(world, other, 'health')!;
+    if (isDying(otherHealth)) continue;
+
     const otherFaction = getComponent<FactionComponent>(world, other, 'faction');
     if (faction && otherFaction && !areEnemies(faction.faction, otherFaction.faction)) continue;
 
@@ -138,9 +149,8 @@ function fireBeam(
       .multiplyScalar(closestHit.distance)
       .add(rayOrigin);
 
-    // Apply damage with falloff
+    // Apply damage with falloff (damage is per-second, multiply by dt)
     const falloffDamage = calculateFalloffDamage(weapon.damage, closestHit.distance);
-    const dt = 1 / 60; // Fixed timestep
     dealDamage(world, closestHit.entity, falloffDamage * dt);
   } else {
     // No hit - beam extends to max range
