@@ -55,14 +55,18 @@ export function weaponSystem(world: World, dt: number): void {
     const transform = getComponent<Transform>(world, entity, 'transform')!;
     const weapons = getComponent<SecondaryWeapons>(world, entity, 'secondaryWeapons')!;
     const faction = getComponent<FactionComponent>(world, entity, 'faction');
-    const targeting = getComponent<Targeting>(world, entity, 'targeting');
     const player = getComponent<PlayerControlled>(world, entity, 'playerControlled');
 
-    // Update lock progress
-    updateLockProgress(world, weapons, targeting, dt);
-
     if (player) {
+      const targeting = getComponent<Targeting>(world, entity, 'targeting');
+      updateLockProgress(world, weapons, targeting?.currentTarget, dt);
       handlePlayerSecondaryWeapons(world, entity, transform, weapons, faction, player, state, gameTime);
+    } else {
+      const ai = getComponent<AIControlled>(world, entity, 'aiControlled');
+      if (ai) {
+        updateLockProgress(world, weapons, ai.target, dt);
+        handleAISecondaryWeapons(world, entity, transform, weapons, faction, ai, gameTime);
+      }
     }
   }
 
@@ -98,6 +102,23 @@ function handleAIPrimaryWeapons(
 
   // AI always fires all weapons together (linked)
   fireLinkedPrimaries(world, entity, transform, weapons, heat, faction, gameTime, aimError);
+}
+
+/** Handle AI secondary weapon firing - fires first available weapon when locked */
+function handleAISecondaryWeapons(
+  world: World, entity: Entity, transform: Transform, weapons: SecondaryWeapons,
+  faction: FactionComponent | undefined, ai: AIControlled, gameTime: number
+): void {
+  if (ai.state !== AIState.Engage || !ai.target || !entityExists(world, ai.target)) return;
+  const timeSinceFire = gameTime - weapons.lastFireTime;
+  for (const weapon of weapons.weapons) {
+    if (weapon.count <= 0 || timeSinceFire < weapon.fireRate) continue;
+    if (weapon.requiresLock && weapons.lockProgress < 1) continue;
+    weapons.lastFireTime = gameTime;
+    weapon.count--;
+    spawnMissile(world, entity, transform, weapon, faction, weapons.lockTarget);
+    return;
+  }
 }
 
 /** Handle player primary weapon input */
@@ -204,38 +225,27 @@ function fireLinkedPrimaries(
   }
 }
 
-/** Update lock-on progress for secondary weapons */
+/** Update lock-on progress for secondary weapons (shared by player and AI) */
 function updateLockProgress(
-  world: World,
-  weapons: SecondaryWeapons,
-  targeting: Targeting | undefined,
-  dt: number
+  world: World, weapons: SecondaryWeapons, target: Entity | null | undefined, dt: number
 ): void {
   const weapon = getCurrentSecondary(weapons);
   if (!weapon) return;
 
-  const target = targeting?.currentTarget;
-
-  // If no target or target doesn't exist, decay lock
-  if (target === undefined || !entityExists(world, target)) {
+  if (target === undefined || target === null || !entityExists(world, target)) {
     weapons.lockProgress = Math.max(0, weapons.lockProgress - dt * 2);
     weapons.lockTarget = undefined;
     return;
   }
 
-  // If target changed, reset lock
   if (weapons.lockTarget !== target) {
     weapons.lockProgress = 0;
     weapons.lockTarget = target;
   }
 
-  // Build lock if weapon requires it
-  if (weapon.requiresLock && weapon.lockSpeed > 0) {
-    weapons.lockProgress = Math.min(1, weapons.lockProgress + weapon.lockSpeed * dt);
-  } else {
-    // No lock required - always ready
-    weapons.lockProgress = 1;
-  }
+  weapons.lockProgress = weapon.requiresLock && weapon.lockSpeed > 0
+    ? Math.min(1, weapons.lockProgress + weapon.lockSpeed * dt)
+    : 1;
 }
 
 /** Handle player secondary weapon input */

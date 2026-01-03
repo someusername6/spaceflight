@@ -53,8 +53,8 @@ Tracks actual implementation status with file references as evidence.
 - [x] AI Evade state → `src/systems/ai-behaviors.ts:82-121` (breaks away, ship-relative barrel roll)
 - [x] AI Protect state → `src/systems/ai-behaviors.ts:124-178` (aggressively engages threats, 400-unit leash)
 - [x] AI Regroup state → `src/systems/ai-behaviors.ts:181-223` (ship-relative loop to recover)
-- [x] AI primary weapon firing → `src/systems/weapons.ts:94-114` (with aim error, always linked)
-- [ ] AI missile firing policy
+- [x] AI primary weapon firing → `src/systems/weapons.ts:90-104` (with aim error, always linked)
+- [x] AI missile firing policy → `src/systems/weapons.ts:107-122` (fires when locked in Engage state)
 - [x] Max-3-on-human constraint → `src/systems/ai.ts:41-50`
 
 ### 3.5 Targeting System
@@ -103,9 +103,9 @@ Tracks actual implementation status with file references as evidence.
 | 3.1 Weapon Components | 4 | 4 | 100% |
 | 3.2 Weapon Systems | 5 | 5 | 100% |
 | 3.3 Shield System | 3 | 3 | 100% |
-| 3.4 AI Implementation | 10 | 11 | 91% |
+| 3.4 AI Implementation | 11 | 11 | 100% |
 | 3.5 Targeting System | 4 | 4 | 100% |
 | 3.6 HUD Implementation | 11 | 13 | 85% |
 | 3.7 Visual Effects | 2 | 5 | 40% |
 | 3.8 Dust Particles | 1 | 1 | 100% |
-| **Phase 3 Total** | **40** | **46** | **87%** |
+| **Phase 3 Total** | **41** | **46** | **89%** |
