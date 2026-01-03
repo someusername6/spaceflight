@@ -14,12 +14,25 @@ import {
 } from './rendering/explosions';
 import { createHUD, updateHUD } from './rendering/hud';
 import {
+  createExhaustRenderer,
+  updateExhaustRenderer,
+} from './rendering/missile-exhaust';
+import {
+  createMuzzleFlashRenderer,
+  updateMuzzleFlashRenderer,
+} from './rendering/muzzle-flash';
+import {
   createRenderer,
   followEntity,
   getScene,
   render,
   syncScene,
 } from './rendering/renderer';
+import {
+  createShieldEffectRenderer,
+  updateShieldEffectRenderer,
+} from './rendering/shield-effects';
+import { createTrailRenderer, updateTrailRenderer } from './rendering/trails';
 import { initInput } from './systems/input';
 
 /** Initialize and start the game */
@@ -46,6 +59,18 @@ function main(): void {
   // Create explosion renderer
   const explosionRenderer = createExplosionRenderer();
 
+  // Create trail renderer for projectiles
+  const trailRenderer = createTrailRenderer();
+
+  // Create missile exhaust renderer
+  const exhaustRenderer = createExhaustRenderer();
+
+  // Create shield effect renderer
+  const shieldEffectRenderer = createShieldEffectRenderer();
+
+  // Create muzzle flash renderer
+  const muzzleFlashRenderer = createMuzzleFlashRenderer();
+
   // Create HUD
   const hud = createHUD(container);
 
@@ -59,6 +84,23 @@ function main(): void {
 
     // Update explosion effects
     updateExplosionRenderer(explosionRenderer, getScene(renderer), world);
+
+    // Update projectile trails
+    updateTrailRenderer(trailRenderer, getScene(renderer), world);
+
+    // Update missile exhaust flames
+    updateExhaustRenderer(
+      exhaustRenderer,
+      getScene(renderer),
+      world,
+      world.systemState.gameTime,
+    );
+
+    // Update shield hit effects
+    updateShieldEffectRenderer(shieldEffectRenderer, getScene(renderer), world);
+
+    // Update muzzle flash effects
+    updateMuzzleFlashRenderer(muzzleFlashRenderer, getScene(renderer), world);
 
     // Follow player and update dust
     const player = findEntity(world, ['playerControlled', 'transform']);

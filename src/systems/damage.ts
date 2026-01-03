@@ -4,9 +4,11 @@
  * Damage flows: Shields first, then hull.
  */
 
+import type * as THREE from 'three';
 import { areEnemies, type FactionComponent } from '../components/faction';
 import type { Health } from '../components/health';
 import { applyDamage } from '../components/health';
+import { recordShieldHit, type ShieldHit } from '../components/shield-hit';
 import type { Shields } from '../components/shields';
 import { damageShields } from '../components/shields';
 import { getComponent, queryEntities } from '../core/ecs';
@@ -59,6 +61,7 @@ function applyDamageWithShields(
   world: World,
   entity: Entity,
   amount: number,
+  hitPosition?: THREE.Vector3,
 ): number {
   const shields = getComponent<Shields>(world, entity, 'shields');
   const health = getComponent<Health>(world, entity, 'health');
@@ -66,8 +69,24 @@ function applyDamageWithShields(
   let remaining = amount;
 
   // Shields absorb first
-  if (shields) {
+  if (shields && shields.current > 0) {
+    const shieldsBefore = shields.current;
     remaining = damageShields(shields, remaining, world.systemState.gameTime);
+    const absorbed = shieldsBefore - shields.current;
+
+    // Record shield hit for visual effects
+    if (absorbed > 0 && hitPosition) {
+      const shieldHit = getComponent<ShieldHit>(world, entity, 'shieldHit');
+      if (shieldHit) {
+        recordShieldHit(
+          shieldHit,
+          hitPosition,
+          absorbed,
+          shields.max,
+          world.systemState.gameTime,
+        );
+      }
+    }
   }
 
   // Remaining damage goes to hull
@@ -83,6 +102,7 @@ export function dealDamage(
   world: World,
   entity: Entity,
   amount: number,
+  hitPosition?: THREE.Vector3,
 ): number {
-  return applyDamageWithShields(world, entity, amount);
+  return applyDamageWithShields(world, entity, amount, hitPosition);
 }

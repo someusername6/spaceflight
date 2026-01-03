@@ -1,7 +1,7 @@
 # Implementation Progress
 
 Tracks actual implementation status with file references as evidence.
-**Last updated:** 2026-01-03 (AI Evade/Protect/Regroup states)
+**Last updated:** 2026-01-03 (VFX: trails, exhaust, muzzle flash, nuke AoE)
 
 ---
 
@@ -80,10 +80,16 @@ Tracks actual implementation status with file references as evidence.
 
 ### 3.7 Visual Effects
 - [x] Beam rendering → `src/rendering/renderer.ts:159-201`
-- [ ] Projectile trails
-- [ ] Missile exhaust
-- [x] Explosions → `src/components/explosion.ts:11-17`, `src/systems/explosions.ts:11-26`, `src/rendering/explosions.ts:99-143`
-- [ ] Shield hit effects
+- [x] Beam fade-out → `src/rendering/renderer.ts:198-218` (0.15s fade when stopped)
+- [x] Projectile trails → `src/rendering/trails.ts:42-142` (8-point ring buffer, faction colors)
+- [x] Muzzle flash → `src/rendering/muzzle-flash.ts:57-158` (faction colors, beam glow)
+- [x] Missile exhaust → `src/rendering/missile-exhaust.ts:42-130` (flickering cone + point light)
+- [x] Explosions → `src/components/explosion.ts`, `src/systems/explosions.ts`, `src/rendering/explosions.ts`
+- [x] Nuke explosion → `src/rendering/explosions.ts:243-412` (multi-stage: flash, ring, color progression, point light)
+- [x] Nuke AoE damage → `src/systems/missiles.ts:175-213` (100-unit radius, linear falloff)
+- [x] Shield hit effects → `src/components/shield-hit.ts`, `src/rendering/shield-effects.ts:38-132`
+- [x] Weapon bank spawn offsets → `src/systems/weapon-spawning.ts:43-71` (projectiles/beams spawn from distinct positions)
+- [ ] Projectile hit effects (vary by weapon type)
 
 ### 3.8 Dust Particles
 - [x] Dust system → `src/rendering/dust.ts:74-180`
@@ -106,6 +112,6 @@ Tracks actual implementation status with file references as evidence.
 | 3.4 AI Implementation | 11 | 11 | 100% |
 | 3.5 Targeting System | 4 | 4 | 100% |
 | 3.6 HUD Implementation | 11 | 13 | 85% |
-| 3.7 Visual Effects | 2 | 5 | 40% |
+| 3.7 Visual Effects | 10 | 11 | 91% |
 | 3.8 Dust Particles | 1 | 1 | 100% |
-| **Phase 3 Total** | **41** | **46** | **89%** |
+| **Phase 3 Total** | **49** | **52** | **94%** |

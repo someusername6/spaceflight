@@ -16,6 +16,8 @@ export interface Missile extends ComponentBase {
   range: number;
   distanceTraveled: number;
   direction: Vector3;
+  aoeRadius: number; // Area of effect radius (0 = no AoE)
+  isNuke: boolean; // For visual effects (larger explosion)
 }
 
 /** Creates a Missile component */
@@ -27,6 +29,8 @@ export function createMissile(
   turnRate: number,
   range: number,
   direction: Vector3,
+  aoeRadius = 0,
+  isNuke = false,
 ): Missile {
   return {
     type: 'missile',
@@ -38,6 +42,8 @@ export function createMissile(
     range,
     distanceTraveled: 0,
     direction: direction.clone().normalize(),
+    aoeRadius,
+    isNuke,
   };
 }
 
@@ -120,6 +126,8 @@ export const MISSILE_DEFS: Record<
     damage: 300,
     fireRate: 3.0,
     lockSpeed: 0.2, // 5 seconds to lock
+    aoeRadius: 100, // Large AoE damage radius
+    isNuke: true, // Special explosion effects
   },
 };
 

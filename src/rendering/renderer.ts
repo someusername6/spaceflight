@@ -15,11 +15,15 @@ import type { Entity, World } from '../core/types';
 import { getActiveBeams } from '../systems/beams';
 import { generateSkyboxTexture, getSunDirectionFromSeed } from './skybox';
 
+/** Beam fade-out duration in seconds */
+const BEAM_FADE_DURATION = 0.15;
+
 /** Beam line entry with cached entity ID to avoid parsing */
 interface BeamLineEntry {
   line: THREE.Line;
   entityId: Entity;
   positions: Float32Array; // Reusable position buffer
+  fadeStartTime: number | null; // When fade-out started (null = active)
 }
 
 /** Renderer state */
@@ -179,7 +183,7 @@ export function syncScene(renderer: Renderer, world: World): void {
   }
 
   // Update beam lines
-  updateBeamLines(world, scene, beamLines);
+  updateBeamLines(world, scene, beamLines, world.systemState.gameTime);
 }
 
 /** Updates beam line visuals */
@@ -187,6 +191,7 @@ function updateBeamLines(
   world: World,
   scene: THREE.Scene,
   beamLines: Map<string, BeamLineEntry>,
+  gameTime: number,
 ): void {
   const activeBeams = getActiveBeams(world);
   // Clear reusable Set (avoid per-frame allocations)
@@ -216,9 +221,12 @@ function updateBeamLines(
         });
         const line = new THREE.Line(geometry, material);
         scene.add(line);
-        entry = { line, entityId: entity, positions };
+        entry = { line, entityId: entity, positions, fadeStartTime: null };
         beamLines.set(key, entry);
       }
+
+      // Beam is active - reset fade state
+      entry.fadeStartTime = null;
 
       // Update position buffer in-place (no allocation)
       const positions = entry.positions;
@@ -235,13 +243,14 @@ function updateBeamLines(
         posAttr.needsUpdate = true;
       }
       entry.line.visible = true;
+      (entry.line.material as THREE.LineBasicMaterial).opacity = 0.8;
 
       // Update color if changed
       (entry.line.material as THREE.LineBasicMaterial).color.copy(beam.color);
     }
   }
 
-  // Hide inactive beams and clean up beams for destroyed entities
+  // Handle inactive beams (fade out) and clean up destroyed entities
   for (const [key, entry] of beamLines) {
     if (!seenBeams.has(key)) {
       // Use cached entityId instead of parsing key
@@ -252,8 +261,24 @@ function updateBeamLines(
         (entry.line.material as THREE.Material).dispose();
         beamLines.delete(key);
       } else {
-        // Entity exists but beam inactive - just hide
-        entry.line.visible = false;
+        // Entity exists but beam inactive - fade out
+        if (entry.fadeStartTime === null) {
+          // Start fading
+          entry.fadeStartTime = gameTime;
+        }
+
+        const fadeAge = gameTime - entry.fadeStartTime;
+        const fadeProgress = fadeAge / BEAM_FADE_DURATION;
+
+        if (fadeProgress >= 1) {
+          // Fade complete - hide
+          entry.line.visible = false;
+        } else {
+          // Still fading - update opacity
+          entry.line.visible = true;
+          (entry.line.material as THREE.LineBasicMaterial).opacity =
+            0.8 * (1 - fadeProgress);
+        }
       }
     }
   }

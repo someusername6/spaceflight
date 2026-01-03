@@ -33,7 +33,11 @@ import {
 import { handleAIPrimaryWeapons, handleAISecondaryWeapons } from './weapons-ai';
 
 // Reusable array for projectile weapons in linked fire (avoid per-frame allocations)
-const projectileWeaponsCollector: PrimaryWeapon[] = [];
+interface WeaponWithIndex {
+  weapon: PrimaryWeapon;
+  index: number;
+}
+const projectileWeaponsCollector: WeaponWithIndex[] = [];
 
 /** Weapon system - handles firing and heat */
 export function weaponSystem(world: World, dt: number): void {
@@ -243,7 +247,15 @@ function fireSinglePrimary(
 
     weapons.lastFireTime = gameTime;
     if (weapon.ammo !== undefined) weapon.ammo--;
-    spawnProjectile(world, entity, transform, weapon, faction);
+    spawnProjectile(
+      world,
+      entity,
+      transform,
+      weapon,
+      faction,
+      weapons.currentIndex,
+      weapons.weapons.length,
+    );
   }
 }
 
@@ -261,10 +273,11 @@ export function fireLinkedPrimaries(
   // Clear and reuse collector (avoid per-frame allocations)
   projectileWeaponsCollector.length = 0;
 
-  // Find projectile weapons (non-beam) that can fire
-  for (const w of weapons.weapons) {
-    if (w.category !== 'beam' && (w.ammo === undefined || w.ammo > 0)) {
-      projectileWeaponsCollector.push(w);
+  // Find projectile weapons (non-beam) that can fire, with their indices
+  for (let i = 0; i < weapons.weapons.length; i++) {
+    const w = weapons.weapons[i];
+    if (w && w.category !== 'beam' && (w.ammo === undefined || w.ammo > 0)) {
+      projectileWeaponsCollector.push({ weapon: w, index: i });
     }
   }
 
@@ -272,8 +285,8 @@ export function fireLinkedPrimaries(
 
   // Calculate slowest fire rate among projectile weapons (avoid .map() allocation)
   let slowestRate = 0;
-  for (const w of projectileWeaponsCollector) {
-    if (w.fireRate > slowestRate) slowestRate = w.fireRate;
+  for (const { weapon } of projectileWeaponsCollector) {
+    if (weapon.fireRate > slowestRate) slowestRate = weapon.fireRate;
   }
 
   // Check if enough time has passed
@@ -282,8 +295,8 @@ export function fireLinkedPrimaries(
 
   // Calculate total heat for all weapons (avoid .reduce() allocation)
   let totalHeat = 0;
-  for (const w of projectileWeaponsCollector) {
-    totalHeat += w.heatPerShot;
+  for (const { weapon } of projectileWeaponsCollector) {
+    totalHeat += weapon.heatPerShot;
   }
 
   // Check if we can add all heat
@@ -291,7 +304,8 @@ export function fireLinkedPrimaries(
 
   // Fire all projectile weapons (with optional aim error for AI)
   weapons.lastFireTime = gameTime;
-  for (const weapon of projectileWeaponsCollector) {
+  const totalBanks = weapons.weapons.length;
+  for (const { weapon, index } of projectileWeaponsCollector) {
     if (weapon.ammo !== undefined) weapon.ammo--;
     spawnProjectileWithAimError(
       world,
@@ -300,6 +314,8 @@ export function fireLinkedPrimaries(
       weapon,
       faction,
       aimError,
+      index,
+      totalBanks,
     );
   }
 }

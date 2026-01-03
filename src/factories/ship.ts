@@ -11,6 +11,7 @@ import { createHeat } from '../components/heat';
 import { createSecondaryWeaponFromDef } from '../components/missile';
 import { createPhysics } from '../components/physics';
 import { createPlayerControlled } from '../components/player';
+import { createShieldHit } from '../components/shield-hit';
 import { createShields } from '../components/shields';
 import { createTargeting } from '../components/targeting';
 import { createTransform } from '../components/transform';
@@ -119,6 +120,7 @@ export function createPlayerShip(
     entity,
     createShields(stats.shields, stats.shieldRegen, stats.shieldDelay),
   );
+  addComponent(world, entity, createShieldHit());
   addComponent(world, entity, createFaction(Faction.Player));
   addComponent(world, entity, createPlayerControlled());
   addComponent(world, entity, createTargeting());
@@ -181,6 +183,7 @@ export function createAIShip(
     entity,
     createShields(stats.shields, stats.shieldRegen, stats.shieldDelay),
   );
+  addComponent(world, entity, createShieldHit());
   addComponent(world, entity, createFaction(faction));
   addComponent(world, entity, createAIControlled());
   addComponent(world, entity, createAimError(world.prng)); // AI has imperfect aim

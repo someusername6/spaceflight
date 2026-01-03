@@ -3,8 +3,6 @@
  */
 
 import * as THREE from 'three';
-import type { FactionComponent } from '../components/faction';
-import { areEnemies } from '../components/faction';
 import type { Health } from '../components/health';
 import { isDying } from '../components/health';
 import type { Heat } from '../components/heat';
@@ -18,6 +16,7 @@ import type { Entity, World } from '../core/types';
 import type { Collision } from './collision';
 import { dealDamage } from './damage';
 import { getForward } from './physics';
+import { calculateBankOffset } from './weapon-spawning';
 
 /** Active beam state for rendering */
 export interface ActiveBeam {
@@ -98,7 +97,6 @@ export function beamSystem(world: World, dt: number): void {
       'primaryWeapons',
     ) as PrimaryWeapons;
     const heat = getComponent<Heat>(world, entity, 'heat') as Heat;
-    const faction = getComponent<FactionComponent>(world, entity, 'faction');
     const player = getComponent<PlayerControlled>(
       world,
       entity,
@@ -117,16 +115,7 @@ export function beamSystem(world: World, dt: number): void {
     // Determine which beams to fire based on linked mode
     if (weapons.linked) {
       // Linked mode: fire all beams simultaneously
-      fireLinkedBeams(
-        world,
-        entity,
-        transform,
-        weapons,
-        heat,
-        faction,
-        dt,
-        activeBeams,
-      );
+      fireLinkedBeams(world, entity, transform, weapons, heat, dt, activeBeams);
     } else {
       // Single mode: only fire if current weapon is a beam
       const weapon = getCurrentPrimary(weapons);
@@ -143,7 +132,7 @@ export function beamSystem(world: World, dt: number): void {
         transform,
         weapon,
         weapons.currentIndex,
-        faction,
+        weapons.weapons.length,
         dt,
         activeBeams,
       );
@@ -158,7 +147,6 @@ function fireLinkedBeams(
   transform: Transform,
   weapons: PrimaryWeapons,
   heat: Heat,
-  faction: FactionComponent | undefined,
   dt: number,
   activeBeams: Map<Entity, ActiveBeam[]>,
 ): void {
@@ -187,10 +175,23 @@ function fireLinkedBeams(
   if (!addHeat(heat, heatToAdd)) return; // Overheated
 
   // Fire all beams
+  const totalBanks = weapons.weapons.length;
   for (const { weapon, index } of beamWeaponsCollector) {
-    fireBeam(world, owner, transform, weapon, index, faction, dt, activeBeams);
+    fireBeam(
+      world,
+      owner,
+      transform,
+      weapon,
+      index,
+      totalBanks,
+      dt,
+      activeBeams,
+    );
   }
 }
+
+/** Beam spawn offset from ship center (forward) */
+const BEAM_SPAWN_OFFSET = 3;
 
 /** Fire a beam and process hits */
 function fireBeam(
@@ -199,12 +200,19 @@ function fireBeam(
   transform: Transform,
   weapon: PrimaryWeapon,
   weaponIndex: number,
-  faction: FactionComponent | undefined,
+  totalBanks: number,
   dt: number,
   activeBeams: Map<Entity, ActiveBeam[]>,
 ): void {
   const forward = getForward(transform);
-  rayOrigin.copy(transform.position);
+  // Calculate beam origin with bank offset
+  const origin = calculateBankOffset(
+    transform,
+    weaponIndex,
+    totalBanks,
+    BEAM_SPAWN_OFFSET,
+  );
+  rayOrigin.copy(origin);
   rayDirection.copy(forward);
 
   // Get or create beam array for this entity
@@ -258,17 +266,7 @@ function fireBeam(
     const otherHealth = getComponent<Health>(world, other, 'health') as Health;
     if (isDying(otherHealth)) continue;
 
-    const otherFaction = getComponent<FactionComponent>(
-      world,
-      other,
-      'faction',
-    );
-    if (
-      faction &&
-      otherFaction &&
-      !areEnemies(faction.faction, otherFaction.faction)
-    )
-      continue;
+    // Friendly fire enabled - beams damage anyone except owner
 
     // Query guarantees these components exist
     const otherTransform = getComponent<Transform>(
@@ -316,7 +314,12 @@ function fireBeam(
       weapon.damage,
       closestHitResult.distance,
     );
-    dealDamage(world, closestHitResult.entity, falloffDamage * dt);
+    dealDamage(
+      world,
+      closestHitResult.entity,
+      falloffDamage * dt,
+      beam.hitPoint,
+    );
   } else {
     // No hit - beam extends to max range
     beam.hitPoint

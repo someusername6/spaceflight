@@ -29,12 +29,25 @@ Ships have **banks** for each type:
 |--------|-----------|------------|-----------|-------|--------|-----------|
 | Autocannon | 2 | 500 m/s | 65ms | 400m | 8 | 200 |
 | Railgun | 3 | 2000 m/s | 800ms | 2000m | 80 | 20 |
-| Flak | 2 | 400 m/s | 150ms | 300m | 5 + AoE | 60 |
+| Flak | 4 | 350 m/s | 400ms | 600m | 15 + shrapnel | 50 |
 
 **Fantasy:**
 - Autocannon: Spray of bullets, high rate
 - Railgun: Long-range precision, high damage
-- Flak: Anti-missile, close-range area denial
+- Flak: Proximity-fused shrapnel burst
+
+### Flak Cannon Mechanics
+
+The Flak cannon fires proximity-fused projectiles that explode into shrapnel:
+
+1. **Projectile Phase:** Red glowing sphere flies toward enemies
+2. **Detonation Trigger:** Explodes when any enemy enters 80-unit radius
+3. **Shrapnel Burst:** Spawns 8 shrapnel projectiles in all directions
+   - Shrapnel Speed: 450 m/s
+   - Shrapnel Range: 120m
+   - Shrapnel Damage: 8 per hit
+
+The projectile does NOT explode based on time or distance - only on enemy proximity. This makes it effective against clustered enemies and ineffective against isolated targets at extreme range.
 
 ### Beam Weapons (Continuous)
 
@@ -69,7 +82,7 @@ Where minDistance = 100m (caps damage when very close)
 | Cluster | No | 3 | 400 m/s | 60°/s | 1200m | 25 | Auto-retarget |
 | Swarm | Yes | 8 | 500 m/s | 100°/s | 600m | 10 | Overwhelming |
 | Torpedo | Yes | 1 | 200 m/s | 30°/s | 4000m | 150 | Heavy hitter |
-| Nuke | Yes | 1 | 150 m/s | 20°/s | 3000m | 300 | AoE, friendly fire |
+| Nuke | Yes | 1 | 150 m/s | 20°/s | 3000m | 300 | AoE, friendly fire, smart detonation |
 
 **Fantasy:**
 - Rocket: Fire-and-forget, no lock hassle
@@ -79,6 +92,17 @@ Where minDistance = 100m (caps damage when very close)
 - Swarm: Overwhelm point defense
 - Torpedo: Capital ship killer
 - Nuke: Game-changer, risky
+
+### Nuke Smart Detonation
+
+The Nuke missile has intelligent detonation logic:
+
+1. **Collision Detonation:** Explodes immediately on direct hit with any enemy
+2. **Proximity Detonation:** When out of range, checks for enemies within AoE radius
+   - If enemies are within 150-unit AoE radius: triggers explosion
+   - If no enemies in range: missile expires without explosion (wasted)
+
+This prevents nukes from detonating harmlessly in empty space while ensuring they always detonate when they can deal damage. The AoE explosion deals 50% damage with linear falloff from center to edge.
 
 ### Decoys
 
@@ -106,15 +130,21 @@ Where minDistance = 100m (caps damage when very close)
 
 ## Weapon Linking
 
-Ships can link same-type weapons:
-- 2x Plasma: Fire both simultaneously
-- Cycling: Fire one, then other, then both, then next type
+Ships can toggle between two firing modes:
 
-Example loadout cycling (2x Plasma, 1x Pulse):
-1. Plasma A
-2. Plasma B
-3. Plasma A+B (linked)
-4. Pulse
+**Single Mode (default):**
+- Fires only the currently selected weapon
+- Use weapon cycling to switch between weapons
+- Lower heat generation per shot
+
+**Linked Mode:**
+- Fires all primary weapons simultaneously
+- All projectile weapons fire at once
+- All beam weapons fire at once
+- Heat from all weapons accumulates together
+- Cooldown display shows the slowest weapon's fire rate
+
+AI ships always fire in linked mode (all weapons together).
 
 ## Bank Sizes
 
@@ -125,6 +155,21 @@ Bank size affects:
 
 Standard sizes: 1 (small), 2 (medium), 3 (large)
 
+## Friendly Fire
+
+All weapons have friendly fire enabled:
+
+- **Projectiles:** Damage any ship except the owner
+- **Missiles:** Damage any ship on collision except the owner
+- **Nuke AoE:** Damages all ships within blast radius (including friendlies)
+- **Flak Shrapnel:** Damages all ships within range (including friendlies)
+- **Beams:** Damage any ship except the firer
+
+**Trigger vs Damage distinction:**
+- Flak explosion only *triggers* when enemies are in proximity
+- Nuke end-of-range explosion only *triggers* when enemies are in AoE
+- But once triggered, the resulting damage affects all ships
+
 ## Balance Philosophy
 
 - Energy weapons: Infinite but heat-limited
@@ -133,3 +178,4 @@ Standard sizes: 1 (small), 2 (medium), 3 (large)
 - Beams: Require tracking skill, reward aim
 - Heat forces engagement rhythm
 - No weapon should be universally best
+- Friendly fire adds tactical depth and risk/reward

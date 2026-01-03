@@ -18,6 +18,10 @@ export interface PrimaryWeapon {
   damage: number;
   ammo?: number; // Undefined = infinite
   maxAmmo?: number;
+  /** Flak explosion radius - explodes when enemies within range */
+  flakRadius?: number;
+  /** Number of shrapnel projectiles on flak explosion */
+  shrapnelCount?: number;
 }
 
 /** Secondary weapon definition */
@@ -32,6 +36,8 @@ export interface SecondaryWeapon {
   maxCount: number;
   fireRate: number; // Seconds between shots
   lockSpeed: number; // Lock acquisition speed (0-1 per second, 0 = no lock needed)
+  aoeRadius?: number; // Area of effect radius (undefined = no AoE)
+  isNuke?: boolean; // Special nuke explosion effects
 }
 
 /** Primary weapons component */
@@ -106,6 +112,19 @@ export const WEAPON_DEFS = {
     damage: 80,
     ammo: 20,
     maxAmmo: 20,
+  },
+  flak: {
+    name: 'Flak',
+    category: 'ballistic' as WeaponCategory,
+    heatPerShot: 4,
+    projectileSpeed: 350,
+    fireRate: 0.4, // 400ms
+    range: 600,
+    damage: 15, // Direct hit damage (shrapnel does separate damage)
+    ammo: 50,
+    maxAmmo: 50,
+    flakRadius: 80, // Explodes when enemies within 80 units
+    shrapnelCount: 8, // Spawns 8 shrapnel projectiles
   },
 
   // Beam weapons (projectileSpeed=0 means instant hit, damage is per second)

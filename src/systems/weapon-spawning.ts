@@ -1,13 +1,16 @@
 /**
  * Weapon Spawning - Creates projectile and missile entities.
+ *
+ * Each weapon bank has a distinct spawn point offset from ship center.
  */
 
-import { Vector3 } from 'three';
+import * as THREE from 'three';
 import type { AimError } from '../components/aim-error';
 import { applyAimError } from '../components/aim-error';
 import type { FactionComponent } from '../components/faction';
 import { createFaction } from '../components/faction';
 import { createMissile } from '../components/missile';
+import type { ProjectileCategory, WeaponName } from '../components/projectile';
 import { createProjectile } from '../components/projectile';
 import type { Transform } from '../components/transform';
 import { createTransform } from '../components/transform';
@@ -17,37 +20,88 @@ import type { Entity, World } from '../core/types';
 import { createCollision } from './collision';
 import { getForward } from './physics';
 
-/** Projectile spawn offset from ship center */
+/** Projectile spawn offset from ship center (forward) */
 const PROJECTILE_SPAWN_OFFSET = 3;
 const MISSILE_SPAWN_OFFSET = 4;
+
+/** Lateral offset between weapon banks */
+const BANK_LATERAL_OFFSET = 1.5;
 
 /** Collision radii */
 const PROJECTILE_RADIUS = 0.5;
 const MISSILE_RADIUS = 1.0;
 
-// Reusable spawn position vector (avoid per-spawn allocations)
-const spawnPos = new Vector3();
+// Reusable vectors (avoid per-spawn allocations)
+const spawnPos = new THREE.Vector3();
+const rightAxis = new THREE.Vector3();
+const tempForward = new THREE.Vector3();
+
+/**
+ * Calculate spawn position for a weapon bank.
+ * Banks are distributed symmetrically around ship center.
+ * Bank 0 = left, Bank 1 = right, Bank 2 = left-outer, etc.
+ */
+export function calculateBankOffset(
+  transform: Transform,
+  bankIndex: number,
+  totalBanks: number,
+  forwardOffset: number,
+): THREE.Vector3 {
+  const forward = getForward(transform);
+  spawnPos.copy(transform.position).addScaledVector(forward, forwardOffset);
+
+  // For single bank, no lateral offset
+  if (totalBanks <= 1) return spawnPos;
+
+  // Calculate right axis (perpendicular to forward, in local XZ plane)
+  tempForward.copy(forward);
+  rightAxis.set(0, 1, 0).cross(tempForward).normalize();
+
+  // Distribute banks: 0=left, 1=right, 2=far-left, 3=far-right, etc.
+  const pairIndex = Math.floor(bankIndex / 2);
+  const isRight = bankIndex % 2 === 1;
+  const lateralOffset = BANK_LATERAL_OFFSET * (pairIndex + 1);
+
+  if (isRight) {
+    spawnPos.addScaledVector(rightAxis, lateralOffset);
+  } else {
+    spawnPos.addScaledVector(rightAxis, -lateralOffset);
+  }
+
+  return spawnPos;
+}
 
 /** Spawn a projectile entity */
 export function spawnProjectile(
   world: World,
   owner: Entity,
   ownerTransform: Transform,
-  weapon: { damage: number; projectileSpeed: number; range: number },
+  weapon: {
+    name: string;
+    damage: number;
+    projectileSpeed: number;
+    range: number;
+    category?: string; // WeaponCategory includes 'beam' but we filter that out
+    flakRadius?: number;
+    shrapnelCount?: number;
+  },
   ownerFaction: FactionComponent | undefined,
+  bankIndex = 0,
+  totalBanks = 1,
 ): void {
   const forward = getForward(ownerTransform);
-  spawnPos
-    .copy(ownerTransform.position)
-    .addScaledVector(forward, PROJECTILE_SPAWN_OFFSET);
+  const pos = calculateBankOffset(
+    ownerTransform,
+    bankIndex,
+    totalBanks,
+    PROJECTILE_SPAWN_OFFSET,
+  );
 
   const projectile = createEntity(world);
+  const category: ProjectileCategory =
+    weapon.category === 'ballistic' ? 'ballistic' : 'energy';
 
-  addComponent(
-    world,
-    projectile,
-    createTransform(spawnPos.x, spawnPos.y, spawnPos.z),
-  );
+  addComponent(world, projectile, createTransform(pos.x, pos.y, pos.z));
   addComponent(
     world,
     projectile,
@@ -57,6 +111,10 @@ export function spawnProjectile(
       weapon.projectileSpeed,
       weapon.range,
       forward,
+      category,
+      weapon.name as WeaponName,
+      weapon.flakRadius,
+      weapon.shrapnelCount,
     ),
   );
   addComponent(world, projectile, createCollision(PROJECTILE_RADIUS));
@@ -72,25 +130,36 @@ export function spawnProjectileWithAimError(
   world: World,
   owner: Entity,
   ownerTransform: Transform,
-  weapon: { damage: number; projectileSpeed: number; range: number },
+  weapon: {
+    name: string;
+    damage: number;
+    projectileSpeed: number;
+    range: number;
+    category?: string;
+    flakRadius?: number;
+    shrapnelCount?: number;
+  },
   ownerFaction: FactionComponent | undefined,
   aimError: AimError | undefined,
+  bankIndex = 0,
+  totalBanks = 1,
 ): void {
   const forward = getForward(ownerTransform);
-  spawnPos
-    .copy(ownerTransform.position)
-    .addScaledVector(forward, PROJECTILE_SPAWN_OFFSET);
+  const pos = calculateBankOffset(
+    ownerTransform,
+    bankIndex,
+    totalBanks,
+    PROJECTILE_SPAWN_OFFSET,
+  );
 
   // Apply aim error if present, otherwise use forward direction
   const direction = aimError ? applyAimError(forward, aimError) : forward;
 
   const projectile = createEntity(world);
+  const category: ProjectileCategory =
+    weapon.category === 'ballistic' ? 'ballistic' : 'energy';
 
-  addComponent(
-    world,
-    projectile,
-    createTransform(spawnPos.x, spawnPos.y, spawnPos.z),
-  );
+  addComponent(world, projectile, createTransform(pos.x, pos.y, pos.z));
   addComponent(
     world,
     projectile,
@@ -100,6 +169,10 @@ export function spawnProjectileWithAimError(
       weapon.projectileSpeed,
       weapon.range,
       direction,
+      category,
+      weapon.name as WeaponName,
+      weapon.flakRadius,
+      weapon.shrapnelCount,
     ),
   );
   addComponent(world, projectile, createCollision(PROJECTILE_RADIUS));
@@ -107,6 +180,62 @@ export function spawnProjectileWithAimError(
   // Projectiles inherit owner's faction
   if (ownerFaction) {
     addComponent(world, projectile, createFaction(ownerFaction.faction));
+  }
+}
+
+/** Shrapnel projectile stats */
+const SHRAPNEL_SPEED = 450;
+const SHRAPNEL_RANGE = 120;
+const SHRAPNEL_DAMAGE = 8;
+const SHRAPNEL_RADIUS = 0.3;
+
+/** Spawn shrapnel projectiles from a flak explosion */
+export function spawnShrapnel(
+  world: World,
+  position: THREE.Vector3,
+  count: number,
+  owner: Entity,
+  ownerFaction: FactionComponent | undefined,
+): void {
+  const goldenAngle = Math.PI * (3 - Math.sqrt(5)); // ~137.5 degrees
+
+  for (let i = 0; i < count; i++) {
+    // Distribute shrapnel in a sphere using golden ratio
+    const y = 1 - (i / (count - 1)) * 2; // y goes from 1 to -1
+    const radiusAtY = Math.sqrt(1 - y * y);
+    const theta = goldenAngle * i;
+
+    const direction = new THREE.Vector3(
+      radiusAtY * Math.cos(theta),
+      y,
+      radiusAtY * Math.sin(theta),
+    ).normalize();
+
+    const shrapnel = createEntity(world);
+
+    addComponent(
+      world,
+      shrapnel,
+      createTransform(position.x, position.y, position.z),
+    );
+    addComponent(
+      world,
+      shrapnel,
+      createProjectile(
+        owner,
+        SHRAPNEL_DAMAGE,
+        SHRAPNEL_SPEED,
+        SHRAPNEL_RANGE,
+        direction,
+        'ballistic',
+        'Shrapnel',
+      ),
+    );
+    addComponent(world, shrapnel, createCollision(SHRAPNEL_RADIUS));
+
+    if (ownerFaction) {
+      addComponent(world, shrapnel, createFaction(ownerFaction.faction));
+    }
   }
 }
 
@@ -143,6 +272,8 @@ export function spawnMissile(
       weapon.turnRate,
       weapon.range,
       forward,
+      weapon.aoeRadius ?? 0,
+      weapon.isNuke ?? false,
     ),
   );
 

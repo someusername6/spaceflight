@@ -4,6 +4,20 @@
 
 import type { ComponentBase, Entity, Vector3 } from '../core/types';
 
+/** Projectile category affects hit visual effects */
+export type ProjectileCategory = 'energy' | 'ballistic';
+
+/** Known weapon names for visual configuration */
+export type WeaponName =
+  | 'Plasma'
+  | 'Pulse'
+  | 'Ion'
+  | 'Autocannon'
+  | 'Railgun'
+  | 'Flak'
+  | 'Shrapnel'
+  | string;
+
 export interface Projectile extends ComponentBase {
   readonly type: 'projectile';
   owner: Entity; // Who fired this (for friendly fire checks)
@@ -12,6 +26,12 @@ export interface Projectile extends ComponentBase {
   range: number;
   distanceTraveled: number;
   direction: Vector3; // Unit vector, direction of travel
+  category: ProjectileCategory; // For hit effect visuals
+  weaponName: WeaponName; // For specific visual appearance
+  /** Flak explosion radius - if set, projectile explodes into shrapnel when enemies are within this range */
+  flakRadius?: number;
+  /** Number of shrapnel projectiles to spawn on flak explosion */
+  shrapnelCount?: number;
 }
 
 /** Creates a Projectile component */
@@ -21,8 +41,12 @@ export function createProjectile(
   speed: number,
   range: number,
   direction: Vector3,
+  category: ProjectileCategory = 'energy',
+  weaponName: WeaponName = 'Plasma',
+  flakRadius?: number,
+  shrapnelCount?: number,
 ): Projectile {
-  return {
+  const projectile: Projectile = {
     type: 'projectile',
     owner,
     damage,
@@ -30,7 +54,12 @@ export function createProjectile(
     range,
     distanceTraveled: 0,
     direction: direction.clone().normalize(),
+    category,
+    weaponName,
   };
+  if (flakRadius !== undefined) projectile.flakRadius = flakRadius;
+  if (shrapnelCount !== undefined) projectile.shrapnelCount = shrapnelCount;
+  return projectile;
 }
 
 /** Check if projectile is out of range */
