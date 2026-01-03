@@ -25,6 +25,7 @@ const KEY_BINDINGS = {
   cycleTargetPrev: 'BracketLeft',
   targetNearest: 'KeyT',
   fireDecoy: 'KeyX',
+  toggleLink: 'KeyV',
 } as const;
 
 /** Currently pressed keys */
@@ -78,6 +79,7 @@ export function inputSystem(world: World, _dt: number): void {
     input.cycleTargetPrev = pressedKeys.has(KEY_BINDINGS.cycleTargetPrev);
     input.targetNearest = pressedKeys.has(KEY_BINDINGS.targetNearest);
     input.fireDecoy = pressedKeys.has(KEY_BINDINGS.fireDecoy);
+    input.toggleLink = pressedKeys.has(KEY_BINDINGS.toggleLink);
   }
 }
 

@@ -26,14 +26,16 @@ export interface ActiveBeam {
   hitPoint: THREE.Vector3 | null;
   color: THREE.Color;
   active: boolean;
+  weaponIndex: number; // Which weapon slot this beam is from
 }
 
-// Active beams (one per entity that might fire beams)
-const activeBeams = new Map<Entity, ActiveBeam>();
+// Active beams per entity (multiple beams possible in linked mode)
+const activeBeams = new Map<Entity, ActiveBeam[]>();
 
 // Reusable objects
 const rayOrigin = new THREE.Vector3();
 const rayDirection = new THREE.Vector3();
+const tempOC = new THREE.Vector3(); // For ray-sphere intersection
 
 /** Distance for falloff calculation (caps damage when very close) */
 const MIN_FALLOFF_DISTANCE = 100;
@@ -41,8 +43,10 @@ const MIN_FALLOFF_DISTANCE = 100;
 /** Beam system - handles continuous beam damage */
 export function beamSystem(world: World, dt: number): void {
   // Clear all beam states first
-  for (const beam of activeBeams.values()) {
-    beam.active = false;
+  for (const beams of activeBeams.values()) {
+    for (const beam of beams) {
+      beam.active = false;
+    }
   }
 
   // Process each entity with primary weapons
@@ -57,24 +61,65 @@ export function beamSystem(world: World, dt: number): void {
     const faction = getComponent<FactionComponent>(world, entity, 'faction');
     const player = getComponent<PlayerControlled>(world, entity, 'playerControlled');
 
-    const weapon = getCurrentPrimary(weapons);
-    if (!weapon || weapon.category !== 'beam') continue;
-
     // Check if firing (player or AI)
     let isFiring = false;
     if (player) {
       isFiring = player.input.firePrimary;
     }
-    // AI beam firing would go here
+    // AI beam firing would go here (AI doesn't use beams currently)
 
     if (!isFiring) continue;
 
-    // Check heat - apply heat per second
-    const heatToAdd = weapon.heatPerShot * dt;
-    if (!addHeat(heat, heatToAdd)) continue; // Overheated
+    // Determine which beams to fire based on linked mode
+    if (weapons.linked) {
+      // Linked mode: fire all beams simultaneously
+      fireLinkedBeams(world, entity, transform, weapons, heat, faction, dt);
+    } else {
+      // Single mode: only fire if current weapon is a beam
+      const weapon = getCurrentPrimary(weapons);
+      if (!weapon || weapon.category !== 'beam') continue;
 
-    // Fire beam
-    fireBeam(world, entity, transform, weapon, faction, dt);
+      // Check heat - apply heat per second
+      const heatToAdd = weapon.heatPerShot * dt;
+      if (!addHeat(heat, heatToAdd)) continue; // Overheated
+
+      // Fire single beam
+      fireBeam(world, entity, transform, weapon, weapons.currentIndex, faction, dt);
+    }
+  }
+}
+
+/** Fire all beam weapons simultaneously (linked mode) */
+function fireLinkedBeams(
+  world: World,
+  owner: Entity,
+  transform: Transform,
+  weapons: PrimaryWeapons,
+  heat: Heat,
+  faction: FactionComponent | undefined,
+  dt: number
+): void {
+  // Find all beam weapons
+  const beamWeapons: { weapon: PrimaryWeapon; index: number }[] = [];
+  for (let i = 0; i < weapons.weapons.length; i++) {
+    const weapon = weapons.weapons[i];
+    if (weapon && weapon.category === 'beam') {
+      beamWeapons.push({ weapon, index: i });
+    }
+  }
+
+  if (beamWeapons.length === 0) return;
+
+  // Calculate total heat per second for all beams
+  const totalHeat = beamWeapons.reduce((sum, { weapon }) => sum + weapon.heatPerShot, 0);
+  const heatToAdd = totalHeat * dt;
+
+  // Check if we can add all the heat
+  if (!addHeat(heat, heatToAdd)) return; // Overheated
+
+  // Fire all beams
+  for (const { weapon, index } of beamWeapons) {
+    fireBeam(world, owner, transform, weapon, index, faction, dt);
   }
 }
 
@@ -84,6 +129,7 @@ function fireBeam(
   owner: Entity,
   transform: Transform,
   weapon: PrimaryWeapon,
+  weaponIndex: number,
   faction: FactionComponent | undefined,
   dt: number
 ): void {
@@ -91,23 +137,32 @@ function fireBeam(
   rayOrigin.copy(transform.position);
   rayDirection.copy(forward);
 
-  // Get or create beam state
-  let beam = activeBeams.get(owner);
+  // Get or create beam array for this entity
+  let beams = activeBeams.get(owner);
+  if (!beams) {
+    beams = [];
+    activeBeams.set(owner, beams);
+  }
+
+  // Find or create beam state for this weapon slot
+  let beam = beams.find(b => b.weaponIndex === weaponIndex);
   if (!beam) {
     beam = {
       origin: new THREE.Vector3(),
       direction: new THREE.Vector3(),
       hitPoint: null,
-      color: getBeamColor(weapon.name),
+      color: getBeamColor(weapon.name).clone(), // Clone to avoid modifying cache
       active: false,
+      weaponIndex,
     };
-    activeBeams.set(owner, beam);
+    beams.push(beam);
   }
 
   beam.origin.copy(rayOrigin);
   beam.direction.copy(rayDirection);
   beam.active = true;
   beam.hitPoint = null;
+  beam.color.copy(getBeamColor(weapon.name)); // Update color in case weapon changed
 
   // Find nearest enemy in beam path
   let closestHit: { entity: Entity; distance: number } | null = null;
@@ -142,9 +197,14 @@ function fireBeam(
     }
   }
 
+  // Reuse or create hitPoint vector (avoid per-frame allocation)
+  if (!beam.hitPoint) {
+    beam.hitPoint = new THREE.Vector3();
+  }
+
   if (closestHit) {
     // Calculate hit point
-    beam.hitPoint = new THREE.Vector3()
+    beam.hitPoint
       .copy(rayDirection)
       .multiplyScalar(closestHit.distance)
       .add(rayOrigin);
@@ -154,7 +214,7 @@ function fireBeam(
     dealDamage(world, closestHit.entity, falloffDamage * dt);
   } else {
     // No hit - beam extends to max range
-    beam.hitPoint = new THREE.Vector3()
+    beam.hitPoint
       .copy(rayDirection)
       .multiplyScalar(weapon.range)
       .add(rayOrigin);
@@ -174,10 +234,11 @@ function rayIntersectsSphere(
   center: THREE.Vector3,
   radius: number
 ): number | null {
-  const oc = new THREE.Vector3().subVectors(origin, center);
+  // Use reusable tempOC to avoid per-call allocation
+  tempOC.subVectors(origin, center);
   const a = direction.dot(direction);
-  const b = 2 * oc.dot(direction);
-  const c = oc.dot(oc) - radius * radius;
+  const b = 2 * tempOC.dot(direction);
+  const c = tempOC.dot(tempOC) - radius * radius;
   const discriminant = b * b - 4 * a * c;
 
   if (discriminant < 0) return null;
@@ -190,18 +251,21 @@ function rayIntersectsSphere(
   return t2 > 0 ? t2 : null;
 }
 
+// Cached beam colors (avoid per-frame allocation)
+const BEAM_COLORS: Record<string, THREE.Color> = {
+  'Red Laser': new THREE.Color(1, 0.2, 0.1),
+  'Green Laser': new THREE.Color(0.2, 1, 0.2),
+  'Blue Laser': new THREE.Color(0.2, 0.4, 1),
+};
+const DEFAULT_BEAM_COLOR = new THREE.Color(1, 1, 1);
+
 /** Get beam color based on weapon name */
 function getBeamColor(name: string): THREE.Color {
-  switch (name) {
-    case 'Red Laser': return new THREE.Color(1, 0.2, 0.1);
-    case 'Green Laser': return new THREE.Color(0.2, 1, 0.2);
-    case 'Blue Laser': return new THREE.Color(0.2, 0.4, 1);
-    default: return new THREE.Color(1, 1, 1);
-  }
+  return BEAM_COLORS[name] ?? DEFAULT_BEAM_COLOR;
 }
 
 /** Get all active beams for rendering */
-export function getActiveBeams(): Map<Entity, ActiveBeam> {
+export function getActiveBeams(): Map<Entity, ActiveBeam[]> {
   return activeBeams;
 }
 

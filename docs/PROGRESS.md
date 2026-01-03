@@ -1,7 +1,7 @@
 # Implementation Progress
 
 Tracks actual implementation status with file references as evidence.
-**Last updated:** 2026-01-03 (weapon display UX: lock status for all secondaries, cooldown indicator, keyboard hints)
+**Last updated:** 2026-01-03 (weapon bank linking, file split for weapon-display-secondary.ts)
 
 ---
 
@@ -36,7 +36,8 @@ Tracks actual implementation status with file references as evidence.
 - [x] WeaponSystem → `src/systems/weapons.ts:41-80`
 - [x] ProjectileSystem → `src/systems/projectiles.ts:16-69`
 - [x] MissileSystem → `src/systems/missiles.ts:21-117`
-- [x] BeamSystem → `src/systems/beams.ts:40-190`
+- [x] BeamSystem → `src/systems/beams.ts:42-88`
+- [x] Bank linking (linked/single mode) → `src/systems/weapons.ts:130-132` (toggle), `src/systems/weapons.ts:179-214` (linked firing), `src/systems/beams.ts:93-124` (linked beams), `src/components/weapons.ts:43` (linked field)
 
 ### 3.3 Shield System
 - [x] Shields component → `src/components/shields.ts:7-29`
@@ -48,13 +49,17 @@ Tracks actual implementation status with file references as evidence.
 - [x] AIControlled component → `src/components/ai.ts:17-24`
 - [x] Aim error component → `src/components/aim-error.ts:11-23`
 - [x] Aim error system → `src/systems/aim-error.ts:11-14`
-- [x] AI system → `src/systems/ai.ts:50-75` (state machine: Idle/Pursue/Engage)
-- [x] AI weapon firing → `src/systems/weapons.ts:78-105` (with aim error)
+- [x] AI system (Idle/Pursue/Engage) → `src/systems/ai.ts:50-75`
+- [ ] AI Evade state → TODO in `src/systems/ai.ts:77`
+- [ ] AI Protect state → TODO in `src/systems/ai.ts:77`
+- [ ] AI Regroup state → TODO in `src/systems/ai.ts:77`
+- [x] AI primary weapon firing → `src/systems/weapons.ts:94-114` (with aim error, always linked)
+- [ ] AI missile firing policy
 - [x] Max-3-on-human constraint → `src/systems/ai.ts:31-48`
 
 ### 3.5 Targeting System
 - [x] Targeting component → `src/components/targeting.ts:7-31`
-- [x] Lock-on progress → `src/systems/weapons.ts:141-171`
+- [x] Lock-on progress → `src/systems/weapons.ts:217-248`
 - [x] Target cycling → `src/systems/targeting.ts:46-59`
 - [x] Targeting system → `src/systems/targeting.ts:23-60`
 
@@ -66,9 +71,9 @@ Tracks actual implementation status with file references as evidence.
 - [x] Target reticles (corner brackets) → `src/rendering/reticle-drawing.ts:38-97`
 - [x] Off-screen arrows → `src/rendering/reticle-drawing.ts:164-247`
 - [x] Distance display → `src/rendering/reticle-drawing.ts:95`
-- [x] Lead indicator → `src/rendering/lead-calculation.ts:16-68` (intercept calculation), `src/rendering/reticles.ts:206-238` (rendering with range check)
+- [x] Lead indicator → `src/rendering/lead-calculation.ts:16-68` (intercept calculation), `src/rendering/lead-indicators.ts` (multiple indicators in linked mode, out-of-range styling)
 - [x] Lock-on indicator (visual) → `src/rendering/reticle-drawing.ts:99-132`, `src/rendering/reticles.ts:201-205`
-- [x] Weapon banks display → `src/rendering/weapon-display.ts`, `weapon-display-utils.ts`, `weapon-display-styles.ts` (ammo, heat, lock status for all secondaries, cooldown indicator, keyboard hints)
+- [x] Weapon banks display → `src/rendering/weapon-display.ts`, `weapon-display-utils.ts`, `weapon-display-styles.ts`, `weapon-display-secondary.ts` (ammo, heat, lock status for all secondaries, cooldown indicator, keyboard hints, link state [V])
 - [ ] Allied health bars
 - [ ] Target camera + stats
 - [x] 2D radar → `src/rendering/radar.ts` (6DOF ship-relative, logarithmic scaling, faction colors)
@@ -96,11 +101,11 @@ Tracks actual implementation status with file references as evidence.
 | Section | Done | Total | % |
 |---------|------|-------|---|
 | 3.1 Weapon Components | 4 | 4 | 100% |
-| 3.2 Weapon Systems | 4 | 4 | 100% |
+| 3.2 Weapon Systems | 5 | 5 | 100% |
 | 3.3 Shield System | 3 | 3 | 100% |
-| 3.4 AI Implementation | 7 | 7 | 100% |
+| 3.4 AI Implementation | 7 | 11 | 64% |
 | 3.5 Targeting System | 4 | 4 | 100% |
 | 3.6 HUD Implementation | 11 | 13 | 85% |
 | 3.7 Visual Effects | 2 | 5 | 40% |
 | 3.8 Dust Particles | 1 | 1 | 100% |
-| **Phase 3 Total** | **36** | **41** | **88%** |
+| **Phase 3 Total** | **37** | **46** | **80%** |

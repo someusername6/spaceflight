@@ -17,7 +17,7 @@ export interface Renderer {
   camera: THREE.PerspectiveCamera;
   webglRenderer: THREE.WebGLRenderer;
   entityMeshes: Map<Entity, THREE.Object3D>;
-  beamLines: Map<Entity, THREE.Line>;
+  beamLines: Map<string, THREE.Line>; // Key: "${entity}-${weaponIndex}"
 }
 
 /** Colors for factions */
@@ -157,45 +157,49 @@ export function syncScene(renderer: Renderer, world: World): void {
 }
 
 /** Updates beam line visuals */
-function updateBeamLines(scene: THREE.Scene, beamLines: Map<Entity, THREE.Line>): void {
+function updateBeamLines(scene: THREE.Scene, beamLines: Map<string, THREE.Line>): void {
   const activeBeams = getActiveBeams();
-  const seenBeams = new Set<Entity>();
+  const seenBeams = new Set<string>();
 
-  for (const [entity, beam] of activeBeams) {
-    if (!beam.active || !beam.hitPoint) continue;
-    seenBeams.add(entity);
+  for (const [entity, beams] of activeBeams) {
+    for (const beam of beams) {
+      if (!beam.active || !beam.hitPoint) continue;
 
-    let line = beamLines.get(entity);
-    if (!line) {
-      // Create new beam line
-      const geometry = new THREE.BufferGeometry();
-      const material = new THREE.LineBasicMaterial({
-        color: beam.color,
-        linewidth: 2,
-        transparent: true,
-        opacity: 0.8,
-      });
-      line = new THREE.Line(geometry, material);
-      scene.add(line);
-      beamLines.set(entity, line);
+      const key = `${entity}-${beam.weaponIndex}`;
+      seenBeams.add(key);
+
+      let line = beamLines.get(key);
+      if (!line) {
+        // Create new beam line
+        const geometry = new THREE.BufferGeometry();
+        const material = new THREE.LineBasicMaterial({
+          color: beam.color,
+          linewidth: 2,
+          transparent: true,
+          opacity: 0.8,
+        });
+        line = new THREE.Line(geometry, material);
+        scene.add(line);
+        beamLines.set(key, line);
+      }
+
+      // Update line geometry
+      const positions = new Float32Array([
+        beam.origin.x, beam.origin.y, beam.origin.z,
+        beam.hitPoint.x, beam.hitPoint.y, beam.hitPoint.z,
+      ]);
+      const posAttr = new THREE.BufferAttribute(positions, 3);
+      line.geometry.setAttribute('position', posAttr);
+      line.visible = true;
+
+      // Update color if changed
+      (line.material as THREE.LineBasicMaterial).color.copy(beam.color);
     }
-
-    // Update line geometry
-    const positions = new Float32Array([
-      beam.origin.x, beam.origin.y, beam.origin.z,
-      beam.hitPoint.x, beam.hitPoint.y, beam.hitPoint.z,
-    ]);
-    const posAttr = new THREE.BufferAttribute(positions, 3);
-    line.geometry.setAttribute('position', posAttr);
-    line.visible = true;
-
-    // Update color if changed
-    (line.material as THREE.LineBasicMaterial).color.copy(beam.color);
   }
 
   // Hide inactive beams
-  for (const [entity, line] of beamLines) {
-    if (!seenBeams.has(entity)) {
+  for (const [key, line] of beamLines) {
+    if (!seenBeams.has(key)) {
       line.visible = false;
     }
   }

@@ -40,6 +40,7 @@ export interface PrimaryWeapons extends ComponentBase {
   weapons: PrimaryWeapon[];
   currentIndex: number;
   lastFireTime: number; // Timestamp of last fire (for fire rate)
+  linked: boolean; // true = fire all weapons together, false = fire selected only
 }
 
 /** Secondary weapons component */
@@ -152,6 +153,7 @@ export function createPrimaryWeapons(weaponNames: string[]): PrimaryWeapons {
     weapons,
     currentIndex: 0,
     lastFireTime: 0,
+    linked: false, // Default to single-fire mode
   };
 }
 

@@ -136,9 +136,18 @@ export function drawLeadIndicator(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
-  color: string
+  color: string,
+  outOfRange: boolean = false,
+  weaponLabel?: string
 ): void {
-  ctx.strokeStyle = color;
+  // Set up styling (dimmer and dashed if out of range)
+  if (outOfRange) {
+    ctx.strokeStyle = dimColor(color);
+    ctx.setLineDash([3, 3]);
+  } else {
+    ctx.strokeStyle = color;
+    ctx.setLineDash([]);
+  }
   ctx.lineWidth = 2;
 
   // Draw a small circle/pip
@@ -158,6 +167,31 @@ export function drawLeadIndicator(
   ctx.moveTo(x, y + LEAD_INDICATOR_SIZE + 1);
   ctx.lineTo(x, y + half);
   ctx.stroke();
+
+  // Reset line dash
+  ctx.setLineDash([]);
+
+  // Draw weapon label if provided (for linked mode with multiple indicators)
+  if (weaponLabel) {
+    ctx.font = `bold 9px ${FONT_FAMILY}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = outOfRange ? dimColor(color) : color;
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.strokeText(weaponLabel, x, y + LEAD_INDICATOR_SIZE + 4);
+    ctx.fillText(weaponLabel, x, y + LEAD_INDICATOR_SIZE + 4);
+  }
+}
+
+/** Dim a color for out-of-range indicators */
+function dimColor(color: string): string {
+  // Handle common hex colors
+  if (color === '#ff0000' || color === '#f00') return '#660000';
+  if (color === '#00ff00' || color === '#0f0') return '#006600';
+  if (color === '#ffff00' || color === '#ff0') return '#666600';
+  // Default: just return a darker shade
+  return color + '80'; // Add alpha if not handled
 }
 
 /** Draw off-screen arrow pointing to target */

@@ -4,7 +4,7 @@
  */
 import type { World, Entity } from '../core/types';
 import { getComponent } from '../core/ecs';
-import type { PrimaryWeapons, SecondaryWeapons, PrimaryWeapon, SecondaryWeapon } from '../components/weapons';
+import type { PrimaryWeapons, SecondaryWeapons, PrimaryWeapon } from '../components/weapons';
 import type { Targeting } from '../components/targeting';
 import type { Heat } from '../components/heat';
 import { getGameTime } from '../systems/weapons';
@@ -14,6 +14,11 @@ import {
   getPrimarySignature,
   getSecondarySignature,
 } from './weapon-display-utils';
+import {
+  rebuildSecondaryBanks,
+  updateSecondaryDisplay,
+  showSecondaryNone,
+} from './weapon-display-secondary';
 
 /** Weapon display state */
 export interface WeaponDisplay {
@@ -25,6 +30,9 @@ export interface WeaponDisplay {
   // Track "NONE" divs so they can be removed
   primaryNoneEl: HTMLElement | null;
   secondaryNoneEl: HTMLElement | null;
+  // Link state indicator
+  linkIndicator: HTMLElement;
+  lastLinked: boolean | null;
   // Track weapon signatures to detect type changes (not just count)
   lastPrimarySignature: string;
   lastSecondarySignature: string;
@@ -45,6 +53,11 @@ export function createWeaponDisplay(parent: HTMLElement): WeaponDisplay {
   primaryHint.textContent = '[</>]';
   primaryLabel.appendChild(primaryHint);
   primarySection.appendChild(primaryLabel);
+
+  // Link state indicator
+  const linkIndicator = document.createElement('div');
+  linkIndicator.className = 'link-indicator';
+  primarySection.appendChild(linkIndicator);
 
   const secondarySection = document.createElement('div');
   secondarySection.className = 'weapon-section secondary-section';
@@ -69,6 +82,8 @@ export function createWeaponDisplay(parent: HTMLElement): WeaponDisplay {
     secondaryBanks: [],
     primaryNoneEl: null,
     secondaryNoneEl: null,
+    linkIndicator,
+    lastLinked: null,
     lastPrimarySignature: '',
     lastSecondarySignature: '',
   };
@@ -96,27 +111,6 @@ function rebuildPrimaryBanks(display: WeaponDisplay, weapons: PrimaryWeapon[]): 
   display.lastPrimarySignature = getPrimarySignature(weapons);
 }
 
-/** Rebuild secondary weapon bank elements when loadout changes */
-function rebuildSecondaryBanks(display: WeaponDisplay, weapons: SecondaryWeapon[]): void {
-  // Remove old elements and NONE div if present
-  for (const bank of display.secondaryBanks) bank.element.remove();
-  if (display.secondaryNoneEl) {
-    display.secondaryNoneEl.remove();
-    display.secondaryNoneEl = null;
-  }
-  display.secondaryBanks = [];
-
-  // Create new elements
-  for (const w of weapons) {
-    const bank = createBankElement(true, false);
-    bank.nameEl.textContent = w.name;
-    display.secondarySection.appendChild(bank.element);
-    display.secondaryBanks.push(bank);
-  }
-
-  display.lastSecondarySignature = getSecondarySignature(weapons);
-}
-
 /** Update weapon display with current state */
 export function updateWeaponDisplay(
   display: WeaponDisplay,
@@ -136,10 +130,28 @@ export function updateWeaponDisplay(
       rebuildPrimaryBanks(display, primary.weapons);
     }
 
+    // Update link state indicator (only if changed)
+    if (display.lastLinked !== primary.linked) {
+      display.lastLinked = primary.linked;
+      if (primary.linked) {
+        display.linkIndicator.textContent = 'LINKED';
+        display.linkIndicator.className = 'link-indicator linked';
+      } else {
+        display.linkIndicator.textContent = 'SINGLE';
+        display.linkIndicator.className = 'link-indicator single';
+      }
+    }
+
     const heatPct = heat ? Math.round((heat.current / heat.max) * 100) : 0;
     const heatStr = `${heatPct}%`;
     const isHot = heatPct > 80;
     const currentTime = getGameTime();
+    const timeSinceFire = currentTime - primary.lastFireTime;
+
+    // In linked mode, calculate slowest projectile fire rate (for cooldown display)
+    const linkedFireRate = primary.linked
+      ? Math.max(...primary.weapons.filter(w => w.category !== 'beam').map(w => w.fireRate), 0)
+      : 0;
 
     for (let i = 0; i < primary.weapons.length; i++) {
       const w = primary.weapons[i]!;
@@ -147,9 +159,15 @@ export function updateWeaponDisplay(
       const isSelected = i === primary.currentIndex;
       const ammoText = w.ammo !== undefined ? `${w.ammo}/${w.maxAmmo}` : '∞';
 
-      // Check cooldown for selected weapon (fire rate based on current weapon)
-      const timeSinceFire = currentTime - primary.lastFireTime;
-      const onCooldown = isSelected && timeSinceFire < w.fireRate;
+      // Cooldown logic: in linked mode, all weapons show cooldown based on slowest rate
+      // In single mode, only selected weapon shows cooldown based on its own rate
+      let onCooldown: boolean;
+      if (primary.linked) {
+        // All projectile weapons show cooldown together
+        onCooldown = w.category !== 'beam' && timeSinceFire < linkedFireRate;
+      } else {
+        onCooldown = isSelected && timeSinceFire < w.fireRate;
+      }
 
       // Update cooldown state
       if (bank.lastOnCooldown !== onCooldown) {
@@ -193,9 +211,8 @@ export function updateWeaponDisplay(
     }
   }
 
-  // Update secondary weapons
+  // Update secondary weapons (delegated to extracted module)
   if (secondary && secondary.weapons.length > 0) {
-    // Rebuild if weapon signature changed (handles count AND type changes)
     const sig = getSecondarySignature(secondary.weapons);
     if (sig !== display.lastSecondarySignature) {
       rebuildSecondaryBanks(display, secondary.weapons);
@@ -205,92 +222,17 @@ export function updateWeaponDisplay(
     const hasTarget = targeting?.currentTarget !== undefined;
     const currentTime = getGameTime();
 
-    for (let i = 0; i < secondary.weapons.length; i++) {
-      const w = secondary.weapons[i]!;
-      const bank = display.secondaryBanks[i]!;
-      const isSelected = i === secondary.currentIndex;
-      const countText = `${w.count}/${w.maxCount}`;
-      const isEmpty = w.count <= 0;
-
-      // Check cooldown for selected weapon
-      const timeSinceFire = currentTime - secondary.lastFireTime;
-      const onCooldown = isSelected && timeSinceFire < w.fireRate;
-
-      // Update cooldown state
-      if (bank.lastOnCooldown !== onCooldown) {
-        bank.element.classList.toggle('cooldown', onCooldown);
-        bank.lastOnCooldown = onCooldown;
-      }
-
-      // Update selection state
-      if (bank.lastSelected !== isSelected) {
-        bank.element.classList.toggle('selected', isSelected);
-        bank.lastSelected = isSelected;
-      }
-
-      // Update empty state
-      if (bank.lastEmpty !== isEmpty) {
-        bank.element.classList.toggle('empty', isEmpty);
-        bank.ammoEl.classList.toggle('depleted', isEmpty);
-        bank.lastEmpty = isEmpty;
-      }
-
-      // Update ammo count
-      if (bank.lastAmmo !== countText) {
-        bank.ammoEl.textContent = countText;
-        bank.lastAmmo = countText;
-      }
-
-      // Update lock status (show for ALL secondaries, not just selected)
-      if (bank.lockEl) {
-        let lockText = '';
-        let lockClass = '';
-
-        if (w.requiresLock) {
-          if (isSelected) {
-            // Selected lock-required: show actual lock state
-            if (!hasTarget) {
-              lockText = 'NO TGT';
-              lockClass = 'no-target';
-            } else if (lockProgress >= 1) {
-              lockText = 'LOCKED';
-              lockClass = 'locked';
-            } else {
-              lockText = `LOCK ${Math.round(lockProgress * 100)}%`;
-              lockClass = 'locking';
-            }
-          } else {
-            // Non-selected lock-required: show requirement indicator
-            lockText = 'LOCK REQ';
-            lockClass = 'lock-req';
-          }
-        } else {
-          // Dumbfire: always show (so player knows it's always ready)
-          lockText = 'DUMBFIRE';
-          lockClass = isSelected ? 'dumbfire' : 'dumbfire-dim';
-        }
-
-        const lockKey = `${lockText}:${lockClass}`;
-        if (bank.lastLock !== lockKey) {
-          bank.lockEl.textContent = lockText;
-          bank.lockEl.className = 'lock-status' + (lockClass ? ` ${lockClass}` : '');
-          bank.lastLock = lockKey;
-        }
-      }
-    }
+    updateSecondaryDisplay(
+      display,
+      secondary.weapons,
+      secondary.currentIndex,
+      secondary.lastFireTime,
+      lockProgress,
+      hasTarget,
+      currentTime
+    );
   } else {
-    // No weapons - show "NONE"
-    if (display.secondaryBanks.length > 0) {
-      for (const bank of display.secondaryBanks) bank.element.remove();
-      display.secondaryBanks = [];
-      display.lastSecondarySignature = '';
-    }
-    if (!display.secondaryNoneEl) {
-      display.secondaryNoneEl = document.createElement('div');
-      display.secondaryNoneEl.className = 'no-weapon';
-      display.secondaryNoneEl.textContent = 'NONE';
-      display.secondarySection.appendChild(display.secondaryNoneEl);
-    }
+    showSecondaryNone(display);
   }
 }
 

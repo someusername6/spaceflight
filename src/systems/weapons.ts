@@ -31,6 +31,7 @@ const prevInput = {
   cycleWeaponNext: false,
   cycleWeaponPrev: false,
   fireSecondary: false,
+  toggleLink: false,
 };
 
 /** Weapon system - handles firing and heat */
@@ -86,10 +87,11 @@ export function weaponSystem(world: World, dt: number): void {
     prevInput.cycleWeaponNext = player.input.cycleWeaponNext;
     prevInput.cycleWeaponPrev = player.input.cycleWeaponPrev;
     prevInput.fireSecondary = player.input.fireSecondary;
+    prevInput.toggleLink = player.input.toggleLink;
   }
 }
 
-/** Handle AI primary weapon firing */
+/** Handle AI primary weapon firing - AI always fires linked (all weapons) */
 function handleAIPrimaryWeapons(
   world: World,
   entity: Entity,
@@ -105,18 +107,11 @@ function handleAIPrimaryWeapons(
   // Need a valid target
   if (ai.target === null || !entityExists(world, ai.target)) return;
 
-  const weapon = getCurrentPrimary(weapons);
-  if (!weapon) return;
+  // Get aim error if present (makes AI imperfect)
+  const aimError = getComponent<AimError>(world, entity, 'aimError');
 
-  const timeSinceFire = gameTime - weapons.lastFireTime;
-  if (timeSinceFire >= weapon.fireRate && addHeat(heat, weapon.heatPerShot)) {
-    weapons.lastFireTime = gameTime;
-
-    // Get aim error if present (makes AI imperfect)
-    const aimError = getComponent<AimError>(world, entity, 'aimError');
-
-    spawnProjectileWithAimError(world, entity, transform, weapon, faction, aimError);
-  }
+  // AI always fires all weapons together (linked)
+  fireLinkedPrimaries(world, entity, transform, weapons, heat, faction, aimError);
 }
 
 /** Handle player primary weapon input */
@@ -131,7 +126,12 @@ function handlePlayerPrimaryWeapons(
 ): void {
   const input = player.input;
 
-  // Weapon cycling (edge-triggered)
+  // Toggle linked mode (edge-triggered)
+  if (input.toggleLink && !prevInput.toggleLink) {
+    weapons.linked = !weapons.linked;
+  }
+
+  // Weapon cycling (edge-triggered) - only meaningful in single mode
   if (input.cycleWeaponNext && !prevInput.cycleWeaponNext) {
     cycleNextPrimary(weapons);
   }
@@ -139,16 +139,77 @@ function handlePlayerPrimaryWeapons(
     cyclePrevPrimary(weapons);
   }
 
-  // Fire primary weapon
+  // Fire primary weapon(s)
   if (input.firePrimary) {
-    const weapon = getCurrentPrimary(weapons);
-    if (weapon) {
-      const timeSinceFire = gameTime - weapons.lastFireTime;
-      if (timeSinceFire >= weapon.fireRate && addHeat(heat, weapon.heatPerShot)) {
-        weapons.lastFireTime = gameTime;
-        spawnProjectile(world, entity, transform, weapon, faction);
-      }
+    if (weapons.linked) {
+      fireLinkedPrimaries(world, entity, transform, weapons, heat, faction);
+    } else {
+      fireSinglePrimary(world, entity, transform, weapons, heat, faction);
     }
+  }
+}
+
+/** Fire only the currently selected primary weapon */
+function fireSinglePrimary(
+  world: World,
+  entity: Entity,
+  transform: Transform,
+  weapons: PrimaryWeapons,
+  heat: Heat,
+  faction: FactionComponent | undefined
+): void {
+  const weapon = getCurrentPrimary(weapons);
+  if (!weapon || weapon.category === 'beam') return; // Beams handled by beam system
+
+  const timeSinceFire = gameTime - weapons.lastFireTime;
+  if (timeSinceFire >= weapon.fireRate) {
+    // Check ammo
+    if (weapon.ammo !== undefined && weapon.ammo <= 0) return;
+
+    // Check heat
+    if (!addHeat(heat, weapon.heatPerShot)) return;
+
+    weapons.lastFireTime = gameTime;
+    if (weapon.ammo !== undefined) weapon.ammo--;
+    spawnProjectile(world, entity, transform, weapon, faction);
+  }
+}
+
+/** Fire all primary weapons together (linked mode) */
+function fireLinkedPrimaries(
+  world: World,
+  entity: Entity,
+  transform: Transform,
+  weapons: PrimaryWeapons,
+  heat: Heat,
+  faction: FactionComponent | undefined,
+  aimError?: AimError
+): void {
+  // Find projectile weapons (non-beam) that can fire
+  const projectileWeapons = weapons.weapons.filter(w =>
+    w.category !== 'beam' && (w.ammo === undefined || w.ammo > 0)
+  );
+
+  if (projectileWeapons.length === 0) return;
+
+  // Calculate slowest fire rate among projectile weapons
+  const slowestRate = Math.max(...projectileWeapons.map(w => w.fireRate));
+
+  // Check if enough time has passed
+  const timeSinceFire = gameTime - weapons.lastFireTime;
+  if (timeSinceFire < slowestRate) return;
+
+  // Calculate total heat for all weapons
+  const totalHeat = projectileWeapons.reduce((sum, w) => sum + w.heatPerShot, 0);
+
+  // Check if we can add all heat
+  if (!addHeat(heat, totalHeat)) return;
+
+  // Fire all projectile weapons (with optional aim error for AI)
+  weapons.lastFireTime = gameTime;
+  for (const weapon of projectileWeapons) {
+    if (weapon.ammo !== undefined) weapon.ammo--;
+    spawnProjectileWithAimError(world, entity, transform, weapon, faction, aimError);
   }
 }
 
@@ -233,4 +294,5 @@ export function resetWeaponSystem(): void {
   prevInput.cycleWeaponNext = false;
   prevInput.cycleWeaponPrev = false;
   prevInput.fireSecondary = false;
+  prevInput.toggleLink = false;
 }

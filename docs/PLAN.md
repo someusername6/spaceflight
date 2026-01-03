@@ -304,6 +304,31 @@ Playable: WASD+QE to fly, crash into enemy to damage, destroy all enemies to win
 - `MissileSystem` - Tracking logic, lock-on
 - `BeamSystem` - Raycast beams, damage over time
 
+#### 3.2.1 Primary Weapon Bank Linking (FS2-style)
+Player can toggle between LINKED and SINGLE fire modes (V key):
+
+**SINGLE mode (default):**
+- Only the currently selected weapon fires
+- Use `<` / `>` to cycle through weapons
+- Fire rate and heat based on selected weapon only
+
+**LINKED mode:**
+- ALL primary weapons fire simultaneously
+- Projectile weapons fire at the slowest projectile weapon's rate
+- Beam weapons fire continuously (each adds heat per second)
+- Total heat from all weapons checked before firing
+- Empty weapons (ammo=0) are skipped, others still fire
+
+**Weapon type behavior when linked:**
+| Type | Linked Behavior |
+|------|-----------------|
+| Energy (Plasma, Pulse, Ion) | Fire at slowest rate, each adds heat |
+| Ballistic (Autocannon, Railgun) | Fire at slowest rate, skip if empty |
+| Beam (Lasers) | All beams fire continuously |
+| Mixed (projectile + beam) | Projectiles at slowest projectile rate, beams continuous |
+
+**AI behavior:** AI always fires linked (all weapons together)
+
 ### 3.3 Shield System
 - `Shields`: current, max, regenRate, regenDelay, lastDamageTime
 - `ShieldSystem` - Regeneration logic
@@ -314,6 +339,16 @@ Playable: WASD+QE to fly, crash into enemy to damage, destroy all enemies to win
 - Missile firing policy
 - Target selection logic
 - Max-3-on-human constraint
+
+#### 3.4.1 AI Weapon Selection (Future Enhancement)
+Currently AI always fires linked (all weapons). Future enhancement to add smart weapon selection:
+- **Range-based selection:** At long range, prefer railgun/long-range weapons only
+- **Close-range selection:** Prefer beams/short-range high-DPS weapons
+- **Heat management:** Switch to cooler weapons if overheating
+- **Ammo conservation:** Avoid wasting finite ammo at poor angles
+- **Target-type selection:** Use anti-shield weapons on shielded targets
+
+Implementation: Add `selectOptimalWeapon(distance, targetHealth, ownHeat)` that returns either "linked" or specific weapon index
 
 ### 3.5 Targeting System
 - `Targeting`: currentTarget, lockProgress, lockTarget
@@ -328,10 +363,13 @@ Playable: WASD+QE to fly, crash into enemy to damage, destroy all enemies to win
 - Distance display
 - **Bottom-center:** speed, hull, shields, heat bars
 - **Bottom-right:** weapon banks display
-  - Primary banks: show weapon type icons, current heat per bank, ammo count if finite
-  - Secondary banks: show weapon type icons, ammo count, lock status
-  - Currently selected weapon highlighted
-  - Linked weapons indicated visually
+  - Primary banks: show weapon name, ammo count (or ∞), heat % for selected
+  - Secondary banks: show weapon name, count, lock status for ALL (not just selected)
+  - Currently selected weapon highlighted (green border)
+  - Cooldown indicator (orange border/name when on cooldown)
+  - LINKED/SINGLE mode indicator in section header
+  - When LINKED: all primary weapons show selected highlight
+  - Keyboard hints: `[</>]` for cycling, `[V]` for link toggle
 - **Top-left:** allied ship health bars
 - **Top-right:** target camera + stats
 - **Bottom-left:** 2D radar

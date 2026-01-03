@@ -31,6 +31,28 @@ export function getWeaponDisplayStyles(): string {
       font-size: 8px;
       margin-left: 4px;
     }
+    .link-indicator {
+      font-size: 9px;
+      padding: 2px 4px;
+      margin-bottom: 4px;
+      text-align: center;
+      letter-spacing: 1px;
+    }
+    .link-indicator::after {
+      content: ' [V]';
+      color: #050;
+      font-size: 8px;
+    }
+    .link-indicator.linked {
+      color: #4f4;
+      background: rgba(0, 100, 0, 0.4);
+      border: 1px solid #0a0;
+    }
+    .link-indicator.single {
+      color: #666;
+      background: rgba(0, 30, 0, 0.3);
+      border: 1px solid #333;
+    }
     .weapon-bank {
       padding: 3px 6px;
       background: rgba(0, 30, 0, 0.4);

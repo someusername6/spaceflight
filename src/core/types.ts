@@ -69,6 +69,7 @@ export interface InputState {
   cycleTargetPrev: boolean;
   targetNearest: boolean;
   fireDecoy: boolean;
+  toggleLink: boolean;
 }
 
 /** Creates default input state with all flags false */
@@ -91,5 +92,6 @@ export function createInputState(): InputState {
     cycleTargetPrev: false,
     targetNearest: false,
     fireDecoy: false,
+    toggleLink: false,
   };
 }

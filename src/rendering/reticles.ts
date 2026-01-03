@@ -8,11 +8,10 @@ import { getComponent, queryEntities } from '../core/ecs';
 import type { Transform } from '../components/transform';
 import type { Targeting } from '../components/targeting';
 import { Faction, type FactionComponent } from '../components/faction';
-import { drawOnScreenReticle, drawOffScreenArrow, drawLeadIndicator, drawLockIndicator } from './reticle-drawing';
-import { calculateInterceptPoint } from './lead-calculation';
+import { drawOnScreenReticle, drawOffScreenArrow, drawLockIndicator } from './reticle-drawing';
+import { drawLeadIndicators } from './lead-indicators';
 import type { Physics } from '../components/physics';
 import type { PrimaryWeapons, SecondaryWeapons } from '../components/weapons';
-import { getCurrentPrimary } from '../components/weapons';
 
 /** Reticle canvas state */
 export interface ReticleCanvas {
@@ -25,7 +24,6 @@ export interface ReticleCanvas {
 const tempVec3 = new THREE.Vector3();
 const toTarget = new THREE.Vector3();
 const cameraForward = new THREE.Vector3();
-const leadVec3 = new THREE.Vector3();
 const zeroVec3 = new THREE.Vector3(); // Shared zero vector for fallbacks
 const tempBox3 = new THREE.Box3();
 const boxCorners: THREE.Vector3[] = [];
@@ -98,11 +96,8 @@ export function updateReticles(
   const targeting = getComponent<Targeting>(world, player, 'targeting');
   const currentTarget = targeting?.currentTarget;
 
-  // Get player's current weapon stats for lead calculation
+  // Get player's weapons for lead calculation
   const playerWeapons = getComponent<PrimaryWeapons>(world, player, 'primaryWeapons');
-  const currentWeapon = playerWeapons ? getCurrentPrimary(playerWeapons) : undefined;
-  const projectileSpeed = currentWeapon?.projectileSpeed ?? 0;
-  const weaponRange = currentWeapon?.range ?? 0;
 
   // Get lock-on progress for secondary weapons
   const secondaryWeapons = getComponent<SecondaryWeapons>(world, player, 'secondaryWeapons');
@@ -153,8 +148,7 @@ export function updateReticles(
       screenHeight,
       playerTransform,
       playerVelocity,
-      projectileSpeed,
-      weaponRange
+      playerWeapons
     );
   }
 }
@@ -168,8 +162,7 @@ function renderTarget(
   screenHeight: number,
   playerTransform: Transform | undefined,
   playerVelocity: THREE.Vector3 | undefined,
-  projectileSpeed: number,
-  weaponRange: number
+  playerWeapons: PrimaryWeapons | undefined
 ): void {
   // Colors matching radar: dim for non-selected, bright for selected
   // Enemy: red, Ally: green, Neutral: yellow
@@ -217,37 +210,14 @@ function renderTarget(
       drawLockIndicator(ctx, bounds, target.lockProgress, color);
     }
 
-    // Draw lead indicator for selected target (only for projectile weapons, not beams)
-    if (target.isSelected && playerTransform && projectileSpeed > 0) {
-      const interceptPoint = calculateInterceptPoint(
-        playerTransform.position,
-        playerVelocity ?? zeroVec3,
-        target.transform.position,
-        target.velocity,
-        projectileSpeed
+    // Draw lead indicator(s) for selected target
+    if (target.isSelected && playerTransform && playerWeapons) {
+      drawLeadIndicators(
+        ctx, camera, screenWidth, screenHeight,
+        playerTransform, playerVelocity ?? zeroVec3,
+        target.transform.position, target.velocity,
+        playerWeapons, color, cameraForward
       );
-
-      if (interceptPoint) {
-        // Check if intercept is within weapon range
-        const interceptDistance = playerTransform.position.distanceTo(interceptPoint);
-        if (interceptDistance <= weaponRange) {
-          // Check if intercept point is in front of camera
-          toTarget.copy(interceptPoint).sub(camera.position);
-          const interceptBehind = toTarget.dot(cameraForward) < 0;
-
-          if (!interceptBehind) {
-            // Project intercept point to screen
-            leadVec3.copy(interceptPoint).project(camera);
-            const leadX = (leadVec3.x + 1) * 0.5 * screenWidth;
-            const leadY = (1 - leadVec3.y) * 0.5 * screenHeight;
-
-            // Only draw if on screen
-            if (leadX >= 0 && leadX <= screenWidth && leadY >= 0 && leadY <= screenHeight) {
-              drawLeadIndicator(ctx, leadX, leadY, color);
-            }
-          }
-        }
-      }
     }
   } else {
     drawOffScreenArrow(ctx, centerX, centerY, target.distance, color, behindCamera, screenWidth, screenHeight);
