@@ -10,6 +10,7 @@
     "check-size": "bash scripts/build/check-file-size.sh",
     "sim": "node scripts/simulation/run-all.mjs",
     "sim:dust": "node scripts/simulation/dust.mjs",
+    "sim:ai": "npx tsx scripts/simulation/ai-tests.mjs",
     "test": "npx tsx scripts/test-game.mjs"
   },
   "dependencies": {

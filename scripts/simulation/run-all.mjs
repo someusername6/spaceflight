@@ -14,17 +14,15 @@ import { dirname, join } from 'path';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const SIMULATIONS = [
-  { name: 'Dust Particles', script: 'dust.mjs' },
-  // Future simulations:
-  // { name: 'Combat Balance', script: 'combat.mjs' },
-  // { name: 'Economy', script: 'economy.mjs' },
-  // { name: 'AI Behavior', script: 'ai.mjs' },
+  { name: 'Dust Particles', script: 'dust.mjs', runner: 'node' },
+  { name: 'AI Behavior', script: 'ai-tests.mjs', runner: 'npx tsx' },
 ];
 
 async function runSimulation(sim) {
   return new Promise((resolve) => {
     const scriptPath = join(__dirname, sim.script);
-    const proc = spawn('node', [scriptPath], { stdio: 'inherit' });
+    const [cmd, ...args] = (sim.runner || 'node').split(' ');
+    const proc = spawn(cmd, [...args, scriptPath], { stdio: 'inherit' });
     proc.on('close', (code) => resolve({ name: sim.name, passed: code === 0 }));
   });
 }
