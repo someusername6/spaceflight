@@ -19,12 +19,17 @@ export interface ReticleCanvas {
 
 // Reusable objects to avoid per-frame allocations
 const tempVec3 = new THREE.Vector3();
+const toTarget = new THREE.Vector3();
+const cameraForward = new THREE.Vector3();
 const tempBox3 = new THREE.Box3();
 const boxCorners: THREE.Vector3[] = [];
 for (let i = 0; i < 8; i++) boxCorners.push(new THREE.Vector3());
 
 // Reusable targets array (cleared each frame, avoids allocation)
 const targets: TargetInfo[] = [];
+
+// Cache bounding boxes to avoid traverse() every frame (auto-cleaned via WeakMap)
+const boundingBoxCache = new WeakMap<THREE.Object3D, THREE.Box3>();
 
 /** Target info for rendering */
 interface TargetInfo {
@@ -131,20 +136,20 @@ function renderTarget(
   const dimColor = target.isEnemy ? '#880000' : '#008800';
   const color = target.isSelected ? baseColor : dimColor;
 
+  // Check if target is behind camera using dot product (works at any distance)
+  toTarget.copy(target.transform.position).sub(camera.position);
+  cameraForward.set(0, 0, -1).applyQuaternion(camera.quaternion);
+  const behindCamera = toTarget.dot(cameraForward) < 0;
+
   // Project center position to screen space
   tempVec3.copy(target.transform.position).project(camera);
   const centerX = (tempVec3.x + 1) * 0.5 * screenWidth;
   const centerY = (1 - tempVec3.y) * 0.5 * screenHeight;
-  // In NDC, z > 1 means the point is behind the camera (beyond far plane)
-  const behindCamera = tempVec3.z > 1;
 
-  // Try to compute bounds from mesh (already stored in target.mesh)
+  // Compute screen bounds from mesh (only used if target is in front of camera)
   let bounds: { minX: number; maxX: number; minY: number; maxY: number } | null = null;
-  if (target.mesh) {
-    const result = computeScreenBounds(target.mesh, camera, screenWidth, screenHeight);
-    if (result && !result.behind) {
-      bounds = result;
-    }
+  if (target.mesh && !behindCamera) {
+    bounds = computeScreenBounds(target.mesh, camera, screenWidth, screenHeight);
   }
 
   // Check if on screen
@@ -160,33 +165,30 @@ function renderTarget(
   }
 }
 
+/** Get or compute cached bounding box for a mesh (in local space) */
+function getCachedBoundingBox(mesh: THREE.Object3D): THREE.Box3 | null {
+  let cached = boundingBoxCache.get(mesh);
+  if (!cached) {
+    cached = new THREE.Box3().setFromObject(mesh);
+    if (cached.isEmpty()) return null;
+    boundingBoxCache.set(mesh, cached);
+  }
+  return cached;
+}
+
 /** Compute screen bounds from mesh bounding box */
 function computeScreenBounds(
   mesh: THREE.Object3D,
   camera: THREE.Camera,
   screenWidth: number,
   screenHeight: number
-): { minX: number; maxX: number; minY: number; maxY: number; behind: boolean } | null {
-  tempBox3.makeEmpty();
-  let hasGeometry = false;
+): { minX: number; maxX: number; minY: number; maxY: number } | null {
+  // Use cached world-space bounding box (handles hierarchies correctly)
+  const cachedBox = getCachedBoundingBox(mesh);
+  if (!cachedBox) return null;
 
-  mesh.traverse((child) => {
-    if (child instanceof THREE.Mesh && child.geometry) {
-      if (!child.geometry.boundingBox) {
-        child.geometry.computeBoundingBox();
-      }
-      if (child.geometry.boundingBox) {
-        if (!hasGeometry) {
-          tempBox3.copy(child.geometry.boundingBox);
-          hasGeometry = true;
-        } else {
-          tempBox3.union(child.geometry.boundingBox);
-        }
-      }
-    }
-  });
-
-  if (!hasGeometry) return null;
+  // Copy to temp and transform to current world position
+  tempBox3.copy(cachedBox);
 
   const { min, max } = tempBox3;
   boxCorners[0]!.set(min.x, min.y, min.z);
@@ -200,17 +202,12 @@ function computeScreenBounds(
 
   let minX = Infinity, maxX = -Infinity;
   let minY = Infinity, maxY = -Infinity;
-  let allBehind = true;
 
   for (const c of boxCorners) {
     tempVec3.copy(c);
-    tempVec3.applyMatrix4(mesh.matrixWorld);
     tempVec3.project(camera);
 
-    if (tempVec3.z <= 1) {
-      allBehind = false;
-    }
-
+    // x/y projection is valid at any distance (only z is affected by far plane)
     const sx = (tempVec3.x + 1) * 0.5 * screenWidth;
     const sy = (1 - tempVec3.y) * 0.5 * screenHeight;
 
@@ -220,5 +217,5 @@ function computeScreenBounds(
     maxY = Math.max(maxY, sy);
   }
 
-  return { minX, maxX, minY, maxY, behind: allBehind };
+  return { minX, maxX, minY, maxY };
 }

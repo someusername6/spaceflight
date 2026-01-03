@@ -112,13 +112,20 @@ export function drawOffScreenArrow(
   if (behindCamera) { dirX = -dirX; dirY = -dirY; }
 
   const len = Math.sqrt(dirX * dirX + dirY * dirY);
-  if (len > 0) { dirX /= len; dirY /= len; }
+  if (len > 0.001) {
+    dirX /= len;
+    dirY /= len;
+  } else {
+    // Target at screen center or directly behind - default to pointing up
+    dirX = 0;
+    dirY = -1;
+  }
 
   // Find arrow position on screen edge
   const maxX = (screenWidth / 2) - EDGE_MARGIN;
   const maxY = (screenHeight / 2) - EDGE_MARGIN;
 
-  let scale = Infinity;
+  let scale = maxY; // Default for pure vertical
   if (Math.abs(dirX) > 0.001) scale = Math.min(scale, maxX / Math.abs(dirX));
   if (Math.abs(dirY) > 0.001) scale = Math.min(scale, maxY / Math.abs(dirY));
 
