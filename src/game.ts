@@ -23,6 +23,7 @@ import { damageSystem } from './systems/damage';
 import { shieldSystem } from './systems/shields';
 import { heatSystem } from './systems/heat';
 import { cleanupSystem } from './systems/cleanup';
+import { explosionSystem } from './systems/explosions';
 import { missionSystem, getMissionResult, MissionResult } from './systems/mission';
 
 /** Fixed timestep: 60 ticks per second */
@@ -47,8 +48,9 @@ const TICK_SEC = 1 / TICK_RATE;
  * 11. damage - Apply damage from collisions/projectiles/missiles
  * 12. shields - Regenerate shields after damage delay
  * 13. heat - Cool down weapon heat
- * 14. cleanup - Remove dead entities
- * 15. mission - Check win/lose after cleanup
+ * 14. cleanup - Remove dead entities, spawn explosions
+ * 15. explosions - Update explosion effects
+ * 16. mission - Check win/lose after cleanup
  */
 const SYSTEM_ORDER: SystemFn[] = [
   inputSystem,       // 1. Read player input
@@ -64,8 +66,9 @@ const SYSTEM_ORDER: SystemFn[] = [
   damageSystem,      // 11. Apply damage
   shieldSystem,      // 12. Regenerate shields
   heatSystem,        // 13. Cool heat
-  cleanupSystem,     // 14. Remove dead entities
-  missionSystem,     // 15. Check win/lose
+  cleanupSystem,     // 14. Remove dead entities, spawn explosions
+  explosionSystem,   // 15. Update explosion effects
+  missionSystem,     // 16. Check win/lose
 ];
 
 /** Game instance state */

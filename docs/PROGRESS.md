@@ -77,7 +77,7 @@ Tracks actual implementation status with file references as evidence.
 - [x] Beam rendering → `src/rendering/renderer.ts:159-201`
 - [ ] Projectile trails
 - [ ] Missile exhaust
-- [ ] Explosions
+- [x] Explosions → `src/components/explosion.ts:11-17`, `src/systems/explosions.ts:11-26`, `src/rendering/explosions.ts:99-143`
 - [ ] Shield hit effects
 
 ### 3.8 Dust Particles
@@ -101,6 +101,6 @@ Tracks actual implementation status with file references as evidence.
 | 3.4 AI Implementation | 7 | 7 | 100% |
 | 3.5 Targeting System | 4 | 4 | 100% |
 | 3.6 HUD Implementation | 9 | 13 | 69% |
-| 3.7 Visual Effects | 1 | 5 | 20% |
+| 3.7 Visual Effects | 2 | 5 | 40% |
 | 3.8 Dust Particles | 1 | 1 | 100% |
-| **Phase 3 Total** | **33** | **41** | **80%** |
+| **Phase 3 Total** | **34** | **41** | **83%** |

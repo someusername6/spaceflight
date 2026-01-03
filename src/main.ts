@@ -8,6 +8,7 @@ import { initInput } from './systems/input';
 import { resetMission } from './systems/mission';
 import { createRenderer, syncScene, render, followEntity, getScene } from './rendering/renderer';
 import { createDustSystem, updateDustSystem } from './rendering/dust';
+import { createExplosionRenderer, updateExplosionRenderer } from './rendering/explosions';
 import { createHUD, updateHUD } from './rendering/hud';
 import { createPlayerShip, createEnemyShip } from './factories/ship';
 import { findEntity, getComponent } from './core/ecs';
@@ -33,6 +34,9 @@ function main(): void {
   // Create dust particle system
   const dustSystem = createDustSystem(getScene(renderer));
 
+  // Create explosion renderer
+  const explosionRenderer = createExplosionRenderer(getScene(renderer));
+
   // Create HUD
   const hud = createHUD(container);
 
@@ -43,6 +47,9 @@ function main(): void {
   game.onRender = (world, _alpha) => {
     // Sync scene with ECS
     syncScene(renderer, world);
+
+    // Update explosion effects
+    updateExplosionRenderer(explosionRenderer, getScene(renderer), world);
 
     // Follow player and update dust
     const player = findEntity(world, ['playerControlled', 'transform']);
