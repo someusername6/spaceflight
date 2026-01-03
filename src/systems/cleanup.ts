@@ -82,12 +82,12 @@ function spawnExplosion(world: World, entity: number): void {
   const size = collision?.radius ?? 5;
   const color = EXPLOSION_COLORS[faction?.faction ?? Faction.Neutral];
 
-  // Create explosion entity
-  const explosion = createEntity(world);
-  addComponent(world, explosion, createTransform(
+  // Create explosion entity (follows source entity while it exists)
+  const explosionEntity = createEntity(world);
+  addComponent(world, explosionEntity, createTransform(
     transform.position.x,
     transform.position.y,
     transform.position.z
   ));
-  addComponent(world, explosion, createExplosion(size, color.clone()));
+  addComponent(world, explosionEntity, createExplosion(size, color.clone(), entity));
 }

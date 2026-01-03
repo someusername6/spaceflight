@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three';
-import type { ComponentBase } from '../core/types';
+import type { ComponentBase, Entity } from '../core/types';
 
 export interface Explosion extends ComponentBase {
   readonly type: 'explosion';
@@ -15,6 +15,8 @@ export interface Explosion extends ComponentBase {
   size: number;
   /** Explosion color */
   color: THREE.Color;
+  /** Source entity to follow (for coasting dying ships) */
+  sourceEntity?: Entity;
 }
 
 /** Default explosion duration */
@@ -23,15 +25,20 @@ const DEFAULT_MAX_AGE = 0.8;
 /** Creates an Explosion component */
 export function createExplosion(
   size: number,
-  color: THREE.Color = new THREE.Color(0xff6600)
+  color: THREE.Color = new THREE.Color(0xff6600),
+  sourceEntity?: Entity
 ): Explosion {
-  return {
+  const explosion: Explosion = {
     type: 'explosion',
     age: 0,
     maxAge: DEFAULT_MAX_AGE,
     size,
     color,
   };
+  if (sourceEntity !== undefined) {
+    explosion.sourceEntity = sourceEntity;
+  }
+  return explosion;
 }
 
 /** Get normalized progress (0-1) */
