@@ -16,10 +16,19 @@ Ships are small, single-pilot fighters. Each has distinct characteristics making
 | Acceleration | How quickly reaches max speed | 50-150 |
 | Turn Rate | Degrees per second (pitch/yaw) | 60-120 |
 | Roll Rate | Degrees per second (roll) | 90-180 |
+| Angular Accel | How fast rotation spins up/down (deg/sec²) | 400-1200 |
 | Max Heat | Heat capacity before overheating | 80-150 |
 | Cooling | Heat dissipated per second | 10-25 |
 | Primary Banks | Number of primary weapon slots | 1-5 |
 | Secondary Banks | Number of secondary weapon slots | 1-6 |
+
+### Angular Acceleration
+
+Controls rotational inertia - how quickly a ship reaches its turn/roll rate when input is pressed, and how quickly it stops rotating when input is released.
+
+- **High values (1000+):** Snappy, responsive controls. Light fighters.
+- **Low values (400-600):** Heavy, sluggish feel. Bombers and heavy ships.
+- **Default (800):** Balanced feel, ~0.125s to reach full turn rate.
 
 ## Hitbox Multiplier
 
@@ -56,6 +65,7 @@ Fast, fragile gun platform.
 | Acceleration | 150 |
 | Turn Rate | 120 |
 | Roll Rate | 180 |
+| Angular Accel | 1100 |
 | Max Heat | 80 |
 | Cooling | 15 |
 | Primary Banks | 2 (size 1, 1) |
@@ -78,6 +88,7 @@ Balanced fighter, jack of all trades.
 | Acceleration | 100 |
 | Turn Rate | 100 |
 | Roll Rate | 150 |
+| Angular Accel | 800 |
 | Max Heat | 100 |
 | Cooling | 18 |
 | Primary Banks | 3 (size 1, 1, 2) |
@@ -100,6 +111,7 @@ Heavy gun platform, maximum primary firepower.
 | Acceleration | 80 |
 | Turn Rate | 80 |
 | Roll Rate | 120 |
+| Angular Accel | 600 |
 | Max Heat | 150 |
 | Cooling | 25 |
 | Primary Banks | 5 (size 2, 2, 2, 1, 1) |
@@ -122,6 +134,7 @@ Dedicated missile boat.
 | Acceleration | 70 |
 | Turn Rate | 75 |
 | Roll Rate | 110 |
+| Angular Accel | 500 |
 | Max Heat | 80 |
 | Cooling | 12 |
 | Primary Banks | 1 (size 2) |
@@ -144,6 +157,7 @@ Tanky missile platform.
 | Acceleration | 70 |
 | Turn Rate | 70 |
 | Roll Rate | 100 |
+| Angular Accel | 550 |
 | Max Heat | 100 |
 | Cooling | 18 |
 | Primary Banks | 2 (size 2, 1) |
@@ -166,6 +180,7 @@ Glass cannon gun platform.
 | Acceleration | 120 |
 | Turn Rate | 110 |
 | Roll Rate | 160 |
+| Angular Accel | 1000 |
 | Max Heat | 140 |
 | Cooling | 22 |
 | Primary Banks | 4 (size 2, 2, 1, 1) |
@@ -188,6 +203,7 @@ Long-range support with beam focus.
 | Acceleration | 90 |
 | Turn Rate | 90 |
 | Roll Rate | 130 |
+| Angular Accel | 700 |
 | Max Heat | 130 |
 | Cooling | 22 |
 | Primary Banks | 3 (size 3, 2, 1) |

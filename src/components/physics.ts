@@ -18,6 +18,9 @@ export interface Physics extends ComponentBase {
   afterburnerHeatRate: number; // Heat generated per second while afterburning
   isAfterburning: boolean; // Currently using afterburner
   afterburnerLocked: boolean; // Locked out due to overheating (hysteresis)
+  // Rotational inertia (smooth turning)
+  angularVelocity: Vector3; // Current angular velocity (deg/sec): x=pitch, y=yaw, z=roll
+  angularAcceleration: number; // How fast rotation spins up/down (deg/sec²)
 }
 
 /** Creates a Physics component with ship-like defaults */
@@ -29,6 +32,7 @@ export function createPhysics(params: {
   rollRate?: number;
   afterburnerMultiplier?: number;
   afterburnerHeatRate?: number;
+  angularAcceleration?: number;
 }): Physics {
   return {
     type: 'physics',
@@ -43,5 +47,7 @@ export function createPhysics(params: {
     afterburnerHeatRate: params.afterburnerHeatRate ?? 50,
     isAfterburning: false,
     afterburnerLocked: false,
+    angularVelocity: new Vector3(),
+    angularAcceleration: params.angularAcceleration ?? 800, // Reaches full turn in ~0.125s
   };
 }

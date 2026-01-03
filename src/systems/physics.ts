@@ -19,6 +19,13 @@ const forward = new Vector3();
 /** Convert degrees to radians */
 const DEG_TO_RAD = Math.PI / 180;
 
+/** Move value toward target by maxDelta (used for smooth acceleration) */
+function moveToward(current: number, target: number, maxDelta: number): number {
+  const diff = target - current;
+  if (Math.abs(diff) <= maxDelta) return target;
+  return current + Math.sign(diff) * maxDelta;
+}
+
 /** Physics system - updates positions and velocities */
 export function physicsSystem(world: World, dt: number): void {
   for (const entity of queryEntities(world, ['transform', 'physics'])) {
@@ -52,10 +59,21 @@ export function physicsSystem(world: World, dt: number): void {
       // For now, simple pursue behavior handled here
     }
 
-    // Apply rotation (pitch, yaw, roll)
-    const pitchDelta = pitchInput * physics.turnRate * DEG_TO_RAD * dt;
-    const yawDelta = yawInput * physics.turnRate * DEG_TO_RAD * dt;
-    const rollDelta = rollInput * physics.rollRate * DEG_TO_RAD * dt;
+    // Calculate target angular velocity from input
+    const targetPitch = pitchInput * physics.turnRate;
+    const targetYaw = yawInput * physics.turnRate;
+    const targetRoll = rollInput * physics.rollRate;
+
+    // Accelerate/decelerate angular velocity toward target
+    const angAccel = physics.angularAcceleration * dt;
+    physics.angularVelocity.x = moveToward(physics.angularVelocity.x, targetPitch, angAccel);
+    physics.angularVelocity.y = moveToward(physics.angularVelocity.y, targetYaw, angAccel);
+    physics.angularVelocity.z = moveToward(physics.angularVelocity.z, targetRoll, angAccel);
+
+    // Apply angular velocity to rotation
+    const pitchDelta = physics.angularVelocity.x * DEG_TO_RAD * dt;
+    const yawDelta = physics.angularVelocity.y * DEG_TO_RAD * dt;
+    const rollDelta = physics.angularVelocity.z * DEG_TO_RAD * dt;
 
     // Create rotation delta in local space
     tempEuler.set(pitchDelta, yawDelta, rollDelta, 'YXZ');
