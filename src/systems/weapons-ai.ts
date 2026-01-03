@@ -1,26 +1,47 @@
 /**
  * AI Weapon System - Handles AI primary and secondary weapon firing.
  *
- * Extracted from weapons.ts to stay under 400 line limit.
+ * Uses smart weapon selection to pick optimal weapons based on:
+ * - Range to target
+ * - Heat level
+ * - Ammo conservation
+ * - Target shields
+ * - Missile selection
  */
 
 import { type AIControlled, AIState } from '../components/ai';
 import type { AimError } from '../components/aim-error';
 import type { FactionComponent } from '../components/faction';
 import type { Heat } from '../components/heat';
+import { addHeat } from '../components/heat';
 import type { Missile } from '../components/missile';
+import type { Physics } from '../components/physics';
+import type { Shields } from '../components/shields';
 import type { Transform } from '../components/transform';
-import type { PrimaryWeapons, SecondaryWeapons } from '../components/weapons';
-import { findDecoyWeapon } from '../components/weapons';
+import type {
+  PrimaryWeapon,
+  PrimaryWeapons,
+  SecondaryWeapons,
+} from '../components/weapons';
+import { findDecoyWeapon, getEffectiveHeat } from '../components/weapons';
 import { entityExists, getComponent, queryEntities } from '../core/ecs';
 import type { Entity, World } from '../core/types';
-import { spawnDecoy, spawnMissile } from './weapon-spawning';
+import { selectOptimalMissile } from './ai-missile-selection';
+import {
+  calculateFiringAngle,
+  selectOptimalPrimaryWeapon,
+} from './ai-weapon-selection';
+import {
+  spawnDecoy,
+  spawnMissile,
+  spawnProjectileWithAimError,
+} from './weapon-spawning';
 import { fireLinkedPrimaries } from './weapons';
 
 /** Minimum time between AI decoy launches */
 const AI_DECOY_COOLDOWN = 2.0;
 
-/** Handle AI primary weapon firing - AI always fires linked (all weapons) */
+/** Handle AI primary weapon firing with smart weapon selection */
 export function handleAIPrimaryWeapons(
   world: World,
   entity: Entity,
@@ -37,23 +58,100 @@ export function handleAIPrimaryWeapons(
   // Need a valid target
   if (ai.target === null || !entityExists(world, ai.target)) return;
 
+  // Get target information for weapon selection
+  const targetTransform = getComponent<Transform>(
+    world,
+    ai.target,
+    'transform',
+  );
+  if (!targetTransform) return;
+
+  const targetShields = getComponent<Shields>(world, ai.target, 'shields');
+
+  // Calculate distance and firing angle
+  const distance = transform.position.distanceTo(targetTransform.position);
+  const firingAngle = calculateFiringAngle(transform, targetTransform.position);
+
+  // Select optimal weapon(s)
+  const selection = selectOptimalPrimaryWeapon(
+    weapons,
+    distance,
+    heat,
+    targetShields,
+    firingAngle,
+  );
+
   // Get aim error if present (makes AI imperfect)
   const aimError = getComponent<AimError>(world, entity, 'aimError');
 
-  // AI always fires all weapons together (linked)
-  fireLinkedPrimaries(
+  // Execute weapon selection
+  if (selection.mode === 'linked') {
+    fireLinkedPrimaries(
+      world,
+      entity,
+      transform,
+      weapons,
+      heat,
+      faction,
+      gameTime,
+      aimError,
+    );
+  } else if (selection.mode === 'single' && selection.index !== undefined) {
+    fireSinglePrimaryAI(
+      world,
+      entity,
+      transform,
+      weapons,
+      heat,
+      faction,
+      gameTime,
+      selection.index,
+      aimError,
+    );
+  }
+  // mode === 'none' - don't fire (conserving heat/ammo)
+}
+
+/** Fire a specific primary weapon for AI */
+function fireSinglePrimaryAI(
+  world: World,
+  entity: Entity,
+  transform: Transform,
+  weapons: PrimaryWeapons,
+  heat: Heat,
+  faction: FactionComponent | undefined,
+  gameTime: number,
+  weaponIndex: number,
+  aimError?: AimError,
+): void {
+  const weapon = weapons.weapons[weaponIndex] as PrimaryWeapon | undefined;
+  if (!weapon || weapon.category === 'beam') return; // Beams handled by beam system
+
+  const timeSinceFire = gameTime - weapons.lastFireTime;
+  if (timeSinceFire < weapon.fireRate) return;
+
+  // Check ammo
+  if (weapon.ammo !== undefined && weapon.ammo <= 0) return;
+
+  // Check heat (scaled by bank size)
+  if (!addHeat(heat, getEffectiveHeat(weapon))) return;
+
+  weapons.lastFireTime = gameTime;
+  if (weapon.ammo !== undefined) weapon.ammo--;
+
+  spawnProjectileWithAimError(
     world,
     entity,
     transform,
-    weapons,
-    heat,
+    weapon,
     faction,
-    gameTime,
     aimError,
+    weaponIndex,
+    weapons.weapons.length,
   );
 }
 
-/** Handle AI secondary weapon firing - fires missiles and decoys */
+/** Handle AI secondary weapon firing with smart missile selection */
 export function handleAISecondaryWeapons(
   world: World,
   entity: Entity,
@@ -75,16 +173,60 @@ export function handleAISecondaryWeapons(
     return;
   }
 
+  // Check fire rate cooldown
   const timeSinceFire = gameTime - weapons.lastFireTime;
+  const fastestFireRate = getFastestMissileFireRate(weapons);
+  if (timeSinceFire < fastestFireRate) return;
+
+  // Get target information for missile selection
+  const targetTransform = getComponent<Transform>(
+    world,
+    ai.target,
+    'transform',
+  );
+  if (!targetTransform) return;
+
+  const targetPhysics = getComponent<Physics>(world, ai.target, 'physics');
+  const targetSpeed = targetPhysics?.velocity.length() ?? 0;
+  const distance = transform.position.distanceTo(targetTransform.position);
+  const isLocked = weapons.lockProgress >= 1;
+
+  // Select optimal missile
+  const selection = selectOptimalMissile(
+    weapons,
+    distance,
+    targetSpeed,
+    isLocked,
+  );
+
+  if (!selection.shouldFire) return;
+
+  // Set AI's selected weapon (for lock tracking consistency with player)
+  // This ensures lock progress is tracked for the correct weapon
+  weapons.currentIndex = selection.index;
+
+  const weapon = weapons.weapons[selection.index];
+  if (!weapon || weapon.isDecoy || weapon.count <= 0) return;
+
+  // Final checks (using same logic as player)
+  if (weapon.requiresLock && !isLocked) return;
+  if (timeSinceFire < weapon.fireRate) return;
+
+  // Fire the selected missile
+  weapons.lastFireTime = gameTime;
+  weapon.count--;
+  spawnMissile(world, entity, transform, weapon, faction, weapons.lockTarget);
+}
+
+/** Get fastest fire rate among non-decoy missiles */
+function getFastestMissileFireRate(weapons: SecondaryWeapons): number {
+  let fastest = Infinity;
   for (const weapon of weapons.weapons) {
-    if (weapon.isDecoy) continue; // Skip decoys here - handled above
-    if (weapon.count <= 0 || timeSinceFire < weapon.fireRate) continue;
-    if (weapon.requiresLock && weapons.lockProgress < 1) continue;
-    weapons.lastFireTime = gameTime;
-    weapon.count--;
-    spawnMissile(world, entity, transform, weapon, faction, weapons.lockTarget);
-    return;
+    if (!weapon.isDecoy && weapon.fireRate < fastest) {
+      fastest = weapon.fireRate;
+    }
   }
+  return fastest === Infinity ? 0.5 : fastest;
 }
 
 /** Check if any missiles are targeting this entity */

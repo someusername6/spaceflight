@@ -68,6 +68,14 @@ Tracks actual implementation status with file references as evidence.
 - [x] AI decoy usage → `src/systems/weapons-ai.ts:99-123` (launches when targeted by missiles, 2s cooldown)
 - [x] Max-3-on-human constraint → `src/systems/ai.ts:41-50`
 
+#### 3.4.1 AI Weapon Selection
+- [x] Range-based primary selection → `src/systems/ai-weapon-selection.ts:49-64`
+- [x] Heat management selection → `src/systems/ai-weapon-selection.ts:125-133`
+- [x] Ammo conservation → `src/systems/ai-weapon-selection.ts:189-196`
+- [x] Target-type selection (Ion against shields) → `src/systems/ai-weapon-selection.ts:141-143`
+- [x] AI missile selection → `src/systems/ai-missile-selection.ts:26-79`
+- [x] Lock reset on weapon change → `src/systems/weapons.ts:258-262`
+
 ### 3.5 Targeting System
 - [x] Targeting component → `src/components/targeting.ts:7-31`
 - [x] Lock-on progress → `src/systems/weapons.ts:217-248`
@@ -125,9 +133,9 @@ Tracks actual implementation status with file references as evidence.
 | 3.1 Weapon Components | 5 | 5 | 100% |
 | 3.2 Weapon Systems | 14 | 14 | 100% |
 | 3.3 Shield System | 3 | 3 | 100% |
-| 3.4 AI Implementation | 12 | 12 | 100% |
+| 3.4 AI Implementation | 12 | 17 | 71% |
 | 3.5 Targeting System | 4 | 4 | 100% |
 | 3.6 HUD Implementation | 13 | 13 | 100% |
 | 3.7 Visual Effects | 16 | 16 | 100% |
 | 3.8 Dust Particles | 1 | 1 | 100% |
-| **Phase 3 Total** | **68** | **68** | **100%** |
+| **Phase 3 Total** | **68** | **73** | **93%** |

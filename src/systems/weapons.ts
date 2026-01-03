@@ -223,7 +223,15 @@ export function fireLinkedPrimaries(
   }
 }
 
-/** Update lock-on progress for secondary weapons (shared by player and AI) */
+/**
+ * Update lock-on progress for secondary weapons (shared by player and AI).
+ *
+ * Lock resets when:
+ * - Target changes (different enemy)
+ * - Weapon changes (different missile type has different lock speed)
+ *
+ * This ensures consistent behavior between player and AI.
+ */
 function updateLockProgress(
   world: World,
   weapons: SecondaryWeapons,
@@ -233,17 +241,27 @@ function updateLockProgress(
   const weapon = getCurrentSecondary(weapons);
   if (!weapon) return;
 
+  // No valid target - decay lock
   if (target === undefined || target === null || !entityExists(world, target)) {
     weapons.lockProgress = Math.max(0, weapons.lockProgress - dt * 2);
     weapons.lockTarget = undefined;
     return;
   }
 
+  // Reset lock if target changed
   if (weapons.lockTarget !== target) {
     weapons.lockProgress = 0;
     weapons.lockTarget = target;
+    weapons.lockWeaponIndex = weapons.currentIndex;
   }
 
+  // Reset lock if weapon changed (different missiles have different lock speeds)
+  if (weapons.lockWeaponIndex !== weapons.currentIndex) {
+    weapons.lockProgress = 0;
+    weapons.lockWeaponIndex = weapons.currentIndex;
+  }
+
+  // Accumulate lock progress using current weapon's lock speed
   weapons.lockProgress =
     weapon.requiresLock && weapon.lockSpeed > 0
       ? Math.min(1, weapons.lockProgress + weapon.lockSpeed * dt)

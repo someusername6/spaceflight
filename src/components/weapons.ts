@@ -93,6 +93,7 @@ export interface SecondaryWeapons extends ComponentBase {
   lastFireTime: number;
   lockTarget: Entity | undefined;
   lockProgress: number; // 0-1, 1 = locked
+  lockWeaponIndex: number; // Which weapon the current lock is for (-1 = none)
 }
 
 /** Weapon definitions - all stats from WEAPONS.md */
@@ -273,6 +274,7 @@ export function createSecondaryWeapons(
     lastFireTime: 0,
     lockTarget: undefined,
     lockProgress: 0,
+    lockWeaponIndex: -1, // No weapon locked yet
   };
 }
 
