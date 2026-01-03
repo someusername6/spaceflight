@@ -7,6 +7,7 @@ Headless simulations that test game mechanics without rendering. These validate 
 ```bash
 npm run sim          # Run all simulations
 npm run sim:dust     # Run only dust particle tests
+npm run sim:ai       # Run only AI behavior tests
 ```
 
 ## Available Simulations
@@ -32,13 +33,49 @@ Tests the tiled cube dust particle system for uniform density and determinism.
 - Works at extreme distances (1M+ units)
 - Works with negative coordinates
 
+### ai-tests.mjs - AI Behavior System
+
+Tests the AI state machine, weapon firing, constraints, and movement.
+
+**Files:** Split into modules for maintainability (<150 lines each):
+- `ai-tests.mjs` - Main test runner
+- `ai-test-utils.mjs` - Shared test infrastructure
+- `ai-state-tests.mjs` - State transition tests
+- `ai-combat-tests.mjs` - Combat, movement, determinism tests
+
+**State Transition Tests (9 tests):**
+- Idle → Pursue when enemy detected
+- Pursue → Engage at close range (≤600 units)
+- Engage → Pursue when target far (>1200 units)
+- Engage → Evade when shields <20%
+- Engage → Regroup when shields <10% or heat >90%
+- Evade → Pursue after 5s cooldown + shield recovery
+- Regroup → Pursue after 3s + recovery
+- AI does not acquire dying entities as new targets
+
+**Weapon Firing Tests (3 tests):**
+- AI fires primary weapons only in Engage state
+- AI does not fire in Pursue state
+- AI does not fire in Evade state
+
+**Constraint Tests (2 tests):**
+- Max 3 AI can engage player simultaneously
+- Overflow AI remain in Pursue state
+
+**Movement Tests (3 tests):**
+- AI in Pursue moves toward target
+- AI in Evade moves away from target
+- AI accelerates to max speed
+
+**Determinism Tests (1 test):**
+- Same seed produces identical AI behavior
+
 ### Future Simulations
 
 As the project grows, add simulations for:
 
 - **combat.mjs** - Weapon balance, damage calculations, heat management
 - **economy.mjs** - Campaign progression, salvage rates, credit curves
-- **ai.mjs** - AI state transitions, aim error distribution, target selection
 
 ## Writing New Simulations
 
@@ -56,3 +93,7 @@ Simulations must match game constants. When updating values in `src/`, update th
 | Game File | Simulation |
 |-----------|------------|
 | `src/rendering/dust.ts` | `dust.mjs` |
+| `src/systems/ai.ts` | `ai-tests.mjs` |
+| `src/systems/ai-behaviors.ts` | `ai-tests.mjs` |
+| `src/systems/weapons.ts` | `ai-tests.mjs` |
+| `src/components/health.ts` | `ai-tests.mjs` |
