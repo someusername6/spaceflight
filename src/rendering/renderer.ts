@@ -8,6 +8,7 @@ import { queryEntities, getComponent } from '../core/ecs';
 import type { Transform } from '../components/transform';
 import { Faction, type FactionComponent } from '../components/faction';
 import { generateSkyboxTexture, getSunDirectionFromSeed } from './skybox';
+import { hasComponent } from '../core/ecs';
 
 /** Renderer state */
 export interface Renderer {
@@ -89,6 +90,16 @@ function createShipMesh(faction: Faction): THREE.Mesh {
   return new THREE.Mesh(geometry, material);
 }
 
+/** Creates a projectile mesh */
+function createProjectileMesh(faction: Faction): THREE.Mesh {
+  // Small glowing sphere
+  const geometry = new THREE.SphereGeometry(0.3, 8, 6);
+  const color = FACTION_COLORS[faction] ?? 0xffff00;
+  const material = new THREE.MeshBasicMaterial({ color }); // Unlit for glow effect
+
+  return new THREE.Mesh(geometry, material);
+}
+
 /** Syncs Three.js scene with ECS world */
 export function syncScene(renderer: Renderer, world: World): void {
   const { scene, entityMeshes } = renderer;
@@ -99,12 +110,17 @@ export function syncScene(renderer: Renderer, world: World): void {
     seenEntities.add(entity);
     const transform = getComponent<Transform>(world, entity, 'transform')!;
     const faction = getComponent<FactionComponent>(world, entity, 'faction');
+    const isProjectile = hasComponent(world, entity, 'projectile');
 
     let mesh = entityMeshes.get(entity);
 
     if (!mesh) {
-      // Create new mesh
-      mesh = createShipMesh(faction?.faction ?? Faction.Neutral);
+      // Create appropriate mesh based on entity type
+      if (isProjectile) {
+        mesh = createProjectileMesh(faction?.faction ?? Faction.Neutral);
+      } else {
+        mesh = createShipMesh(faction?.faction ?? Faction.Neutral);
+      }
       scene.add(mesh);
       entityMeshes.set(entity, mesh);
     }

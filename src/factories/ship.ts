@@ -12,6 +12,8 @@ import { createFaction } from '../components/faction';
 import { createPlayerControlled } from '../components/player';
 import { createAIControlled } from '../components/ai';
 import { createTargeting } from '../components/targeting';
+import { createPrimaryWeapons } from '../components/weapons';
+import { createHeat } from '../components/heat';
 import { createCollision } from '../systems/collision';
 import { Vector3, Quaternion } from 'three';
 
@@ -23,6 +25,9 @@ export interface ShipStats {
   turnRate: number;
   rollRate: number;
   collisionRadius: number;
+  maxHeat: number;
+  coolingRate: number;
+  primaryWeapons: string[];
 }
 
 /** Predefined ship archetypes (Slice 1: basic only) */
@@ -34,6 +39,9 @@ export const SHIP_ARCHETYPES: Record<string, ShipStats> = {
     turnRate: 100,
     rollRate: 150,
     collisionRadius: 5,
+    maxHeat: 100,
+    coolingRate: 20, // Heat units per second
+    primaryWeapons: ['plasma'],
   },
   scout: {
     hull: 50,
@@ -42,6 +50,9 @@ export const SHIP_ARCHETYPES: Record<string, ShipStats> = {
     turnRate: 120,
     rollRate: 180,
     collisionRadius: 4,
+    maxHeat: 80,
+    coolingRate: 25,
+    primaryWeapons: ['pulse'],
   },
 };
 
@@ -77,6 +88,8 @@ export function createPlayerShip(
   addComponent(world, entity, createFaction(Faction.Player));
   addComponent(world, entity, createPlayerControlled());
   addComponent(world, entity, createTargeting());
+  addComponent(world, entity, createHeat(stats.maxHeat, stats.coolingRate));
+  addComponent(world, entity, createPrimaryWeapons(stats.primaryWeapons));
   addComponent(world, entity, createCollision(stats.collisionRadius));
 
   return entity;

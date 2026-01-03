@@ -12,9 +12,12 @@ import { createPRNG, type PRNGState } from './core/prng';
 import { inputSystem } from './systems/input';
 import { targetingSystem } from './systems/targeting';
 import { aiSystem } from './systems/ai';
+import { weaponSystem } from './systems/weapons';
 import { physicsSystem } from './systems/physics';
+import { projectileSystem } from './systems/projectiles';
 import { collisionSystem } from './systems/collision';
 import { damageSystem } from './systems/damage';
+import { heatSystem } from './systems/heat';
 import { cleanupSystem } from './systems/cleanup';
 import { missionSystem, getMissionResult, MissionResult } from './systems/mission';
 
@@ -30,21 +33,27 @@ const TICK_SEC = 1 / TICK_RATE;
  * 1. input - Read player intent first
  * 2. targeting - Process target selection from input
  * 3. ai - AI decisions based on current state
- * 4. physics - Apply movement from input/AI
- * 5. collision - Detect collisions after movement
- * 6. damage - Apply damage from collisions
- * 7. cleanup - Remove dead entities
- * 8. mission - Check win/lose after cleanup
+ * 4. weapons - Handle firing, spawn projectiles
+ * 5. physics - Apply movement from input/AI
+ * 6. projectiles - Move projectiles (separate from ship physics)
+ * 7. collision - Detect collisions after movement
+ * 8. damage - Apply damage from collisions/projectiles
+ * 9. heat - Cool down weapon heat
+ * 10. cleanup - Remove dead entities
+ * 11. mission - Check win/lose after cleanup
  */
 const SYSTEM_ORDER: SystemFn[] = [
-  inputSystem,      // 1. Read player input
-  targetingSystem,  // 2. Process target selection
-  aiSystem,         // 3. AI decision making
-  physicsSystem,    // 4. Apply movement
-  collisionSystem,  // 5. Detect collisions
-  damageSystem,     // 6. Apply damage
-  cleanupSystem,    // 7. Remove dead entities
-  missionSystem,    // 8. Check win/lose
+  inputSystem,       // 1. Read player input
+  targetingSystem,   // 2. Process target selection
+  aiSystem,          // 3. AI decision making
+  weaponSystem,      // 4. Handle firing
+  physicsSystem,     // 5. Apply movement
+  projectileSystem,  // 6. Move projectiles
+  collisionSystem,   // 7. Detect collisions
+  damageSystem,      // 8. Apply damage
+  heatSystem,        // 9. Cool heat
+  cleanupSystem,     // 10. Remove dead entities
+  missionSystem,     // 11. Check win/lose
 ];
 
 /** Game instance state */
