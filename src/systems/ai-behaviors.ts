@@ -138,8 +138,19 @@ export function updateProtect(
   }
 
   // Find nearest threat to protectee and engage it directly
+  const protecteeTransform = getComponent<Transform>(world, ai.protectTarget, 'transform');
+  if (!protecteeTransform) {
+    ai.state = AIState.Idle;
+    ai.stateTimer = 0;
+    return;
+  }
+
+  const distToProtectee = transform.position.distanceTo(protecteeTransform.position);
   const threat = findNearestEnemy(world, ai.protectTarget, faction);
-  if (threat) {
+
+  // If too far from protectee, return instead of chasing threats
+  const MAX_PROTECT_RANGE = 400;
+  if (threat && distToProtectee <= MAX_PROTECT_RANGE) {
     ai.target = threat;
     const threatTransform = getComponent<Transform>(world, threat, 'transform');
     if (threatTransform) {
@@ -153,19 +164,15 @@ export function updateProtect(
       physics.currentSpeed = Math.min(physics.currentSpeed + physics.acceleration * dt, physics.maxSpeed);
     }
   } else {
-    // No threats - stay near protectee at reduced speed
-    const protecteeTransform = getComponent<Transform>(world, ai.protectTarget, 'transform');
-    if (protecteeTransform) {
-      const distToProtectee = transform.position.distanceTo(protecteeTransform.position);
-      if (distToProtectee > 200) {
-        // Too far from protectee - move closer
-        toTarget.copy(protecteeTransform.position).sub(transform.position).normalize();
-        turnToward(transform, physics, toTarget, dt);
-        physics.currentSpeed = Math.min(physics.currentSpeed + physics.acceleration * dt, physics.maxSpeed * 0.7);
-      } else {
-        // Close enough - slow down and orbit
-        physics.currentSpeed = Math.max(physics.currentSpeed - physics.acceleration * dt, physics.maxSpeed * 0.3);
-      }
+    // No threats or too far from protectee - return to protectee
+    if (distToProtectee > 200) {
+      // Move closer to protectee
+      toTarget.copy(protecteeTransform.position).sub(transform.position).normalize();
+      turnToward(transform, physics, toTarget, dt);
+      physics.currentSpeed = Math.min(physics.currentSpeed + physics.acceleration * dt, physics.maxSpeed * 0.7);
+    } else {
+      // Close enough - slow down and patrol
+      physics.currentSpeed = Math.max(physics.currentSpeed - physics.acceleration * dt, physics.maxSpeed * 0.3);
     }
   }
 }

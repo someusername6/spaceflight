@@ -75,7 +75,7 @@ export function aiSystem(world: World, dt: number): void {
     const heat = getComponent<Heat>(world, entity, 'heat');
 
     // Check for emergency transitions (can happen from any combat state)
-    if (ai.state === AIState.Pursue || ai.state === AIState.Engage) {
+    if (ai.state === AIState.Pursue || ai.state === AIState.Engage || ai.state === AIState.Protect) {
       if (shouldRegroup(shields, heat)) {
         ai.state = AIState.Regroup;
         ai.stateTimer = 0;
