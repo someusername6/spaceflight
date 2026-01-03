@@ -63,9 +63,9 @@ Tracks actual implementation status with file references as evidence.
 - [x] Hull bar → `src/rendering/hud.ts:196-204`
 - [x] Shields bar → `src/rendering/hud.ts:206-214`
 - [x] Heat bar → `src/rendering/hud.ts:216-224`
-- [x] Target reticles (corner brackets) → `src/rendering/reticles.ts:72-125`
-- [x] Off-screen arrows → `src/rendering/reticle-drawing.ts:98-181`
-- [x] Distance display → `src/rendering/reticle-drawing.ts:94`
+- [x] Target reticles (corner brackets) → `src/rendering/reticle-drawing.ts:38-97`
+- [x] Off-screen arrows → `src/rendering/reticle-drawing.ts:164-247`
+- [x] Distance display → `src/rendering/reticle-drawing.ts:95`
 - [x] Lead indicator → `src/rendering/lead-calculation.ts:16-68` (intercept calculation), `src/rendering/reticles.ts:206-238` (rendering with range check)
 - [x] Lock-on indicator (visual) → `src/rendering/reticle-drawing.ts:99-132`, `src/rendering/reticles.ts:201-205`
 - [ ] Weapon banks display
