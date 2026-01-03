@@ -56,32 +56,41 @@ export function damageSystem(world: World, _dt: number): void {
   }
 }
 
+/** Result of applying damage - for conditional visual effects */
+export interface DamageResult {
+  /** Amount of damage absorbed by shields */
+  shieldDamage: number;
+  /** Amount of damage dealt to hull */
+  hullDamage: number;
+}
+
 /** Apply damage through shields, then hull */
 function applyDamageWithShields(
   world: World,
   entity: Entity,
   amount: number,
   hitPosition?: THREE.Vector3,
-): number {
+): DamageResult {
   const shields = getComponent<Shields>(world, entity, 'shields');
   const health = getComponent<Health>(world, entity, 'health');
 
   let remaining = amount;
+  let shieldDamage = 0;
 
   // Shields absorb first
   if (shields && shields.current > 0) {
     const shieldsBefore = shields.current;
     remaining = damageShields(shields, remaining, world.systemState.gameTime);
-    const absorbed = shieldsBefore - shields.current;
+    shieldDamage = shieldsBefore - shields.current;
 
     // Record shield hit for visual effects
-    if (absorbed > 0 && hitPosition) {
+    if (shieldDamage > 0 && hitPosition) {
       const shieldHit = getComponent<ShieldHit>(world, entity, 'shieldHit');
       if (shieldHit) {
         recordShieldHit(
           shieldHit,
           hitPosition,
-          absorbed,
+          shieldDamage,
           shields.max,
           world.systemState.gameTime,
         );
@@ -90,11 +99,12 @@ function applyDamageWithShields(
   }
 
   // Remaining damage goes to hull
+  let hullDamage = 0;
   if (remaining > 0 && health) {
-    return applyDamage(health, remaining);
+    hullDamage = applyDamage(health, remaining);
   }
 
-  return amount - remaining;
+  return { shieldDamage, hullDamage };
 }
 
 /** Apply direct damage to an entity (for weapons) */
@@ -103,6 +113,6 @@ export function dealDamage(
   entity: Entity,
   amount: number,
   hitPosition?: THREE.Vector3,
-): number {
+): DamageResult {
   return applyDamageWithShields(world, entity, amount, hitPosition);
 }

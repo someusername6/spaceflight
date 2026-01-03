@@ -245,7 +245,53 @@ Decoys are countermeasure flares that seduce missiles away from ships:
 
 ---
 
-## Impact Effects
+## Hit Effects (Damage-Driven)
+
+Hit effects are triggered based on what actually takes damage, providing clear visual feedback:
+
+### Shield vs Hull Hit Logic
+
+| Scenario | Shield Effect | Hull Hit Effect |
+|----------|--------------|-----------------|
+| Shields fully absorb | ✅ Yes (cyan flash) | ❌ No |
+| Shields partially absorb | ✅ Yes (cyan flash) | ✅ Yes (sparks/flash) |
+| No shields / depleted | ❌ No | ✅ Yes (sparks/flash) |
+
+**Why this matters:**
+- Blue flash = "shields working, protected"
+- Orange/cyan sparks = "taking hull damage"
+- Players can instantly tell whether damage got through
+
+### Projectile Hit Effects
+
+**File:** `src/rendering/projectile-hits.ts`
+
+When projectiles deal hull damage, a hit effect spawns based on weapon category:
+
+| Category | Flash Color | Particle Color | Flash Size | Notes |
+|----------|------------|----------------|------------|-------|
+| **Energy** | Cyan RGB(0.4, 0.8, 1.0) | Blue RGB(0.2, 0.6, 1.0) | 1.5 | Electrical sparks |
+| **Ballistic** | Orange RGB(1.0, 0.6, 0.2) | Yellow-orange RGB(1.0, 0.8, 0.3) | 1.0 | Debris sparks |
+
+**Duration:** 0.25 seconds
+**Particles:** 12 per hit, fly outward in hemisphere
+
+### Shield Hit Effects
+
+**File:** `src/rendering/shield-effects.ts`
+
+When shields absorb any amount of damage:
+
+- **Shape:** Expanding sphere at hit location
+- **Color:** Cyan-blue RGB(0.3, 0.7, 1.0)
+- **Size:** 3 units base, scales with damage intensity
+- **Duration:** 0.3 seconds (SHIELD_HIT_DURATION)
+- **Animation:** Expands (1.0 → 3.0x), fades out
+- **Blending:** Additive
+
+---
+
+## Explosions
 
 ### Standard Explosions
 
@@ -303,21 +349,6 @@ The nuke has a unique multi-stage explosion:
 - Radius: 100 units
 - Damage: 50% of direct hit damage with linear falloff
 - Affects: All entities within radius (including friendlies)
-
----
-
-## Shield Hit Effects
-
-**File:** `src/rendering/shield-effects.ts`
-
-When shields absorb damage:
-
-- **Shape:** Expanding sphere at hit location
-- **Color:** Cyan-blue RGB(0.3, 0.7, 1.0)
-- **Size:** 3 units base, scales with damage intensity
-- **Duration:** 0.3 seconds (SHIELD_HIT_DURATION)
-- **Animation:** Expands (1.0 → 3.0x), fades out
-- **Blending:** Additive
 
 ---
 

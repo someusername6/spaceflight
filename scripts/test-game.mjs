@@ -39,6 +39,7 @@ import {
 } from '../src/core/ecs.ts';
 import { Faction } from '../src/core/types.ts';
 import { createCollision } from '../src/systems/collision.ts';
+import { dealDamage } from '../src/systems/damage.ts';
 
 let passed = 0;
 let failed = 0;
@@ -310,6 +311,76 @@ test('Missile resistedDecoys tracks resisted decoys', () => {
   assert(missile.resistedDecoys.size === 2, 'Should have 2 resisted decoys');
   assert(missile.resistedDecoys.has(decoy1), 'Decoy 1 still tracked');
   assert(missile.resistedDecoys.has(decoy2), 'Decoy 2 now tracked');
+});
+
+// Test: Damage result when shields fully absorb
+test('DamageResult: shields fully absorb returns 0 hullDamage', () => {
+  const world = createWorld();
+  const entity = createEntity(world);
+  addComponent(world, entity, createTransform(0, 0, 0));
+  addComponent(world, entity, createHealth(100));
+  addComponent(world, entity, createShields(50, 10, 3)); // 50 shields
+
+  const result = dealDamage(world, entity, 30); // 30 damage < 50 shields
+  assert(result.shieldDamage === 30, 'Should absorb 30 to shields');
+  assert(result.hullDamage === 0, 'Should deal 0 to hull');
+
+  const health = getComponent(world, entity, 'health');
+  const shields = getComponent(world, entity, 'shields');
+  assert(health.hull === 100, 'Hull should be unchanged');
+  assert(shields.current === 20, 'Shields should be 20');
+});
+
+// Test: Damage result when shields partially absorb
+test('DamageResult: shields partially absorb returns both damages', () => {
+  const world = createWorld();
+  const entity = createEntity(world);
+  addComponent(world, entity, createTransform(0, 0, 0));
+  addComponent(world, entity, createHealth(100));
+  addComponent(world, entity, createShields(30, 10, 3)); // 30 shields
+
+  const result = dealDamage(world, entity, 50); // 50 damage > 30 shields
+  assert(result.shieldDamage === 30, 'Should absorb 30 to shields');
+  assert(result.hullDamage === 20, 'Should deal 20 to hull');
+
+  const health = getComponent(world, entity, 'health');
+  const shields = getComponent(world, entity, 'shields');
+  assert(health.hull === 80, 'Hull should be 80');
+  assert(shields.current === 0, 'Shields should be depleted');
+});
+
+// Test: Damage result when no shields
+test('DamageResult: no shields returns all as hullDamage', () => {
+  const world = createWorld();
+  const entity = createEntity(world);
+  addComponent(world, entity, createTransform(0, 0, 0));
+  addComponent(world, entity, createHealth(100));
+  // No shields component
+
+  const result = dealDamage(world, entity, 40);
+  assert(result.shieldDamage === 0, 'Should absorb 0 to shields');
+  assert(result.hullDamage === 40, 'Should deal 40 to hull');
+
+  const health = getComponent(world, entity, 'health');
+  assert(health.hull === 60, 'Hull should be 60');
+});
+
+// Test: Damage result when shields depleted
+test('DamageResult: depleted shields returns all as hullDamage', () => {
+  const world = createWorld();
+  const entity = createEntity(world);
+  addComponent(world, entity, createTransform(0, 0, 0));
+  addComponent(world, entity, createHealth(100));
+  const shields = createShields(50, 10, 3);
+  shields.current = 0; // Already depleted
+  addComponent(world, entity, shields);
+
+  const result = dealDamage(world, entity, 25);
+  assert(result.shieldDamage === 0, 'Should absorb 0 to depleted shields');
+  assert(result.hullDamage === 25, 'Should deal 25 to hull');
+
+  const health = getComponent(world, entity, 'health');
+  assert(health.hull === 75, 'Hull should be 75');
 });
 
 // Summary

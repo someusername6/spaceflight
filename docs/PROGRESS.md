@@ -1,7 +1,7 @@
 # Implementation Progress
 
 Tracks actual implementation status with file references as evidence.
-**Last updated:** 2026-01-03 (Decoys, missile destructibility, missile visuals)
+**Last updated:** 2026-01-03 (Damage-driven hit effects)
 
 ---
 
@@ -97,7 +97,8 @@ Tracks actual implementation status with file references as evidence.
 - [x] Weapon bank spawn offsets → `src/systems/weapon-spawning.ts:43-71` (projectiles/beams spawn from distinct positions)
 - [x] Missile type visuals → `src/rendering/renderer.ts:129-188` (size, color, fins, glow per type)
 - [x] Decoy visuals → `src/rendering/renderer.ts:190-203` (glowing sphere, faction colors)
-- [ ] Projectile hit effects (vary by weapon type)
+- [x] Projectile hit effects → `src/rendering/projectile-hits.ts` (damage-driven: only when hull takes damage)
+- [x] Damage-driven hit logic → `src/systems/damage.ts:59-108` (shield hit if shields absorb, hull hit if hull damaged)
 
 ### 3.8 Dust Particles
 - [x] Dust system → `src/rendering/dust.ts:74-180`
@@ -120,6 +121,6 @@ Tracks actual implementation status with file references as evidence.
 | 3.4 AI Implementation | 12 | 12 | 100% |
 | 3.5 Targeting System | 4 | 4 | 100% |
 | 3.6 HUD Implementation | 11 | 13 | 85% |
-| 3.7 Visual Effects | 12 | 13 | 92% |
+| 3.7 Visual Effects | 14 | 14 | 100% |
 | 3.8 Dust Particles | 1 | 1 | 100% |
-| **Phase 3 Total** | **57** | **60** | **95%** |
+| **Phase 3 Total** | **59** | **61** | **97%** |

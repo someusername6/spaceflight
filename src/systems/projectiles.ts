@@ -131,10 +131,17 @@ export function projectileSystem(world: World, dt: number): void {
         // Friendly fire enabled - damage anyone except owner
 
         // Deal damage at projectile's current position
-        dealDamage(world, other, projectile.damage, transform.position);
+        const result = dealDamage(
+          world,
+          other,
+          projectile.damage,
+          transform.position,
+        );
 
-        // Queue hit effect based on weapon category
-        queueHitEffect(transform.position, projectile.category);
+        // Queue hit effect only if hull took damage (shields-only = no sparks)
+        if (result.hullDamage > 0) {
+          queueHitEffect(transform.position, projectile.category);
+        }
 
         // Projectile is consumed
         toRemove.push(entity);
