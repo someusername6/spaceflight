@@ -21,6 +21,11 @@ import { isDying } from '../components/health';
 /** Game time accumulator */
 let gameTime = 0;
 
+/** Get current game time (for external use, e.g., HUD cooldown display) */
+export function getGameTime(): number {
+  return gameTime;
+}
+
 /** Previous frame input for edge detection */
 const prevInput = {
   cycleWeaponNext: false,

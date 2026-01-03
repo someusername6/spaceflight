@@ -43,6 +43,7 @@ interface TargetInfo {
   distance: number;
   isSelected: boolean;
   isEnemy: boolean;
+  isNeutral: boolean;
   isLockTarget: boolean;
   lockProgress: number;
 }
@@ -130,6 +131,7 @@ export function updateReticles(
       distance,
       isSelected: entity === currentTarget,
       isEnemy: faction.faction === Faction.Enemy,
+      isNeutral: faction.faction === Faction.Neutral,
       isLockTarget,
       lockProgress: isLockTarget ? lockProgress : 0,
     });
@@ -169,8 +171,20 @@ function renderTarget(
   projectileSpeed: number,
   weaponRange: number
 ): void {
-  const baseColor = target.isEnemy ? '#ff0000' : '#00ff00';
-  const dimColor = target.isEnemy ? '#880000' : '#008800';
+  // Colors matching radar: dim for non-selected, bright for selected
+  // Enemy: red, Ally: green, Neutral: yellow
+  let baseColor: string;
+  let dimColor: string;
+  if (target.isNeutral) {
+    baseColor = '#ffff00';
+    dimColor = '#888800';
+  } else if (target.isEnemy) {
+    baseColor = '#ff0000';
+    dimColor = '#880000';
+  } else {
+    baseColor = '#00ff00';
+    dimColor = '#008800';
+  }
   const color = target.isSelected ? baseColor : dimColor;
 
   // Check if target is behind camera using dot product (works at any distance)

@@ -124,9 +124,7 @@ function cycleTarget(targeting: Targeting, direction: number): void {
   }
 
   targeting.currentTarget = targeting.validTargets[targeting.targetIndex];
-  // Reset lock when changing targets
-  targeting.lockProgress = 0;
-  targeting.lockTarget = undefined;
+  // Note: Lock reset is handled by weapons system when it detects target change
 }
 
 /** Select the nearest target */
@@ -139,16 +137,12 @@ function selectNearestTarget(targeting: Targeting): void {
   // Targets are already sorted by distance, so first is nearest
   targeting.targetIndex = 0;
   targeting.currentTarget = targeting.validTargets[0];
-  targeting.lockProgress = 0;
-  targeting.lockTarget = undefined;
 }
 
 /** Clear the current target */
 function clearTarget(targeting: Targeting): void {
   targeting.currentTarget = undefined;
   targeting.targetIndex = -1;
-  targeting.lockProgress = 0;
-  targeting.lockTarget = undefined;
 }
 
 /** Get the current target entity (for external use) */

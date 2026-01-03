@@ -1,7 +1,7 @@
 # Implementation Progress
 
 Tracks actual implementation status with file references as evidence.
-**Last updated:** 2026-01-03
+**Last updated:** 2026-01-03 (weapon display UX: lock status for all secondaries, cooldown indicator, keyboard hints)
 
 ---
 
@@ -68,10 +68,10 @@ Tracks actual implementation status with file references as evidence.
 - [x] Distance display → `src/rendering/reticle-drawing.ts:95`
 - [x] Lead indicator → `src/rendering/lead-calculation.ts:16-68` (intercept calculation), `src/rendering/reticles.ts:206-238` (rendering with range check)
 - [x] Lock-on indicator (visual) → `src/rendering/reticle-drawing.ts:99-132`, `src/rendering/reticles.ts:201-205`
-- [ ] Weapon banks display
+- [x] Weapon banks display → `src/rendering/weapon-display.ts`, `weapon-display-utils.ts`, `weapon-display-styles.ts` (ammo, heat, lock status for all secondaries, cooldown indicator, keyboard hints)
 - [ ] Allied health bars
 - [ ] Target camera + stats
-- [ ] 2D radar
+- [x] 2D radar → `src/rendering/radar.ts` (6DOF ship-relative, logarithmic scaling, faction colors)
 
 ### 3.7 Visual Effects
 - [x] Beam rendering → `src/rendering/renderer.ts:159-201`
@@ -100,7 +100,7 @@ Tracks actual implementation status with file references as evidence.
 | 3.3 Shield System | 3 | 3 | 100% |
 | 3.4 AI Implementation | 7 | 7 | 100% |
 | 3.5 Targeting System | 4 | 4 | 100% |
-| 3.6 HUD Implementation | 9 | 13 | 69% |
+| 3.6 HUD Implementation | 11 | 13 | 85% |
 | 3.7 Visual Effects | 2 | 5 | 40% |
 | 3.8 Dust Particles | 1 | 1 | 100% |
-| **Phase 3 Total** | **34** | **41** | **83%** |
+| **Phase 3 Total** | **36** | **41** | **88%** |

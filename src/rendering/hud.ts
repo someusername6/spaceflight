@@ -17,6 +17,18 @@ import {
   resizeReticleCanvas,
 } from './reticles';
 import { HUD_STYLE_ID, getHUDStyles } from './hud-styles';
+import {
+  type WeaponDisplay,
+  createWeaponDisplay,
+  updateWeaponDisplay,
+  getWeaponDisplayStyles,
+} from './weapon-display';
+import {
+  type RadarDisplay,
+  createRadar,
+  updateRadar,
+  getRadarStyles,
+} from './radar';
 
 /** HUD state */
 export interface HUD {
@@ -39,6 +51,10 @@ export interface HUD {
   shieldValue: HTMLElement;
   heatValue: HTMLElement;
   reticleCanvas: ReticleCanvas;
+  // Weapon display (bottom-right)
+  weaponDisplay: WeaponDisplay;
+  // Radar display (bottom-left)
+  radarDisplay: RadarDisplay;
   // Cleanup function
   dispose: () => void;
 }
@@ -89,13 +105,19 @@ export function createHUD(parent: HTMLElement): HUD {
   if (!document.getElementById(HUD_STYLE_ID)) {
     const style = document.createElement('style');
     style.id = HUD_STYLE_ID;
-    style.textContent = getHUDStyles();
+    style.textContent = getHUDStyles() + getWeaponDisplayStyles() + getRadarStyles();
     document.head.appendChild(style);
   }
   parent.appendChild(container);
 
   // Create canvas for reticles
   const reticleCanvas = createReticleCanvas(container);
+
+  // Create weapon display (bottom-right)
+  const weaponDisplay = createWeaponDisplay(container);
+
+  // Create radar display (bottom-left)
+  const radarDisplay = createRadar(container);
 
   // Handle resize
   const onResize = () => {
@@ -131,6 +153,8 @@ export function createHUD(parent: HTMLElement): HUD {
     shieldValue: container.querySelector('.shield-value')!,
     heatValue: container.querySelector('.heat-value')!,
     reticleCanvas,
+    weaponDisplay,
+    radarDisplay,
     dispose,
   };
 }
@@ -148,6 +172,8 @@ export function updateHUD(
   if (player === undefined) return;
 
   updatePlayerStatus(hud, world, player);
+  updateWeaponDisplay(hud.weaponDisplay, world, player);
+  updateRadar(hud.radarDisplay, world, player);
 
   const playerTransform = getComponent<Transform>(world, player, 'transform');
   const playerPhysics = getComponent<Physics>(world, player, 'physics');
