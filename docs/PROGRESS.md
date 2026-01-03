@@ -48,13 +48,13 @@ Tracks actual implementation status with file references as evidence.
 - [x] AIControlled component → `src/components/ai.ts:17-24`
 - [x] Aim error component → `src/components/aim-error.ts:11-23`
 - [x] Aim error system → `src/systems/aim-error.ts:11-14`
-- [ ] AI system (EXISTS but DISABLED) → `src/systems/ai.ts:23-28`
-- [ ] AI weapon firing
-- [ ] Max-3-on-human constraint
+- [x] AI system → `src/systems/ai.ts:50-75` (state machine: Idle/Pursue/Engage)
+- [x] AI weapon firing → `src/systems/weapons.ts:78-105` (with aim error)
+- [x] Max-3-on-human constraint → `src/systems/ai.ts:31-48`
 
 ### 3.5 Targeting System
 - [x] Targeting component → `src/components/targeting.ts:7-31`
-- [x] Lock-on progress → `src/systems/weapons.ts:115-147`
+- [x] Lock-on progress → `src/systems/weapons.ts:141-171`
 - [x] Target cycling → `src/systems/targeting.ts:46-59`
 - [x] Targeting system → `src/systems/targeting.ts:23-60`
 
@@ -98,9 +98,9 @@ Tracks actual implementation status with file references as evidence.
 | 3.1 Weapon Components | 4 | 4 | 100% |
 | 3.2 Weapon Systems | 4 | 4 | 100% |
 | 3.3 Shield System | 3 | 3 | 100% |
-| 3.4 AI Implementation | 4 | 7 | 57% |
+| 3.4 AI Implementation | 7 | 7 | 100% |
 | 3.5 Targeting System | 4 | 4 | 100% |
 | 3.6 HUD Implementation | 9 | 13 | 69% |
 | 3.7 Visual Effects | 1 | 5 | 20% |
 | 3.8 Dust Particles | 1 | 1 | 100% |
-| **Phase 3 Total** | **30** | **41** | **73%** |
+| **Phase 3 Total** | **33** | **41** | **80%** |

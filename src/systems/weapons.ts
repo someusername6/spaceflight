@@ -3,21 +3,18 @@
  */
 
 import type { World, Entity } from '../core/types';
-import { queryEntities, getComponent, createEntity, addComponent, entityExists } from '../core/ecs';
+import { queryEntities, getComponent, entityExists } from '../core/ecs';
 import type { Transform } from '../components/transform';
-import { createTransform } from '../components/transform';
 import type { PlayerControlled } from '../components/player';
-import type { PrimaryWeapons, SecondaryWeapons, SecondaryWeapon } from '../components/weapons';
+import type { PrimaryWeapons, SecondaryWeapons } from '../components/weapons';
 import { getCurrentPrimary, getCurrentSecondary, cycleNextPrimary, cyclePrevPrimary } from '../components/weapons';
 import type { Heat } from '../components/heat';
 import { addHeat } from '../components/heat';
-import { createProjectile } from '../components/projectile';
-import { createMissile } from '../components/missile';
-import { createCollision } from './collision';
 import type { FactionComponent } from '../components/faction';
-import { createFaction } from '../components/faction';
 import type { Targeting } from '../components/targeting';
-import { getForward } from './physics';
+import { AIState, type AIControlled } from '../components/ai';
+import type { AimError } from '../components/aim-error';
+import { spawnProjectile, spawnProjectileWithAimError, spawnMissile } from './weapon-spawning';
 
 /** Game time accumulator */
 let gameTime = 0;
@@ -28,14 +25,6 @@ const prevInput = {
   cycleWeaponPrev: false,
   fireSecondary: false,
 };
-
-/** Projectile spawn offset from ship center */
-const PROJECTILE_SPAWN_OFFSET = 3;
-const MISSILE_SPAWN_OFFSET = 4;
-
-/** Collision radii */
-const PROJECTILE_RADIUS = 0.5;
-const MISSILE_RADIUS = 1.0;
 
 /** Weapon system - handles firing and heat */
 export function weaponSystem(world: World, dt: number): void {
@@ -51,6 +40,12 @@ export function weaponSystem(world: World, dt: number): void {
 
     if (player) {
       handlePlayerPrimaryWeapons(world, entity, transform, weapons, heat, faction, player);
+    } else {
+      // Check for AI-controlled entity
+      const ai = getComponent<AIControlled>(world, entity, 'aiControlled');
+      if (ai) {
+        handleAIPrimaryWeapons(world, entity, transform, weapons, heat, faction, ai);
+      }
     }
   }
 
@@ -76,6 +71,36 @@ export function weaponSystem(world: World, dt: number): void {
     prevInput.cycleWeaponNext = player.input.cycleWeaponNext;
     prevInput.cycleWeaponPrev = player.input.cycleWeaponPrev;
     prevInput.fireSecondary = player.input.fireSecondary;
+  }
+}
+
+/** Handle AI primary weapon firing */
+function handleAIPrimaryWeapons(
+  world: World,
+  entity: Entity,
+  transform: Transform,
+  weapons: PrimaryWeapons,
+  heat: Heat,
+  faction: FactionComponent | undefined,
+  ai: AIControlled
+): void {
+  // Only fire when in Engage state
+  if (ai.state !== AIState.Engage) return;
+
+  // Need a valid target
+  if (ai.target === null || !entityExists(world, ai.target)) return;
+
+  const weapon = getCurrentPrimary(weapons);
+  if (!weapon) return;
+
+  const timeSinceFire = gameTime - weapons.lastFireTime;
+  if (timeSinceFire >= weapon.fireRate && addHeat(heat, weapon.heatPerShot)) {
+    weapons.lastFireTime = gameTime;
+
+    // Get aim error if present (makes AI imperfect)
+    const aimError = getComponent<AimError>(world, entity, 'aimError');
+
+    spawnProjectileWithAimError(world, entity, transform, weapon, faction, aimError);
   }
 }
 
@@ -176,68 +201,6 @@ function handlePlayerSecondaryWeapons(
       const target = weapons.lockProgress >= 1 ? weapons.lockTarget : undefined;
       spawnMissile(world, entity, transform, weapon, faction, target);
     }
-  }
-}
-
-/** Spawn a projectile entity */
-function spawnProjectile(
-  world: World,
-  owner: Entity,
-  ownerTransform: Transform,
-  weapon: { damage: number; projectileSpeed: number; range: number },
-  ownerFaction: FactionComponent | undefined
-): void {
-  const forward = getForward(ownerTransform);
-  const spawnPos = ownerTransform.position.clone().addScaledVector(forward, PROJECTILE_SPAWN_OFFSET);
-
-  const projectile = createEntity(world);
-
-  addComponent(world, projectile, createTransform(spawnPos.x, spawnPos.y, spawnPos.z));
-  addComponent(
-    world,
-    projectile,
-    createProjectile(owner, weapon.damage, weapon.projectileSpeed, weapon.range, forward)
-  );
-  addComponent(world, projectile, createCollision(PROJECTILE_RADIUS));
-
-  // Projectiles inherit owner's faction
-  if (ownerFaction) {
-    addComponent(world, projectile, createFaction(ownerFaction.faction));
-  }
-}
-
-/** Spawn a missile entity */
-function spawnMissile(
-  world: World,
-  owner: Entity,
-  ownerTransform: Transform,
-  weapon: SecondaryWeapon,
-  ownerFaction: FactionComponent | undefined,
-  target: Entity | undefined
-): void {
-  const forward = getForward(ownerTransform);
-  const spawnPos = ownerTransform.position.clone().addScaledVector(forward, MISSILE_SPAWN_OFFSET);
-
-  const missile = createEntity(world);
-
-  // Create transform at spawn position
-  const missileTransform = createTransform(spawnPos.x, spawnPos.y, spawnPos.z);
-  missileTransform.rotation.copy(ownerTransform.rotation);
-  addComponent(world, missile, missileTransform);
-
-  // Create missile component
-  addComponent(
-    world,
-    missile,
-    createMissile(owner, target, weapon.damage, weapon.speed, weapon.turnRate, weapon.range, forward)
-  );
-
-  // Add collision
-  addComponent(world, missile, createCollision(MISSILE_RADIUS));
-
-  // Missiles inherit owner's faction
-  if (ownerFaction) {
-    addComponent(world, missile, createFaction(ownerFaction.faction));
   }
 }
 

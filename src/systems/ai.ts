@@ -6,25 +6,166 @@
 
 import { Vector3, Quaternion } from 'three';
 import type { World, Entity } from '../core/types';
-import { queryEntities, getComponent } from '../core/ecs';
+import { queryEntities, getComponent, entityExists } from '../core/ecs';
 import type { Transform } from '../components/transform';
 import type { Physics } from '../components/physics';
-import { type AIControlled } from '../components/ai';
+import { AIState, type AIControlled } from '../components/ai';
 import { Faction, type FactionComponent, areEnemies } from '../components/faction';
 
 // Reusable vectors
 const toTarget = new Vector3();
 const forward = new Vector3();
-const desiredDir = new Vector3();
+const rotationAxis = new Vector3();
+const deltaQuat = new Quaternion();
 
 const DEG_TO_RAD = Math.PI / 180;
 
+/** Engage range - how close before AI starts shooting */
+const ENGAGE_RANGE = 600;
+
+/** Break off range - AI will pursue if target gets this far */
+const BREAK_OFF_RANGE = 1200;
+
+/** Maximum AI that can engage the player simultaneously */
+const MAX_ENGAGING_PLAYER = 3;
+
+/** Count how many AI are currently engaging a specific target */
+function countEngagingTarget(world: World, target: Entity): number {
+  let count = 0;
+  for (const entity of queryEntities(world, ['aiControlled'])) {
+    const ai = getComponent<AIControlled>(world, entity, 'aiControlled')!;
+    if (ai.state === AIState.Engage && ai.target === target) {
+      count++;
+    }
+  }
+  return count;
+}
+
+/** Check if an entity is the player */
+function isPlayer(world: World, entity: Entity): boolean {
+  return getComponent(world, entity, 'playerControlled') !== undefined;
+}
+
 /** AI system - updates AI state and movement */
 export function aiSystem(world: World, dt: number): void {
-  // AI disabled for testing - enemies stay idle
-  // TODO: Re-enable AI when ready for combat testing
-  void world;
-  void dt;
+  for (const entity of queryEntities(world, ['aiControlled', 'transform', 'physics', 'faction'])) {
+    const ai = getComponent<AIControlled>(world, entity, 'aiControlled')!;
+    const transform = getComponent<Transform>(world, entity, 'transform')!;
+    const physics = getComponent<Physics>(world, entity, 'physics')!;
+    const faction = getComponent<FactionComponent>(world, entity, 'faction')!;
+
+    // Update state timer
+    ai.stateTimer += dt;
+
+    // Run state machine
+    switch (ai.state) {
+      case AIState.Idle:
+        updateIdle(world, entity, ai, faction.faction);
+        break;
+      case AIState.Pursue:
+        updatePursue(world, entity, ai, transform, physics, dt);
+        break;
+      case AIState.Engage:
+        updateEngage(world, entity, ai, transform, physics, dt);
+        break;
+      // TODO: Evade, Protect, Regroup states
+    }
+  }
+}
+
+/** Idle state - look for enemies */
+function updateIdle(world: World, entity: Entity, ai: AIControlled, faction: Faction): void {
+  const target = findNearestEnemy(world, entity, faction);
+  if (target !== null) {
+    ai.target = target;
+    ai.state = AIState.Pursue;
+    ai.stateTimer = 0;
+  }
+}
+
+/** Pursue state - chase target until in engage range */
+function updatePursue(
+  world: World,
+  entity: Entity,
+  ai: AIControlled,
+  transform: Transform,
+  physics: Physics,
+  dt: number
+): void {
+  // Check if target is still valid
+  if (ai.target === null || !entityExists(world, ai.target)) {
+    ai.target = null;
+    ai.state = AIState.Idle;
+    ai.stateTimer = 0;
+    return;
+  }
+
+  // Check distance to target
+  const targetTransform = getComponent<Transform>(world, ai.target, 'transform');
+  if (!targetTransform) {
+    ai.target = null;
+    ai.state = AIState.Idle;
+    ai.stateTimer = 0;
+    return;
+  }
+
+  const distance = transform.position.distanceTo(targetTransform.position);
+
+  // Transition to engage if close enough
+  if (distance <= ENGAGE_RANGE) {
+    // Check max-3-on-human constraint
+    const targetIsPlayer = isPlayer(world, ai.target);
+    const canEngage = !targetIsPlayer || countEngagingTarget(world, ai.target) < MAX_ENGAGING_PLAYER;
+
+    if (canEngage) {
+      ai.state = AIState.Engage;
+      ai.stateTimer = 0;
+    }
+    // If can't engage (too many on player), stay in Pursue
+  }
+
+  // Continue pursuing
+  pursueTarget(world, entity, ai, transform, physics, dt);
+}
+
+/** Engage state - attack target while maintaining pursuit */
+function updateEngage(
+  world: World,
+  entity: Entity,
+  ai: AIControlled,
+  transform: Transform,
+  physics: Physics,
+  dt: number
+): void {
+  // Check if target is still valid
+  if (ai.target === null || !entityExists(world, ai.target)) {
+    ai.target = null;
+    ai.state = AIState.Idle;
+    ai.stateTimer = 0;
+    return;
+  }
+
+  // Check distance to target
+  const targetTransform = getComponent<Transform>(world, ai.target, 'transform');
+  if (!targetTransform) {
+    ai.target = null;
+    ai.state = AIState.Idle;
+    ai.stateTimer = 0;
+    return;
+  }
+
+  const distance = transform.position.distanceTo(targetTransform.position);
+
+  // Break off if target too far
+  if (distance > BREAK_OFF_RANGE) {
+    ai.state = AIState.Pursue;
+    ai.stateTimer = 0;
+  }
+
+  // Continue pursuing while engaging
+  pursueTarget(world, entity, ai, transform, physics, dt);
+
+  // Note: Weapon firing is handled by weaponSystem checking AI state
 }
 
 /** Find the nearest enemy entity */
@@ -73,28 +214,41 @@ export function pursueTarget(
   }
 
   // Calculate direction to target
-  toTarget.copy(targetTransform.position).sub(transform.position).normalize();
+  toTarget.copy(targetTransform.position).sub(transform.position);
+  const distToTarget = toTarget.length();
 
-  // Get current forward
-  forward.set(0, 0, -1).applyQuaternion(transform.rotation);
+  // Only turn if we have a valid direction (not at target position)
+  if (distToTarget > 0.001) {
+    toTarget.multiplyScalar(1 / distToTarget); // normalize
 
-  // Calculate rotation needed
-  const dot = forward.dot(toTarget);
-  const turnSpeed = physics.turnRate * DEG_TO_RAD * dt;
+    // Get current forward
+    forward.set(0, 0, -1).applyQuaternion(transform.rotation);
 
-  if (dot < 0.999) {
-    // Need to turn - create rotation toward target
-    desiredDir.copy(toTarget);
+    // Calculate rotation needed
+    const dot = forward.dot(toTarget);
+    const turnSpeed = physics.turnRate * DEG_TO_RAD * dt;
 
-    // Use slerp-like approach: rotate toward target
-    const axis = new Vector3().crossVectors(forward, desiredDir).normalize();
-    const angle = Math.acos(Math.max(-1, Math.min(1, dot)));
-    const rotateAngle = Math.min(angle, turnSpeed);
+    if (dot < 0.999) {
+      // Use slerp-like approach: rotate toward target
+      rotationAxis.crossVectors(forward, toTarget);
+      const axisLengthSq = rotationAxis.lengthSq();
 
-    if (axis.lengthSq() > 0.001) {
-      const deltaQuat = new Quaternion().setFromAxisAngle(axis, rotateAngle);
-      transform.rotation.premultiply(deltaQuat);
-      transform.rotation.normalize();
+      if (axisLengthSq > 0.0001) {
+        // Normal case: use cross product as rotation axis
+        rotationAxis.multiplyScalar(1 / Math.sqrt(axisLengthSq)); // normalize
+        const angle = Math.acos(Math.max(-1, Math.min(1, dot)));
+        const rotateAngle = Math.min(angle, turnSpeed);
+
+        deltaQuat.setFromAxisAngle(rotationAxis, rotateAngle);
+        transform.rotation.premultiply(deltaQuat);
+        transform.rotation.normalize();
+      } else if (dot < -0.9) {
+        // Anti-parallel case: pick arbitrary perpendicular axis (up)
+        rotationAxis.set(0, 1, 0);
+        deltaQuat.setFromAxisAngle(rotationAxis, turnSpeed);
+        transform.rotation.premultiply(deltaQuat);
+        transform.rotation.normalize();
+      }
     }
   }
 

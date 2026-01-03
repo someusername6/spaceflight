@@ -157,6 +157,8 @@ export function createAIShip(
   addComponent(world, entity, createFaction(faction));
   addComponent(world, entity, createAIControlled());
   addComponent(world, entity, createAimError()); // AI has imperfect aim
+  addComponent(world, entity, createHeat(stats.maxHeat, stats.coolingRate));
+  addComponent(world, entity, createPrimaryWeapons(stats.primaryWeapons));
   addComponent(world, entity, createCollision(stats.collisionRadius * 1.5)); // AI has larger hitbox
 
   return entity;
