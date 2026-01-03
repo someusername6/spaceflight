@@ -14,6 +14,10 @@ export interface Physics extends ComponentBase {
   turnRate: number; // Degrees per second for pitch/yaw
   rollRate: number; // Degrees per second for roll
   currentSpeed: number; // Current target speed (0 to maxSpeed)
+  afterburnerMultiplier: number; // Speed multiplier when afterburning (e.g., 1.5)
+  afterburnerHeatRate: number; // Heat generated per second while afterburning
+  isAfterburning: boolean; // Currently using afterburner
+  afterburnerLocked: boolean; // Locked out due to overheating (hysteresis)
 }
 
 /** Creates a Physics component with ship-like defaults */
@@ -23,6 +27,8 @@ export function createPhysics(params: {
   drag?: number;
   turnRate?: number;
   rollRate?: number;
+  afterburnerMultiplier?: number;
+  afterburnerHeatRate?: number;
 }): Physics {
   return {
     type: 'physics',
@@ -33,5 +39,9 @@ export function createPhysics(params: {
     turnRate: params.turnRate ?? 100,
     rollRate: params.rollRate ?? 150,
     currentSpeed: 0,
+    afterburnerMultiplier: params.afterburnerMultiplier ?? 1.5,
+    afterburnerHeatRate: params.afterburnerHeatRate ?? 50,
+    isAfterburning: false,
+    afterburnerLocked: false,
   };
 }

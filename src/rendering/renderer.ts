@@ -7,7 +7,7 @@ import type { World, Entity } from '../core/types';
 import { queryEntities, getComponent } from '../core/ecs';
 import type { Transform } from '../components/transform';
 import { Faction, type FactionComponent } from '../components/faction';
-import { generateSkyboxTexture, getSunDirectionFromSeed } from './skybox';
+import { getSunDirectionFromSeed } from './skybox';
 import { hasComponent } from '../core/ecs';
 
 /** Renderer state */
@@ -57,11 +57,8 @@ export function createRenderer(container: HTMLElement): Renderer {
   directionalLight.position.copy(sunDir);
   scene.add(directionalLight);
 
-  // Procedural skybox (fully deterministic from seed)
-  scene.background = generateSkyboxTexture(webglRenderer, {
-    seed: skyboxSeed,
-    resolution: 1024,
-  });
+  // Black background for now (testing HUD contrast)
+  scene.background = new THREE.Color(0x000000);
 
   // Handle resize
   window.addEventListener('resize', () => {

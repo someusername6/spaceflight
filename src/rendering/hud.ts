@@ -2,7 +2,7 @@
  * HUD rendering - HTML/CSS overlay for game UI.
  */
 
-import * as THREE from 'three';
+import type { Camera } from 'three';
 import type { World, Entity } from '../core/types';
 import { getComponent, findEntity } from '../core/ecs';
 import type { Transform } from '../components/transform';
@@ -10,113 +10,128 @@ import type { Health } from '../components/health';
 import type { Shields } from '../components/shields';
 import type { Heat } from '../components/heat';
 import type { Physics } from '../components/physics';
-import type { Targeting } from '../components/targeting';
+import {
+  type ReticleCanvas,
+  createReticleCanvas,
+  updateReticles,
+  resizeReticleCanvas,
+} from './reticles';
+import { HUD_STYLE_ID, getHUDStyles } from './hud-styles';
 
 /** HUD state */
 export interface HUD {
   container: HTMLElement;
-  speedEl: HTMLElement;
-  hullBar: HTMLElement;
-  shieldBar: HTMLElement;
-  heatBar: HTMLElement;
-  targetReticle: HTMLElement;
+  speedFill: HTMLElement;
+  afterburnerFill: HTMLElement;
+  maxSpeedTick: HTMLElement;
+  speedValue: HTMLElement;
+  throttleMarker: HTMLElement;
+  // Cached segment elements (avoid DOM recreation every frame)
+  shieldSegments: HTMLElement[];
+  hullSegments: HTMLElement[];
+  heatSegments: HTMLElement[];
+  // Cached container refs (avoid .closest() every frame)
+  shieldContainer: HTMLElement;
+  hullContainer: HTMLElement;
+  heatContainer: HTMLElement;
+  // Value display elements
+  hullValue: HTMLElement;
+  shieldValue: HTMLElement;
+  heatValue: HTMLElement;
+  reticleCanvas: ReticleCanvas;
+  // Cleanup function
+  dispose: () => void;
+}
+
+/** Number of segments per bar */
+const SEGMENT_COUNT = 10;
+
+/** Create segment HTML for bars */
+function createSegmentHTML(): string {
+  return Array(SEGMENT_COUNT).fill('<div class="segment"></div>').join('');
 }
 
 /** Create HUD elements */
 export function createHUD(parent: HTMLElement): HUD {
-  // Create container
   const container = document.createElement('div');
   container.id = 'hud';
   container.innerHTML = `
     <div class="status-panel">
-      <div class="speed-display"><span class="speed-value">0</span> m/s</div>
-      <div class="bar-container">
-        <div class="bar-label">HULL</div>
-        <div class="bar hull-bar"><div class="bar-fill"></div></div>
+      <div class="bar-row speed-row">
+        <div class="bar-label">SPD</div>
+        <div class="speed-bar">
+          <div class="speed-fill"></div>
+          <div class="afterburner-fill"></div>
+          <div class="max-speed-tick"></div>
+          <div class="throttle-marker">▲</div>
+        </div>
+        <div class="bar-value speed-value">0</div>
       </div>
-      <div class="bar-container">
+      <div class="bar-container shield-container">
         <div class="bar-label">SHLD</div>
-        <div class="bar shield-bar"><div class="bar-fill"></div></div>
+        <div class="bar shield-bar"><div class="bar-segments">${createSegmentHTML()}</div></div>
+        <div class="bar-value shield-value">100</div>
       </div>
-      <div class="bar-container">
+      <div class="bar-container hull-container">
+        <div class="bar-label">HULL</div>
+        <div class="bar hull-bar"><div class="bar-segments">${createSegmentHTML()}</div></div>
+        <div class="bar-value hull-value">100</div>
+      </div>
+      <div class="bar-container heat-container">
         <div class="bar-label">HEAT</div>
-        <div class="bar heat-bar"><div class="bar-fill"></div></div>
+        <div class="bar heat-bar"><div class="bar-segments">${createSegmentHTML()}</div></div>
+        <div class="bar-value heat-value">0</div>
       </div>
     </div>
-    <div class="target-reticle"></div>
   `;
 
-  // Add styles
-  const style = document.createElement('style');
-  style.textContent = `
-    #hud {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      font-family: 'Courier New', monospace;
-      color: #0f0;
-    }
-    .status-panel {
-      position: absolute;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      background: rgba(0, 0, 0, 0.5);
-      padding: 10px;
-      border: 1px solid #0f0;
-    }
-    .speed-display {
-      text-align: center;
-      font-size: 18px;
-      margin-bottom: 8px;
-    }
-    .bar-container {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .bar-label {
-      width: 40px;
-      font-size: 12px;
-    }
-    .bar {
-      width: 150px;
-      height: 12px;
-      background: rgba(0, 50, 0, 0.5);
-      border: 1px solid #0a0;
-    }
-    .bar-fill {
-      height: 100%;
-      transition: width 0.1s;
-    }
-    .hull-bar .bar-fill { background: #0f0; }
-    .shield-bar .bar-fill { background: #0af; }
-    .heat-bar .bar-fill { background: #f80; }
-    .target-reticle {
-      position: absolute;
-      width: 40px;
-      height: 40px;
-      border: 2px solid #f00;
-      display: none;
-      pointer-events: none;
-    }
-  `;
-  document.head.appendChild(style);
+  // Add styles only once (prevent duplicates)
+  if (!document.getElementById(HUD_STYLE_ID)) {
+    const style = document.createElement('style');
+    style.id = HUD_STYLE_ID;
+    style.textContent = getHUDStyles();
+    document.head.appendChild(style);
+  }
   parent.appendChild(container);
+
+  // Create canvas for reticles
+  const reticleCanvas = createReticleCanvas(container);
+
+  // Handle resize
+  const onResize = () => {
+    resizeReticleCanvas(reticleCanvas, parent.clientWidth, parent.clientHeight);
+  };
+  window.addEventListener('resize', onResize);
+
+  // Cache segment elements (convert NodeList to array)
+  const shieldSegments = Array.from(container.querySelectorAll('.shield-bar .segment')) as HTMLElement[];
+  const hullSegments = Array.from(container.querySelectorAll('.hull-bar .segment')) as HTMLElement[];
+  const heatSegments = Array.from(container.querySelectorAll('.heat-bar .segment')) as HTMLElement[];
+
+  // Cleanup function
+  const dispose = () => {
+    window.removeEventListener('resize', onResize);
+    container.remove();
+  };
 
   return {
     container,
-    speedEl: container.querySelector('.speed-value')!,
-    hullBar: container.querySelector('.hull-bar .bar-fill')!,
-    shieldBar: container.querySelector('.shield-bar .bar-fill')!,
-    heatBar: container.querySelector('.heat-bar .bar-fill')!,
-    targetReticle: container.querySelector('.target-reticle')!,
+    speedFill: container.querySelector('.speed-fill')!,
+    afterburnerFill: container.querySelector('.afterburner-fill')!,
+    maxSpeedTick: container.querySelector('.max-speed-tick')!,
+    speedValue: container.querySelector('.speed-value')!,
+    throttleMarker: container.querySelector('.throttle-marker')!,
+    shieldSegments,
+    hullSegments,
+    heatSegments,
+    shieldContainer: container.querySelector('.shield-container')!,
+    hullContainer: container.querySelector('.hull-container')!,
+    heatContainer: container.querySelector('.heat-container')!,
+    hullValue: container.querySelector('.hull-value')!,
+    shieldValue: container.querySelector('.shield-value')!,
+    heatValue: container.querySelector('.heat-value')!,
+    reticleCanvas,
+    dispose,
   };
 }
 
@@ -124,86 +139,95 @@ export function createHUD(parent: HTMLElement): HUD {
 export function updateHUD(
   hud: HUD,
   world: World,
-  camera: THREE.Camera,
+  camera: Camera,
+  entityMeshes: Map<number, import('three').Object3D>,
   screenWidth: number,
   screenHeight: number
 ): void {
-  // Find player
   const player = findEntity(world, ['playerControlled', 'transform']);
   if (player === undefined) return;
 
-  // Update speed
+  updatePlayerStatus(hud, world, player);
+
+  const playerTransform = getComponent<Transform>(world, player, 'transform');
+  updateReticles(
+    hud.reticleCanvas,
+    world,
+    player,
+    playerTransform,
+    camera,
+    entityMeshes,
+    screenWidth,
+    screenHeight
+  );
+}
+
+/** Update player status bars */
+function updatePlayerStatus(hud: HUD, world: World, player: Entity): void {
   const physics = getComponent<Physics>(world, player, 'physics');
   if (physics) {
-    hud.speedEl.textContent = Math.round(physics.currentSpeed).toString();
+    const actualSpeed = physics.velocity.length();
+    const afterburnerMax = physics.maxSpeed * physics.afterburnerMultiplier;
+
+    // Position the max-speed tick mark (shows where normal max is on the full bar)
+    const tickPosition = (physics.maxSpeed / afterburnerMax) * 100;
+    hud.maxSpeedTick.style.left = `${tickPosition}%`;
+
+    // Speed fill: green portion up to maxSpeed
+    const normalSpeedPct = Math.min((actualSpeed / afterburnerMax) * 100, tickPosition);
+    hud.speedFill.style.width = `${normalSpeedPct}%`;
+
+    // Afterburner fill: orange portion beyond maxSpeed
+    if (actualSpeed > physics.maxSpeed) {
+      const abSpeedPct = ((actualSpeed - physics.maxSpeed) / (afterburnerMax - physics.maxSpeed)) * (100 - tickPosition);
+      hud.afterburnerFill.style.width = `${abSpeedPct}%`;
+      hud.afterburnerFill.style.left = `${tickPosition}%`;
+    } else {
+      hud.afterburnerFill.style.width = '0%';
+    }
+
+    hud.speedValue.textContent = Math.round(actualSpeed).toString();
+
+    // Throttle marker position (0-100% throttle maps to 0 to maxSpeed, which is 0 to tickPosition% of bar)
+    const throttlePct = (physics.currentSpeed / afterburnerMax) * 100;
+    hud.throttleMarker.style.left = `${Math.min(throttlePct, 100)}%`;
   }
 
-  // Update hull bar
   const health = getComponent<Health>(world, player, 'health');
   if (health) {
     const pct = (health.hull / health.maxHull) * 100;
-    hud.hullBar.style.width = `${pct}%`;
+    updateSegmentedBar(hud.hullSegments, pct);
+    hud.hullValue.textContent = Math.round(health.hull).toString();
+
+    // Critical state: hull < 25%
+    hud.hullContainer.classList.toggle('critical', pct < 25);
   }
 
-  // Update shield bar
   const shields = getComponent<Shields>(world, player, 'shields');
   if (shields) {
     const pct = (shields.current / shields.max) * 100;
-    hud.shieldBar.style.width = `${pct}%`;
+    updateSegmentedBar(hud.shieldSegments, pct);
+    hud.shieldValue.textContent = Math.round(shields.current).toString();
+
+    // Warning state: shields at 0
+    hud.shieldContainer.classList.toggle('warning', shields.current <= 0);
   }
 
-  // Update heat bar
   const heat = getComponent<Heat>(world, player, 'heat');
   if (heat) {
     const pct = (heat.current / heat.max) * 100;
-    hud.heatBar.style.width = `${pct}%`;
-  }
+    updateSegmentedBar(hud.heatSegments, pct);
+    hud.heatValue.textContent = Math.round(heat.current).toString();
 
-  // Update target reticle
-  const targeting = getComponent<Targeting>(world, player, 'targeting');
-  if (targeting?.currentTarget !== undefined) {
-    updateTargetReticle(hud, world, targeting.currentTarget, camera, screenWidth, screenHeight);
-  } else {
-    hud.targetReticle.style.display = 'none';
+    // Danger state: heat > 80%
+    hud.heatContainer.classList.toggle('danger', pct > 80);
   }
 }
 
-/** Update target reticle position */
-function updateTargetReticle(
-  hud: HUD,
-  world: World,
-  target: Entity,
-  camera: THREE.Camera,
-  screenWidth: number,
-  screenHeight: number
-): void {
-  const transform = getComponent<Transform>(world, target, 'transform');
-  if (!transform) {
-    hud.targetReticle.style.display = 'none';
-    return;
-  }
-
-  // Project 3D position to screen
-  const pos = transform.position.clone().project(camera);
-
-  // Check if behind camera
-  if (pos.z > 1) {
-    hud.targetReticle.style.display = 'none';
-    return;
-  }
-
-  // Convert to screen coordinates
-  const x = (pos.x + 1) * 0.5 * screenWidth;
-  const y = (1 - pos.y) * 0.5 * screenHeight;
-
-  // Check if on screen
-  if (x < -20 || x > screenWidth + 20 || y < -20 || y > screenHeight + 20) {
-    hud.targetReticle.style.display = 'none';
-    return;
-  }
-
-  // Update reticle position
-  hud.targetReticle.style.display = 'block';
-  hud.targetReticle.style.left = `${x - 20}px`;
-  hud.targetReticle.style.top = `${y - 20}px`;
+/** Update segmented bar display by toggling classes (no DOM recreation) */
+function updateSegmentedBar(segments: HTMLElement[], percentage: number): void {
+  const filledCount = Math.round(percentage / SEGMENT_COUNT);
+  segments.forEach((segment, i) => {
+    segment.classList.toggle('filled', i < filledCount);
+  });
 }

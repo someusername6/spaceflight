@@ -10,7 +10,7 @@ import type { PlayerControlled } from '../components/player';
 import type { PrimaryWeapons } from '../components/weapons';
 import { getCurrentPrimary, cycleNextPrimary, cyclePrevPrimary } from '../components/weapons';
 import type { Heat } from '../components/heat';
-import { addHeat, coolDown } from '../components/heat';
+import { addHeat } from '../components/heat';
 import { createProjectile } from '../components/projectile';
 import { createCollision } from './collision';
 import type { FactionComponent } from '../components/faction';
@@ -42,9 +42,6 @@ export function weaponSystem(world: World, dt: number): void {
     const weapons = getComponent<PrimaryWeapons>(world, entity, 'primaryWeapons')!;
     const heat = getComponent<Heat>(world, entity, 'heat')!;
     const faction = getComponent<FactionComponent>(world, entity, 'faction');
-
-    // Cool down heat
-    coolDown(heat, dt);
 
     // Check if this is player (for input handling)
     const player = getComponent<PlayerControlled>(world, entity, 'playerControlled');

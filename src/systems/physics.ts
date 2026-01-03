@@ -9,6 +9,7 @@ import type { Transform } from '../components/transform';
 import type { Physics } from '../components/physics';
 import type { PlayerControlled } from '../components/player';
 import type { AIControlled } from '../components/ai';
+import type { Heat } from '../components/heat';
 
 // Reusable objects to avoid allocations
 const tempEuler = new Euler();
@@ -33,6 +34,7 @@ export function physicsSystem(world: World, dt: number): void {
     let rollInput = 0;
     let accelerating = false;
     let decelerating = false;
+    let afterburner = false;
 
     if (player) {
       // Player input
@@ -44,6 +46,7 @@ export function physicsSystem(world: World, dt: number): void {
       if (player.input.rollRight) rollInput = -1;
       accelerating = player.input.accelerate;
       decelerating = player.input.decelerate;
+      afterburner = player.input.afterburner;
     } else if (ai) {
       // AI will set these values through AI system (TODO)
       // For now, simple pursue behavior handled here
@@ -62,20 +65,63 @@ export function physicsSystem(world: World, dt: number): void {
     transform.rotation.multiply(tempQuat);
     transform.rotation.normalize();
 
+    // Calculate afterburner max speed
+    const afterburnerMaxSpeed = physics.maxSpeed * physics.afterburnerMultiplier;
+    const heat = getComponent<Heat>(world, entity, 'heat');
+
+    // Afterburner heat lockout with hysteresis (prevents oscillation)
+    if (heat) {
+      if (physics.afterburnerLocked) {
+        // Must cool to 50% to unlock
+        if (heat.current <= heat.max * 0.5) {
+          physics.afterburnerLocked = false;
+        }
+      } else {
+        // Lock at 95% heat
+        if (heat.current >= heat.max * 0.95) {
+          physics.afterburnerLocked = true;
+        }
+      }
+    }
+
+    const canAfterburn = afterburner && !physics.afterburnerLocked;
+
     // Update current speed based on input
-    if (accelerating) {
+    if (canAfterburn) {
+      // Afterburner: accelerate toward afterburner max (works from any speed)
+      physics.currentSpeed = Math.min(
+        physics.currentSpeed + physics.acceleration * 1.5 * dt,
+        afterburnerMaxSpeed
+      );
+      physics.isAfterburning = true;
+
+      // Generate heat while afterburning
+      if (heat) {
+        heat.current = Math.min(heat.max, heat.current + physics.afterburnerHeatRate * dt);
+      }
+    } else if (accelerating) {
+      // Normal acceleration up to max speed
       physics.currentSpeed = Math.min(
         physics.currentSpeed + physics.acceleration * dt,
         physics.maxSpeed
       );
+      physics.isAfterburning = false;
     } else if (decelerating) {
       physics.currentSpeed = Math.max(
         physics.currentSpeed - physics.acceleration * dt,
         0
       );
+      physics.isAfterburning = false;
+    } else {
+      // Coasting - if above max speed, decelerate back to max
+      if (physics.currentSpeed > physics.maxSpeed) {
+        physics.currentSpeed = Math.max(
+          physics.currentSpeed - physics.acceleration * 0.5 * dt,
+          physics.maxSpeed
+        );
+      }
+      physics.isAfterburning = false;
     }
-    // No drag when coasting - ship maintains current speed
-    // Drag only applies to cap speed at maxSpeed (handled in accelerating branch)
 
     // Calculate forward vector from rotation
     forward.set(0, 0, -1);

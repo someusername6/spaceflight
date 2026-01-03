@@ -56,11 +56,11 @@ function main(): void {
       }
     }
 
-    // Update HUD
-    updateHUD(hud, world, renderer.camera, container.clientWidth, container.clientHeight);
-
-    // Render
+    // Render (updates all world matrices)
     render(renderer);
+
+    // Update HUD (uses matrices updated by render)
+    updateHUD(hud, world, renderer.camera, renderer.entityMeshes, container.clientWidth, container.clientHeight);
   };
 
   // Mission end disabled for flight testing
@@ -78,8 +78,8 @@ function main(): void {
   startGame(game);
 
   console.log('Spaceflight Slice 2 - Combat Basics');
-  console.log('Flight: WASD = Pitch/Yaw, QE = Roll, Shift = Accelerate, Ctrl = Decelerate');
-  console.log('Combat: Space = Fire, T = Target nearest, < > = Cycle targets');
+  console.log('Flight: WASD = Pitch/Yaw, QE = Roll, Shift = Accelerate, Ctrl = Decelerate, Z = Afterburner');
+  console.log('Combat: Space = Fire, T = Target nearest, [ ] = Cycle targets, < > = Cycle weapons');
   console.log('Objective: Destroy all enemy ships!');
 }
 
