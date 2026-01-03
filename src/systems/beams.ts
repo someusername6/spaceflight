@@ -13,6 +13,14 @@ import type { PrimaryWeapon, PrimaryWeapons } from '../components/weapons';
 import { getCurrentPrimary, getEffectiveHeat } from '../components/weapons';
 import { getComponent, hasComponent, queryEntities } from '../core/ecs';
 import type { Entity, World } from '../core/types';
+import {
+  type BeamWeaponInfo,
+  calculateFalloffDamage,
+  getBeamColor,
+  getBeamWeaponInfo,
+  rayIntersectsSphere,
+  resetBeamWeaponPool,
+} from './beam-helpers';
 import type { Collision } from './collision';
 import { dealDamage } from './damage';
 import { getForward } from './physics';
@@ -26,43 +34,25 @@ export interface ActiveBeam {
   color: THREE.Color;
   active: boolean;
   weaponIndex: number; // Which weapon slot this beam is from
+  // Pulse beam state
+  isPulseBeam?: boolean;
+  pulseActive?: boolean; // Whether the current pulse is visually active
+  lastPulseTime?: number;
+  // Nuclear lance state
+  isLance?: boolean;
+  lanceFireTime?: number; // When lance was fired (for fade effect)
+  // Weapon name for special rendering
+  weaponName?: string;
 }
 
 // Reusable objects
 const rayOrigin = new THREE.Vector3();
 const rayDirection = new THREE.Vector3();
-const tempOC = new THREE.Vector3(); // For ray-sphere intersection
-
-// Pool for beam weapon info objects (avoid per-frame allocations)
-interface BeamWeaponInfo {
-  weapon: PrimaryWeapon;
-  index: number;
-}
-const beamWeaponPool: BeamWeaponInfo[] = [];
-let beamWeaponPoolIndex = 0;
-
-function getBeamWeaponInfo(
-  weapon: PrimaryWeapon,
-  index: number,
-): BeamWeaponInfo {
-  if (beamWeaponPoolIndex >= beamWeaponPool.length) {
-    beamWeaponPool.push({ weapon: null as unknown as PrimaryWeapon, index: 0 });
-  }
-  const info = beamWeaponPool[beamWeaponPoolIndex++] as BeamWeaponInfo;
-  info.weapon = weapon;
-  info.index = index;
-  return info;
-}
-
-// Reusable array for linked beam firing (stores pool references)
 const beamWeaponsCollector: BeamWeaponInfo[] = [];
 
 // Reusable object for beam hit detection (avoid per-frame allocations)
 const closestHitResult = { entity: 0 as Entity, distance: 0 };
 let hasClosestHit = false;
-
-/** Distance for falloff calculation (caps damage when very close) */
-const MIN_FALLOFF_DISTANCE = 100;
 
 /** Beam system - handles continuous beam damage */
 export function beamSystem(world: World, dt: number): void {
@@ -121,9 +111,22 @@ export function beamSystem(world: World, dt: number): void {
       const weapon = getCurrentPrimary(weapons);
       if (!weapon || weapon.category !== 'beam') continue;
 
+      // Handle ammo-based beams (Nuclear Lance)
+      if (weapon.ammo !== undefined) {
+        if (weapon.ammo <= 0) continue; // No ammo
+        // Check fire rate cooldown
+        const gameTime = world.systemState.gameTime;
+        if (gameTime - weapons.lastFireTime < weapon.fireRate) continue;
+        weapons.lastFireTime = gameTime;
+        weapon.ammo--;
+      }
+
       // Check heat - apply heat per second (scaled by bank size)
-      const heatToAdd = getEffectiveHeat(weapon) * dt;
-      if (!addHeat(heat, heatToAdd)) continue; // Overheated
+      // For pulse beams, heat is per pulse (handled in fireBeam)
+      if (!weapon.isPulseBeam) {
+        const heatToAdd = getEffectiveHeat(weapon) * dt;
+        if (!addHeat(heat, heatToAdd)) continue; // Overheated
+      }
 
       // Fire single beam
       fireBeam(
@@ -151,7 +154,7 @@ function fireLinkedBeams(
   activeBeams: Map<Entity, ActiveBeam[]>,
 ): void {
   // Reset pool and clear collector (avoid per-frame allocations)
-  beamWeaponPoolIndex = 0;
+  resetBeamWeaponPool();
   beamWeaponsCollector.length = 0;
 
   // Find all beam weapons
@@ -204,6 +207,7 @@ function fireBeam(
   dt: number,
   activeBeams: Map<Entity, ActiveBeam[]>,
 ): void {
+  const gameTime = world.systemState.gameTime;
   const forward = getForward(transform);
   // Calculate beam origin with bank offset
   const origin = calculateBankOffset(
@@ -230,15 +234,27 @@ function fireBeam(
       break;
     }
   }
+  const isPulse = weapon.isPulseBeam === true;
+  const isLance = weapon.name === 'Nuclear Lance';
   if (!beam) {
-    beam = {
+    const newBeam: ActiveBeam = {
       origin: new THREE.Vector3(),
       direction: new THREE.Vector3(),
       hitPoint: null,
       color: getBeamColor(weapon.name).clone(), // Clone to avoid modifying cache
       active: false,
       weaponIndex,
+      weaponName: weapon.name,
     };
+    if (isPulse) {
+      newBeam.isPulseBeam = true;
+      newBeam.lastPulseTime = 0;
+      newBeam.pulseActive = false;
+    }
+    if (isLance) {
+      newBeam.isLance = true;
+    }
+    beam = newBeam;
     beams.push(beam);
   }
 
@@ -247,6 +263,32 @@ function fireBeam(
   beam.active = true;
   beam.hitPoint = null;
   beam.color.copy(getBeamColor(weapon.name)); // Update color in case weapon changed
+  beam.weaponName = weapon.name;
+
+  // Handle pulse beam timing (Lightning)
+  let shouldDealDamage = true;
+  if (weapon.isPulseBeam && weapon.pulseInterval) {
+    const timeSinceLastPulse = gameTime - (beam.lastPulseTime ?? 0);
+    if (timeSinceLastPulse >= weapon.pulseInterval) {
+      beam.lastPulseTime = gameTime;
+      beam.pulseActive = true;
+      shouldDealDamage = true;
+      // Add heat per pulse (need to get heat component)
+      const heat = getComponent<Heat>(world, owner, 'heat');
+      if (heat) {
+        const heatPerPulse = getEffectiveHeat(weapon);
+        if (!addHeat(heat, heatPerPulse)) {
+          // Overheated - don't fire this pulse
+          beam.pulseActive = false;
+          shouldDealDamage = false;
+        }
+      }
+    } else {
+      // Between pulses - still show beam direction but no damage
+      beam.pulseActive = false;
+      shouldDealDamage = false;
+    }
+  }
 
   // Find nearest enemy in beam path (use reusable object instead of allocating)
   hasClosestHit = false;
@@ -309,67 +351,32 @@ function fireBeam(
       .multiplyScalar(closestHitResult.distance)
       .add(rayOrigin);
 
-    // Apply damage with falloff (damage is per-second, multiply by dt)
-    const falloffDamage = calculateFalloffDamage(
-      weapon.damage,
-      closestHitResult.distance,
-    );
-    dealDamage(
-      world,
-      closestHitResult.entity,
-      falloffDamage * dt,
-      beam.hitPoint,
-    );
+    // Apply damage if appropriate
+    if (shouldDealDamage) {
+      let damage: number;
+      if (weapon.isPulseBeam) {
+        // Pulse beams deal fixed damage per pulse (no dt scaling)
+        damage = weapon.noFalloff
+          ? weapon.damage
+          : calculateFalloffDamage(weapon.damage, closestHitResult.distance);
+      } else {
+        // Continuous beams deal damage per second (scaled by dt)
+        const falloffDamage = calculateFalloffDamage(
+          weapon.damage,
+          closestHitResult.distance,
+        );
+        damage = falloffDamage * dt;
+      }
+      dealDamage(world, closestHitResult.entity, damage, beam.hitPoint);
+    }
   } else {
-    // No hit - beam extends to max range
-    beam.hitPoint
-      .copy(rayDirection)
-      .multiplyScalar(weapon.range)
-      .add(rayOrigin);
+    // No hit - beam extends to max range (or shorter for off-target pulse beams)
+    const range =
+      weapon.isPulseBeam && !hasClosestHit
+        ? Math.min(weapon.range, 150) // Tesla arc into nothingness
+        : weapon.range;
+    beam.hitPoint.copy(rayDirection).multiplyScalar(range).add(rayOrigin);
   }
-}
-
-/** Calculate damage with 1/d² falloff */
-function calculateFalloffDamage(baseDamage: number, distance: number): number {
-  const effectiveDistance = Math.max(MIN_FALLOFF_DISTANCE, distance);
-  return baseDamage / (effectiveDistance / MIN_FALLOFF_DISTANCE) ** 2;
-}
-
-/** Ray-sphere intersection test, returns distance or null */
-function rayIntersectsSphere(
-  origin: THREE.Vector3,
-  direction: THREE.Vector3,
-  center: THREE.Vector3,
-  radius: number,
-): number | null {
-  // Use reusable tempOC to avoid per-call allocation
-  tempOC.subVectors(origin, center);
-  const a = direction.dot(direction);
-  const b = 2 * tempOC.dot(direction);
-  const c = tempOC.dot(tempOC) - radius * radius;
-  const discriminant = b * b - 4 * a * c;
-
-  if (discriminant < 0) return null;
-
-  const t = (-b - Math.sqrt(discriminant)) / (2 * a);
-  if (t > 0) return t;
-
-  // Inside sphere or behind ray
-  const t2 = (-b + Math.sqrt(discriminant)) / (2 * a);
-  return t2 > 0 ? t2 : null;
-}
-
-// Cached beam colors (avoid per-frame allocation)
-const BEAM_COLORS: Record<string, THREE.Color> = {
-  'Red Laser': new THREE.Color(1, 0.2, 0.1),
-  'Green Laser': new THREE.Color(0.2, 1, 0.2),
-  'Blue Laser': new THREE.Color(0.2, 0.4, 1),
-};
-const DEFAULT_BEAM_COLOR = new THREE.Color(1, 1, 1);
-
-/** Get beam color based on weapon name */
-function getBeamColor(name: string): THREE.Color {
-  return BEAM_COLORS[name] ?? DEFAULT_BEAM_COLOR;
 }
 
 /** Get all active beams for rendering */

@@ -14,6 +14,10 @@ import {
 } from './rendering/explosions';
 import { createHUD, updateHUD } from './rendering/hud';
 import {
+  createLightningRenderer,
+  updateLightningRenderer,
+} from './rendering/lightning';
+import {
   createExhaustRenderer,
   updateExhaustRenderer,
 } from './rendering/missile-exhaust';
@@ -21,6 +25,10 @@ import {
   createMuzzleFlashRenderer,
   updateMuzzleFlashRenderer,
 } from './rendering/muzzle-flash';
+import {
+  createNuclearLanceRenderer,
+  updateNuclearLanceRenderer,
+} from './rendering/nuclear-lance';
 import {
   createRenderer,
   followEntity,
@@ -71,6 +79,12 @@ function main(): void {
   // Create muzzle flash renderer
   const muzzleFlashRenderer = createMuzzleFlashRenderer();
 
+  // Create lightning renderer
+  const lightningRenderer = createLightningRenderer(getScene(renderer));
+
+  // Create nuclear lance renderer
+  const nuclearLanceRenderer = createNuclearLanceRenderer(getScene(renderer));
+
   // Create HUD
   const hud = createHUD(container);
 
@@ -101,6 +115,12 @@ function main(): void {
 
     // Update muzzle flash effects
     updateMuzzleFlashRenderer(muzzleFlashRenderer, getScene(renderer), world);
+
+    // Update lightning effects
+    updateLightningRenderer(lightningRenderer, getScene(renderer), world);
+
+    // Update nuclear lance effects
+    updateNuclearLanceRenderer(nuclearLanceRenderer, getScene(renderer), world);
 
     // Follow player and update dust
     const player = findEntity(world, ['playerControlled', 'transform']);

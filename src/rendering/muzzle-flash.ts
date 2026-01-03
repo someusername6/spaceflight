@@ -27,6 +27,8 @@ const BEAM_GLOW_COLORS: Record<string, THREE.Color> = {
   Red: new THREE.Color(1.0, 0.3, 0.2),
   Green: new THREE.Color(0.3, 1.0, 0.3),
   Blue: new THREE.Color(0.4, 0.5, 1.0),
+  Lightning: new THREE.Color(0.7, 0.85, 1.0), // Electric blue-white
+  Nuclear: new THREE.Color(1.0, 0.95, 0.8), // Bright white-gold
 };
 const DEFAULT_BEAM_GLOW = new THREE.Color(1.0, 1.0, 1.0);
 
@@ -205,12 +207,18 @@ function updateBeamGlows(
 
       let glow = renderer.beamGlows.get(key);
       if (!glow) {
-        // Determine color from beam
+        // Determine color from beam (check weapon name first, then RGB)
         let glowColor = DEFAULT_BEAM_GLOW;
-        for (const [colorName, color] of Object.entries(BEAM_GLOW_COLORS)) {
-          if (beam.color.r > 0.5 && colorName === 'Red') glowColor = color;
-          if (beam.color.g > 0.5 && colorName === 'Green') glowColor = color;
-          if (beam.color.b > 0.5 && colorName === 'Blue') glowColor = color;
+        if (beam.weaponName === 'Lightning') {
+          glowColor = BEAM_GLOW_COLORS.Lightning as THREE.Color;
+        } else if (beam.weaponName === 'Nuclear Lance') {
+          glowColor = BEAM_GLOW_COLORS.Nuclear as THREE.Color;
+        } else {
+          for (const [colorName, color] of Object.entries(BEAM_GLOW_COLORS)) {
+            if (beam.color.r > 0.5 && colorName === 'Red') glowColor = color;
+            if (beam.color.g > 0.5 && colorName === 'Green') glowColor = color;
+            if (beam.color.b > 0.5 && colorName === 'Blue') glowColor = color;
+          }
         }
 
         glow = createBeamGlow(renderer, scene, glowColor);

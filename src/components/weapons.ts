@@ -24,6 +24,12 @@ export interface PrimaryWeapon {
   flakRadius?: number;
   /** Number of shrapnel projectiles on flak explosion */
   shrapnelCount?: number;
+  /** Pulse beam - fires in discrete pulses instead of continuous */
+  isPulseBeam?: boolean;
+  /** Interval between pulse beam shots (seconds) */
+  pulseInterval?: number;
+  /** No damage falloff (constant damage at any range) */
+  noFalloff?: boolean;
 }
 
 /** Secondary weapon definition */
@@ -184,6 +190,31 @@ export const WEAPON_DEFS = {
     fireRate: 0,
     range: 1200,
     damage: 25,
+  },
+
+  // Special beam weapons
+  lightning: {
+    name: 'Lightning',
+    category: 'beam' as WeaponCategory,
+    heatPerShot: 2, // 20/sec at 10 pulses/sec
+    projectileSpeed: 0,
+    fireRate: 0, // Continuous (pulse handled separately)
+    range: 300,
+    damage: 5, // 50/sec at 10 pulses/sec
+    isPulseBeam: true,
+    pulseInterval: 0.1, // 100ms between bolts
+    noFalloff: true,
+  },
+  nuclearLance: {
+    name: 'Nuclear Lance',
+    category: 'beam' as WeaponCategory,
+    heatPerShot: 0, // No heat
+    projectileSpeed: 0,
+    fireRate: 0.5, // Single shot with cooldown
+    range: 3000,
+    damage: 500, // Single massive hit
+    ammo: 1, // Limited ammo
+    maxAmmo: 1,
   },
 } as const;
 
