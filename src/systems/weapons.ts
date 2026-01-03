@@ -15,7 +15,7 @@ import type {
   PrimaryWeapons,
   SecondaryWeapons,
 } from '../components/weapons';
-import { getCurrentSecondary } from '../components/weapons';
+import { getCurrentSecondary, getEffectiveHeat } from '../components/weapons';
 import { entityExists, getComponent, queryEntities } from '../core/ecs';
 import type { Entity, World } from '../core/types';
 import { spawnProjectileWithAimError } from './weapon-spawning';
@@ -196,10 +196,10 @@ export function fireLinkedPrimaries(
   const timeSinceFire = gameTime - weapons.lastFireTime;
   if (timeSinceFire < slowestRate) return;
 
-  // Calculate total heat for all weapons (avoid .reduce() allocation)
+  // Calculate total heat for all weapons (scaled by bank size)
   let totalHeat = 0;
   for (const { weapon } of projectileWeaponsCollector) {
-    totalHeat += weapon.heatPerShot;
+    totalHeat += getEffectiveHeat(weapon);
   }
 
   // Check if we can add all heat

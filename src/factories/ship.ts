@@ -22,11 +22,19 @@ import { createTransform } from '../components/transform';
 import {
   createPrimaryWeapons,
   createSecondaryWeapons,
+  type WeaponBankSpec,
 } from '../components/weapons';
 import { addComponent, createEntity } from '../core/ecs';
 import type { Entity, World } from '../core/types';
 import { Faction } from '../core/types';
 import { createCollision } from '../systems/collision';
+
+/** Secondary weapon bank specification */
+export interface SecondaryBankSpec {
+  name: string;
+  count: number;
+  size: number;
+}
 
 /** Ship archetype stats */
 export interface ShipStats {
@@ -41,12 +49,13 @@ export interface ShipStats {
   collisionRadius: number;
   maxHeat: number;
   coolingRate: number;
-  primaryWeapons: string[];
-  secondaryWeapons?: { name: string; count: number }[];
+  primaryWeapons: WeaponBankSpec[];
+  secondaryWeapons?: SecondaryBankSpec[];
 }
 
-/** Predefined ship archetypes (Slice 1: basic only) */
+/** Predefined ship archetypes - bank sizes from SHIPS.md */
 export const SHIP_ARCHETYPES: Record<string, ShipStats> = {
+  // Interceptor: Primary 3 (size 1, 1, 2), Secondary 2 (size 1, 2)
   interceptor: {
     hull: 80,
     shields: 60,
@@ -59,12 +68,16 @@ export const SHIP_ARCHETYPES: Record<string, ShipStats> = {
     collisionRadius: 5,
     maxHeat: 100,
     coolingRate: 20,
-    primaryWeapons: ['plasma', 'greenLaser'],
+    primaryWeapons: [
+      { name: 'plasma', size: 1 },
+      { name: 'greenLaser', size: 2 },
+    ],
     secondaryWeapons: [
-      { name: 'seeker', count: 8 },
-      { name: 'rocket', count: 12 },
+      { name: 'seeker', count: 8, size: 1 },
+      { name: 'rocket', count: 12, size: 2 },
     ],
   },
+  // Scout: Primary 2 (size 1, 1), Secondary 1 (size 1)
   scout: {
     hull: 50,
     shields: 30,
@@ -77,8 +90,8 @@ export const SHIP_ARCHETYPES: Record<string, ShipStats> = {
     collisionRadius: 4,
     maxHeat: 80,
     coolingRate: 25,
-    primaryWeapons: ['pulse'],
-    secondaryWeapons: [{ name: 'dart', count: 6 }],
+    primaryWeapons: [{ name: 'pulse', size: 1 }],
+    secondaryWeapons: [{ name: 'dart', count: 6, size: 1 }],
   },
 };
 
@@ -132,10 +145,10 @@ export function createPlayerShip(
   addComponent(world, entity, createHeat(stats.maxHeat, stats.coolingRate));
   addComponent(world, entity, createPrimaryWeapons(stats.primaryWeapons));
 
-  // Add secondary weapons if defined
+  // Add secondary weapons if defined (count scaled by bank size)
   if (stats.secondaryWeapons && stats.secondaryWeapons.length > 0) {
     const secondaryWeapons = stats.secondaryWeapons.map((w) =>
-      createSecondaryWeaponFromDef(w.name, w.count),
+      createSecondaryWeaponFromDef(w.name, w.count, w.size),
     );
     addComponent(world, entity, createSecondaryWeapons(secondaryWeapons));
   }

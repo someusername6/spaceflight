@@ -10,7 +10,7 @@ import { addHeat } from '../components/heat';
 import type { PlayerControlled } from '../components/player';
 import type { Transform } from '../components/transform';
 import type { PrimaryWeapon, PrimaryWeapons } from '../components/weapons';
-import { getCurrentPrimary } from '../components/weapons';
+import { getCurrentPrimary, getEffectiveHeat } from '../components/weapons';
 import { getComponent, hasComponent, queryEntities } from '../core/ecs';
 import type { Entity, World } from '../core/types';
 import type { Collision } from './collision';
@@ -121,8 +121,8 @@ export function beamSystem(world: World, dt: number): void {
       const weapon = getCurrentPrimary(weapons);
       if (!weapon || weapon.category !== 'beam') continue;
 
-      // Check heat - apply heat per second
-      const heatToAdd = weapon.heatPerShot * dt;
+      // Check heat - apply heat per second (scaled by bank size)
+      const heatToAdd = getEffectiveHeat(weapon) * dt;
       if (!addHeat(heat, heatToAdd)) continue; // Overheated
 
       // Fire single beam
@@ -164,10 +164,10 @@ function fireLinkedBeams(
 
   if (beamWeaponsCollector.length === 0) return;
 
-  // Calculate total heat per second for all beams (avoid reduce callback allocation)
+  // Calculate total heat per second for all beams (scaled by bank size)
   let totalHeat = 0;
   for (const { weapon } of beamWeaponsCollector) {
-    totalHeat += weapon.heatPerShot;
+    totalHeat += getEffectiveHeat(weapon);
   }
   const heatToAdd = totalHeat * dt;
 

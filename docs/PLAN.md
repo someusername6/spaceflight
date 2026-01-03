@@ -329,6 +329,18 @@ Player can toggle between LINKED and SINGLE fire modes (V key):
 
 **AI behavior:** AI always fires linked (all weapons together)
 
+#### 3.2.2 Weapon Bank Sizes
+Each weapon bank has a size (1, 2, or 3) that affects weapon performance:
+
+| Weapon Type | Size Effect | Scaling |
+|-------------|-------------|---------|
+| Energy | Reduced heat per shot | `heat / size` |
+| Ballistic | Increased ammo capacity | `ammo × size` |
+| Beam | Reduced heat per second | `heat / size` |
+| Missiles/Decoys | Increased count | `count × size` |
+
+This creates equipment-fitting decisions: which weapon goes in which bank?
+
 ### 3.3 Shield System
 - `Shields`: current, max, regenRate, regenDelay, lastDamageTime
 - `ShieldSystem` - Regeneration logic

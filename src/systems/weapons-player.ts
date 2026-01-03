@@ -16,6 +16,7 @@ import {
   findDecoyWeapon,
   getCurrentPrimary,
   getCurrentSecondary,
+  getEffectiveHeat,
 } from '../components/weapons';
 import type { Entity, World } from '../core/types';
 import { spawnDecoy, spawnMissile, spawnProjectile } from './weapon-spawning';
@@ -93,8 +94,8 @@ function fireSinglePrimary(
     // Check ammo
     if (weapon.ammo !== undefined && weapon.ammo <= 0) return;
 
-    // Check heat
-    if (!addHeat(heat, weapon.heatPerShot)) return;
+    // Check heat (scaled by bank size)
+    if (!addHeat(heat, getEffectiveHeat(weapon))) return;
 
     weapons.lastFireTime = gameTime;
     if (weapon.ammo !== undefined) weapon.ammo--;

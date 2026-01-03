@@ -159,12 +159,34 @@ AI ships always fire in linked mode (all weapons together).
 
 ## Bank Sizes
 
-Bank size affects:
-- **Energy weapons:** Heat capacity multiplier (size 2 = 2x shots before overheat)
-- **Ballistic weapons:** Ammo capacity multiplier
-- **Missiles:** Ammo capacity multiplier
+Ships have weapon banks of different sizes (1, 2, or 3). Bank size affects weapon performance:
 
-Standard sizes: 1 (small), 2 (medium), 3 (large)
+### Scaling Rules
+
+| Weapon Type | Bank Size Effect | Formula | Example (Size 2) |
+|-------------|------------------|---------|------------------|
+| **Energy** (Plasma, Pulse, Ion) | Reduced heat per shot | `heat / size` | Plasma: 8 → 4 heat |
+| **Ballistic** (Autocannon, Railgun, Flak) | Increased ammo | `ammo × size` | Autocannon: 200 → 400 |
+| **Beam** (Lasers, Lightning) | Reduced heat per second | `heat / size` | Red Laser: 15 → 7.5/s |
+| **Nuclear Lance** | Additional shots | `ammo = size` | 1 → 2 shots |
+| **Missiles** (all types) | Increased count | `count × size` | Seeker: 8 → 16 |
+| **Decoys** | Increased count | `count × size` | 4 → 8 decoys |
+
+### Gameplay Effect
+
+- **Size 1:** Base values - heat-limited, ammo-limited
+- **Size 2:** 2× efficiency - sustain fire twice as long, or carry twice the ammo
+- **Size 3:** 3× efficiency - maximum sustained fire / ammo capacity
+
+### Strategic Implications
+
+Bank sizes are fixed per ship archetype. Players choose which weapon to mount in which bank:
+
+- **Put energy weapons in large banks:** Sustain fire longer before overheating
+- **Put ballistic weapons in large banks:** Carry more ammo for extended engagements
+- **Put best missiles in large banks:** More ordnance for critical strikes
+
+This creates equipment-fitting decisions that define loadout strategy
 
 ## Friendly Fire
 

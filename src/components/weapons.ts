@@ -18,6 +18,8 @@ export interface PrimaryWeapon {
   damage: number;
   ammo?: number; // Undefined = infinite
   maxAmmo?: number;
+  /** Bank size (1, 2, or 3) - affects heat efficiency and ammo capacity */
+  bankSize: number;
   /** Flak explosion radius - explodes when enemies within range */
   flakRadius?: number;
   /** Number of shrapnel projectiles on flak explosion */
@@ -36,13 +38,18 @@ export interface SecondaryWeapon {
   maxCount: number;
   fireRate: number; // Seconds between shots
   lockSpeed: number; // Lock acquisition speed (0-1 per second, 0 = no lock needed)
+  /** Bank size (1, 2, or 3) - affects ammo capacity */
+  bankSize: number;
   aoeRadius?: number; // Area of effect radius (undefined = no AoE)
   isNuke?: boolean; // Special nuke explosion effects
   isDecoy?: boolean; // Countermeasure - distracts missiles
 }
 
-/** Decoy weapon definition */
-export const DECOY_DEF: Omit<SecondaryWeapon, 'count' | 'maxCount'> = {
+/** Decoy weapon definition (bankSize, count, maxCount set at creation) */
+export const DECOY_DEF: Omit<
+  SecondaryWeapon,
+  'count' | 'maxCount' | 'bankSize'
+> = {
   name: 'Decoy',
   requiresLock: false,
   speed: 50, // Slow movement
@@ -54,9 +61,13 @@ export const DECOY_DEF: Omit<SecondaryWeapon, 'count' | 'maxCount'> = {
   isDecoy: true,
 };
 
-/** Creates a decoy secondary weapon */
-export function createDecoyWeapon(count: number): SecondaryWeapon {
-  return { ...DECOY_DEF, count, maxCount: count };
+/** Creates a decoy secondary weapon (count is scaled by bankSize) */
+export function createDecoyWeapon(
+  baseCount: number,
+  bankSize = 1,
+): SecondaryWeapon {
+  const count = baseCount * bankSize;
+  return { ...DECOY_DEF, count, maxCount: count, bankSize };
 }
 
 /** Primary weapons component */
@@ -176,14 +187,34 @@ export const WEAPON_DEFS = {
   },
 } as const;
 
-/** Creates a PrimaryWeapons component */
-export function createPrimaryWeapons(weaponNames: string[]): PrimaryWeapons {
-  const weapons: PrimaryWeapon[] = weaponNames.map((name) => {
+/** Weapon bank specification (name + size) */
+export interface WeaponBankSpec {
+  name: string;
+  size: number;
+}
+
+/** Creates a PrimaryWeapons component from bank specs */
+export function createPrimaryWeapons(
+  bankSpecs: WeaponBankSpec[] | string[],
+): PrimaryWeapons {
+  const weapons: PrimaryWeapon[] = bankSpecs.map((spec) => {
+    // Support both old string[] format (size=1) and new WeaponBankSpec format
+    const name = typeof spec === 'string' ? spec : spec.name;
+    const bankSize = typeof spec === 'string' ? 1 : spec.size;
+
     const def = WEAPON_DEFS[name as keyof typeof WEAPON_DEFS];
     if (!def) {
       throw new Error(`Unknown weapon: ${name}`);
     }
-    return { ...def };
+
+    // Apply bank size scaling to ammo (ballistic weapons only)
+    const baseAmmo = 'ammo' in def ? (def.ammo as number) : undefined;
+    if (baseAmmo !== undefined) {
+      const scaledAmmo = baseAmmo * bankSize;
+      return { ...def, bankSize, ammo: scaledAmmo, maxAmmo: scaledAmmo };
+    }
+
+    return { ...def, bankSize };
   });
 
   return {
@@ -193,6 +224,11 @@ export function createPrimaryWeapons(weaponNames: string[]): PrimaryWeapons {
     lastFireTime: 0,
     linked: false, // Default to single-fire mode
   };
+}
+
+/** Get effective heat per shot (accounts for bank size) */
+export function getEffectiveHeat(weapon: PrimaryWeapon): number {
+  return weapon.heatPerShot / weapon.bankSize;
 }
 
 /** Creates a SecondaryWeapons component */

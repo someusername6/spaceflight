@@ -67,10 +67,10 @@ export function isMissileExpired(missile: Missile): boolean {
   return missile.distanceTraveled >= missile.range;
 }
 
-/** Missile definitions from WEAPONS.md */
+/** Missile definitions from WEAPONS.md (bankSize, count, maxCount set at creation) */
 export const MISSILE_DEFS: Record<
   string,
-  Omit<SecondaryWeapon, 'count' | 'maxCount'>
+  Omit<SecondaryWeapon, 'count' | 'maxCount' | 'bankSize'>
 > = {
   rocket: {
     name: 'Rocket',
@@ -146,12 +146,14 @@ export const MISSILE_DEFS: Record<
   },
 };
 
-/** Creates a SecondaryWeapon from a missile definition */
+/** Creates a SecondaryWeapon from a missile definition (count is scaled by bankSize) */
 export function createSecondaryWeaponFromDef(
   name: string,
-  count: number,
+  baseCount: number,
+  bankSize = 1,
 ): SecondaryWeapon {
   const def = MISSILE_DEFS[name];
   if (!def) throw new Error(`Unknown missile: ${name}`);
-  return { ...def, count, maxCount: count };
+  const count = baseCount * bankSize;
+  return { ...def, count, maxCount: count, bankSize };
 }
