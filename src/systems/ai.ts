@@ -1,7 +1,5 @@
 /**
  * AI System - State machine and behavior for AI-controlled ships.
- *
- * Slice 1: Simple pursue behavior only.
  */
 
 import { Vector3, Quaternion } from 'three';
@@ -13,6 +11,15 @@ import { AIState, type AIControlled } from '../components/ai';
 import { Faction, type FactionComponent, areEnemies } from '../components/faction';
 import type { Health } from '../components/health';
 import { isDying } from '../components/health';
+import type { Shields } from '../components/shields';
+import type { Heat } from '../components/heat';
+import {
+  shouldEvade,
+  shouldRegroup,
+  updateEvade,
+  updateProtect,
+  updateRegroup,
+} from './ai-behaviors';
 
 // Reusable vectors
 const toTarget = new Vector3();
@@ -63,6 +70,21 @@ export function aiSystem(world: World, dt: number): void {
     // Update state timer
     ai.stateTimer += dt;
 
+    // Get shields and heat for state transitions
+    const shields = getComponent<Shields>(world, entity, 'shields');
+    const heat = getComponent<Heat>(world, entity, 'heat');
+
+    // Check for emergency transitions (can happen from any combat state)
+    if (ai.state === AIState.Pursue || ai.state === AIState.Engage) {
+      if (shouldRegroup(shields, heat)) {
+        ai.state = AIState.Regroup;
+        ai.stateTimer = 0;
+      } else if (shouldEvade(shields)) {
+        ai.state = AIState.Evade;
+        ai.stateTimer = 0;
+      }
+    }
+
     // Run state machine
     switch (ai.state) {
       case AIState.Idle:
@@ -74,7 +96,15 @@ export function aiSystem(world: World, dt: number): void {
       case AIState.Engage:
         updateEngage(world, entity, ai, transform, physics, dt);
         break;
-      // TODO: Evade, Protect, Regroup states
+      case AIState.Evade:
+        updateEvade(world, entity, ai, transform, physics, shields, dt);
+        break;
+      case AIState.Protect:
+        updateProtect(world, entity, ai, transform, physics, faction.faction, dt);
+        break;
+      case AIState.Regroup:
+        updateRegroup(world, entity, ai, transform, physics, shields, heat, dt);
+        break;
     }
   }
 }
@@ -106,7 +136,6 @@ function updatePursue(
     return;
   }
 
-  // Check distance to target
   const targetTransform = getComponent<Transform>(world, ai.target, 'transform');
   if (!targetTransform) {
     ai.target = null;
@@ -119,7 +148,6 @@ function updatePursue(
 
   // Transition to engage if close enough
   if (distance <= ENGAGE_RANGE) {
-    // Check max-3-on-human constraint
     const targetIsPlayer = isPlayer(world, ai.target);
     const canEngage = !targetIsPlayer || countEngagingTarget(world, ai.target) < MAX_ENGAGING_PLAYER;
 
@@ -127,10 +155,8 @@ function updatePursue(
       ai.state = AIState.Engage;
       ai.stateTimer = 0;
     }
-    // If can't engage (too many on player), stay in Pursue
   }
 
-  // Continue pursuing
   pursueTarget(world, entity, ai, transform, physics, dt);
 }
 
@@ -143,7 +169,6 @@ function updateEngage(
   physics: Physics,
   dt: number
 ): void {
-  // Check if target is still valid
   if (ai.target === null || !entityExists(world, ai.target)) {
     ai.target = null;
     ai.state = AIState.Idle;
@@ -151,7 +176,6 @@ function updateEngage(
     return;
   }
 
-  // Check distance to target
   const targetTransform = getComponent<Transform>(world, ai.target, 'transform');
   if (!targetTransform) {
     ai.target = null;
@@ -162,24 +186,16 @@ function updateEngage(
 
   const distance = transform.position.distanceTo(targetTransform.position);
 
-  // Break off if target too far
   if (distance > BREAK_OFF_RANGE) {
     ai.state = AIState.Pursue;
     ai.stateTimer = 0;
   }
 
-  // Continue pursuing while engaging
   pursueTarget(world, entity, ai, transform, physics, dt);
-
-  // Note: Weapon firing is handled by weaponSystem checking AI state
 }
 
 /** Find the nearest enemy entity */
-export function findNearestEnemy(
-  world: World,
-  self: Entity,
-  selfFaction: Faction
-): Entity | null {
+export function findNearestEnemy(world: World, self: Entity, selfFaction: Faction): Entity | null {
   let nearest: Entity | null = null;
   let nearestDist = Infinity;
 
@@ -189,7 +205,6 @@ export function findNearestEnemy(
   for (const other of queryEntities(world, ['transform', 'faction', 'health'])) {
     if (other === self) continue;
 
-    // Skip dying enemies (already exploding)
     const otherHealth = getComponent<Health>(world, other, 'health')!;
     if (isDying(otherHealth)) continue;
 
@@ -223,29 +238,22 @@ export function pursueTarget(
     return;
   }
 
-  // Calculate direction to target
   toTarget.copy(targetTransform.position).sub(transform.position);
   const distToTarget = toTarget.length();
 
-  // Only turn if we have a valid direction (not at target position)
   if (distToTarget > 0.001) {
-    toTarget.multiplyScalar(1 / distToTarget); // normalize
-
-    // Get current forward
+    toTarget.multiplyScalar(1 / distToTarget);
     forward.set(0, 0, -1).applyQuaternion(transform.rotation);
 
-    // Calculate rotation needed
     const dot = forward.dot(toTarget);
     const turnSpeed = physics.turnRate * DEG_TO_RAD * dt;
 
     if (dot < 0.999) {
-      // Use slerp-like approach: rotate toward target
       rotationAxis.crossVectors(forward, toTarget);
       const axisLengthSq = rotationAxis.lengthSq();
 
       if (axisLengthSq > 0.0001) {
-        // Normal case: use cross product as rotation axis
-        rotationAxis.multiplyScalar(1 / Math.sqrt(axisLengthSq)); // normalize
+        rotationAxis.multiplyScalar(1 / Math.sqrt(axisLengthSq));
         const angle = Math.acos(Math.max(-1, Math.min(1, dot)));
         const rotateAngle = Math.min(angle, turnSpeed);
 
@@ -253,7 +261,6 @@ export function pursueTarget(
         transform.rotation.premultiply(deltaQuat);
         transform.rotation.normalize();
       } else if (dot < -0.9) {
-        // Anti-parallel case: pick arbitrary perpendicular axis (up)
         rotationAxis.set(0, 1, 0);
         deltaQuat.setFromAxisAngle(rotationAxis, turnSpeed);
         transform.rotation.premultiply(deltaQuat);
@@ -262,7 +269,6 @@ export function pursueTarget(
     }
   }
 
-  // Always accelerate when pursuing
   physics.currentSpeed = Math.min(
     physics.currentSpeed + physics.acceleration * dt,
     physics.maxSpeed

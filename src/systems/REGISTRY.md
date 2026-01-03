@@ -26,6 +26,7 @@ Every system must be listed here with a one-line purpose description.
 | Module | Purpose |
 |--------|---------|
 | weapon-spawning.ts | Projectile/missile creation helpers for weaponSystem |
+| ai-behaviors.ts | State behavior functions (Evade/Protect/Regroup) for aiSystem |
 
 ## Adding a New System
 

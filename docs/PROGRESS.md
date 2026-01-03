@@ -1,7 +1,7 @@
 # Implementation Progress
 
 Tracks actual implementation status with file references as evidence.
-**Last updated:** 2026-01-03 (weapon bank linking, file split for weapon-display-secondary.ts)
+**Last updated:** 2026-01-03 (AI Evade/Protect/Regroup states)
 
 ---
 
@@ -49,13 +49,13 @@ Tracks actual implementation status with file references as evidence.
 - [x] AIControlled component → `src/components/ai.ts:17-24`
 - [x] Aim error component → `src/components/aim-error.ts:11-23`
 - [x] Aim error system → `src/systems/aim-error.ts:11-14`
-- [x] AI system (Idle/Pursue/Engage) → `src/systems/ai.ts:50-75`
-- [ ] AI Evade state → TODO in `src/systems/ai.ts:77`
-- [ ] AI Protect state → TODO in `src/systems/ai.ts:77`
-- [ ] AI Regroup state → TODO in `src/systems/ai.ts:77`
+- [x] AI system (Idle/Pursue/Engage) → `src/systems/ai.ts:58-110`
+- [x] AI Evade state → `src/systems/ai-behaviors.ts:74-103` (breaks away, erratic movement)
+- [x] AI Protect state → `src/systems/ai-behaviors.ts:106-155` (positions between ally and threat)
+- [x] AI Regroup state → `src/systems/ai-behaviors.ts:158-196` (loops away to recover)
 - [x] AI primary weapon firing → `src/systems/weapons.ts:94-114` (with aim error, always linked)
 - [ ] AI missile firing policy
-- [x] Max-3-on-human constraint → `src/systems/ai.ts:31-48`
+- [x] Max-3-on-human constraint → `src/systems/ai.ts:41-50`
 
 ### 3.5 Targeting System
 - [x] Targeting component → `src/components/targeting.ts:7-31`
@@ -103,9 +103,9 @@ Tracks actual implementation status with file references as evidence.
 | 3.1 Weapon Components | 4 | 4 | 100% |
 | 3.2 Weapon Systems | 5 | 5 | 100% |
 | 3.3 Shield System | 3 | 3 | 100% |
-| 3.4 AI Implementation | 7 | 11 | 64% |
+| 3.4 AI Implementation | 10 | 11 | 91% |
 | 3.5 Targeting System | 4 | 4 | 100% |
 | 3.6 HUD Implementation | 11 | 13 | 85% |
 | 3.7 Visual Effects | 2 | 5 | 40% |
 | 3.8 Dust Particles | 1 | 1 | 100% |
-| **Phase 3 Total** | **37** | **46** | **80%** |
+| **Phase 3 Total** | **40** | **46** | **87%** |
