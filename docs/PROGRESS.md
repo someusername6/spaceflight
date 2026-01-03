@@ -1,7 +1,7 @@
 # Implementation Progress
 
 Tracks actual implementation status with file references as evidence.
-**Last updated:** 2026-01-03 (VFX: trails, exhaust, muzzle flash, nuke AoE)
+**Last updated:** 2026-01-03 (Decoys, missile destructibility, missile visuals)
 
 ---
 
@@ -31,6 +31,7 @@ Tracks actual implementation status with file references as evidence.
 - [x] SecondaryWeapons → `src/components/weapons.ts:46-53`
 - [x] Heat → `src/components/heat.ts:7-41`
 - [x] Ammo (inline in PrimaryWeapon) → `src/components/weapons.ts:19-20`
+- [x] Decoy component → `src/components/decoy.ts:14-21`
 
 ### 3.2 Weapon Systems
 - [x] WeaponSystem → `src/systems/weapons.ts:41-80`
@@ -38,6 +39,10 @@ Tracks actual implementation status with file references as evidence.
 - [x] MissileSystem → `src/systems/missiles.ts:21-117`
 - [x] BeamSystem → `src/systems/beams.ts:42-88`
 - [x] Bank linking (linked/single mode) → `src/systems/weapons.ts:130-132` (toggle), `src/systems/weapons.ts:179-214` (linked firing), `src/systems/beams.ts:93-124` (linked beams), `src/components/weapons.ts:43` (linked field)
+- [x] DecoySystem → `src/systems/decoys.ts:16-49` (movement, lifetime, missile collision)
+- [x] Missile seduction by decoys → `src/systems/missiles.ts:52-64` (50% chance within 200 units)
+- [x] Missile destructibility → `src/systems/weapon-spawning.ts:290` (1 HP, destroyed by any hit)
+- [x] Nuke AoE destroys projectiles → `src/systems/missiles.ts:366-400`
 
 ### 3.3 Shield System
 - [x] Shields component → `src/components/shields.ts:7-29`
@@ -55,6 +60,7 @@ Tracks actual implementation status with file references as evidence.
 - [x] AI Regroup state → `src/systems/ai-behaviors.ts:181-223` (ship-relative loop to recover)
 - [x] AI primary weapon firing → `src/systems/weapons.ts:90-104` (with aim error, always linked)
 - [x] AI missile firing policy → `src/systems/weapons.ts:107-122` (fires when locked in Engage state)
+- [x] AI decoy usage → `src/systems/weapons-ai.ts:99-123` (launches when targeted by missiles, 2s cooldown)
 - [x] Max-3-on-human constraint → `src/systems/ai.ts:41-50`
 
 ### 3.5 Targeting System
@@ -89,6 +95,8 @@ Tracks actual implementation status with file references as evidence.
 - [x] Nuke AoE damage → `src/systems/missiles.ts:175-213` (100-unit radius, linear falloff)
 - [x] Shield hit effects → `src/components/shield-hit.ts`, `src/rendering/shield-effects.ts:38-132`
 - [x] Weapon bank spawn offsets → `src/systems/weapon-spawning.ts:43-71` (projectiles/beams spawn from distinct positions)
+- [x] Missile type visuals → `src/rendering/renderer.ts:129-188` (size, color, fins, glow per type)
+- [x] Decoy visuals → `src/rendering/renderer.ts:190-203` (glowing sphere, faction colors)
 - [ ] Projectile hit effects (vary by weapon type)
 
 ### 3.8 Dust Particles
@@ -106,12 +114,12 @@ Tracks actual implementation status with file references as evidence.
 
 | Section | Done | Total | % |
 |---------|------|-------|---|
-| 3.1 Weapon Components | 4 | 4 | 100% |
-| 3.2 Weapon Systems | 5 | 5 | 100% |
+| 3.1 Weapon Components | 5 | 5 | 100% |
+| 3.2 Weapon Systems | 9 | 9 | 100% |
 | 3.3 Shield System | 3 | 3 | 100% |
-| 3.4 AI Implementation | 11 | 11 | 100% |
+| 3.4 AI Implementation | 12 | 12 | 100% |
 | 3.5 Targeting System | 4 | 4 | 100% |
 | 3.6 HUD Implementation | 11 | 13 | 85% |
-| 3.7 Visual Effects | 10 | 11 | 91% |
+| 3.7 Visual Effects | 12 | 13 | 92% |
 | 3.8 Dust Particles | 1 | 1 | 100% |
-| **Phase 3 Total** | **49** | **52** | **94%** |
+| **Phase 3 Total** | **57** | **60** | **95%** |

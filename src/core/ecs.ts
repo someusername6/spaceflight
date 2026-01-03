@@ -33,7 +33,9 @@ export function createWorld(seed: number = 0): World {
           cycleWeaponPrev: false,
           fireSecondary: false,
           toggleLink: false,
+          launchDecoy: false,
         },
+        lastDecoyFireTime: 0,
       },
       targeting: {
         prevInput: {

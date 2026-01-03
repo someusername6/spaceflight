@@ -45,7 +45,9 @@ export interface SystemState {
       cycleWeaponPrev: boolean;
       fireSecondary: boolean;
       toggleLink: boolean;
+      launchDecoy: boolean;
     };
+    lastDecoyFireTime: number;
   };
   /** Targeting system state */
   targeting: {
@@ -110,6 +112,7 @@ export interface InputState {
   // Combat
   firePrimary: boolean;
   fireSecondary: boolean;
+  launchDecoy: boolean;
   cycleWeaponNext: boolean;
   cycleWeaponPrev: boolean;
   cycleTargetNext: boolean;
@@ -132,6 +135,7 @@ export function createInputState(): InputState {
     afterburner: false,
     firePrimary: false,
     fireSecondary: false,
+    launchDecoy: false,
     cycleWeaponNext: false,
     cycleWeaponPrev: false,
     cycleTargetNext: false,

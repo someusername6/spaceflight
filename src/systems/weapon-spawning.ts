@@ -7,22 +7,26 @@
 import * as THREE from 'three';
 import type { AimError } from '../components/aim-error';
 import { applyAimError } from '../components/aim-error';
+import { createDecoy } from '../components/decoy';
 import type { FactionComponent } from '../components/faction';
 import { createFaction } from '../components/faction';
-import { createMissile } from '../components/missile';
+import { createHealth } from '../components/health';
+import { createMissile, type MissileType } from '../components/missile';
 import type { ProjectileCategory, WeaponName } from '../components/projectile';
 import { createProjectile } from '../components/projectile';
 import type { Transform } from '../components/transform';
 import { createTransform } from '../components/transform';
 import type { SecondaryWeapon } from '../components/weapons';
 import { addComponent, createEntity } from '../core/ecs';
+import { randomUnitVector } from '../core/prng';
 import type { Entity, World } from '../core/types';
 import { createCollision } from './collision';
 import { getForward } from './physics';
 
-/** Projectile spawn offset from ship center (forward) */
+/** Spawn offsets from ship center */
 const PROJECTILE_SPAWN_OFFSET = 3;
 const MISSILE_SPAWN_OFFSET = 4;
+const DECOY_SPAWN_OFFSET = 3; // Below the ship (downward)
 
 /** Lateral offset between weapon banks */
 const BANK_LATERAL_OFFSET = 1.5;
@@ -35,6 +39,7 @@ const MISSILE_RADIUS = 1.0;
 const spawnPos = new THREE.Vector3();
 const rightAxis = new THREE.Vector3();
 const tempForward = new THREE.Vector3();
+const downAxis = new THREE.Vector3();
 
 /**
  * Calculate spawn position for a weapon bank.
@@ -260,7 +265,8 @@ export function spawnMissile(
   missileTransform.rotation.copy(ownerTransform.rotation);
   addComponent(world, missile, missileTransform);
 
-  // Create missile component
+  // Create missile component with type for visuals
+  const missileType = weapon.name.toLowerCase() as MissileType;
   addComponent(
     world,
     missile,
@@ -274,14 +280,64 @@ export function spawnMissile(
       forward,
       weapon.aoeRadius ?? 0,
       weapon.isNuke ?? false,
+      missileType,
     ),
   );
 
   // Add collision
   addComponent(world, missile, createCollision(MISSILE_RADIUS));
 
+  // Add health (missiles have 1 HP - destroyed by any hit)
+  addComponent(world, missile, createHealth(1));
+
   // Missiles inherit owner's faction
   if (ownerFaction) {
     addComponent(world, missile, createFaction(ownerFaction.faction));
+  }
+}
+
+/** Decoy collision radius */
+const DECOY_RADIUS = 1.5;
+
+// Reusable vector for decoy direction (avoid per-call allocations)
+const decoyDirection = new THREE.Vector3();
+
+/** Spawn a decoy entity (launches from bottom of ship with downward bias) */
+export function spawnDecoy(
+  world: World,
+  owner: Entity,
+  ownerTransform: Transform,
+  ownerFaction: FactionComponent | undefined,
+): void {
+  // Get ship's local "down" direction (negative Y in local space)
+  downAxis.set(0, -1, 0).applyQuaternion(ownerTransform.rotation);
+  spawnPos
+    .copy(ownerTransform.position)
+    .addScaledVector(downAxis, DECOY_SPAWN_OFFSET);
+
+  // Random direction biased downward (away from ship)
+  const randomDir = randomUnitVector(world.prng);
+  decoyDirection.set(randomDir.x, randomDir.y, randomDir.z);
+  // Bias toward downward (ship's local down direction)
+  decoyDirection.addScaledVector(downAxis, 1.5).normalize();
+
+  const decoy = createEntity(world);
+
+  // Create transform at spawn position
+  const decoyTransform = createTransform(spawnPos.x, spawnPos.y, spawnPos.z);
+  addComponent(world, decoy, decoyTransform);
+
+  // Create decoy component
+  addComponent(world, decoy, createDecoy(owner, decoyDirection));
+
+  // Add collision (decoys can destroy missiles on contact)
+  addComponent(world, decoy, createCollision(DECOY_RADIUS));
+
+  // Add health (decoys have 1 HP like missiles)
+  addComponent(world, decoy, createHealth(1));
+
+  // Decoys inherit owner's faction
+  if (ownerFaction) {
+    addComponent(world, decoy, createFaction(ownerFaction.faction));
   }
 }

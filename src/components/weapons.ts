@@ -38,6 +38,25 @@ export interface SecondaryWeapon {
   lockSpeed: number; // Lock acquisition speed (0-1 per second, 0 = no lock needed)
   aoeRadius?: number; // Area of effect radius (undefined = no AoE)
   isNuke?: boolean; // Special nuke explosion effects
+  isDecoy?: boolean; // Countermeasure - distracts missiles
+}
+
+/** Decoy weapon definition */
+export const DECOY_DEF: Omit<SecondaryWeapon, 'count' | 'maxCount'> = {
+  name: 'Decoy',
+  requiresLock: false,
+  speed: 50, // Slow movement
+  turnRate: 0,
+  range: 0, // Not used (lifetime-based)
+  damage: 0, // Non-damaging
+  fireRate: 0.5, // 2 per second max
+  lockSpeed: 0,
+  isDecoy: true,
+};
+
+/** Creates a decoy secondary weapon */
+export function createDecoyWeapon(count: number): SecondaryWeapon {
+  return { ...DECOY_DEF, count, maxCount: count };
 }
 
 /** Primary weapons component */
@@ -228,4 +247,17 @@ export function canFire(
 ): boolean {
   const fireRate = 'fireRate' in weapon ? weapon.fireRate : 0.5;
   return now - lastFire >= fireRate;
+}
+
+/** Find decoy weapon in secondary weapons (returns index and weapon) */
+export function findDecoyWeapon(
+  weapons: SecondaryWeapons,
+): { index: number; weapon: SecondaryWeapon } | undefined {
+  for (let i = 0; i < weapons.weapons.length; i++) {
+    const weapon = weapons.weapons[i] as SecondaryWeapon;
+    if (weapon.isDecoy && weapon.count > 0) {
+      return { index: i, weapon };
+    }
+  }
+  return undefined;
 }

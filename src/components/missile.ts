@@ -5,6 +5,16 @@
 import type { ComponentBase, Entity, Vector3 } from '../core/types';
 import type { SecondaryWeapon } from './weapons';
 
+/** Missile type for visual differentiation */
+export type MissileType =
+  | 'rocket'
+  | 'seeker'
+  | 'dart'
+  | 'cluster'
+  | 'swarm'
+  | 'torpedo'
+  | 'nuke';
+
 /** Missile in-flight component */
 export interface Missile extends ComponentBase {
   readonly type: 'missile';
@@ -18,6 +28,7 @@ export interface Missile extends ComponentBase {
   direction: Vector3;
   aoeRadius: number; // Area of effect radius (0 = no AoE)
   isNuke: boolean; // For visual effects (larger explosion)
+  missileType: MissileType; // Visual appearance type
 }
 
 /** Creates a Missile component */
@@ -31,6 +42,7 @@ export function createMissile(
   direction: Vector3,
   aoeRadius = 0,
   isNuke = false,
+  missileType: MissileType = 'seeker',
 ): Missile {
   return {
     type: 'missile',
@@ -44,6 +56,7 @@ export function createMissile(
     direction: direction.clone().normalize(),
     aoeRadius,
     isNuke,
+    missileType,
   };
 }
 

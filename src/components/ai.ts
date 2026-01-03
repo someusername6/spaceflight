@@ -21,6 +21,7 @@ export interface AIControlled extends ComponentBase {
   protectTarget: Entity | null;
   stateTimer: number; // Time in current state
   lastStateChange: number; // For cooldowns
+  lastDecoyTime: number; // When AI last launched a decoy
 }
 
 /** Creates an AIControlled component */
@@ -32,5 +33,6 @@ export function createAIControlled(): AIControlled {
     protectTarget: null,
     stateTimer: 0,
     lastStateChange: 0,
+    lastDecoyTime: 0,
   };
 }

@@ -19,6 +19,7 @@ const KEY_BINDINGS = {
   afterburner: 'KeyZ',
   firePrimary: 'Space',
   fireSecondary: 'KeyF',
+  launchDecoy: 'KeyC',
   cycleWeaponNext: 'Period',
   cycleWeaponPrev: 'Comma',
   cycleTargetNext: 'BracketRight',
@@ -80,6 +81,7 @@ export function inputSystem(world: World, _dt: number): void {
     // Combat
     input.firePrimary = pressedKeys.has(KEY_BINDINGS.firePrimary);
     input.fireSecondary = pressedKeys.has(KEY_BINDINGS.fireSecondary);
+    input.launchDecoy = pressedKeys.has(KEY_BINDINGS.launchDecoy);
     input.cycleWeaponNext = pressedKeys.has(KEY_BINDINGS.cycleWeaponNext);
     input.cycleWeaponPrev = pressedKeys.has(KEY_BINDINGS.cycleWeaponPrev);
     input.cycleTargetNext = pressedKeys.has(KEY_BINDINGS.cycleTargetNext);

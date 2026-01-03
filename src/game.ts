@@ -12,6 +12,7 @@ import { beamSystem } from './systems/beams';
 import { cleanupSystem } from './systems/cleanup';
 import { collisionSystem } from './systems/collision';
 import { damageSystem } from './systems/damage';
+import { decoySystem } from './systems/decoys';
 import { explosionSystem } from './systems/explosions';
 import { heatSystem } from './systems/heat';
 // Systems (in execution order)
@@ -63,14 +64,15 @@ const SYSTEM_ORDER: SystemFn[] = [
   beamSystem, // 6. Handle beam damage
   physicsSystem, // 7. Apply movement
   projectileSystem, // 8. Move projectiles
-  missileSystem, // 9. Move missiles with tracking
-  collisionSystem, // 10. Detect collisions
-  damageSystem, // 11. Apply damage
-  shieldSystem, // 12. Regenerate shields
-  heatSystem, // 13. Cool heat
-  cleanupSystem, // 14. Remove dead entities, spawn explosions
-  explosionSystem, // 15. Update explosion effects
-  missionSystem, // 16. Check win/lose
+  missileSystem, // 9. Move missiles with tracking (decoy seduction here)
+  decoySystem, // 10. Move decoys, destroy missiles on contact
+  collisionSystem, // 11. Detect collisions
+  damageSystem, // 12. Apply damage
+  shieldSystem, // 13. Regenerate shields
+  heatSystem, // 14. Cool heat
+  cleanupSystem, // 15. Remove dead entities, spawn explosions
+  explosionSystem, // 16. Update explosion effects
+  missionSystem, // 17. Check win/lose
 ];
 
 /** Game instance state */

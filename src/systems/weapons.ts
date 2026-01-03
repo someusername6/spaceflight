@@ -1,6 +1,4 @@
-/**
- * Weapon System - Handles firing primary and secondary weapons.
- */
+/** Weapon System - Handles firing primary and secondary weapons. */
 
 import type { AIControlled } from '../components/ai';
 import type { AimError } from '../components/aim-error';
@@ -17,20 +15,15 @@ import type {
   PrimaryWeapons,
   SecondaryWeapons,
 } from '../components/weapons';
-import {
-  cycleNextPrimary,
-  cyclePrevPrimary,
-  getCurrentPrimary,
-  getCurrentSecondary,
-} from '../components/weapons';
+import { getCurrentSecondary } from '../components/weapons';
 import { entityExists, getComponent, queryEntities } from '../core/ecs';
 import type { Entity, World } from '../core/types';
-import {
-  spawnMissile,
-  spawnProjectile,
-  spawnProjectileWithAimError,
-} from './weapon-spawning';
+import { spawnProjectileWithAimError } from './weapon-spawning';
 import { handleAIPrimaryWeapons, handleAISecondaryWeapons } from './weapons-ai';
+import {
+  handlePlayerPrimaryWeapons,
+  handlePlayerSecondaryWeapons,
+} from './weapons-player';
 
 // Reusable array for projectile weapons in linked fire (avoid per-frame allocations)
 interface WeaponWithIndex {
@@ -54,7 +47,6 @@ export function weaponSystem(world: World, dt: number): void {
     const health = getComponent<Health>(world, entity, 'health');
     if (health && isDying(health)) continue;
 
-    // Query guarantees these components exist
     const transform = getComponent<Transform>(
       world,
       entity,
@@ -112,7 +104,6 @@ export function weaponSystem(world: World, dt: number): void {
     const health = getComponent<Health>(world, entity, 'health');
     if (health && isDying(health)) continue;
 
-    // Query guarantees these components exist
     const transform = getComponent<Transform>(
       world,
       entity,
@@ -167,95 +158,7 @@ export function weaponSystem(world: World, dt: number): void {
     state.prevInput.cycleWeaponPrev = player.input.cycleWeaponPrev;
     state.prevInput.fireSecondary = player.input.fireSecondary;
     state.prevInput.toggleLink = player.input.toggleLink;
-  }
-}
-
-/** Handle player primary weapon input */
-function handlePlayerPrimaryWeapons(
-  world: World,
-  entity: Entity,
-  transform: Transform,
-  weapons: PrimaryWeapons,
-  heat: Heat,
-  faction: FactionComponent | undefined,
-  player: PlayerControlled,
-  state: World['systemState']['weapons'],
-  gameTime: number,
-): void {
-  const input = player.input;
-  const prevInput = state.prevInput;
-
-  // Toggle linked mode (edge-triggered)
-  if (input.toggleLink && !prevInput.toggleLink) {
-    weapons.linked = !weapons.linked;
-  }
-
-  // Weapon cycling (edge-triggered) - only meaningful in single mode
-  if (input.cycleWeaponNext && !prevInput.cycleWeaponNext) {
-    cycleNextPrimary(weapons);
-  }
-  if (input.cycleWeaponPrev && !prevInput.cycleWeaponPrev) {
-    cyclePrevPrimary(weapons);
-  }
-
-  // Fire primary weapon(s)
-  if (input.firePrimary) {
-    if (weapons.linked) {
-      fireLinkedPrimaries(
-        world,
-        entity,
-        transform,
-        weapons,
-        heat,
-        faction,
-        gameTime,
-      );
-    } else {
-      fireSinglePrimary(
-        world,
-        entity,
-        transform,
-        weapons,
-        heat,
-        faction,
-        gameTime,
-      );
-    }
-  }
-}
-
-/** Fire only the currently selected primary weapon */
-function fireSinglePrimary(
-  world: World,
-  entity: Entity,
-  transform: Transform,
-  weapons: PrimaryWeapons,
-  heat: Heat,
-  faction: FactionComponent | undefined,
-  gameTime: number,
-): void {
-  const weapon = getCurrentPrimary(weapons);
-  if (!weapon || weapon.category === 'beam') return; // Beams handled by beam system
-
-  const timeSinceFire = gameTime - weapons.lastFireTime;
-  if (timeSinceFire >= weapon.fireRate) {
-    // Check ammo
-    if (weapon.ammo !== undefined && weapon.ammo <= 0) return;
-
-    // Check heat
-    if (!addHeat(heat, weapon.heatPerShot)) return;
-
-    weapons.lastFireTime = gameTime;
-    if (weapon.ammo !== undefined) weapon.ammo--;
-    spawnProjectile(
-      world,
-      entity,
-      transform,
-      weapon,
-      faction,
-      weapons.currentIndex,
-      weapons.weapons.length,
-    );
+    state.prevInput.launchDecoy = player.input.launchDecoy;
   }
 }
 
@@ -345,42 +248,6 @@ function updateLockProgress(
     weapon.requiresLock && weapon.lockSpeed > 0
       ? Math.min(1, weapons.lockProgress + weapon.lockSpeed * dt)
       : 1;
-}
-
-/** Handle player secondary weapon input */
-function handlePlayerSecondaryWeapons(
-  world: World,
-  entity: Entity,
-  transform: Transform,
-  weapons: SecondaryWeapons,
-  faction: FactionComponent | undefined,
-  player: PlayerControlled,
-  state: World['systemState']['weapons'],
-  gameTime: number,
-): void {
-  const input = player.input;
-  const prevInput = state.prevInput;
-
-  // Fire secondary weapon (edge-triggered to prevent rapid fire)
-  if (input.fireSecondary && !prevInput.fireSecondary) {
-    const weapon = getCurrentSecondary(weapons);
-    if (weapon && weapon.count > 0) {
-      const timeSinceFire = gameTime - weapons.lastFireTime;
-
-      // Check fire rate
-      if (timeSinceFire < weapon.fireRate) return;
-
-      // Check lock requirement
-      if (weapon.requiresLock && weapons.lockProgress < 1) return;
-
-      // Fire missile
-      weapons.lastFireTime = gameTime;
-      weapon.count--;
-
-      const target = weapons.lockProgress >= 1 ? weapons.lockTarget : undefined;
-      spawnMissile(world, entity, transform, weapon, faction, target);
-    }
-  }
 }
 
 /** Get player input (if player exists) */

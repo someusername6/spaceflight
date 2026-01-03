@@ -1,14 +1,14 @@
-/**
- * Missile System - Handles missile tracking, movement, and hits.
- */
+/** Missile System - Handles missile tracking, movement, and hits. */
 
 import * as THREE from 'three';
+import { DECOY_SEDUCE_CHANCE, DECOY_SEDUCE_RANGE } from '../components/decoy';
 import { createExplosion } from '../components/explosion';
 import type { FactionComponent } from '../components/faction';
 import { areEnemies } from '../components/faction';
 import type { Health } from '../components/health';
 import type { Missile } from '../components/missile';
 import { isMissileExpired } from '../components/missile';
+import type { Projectile } from '../components/projectile';
 import type { Transform } from '../components/transform';
 import { createTransform } from '../components/transform';
 import {
@@ -20,15 +20,13 @@ import {
   queryEntities,
   removeEntity,
 } from '../core/ecs';
+import { random } from '../core/prng';
 import type { Entity, World } from '../core/types';
 import type { Collision } from './collision';
 import { dealDamage } from './damage';
 
-/** Explosion size for missile impacts */
 const MISSILE_EXPLOSION_SIZE = 4;
-const MISSILE_EXPLOSION_COLOR = new THREE.Color(1.0, 0.5, 0.1); // Orange
-
-/** Nuke explosion size multiplier */
+const MISSILE_EXPLOSION_COLOR = new THREE.Color(1.0, 0.5, 0.1);
 const NUKE_EXPLOSION_SIZE = 15;
 
 // Reusable vectors and quaternions (avoid per-frame allocations)
@@ -36,6 +34,7 @@ const toTarget = new THREE.Vector3();
 const rotationAxis = new THREE.Vector3();
 const tempForward = new THREE.Vector3();
 const tempQuat = new THREE.Quaternion();
+const toDecoy = new THREE.Vector3();
 
 /** Missile system - tracking and collision handling */
 export function missileSystem(world: World, dt: number): void {
@@ -49,6 +48,20 @@ export function missileSystem(world: World, dt: number): void {
       entity,
       'transform',
     ) as Transform;
+
+    // Check for decoy seduction (any missile with turnRate can be seduced)
+    if (
+      missile.turnRate > 0 &&
+      !hasComponent(world, missile.target ?? -1, 'decoy')
+    ) {
+      const nearestDecoy = findNearestDecoy(world, transform.position);
+      if (nearestDecoy) {
+        // Seduction chance check (deterministic using world prng)
+        if (random(world.prng) < DECOY_SEDUCE_CHANCE) {
+          missile.target = nearestDecoy;
+        }
+      }
+    }
 
     // Update tracking if we have a target
     if (missile.target !== undefined && missile.turnRate > 0) {
@@ -99,6 +112,13 @@ export function missileSystem(world: World, dt: number): void {
             missile.owner,
             -1 as Entity, // No direct hit target to exclude
           );
+          // Nuke also destroys projectiles within blast radius
+          destroyProjectilesInRadius(
+            world,
+            transform.position,
+            missile.aoeRadius,
+            missile.owner,
+          );
           spawnMissileExplosion(world, transform.position, true);
         }
       }
@@ -129,6 +149,15 @@ export function missileSystem(world: World, dt: number): void {
             missile.owner,
             other, // Exclude the directly-hit target
           );
+          // Nuke also destroys projectiles within blast radius
+          if (missile.isNuke) {
+            destroyProjectilesInRadius(
+              world,
+              transform.position,
+              missile.aoeRadius,
+              missile.owner,
+            );
+          }
         }
 
         // Spawn explosion at impact point
@@ -181,7 +210,7 @@ function spawnMissileExplosion(
 // Reusable vector for AoE distance calculation
 const aoeTempVec = new THREE.Vector3();
 
-/** Deal AoE damage to all entities within radius */
+/** Deal AoE damage to all entities within radius (including missiles and projectiles) */
 function dealAoeDamage(
   world: World,
   center: THREE.Vector3,
@@ -193,8 +222,7 @@ function dealAoeDamage(
   // Find all entities with health and transform within radius
   for (const entity of queryEntities(world, ['transform', 'health'])) {
     if (entity === owner || entity === exclude) continue;
-    if (hasComponent(world, entity, 'projectile')) continue;
-    if (hasComponent(world, entity, 'missile')) continue;
+    // Note: missiles AND projectiles CAN be damaged by AoE (e.g., nuke clearing the area)
 
     // Query guarantees these components exist
     const transform = getComponent<Transform>(
@@ -304,5 +332,69 @@ function trackTarget(
     }
     tempQuat.setFromAxisAngle(rotationAxis, maxTurn);
     missile.direction.applyQuaternion(tempQuat).normalize();
+  }
+}
+
+/** Find nearest decoy within seduce range (for missile seduction) */
+function findNearestDecoy(
+  world: World,
+  missilePosition: THREE.Vector3,
+): Entity | undefined {
+  let nearestDecoy: Entity | undefined;
+  let nearestDistance = DECOY_SEDUCE_RANGE;
+
+  for (const entity of queryEntities(world, ['decoy', 'transform'])) {
+    const transform = getComponent<Transform>(
+      world,
+      entity,
+      'transform',
+    ) as Transform;
+
+    toDecoy.copy(transform.position).sub(missilePosition);
+    const distance = toDecoy.length();
+
+    if (distance < nearestDistance) {
+      nearestDistance = distance;
+      nearestDecoy = entity;
+    }
+  }
+
+  return nearestDecoy;
+}
+
+/** Destroy all projectiles within radius (for nuke AoE) */
+function destroyProjectilesInRadius(
+  world: World,
+  center: THREE.Vector3,
+  radius: number,
+  owner: Entity,
+): void {
+  const toDestroy: Entity[] = [];
+
+  for (const entity of queryEntities(world, ['projectile', 'transform'])) {
+    const projectile = getComponent<Projectile>(
+      world,
+      entity,
+      'projectile',
+    ) as Projectile;
+    // Don't destroy owner's projectiles
+    if (projectile.owner === owner) continue;
+
+    const transform = getComponent<Transform>(
+      world,
+      entity,
+      'transform',
+    ) as Transform;
+
+    aoeTempVec.copy(transform.position).sub(center);
+    const distance = aoeTempVec.length();
+
+    if (distance <= radius) {
+      toDestroy.push(entity);
+    }
+  }
+
+  for (const entity of toDestroy) {
+    removeEntity(world, entity);
   }
 }

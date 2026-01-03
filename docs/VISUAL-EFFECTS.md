@@ -12,6 +12,7 @@ This document describes all weapon-related visual effects (VFX) in the game, inc
 | Beam Rendering | `src/rendering/renderer.ts` | Continuous beam lines with fade-out |
 | Shield Hit Effects | `src/rendering/shield-effects.ts` | Cyan flash when shields absorb damage |
 | Explosions | `src/rendering/explosions.ts` | Expanding spheres + particles on impacts |
+| Decoys | `src/rendering/renderer.ts` | Glowing spheres that seduce missiles |
 
 ---
 
@@ -178,6 +179,69 @@ Each missile has a flame effect at its rear:
 | **Swarm** | 500 | 100 deg/s | 600 | Rapid fire, low damage each |
 | **Torpedo** | 200 | 30 deg/s | 4000 | Slow but high damage, long range |
 | **Nuke** | 150 | 20 deg/s | 3000 | Massive AoE damage, special explosion |
+
+### Missile Visual Appearance
+
+**File:** `src/rendering/renderer.ts`
+
+Each missile type has a distinctive visual appearance reflecting its combat role:
+
+| Missile | Body Color | Size (radius × length) | Special Features | Fantasy |
+|---------|-----------|------------------------|------------------|---------|
+| **Rocket** | Red-orange #FF4400 | 0.6 × 2.5 | Chunky, no glow | Unguided workhorse |
+| **Seeker** | Cyan #00FFCC | 0.4 × 3.0 | Sleek standard shape | Reliable tracker |
+| **Dart** | Blue-white #AADDFF | 0.25 × 3.5 | Thin, glowing tip (#4488FF) | Fast precision strike |
+| **Cluster** | Yellow-orange #FFAA00 | 0.35 × 2.0 | Compact, no glow | Chaos spreader |
+| **Swarm** | Orange #FF8800 | 0.2 × 1.5 | Tiny, glowing body (#FF4400) | Overwhelming numbers |
+| **Torpedo** | Blue-silver #6688AA | 0.7 × 4.0 | Large with 4 stabilizer fins | Capital ship killer |
+| **Nuke** | Deep red #FF2200 | 0.9 × 5.0 | Massive with fins, ominous glow (#FF0000) | Game-changer |
+
+### Visual Components
+
+1. **Body Cone:** Main missile shape pointing forward
+   - Size varies significantly by type (swarm is tiny, nuke is massive)
+   - Color reflects weapon personality
+
+2. **Stabilizer Fins:** Torpedo and Nuke only
+   - 4 fins arranged in cross pattern at rear
+   - Gray metallic color
+   - Convey heavy ordnance
+
+3. **Glow Sphere:** Dart, Swarm, and Nuke only
+   - Additive blended sphere near missile tip
+   - Creates "hot" or "energized" appearance
+   - Pulses with emissive color
+
+---
+
+## Decoys
+
+**File:** `src/rendering/renderer.ts`
+
+Decoys are countermeasure flares that seduce missiles away from ships:
+
+### Visual Appearance
+
+| Component | Description |
+|-----------|-------------|
+| **Inner Core** | Bright sphere (radius 0.8) |
+| **Outer Glow** | Larger translucent sphere (radius 1.2) |
+| **Blending** | Additive for glow effect |
+
+### Colors by Faction
+
+| Faction | Color |
+|---------|-------|
+| Player | Green #00FF00 |
+| Enemy | Red #FF0000 |
+| Neutral | Yellow #FFFF00 |
+
+### Spawn Behavior
+
+- **Position:** Below ship (local -Y direction)
+- **Direction:** Random + downward bias
+- **Speed:** 50 m/s
+- **Lifetime:** 10 seconds
 
 ---
 

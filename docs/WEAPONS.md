@@ -108,13 +108,24 @@ This prevents nukes from detonating harmlessly in empty space while ensuring the
 
 | Property | Value |
 |----------|-------|
-| Launch direction | Backward + random |
+| Launch direction | Bottom of ship + downward bias |
 | Speed | 50 m/s |
 | Lifetime | 10 seconds |
-| Distraction chance | 50% per missile in range |
+| Seduce range | 200 units |
+| Seduce chance | 50% per missile in range |
 | Collision | Destroys missile on contact |
+| Keybind | C (dedicated key) |
+
+**Mechanics:**
+- Launch from the bottom of the ship with a downward-biased random direction
+- Missiles within 200-unit range have a 50% chance to be seduced each tick
+- Seduced missiles retarget to the decoy and track it instead
+- Direct collision with a missile destroys both the decoy and the missile
+- Works against missiles from any faction (including friendly missiles)
 
 **Usage:** Deploy when locked, missiles in flight, or preemptively when engaging.
+
+**AI Behavior:** AI ships with decoys equipped will automatically launch them when targeted by missiles (2-second cooldown between launches).
 
 ## Lock-On System
 
