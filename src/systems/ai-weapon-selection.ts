@@ -7,6 +7,8 @@
  * - Ammo conservation (don't waste finite ammo at poor angles)
  * - Target shields (prefer Ion against shielded targets)
  * - Missile selection (pick optimal missile for situation)
+ *
+ * Uses AIProfile for per-entity behavior thresholds.
  */
 
 import type { Heat } from '../components/heat';
@@ -15,6 +17,7 @@ import type { Shields } from '../components/shields';
 import type { Transform } from '../components/transform';
 import type { PrimaryWeapon, PrimaryWeapons } from '../components/weapons';
 import { getEffectiveHeat } from '../components/weapons';
+import type { AIProfile } from '../data/ai-profiles';
 
 /** Result of weapon selection */
 export interface WeaponSelection {
@@ -36,12 +39,6 @@ const RANGE_THRESHOLDS = {
   long: 800,
   medium: 400,
 };
-
-/** Heat threshold for switching to cooler weapons */
-const HEAT_SWITCH_THRESHOLD = 0.75;
-
-/** Minimum firing angle (degrees) - don't waste ammo at poor angles */
-const MIN_FIRING_ANGLE = 30;
 
 /**
  * Categorize distance into range category.
@@ -101,6 +98,7 @@ function scoreWeapon(
   distance: number,
   heatPercent: number,
   targetHasShields: boolean,
+  profile: AIProfile,
 ): number {
   let score = 0;
 
@@ -124,7 +122,7 @@ function scoreWeapon(
 
   // Heat efficiency bonus (prefer low-heat weapons when hot)
   const heatPerShot = getEffectiveHeat(weapon);
-  if (heatPercent > HEAT_SWITCH_THRESHOLD) {
+  if (heatPercent > profile.heatSwitchThreshold) {
     // When hot, strongly prefer low-heat weapons
     score += Math.max(0, 30 - heatPerShot * 2);
   } else {
@@ -163,6 +161,7 @@ function scoreWeapon(
  * @param heat - AI's heat component
  * @param targetShields - Target's shields (or undefined)
  * @param firingAngle - Angle to target in degrees (0 = dead ahead)
+ * @param profile - AI behavior profile with thresholds
  * @returns Weapon selection result
  */
 export function selectOptimalPrimaryWeapon(
@@ -171,6 +170,7 @@ export function selectOptimalPrimaryWeapon(
   heat: Heat,
   targetShields: Shields | undefined,
   firingAngle: number,
+  profile: AIProfile,
 ): WeaponSelection {
   const heatPercent = getHeatPercent(heat);
   const targetHasShields =
@@ -189,8 +189,8 @@ export function selectOptimalPrimaryWeapon(
     return { mode: 'none' };
   }
 
-  // Don't waste finite ammo at poor firing angles
-  if (firingAngle > MIN_FIRING_ANGLE) {
+  // Don't waste finite ammo at poor firing angles (use profile threshold)
+  if (firingAngle > profile.minFiringAngle) {
     // Only fire infinite ammo weapons
     const infiniteWeapon = findInfiniteAmmoWeapon(weapons, distance);
     if (infiniteWeapon !== null) {
@@ -209,7 +209,13 @@ export function selectOptimalPrimaryWeapon(
     const weapon = weapons.weapons[i];
     if (!weapon) continue;
 
-    const score = scoreWeapon(weapon, distance, heatPercent, targetHasShields);
+    const score = scoreWeapon(
+      weapon,
+      distance,
+      heatPercent,
+      targetHasShields,
+      profile,
+    );
     const isValid = score > -500;
 
     if (isValid) {
@@ -231,12 +237,12 @@ export function selectOptimalPrimaryWeapon(
 
   // LINKED MODE: Fire all weapons when conditions are favorable
   // - All weapons can reach target and have ammo
-  // - Heat is manageable (below 60%)
+  // - Heat is manageable (use profile's linked fire threshold)
   // - Not targeting shields with Ion available (prefer focused fire)
   if (
     allWeaponsValid &&
     validWeaponCount > 1 &&
-    heatPercent < 0.6 &&
+    heatPercent < profile.linkedFireHeatThreshold &&
     !(targetHasShields && hasIonWeapon(weapons))
   ) {
     return { mode: 'linked' };

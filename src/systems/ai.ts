@@ -17,6 +17,7 @@ import type { Shields } from '../components/shields';
 import type { Transform } from '../components/transform';
 import { entityExists, getComponent, queryEntities } from '../core/ecs';
 import type { Entity, World } from '../core/types';
+import { AI_GLOBAL_SETTINGS } from '../data/ai-profiles';
 import {
   shouldEvade,
   shouldRegroup,
@@ -32,15 +33,6 @@ const rotationAxis = new Vector3();
 const deltaQuat = new Quaternion();
 
 const DEG_TO_RAD = Math.PI / 180;
-
-/** Engage range - how close before AI starts shooting */
-const ENGAGE_RANGE = 600;
-
-/** Break off range - AI will pursue if target gets this far */
-const BREAK_OFF_RANGE = 1200;
-
-/** Maximum AI that can engage the player simultaneously */
-const MAX_ENGAGING_PLAYER = 3;
 
 /** Count how many AI are currently engaging a specific target */
 function countEngagingTarget(world: World, target: Entity): number {
@@ -107,10 +99,10 @@ export function aiSystem(world: World, dt: number): void {
       ai.state === AIState.Engage ||
       ai.state === AIState.Protect
     ) {
-      if (shouldRegroup(shields, heat)) {
+      if (shouldRegroup(shields, heat, ai.profile)) {
         ai.state = AIState.Regroup;
         ai.stateTimer = 0;
-      } else if (shouldEvade(shields)) {
+      } else if (shouldEvade(shields, ai.profile)) {
         ai.state = AIState.Evade;
         ai.stateTimer = 0;
       }
@@ -194,12 +186,13 @@ function updatePursue(
 
   const distance = transform.position.distanceTo(targetTransform.position);
 
-  // Transition to engage if close enough
-  if (distance <= ENGAGE_RANGE) {
+  // Transition to engage if close enough (use profile's engage range)
+  if (distance <= ai.profile.engageRange) {
     const targetIsPlayer = isPlayer(world, ai.target);
     const canEngage =
       !targetIsPlayer ||
-      countEngagingTarget(world, ai.target) < MAX_ENGAGING_PLAYER;
+      countEngagingTarget(world, ai.target) <
+        AI_GLOBAL_SETTINGS.maxEngagingPlayer;
 
     if (canEngage) {
       ai.state = AIState.Engage;
@@ -240,7 +233,8 @@ function updateEngage(
 
   const distance = transform.position.distanceTo(targetTransform.position);
 
-  if (distance > BREAK_OFF_RANGE) {
+  // Break off if target gets too far (use profile's break-off range)
+  if (distance > ai.profile.breakOffRange) {
     ai.state = AIState.Pursue;
     ai.stateTimer = 0;
   }

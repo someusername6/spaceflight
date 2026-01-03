@@ -3,6 +3,11 @@
  */
 
 import type { ComponentBase, Entity } from '../core/types';
+import {
+  type AIProfile,
+  getAIProfile,
+  type ProfileName,
+} from '../data/ai-profiles';
 
 /** AI behavior states */
 export enum AIState {
@@ -22,10 +27,14 @@ export interface AIControlled extends ComponentBase {
   stateTimer: number; // Time in current state
   lastStateChange: number; // For cooldowns
   lastDecoyTime: number; // When AI last launched a decoy
+  /** AI behavior profile (determines competence level) */
+  profile: AIProfile;
 }
 
-/** Creates an AIControlled component */
-export function createAIControlled(): AIControlled {
+/** Creates an AIControlled component with a profile */
+export function createAIControlled(
+  profileName: ProfileName = 'regular',
+): AIControlled {
   return {
     type: 'aiControlled',
     state: AIState.Idle,
@@ -34,5 +43,6 @@ export function createAIControlled(): AIControlled {
     stateTimer: 0,
     lastStateChange: 0,
     lastDecoyTime: 0,
+    profile: getAIProfile(profileName),
   };
 }

@@ -8,6 +8,7 @@
 import * as THREE from 'three';
 import { type PRNGState, random, randomRange } from '../core/prng';
 import type { ComponentBase } from '../core/types';
+import type { AIProfile } from '../data/ai-profiles';
 
 // Reusable objects for applyAimError (avoid per-call allocations)
 const tempResult = new THREE.Vector3();
@@ -42,17 +43,31 @@ function setRandomDirection(target: THREE.Vector2, prng: PRNGState): void {
   target.set(Math.cos(angle), Math.sin(angle));
 }
 
-/** Creates an AimError component with default values */
+/** Creates an AimError component from AI profile or explicit values */
 export function createAimError(
   prng: PRNGState,
-  maxError = 0.05, // ~3 degrees
-  driftSpeed = 0.02, // ~1 degree per second
+  profileOrMaxError?: AIProfile | number,
+  driftSpeed?: number,
 ): AimError {
+  // Support both profile-based and explicit value creation
+  let maxError: number;
+  let drift: number;
+
+  if (typeof profileOrMaxError === 'object') {
+    // AIProfile provided
+    maxError = profileOrMaxError.aimErrorBase;
+    drift = profileOrMaxError.aimErrorDriftSpeed;
+  } else {
+    // Explicit values (backwards compatible)
+    maxError = profileOrMaxError ?? 0.05;
+    drift = driftSpeed ?? 0.02;
+  }
+
   return {
     type: 'aimError',
     offset: new THREE.Vector2(0, 0),
     maxError,
-    driftSpeed,
+    driftSpeed: drift,
     driftDirection: createRandomDirection(prng),
     driftTimer: randomDriftTime(prng),
   };

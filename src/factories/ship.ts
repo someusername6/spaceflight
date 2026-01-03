@@ -27,6 +27,7 @@ import {
 import { addComponent, createEntity } from '../core/ecs';
 import type { Entity, World } from '../core/types';
 import { Faction } from '../core/types';
+import type { ProfileName } from '../data/ai-profiles';
 import { createCollision } from '../systems/collision';
 
 /** Secondary weapon bank specification */
@@ -296,6 +297,7 @@ export function createAIShip(
   faction: Faction,
   position?: Vector3,
   rotation?: Quaternion,
+  profileName: ProfileName = 'regular',
 ): Entity {
   const stats = SHIP_ARCHETYPES[archetype];
   if (!stats) {
@@ -341,8 +343,11 @@ export function createAIShip(
   const callsign = generateCallsign(callsignPrefix);
   addComponent(world, entity, createShipIdentity(archetype, callsign));
 
-  addComponent(world, entity, createAIControlled());
-  addComponent(world, entity, createAimError(world.prng)); // AI has imperfect aim
+  // Create AI with profile - aim error derived from profile
+  const ai = createAIControlled(profileName);
+  addComponent(world, entity, ai);
+  addComponent(world, entity, createAimError(world.prng, ai.profile));
+
   addComponent(world, entity, createHeat(stats.maxHeat, stats.coolingRate));
   addComponent(world, entity, createPrimaryWeapons(stats.primaryWeapons));
   addComponent(world, entity, createCollision(stats.collisionRadius * 1.5)); // AI has larger hitbox
@@ -356,8 +361,16 @@ export function createEnemyShip(
   archetype: string,
   position?: Vector3,
   rotation?: Quaternion,
+  profileName: ProfileName = 'regular',
 ): Entity {
-  return createAIShip(world, archetype, Faction.Enemy, position, rotation);
+  return createAIShip(
+    world,
+    archetype,
+    Faction.Enemy,
+    position,
+    rotation,
+    profileName,
+  );
 }
 
 /** Creates an allied AI ship (wingman) */
@@ -366,6 +379,14 @@ export function createWingman(
   archetype: string,
   position?: Vector3,
   rotation?: Quaternion,
+  profileName: ProfileName = 'regular',
 ): Entity {
-  return createAIShip(world, archetype, Faction.Player, position, rotation);
+  return createAIShip(
+    world,
+    archetype,
+    Faction.Player,
+    position,
+    rotation,
+    profileName,
+  );
 }

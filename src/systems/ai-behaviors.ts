@@ -2,6 +2,7 @@
  * AI Behaviors - State update functions for AI ships.
  *
  * Extracted from ai.ts to stay under 400 line limit.
+ * Uses AIProfile for per-entity behavior configuration.
  */
 
 import { Quaternion, Vector3 } from 'three';
@@ -18,6 +19,7 @@ import type { Shields } from '../components/shields';
 import type { Transform } from '../components/transform';
 import { entityExists, getComponent } from '../core/ecs';
 import type { Entity, World } from '../core/types';
+import type { AIProfile } from '../data/ai-profiles';
 import { findNearestEnemy } from './ai';
 
 // Reusable vectors
@@ -29,40 +31,35 @@ const localUp = new Vector3(); // For ship-relative calculations
 
 const DEG_TO_RAD = Math.PI / 180;
 
-/** Thresholds for state transitions */
-const LOW_SHIELDS_PERCENT = 0.2; // 20% - trigger evade
-const VERY_LOW_SHIELDS_PERCENT = 0.1; // 10% - trigger regroup
-const RECOVER_SHIELDS_PERCENT = 0.5; // 50% - exit regroup
-// RECOVER_HEAT_PERCENT uses AFTERBURNER_UNLOCK_THRESHOLD from heat.ts (0.5)
-const EVADE_COOLDOWN = 5.0; // 5s before can exit evade
-const REGROUP_MIN_TIME = 3.0; // Minimum time in regroup
-const PROTECT_CHASE_RANGE = 400; // Max distance from protectee to chase threats
-const PROTECT_PATROL_RANGE = 200; // Distance to patrol around protectee
-
-/** Check if AI should evade (low shields) */
-export function shouldEvade(shields: Shields | undefined): boolean {
+/** Check if AI should evade (low shields) - uses profile threshold */
+export function shouldEvade(
+  shields: Shields | undefined,
+  profile: AIProfile,
+): boolean {
   if (!shields) return false;
-  return shields.current / shields.max < LOW_SHIELDS_PERCENT;
+  return shields.current / shields.max < profile.evadeShieldThreshold;
 }
 
-/** Check if AI should regroup (very low shields or overheated) */
+/** Check if AI should regroup (very low shields or overheated) - uses profile threshold */
 export function shouldRegroup(
   shields: Shields | undefined,
   heat: Heat | undefined,
+  profile: AIProfile,
 ): boolean {
   const veryLowShields =
-    shields && shields.current / shields.max < VERY_LOW_SHIELDS_PERCENT;
+    shields && shields.current / shields.max < profile.regroupShieldThreshold;
   const overheated = heat && isHeatWarning(heat);
   return !!(veryLowShields || overheated);
 }
 
-/** Check if AI has recovered enough to re-engage */
+/** Check if AI has recovered enough to re-engage - uses profile threshold */
 function hasRecovered(
   shields: Shields | undefined,
   heat: Heat | undefined,
+  profile: AIProfile,
 ): boolean {
   const shieldsOk =
-    !shields || shields.current / shields.max >= RECOVER_SHIELDS_PERCENT;
+    !shields || shields.current / shields.max >= profile.recoverShieldThreshold;
   const heatOk = !heat || getHeatPercent(heat) <= AFTERBURNER_UNLOCK_THRESHOLD;
   return shieldsOk && heatOk;
 }
@@ -108,10 +105,11 @@ export function updateEvade(
   shields: Shields | undefined,
   dt: number,
 ): void {
+  const profile = ai.profile;
   // Exit condition: cooldown expired and shields recovered (or no shields)
   const shieldsRecovered =
-    !shields || shields.current / shields.max >= LOW_SHIELDS_PERCENT;
-  if (ai.stateTimer >= EVADE_COOLDOWN && shieldsRecovered) {
+    !shields || shields.current / shields.max >= profile.evadeShieldThreshold;
+  if (ai.stateTimer >= profile.evadeCooldown && shieldsRecovered) {
     ai.state = ai.target ? AIState.Pursue : AIState.Idle;
     ai.stateTimer = 0;
     return;
@@ -158,6 +156,8 @@ export function updateProtect(
   faction: Faction,
   dt: number,
 ): void {
+  const profile = ai.profile;
+
   // Check if we have someone to protect
   if (!ai.protectTarget || !entityExists(world, ai.protectTarget)) {
     ai.state = AIState.Idle;
@@ -183,7 +183,7 @@ export function updateProtect(
   const threat = findNearestEnemy(world, ai.protectTarget, faction);
 
   // If too far from protectee, return instead of chasing threats
-  if (threat && distToProtectee <= PROTECT_CHASE_RANGE) {
+  if (threat && distToProtectee <= profile.protectChaseRange) {
     ai.target = threat;
     const threatTransform = getComponent<Transform>(world, threat, 'transform');
     if (threatTransform) {
@@ -201,7 +201,7 @@ export function updateProtect(
     }
   } else {
     // No threats or too far from protectee - return to protectee
-    if (distToProtectee > PROTECT_PATROL_RANGE) {
+    if (distToProtectee > profile.protectPatrolRange) {
       // Move closer to protectee
       toTarget
         .copy(protecteeTransform.position)
@@ -233,8 +233,12 @@ export function updateRegroup(
   heat: Heat | undefined,
   dt: number,
 ): void {
+  const profile = ai.profile;
   // Exit condition: recovered and minimum time passed
-  if (ai.stateTimer >= REGROUP_MIN_TIME && hasRecovered(shields, heat)) {
+  if (
+    ai.stateTimer >= profile.regroupMinTime &&
+    hasRecovered(shields, heat, profile)
+  ) {
     ai.state = ai.target ? AIState.Pursue : AIState.Idle;
     ai.stateTimer = 0;
     return;

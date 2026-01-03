@@ -1,9 +1,13 @@
 /**
  * AI Weapon Selection Tests - validates primary weapon selection logic.
+ *
+ * Uses real AI profiles via test fixtures to ensure tests reflect actual
+ * game behavior and don't rely on hardcoded assumptions.
  */
 
 import { createHeat } from '../src/components/heat.ts';
 import { createPrimaryWeapons } from '../src/components/weapons.ts';
+import { DEFAULT_TEST_PROFILE } from '../src/data/test-fixtures.ts';
 import {
   calculateFiringAngle,
   getDistanceCategory,
@@ -133,6 +137,7 @@ test('Linked mode when all weapons in range and heat low', () => {
     heat,
     undefined, // No shields - so Ion doesn't get shield bonus
     10, // Good firing angle
+    DEFAULT_TEST_PROFILE,
   );
 
   assert(
@@ -155,6 +160,7 @@ test('Single mode when weapon out of range', () => {
     heat,
     undefined,
     10,
+    DEFAULT_TEST_PROFILE,
   );
 
   // Should use single mode with plasma (only one that can reach)
@@ -176,6 +182,7 @@ test('No firing when heat is critical', () => {
     heat,
     undefined,
     10,
+    DEFAULT_TEST_PROFILE,
   );
 
   // High heat weapons should not fire
@@ -209,6 +216,7 @@ test('Prefer Ion weapon against shielded targets', () => {
     heat,
     targetShields,
     10,
+    DEFAULT_TEST_PROFILE,
   );
 
   // Should prefer Ion for shielded target
@@ -232,7 +240,8 @@ test('Avoid wasting finite ammo at poor firing angles', () => {
     600,
     heat,
     undefined,
-    45, // Poor angle
+    45, // Poor angle (above profile's minFiringAngle of 30)
+    DEFAULT_TEST_PROFILE,
   );
 
   // Should prefer infinite ammo weapon at poor angles

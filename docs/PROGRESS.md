@@ -1,7 +1,7 @@
 # Implementation Progress
 
 Tracks actual implementation status with file references as evidence.
-**Last updated:** 2026-01-03 (Lightning gun + Nuclear Lance weapons)
+**Last updated:** 2026-01-03 (AI profiles + Data layer refactor)
 
 ---
 
@@ -76,6 +76,19 @@ Tracks actual implementation status with file references as evidence.
 - [x] AI missile selection → `src/systems/ai-missile-selection.ts:26-79`
 - [x] Lock reset on weapon change → `src/systems/weapons.ts:258-262`
 
+#### 3.4.2 AI Profiles & Data Layer
+- [x] AIProfile interface → `src/data/ai-profiles.ts:11-56` (16 behavior parameters)
+- [x] Preset profiles (rookie/regular/veteran/ace) → `src/data/ai-profiles.ts:63-179`
+- [x] Profile field in AIControlled → `src/components/ai.ts:31` (per-entity behavior)
+- [x] Profile-based state transitions → `src/systems/ai-behaviors.ts:34-65` (shield thresholds, cooldowns)
+- [x] Profile-based weapon selection → `src/systems/ai-weapon-selection.ts:167-173` (heat, angle thresholds)
+- [x] Profile-based decoy usage → `src/systems/weapons-ai.ts:252` (cooldown from profile)
+- [x] Centralized weapon data → `src/data/weapons.ts` (all 11 primary weapons)
+- [x] Centralized missile data → `src/data/missiles.ts` (7 missiles + decoy)
+- [x] Centralized ship data → `src/data/ships.ts` (7 ship archetypes)
+- [x] Combat constants → `src/data/combat.ts` (heat, collision, explosion, etc.)
+- [x] Test fixtures → `src/data/test-fixtures.ts` (reusable test data)
+
 ### 3.5 Targeting System
 - [x] Targeting component → `src/components/targeting.ts:7-31`
 - [x] Lock-on progress → `src/systems/weapons.ts:217-248`
@@ -133,9 +146,9 @@ Tracks actual implementation status with file references as evidence.
 | 3.1 Weapon Components | 5 | 5 | 100% |
 | 3.2 Weapon Systems | 14 | 14 | 100% |
 | 3.3 Shield System | 3 | 3 | 100% |
-| 3.4 AI Implementation | 12 | 17 | 71% |
+| 3.4 AI Implementation | 23 | 23 | 100% |
 | 3.5 Targeting System | 4 | 4 | 100% |
 | 3.6 HUD Implementation | 13 | 13 | 100% |
 | 3.7 Visual Effects | 16 | 16 | 100% |
 | 3.8 Dust Particles | 1 | 1 | 100% |
-| **Phase 3 Total** | **68** | **73** | **93%** |
+| **Phase 3 Total** | **79** | **79** | **100%** |

@@ -7,6 +7,8 @@
  * - Ammo conservation
  * - Target shields
  * - Missile selection
+ *
+ * Uses AIProfile for per-entity behavior thresholds.
  */
 
 import { type AIControlled, AIState } from '../components/ai';
@@ -37,9 +39,6 @@ import {
   spawnProjectileWithAimError,
 } from './weapon-spawning';
 import { fireLinkedPrimaries } from './weapons';
-
-/** Minimum time between AI decoy launches */
-const AI_DECOY_COOLDOWN = 2.0;
 
 /** Handle AI primary weapon firing with smart weapon selection */
 export function handleAIPrimaryWeapons(
@@ -72,13 +71,14 @@ export function handleAIPrimaryWeapons(
   const distance = transform.position.distanceTo(targetTransform.position);
   const firingAngle = calculateFiringAngle(transform, targetTransform.position);
 
-  // Select optimal weapon(s)
+  // Select optimal weapon(s) using AI profile thresholds
   const selection = selectOptimalPrimaryWeapon(
     weapons,
     distance,
     heat,
     targetShields,
     firingAngle,
+    ai.profile,
   );
 
   // Get aim error if present (makes AI imperfect)
@@ -248,8 +248,8 @@ function handleAIDecoys(
   ai: AIControlled,
   gameTime: number,
 ): void {
-  // Check cooldown
-  if (gameTime - ai.lastDecoyTime < AI_DECOY_COOLDOWN) return;
+  // Check cooldown (use profile's decoy cooldown)
+  if (gameTime - ai.lastDecoyTime < ai.profile.decoyCooldown) return;
 
   // Check if we have decoys
   const decoyResult = findDecoyWeapon(weapons);
