@@ -6,8 +6,8 @@ import * as THREE from 'three';
 import type { Transform } from '../components/transform';
 import type { PrimaryWeapons } from '../components/weapons';
 import { getCurrentPrimary } from '../components/weapons';
-import { drawLeadIndicator } from './reticle-drawing';
 import { calculateInterceptPoint } from './lead-calculation';
+import { drawLeadIndicator } from './reticle-drawing';
 
 // Reusable vectors for lead calculation
 const leadVec3 = new THREE.Vector3();
@@ -25,15 +25,22 @@ export function drawLeadIndicators(
   targetVelocity: THREE.Vector3,
   weapons: PrimaryWeapons,
   color: string,
-  cameraForward: THREE.Vector3
+  cameraForward: THREE.Vector3,
 ): void {
   if (weapons.linked) {
     // Linked mode: show lead indicators for each unique projectile speed
     drawLinkedLeadIndicators(
-      ctx, camera, screenWidth, screenHeight,
-      playerTransform, playerVelocity,
-      targetPosition, targetVelocity,
-      weapons, color, cameraForward
+      ctx,
+      camera,
+      screenWidth,
+      screenHeight,
+      playerTransform,
+      playerVelocity,
+      targetPosition,
+      targetVelocity,
+      weapons,
+      color,
+      cameraForward,
     );
   } else {
     // Single mode: show one lead indicator for current weapon
@@ -41,11 +48,20 @@ export function drawLeadIndicators(
     if (!weapon || weapon.projectileSpeed <= 0) return; // Beams don't need lead
 
     drawSingleLeadIndicator(
-      ctx, camera, screenWidth, screenHeight,
-      playerTransform, playerVelocity,
-      targetPosition, targetVelocity,
-      weapon.projectileSpeed, weapon.range, weapon.name,
-      color, cameraForward, false // Don't show label in single mode
+      ctx,
+      camera,
+      screenWidth,
+      screenHeight,
+      playerTransform,
+      playerVelocity,
+      targetPosition,
+      targetVelocity,
+      weapon.projectileSpeed,
+      weapon.range,
+      weapon.name,
+      color,
+      cameraForward,
+      false, // Don't show label in single mode
     );
   }
 }
@@ -65,14 +81,14 @@ function drawSingleLeadIndicator(
   weaponName: string,
   color: string,
   cameraForward: THREE.Vector3,
-  showLabel: boolean
+  showLabel: boolean,
 ): void {
   const interceptPoint = calculateInterceptPoint(
     playerTransform.position,
     playerVelocity,
     targetPosition,
     targetVelocity,
-    projectileSpeed
+    projectileSpeed,
   );
 
   if (!interceptPoint) return;
@@ -92,7 +108,12 @@ function drawSingleLeadIndicator(
   const leadY = (1 - leadVec3.y) * 0.5 * screenHeight;
 
   // Only draw if on screen
-  if (leadX >= 0 && leadX <= screenWidth && leadY >= 0 && leadY <= screenHeight) {
+  if (
+    leadX >= 0 &&
+    leadX <= screenWidth &&
+    leadY >= 0 &&
+    leadY <= screenHeight
+  ) {
     const label = showLabel ? weaponName : undefined;
     drawLeadIndicator(ctx, leadX, leadY, color, outOfRange, label);
   }
@@ -110,7 +131,7 @@ function drawLinkedLeadIndicators(
   targetVelocity: THREE.Vector3,
   weapons: PrimaryWeapons,
   color: string,
-  cameraForward: THREE.Vector3
+  cameraForward: THREE.Vector3,
 ): void {
   // Collect unique projectile speeds and their weapon names
   // (beams have speed 0 and don't need lead indicators)
@@ -129,11 +150,20 @@ function drawLinkedLeadIndicators(
   // Draw a lead indicator for each unique speed
   for (const [speed, { name, range }] of uniqueSpeeds) {
     drawSingleLeadIndicator(
-      ctx, camera, screenWidth, screenHeight,
-      playerTransform, playerVelocity,
-      targetPosition, targetVelocity,
-      speed, range, name,
-      color, cameraForward, showLabels
+      ctx,
+      camera,
+      screenWidth,
+      screenHeight,
+      playerTransform,
+      playerVelocity,
+      targetPosition,
+      targetVelocity,
+      speed,
+      range,
+      name,
+      color,
+      cameraForward,
+      showLabels,
     );
   }
 }

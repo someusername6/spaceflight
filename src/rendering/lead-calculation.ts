@@ -18,7 +18,7 @@ export function calculateInterceptPoint(
   shooterVel: Vector3,
   targetPos: Vector3,
   targetVel: Vector3,
-  projectileSpeed: number
+  projectileSpeed: number,
 ): Vector3 | undefined {
   // Relative position and velocity
   relPos.copy(targetPos).sub(shooterPos);

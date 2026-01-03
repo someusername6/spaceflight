@@ -2,16 +2,16 @@
  * Physics System - Applies velocity, drag, and rotation to transforms.
  */
 
-import { Vector3, Quaternion, Euler } from 'three';
-import type { World } from '../core/types';
-import { queryEntities, getComponent } from '../core/ecs';
-import type { Transform } from '../components/transform';
-import type { Physics } from '../components/physics';
-import type { PlayerControlled } from '../components/player';
+import { Euler, Quaternion, Vector3 } from 'three';
 import type { AIControlled } from '../components/ai';
-import type { Heat } from '../components/heat';
 import type { Health } from '../components/health';
 import { isDying } from '../components/health';
+import type { Heat } from '../components/heat';
+import type { Physics } from '../components/physics';
+import type { PlayerControlled } from '../components/player';
+import type { Transform } from '../components/transform';
+import { getComponent, queryEntities } from '../core/ecs';
+import type { World } from '../core/types';
 
 // Reusable objects to avoid allocations
 const tempEuler = new Euler();
@@ -31,8 +31,13 @@ function moveToward(current: number, target: number, maxDelta: number): number {
 /** Physics system - updates positions and velocities */
 export function physicsSystem(world: World, dt: number): void {
   for (const entity of queryEntities(world, ['transform', 'physics'])) {
-    const transform = getComponent<Transform>(world, entity, 'transform')!;
-    const physics = getComponent<Physics>(world, entity, 'physics')!;
+    // Query guarantees these components exist
+    const transform = getComponent<Transform>(
+      world,
+      entity,
+      'transform',
+    ) as Transform;
+    const physics = getComponent<Physics>(world, entity, 'physics') as Physics;
 
     // Dying entities coast with current velocity (no control input)
     const health = getComponent<Health>(world, entity, 'health');
@@ -43,7 +48,11 @@ export function physicsSystem(world: World, dt: number): void {
     }
 
     // Get control input (either from player or AI)
-    const player = getComponent<PlayerControlled>(world, entity, 'playerControlled');
+    const player = getComponent<PlayerControlled>(
+      world,
+      entity,
+      'playerControlled',
+    );
     const ai = getComponent<AIControlled>(world, entity, 'aiControlled');
 
     let pitchInput = 0;
@@ -76,9 +85,21 @@ export function physicsSystem(world: World, dt: number): void {
 
     // Accelerate/decelerate angular velocity toward target
     const angAccel = physics.angularAcceleration * dt;
-    physics.angularVelocity.x = moveToward(physics.angularVelocity.x, targetPitch, angAccel);
-    physics.angularVelocity.y = moveToward(physics.angularVelocity.y, targetYaw, angAccel);
-    physics.angularVelocity.z = moveToward(physics.angularVelocity.z, targetRoll, angAccel);
+    physics.angularVelocity.x = moveToward(
+      physics.angularVelocity.x,
+      targetPitch,
+      angAccel,
+    );
+    physics.angularVelocity.y = moveToward(
+      physics.angularVelocity.y,
+      targetYaw,
+      angAccel,
+    );
+    physics.angularVelocity.z = moveToward(
+      physics.angularVelocity.z,
+      targetRoll,
+      angAccel,
+    );
 
     // Apply angular velocity to rotation
     const pitchDelta = physics.angularVelocity.x * DEG_TO_RAD * dt;
@@ -94,7 +115,8 @@ export function physicsSystem(world: World, dt: number): void {
     transform.rotation.normalize();
 
     // Calculate afterburner max speed
-    const afterburnerMaxSpeed = physics.maxSpeed * physics.afterburnerMultiplier;
+    const afterburnerMaxSpeed =
+      physics.maxSpeed * physics.afterburnerMultiplier;
     const heat = getComponent<Heat>(world, entity, 'heat');
 
     // Afterburner heat lockout with hysteresis (prevents oscillation)
@@ -119,25 +141,28 @@ export function physicsSystem(world: World, dt: number): void {
       // Afterburner: accelerate toward afterburner max (works from any speed)
       physics.currentSpeed = Math.min(
         physics.currentSpeed + physics.acceleration * 1.5 * dt,
-        afterburnerMaxSpeed
+        afterburnerMaxSpeed,
       );
       physics.isAfterburning = true;
 
       // Generate heat while afterburning
       if (heat) {
-        heat.current = Math.min(heat.max, heat.current + physics.afterburnerHeatRate * dt);
+        heat.current = Math.min(
+          heat.max,
+          heat.current + physics.afterburnerHeatRate * dt,
+        );
       }
     } else if (accelerating) {
       // Normal acceleration up to max speed
       physics.currentSpeed = Math.min(
         physics.currentSpeed + physics.acceleration * dt,
-        physics.maxSpeed
+        physics.maxSpeed,
       );
       physics.isAfterburning = false;
     } else if (decelerating) {
       physics.currentSpeed = Math.max(
         physics.currentSpeed - physics.acceleration * dt,
-        0
+        0,
       );
       physics.isAfterburning = false;
     } else {
@@ -145,7 +170,7 @@ export function physicsSystem(world: World, dt: number): void {
       if (physics.currentSpeed > physics.maxSpeed) {
         physics.currentSpeed = Math.max(
           physics.currentSpeed - physics.acceleration * 0.5 * dt,
-          physics.maxSpeed
+          physics.maxSpeed,
         );
       }
       physics.isAfterburning = false;

@@ -20,7 +20,7 @@ export function createProjectile(
   damage: number,
   speed: number,
   range: number,
-  direction: Vector3
+  direction: Vector3,
 ): Projectile {
   return {
     type: 'projectile',

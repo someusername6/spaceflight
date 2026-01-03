@@ -2,7 +2,7 @@
  * Transform component - position and rotation in 3D space.
  */
 
-import { Vector3, Quaternion } from 'three';
+import { Quaternion, Vector3 } from 'three';
 import type { ComponentBase } from '../core/types';
 
 export interface Transform extends ComponentBase {
@@ -16,7 +16,7 @@ export function createTransform(
   x = 0,
   y = 0,
   z = 0,
-  rotation?: Quaternion
+  rotation?: Quaternion,
 ): Transform {
   return {
     type: 'transform',
@@ -26,7 +26,10 @@ export function createTransform(
 }
 
 /** Creates a Transform at a specific position */
-export function createTransformAt(position: Vector3, rotation?: Quaternion): Transform {
+export function createTransformAt(
+  position: Vector3,
+  rotation?: Quaternion,
+): Transform {
   return {
     type: 'transform',
     position: position.clone(),

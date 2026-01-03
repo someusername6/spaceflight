@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 /**
  * AI Behavior Simulation Tests
  *
@@ -8,14 +9,14 @@
  * Exit code: 0 if all tests pass, 1 if any fail
  */
 
-import { resetCounters, getResults } from './ai-test-utils.mjs';
-import { runStateTransitionTests } from './ai-state-tests.mjs';
 import {
-  runWeaponFiringTests,
   runConstraintTests,
-  runMovementTests,
   runDeterminismTests,
+  runMovementTests,
+  runWeaponFiringTests,
 } from './ai-combat-tests.mjs';
+import { runStateTransitionTests } from './ai-state-tests.mjs';
+import { getResults, resetCounters } from './ai-test-utils.mjs';
 
 // ============================================================================
 // Main

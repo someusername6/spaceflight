@@ -2,19 +2,25 @@
  * Headless game test - validates core ECS and systems work.
  */
 
-import { createWorld, createEntity, addComponent, getComponent, queryEntities, findEntity } from '../src/core/ecs.ts';
-import { createTransform } from '../src/components/transform.ts';
-import { createPhysics } from '../src/components/physics.ts';
-import { createHealth } from '../src/components/health.ts';
 import { createFaction } from '../src/components/faction.ts';
-import { createPlayerControlled } from '../src/components/player.ts';
+import { createHealth } from '../src/components/health.ts';
 import { createHeat } from '../src/components/heat.ts';
-import { createPrimaryWeapons } from '../src/components/weapons.ts';
+import { createPhysics } from '../src/components/physics.ts';
+import { createPlayerControlled } from '../src/components/player.ts';
 import { createShields } from '../src/components/shields.ts';
 import { createTargeting } from '../src/components/targeting.ts';
-import { createCollision } from '../src/systems/collision.ts';
+import { createTransform } from '../src/components/transform.ts';
+import { createPrimaryWeapons } from '../src/components/weapons.ts';
+import {
+  addComponent,
+  createEntity,
+  createWorld,
+  findEntity,
+  getComponent,
+  queryEntities,
+} from '../src/core/ecs.ts';
 import { Faction } from '../src/core/types.ts';
-import { Vector3 } from 'three';
+import { createCollision } from '../src/systems/collision.ts';
 
 let passed = 0;
 let failed = 0;
@@ -85,7 +91,16 @@ test('Player ship has all required components', () => {
 
   // Add all components a player ship should have
   addComponent(world, entity, createTransform(0, 0, 0));
-  addComponent(world, entity, createPhysics({ maxSpeed: 250, acceleration: 100, turnRate: 100, rollRate: 150 }));
+  addComponent(
+    world,
+    entity,
+    createPhysics({
+      maxSpeed: 250,
+      acceleration: 100,
+      turnRate: 100,
+      rollRate: 150,
+    }),
+  );
   addComponent(world, entity, createHealth(80));
   addComponent(world, entity, createShields(60, 10, 3));
   addComponent(world, entity, createFaction(Faction.Player));
@@ -101,10 +116,16 @@ test('Player ship has all required components', () => {
   assert(getComponent(world, entity, 'health'), 'Should have health');
   assert(getComponent(world, entity, 'shields'), 'Should have shields');
   assert(getComponent(world, entity, 'faction'), 'Should have faction');
-  assert(getComponent(world, entity, 'playerControlled'), 'Should have playerControlled');
+  assert(
+    getComponent(world, entity, 'playerControlled'),
+    'Should have playerControlled',
+  );
   assert(getComponent(world, entity, 'targeting'), 'Should have targeting');
   assert(getComponent(world, entity, 'heat'), 'Should have heat');
-  assert(getComponent(world, entity, 'primaryWeapons'), 'Should have primaryWeapons');
+  assert(
+    getComponent(world, entity, 'primaryWeapons'),
+    'Should have primaryWeapons',
+  );
   assert(getComponent(world, entity, 'collision'), 'Should have collision');
 });
 

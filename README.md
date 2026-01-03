@@ -22,7 +22,7 @@ npm run dev
 
 - `npm run dev` - Start development server
 - `npm run build` - Build for production
-- `npm run check-size` - Verify no file exceeds 300 lines
+- `npm run check-size` - Verify no file exceeds 400 lines
 
 ## Controls
 

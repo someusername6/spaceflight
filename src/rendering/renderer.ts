@@ -3,13 +3,12 @@
  */
 
 import * as THREE from 'three';
-import type { World, Entity } from '../core/types';
-import { queryEntities, getComponent } from '../core/ecs';
-import type { Transform } from '../components/transform';
 import { Faction, type FactionComponent } from '../components/faction';
-import { getSunDirectionFromSeed, generateSkyboxTexture } from './skybox';
-import { hasComponent } from '../core/ecs';
+import type { Transform } from '../components/transform';
+import { getComponent, hasComponent, queryEntities } from '../core/ecs';
+import type { Entity, World } from '../core/types';
 import { getActiveBeams } from '../systems/beams';
+import { generateSkyboxTexture, getSunDirectionFromSeed } from './skybox';
 
 /** Renderer state */
 export interface Renderer {
@@ -22,8 +21,8 @@ export interface Renderer {
 
 /** Colors for factions */
 const FACTION_COLORS = {
-  [Faction.Player]: 0x00ff00,  // Green
-  [Faction.Enemy]: 0xff0000,   // Red
+  [Faction.Player]: 0x00ff00, // Green
+  [Faction.Enemy]: 0xff0000, // Red
   [Faction.Neutral]: 0xffff00, // Yellow
 };
 
@@ -37,7 +36,7 @@ export function createRenderer(container: HTMLElement): Renderer {
     60,
     container.clientWidth / container.clientHeight,
     0.1,
-    10000
+    10000,
   );
 
   // WebGL Renderer
@@ -119,7 +118,12 @@ export function syncScene(renderer: Renderer, world: World): void {
   // Update or create meshes for entities with transforms
   for (const entity of queryEntities(world, ['transform'])) {
     seenEntities.add(entity);
-    const transform = getComponent<Transform>(world, entity, 'transform')!;
+    // Query guarantees this component exists
+    const transform = getComponent<Transform>(
+      world,
+      entity,
+      'transform',
+    ) as Transform;
     const faction = getComponent<FactionComponent>(world, entity, 'faction');
     const isProjectile = hasComponent(world, entity, 'projectile');
     const isMissile = hasComponent(world, entity, 'missile');
@@ -157,7 +161,11 @@ export function syncScene(renderer: Renderer, world: World): void {
 }
 
 /** Updates beam line visuals */
-function updateBeamLines(world: World, scene: THREE.Scene, beamLines: Map<string, THREE.Line>): void {
+function updateBeamLines(
+  world: World,
+  scene: THREE.Scene,
+  beamLines: Map<string, THREE.Line>,
+): void {
   const activeBeams = getActiveBeams(world);
   const seenBeams = new Set<string>();
 
@@ -185,8 +193,12 @@ function updateBeamLines(world: World, scene: THREE.Scene, beamLines: Map<string
 
       // Update line geometry
       const positions = new Float32Array([
-        beam.origin.x, beam.origin.y, beam.origin.z,
-        beam.hitPoint.x, beam.hitPoint.y, beam.hitPoint.z,
+        beam.origin.x,
+        beam.origin.y,
+        beam.origin.z,
+        beam.hitPoint.x,
+        beam.hitPoint.y,
+        beam.hitPoint.z,
       ]);
       const posAttr = new THREE.BufferAttribute(positions, 3);
       line.geometry.setAttribute('position', posAttr);
@@ -214,7 +226,7 @@ export function render(renderer: Renderer): void {
 export function followEntity(
   renderer: Renderer,
   world: World,
-  entity: Entity
+  entity: Entity,
 ): void {
   const transform = getComponent<Transform>(world, entity, 'transform');
   if (!transform) return;
@@ -233,7 +245,7 @@ export function followEntity(
   // Apply a slight downward tilt to see the ship better
   const tiltQuat = new THREE.Quaternion().setFromAxisAngle(
     new THREE.Vector3(1, 0, 0),
-    -0.1 // Small downward tilt
+    -0.1, // Small downward tilt
   );
   camera.quaternion.multiply(tiltQuat);
 }

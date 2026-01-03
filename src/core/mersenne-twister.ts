@@ -6,28 +6,30 @@
  */
 
 export class MersenneTwister {
-  private _state: number[] = new Array(624);
+  private _state: number[];
   private _index = 0;
 
   constructor(seed: number) {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    this._state = new Array<number>(624);
     this._state[0] = seed != null ? seed : (Math.random() * 0xffffffff) | 0;
 
     for (let i = 1; i < 624; i++) {
-      this._state[i] = this._state[i - 1]! ^ (this._state[i - 1]! >>> 30);
-      this._state[i] = 0x6c078965 * this._state[i]! + i;
-      this._state[i] = this._state[i]! & ((this._state[i]! << 32) - 1);
+      const prev = this._state[i - 1] as number;
+      this._state[i] = prev ^ (prev >>> 30);
+      this._state[i] = 0x6c078965 * (this._state[i] as number) + i;
+      const curr = this._state[i] as number;
+      this._state[i] = curr & ((curr << 32) - 1);
     }
   }
 
   private _generateNumbers(): void {
     const MT = this._state;
     for (let i = 0; i < 624; i++) {
-      let y = MT[i]! & 0x80000000;
-      y = y + (MT[(i + 1) % 624]! & 0x7fffffff);
-      MT[i] = MT[(i + 397) % 624]! ^ (y >>> 1);
-      if ((y % 2) !== 0) {
-        MT[i] = MT[i]! ^ 0x9908b0df;
+      let y = (MT[i] as number) & 0x80000000;
+      y = y + ((MT[(i + 1) % 624] as number) & 0x7fffffff);
+      MT[i] = (MT[(i + 397) % 624] as number) ^ (y >>> 1);
+      if (y % 2 !== 0) {
+        MT[i] = (MT[i] as number) ^ 0x9908b0df;
       }
     }
   }
@@ -37,7 +39,7 @@ export class MersenneTwister {
       this._generateNumbers();
     }
 
-    let y = this._state[this._index]!;
+    let y = this._state[this._index] as number;
     y = y ^ (y >>> 11);
     y = y ^ ((y << 7) & 0x9d2c5680);
     y = y ^ ((y << 15) & 0xefc60000);

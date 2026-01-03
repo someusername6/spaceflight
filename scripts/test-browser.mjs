@@ -2,8 +2,8 @@
  * Browser test - captures console output to debug rendering issues.
  */
 
+import { spawn } from 'node:child_process';
 import puppeteer from 'puppeteer';
-import { spawn } from 'child_process';
 
 // Start Vite dev server
 console.log('Starting Vite dev server...');
@@ -68,7 +68,9 @@ try {
   console.log('\n=== Browser Debug Info ===');
   console.log('Debug info:', debugInfo);
   console.log('\n=== Console Logs ===');
-  logs.forEach((log) => console.log(log));
+  for (const log of logs) {
+    console.log(log);
+  }
 
   await browser.close();
 } catch (err) {

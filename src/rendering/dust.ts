@@ -16,10 +16,10 @@ const PARTICLE_SIZE = 8;
 const PARTICLE_COLOR = new THREE.Color(0xffffff);
 
 // Fade distances (ship is ~40-50 units from camera)
-const FADE_NEAR = 50;       // Fully faded at ship distance
-const FADE_MID = 150;       // Fully visible here
-const FADE_FAR = 500;       // Start fading out
-const FADE_END = 600;       // Fully faded at render distance
+const FADE_NEAR = 50; // Fully faded at ship distance
+const FADE_MID = 150; // Fully visible here
+const FADE_FAR = 500; // Start fading out
+const FADE_END = 600; // Fully faded at render distance
 
 /** Hash cube coordinates to a seed - each cube gets unique but deterministic particles */
 function hashCubeCoords(cx: number, cy: number, cz: number): number {
@@ -82,7 +82,8 @@ export interface DustSystem {
 /** Creates the dust particle system */
 export function createDustSystem(scene: THREE.Scene): DustSystem {
   const cubesPerAxis = Math.ceil((RENDER_DISTANCE * 2) / CUBE_SIZE) + 1;
-  const maxParticles = cubesPerAxis * cubesPerAxis * cubesPerAxis * PARTICLES_PER_CUBE;
+  const maxParticles =
+    cubesPerAxis * cubesPerAxis * cubesPerAxis * PARTICLES_PER_CUBE;
 
   const geometry = new THREE.BufferGeometry();
   const positions = new Float32Array(maxParticles * 3);
@@ -112,7 +113,7 @@ export function createDustSystem(scene: THREE.Scene): DustSystem {
 /** Updates dust particles based on player position */
 export function updateDustSystem(
   dust: DustSystem,
-  playerPosition: THREE.Vector3
+  playerPosition: THREE.Vector3,
 ): void {
   const { positions, geometry } = dust;
 
@@ -124,9 +125,21 @@ export function updateDustSystem(
   let particleIndex = 0;
   const renderDistSq = RENDER_DISTANCE * RENDER_DISTANCE;
 
-  for (let cx = playerCubeX - cubeRadius; cx <= playerCubeX + cubeRadius; cx++) {
-    for (let cy = playerCubeY - cubeRadius; cy <= playerCubeY + cubeRadius; cy++) {
-      for (let cz = playerCubeZ - cubeRadius; cz <= playerCubeZ + cubeRadius; cz++) {
+  for (
+    let cx = playerCubeX - cubeRadius;
+    cx <= playerCubeX + cubeRadius;
+    cx++
+  ) {
+    for (
+      let cy = playerCubeY - cubeRadius;
+      cy <= playerCubeY + cubeRadius;
+      cy++
+    ) {
+      for (
+        let cz = playerCubeZ - cubeRadius;
+        cz <= playerCubeZ + cubeRadius;
+        cz++
+      ) {
         const cubeOriginX = cx * CUBE_SIZE;
         const cubeOriginY = cy * CUBE_SIZE;
         const cubeOriginZ = cz * CUBE_SIZE;
@@ -135,7 +148,9 @@ export function updateDustSystem(
         let seed = hashCubeCoords(cx, cy, cz);
 
         for (let i = 0; i < PARTICLES_PER_CUBE; i++) {
-          let ox, oy, oz;
+          let ox: number;
+          let oy: number;
+          let oz: number;
           [seed, ox] = nextRandom(seed);
           [seed, oy] = nextRandom(seed);
           [seed, oz] = nextRandom(seed);
@@ -169,7 +184,10 @@ export function updateDustSystem(
     positions[idx + 2] = -999999;
   }
 
-  geometry.attributes.position!.needsUpdate = true;
+  const positionAttr = geometry.attributes.position;
+  if (positionAttr) {
+    positionAttr.needsUpdate = true;
+  }
   geometry.setDrawRange(0, particleIndex);
 }
 

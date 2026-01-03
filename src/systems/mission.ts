@@ -4,10 +4,10 @@
  * Slice 1: Simple destroy all enemies / player death.
  */
 
+import { Faction, type FactionComponent } from '../components/faction';
+import { countEntities, getComponent, queryEntities } from '../core/ecs';
 import type { World } from '../core/types';
 import { MissionResult } from '../core/types';
-import { queryEntities, getComponent, countEntities } from '../core/ecs';
-import { Faction, type FactionComponent } from '../components/faction';
 
 // Re-export MissionResult for consumers
 export { MissionResult };
@@ -30,7 +30,12 @@ export function missionSystem(world: World, _dt: number): void {
   // Check for no enemies remaining (victory)
   let enemyCount = 0;
   for (const entity of queryEntities(world, ['faction', 'health'])) {
-    const faction = getComponent<FactionComponent>(world, entity, 'faction')!;
+    // Query guarantees this component exists
+    const faction = getComponent<FactionComponent>(
+      world,
+      entity,
+      'faction',
+    ) as FactionComponent;
     if (faction.faction === Faction.Enemy) {
       enemyCount++;
     }

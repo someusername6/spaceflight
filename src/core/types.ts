@@ -3,7 +3,7 @@
  */
 
 // Three.js vector/quaternion types (re-exported for convenience)
-export { Vector3, Quaternion, Euler } from 'three';
+export { Euler, Quaternion, Vector3 } from 'three';
 
 /** Entity is just a numeric ID */
 export type Entity = number;
@@ -23,7 +23,7 @@ export type ComponentType = string;
 export type ComponentMap = Map<ComponentType, ComponentBase>;
 
 /** Mission result values */
-export const enum MissionResult {
+export enum MissionResult {
   InProgress = 'inProgress',
   Victory = 'victory',
   Defeat = 'defeat',
@@ -65,14 +65,14 @@ export interface World {
 }
 
 /** Team/faction identifiers */
-export const enum Faction {
+export enum Faction {
   Player = 0,
   Enemy = 1,
   Neutral = 2,
 }
 
 /** Game state for the main loop */
-export const enum GameState {
+export enum GameState {
   Loading = 'loading',
   Menu = 'menu',
   Playing = 'playing',

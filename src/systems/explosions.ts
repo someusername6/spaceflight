@@ -2,21 +2,43 @@
  * Explosion System - Updates explosion age and removes finished explosions.
  */
 
-import type { World } from '../core/types';
-import { queryEntities, getComponent, removeEntity, processRemovals, entityExists } from '../core/ecs';
 import type { Explosion } from '../components/explosion';
 import { isExplosionFinished } from '../components/explosion';
 import type { Transform } from '../components/transform';
+import {
+  entityExists,
+  getComponent,
+  processRemovals,
+  queryEntities,
+  removeEntity,
+} from '../core/ecs';
+import type { World } from '../core/types';
 
 /** Explosion system - updates explosion lifetimes */
 export function explosionSystem(world: World, dt: number): void {
   for (const entity of queryEntities(world, ['explosion', 'transform'])) {
-    const explosion = getComponent<Explosion>(world, entity, 'explosion')!;
-    const transform = getComponent<Transform>(world, entity, 'transform')!;
+    // Query guarantees these components exist
+    const explosion = getComponent<Explosion>(
+      world,
+      entity,
+      'explosion',
+    ) as Explosion;
+    const transform = getComponent<Transform>(
+      world,
+      entity,
+      'transform',
+    ) as Transform;
 
     // Follow source entity if it still exists (for coasting dying ships)
-    if (explosion.sourceEntity !== undefined && entityExists(world, explosion.sourceEntity)) {
-      const sourceTransform = getComponent<Transform>(world, explosion.sourceEntity, 'transform');
+    if (
+      explosion.sourceEntity !== undefined &&
+      entityExists(world, explosion.sourceEntity)
+    ) {
+      const sourceTransform = getComponent<Transform>(
+        world,
+        explosion.sourceEntity,
+        'transform',
+      );
       if (sourceTransform) {
         transform.position.copy(sourceTransform.position);
       }

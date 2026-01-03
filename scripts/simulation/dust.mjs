@@ -47,9 +47,21 @@ function getParticlesNearPosition(px, py, pz) {
   const cubeRadius = Math.ceil(RENDER_DISTANCE / CUBE_SIZE);
   const renderDistSq = RENDER_DISTANCE * RENDER_DISTANCE;
 
-  for (let cx = playerCubeX - cubeRadius; cx <= playerCubeX + cubeRadius; cx++) {
-    for (let cy = playerCubeY - cubeRadius; cy <= playerCubeY + cubeRadius; cy++) {
-      for (let cz = playerCubeZ - cubeRadius; cz <= playerCubeZ + cubeRadius; cz++) {
+  for (
+    let cx = playerCubeX - cubeRadius;
+    cx <= playerCubeX + cubeRadius;
+    cx++
+  ) {
+    for (
+      let cy = playerCubeY - cubeRadius;
+      cy <= playerCubeY + cubeRadius;
+      cy++
+    ) {
+      for (
+        let cz = playerCubeZ - cubeRadius;
+        cz <= playerCubeZ + cubeRadius;
+        cz++
+      ) {
         const cubeOriginX = cx * CUBE_SIZE;
         const cubeOriginY = cy * CUBE_SIZE;
         const cubeOriginZ = cz * CUBE_SIZE;
@@ -99,7 +111,10 @@ function isInViewCone(p, playerPos, viewDir) {
 
 function runFlightScenario(name, getVelocityAtTime, quiet) {
   const playerPos = { x: 0, y: 0, z: 0 };
-  let minInView = Infinity, maxInView = 0, totalInView = 0, sampleCount = 0;
+  let minInView = Infinity,
+    maxInView = 0,
+    totalInView = 0,
+    sampleCount = 0;
   const totalFrames = 30 * 60;
 
   for (let frame = 0; frame < totalFrames; frame++) {
@@ -111,10 +126,15 @@ function runFlightScenario(name, getVelocityAtTime, quiet) {
     playerPos.y += vel.y * DT;
     playerPos.z += vel.z * DT;
 
-    const particles = getParticlesNearPosition(playerPos.x, playerPos.y, playerPos.z);
-    const viewDir = speed > 1
-      ? { x: vel.x / speed, y: vel.y / speed, z: vel.z / speed }
-      : { x: 0, y: 0, z: 1 };
+    const particles = getParticlesNearPosition(
+      playerPos.x,
+      playerPos.y,
+      playerPos.z,
+    );
+    const viewDir =
+      speed > 1
+        ? { x: vel.x / speed, y: vel.y / speed, z: vel.z / speed }
+        : { x: 0, y: 0, z: 1 };
 
     let inView = 0;
     for (const p of particles) {
@@ -129,11 +149,13 @@ function runFlightScenario(name, getVelocityAtTime, quiet) {
 
   const avgInView = totalInView / sampleCount;
   const variance = (maxInView - minInView) / avgInView;
-  const pass = variance < 0.20 && minInView > 100;
+  const pass = variance < 0.2 && minInView > 100;
 
   if (!quiet) {
     const status = pass ? '✓' : '✗';
-    console.log(`  ${status} ${name}: min=${minInView}, avg=${avgInView.toFixed(0)}, variance=${(variance * 100).toFixed(1)}%`);
+    console.log(
+      `  ${status} ${name}: min=${minInView}, avg=${avgInView.toFixed(0)}, variance=${(variance * 100).toFixed(1)}%`,
+    );
   }
   return pass;
 }
@@ -143,15 +165,41 @@ function runFlightTests(quiet) {
 
   const scenarios = [
     ['Straight flight', () => ({ x: 0, y: 0, z: PLAYER_SPEED })],
-    ['180° turn', (t) => t < 10 ? { x: 0, y: 0, z: PLAYER_SPEED } : { x: 0, y: 0, z: -PLAYER_SPEED }],
-    ['90° turn', (t) => t < 10 ? { x: 0, y: 0, z: PLAYER_SPEED } : { x: 0, y: PLAYER_SPEED, z: 0 }],
-    ['Spiral', (t) => ({ x: Math.sin(t * 0.5) * PLAYER_SPEED, y: 0, z: Math.cos(t * 0.5) * PLAYER_SPEED })],
+    [
+      '180° turn',
+      (t) =>
+        t < 10
+          ? { x: 0, y: 0, z: PLAYER_SPEED }
+          : { x: 0, y: 0, z: -PLAYER_SPEED },
+    ],
+    [
+      '90° turn',
+      (t) =>
+        t < 10
+          ? { x: 0, y: 0, z: PLAYER_SPEED }
+          : { x: 0, y: PLAYER_SPEED, z: 0 },
+    ],
+    [
+      'Spiral',
+      (t) => ({
+        x: Math.sin(t * 0.5) * PLAYER_SPEED,
+        y: 0,
+        z: Math.cos(t * 0.5) * PLAYER_SPEED,
+      }),
+    ],
     ['Stationary', () => ({ x: 0, y: 0, z: 0 })],
-    ['Random turns', (t) => {
-      const angles = [0, Math.PI / 2, Math.PI, -Math.PI / 2, Math.PI / 4];
-      const angle = angles[Math.floor(t / 2) % angles.length];
-      return { x: Math.sin(angle) * PLAYER_SPEED, y: 0, z: Math.cos(angle) * PLAYER_SPEED };
-    }],
+    [
+      'Random turns',
+      (t) => {
+        const angles = [0, Math.PI / 2, Math.PI, -Math.PI / 2, Math.PI / 4];
+        const angle = angles[Math.floor(t / 2) % angles.length];
+        return {
+          x: Math.sin(angle) * PLAYER_SPEED,
+          y: 0,
+          z: Math.cos(angle) * PLAYER_SPEED,
+        };
+      },
+    ],
   ];
 
   let allPass = true;
@@ -171,7 +219,8 @@ function particlesEqual(a, b) {
   a.sort(sortFn);
   b.sort(sortFn);
   for (let i = 0; i < a.length; i++) {
-    if (a[i].x !== b[i].x || a[i].y !== b[i].y || a[i].z !== b[i].z) return false;
+    if (a[i].x !== b[i].x || a[i].y !== b[i].y || a[i].z !== b[i].z)
+      return false;
   }
   return true;
 }
@@ -184,7 +233,8 @@ function runDeterminismTests(quiet) {
   const pos1a = getParticlesNearPosition(1234.5, -567.8, 9012.3);
   const pos1b = getParticlesNearPosition(1234.5, -567.8, 9012.3);
   const test1 = particlesEqual(pos1a, pos1b);
-  if (!quiet) console.log(`  ${test1 ? '✓' : '✗'} Same position returns same particles`);
+  if (!quiet)
+    console.log(`  ${test1 ? '✓' : '✗'} Same position returns same particles`);
   if (!test1) allPass = false;
 
   // Test 2: Return to origin
@@ -192,27 +242,39 @@ function runDeterminismTests(quiet) {
   getParticlesNearPosition(10000, 10000, 10000);
   const originAfter = getParticlesNearPosition(0, 0, 0);
   const test2 = particlesEqual(originBefore, originAfter);
-  if (!quiet) console.log(`  ${test2 ? '✓' : '✗'} Return to origin shows same particles`);
+  if (!quiet)
+    console.log(`  ${test2 ? '✓' : '✗'} Return to origin shows same particles`);
   if (!test2) allPass = false;
 
   // Test 3: Cube boundary overlap
   const near1 = getParticlesNearPosition(199, 0, 0);
   const near2 = getParticlesNearPosition(201, 0, 0);
-  const shared = near1.filter(p1 => near2.some(p2 => p1.x === p2.x && p1.y === p2.y && p1.z === p2.z));
+  const shared = near1.filter((p1) =>
+    near2.some((p2) => p1.x === p2.x && p1.y === p2.y && p1.z === p2.z),
+  );
   const test3 = shared.length > near1.length * 0.9;
-  if (!quiet) console.log(`  ${test3 ? '✓' : '✗'} Cube boundaries smooth (${(100 * shared.length / near1.length).toFixed(1)}% overlap)`);
+  if (!quiet)
+    console.log(
+      `  ${test3 ? '✓' : '✗'} Cube boundaries smooth (${((100 * shared.length) / near1.length).toFixed(1)}% overlap)`,
+    );
   if (!test3) allPass = false;
 
   // Test 4: Extreme distances
   const farPos = getParticlesNearPosition(1000000, -500000, 2000000);
   const test4 = farPos.length > 2000 && farPos.length < 5000;
-  if (!quiet) console.log(`  ${test4 ? '✓' : '✗'} Works at extreme distances (${farPos.length} particles)`);
+  if (!quiet)
+    console.log(
+      `  ${test4 ? '✓' : '✗'} Works at extreme distances (${farPos.length} particles)`,
+    );
   if (!test4) allPass = false;
 
   // Test 5: Negative positions
   const negPos = getParticlesNearPosition(-1234, -5678, -9012);
   const test5 = negPos.length > 2000 && negPos.length < 5000;
-  if (!quiet) console.log(`  ${test5 ? '✓' : '✗'} Works with negative coordinates (${negPos.length} particles)`);
+  if (!quiet)
+    console.log(
+      `  ${test5 ? '✓' : '✗'} Works with negative coordinates (${negPos.length} particles)`,
+    );
   if (!test5) allPass = false;
 
   return allPass;
@@ -226,7 +288,9 @@ const quiet = process.argv.includes('--quiet') || process.argv.includes('-q');
 
 if (!quiet) {
   console.log('=== Dust Particle Simulation ===');
-  console.log(`Config: CUBE_SIZE=${CUBE_SIZE}, PARTICLES_PER_CUBE=${PARTICLES_PER_CUBE}, RENDER_DISTANCE=${RENDER_DISTANCE}`);
+  console.log(
+    `Config: CUBE_SIZE=${CUBE_SIZE}, PARTICLES_PER_CUBE=${PARTICLES_PER_CUBE}, RENDER_DISTANCE=${RENDER_DISTANCE}`,
+  );
 }
 
 const flightPass = runFlightTests(quiet);
@@ -234,7 +298,7 @@ const determinismPass = runDeterminismTests(quiet);
 const allPass = flightPass && determinismPass;
 
 if (!quiet) {
-  console.log('\n' + (allPass ? '✓ ALL TESTS PASS' : '✗ SOME TESTS FAILED'));
+  console.log(`\n${allPass ? '✓ ALL TESTS PASS' : '✗ SOME TESTS FAILED'}`);
 }
 
 process.exit(allPass ? 0 : 1);

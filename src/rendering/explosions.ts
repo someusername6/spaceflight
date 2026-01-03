@@ -7,12 +7,12 @@
  */
 
 import * as THREE from 'three';
-import type { World, Entity } from '../core/types';
-import { queryEntities, getComponent } from '../core/ecs';
-import type { Transform } from '../components/transform';
 import type { Explosion } from '../components/explosion';
 import { getExplosionProgress } from '../components/explosion';
+import type { Transform } from '../components/transform';
+import { getComponent, queryEntities } from '../core/ecs';
 import { createPRNG, random } from '../core/prng';
+import type { Entity, World } from '../core/types';
 
 /** Particles per explosion */
 const PARTICLES_PER_EXPLOSION = 24;
@@ -94,7 +94,7 @@ export function createExplosionRenderer(): ExplosionRenderer {
 export function updateExplosionRenderer(
   renderer: ExplosionRenderer,
   scene: THREE.Scene,
-  world: World
+  world: World,
 ): void {
   const seenExplosions = new Set<Entity>();
 
@@ -102,8 +102,17 @@ export function updateExplosionRenderer(
   for (const entity of queryEntities(world, ['explosion', 'transform'])) {
     seenExplosions.add(entity);
 
-    const explosion = getComponent<Explosion>(world, entity, 'explosion')!;
-    const transform = getComponent<Transform>(world, entity, 'transform')!;
+    // Query guarantees these components exist
+    const explosion = getComponent<Explosion>(
+      world,
+      entity,
+      'explosion',
+    ) as Explosion;
+    const transform = getComponent<Transform>(
+      world,
+      entity,
+      'transform',
+    ) as Transform;
     const progress = getExplosionProgress(explosion);
 
     let visual = renderer.visuals.get(entity);
@@ -115,7 +124,7 @@ export function updateExplosionRenderer(
         scene,
         entity,
         explosion.color,
-        transform.position
+        transform.position,
       );
       renderer.visuals.set(entity, visual);
     }
@@ -144,11 +153,14 @@ function createExplosionVisual(
   scene: THREE.Scene,
   entity: Entity,
   color: THREE.Color,
-  position: THREE.Vector3
+  position: THREE.Vector3,
 ): ExplosionVisual {
   // Create sphere
   const sphereMaterial = createSphereMaterial(color);
-  const sphere = new THREE.Mesh(renderer.sphereGeometry.clone(), sphereMaterial);
+  const sphere = new THREE.Mesh(
+    renderer.sphereGeometry.clone(),
+    sphereMaterial,
+  );
   sphere.position.copy(position);
   sphere.scale.setScalar(0.1); // Start small
   scene.add(sphere);
@@ -156,7 +168,10 @@ function createExplosionVisual(
   // Create particles (positions set by updateExplosionVisual)
   const particlePositions = new Float32Array(PARTICLES_PER_EXPLOSION * 3);
   const particleGeometry = new THREE.BufferGeometry();
-  particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+  particleGeometry.setAttribute(
+    'position',
+    new THREE.BufferAttribute(particlePositions, 3),
+  );
 
   const particleMaterial = createParticleMaterial(color);
   const particles = new THREE.Points(particleGeometry, particleMaterial);
@@ -173,12 +188,12 @@ function updateExplosionVisual(
   visual: ExplosionVisual,
   position: THREE.Vector3,
   explosion: Explosion,
-  progress: number
+  progress: number,
 ): void {
   const { sphere, particles, particleVelocities } = visual;
 
   // Eased progress for smoother animation
-  const easedProgress = 1 - Math.pow(1 - progress, 2); // ease out
+  const easedProgress = 1 - (1 - progress) ** 2; // ease out
 
   // Update sphere - expand and fade
   const sphereScale = explosion.size * (0.5 + easedProgress * EXPANSION_SPEED);
@@ -190,16 +205,23 @@ function updateExplosionVisual(
   (sphere.material as THREE.MeshBasicMaterial).opacity = sphereOpacity;
 
   // Update particles - fly outward from center
-  const particlePositions = particles.geometry.attributes.position!.array as Float32Array;
+  const particlePositions = particles.geometry.attributes.position
+    ?.array as Float32Array;
   const particleDistance = explosion.size * easedProgress * PARTICLE_SPEED;
 
   for (let i = 0; i < PARTICLES_PER_EXPLOSION; i++) {
     const idx = i * 3;
-    particlePositions[idx] = position.x + particleVelocities[idx]! * particleDistance;
-    particlePositions[idx + 1] = position.y + particleVelocities[idx + 1]! * particleDistance;
-    particlePositions[idx + 2] = position.z + particleVelocities[idx + 2]! * particleDistance;
+    particlePositions[idx] =
+      position.x + (particleVelocities[idx] as number) * particleDistance;
+    particlePositions[idx + 1] =
+      position.y + (particleVelocities[idx + 1] as number) * particleDistance;
+    particlePositions[idx + 2] =
+      position.z + (particleVelocities[idx + 2] as number) * particleDistance;
   }
-  particles.geometry.attributes.position!.needsUpdate = true;
+  const posAttr = particles.geometry.attributes.position;
+  if (posAttr) {
+    posAttr.needsUpdate = true;
+  }
 
   // Fade out particles
   const particleOpacity = Math.max(0, 1 - easedProgress);
@@ -209,7 +231,7 @@ function updateExplosionVisual(
 /** Disposes of explosion renderer resources */
 export function disposeExplosionRenderer(
   renderer: ExplosionRenderer,
-  scene: THREE.Scene
+  scene: THREE.Scene,
 ): void {
   for (const visual of renderer.visuals.values()) {
     scene.remove(visual.sphere);

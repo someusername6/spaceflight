@@ -3,24 +3,24 @@
  */
 
 import * as THREE from 'three';
-import type { World } from '../core/types';
-import {
-  queryEntities,
-  getComponent,
-  removeEntity,
-  processRemovals,
-  createEntity,
-  addComponent,
-  isShip,
-} from '../core/ecs';
+import { createExplosion } from '../components/explosion';
+import type { FactionComponent } from '../components/faction';
+import { Faction } from '../components/faction';
 import type { Health } from '../components/health';
 import { isDead } from '../components/health';
 import type { Transform } from '../components/transform';
 import { createTransform } from '../components/transform';
-import { createExplosion } from '../components/explosion';
+import {
+  addComponent,
+  createEntity,
+  getComponent,
+  isShip,
+  processRemovals,
+  queryEntities,
+  removeEntity,
+} from '../core/ecs';
+import type { World } from '../core/types';
 import type { Collision } from './collision';
-import type { FactionComponent } from '../components/faction';
-import { Faction } from '../components/faction';
 
 /**
  * How long ships stay visible after death (for explosion to engulf them).
@@ -34,8 +34,8 @@ const SHIP_DEATH_DELAY = 0.15;
 
 /** Faction colors for explosions */
 const EXPLOSION_COLORS: Record<Faction, THREE.Color> = {
-  [Faction.Player]: new THREE.Color(0x00ff66),  // Green
-  [Faction.Enemy]: new THREE.Color(0xff6600),   // Orange
+  [Faction.Player]: new THREE.Color(0x00ff66), // Green
+  [Faction.Enemy]: new THREE.Color(0xff6600), // Orange
   [Faction.Neutral]: new THREE.Color(0xffff00), // Yellow
 };
 
@@ -43,7 +43,8 @@ const EXPLOSION_COLORS: Record<Faction, THREE.Color> = {
 export function cleanupSystem(world: World, dt: number): void {
   // Handle dead entities
   for (const entity of queryEntities(world, ['health'])) {
-    const health = getComponent<Health>(world, entity, 'health')!;
+    // Query guarantees this component exists
+    const health = getComponent<Health>(world, entity, 'health') as Health;
 
     if (!isDead(health)) continue;
 
@@ -84,10 +85,18 @@ function spawnExplosion(world: World, entity: number): void {
 
   // Create explosion entity (follows source entity while it exists)
   const explosionEntity = createEntity(world);
-  addComponent(world, explosionEntity, createTransform(
-    transform.position.x,
-    transform.position.y,
-    transform.position.z
-  ));
-  addComponent(world, explosionEntity, createExplosion(size, color.clone(), entity));
+  addComponent(
+    world,
+    explosionEntity,
+    createTransform(
+      transform.position.x,
+      transform.position.y,
+      transform.position.z,
+    ),
+  );
+  addComponent(
+    world,
+    explosionEntity,
+    createExplosion(size, color.clone(), entity),
+  );
 }

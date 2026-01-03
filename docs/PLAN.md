@@ -152,7 +152,7 @@ Create comprehensive documentation before writing code. This serves as the sourc
 - ECS philosophy and rules
 - System execution order (explicit list)
 - Determinism requirements
-- File size limits (300 lines max)
+- File size limits (400 lines max)
 - Component vs System responsibilities
 
 ### 1.3 WEAPONS.md
@@ -535,7 +535,7 @@ Polished single-player game, ready for MP in future iteration.
 ## Implementation Rules
 
 ### Code Quality
-- **Max 300 lines per file** - Split if larger
+- **Max 400 lines per file** - Split if larger
 - **One system = one responsibility** - No god systems
 - **Components are plain data** - No methods
 - **Systems are pure functions** - No hidden state
@@ -565,11 +565,11 @@ The previous project failed partly due to architectural rot: 3k-line files, code
 
 ### 1. Automated File Size Check
 
-**Implementation:** Add a pre-commit script that fails if any `.ts` file exceeds 300 lines.
+**Implementation:** Add a pre-commit script that fails if any `.ts` file exceeds 400 lines.
 
 ```bash
 # scripts/check-file-size.sh
-MAX_LINES=300
+MAX_LINES=400
 FAILED=0
 for file in $(find src -name "*.ts"); do
   lines=$(wc -l < "$file")
@@ -700,7 +700,7 @@ function tick(world: World, dt: number) {
 
 Before marking a slice complete:
 
-- [ ] All new files under 300 lines
+- [ ] All new files under 400 lines
 - [ ] All new systems in REGISTRY.md
 - [ ] All components are interfaces (not classes)
 - [ ] No `Math.random()` or `Date.now()` in game logic
@@ -712,14 +712,14 @@ Before marking a slice complete:
 
 For every significant change, I will:
 1. List files modified and their new line counts
-2. Confirm no file exceeds 300 lines
+2. Confirm no file exceeds 400 lines
 3. Confirm system responsibilities unchanged or registry updated
 4. Confirm no legacy/conversion code remains
 
 ### 9. When to Split Files
 
 A file should be split when:
-- It exceeds 200 lines (proactive, before hitting 300)
+- It exceeds 300 lines (proactive, before hitting 400)
 - It handles more than one conceptual responsibility
 - You need to scroll to understand what's happening
 

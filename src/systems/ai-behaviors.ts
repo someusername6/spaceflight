@@ -1,18 +1,18 @@
 /**
  * AI Behaviors - State update functions for AI ships.
  *
- * Extracted from ai.ts to stay under 300 line limit.
+ * Extracted from ai.ts to stay under 400 line limit.
  */
 
-import { Vector3, Quaternion } from 'three';
-import type { World, Entity } from '../core/types';
-import { getComponent, entityExists } from '../core/ecs';
-import type { Transform } from '../components/transform';
-import type { Physics } from '../components/physics';
-import { AIState, type AIControlled } from '../components/ai';
-import { Faction } from '../components/faction';
-import type { Shields } from '../components/shields';
+import { Quaternion, Vector3 } from 'three';
+import { type AIControlled, AIState } from '../components/ai';
+import type { Faction } from '../components/faction';
 import type { Heat } from '../components/heat';
+import type { Physics } from '../components/physics';
+import type { Shields } from '../components/shields';
+import type { Transform } from '../components/transform';
+import { entityExists, getComponent } from '../core/ecs';
+import type { Entity, World } from '../core/types';
 import { findNearestEnemy } from './ai';
 
 // Reusable vectors
@@ -25,14 +25,14 @@ const localUp = new Vector3(); // For ship-relative calculations
 const DEG_TO_RAD = Math.PI / 180;
 
 /** Thresholds for state transitions */
-const LOW_SHIELDS_PERCENT = 0.2;      // 20% - trigger evade
+const LOW_SHIELDS_PERCENT = 0.2; // 20% - trigger evade
 const VERY_LOW_SHIELDS_PERCENT = 0.1; // 10% - trigger regroup
-const RECOVER_SHIELDS_PERCENT = 0.5;  // 50% - exit regroup
-const RECOVER_HEAT_PERCENT = 0.5;     // 50% - exit regroup
-const EVADE_COOLDOWN = 5.0;           // 5s before can exit evade
-const REGROUP_MIN_TIME = 3.0;         // Minimum time in regroup
-const PROTECT_CHASE_RANGE = 400;      // Max distance from protectee to chase threats
-const PROTECT_PATROL_RANGE = 200;     // Distance to patrol around protectee
+const RECOVER_SHIELDS_PERCENT = 0.5; // 50% - exit regroup
+const RECOVER_HEAT_PERCENT = 0.5; // 50% - exit regroup
+const EVADE_COOLDOWN = 5.0; // 5s before can exit evade
+const REGROUP_MIN_TIME = 3.0; // Minimum time in regroup
+const PROTECT_CHASE_RANGE = 400; // Max distance from protectee to chase threats
+const PROTECT_PATROL_RANGE = 200; // Distance to patrol around protectee
 
 /** Check if AI should evade (low shields) */
 export function shouldEvade(shields: Shields | undefined): boolean {
@@ -41,21 +41,34 @@ export function shouldEvade(shields: Shields | undefined): boolean {
 }
 
 /** Check if AI should regroup (very low shields or overheated) */
-export function shouldRegroup(shields: Shields | undefined, heat: Heat | undefined): boolean {
-  const veryLowShields = shields && shields.current / shields.max < VERY_LOW_SHIELDS_PERCENT;
+export function shouldRegroup(
+  shields: Shields | undefined,
+  heat: Heat | undefined,
+): boolean {
+  const veryLowShields =
+    shields && shields.current / shields.max < VERY_LOW_SHIELDS_PERCENT;
   const overheated = heat && heat.current / heat.max > 0.9;
   return !!(veryLowShields || overheated);
 }
 
 /** Check if AI has recovered enough to re-engage */
-function hasRecovered(shields: Shields | undefined, heat: Heat | undefined): boolean {
-  const shieldsOk = !shields || shields.current / shields.max >= RECOVER_SHIELDS_PERCENT;
+function hasRecovered(
+  shields: Shields | undefined,
+  heat: Heat | undefined,
+): boolean {
+  const shieldsOk =
+    !shields || shields.current / shields.max >= RECOVER_SHIELDS_PERCENT;
   const heatOk = !heat || heat.current / heat.max <= RECOVER_HEAT_PERCENT;
   return shieldsOk && heatOk;
 }
 
 /** Helper: Turn toward a direction */
-function turnToward(transform: Transform, physics: Physics, direction: Vector3, dt: number): void {
+function turnToward(
+  transform: Transform,
+  physics: Physics,
+  direction: Vector3,
+  dt: number,
+): void {
   forward.set(0, 0, -1).applyQuaternion(transform.rotation);
   const dot = forward.dot(direction);
   const turnSpeed = physics.turnRate * DEG_TO_RAD * dt;
@@ -88,10 +101,11 @@ export function updateEvade(
   transform: Transform,
   physics: Physics,
   shields: Shields | undefined,
-  dt: number
+  dt: number,
 ): void {
   // Exit condition: cooldown expired and shields recovered (or no shields)
-  const shieldsRecovered = !shields || shields.current / shields.max >= LOW_SHIELDS_PERCENT;
+  const shieldsRecovered =
+    !shields || shields.current / shields.max >= LOW_SHIELDS_PERCENT;
   if (ai.stateTimer >= EVADE_COOLDOWN && shieldsRecovered) {
     ai.state = ai.target ? AIState.Pursue : AIState.Idle;
     ai.stateTimer = 0;
@@ -100,7 +114,11 @@ export function updateEvade(
 
   // Evade behavior: turn away from target and fly erratically
   if (ai.target && entityExists(world, ai.target)) {
-    const targetTransform = getComponent<Transform>(world, ai.target, 'transform');
+    const targetTransform = getComponent<Transform>(
+      world,
+      ai.target,
+      'transform',
+    );
     if (targetTransform) {
       // Turn AWAY from target
       toTarget.copy(transform.position).sub(targetTransform.position);
@@ -119,7 +137,10 @@ export function updateEvade(
   transform.rotation.normalize();
 
   // Accelerate to max speed
-  physics.currentSpeed = Math.min(physics.currentSpeed + physics.acceleration * dt, physics.maxSpeed);
+  physics.currentSpeed = Math.min(
+    physics.currentSpeed + physics.acceleration * dt,
+    physics.maxSpeed,
+  );
 }
 
 /** Protect state - aggressively engage threats to the protectee */
@@ -130,7 +151,7 @@ export function updateProtect(
   transform: Transform,
   physics: Physics,
   faction: Faction,
-  dt: number
+  dt: number,
 ): void {
   // Check if we have someone to protect
   if (!ai.protectTarget || !entityExists(world, ai.protectTarget)) {
@@ -140,14 +161,20 @@ export function updateProtect(
   }
 
   // Find nearest threat to protectee and engage it directly
-  const protecteeTransform = getComponent<Transform>(world, ai.protectTarget, 'transform');
+  const protecteeTransform = getComponent<Transform>(
+    world,
+    ai.protectTarget,
+    'transform',
+  );
   if (!protecteeTransform) {
     ai.state = AIState.Idle;
     ai.stateTimer = 0;
     return;
   }
 
-  const distToProtectee = transform.position.distanceTo(protecteeTransform.position);
+  const distToProtectee = transform.position.distanceTo(
+    protecteeTransform.position,
+  );
   const threat = findNearestEnemy(world, ai.protectTarget, faction);
 
   // If too far from protectee, return instead of chasing threats
@@ -162,18 +189,30 @@ export function updateProtect(
         turnToward(transform, physics, toTarget, dt);
       }
       // Full speed pursuit
-      physics.currentSpeed = Math.min(physics.currentSpeed + physics.acceleration * dt, physics.maxSpeed);
+      physics.currentSpeed = Math.min(
+        physics.currentSpeed + physics.acceleration * dt,
+        physics.maxSpeed,
+      );
     }
   } else {
     // No threats or too far from protectee - return to protectee
     if (distToProtectee > PROTECT_PATROL_RANGE) {
       // Move closer to protectee
-      toTarget.copy(protecteeTransform.position).sub(transform.position).normalize();
+      toTarget
+        .copy(protecteeTransform.position)
+        .sub(transform.position)
+        .normalize();
       turnToward(transform, physics, toTarget, dt);
-      physics.currentSpeed = Math.min(physics.currentSpeed + physics.acceleration * dt, physics.maxSpeed * 0.7);
+      physics.currentSpeed = Math.min(
+        physics.currentSpeed + physics.acceleration * dt,
+        physics.maxSpeed * 0.7,
+      );
     } else {
       // Close enough - slow down and patrol
-      physics.currentSpeed = Math.max(physics.currentSpeed - physics.acceleration * dt, physics.maxSpeed * 0.3);
+      physics.currentSpeed = Math.max(
+        physics.currentSpeed - physics.acceleration * dt,
+        physics.maxSpeed * 0.3,
+      );
     }
   }
 }
@@ -187,7 +226,7 @@ export function updateRegroup(
   physics: Physics,
   shields: Shields | undefined,
   heat: Heat | undefined,
-  dt: number
+  dt: number,
 ): void {
   // Exit condition: recovered and minimum time passed
   if (ai.stateTimer >= REGROUP_MIN_TIME && hasRecovered(shields, heat)) {
@@ -198,7 +237,11 @@ export function updateRegroup(
 
   // Regroup behavior: fly away from target in a large loop
   if (ai.target && entityExists(world, ai.target)) {
-    const targetTransform = getComponent<Transform>(world, ai.target, 'transform');
+    const targetTransform = getComponent<Transform>(
+      world,
+      ai.target,
+      'transform',
+    );
     if (targetTransform) {
       // Turn away from target with slight curve (looping maneuver)
       toTarget.copy(transform.position).sub(targetTransform.position);
@@ -216,9 +259,15 @@ export function updateRegroup(
   // Cruise at moderate speed to conserve heat
   const targetSpeed = physics.maxSpeed * 0.7;
   if (physics.currentSpeed < targetSpeed) {
-    physics.currentSpeed = Math.min(physics.currentSpeed + physics.acceleration * dt, targetSpeed);
+    physics.currentSpeed = Math.min(
+      physics.currentSpeed + physics.acceleration * dt,
+      targetSpeed,
+    );
   } else if (physics.currentSpeed > targetSpeed) {
     // Decelerate if going too fast
-    physics.currentSpeed = Math.max(physics.currentSpeed - physics.acceleration * dt, targetSpeed);
+    physics.currentSpeed = Math.max(
+      physics.currentSpeed - physics.acceleration * dt,
+      targetSpeed,
+    );
   }
 }

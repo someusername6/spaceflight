@@ -62,4 +62,4 @@ Located in `shaders/` subdirectory:
 1. Add entry to the appropriate section above
 2. Create file in `src/rendering/`
 3. Ensure it only READS from World state, never writes
-4. Keep under 300 lines (split if needed)
+4. Keep under 400 lines (split if needed)

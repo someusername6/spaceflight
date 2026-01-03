@@ -28,7 +28,9 @@ export function isDead(health: Health): boolean {
 
 /** Check if entity is dying (dead but waiting for removal during death delay) */
 export function isDying(health: Health): boolean {
-  return health.hull <= 0 && health.deathDelay !== undefined && health.deathDelay > 0;
+  return (
+    health.hull <= 0 && health.deathDelay !== undefined && health.deathDelay > 0
+  );
 }
 
 /** Apply damage to health, returns actual damage dealt */

@@ -21,7 +21,8 @@ export function createPRNG(seed: number): PRNGState {
  */
 export function random(state: PRNGState): number {
   // mulberry32 algorithm
-  let t = (state.seed += 0x6d2b79f5);
+  state.seed += 0x6d2b79f5;
+  let t = state.seed;
   t = Math.imul(t ^ (t >>> 15), t | 1);
   t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
   return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
@@ -33,7 +34,11 @@ export function randomInt(state: PRNGState, min: number, max: number): number {
 }
 
 /** Random float in [min, max) range */
-export function randomRange(state: PRNGState, min: number, max: number): number {
+export function randomRange(
+  state: PRNGState,
+  min: number,
+  max: number,
+): number {
   return random(state) * (max - min) + min;
 }
 
@@ -47,20 +52,27 @@ export function randomChoice<T>(state: PRNGState, array: readonly T[]): T {
   if (array.length === 0) {
     throw new Error('Cannot pick from empty array');
   }
-  return array[randomInt(state, 0, array.length - 1)]!;
+  const index = randomInt(state, 0, array.length - 1);
+  return array[index] as T;
 }
 
 /** Shuffle array in place (Fisher-Yates) */
 export function shuffle<T>(state: PRNGState, array: T[]): T[] {
   for (let i = array.length - 1; i > 0; i--) {
     const j = randomInt(state, 0, i);
-    [array[i], array[j]] = [array[j]!, array[i]!];
+    const temp = array[i] as T;
+    array[i] = array[j] as T;
+    array[j] = temp;
   }
   return array;
 }
 
 /** Random unit vector (for 3D direction) */
-export function randomUnitVector(state: PRNGState): { x: number; y: number; z: number } {
+export function randomUnitVector(state: PRNGState): {
+  x: number;
+  y: number;
+  z: number;
+} {
   // Uniform distribution on sphere using rejection sampling
   let x: number, y: number, z: number, lengthSq: number;
   do {

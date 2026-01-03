@@ -1,0 +1,17 @@
+#!/bin/bash
+# Pre-commit hook: runs linting and file size check
+# Install with: cp scripts/build/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+
+set -e
+
+echo "Running pre-commit checks..."
+
+# Run Biome lint/format check
+echo "Checking formatting and lint..."
+npx biome check --staged src/ scripts/
+
+# Run file size check
+echo "Checking file sizes..."
+bash scripts/build/check-file-size.sh
+
+echo "Pre-commit checks passed!"

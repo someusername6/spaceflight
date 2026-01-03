@@ -3,15 +3,24 @@
  */
 
 import { Vector3 } from 'three';
-import { createGame, startGame } from './game';
-import { initInput } from './systems/input';
-import { createRenderer, syncScene, render, followEntity, getScene } from './rendering/renderer';
-import { createDustSystem, updateDustSystem } from './rendering/dust';
-import { createExplosionRenderer, updateExplosionRenderer } from './rendering/explosions';
-import { createHUD, updateHUD } from './rendering/hud';
-import { createPlayerShip, createEnemyShip } from './factories/ship';
-import { findEntity, getComponent } from './core/ecs';
 import type { Transform } from './components/transform';
+import { findEntity, getComponent } from './core/ecs';
+import { createEnemyShip, createPlayerShip } from './factories/ship';
+import { createGame, startGame } from './game';
+import { createDustSystem, updateDustSystem } from './rendering/dust';
+import {
+  createExplosionRenderer,
+  updateExplosionRenderer,
+} from './rendering/explosions';
+import { createHUD, updateHUD } from './rendering/hud';
+import {
+  createRenderer,
+  followEntity,
+  getScene,
+  render,
+  syncScene,
+} from './rendering/renderer';
+import { initInput } from './systems/input';
 
 /** Initialize and start the game */
 function main(): void {
@@ -66,7 +75,14 @@ function main(): void {
     render(renderer);
 
     // Update HUD (uses matrices updated by render)
-    updateHUD(hud, world, renderer.camera, renderer.entityMeshes, container.clientWidth, container.clientHeight);
+    updateHUD(
+      hud,
+      world,
+      renderer.camera,
+      renderer.entityMeshes,
+      container.clientWidth,
+      container.clientHeight,
+    );
   };
 
   // Mission end disabled for flight testing
@@ -84,8 +100,12 @@ function main(): void {
   startGame(game);
 
   console.log('Spaceflight Slice 2 - Combat Basics');
-  console.log('Flight: WASD = Pitch/Yaw, QE = Roll, Shift = Accelerate, Ctrl = Decelerate, Z = Afterburner');
-  console.log('Combat: Space = Fire, T = Target nearest, [ ] = Cycle targets, < > = Cycle weapons');
+  console.log(
+    'Flight: WASD = Pitch/Yaw, QE = Roll, Shift = Accelerate, Ctrl = Decelerate, Z = Afterburner',
+  );
+  console.log(
+    'Combat: Space = Fire, T = Target nearest, [ ] = Cycle targets, < > = Cycle weapons',
+  );
   console.log('Objective: Destroy all enemy ships!');
 }
 

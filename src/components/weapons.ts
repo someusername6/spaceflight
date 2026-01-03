@@ -158,7 +158,9 @@ export function createPrimaryWeapons(weaponNames: string[]): PrimaryWeapons {
 }
 
 /** Creates a SecondaryWeapons component */
-export function createSecondaryWeapons(weapons: SecondaryWeapon[]): SecondaryWeapons {
+export function createSecondaryWeapons(
+  weapons: SecondaryWeapon[],
+): SecondaryWeapons {
   return {
     type: 'secondaryWeapons',
     weapons,
@@ -170,12 +172,16 @@ export function createSecondaryWeapons(weapons: SecondaryWeapon[]): SecondaryWea
 }
 
 /** Get current primary weapon, or undefined if none */
-export function getCurrentPrimary(weapons: PrimaryWeapons): PrimaryWeapon | undefined {
+export function getCurrentPrimary(
+  weapons: PrimaryWeapons,
+): PrimaryWeapon | undefined {
   return weapons.weapons[weapons.currentIndex];
 }
 
 /** Get current secondary weapon, or undefined if none */
-export function getCurrentSecondary(weapons: SecondaryWeapons): SecondaryWeapon | undefined {
+export function getCurrentSecondary(
+  weapons: SecondaryWeapons,
+): SecondaryWeapon | undefined {
   return weapons.weapons[weapons.currentIndex];
 }
 
@@ -190,12 +196,17 @@ export function cycleNextPrimary(weapons: PrimaryWeapons): void {
 export function cyclePrevPrimary(weapons: PrimaryWeapons): void {
   if (weapons.weapons.length > 0) {
     weapons.currentIndex =
-      (weapons.currentIndex - 1 + weapons.weapons.length) % weapons.weapons.length;
+      (weapons.currentIndex - 1 + weapons.weapons.length) %
+      weapons.weapons.length;
   }
 }
 
 /** Check if weapon can fire (fire rate cooldown) */
-export function canFire(weapon: PrimaryWeapon | SecondaryWeapon, lastFire: number, now: number): boolean {
+export function canFire(
+  weapon: PrimaryWeapon | SecondaryWeapon,
+  lastFire: number,
+  now: number,
+): boolean {
   const fireRate = 'fireRate' in weapon ? weapon.fireRate : 0.5;
   return now - lastFire >= fireRate;
 }

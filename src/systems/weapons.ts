@@ -2,21 +2,31 @@
  * Weapon System - Handles firing primary and secondary weapons.
  */
 
-import type { World, Entity } from '../core/types';
-import { queryEntities, getComponent, entityExists } from '../core/ecs';
-import type { Transform } from '../components/transform';
-import type { PlayerControlled } from '../components/player';
-import type { PrimaryWeapons, SecondaryWeapons } from '../components/weapons';
-import { getCurrentPrimary, getCurrentSecondary, cycleNextPrimary, cyclePrevPrimary } from '../components/weapons';
-import type { Heat } from '../components/heat';
-import { addHeat } from '../components/heat';
-import type { FactionComponent } from '../components/faction';
-import type { Targeting } from '../components/targeting';
-import { AIState, type AIControlled } from '../components/ai';
+import type { AIControlled } from '../components/ai';
 import type { AimError } from '../components/aim-error';
-import { spawnProjectile, spawnProjectileWithAimError, spawnMissile } from './weapon-spawning';
+import type { FactionComponent } from '../components/faction';
 import type { Health } from '../components/health';
 import { isDying } from '../components/health';
+import type { Heat } from '../components/heat';
+import { addHeat } from '../components/heat';
+import type { PlayerControlled } from '../components/player';
+import type { Targeting } from '../components/targeting';
+import type { Transform } from '../components/transform';
+import type { PrimaryWeapons, SecondaryWeapons } from '../components/weapons';
+import {
+  cycleNextPrimary,
+  cyclePrevPrimary,
+  getCurrentPrimary,
+  getCurrentSecondary,
+} from '../components/weapons';
+import { entityExists, getComponent, queryEntities } from '../core/ecs';
+import type { Entity, World } from '../core/types';
+import {
+  spawnMissile,
+  spawnProjectile,
+  spawnProjectileWithAimError,
+} from './weapon-spawning';
+import { handleAIPrimaryWeapons, handleAISecondaryWeapons } from './weapons-ai';
 
 /** Weapon system - handles firing and heat */
 export function weaponSystem(world: World, dt: number): void {
@@ -24,48 +34,117 @@ export function weaponSystem(world: World, dt: number): void {
   const gameTime = world.systemState.gameTime;
 
   // Process entities with primary weapons
-  for (const entity of queryEntities(world, ['transform', 'primaryWeapons', 'heat'])) {
+  for (const entity of queryEntities(world, [
+    'transform',
+    'primaryWeapons',
+    'heat',
+  ])) {
     // Skip dying entities (can't fire while exploding)
     const health = getComponent<Health>(world, entity, 'health');
     if (health && isDying(health)) continue;
 
-    const transform = getComponent<Transform>(world, entity, 'transform')!;
-    const weapons = getComponent<PrimaryWeapons>(world, entity, 'primaryWeapons')!;
-    const heat = getComponent<Heat>(world, entity, 'heat')!;
+    // Query guarantees these components exist
+    const transform = getComponent<Transform>(
+      world,
+      entity,
+      'transform',
+    ) as Transform;
+    const weapons = getComponent<PrimaryWeapons>(
+      world,
+      entity,
+      'primaryWeapons',
+    ) as PrimaryWeapons;
+    const heat = getComponent<Heat>(world, entity, 'heat') as Heat;
     const faction = getComponent<FactionComponent>(world, entity, 'faction');
-    const player = getComponent<PlayerControlled>(world, entity, 'playerControlled');
+    const player = getComponent<PlayerControlled>(
+      world,
+      entity,
+      'playerControlled',
+    );
 
     if (player) {
-      handlePlayerPrimaryWeapons(world, entity, transform, weapons, heat, faction, player, state, gameTime);
+      handlePlayerPrimaryWeapons(
+        world,
+        entity,
+        transform,
+        weapons,
+        heat,
+        faction,
+        player,
+        state,
+        gameTime,
+      );
     } else {
       // Check for AI-controlled entity
       const ai = getComponent<AIControlled>(world, entity, 'aiControlled');
       if (ai) {
-        handleAIPrimaryWeapons(world, entity, transform, weapons, heat, faction, ai, gameTime);
+        handleAIPrimaryWeapons(
+          world,
+          entity,
+          transform,
+          weapons,
+          heat,
+          faction,
+          ai,
+          gameTime,
+        );
       }
     }
   }
 
   // Process entities with secondary weapons
-  for (const entity of queryEntities(world, ['transform', 'secondaryWeapons'])) {
+  for (const entity of queryEntities(world, [
+    'transform',
+    'secondaryWeapons',
+  ])) {
     // Skip dying entities (can't fire while exploding)
     const health = getComponent<Health>(world, entity, 'health');
     if (health && isDying(health)) continue;
 
-    const transform = getComponent<Transform>(world, entity, 'transform')!;
-    const weapons = getComponent<SecondaryWeapons>(world, entity, 'secondaryWeapons')!;
+    // Query guarantees these components exist
+    const transform = getComponent<Transform>(
+      world,
+      entity,
+      'transform',
+    ) as Transform;
+    const weapons = getComponent<SecondaryWeapons>(
+      world,
+      entity,
+      'secondaryWeapons',
+    ) as SecondaryWeapons;
     const faction = getComponent<FactionComponent>(world, entity, 'faction');
-    const player = getComponent<PlayerControlled>(world, entity, 'playerControlled');
+    const player = getComponent<PlayerControlled>(
+      world,
+      entity,
+      'playerControlled',
+    );
 
     if (player) {
       const targeting = getComponent<Targeting>(world, entity, 'targeting');
       updateLockProgress(world, weapons, targeting?.currentTarget, dt);
-      handlePlayerSecondaryWeapons(world, entity, transform, weapons, faction, player, state, gameTime);
+      handlePlayerSecondaryWeapons(
+        world,
+        entity,
+        transform,
+        weapons,
+        faction,
+        player,
+        state,
+        gameTime,
+      );
     } else {
       const ai = getComponent<AIControlled>(world, entity, 'aiControlled');
       if (ai) {
         updateLockProgress(world, weapons, ai.target, dt);
-        handleAISecondaryWeapons(world, entity, transform, weapons, faction, ai, gameTime);
+        handleAISecondaryWeapons(
+          world,
+          entity,
+          transform,
+          weapons,
+          faction,
+          ai,
+          gameTime,
+        );
       }
     }
   }
@@ -80,47 +159,6 @@ export function weaponSystem(world: World, dt: number): void {
   }
 }
 
-/** Handle AI primary weapon firing - AI always fires linked (all weapons) */
-function handleAIPrimaryWeapons(
-  world: World,
-  entity: Entity,
-  transform: Transform,
-  weapons: PrimaryWeapons,
-  heat: Heat,
-  faction: FactionComponent | undefined,
-  ai: AIControlled,
-  gameTime: number
-): void {
-  // Only fire when in Engage state
-  if (ai.state !== AIState.Engage) return;
-
-  // Need a valid target
-  if (ai.target === null || !entityExists(world, ai.target)) return;
-
-  // Get aim error if present (makes AI imperfect)
-  const aimError = getComponent<AimError>(world, entity, 'aimError');
-
-  // AI always fires all weapons together (linked)
-  fireLinkedPrimaries(world, entity, transform, weapons, heat, faction, gameTime, aimError);
-}
-
-/** Handle AI secondary weapon firing - fires first available weapon when locked */
-function handleAISecondaryWeapons(
-  world: World, entity: Entity, transform: Transform, weapons: SecondaryWeapons,
-  faction: FactionComponent | undefined, ai: AIControlled, gameTime: number
-): void {
-  if (ai.state !== AIState.Engage || !ai.target || !entityExists(world, ai.target)) return;
-  const timeSinceFire = gameTime - weapons.lastFireTime;
-  for (const weapon of weapons.weapons) {
-    if (weapon.count <= 0 || timeSinceFire < weapon.fireRate) continue;
-    if (weapon.requiresLock && weapons.lockProgress < 1) continue;
-    weapons.lastFireTime = gameTime;
-    weapon.count--;
-    spawnMissile(world, entity, transform, weapon, faction, weapons.lockTarget);
-    return;
-  }
-}
-
 /** Handle player primary weapon input */
 function handlePlayerPrimaryWeapons(
   world: World,
@@ -131,7 +169,7 @@ function handlePlayerPrimaryWeapons(
   faction: FactionComponent | undefined,
   player: PlayerControlled,
   state: World['systemState']['weapons'],
-  gameTime: number
+  gameTime: number,
 ): void {
   const input = player.input;
   const prevInput = state.prevInput;
@@ -152,9 +190,25 @@ function handlePlayerPrimaryWeapons(
   // Fire primary weapon(s)
   if (input.firePrimary) {
     if (weapons.linked) {
-      fireLinkedPrimaries(world, entity, transform, weapons, heat, faction, gameTime);
+      fireLinkedPrimaries(
+        world,
+        entity,
+        transform,
+        weapons,
+        heat,
+        faction,
+        gameTime,
+      );
     } else {
-      fireSinglePrimary(world, entity, transform, weapons, heat, faction, gameTime);
+      fireSinglePrimary(
+        world,
+        entity,
+        transform,
+        weapons,
+        heat,
+        faction,
+        gameTime,
+      );
     }
   }
 }
@@ -167,7 +221,7 @@ function fireSinglePrimary(
   weapons: PrimaryWeapons,
   heat: Heat,
   faction: FactionComponent | undefined,
-  gameTime: number
+  gameTime: number,
 ): void {
   const weapon = getCurrentPrimary(weapons);
   if (!weapon || weapon.category === 'beam') return; // Beams handled by beam system
@@ -187,7 +241,7 @@ function fireSinglePrimary(
 }
 
 /** Fire all primary weapons together (linked mode) */
-function fireLinkedPrimaries(
+export function fireLinkedPrimaries(
   world: World,
   entity: Entity,
   transform: Transform,
@@ -195,24 +249,27 @@ function fireLinkedPrimaries(
   heat: Heat,
   faction: FactionComponent | undefined,
   gameTime: number,
-  aimError?: AimError
+  aimError?: AimError,
 ): void {
   // Find projectile weapons (non-beam) that can fire
-  const projectileWeapons = weapons.weapons.filter(w =>
-    w.category !== 'beam' && (w.ammo === undefined || w.ammo > 0)
+  const projectileWeapons = weapons.weapons.filter(
+    (w) => w.category !== 'beam' && (w.ammo === undefined || w.ammo > 0),
   );
 
   if (projectileWeapons.length === 0) return;
 
   // Calculate slowest fire rate among projectile weapons
-  const slowestRate = Math.max(...projectileWeapons.map(w => w.fireRate));
+  const slowestRate = Math.max(...projectileWeapons.map((w) => w.fireRate));
 
   // Check if enough time has passed
   const timeSinceFire = gameTime - weapons.lastFireTime;
   if (timeSinceFire < slowestRate) return;
 
   // Calculate total heat for all weapons
-  const totalHeat = projectileWeapons.reduce((sum, w) => sum + w.heatPerShot, 0);
+  const totalHeat = projectileWeapons.reduce(
+    (sum, w) => sum + w.heatPerShot,
+    0,
+  );
 
   // Check if we can add all heat
   if (!addHeat(heat, totalHeat)) return;
@@ -221,13 +278,23 @@ function fireLinkedPrimaries(
   weapons.lastFireTime = gameTime;
   for (const weapon of projectileWeapons) {
     if (weapon.ammo !== undefined) weapon.ammo--;
-    spawnProjectileWithAimError(world, entity, transform, weapon, faction, aimError);
+    spawnProjectileWithAimError(
+      world,
+      entity,
+      transform,
+      weapon,
+      faction,
+      aimError,
+    );
   }
 }
 
 /** Update lock-on progress for secondary weapons (shared by player and AI) */
 function updateLockProgress(
-  world: World, weapons: SecondaryWeapons, target: Entity | null | undefined, dt: number
+  world: World,
+  weapons: SecondaryWeapons,
+  target: Entity | null | undefined,
+  dt: number,
 ): void {
   const weapon = getCurrentSecondary(weapons);
   if (!weapon) return;
@@ -243,9 +310,10 @@ function updateLockProgress(
     weapons.lockTarget = target;
   }
 
-  weapons.lockProgress = weapon.requiresLock && weapon.lockSpeed > 0
-    ? Math.min(1, weapons.lockProgress + weapon.lockSpeed * dt)
-    : 1;
+  weapons.lockProgress =
+    weapon.requiresLock && weapon.lockSpeed > 0
+      ? Math.min(1, weapons.lockProgress + weapon.lockSpeed * dt)
+      : 1;
 }
 
 /** Handle player secondary weapon input */
@@ -257,7 +325,7 @@ function handlePlayerSecondaryWeapons(
   faction: FactionComponent | undefined,
   player: PlayerControlled,
   state: World['systemState']['weapons'],
-  gameTime: number
+  gameTime: number,
 ): void {
   const input = player.input;
   const prevInput = state.prevInput;

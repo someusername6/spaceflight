@@ -2,9 +2,9 @@
  * Input System - Reads keyboard state and sets player intent flags.
  */
 
-import type { World } from '../core/types';
-import { queryEntities, getComponent } from '../core/ecs';
 import type { PlayerControlled } from '../components/player';
+import { getComponent, queryEntities } from '../core/ecs';
+import type { World } from '../core/types';
 
 /** Key bindings (will be configurable later) */
 const KEY_BINDINGS = {
@@ -36,7 +36,11 @@ export function initInput(): void {
   window.addEventListener('keydown', (e) => {
     pressedKeys.add(e.code);
     // Prevent browser defaults for game keys
-    if (Object.values(KEY_BINDINGS).includes(e.code as typeof KEY_BINDINGS[keyof typeof KEY_BINDINGS])) {
+    if (
+      Object.values(KEY_BINDINGS).includes(
+        e.code as (typeof KEY_BINDINGS)[keyof typeof KEY_BINDINGS],
+      )
+    ) {
       e.preventDefault();
     }
   });
@@ -54,7 +58,11 @@ export function initInput(): void {
 /** Input system - updates player input state each frame */
 export function inputSystem(world: World, _dt: number): void {
   for (const entity of queryEntities(world, ['playerControlled'])) {
-    const player = getComponent<PlayerControlled>(world, entity, 'playerControlled');
+    const player = getComponent<PlayerControlled>(
+      world,
+      entity,
+      'playerControlled',
+    );
     if (!player) continue;
 
     const input = player.input;

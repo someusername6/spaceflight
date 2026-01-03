@@ -5,14 +5,18 @@
  * and maintains lock-on progress for missiles.
  */
 
-import type { World, Entity } from '../core/types';
-import { queryEntities, getComponent, entityExists } from '../core/ecs';
-import type { Transform } from '../components/transform';
-import type { PlayerControlled } from '../components/player';
-import type { Targeting } from '../components/targeting';
-import { type FactionComponent, areEnemies, Faction } from '../components/faction';
+import {
+  areEnemies,
+  Faction,
+  type FactionComponent,
+} from '../components/faction';
 import type { Health } from '../components/health';
 import { isDying } from '../components/health';
+import type { PlayerControlled } from '../components/player';
+import type { Targeting } from '../components/targeting';
+import type { Transform } from '../components/transform';
+import { entityExists, getComponent, queryEntities } from '../core/ecs';
+import type { Entity, World } from '../core/types';
 
 /** Track previous input state for edge detection (only trigger on key press, not hold) */
 const prevInput = {
@@ -23,10 +27,27 @@ const prevInput = {
 
 /** Targeting system - updates target selection based on input */
 export function targetingSystem(world: World, _dt: number): void {
-  for (const entity of queryEntities(world, ['playerControlled', 'targeting', 'transform'])) {
-    const player = getComponent<PlayerControlled>(world, entity, 'playerControlled')!;
-    const targeting = getComponent<Targeting>(world, entity, 'targeting')!;
-    const transform = getComponent<Transform>(world, entity, 'transform')!;
+  for (const entity of queryEntities(world, [
+    'playerControlled',
+    'targeting',
+    'transform',
+  ])) {
+    // Query guarantees these components exist
+    const player = getComponent<PlayerControlled>(
+      world,
+      entity,
+      'playerControlled',
+    ) as PlayerControlled;
+    const targeting = getComponent<Targeting>(
+      world,
+      entity,
+      'targeting',
+    ) as Targeting;
+    const transform = getComponent<Transform>(
+      world,
+      entity,
+      'transform',
+    ) as Transform;
     const faction = getComponent<FactionComponent>(world, entity, 'faction');
 
     const selfFaction = faction?.faction ?? Faction.Player;
@@ -36,8 +57,10 @@ export function targetingSystem(world: World, _dt: number): void {
 
     // Clear target if it no longer exists or is no longer valid
     if (targeting.currentTarget !== undefined) {
-      if (!entityExists(world, targeting.currentTarget) ||
-          !targeting.validTargets.includes(targeting.currentTarget)) {
+      if (
+        !entityExists(world, targeting.currentTarget) ||
+        !targeting.validTargets.includes(targeting.currentTarget)
+      ) {
         clearTarget(targeting);
       }
     }
@@ -68,21 +91,36 @@ function updateValidTargets(
   self: Entity,
   targeting: Targeting,
   selfTransform: Transform,
-  selfFaction: Faction
+  selfFaction: Faction,
 ): void {
   const targets: { entity: Entity; distance: number }[] = [];
 
-  for (const other of queryEntities(world, ['transform', 'faction', 'health'])) {
+  for (const other of queryEntities(world, [
+    'transform',
+    'faction',
+    'health',
+  ])) {
     if (other === self) continue;
 
     // Skip dying enemies (already exploding)
-    const otherHealth = getComponent<Health>(world, other, 'health')!;
+    // Query guarantees health component exists
+    const otherHealth = getComponent<Health>(world, other, 'health') as Health;
     if (isDying(otherHealth)) continue;
 
-    const otherFaction = getComponent<FactionComponent>(world, other, 'faction');
-    if (!otherFaction || !areEnemies(selfFaction, otherFaction.faction)) continue;
+    const otherFaction = getComponent<FactionComponent>(
+      world,
+      other,
+      'faction',
+    );
+    if (!otherFaction || !areEnemies(selfFaction, otherFaction.faction))
+      continue;
 
-    const otherTransform = getComponent<Transform>(world, other, 'transform')!;
+    // Query guarantees transform component exists
+    const otherTransform = getComponent<Transform>(
+      world,
+      other,
+      'transform',
+    ) as Transform;
     const distance = selfTransform.position.distanceTo(otherTransform.position);
 
     targets.push({ entity: other, distance });
@@ -92,7 +130,7 @@ function updateValidTargets(
   targets.sort((a, b) => a.distance - b.distance);
 
   // Update the valid targets list
-  targeting.validTargets = targets.map(t => t.entity);
+  targeting.validTargets = targets.map((t) => t.entity);
 
   // Update target index if current target is still valid
   if (targeting.currentTarget !== undefined) {
@@ -110,7 +148,8 @@ function cycleTarget(targeting: Targeting, direction: number): void {
 
   if (targeting.currentTarget === undefined) {
     // No current target - select first (nearest) or last based on direction
-    targeting.targetIndex = direction > 0 ? 0 : targeting.validTargets.length - 1;
+    targeting.targetIndex =
+      direction > 0 ? 0 : targeting.validTargets.length - 1;
   } else {
     // Cycle to next/previous
     targeting.targetIndex += direction;

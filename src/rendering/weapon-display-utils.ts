@@ -20,7 +20,10 @@ export interface WeaponBankCache {
 }
 
 /** Create a single weapon bank element */
-export function createBankElement(isSecondary: boolean, isBeam: boolean): WeaponBankCache {
+export function createBankElement(
+  isSecondary: boolean,
+  isBeam: boolean,
+): WeaponBankCache {
   const element = document.createElement('div');
   element.className = 'weapon-bank';
   const nameEl = document.createElement('div');
@@ -53,16 +56,28 @@ export function createBankElement(isSecondary: boolean, isBeam: boolean): Weapon
   element.appendChild(infoEl);
   if (typeEl) element.appendChild(typeEl);
 
-  return { element, nameEl, ammoEl, heatEl, lockEl, typeEl,
-    lastSelected: false, lastAmmo: '', lastHeat: '', lastLock: '', lastEmpty: false, lastOnCooldown: false };
+  return {
+    element,
+    nameEl,
+    ammoEl,
+    heatEl,
+    lockEl,
+    typeEl,
+    lastSelected: false,
+    lastAmmo: '',
+    lastHeat: '',
+    lastLock: '',
+    lastEmpty: false,
+    lastOnCooldown: false,
+  };
 }
 
 /** Generate signature for primary weapons (name + category) */
 export function getPrimarySignature(weapons: PrimaryWeapon[]): string {
-  return weapons.map(w => `${w.name}:${w.category}`).join(',');
+  return weapons.map((w) => `${w.name}:${w.category}`).join(',');
 }
 
 /** Generate signature for secondary weapons (name + requiresLock) */
 export function getSecondarySignature(weapons: SecondaryWeapon[]): string {
-  return weapons.map(w => `${w.name}:${w.requiresLock}`).join(',');
+  return weapons.map((w) => `${w.name}:${w.requiresLock}`).join(',');
 }

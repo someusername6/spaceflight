@@ -31,9 +31,39 @@ Before starting work on a "missing" feature:
 
 (From PLAN.md - repeated here for visibility)
 
-- **Max 300 lines per file** - Split if larger
+- **Max 400 lines per file** - Split if larger
 - **Components are interfaces** - No methods, no classes
 - **Systems are pure functions** - `(world: World, dt: number) => void`
 - **No `Math.random()`** - Use seeded PRNG
 - **No `Date.now()` in game logic** - Fixed timestep only
 - **Update REGISTRY.md** when adding systems
+
+## Formatting Rules (MANDATORY)
+
+This project uses Biome for formatting and linting. A pre-commit hook enforces these rules.
+
+**Never compress code to fit line limits.** If a file approaches 400 lines:
+1. Split the file into logical modules
+2. Do NOT put multiple statements on one line
+3. Do NOT remove blank lines or compress formatting
+
+**Correct formatting:**
+```typescript
+if (condition) {
+  doSomething();
+  doSomethingElse();
+}
+```
+
+**Wrong (compressed):**
+```typescript
+if (condition) { doSomething(); doSomethingElse(); }
+```
+
+**Commands:**
+- `npm run format` - Auto-format code
+- `npm run lint` - Check for lint errors
+- `npm run lint:fix` - Fix lint errors
+- `npm run check-size` - Verify file size limits
+
+**Before committing:** Run `npm run lint` to ensure code passes checks.

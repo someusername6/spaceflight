@@ -26,7 +26,7 @@ const DEFAULT_MAX_AGE = 0.8;
 export function createExplosion(
   size: number,
   color: THREE.Color = new THREE.Color(0xff6600),
-  sourceEntity?: Entity
+  sourceEntity?: Entity,
 ): Explosion {
   const explosion: Explosion = {
     type: 'explosion',

@@ -19,7 +19,7 @@ export function drawOutlinedText(
   text: string,
   x: number,
   y: number,
-  color: string
+  color: string,
 ): void {
   const upperText = text.toUpperCase();
   ctx.font = `bold ${FONT_SIZE}px ${FONT_FAMILY}`;
@@ -40,7 +40,7 @@ export function drawOnScreenReticle(
   ctx: CanvasRenderingContext2D,
   bounds: { minX: number; maxX: number; minY: number; maxY: number },
   distance: number,
-  color: string
+  color: string,
 ): void {
   // Calculate box dimensions with padding
   let width = bounds.maxX - bounds.minX + RETICLE_PADDING * 2;
@@ -92,7 +92,13 @@ export function drawOnScreenReticle(
   // Distance text below
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
-  drawOutlinedText(ctx, `${Math.round(distance)}`, left + width / 2, bottom + 4, color);
+  drawOutlinedText(
+    ctx,
+    `${Math.round(distance)}`,
+    left + width / 2,
+    bottom + 4,
+    color,
+  );
 }
 
 /** Draw lock-on progress indicator (arc around target) */
@@ -100,7 +106,7 @@ export function drawLockIndicator(
   ctx: CanvasRenderingContext2D,
   bounds: { minX: number; maxX: number; minY: number; maxY: number },
   progress: number, // 0-1
-  color: string
+  color: string,
 ): void {
   const centerX = (bounds.minX + bounds.maxX) / 2;
   const centerY = (bounds.minY + bounds.maxY) / 2;
@@ -138,7 +144,7 @@ export function drawLeadIndicator(
   y: number,
   color: string,
   outOfRange: boolean = false,
-  weaponLabel?: string
+  weaponLabel?: string,
 ): void {
   // Set up styling (dimmer and dashed if out of range)
   if (outOfRange) {
@@ -191,7 +197,7 @@ function dimColor(color: string): string {
   if (color === '#00ff00' || color === '#0f0') return '#006600';
   if (color === '#ffff00' || color === '#ff0') return '#666600';
   // Default: just return a darker shade
-  return color + '80'; // Add alpha if not handled
+  return `${color}80`; // Add alpha if not handled
 }
 
 /** Draw off-screen arrow pointing to target */
@@ -203,13 +209,16 @@ export function drawOffScreenArrow(
   color: string,
   behindCamera: boolean,
   screenWidth: number,
-  screenHeight: number
+  screenHeight: number,
 ): void {
   const centerX = screenWidth / 2;
   const centerY = screenHeight / 2;
   let dirX = x - centerX;
   let dirY = y - centerY;
-  if (behindCamera) { dirX = -dirX; dirY = -dirY; }
+  if (behindCamera) {
+    dirX = -dirX;
+    dirY = -dirY;
+  }
 
   const len = Math.sqrt(dirX * dirX + dirY * dirY);
   if (len > 0.001) {
@@ -222,8 +231,8 @@ export function drawOffScreenArrow(
   }
 
   // Find arrow position on screen edge
-  const maxX = (screenWidth / 2) - EDGE_MARGIN;
-  const maxY = (screenHeight / 2) - EDGE_MARGIN;
+  const maxX = screenWidth / 2 - EDGE_MARGIN;
+  const maxY = screenHeight / 2 - EDGE_MARGIN;
 
   let scale = maxY; // Default for pure vertical
   if (Math.abs(dirX) > 0.001) scale = Math.min(scale, maxX / Math.abs(dirX));

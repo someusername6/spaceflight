@@ -19,7 +19,7 @@ export const NEBULA_CONTINUE_CHANCE = 0.45;
 
 // Star halo parameters
 export const HALO_MAX_COUNT = 9;
-export const HALO_FALLOFF_BASE = Math.pow(2, 20); // ~1 million
+export const HALO_FALLOFF_BASE = 2 ** 20; // ~1 million
 export const HALO_CONTINUE_CHANCE = 0.01;
 
 // Sun parameters (high falloff = tight halo)

@@ -2,19 +2,19 @@
  * Weapon Spawning - Creates projectile and missile entities.
  */
 
-import type { World, Entity } from '../core/types';
-import { createEntity, addComponent } from '../core/ecs';
+import type { AimError } from '../components/aim-error';
+import { applyAimError } from '../components/aim-error';
+import type { FactionComponent } from '../components/faction';
+import { createFaction } from '../components/faction';
+import { createMissile } from '../components/missile';
+import { createProjectile } from '../components/projectile';
 import type { Transform } from '../components/transform';
 import { createTransform } from '../components/transform';
 import type { SecondaryWeapon } from '../components/weapons';
-import { createProjectile } from '../components/projectile';
-import { createMissile } from '../components/missile';
+import { addComponent, createEntity } from '../core/ecs';
+import type { Entity, World } from '../core/types';
 import { createCollision } from './collision';
-import type { FactionComponent } from '../components/faction';
-import { createFaction } from '../components/faction';
 import { getForward } from './physics';
-import type { AimError } from '../components/aim-error';
-import { applyAimError } from '../components/aim-error';
 
 /** Projectile spawn offset from ship center */
 const PROJECTILE_SPAWN_OFFSET = 3;
@@ -30,18 +30,30 @@ export function spawnProjectile(
   owner: Entity,
   ownerTransform: Transform,
   weapon: { damage: number; projectileSpeed: number; range: number },
-  ownerFaction: FactionComponent | undefined
+  ownerFaction: FactionComponent | undefined,
 ): void {
   const forward = getForward(ownerTransform);
-  const spawnPos = ownerTransform.position.clone().addScaledVector(forward, PROJECTILE_SPAWN_OFFSET);
+  const spawnPos = ownerTransform.position
+    .clone()
+    .addScaledVector(forward, PROJECTILE_SPAWN_OFFSET);
 
   const projectile = createEntity(world);
 
-  addComponent(world, projectile, createTransform(spawnPos.x, spawnPos.y, spawnPos.z));
   addComponent(
     world,
     projectile,
-    createProjectile(owner, weapon.damage, weapon.projectileSpeed, weapon.range, forward)
+    createTransform(spawnPos.x, spawnPos.y, spawnPos.z),
+  );
+  addComponent(
+    world,
+    projectile,
+    createProjectile(
+      owner,
+      weapon.damage,
+      weapon.projectileSpeed,
+      weapon.range,
+      forward,
+    ),
   );
   addComponent(world, projectile, createCollision(PROJECTILE_RADIUS));
 
@@ -58,21 +70,33 @@ export function spawnProjectileWithAimError(
   ownerTransform: Transform,
   weapon: { damage: number; projectileSpeed: number; range: number },
   ownerFaction: FactionComponent | undefined,
-  aimError: AimError | undefined
+  aimError: AimError | undefined,
 ): void {
   const forward = getForward(ownerTransform);
-  const spawnPos = ownerTransform.position.clone().addScaledVector(forward, PROJECTILE_SPAWN_OFFSET);
+  const spawnPos = ownerTransform.position
+    .clone()
+    .addScaledVector(forward, PROJECTILE_SPAWN_OFFSET);
 
   // Apply aim error if present, otherwise use forward direction
   const direction = aimError ? applyAimError(forward, aimError) : forward;
 
   const projectile = createEntity(world);
 
-  addComponent(world, projectile, createTransform(spawnPos.x, spawnPos.y, spawnPos.z));
   addComponent(
     world,
     projectile,
-    createProjectile(owner, weapon.damage, weapon.projectileSpeed, weapon.range, direction)
+    createTransform(spawnPos.x, spawnPos.y, spawnPos.z),
+  );
+  addComponent(
+    world,
+    projectile,
+    createProjectile(
+      owner,
+      weapon.damage,
+      weapon.projectileSpeed,
+      weapon.range,
+      direction,
+    ),
   );
   addComponent(world, projectile, createCollision(PROJECTILE_RADIUS));
 
@@ -89,10 +113,12 @@ export function spawnMissile(
   ownerTransform: Transform,
   weapon: SecondaryWeapon,
   ownerFaction: FactionComponent | undefined,
-  target: Entity | undefined
+  target: Entity | undefined,
 ): void {
   const forward = getForward(ownerTransform);
-  const spawnPos = ownerTransform.position.clone().addScaledVector(forward, MISSILE_SPAWN_OFFSET);
+  const spawnPos = ownerTransform.position
+    .clone()
+    .addScaledVector(forward, MISSILE_SPAWN_OFFSET);
 
   const missile = createEntity(world);
 
@@ -105,7 +131,15 @@ export function spawnMissile(
   addComponent(
     world,
     missile,
-    createMissile(owner, target, weapon.damage, weapon.speed, weapon.turnRate, weapon.range, forward)
+    createMissile(
+      owner,
+      target,
+      weapon.damage,
+      weapon.speed,
+      weapon.turnRate,
+      weapon.range,
+      forward,
+    ),
   );
 
   // Add collision

@@ -2,23 +2,26 @@
  * Ship entity factory - creates ship entities with all required components.
  */
 
-import type { World, Entity } from '../core/types';
-import { Faction } from '../core/types';
-import { createEntity, addComponent } from '../core/ecs';
-import { createTransform } from '../components/transform';
-import { createPhysics } from '../components/physics';
-import { createHealth } from '../components/health';
-import { createFaction } from '../components/faction';
-import { createPlayerControlled } from '../components/player';
+import type { Quaternion, Vector3 } from 'three';
 import { createAIControlled } from '../components/ai';
-import { createTargeting } from '../components/targeting';
-import { createPrimaryWeapons, createSecondaryWeapons } from '../components/weapons';
-import { createSecondaryWeaponFromDef } from '../components/missile';
-import { createHeat } from '../components/heat';
-import { createShields } from '../components/shields';
-import { createCollision } from '../systems/collision';
 import { createAimError } from '../components/aim-error';
-import { Vector3, Quaternion } from 'three';
+import { createFaction } from '../components/faction';
+import { createHealth } from '../components/health';
+import { createHeat } from '../components/heat';
+import { createSecondaryWeaponFromDef } from '../components/missile';
+import { createPhysics } from '../components/physics';
+import { createPlayerControlled } from '../components/player';
+import { createShields } from '../components/shields';
+import { createTargeting } from '../components/targeting';
+import { createTransform } from '../components/transform';
+import {
+  createPrimaryWeapons,
+  createSecondaryWeapons,
+} from '../components/weapons';
+import { addComponent, createEntity } from '../core/ecs';
+import type { Entity, World } from '../core/types';
+import { Faction } from '../core/types';
+import { createCollision } from '../systems/collision';
 
 /** Ship archetype stats */
 export interface ShipStats {
@@ -79,7 +82,7 @@ export function createPlayerShip(
   world: World,
   archetype: string,
   position?: Vector3,
-  rotation?: Quaternion
+  rotation?: Quaternion,
 ): Entity {
   const stats = SHIP_ARCHETYPES[archetype];
   if (!stats) {
@@ -88,22 +91,34 @@ export function createPlayerShip(
 
   const entity = createEntity(world);
 
-  addComponent(world, entity, createTransform(
-    position?.x ?? 0,
-    position?.y ?? 0,
-    position?.z ?? 0,
-    rotation
-  ));
+  addComponent(
+    world,
+    entity,
+    createTransform(
+      position?.x ?? 0,
+      position?.y ?? 0,
+      position?.z ?? 0,
+      rotation,
+    ),
+  );
 
-  addComponent(world, entity, createPhysics({
-    maxSpeed: stats.maxSpeed,
-    acceleration: stats.acceleration,
-    turnRate: stats.turnRate,
-    rollRate: stats.rollRate,
-  }));
+  addComponent(
+    world,
+    entity,
+    createPhysics({
+      maxSpeed: stats.maxSpeed,
+      acceleration: stats.acceleration,
+      turnRate: stats.turnRate,
+      rollRate: stats.rollRate,
+    }),
+  );
 
   addComponent(world, entity, createHealth(stats.hull));
-  addComponent(world, entity, createShields(stats.shields, stats.shieldRegen, stats.shieldDelay));
+  addComponent(
+    world,
+    entity,
+    createShields(stats.shields, stats.shieldRegen, stats.shieldDelay),
+  );
   addComponent(world, entity, createFaction(Faction.Player));
   addComponent(world, entity, createPlayerControlled());
   addComponent(world, entity, createTargeting());
@@ -112,8 +127,8 @@ export function createPlayerShip(
 
   // Add secondary weapons if defined
   if (stats.secondaryWeapons && stats.secondaryWeapons.length > 0) {
-    const secondaryWeapons = stats.secondaryWeapons.map(
-      (w) => createSecondaryWeaponFromDef(w.name, w.count)
+    const secondaryWeapons = stats.secondaryWeapons.map((w) =>
+      createSecondaryWeaponFromDef(w.name, w.count),
     );
     addComponent(world, entity, createSecondaryWeapons(secondaryWeapons));
   }
@@ -129,7 +144,7 @@ export function createAIShip(
   archetype: string,
   faction: Faction,
   position?: Vector3,
-  rotation?: Quaternion
+  rotation?: Quaternion,
 ): Entity {
   const stats = SHIP_ARCHETYPES[archetype];
   if (!stats) {
@@ -138,22 +153,34 @@ export function createAIShip(
 
   const entity = createEntity(world);
 
-  addComponent(world, entity, createTransform(
-    position?.x ?? 0,
-    position?.y ?? 0,
-    position?.z ?? 0,
-    rotation
-  ));
+  addComponent(
+    world,
+    entity,
+    createTransform(
+      position?.x ?? 0,
+      position?.y ?? 0,
+      position?.z ?? 0,
+      rotation,
+    ),
+  );
 
-  addComponent(world, entity, createPhysics({
-    maxSpeed: stats.maxSpeed,
-    acceleration: stats.acceleration,
-    turnRate: stats.turnRate,
-    rollRate: stats.rollRate,
-  }));
+  addComponent(
+    world,
+    entity,
+    createPhysics({
+      maxSpeed: stats.maxSpeed,
+      acceleration: stats.acceleration,
+      turnRate: stats.turnRate,
+      rollRate: stats.rollRate,
+    }),
+  );
 
   addComponent(world, entity, createHealth(stats.hull));
-  addComponent(world, entity, createShields(stats.shields, stats.shieldRegen, stats.shieldDelay));
+  addComponent(
+    world,
+    entity,
+    createShields(stats.shields, stats.shieldRegen, stats.shieldDelay),
+  );
   addComponent(world, entity, createFaction(faction));
   addComponent(world, entity, createAIControlled());
   addComponent(world, entity, createAimError(world.prng)); // AI has imperfect aim
@@ -169,7 +196,7 @@ export function createEnemyShip(
   world: World,
   archetype: string,
   position?: Vector3,
-  rotation?: Quaternion
+  rotation?: Quaternion,
 ): Entity {
   return createAIShip(world, archetype, Faction.Enemy, position, rotation);
 }
@@ -179,7 +206,7 @@ export function createWingman(
   world: World,
   archetype: string,
   position?: Vector3,
-  rotation?: Quaternion
+  rotation?: Quaternion,
 ): Entity {
   return createAIShip(world, archetype, Faction.Player, position, rotation);
 }

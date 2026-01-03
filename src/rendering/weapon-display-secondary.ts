@@ -4,7 +4,10 @@
 
 import type { SecondaryWeapon } from '../components/weapons';
 import type { WeaponBankCache } from './weapon-display-utils';
-import { createBankElement, getSecondarySignature } from './weapon-display-utils';
+import {
+  createBankElement,
+  getSecondarySignature,
+} from './weapon-display-utils';
 
 /** Secondary display state (subset of WeaponDisplay) */
 export interface SecondaryDisplayState {
@@ -17,7 +20,7 @@ export interface SecondaryDisplayState {
 /** Rebuild secondary weapon bank elements when loadout changes */
 export function rebuildSecondaryBanks(
   display: SecondaryDisplayState,
-  weapons: SecondaryWeapon[]
+  weapons: SecondaryWeapon[],
 ): void {
   // Remove old elements and NONE div if present
   for (const bank of display.secondaryBanks) bank.element.remove();
@@ -46,11 +49,13 @@ export function updateSecondaryDisplay(
   lastFireTime: number,
   lockProgress: number,
   hasTarget: boolean,
-  currentTime: number
+  currentTime: number,
 ): void {
   for (let i = 0; i < weapons.length; i++) {
-    const w = weapons[i]!;
-    const bank = display.secondaryBanks[i]!;
+    const w = weapons[i] as (typeof weapons)[0];
+    const bank = display.secondaryBanks[
+      i
+    ] as (typeof display.secondaryBanks)[0];
     const isSelected = i === currentIndex;
     const countText = `${w.count}/${w.maxCount}`;
     const isEmpty = w.count <= 0;
@@ -116,7 +121,7 @@ export function updateSecondaryDisplay(
       const lockKey = `${lockText}:${lockClass}`;
       if (bank.lastLock !== lockKey) {
         bank.lockEl.textContent = lockText;
-        bank.lockEl.className = 'lock-status' + (lockClass ? ` ${lockClass}` : '');
+        bank.lockEl.className = `lock-status${lockClass ? ` ${lockClass}` : ''}`;
         bank.lastLock = lockKey;
       }
     }

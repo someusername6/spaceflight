@@ -5,7 +5,7 @@
 import type { ComponentBase, Entity } from '../core/types';
 
 /** AI behavior states */
-export const enum AIState {
+export enum AIState {
   Idle = 'idle',
   Pursue = 'pursue',
   Engage = 'engage',

@@ -2,13 +2,17 @@
  * AI Test Utilities - Shared infrastructure for AI tests.
  */
 
-import { createGame, tick } from '../../src/game.ts';
-import { createPlayerShip, createEnemyShip } from '../../src/factories/ship.ts';
-import { getComponent, queryEntities, entityExists } from '../../src/core/ecs.ts';
-import { Faction } from '../../src/core/types.ts';
+import { Vector3 } from 'three';
 import { AIState } from '../../src/components/ai.ts';
 import { isDying } from '../../src/components/health.ts';
-import { Vector3 } from 'three';
+import {
+  entityExists,
+  getComponent,
+  queryEntities,
+} from '../../src/core/ecs.ts';
+import { Faction } from '../../src/core/types.ts';
+import { createEnemyShip, createPlayerShip } from '../../src/factories/ship.ts';
+import { createGame, tick } from '../../src/game.ts';
 
 // Test counters
 let passed = 0;
@@ -40,7 +44,9 @@ export function assert(condition, message) {
 
 export function assertEq(actual, expected, message) {
   if (actual !== expected) {
-    throw new Error(`${message || 'Assertion failed'}: expected ${expected}, got ${actual}`);
+    throw new Error(
+      `${message || 'Assertion failed'}: expected ${expected}, got ${actual}`,
+    );
   }
 }
 

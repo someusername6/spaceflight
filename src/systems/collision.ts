@@ -4,10 +4,14 @@
  * Slice 1: Simple sphere-sphere collision only.
  */
 
-import type { World, Entity } from '../core/types';
-import { queryEntities, getComponent, addComponent, hasComponent } from '../core/ecs';
 import type { Transform } from '../components/transform';
-import type { ComponentBase } from '../core/types';
+import {
+  addComponent,
+  getComponent,
+  hasComponent,
+  queryEntities,
+} from '../core/ecs';
+import type { ComponentBase, Entity, World } from '../core/types';
 
 /** Default collision radius for ships */
 const DEFAULT_SHIP_RADIUS = 5;
@@ -32,7 +36,12 @@ export function createCollision(radius = DEFAULT_SHIP_RADIUS): Collision {
 export function collisionSystem(world: World, _dt: number): void {
   // Clear previous frame's collisions
   for (const entity of queryEntities(world, ['collision'])) {
-    const collision = getComponent<Collision>(world, entity, 'collision')!;
+    // Query guarantees this component exists
+    const collision = getComponent<Collision>(
+      world,
+      entity,
+      'collision',
+    ) as Collision;
     collision.collidedWith = [];
   }
 
@@ -44,16 +53,25 @@ export function collisionSystem(world: World, _dt: number): void {
   }> = [];
 
   for (const entity of queryEntities(world, ['transform', 'collision'])) {
-    const transform = getComponent<Transform>(world, entity, 'transform')!;
-    const collision = getComponent<Collision>(world, entity, 'collision')!;
+    // Query guarantees these components exist
+    const transform = getComponent<Transform>(
+      world,
+      entity,
+      'transform',
+    ) as Transform;
+    const collision = getComponent<Collision>(
+      world,
+      entity,
+      'collision',
+    ) as Collision;
     collidables.push({ entity, transform, collision });
   }
 
   // Check all pairs (O(n²) - fine for small entity counts)
   for (let i = 0; i < collidables.length; i++) {
     for (let j = i + 1; j < collidables.length; j++) {
-      const a = collidables[i]!;
-      const b = collidables[j]!;
+      const a = collidables[i] as (typeof collidables)[0];
+      const b = collidables[j] as (typeof collidables)[0];
 
       const dist = a.transform.position.distanceTo(b.transform.position);
       const minDist = a.collision.radius + b.collision.radius;
@@ -80,7 +98,11 @@ export function getCollisions(world: World, entity: Entity): Entity[] {
 }
 
 /** Ensure entity has collision component */
-export function ensureCollision(world: World, entity: Entity, radius?: number): void {
+export function ensureCollision(
+  world: World,
+  entity: Entity,
+  radius?: number,
+): void {
   if (!hasComponent(world, entity, 'collision')) {
     addComponent(world, entity, createCollision(radius));
   }

@@ -3,11 +3,11 @@
  * Runs headless browser, captures the skybox from multiple angles.
  */
 
+import { existsSync, readFileSync } from 'node:fs';
+import { createServer } from 'node:http';
+import { extname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import puppeteer from 'puppeteer';
-import { createServer } from 'http';
-import { readFileSync, existsSync } from 'fs';
-import { join, extname } from 'path';
-import { fileURLToPath } from 'url';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const DIST_DIR = join(__dirname, '..', 'dist');
@@ -25,7 +25,7 @@ const MIME_TYPES = {
 function startServer(port) {
   return new Promise((resolve) => {
     const server = createServer((req, res) => {
-      let filePath = join(DIST_DIR, req.url === '/' ? 'index.html' : req.url);
+      const filePath = join(DIST_DIR, req.url === '/' ? 'index.html' : req.url);
 
       if (!existsSync(filePath)) {
         res.writeHead(404);
@@ -40,7 +40,7 @@ function startServer(port) {
         const content = readFileSync(filePath);
         res.writeHead(200, { 'Content-Type': contentType });
         res.end(content);
-      } catch (err) {
+      } catch (_err) {
         res.writeHead(500);
         res.end('Server error');
       }
@@ -61,7 +61,7 @@ async function captureScreenshot() {
   }
 
   // Create output dir
-  const { mkdirSync } = await import('fs');
+  const { mkdirSync } = await import('node:fs');
   mkdirSync(OUTPUT_DIR, { recursive: true });
 
   const server = await startServer(3999);
@@ -79,7 +79,7 @@ async function captureScreenshot() {
   await page.goto('http://localhost:3999', { waitUntil: 'networkidle0' });
 
   // Wait for WebGL to render
-  await new Promise(r => setTimeout(r, 2000));
+  await new Promise((r) => setTimeout(r, 2000));
 
   // Take screenshot
   const screenshotPath = join(OUTPUT_DIR, 'skybox-test.png');

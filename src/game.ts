@@ -4,26 +4,29 @@
  * This file defines the explicit system execution order.
  */
 
-import type { World, SystemFn } from './core/types';
 import { createWorld } from './core/ecs';
-
-// Systems (in execution order)
-import { inputSystem } from './systems/input';
-import { targetingSystem } from './systems/targeting';
+import type { SystemFn, World } from './core/types';
 import { aiSystem } from './systems/ai';
 import { aimErrorSystem } from './systems/aim-error';
-import { weaponSystem } from './systems/weapons';
 import { beamSystem } from './systems/beams';
-import { physicsSystem } from './systems/physics';
-import { projectileSystem } from './systems/projectiles';
-import { missileSystem } from './systems/missiles';
+import { cleanupSystem } from './systems/cleanup';
 import { collisionSystem } from './systems/collision';
 import { damageSystem } from './systems/damage';
-import { shieldSystem } from './systems/shields';
-import { heatSystem } from './systems/heat';
-import { cleanupSystem } from './systems/cleanup';
 import { explosionSystem } from './systems/explosions';
-import { missionSystem, getMissionResult, MissionResult } from './systems/mission';
+import { heatSystem } from './systems/heat';
+// Systems (in execution order)
+import { inputSystem } from './systems/input';
+import { missileSystem } from './systems/missiles';
+import {
+  getMissionResult,
+  MissionResult,
+  missionSystem,
+} from './systems/mission';
+import { physicsSystem } from './systems/physics';
+import { projectileSystem } from './systems/projectiles';
+import { shieldSystem } from './systems/shields';
+import { targetingSystem } from './systems/targeting';
+import { weaponSystem } from './systems/weapons';
 
 /** Fixed timestep: 60 ticks per second */
 const TICK_RATE = 60;
@@ -52,22 +55,22 @@ const TICK_SEC = 1 / TICK_RATE;
  * 16. mission - Check win/lose after cleanup
  */
 const SYSTEM_ORDER: SystemFn[] = [
-  inputSystem,       // 1. Read player input
-  targetingSystem,   // 2. Process target selection
-  aiSystem,          // 3. AI decision making
-  aimErrorSystem,    // 4. Update aim drift
-  weaponSystem,      // 5. Handle firing
-  beamSystem,        // 6. Handle beam damage
-  physicsSystem,     // 7. Apply movement
-  projectileSystem,  // 8. Move projectiles
-  missileSystem,     // 9. Move missiles with tracking
-  collisionSystem,   // 10. Detect collisions
-  damageSystem,      // 11. Apply damage
-  shieldSystem,      // 12. Regenerate shields
-  heatSystem,        // 13. Cool heat
-  cleanupSystem,     // 14. Remove dead entities, spawn explosions
-  explosionSystem,   // 15. Update explosion effects
-  missionSystem,     // 16. Check win/lose
+  inputSystem, // 1. Read player input
+  targetingSystem, // 2. Process target selection
+  aiSystem, // 3. AI decision making
+  aimErrorSystem, // 4. Update aim drift
+  weaponSystem, // 5. Handle firing
+  beamSystem, // 6. Handle beam damage
+  physicsSystem, // 7. Apply movement
+  projectileSystem, // 8. Move projectiles
+  missileSystem, // 9. Move missiles with tracking
+  collisionSystem, // 10. Detect collisions
+  damageSystem, // 11. Apply damage
+  shieldSystem, // 12. Regenerate shields
+  heatSystem, // 13. Cool heat
+  cleanupSystem, // 14. Remove dead entities, spawn explosions
+  explosionSystem, // 15. Update explosion effects
+  missionSystem, // 16. Check win/lose
 ];
 
 /** Game instance state */

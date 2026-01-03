@@ -26,7 +26,7 @@ export function createMissile(
   speed: number,
   turnRate: number,
   range: number,
-  direction: Vector3
+  direction: Vector3,
 ): Missile {
   return {
     type: 'missile',
@@ -47,7 +47,10 @@ export function isMissileExpired(missile: Missile): boolean {
 }
 
 /** Missile definitions from WEAPONS.md */
-export const MISSILE_DEFS: Record<string, Omit<SecondaryWeapon, 'count' | 'maxCount'>> = {
+export const MISSILE_DEFS: Record<
+  string,
+  Omit<SecondaryWeapon, 'count' | 'maxCount'>
+> = {
   rocket: {
     name: 'Rocket',
     requiresLock: false,
@@ -121,7 +124,10 @@ export const MISSILE_DEFS: Record<string, Omit<SecondaryWeapon, 'count' | 'maxCo
 };
 
 /** Creates a SecondaryWeapon from a missile definition */
-export function createSecondaryWeaponFromDef(name: string, count: number): SecondaryWeapon {
+export function createSecondaryWeaponFromDef(
+  name: string,
+  count: number,
+): SecondaryWeapon {
   const def = MISSILE_DEFS[name];
   if (!def) throw new Error(`Unknown missile: ${name}`);
   return { ...def, count, maxCount: count };

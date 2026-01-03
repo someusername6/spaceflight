@@ -2,17 +2,21 @@
  * AI System - State machine and behavior for AI-controlled ships.
  */
 
-import { Vector3, Quaternion } from 'three';
-import type { World, Entity } from '../core/types';
-import { queryEntities, getComponent, entityExists } from '../core/ecs';
-import type { Transform } from '../components/transform';
-import type { Physics } from '../components/physics';
-import { AIState, type AIControlled } from '../components/ai';
-import { Faction, type FactionComponent, areEnemies } from '../components/faction';
+import { Quaternion, Vector3 } from 'three';
+import { type AIControlled, AIState } from '../components/ai';
+import {
+  areEnemies,
+  type Faction,
+  type FactionComponent,
+} from '../components/faction';
 import type { Health } from '../components/health';
 import { isDying } from '../components/health';
-import type { Shields } from '../components/shields';
 import type { Heat } from '../components/heat';
+import type { Physics } from '../components/physics';
+import type { Shields } from '../components/shields';
+import type { Transform } from '../components/transform';
+import { entityExists, getComponent, queryEntities } from '../core/ecs';
+import type { Entity, World } from '../core/types';
 import {
   shouldEvade,
   shouldRegroup,
@@ -42,7 +46,12 @@ const MAX_ENGAGING_PLAYER = 3;
 function countEngagingTarget(world: World, target: Entity): number {
   let count = 0;
   for (const entity of queryEntities(world, ['aiControlled'])) {
-    const ai = getComponent<AIControlled>(world, entity, 'aiControlled')!;
+    // Query guarantees this component exists
+    const ai = getComponent<AIControlled>(
+      world,
+      entity,
+      'aiControlled',
+    ) as AIControlled;
     if (ai.state === AIState.Engage && ai.target === target) {
       count++;
     }
@@ -57,15 +66,33 @@ function isPlayer(world: World, entity: Entity): boolean {
 
 /** AI system - updates AI state and movement */
 export function aiSystem(world: World, dt: number): void {
-  for (const entity of queryEntities(world, ['aiControlled', 'transform', 'physics', 'faction'])) {
+  for (const entity of queryEntities(world, [
+    'aiControlled',
+    'transform',
+    'physics',
+    'faction',
+  ])) {
     // Skip dying entities (they freeze during death animation)
     const health = getComponent<Health>(world, entity, 'health');
     if (health && isDying(health)) continue;
 
-    const ai = getComponent<AIControlled>(world, entity, 'aiControlled')!;
-    const transform = getComponent<Transform>(world, entity, 'transform')!;
-    const physics = getComponent<Physics>(world, entity, 'physics')!;
-    const faction = getComponent<FactionComponent>(world, entity, 'faction')!;
+    // Query guarantees these components exist
+    const ai = getComponent<AIControlled>(
+      world,
+      entity,
+      'aiControlled',
+    ) as AIControlled;
+    const transform = getComponent<Transform>(
+      world,
+      entity,
+      'transform',
+    ) as Transform;
+    const physics = getComponent<Physics>(world, entity, 'physics') as Physics;
+    const faction = getComponent<FactionComponent>(
+      world,
+      entity,
+      'faction',
+    ) as FactionComponent;
 
     // Update state timer
     ai.stateTimer += dt;
@@ -75,7 +102,11 @@ export function aiSystem(world: World, dt: number): void {
     const heat = getComponent<Heat>(world, entity, 'heat');
 
     // Check for emergency transitions (can happen from any combat state)
-    if (ai.state === AIState.Pursue || ai.state === AIState.Engage || ai.state === AIState.Protect) {
+    if (
+      ai.state === AIState.Pursue ||
+      ai.state === AIState.Engage ||
+      ai.state === AIState.Protect
+    ) {
       if (shouldRegroup(shields, heat)) {
         ai.state = AIState.Regroup;
         ai.stateTimer = 0;
@@ -100,7 +131,15 @@ export function aiSystem(world: World, dt: number): void {
         updateEvade(world, entity, ai, transform, physics, shields, dt);
         break;
       case AIState.Protect:
-        updateProtect(world, entity, ai, transform, physics, faction.faction, dt);
+        updateProtect(
+          world,
+          entity,
+          ai,
+          transform,
+          physics,
+          faction.faction,
+          dt,
+        );
         break;
       case AIState.Regroup:
         updateRegroup(world, entity, ai, transform, physics, shields, heat, dt);
@@ -110,7 +149,12 @@ export function aiSystem(world: World, dt: number): void {
 }
 
 /** Idle state - look for enemies */
-function updateIdle(world: World, entity: Entity, ai: AIControlled, faction: Faction): void {
+function updateIdle(
+  world: World,
+  entity: Entity,
+  ai: AIControlled,
+  faction: Faction,
+): void {
   const target = findNearestEnemy(world, entity, faction);
   if (target !== null) {
     ai.target = target;
@@ -126,7 +170,7 @@ function updatePursue(
   ai: AIControlled,
   transform: Transform,
   physics: Physics,
-  dt: number
+  dt: number,
 ): void {
   // Check if target is still valid
   if (ai.target === null || !entityExists(world, ai.target)) {
@@ -136,7 +180,11 @@ function updatePursue(
     return;
   }
 
-  const targetTransform = getComponent<Transform>(world, ai.target, 'transform');
+  const targetTransform = getComponent<Transform>(
+    world,
+    ai.target,
+    'transform',
+  );
   if (!targetTransform) {
     ai.target = null;
     ai.state = AIState.Idle;
@@ -149,7 +197,9 @@ function updatePursue(
   // Transition to engage if close enough
   if (distance <= ENGAGE_RANGE) {
     const targetIsPlayer = isPlayer(world, ai.target);
-    const canEngage = !targetIsPlayer || countEngagingTarget(world, ai.target) < MAX_ENGAGING_PLAYER;
+    const canEngage =
+      !targetIsPlayer ||
+      countEngagingTarget(world, ai.target) < MAX_ENGAGING_PLAYER;
 
     if (canEngage) {
       ai.state = AIState.Engage;
@@ -167,7 +217,7 @@ function updateEngage(
   ai: AIControlled,
   transform: Transform,
   physics: Physics,
-  dt: number
+  dt: number,
 ): void {
   if (ai.target === null || !entityExists(world, ai.target)) {
     ai.target = null;
@@ -176,7 +226,11 @@ function updateEngage(
     return;
   }
 
-  const targetTransform = getComponent<Transform>(world, ai.target, 'transform');
+  const targetTransform = getComponent<Transform>(
+    world,
+    ai.target,
+    'transform',
+  );
   if (!targetTransform) {
     ai.target = null;
     ai.state = AIState.Idle;
@@ -195,23 +249,42 @@ function updateEngage(
 }
 
 /** Find the nearest enemy entity */
-export function findNearestEnemy(world: World, self: Entity, selfFaction: Faction): Entity | null {
+export function findNearestEnemy(
+  world: World,
+  self: Entity,
+  selfFaction: Faction,
+): Entity | null {
   let nearest: Entity | null = null;
   let nearestDist = Infinity;
 
   const selfTransform = getComponent<Transform>(world, self, 'transform');
   if (!selfTransform) return null;
 
-  for (const other of queryEntities(world, ['transform', 'faction', 'health'])) {
+  for (const other of queryEntities(world, [
+    'transform',
+    'faction',
+    'health',
+  ])) {
     if (other === self) continue;
 
-    const otherHealth = getComponent<Health>(world, other, 'health')!;
+    // Query guarantees health component exists
+    const otherHealth = getComponent<Health>(world, other, 'health') as Health;
     if (isDying(otherHealth)) continue;
 
-    const otherFaction = getComponent<FactionComponent>(world, other, 'faction');
-    if (!otherFaction || !areEnemies(selfFaction, otherFaction.faction)) continue;
+    const otherFaction = getComponent<FactionComponent>(
+      world,
+      other,
+      'faction',
+    );
+    if (!otherFaction || !areEnemies(selfFaction, otherFaction.faction))
+      continue;
 
-    const otherTransform = getComponent<Transform>(world, other, 'transform')!;
+    // Query guarantees transform component exists
+    const otherTransform = getComponent<Transform>(
+      world,
+      other,
+      'transform',
+    ) as Transform;
     const dist = selfTransform.position.distanceTo(otherTransform.position);
 
     if (dist < nearestDist) {
@@ -230,9 +303,14 @@ export function pursueTarget(
   ai: AIControlled,
   transform: Transform,
   physics: Physics,
-  dt: number
+  dt: number,
 ): void {
-  const targetTransform = getComponent<Transform>(world, ai.target!, 'transform');
+  // ai.target is checked by caller before calling pursueTarget
+  const targetTransform = getComponent<Transform>(
+    world,
+    ai.target as Entity,
+    'transform',
+  );
   if (!targetTransform) {
     ai.target = null;
     return;
@@ -271,7 +349,7 @@ export function pursueTarget(
 
   physics.currentSpeed = Math.min(
     physics.currentSpeed + physics.acceleration * dt,
-    physics.maxSpeed
+    physics.maxSpeed,
   );
 }
 

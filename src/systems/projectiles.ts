@@ -2,14 +2,19 @@
  * Projectile System - Moves projectiles, checks hits, and despawns expired.
  */
 
-import type { World, Entity } from '../core/types';
-import { queryEntities, getComponent, removeEntity, hasComponent } from '../core/ecs';
-import type { Transform } from '../components/transform';
-import type { Projectile } from '../components/projectile';
-import { isExpired } from '../components/projectile';
-import type { Collision } from './collision';
 import type { FactionComponent } from '../components/faction';
 import { areEnemies } from '../components/faction';
+import type { Projectile } from '../components/projectile';
+import { isExpired } from '../components/projectile';
+import type { Transform } from '../components/transform';
+import {
+  getComponent,
+  hasComponent,
+  queryEntities,
+  removeEntity,
+} from '../core/ecs';
+import type { Entity, World } from '../core/types';
+import type { Collision } from './collision';
 import { dealDamage } from './damage';
 
 /** Projectile system - movement and collision handling */
@@ -18,8 +23,17 @@ export function projectileSystem(world: World, dt: number): void {
   const toRemove: Entity[] = [];
 
   for (const entity of queryEntities(world, ['projectile', 'transform'])) {
-    const projectile = getComponent<Projectile>(world, entity, 'projectile')!;
-    const transform = getComponent<Transform>(world, entity, 'transform')!;
+    // Query guarantees these components exist
+    const projectile = getComponent<Projectile>(
+      world,
+      entity,
+      'projectile',
+    ) as Projectile;
+    const transform = getComponent<Transform>(
+      world,
+      entity,
+      'transform',
+    ) as Transform;
 
     // Move projectile
     const distance = projectile.speed * dt;
@@ -35,7 +49,11 @@ export function projectileSystem(world: World, dt: number): void {
     // Check for collisions with ships (non-projectile entities)
     const collision = getComponent<Collision>(world, entity, 'collision');
     if (collision && collision.collidedWith.length > 0) {
-      const projectileFaction = getComponent<FactionComponent>(world, entity, 'faction');
+      const projectileFaction = getComponent<FactionComponent>(
+        world,
+        entity,
+        'faction',
+      );
 
       for (const other of collision.collidedWith) {
         // Skip collision with owner
@@ -45,7 +63,11 @@ export function projectileSystem(world: World, dt: number): void {
         if (hasComponent(world, other, 'projectile')) continue;
 
         // Check if this is a valid target (enemy or no faction)
-        const otherFaction = getComponent<FactionComponent>(world, other, 'faction');
+        const otherFaction = getComponent<FactionComponent>(
+          world,
+          other,
+          'faction',
+        );
         if (projectileFaction && otherFaction) {
           if (!areEnemies(projectileFaction.faction, otherFaction.faction)) {
             continue; // Same team, no damage

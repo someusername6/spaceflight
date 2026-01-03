@@ -3,21 +3,21 @@
  */
 
 import * as THREE from 'three';
-import type { World, Entity } from '../core/types';
-import { queryEntities, getComponent, hasComponent } from '../core/ecs';
-import type { Transform } from '../components/transform';
-import type { PlayerControlled } from '../components/player';
-import type { PrimaryWeapons, PrimaryWeapon } from '../components/weapons';
-import { getCurrentPrimary } from '../components/weapons';
-import type { Heat } from '../components/heat';
-import { addHeat } from '../components/heat';
 import type { FactionComponent } from '../components/faction';
 import { areEnemies } from '../components/faction';
+import type { Health } from '../components/health';
+import { isDying } from '../components/health';
+import type { Heat } from '../components/heat';
+import { addHeat } from '../components/heat';
+import type { PlayerControlled } from '../components/player';
+import type { Transform } from '../components/transform';
+import type { PrimaryWeapon, PrimaryWeapons } from '../components/weapons';
+import { getCurrentPrimary } from '../components/weapons';
+import { getComponent, hasComponent, queryEntities } from '../core/ecs';
+import type { Entity, World } from '../core/types';
 import type { Collision } from './collision';
 import { dealDamage } from './damage';
 import { getForward } from './physics';
-import type { Health } from '../components/health';
-import { isDying } from '../components/health';
 
 /** Active beam state for rendering */
 export interface ActiveBeam {
@@ -49,16 +49,33 @@ export function beamSystem(world: World, dt: number): void {
   }
 
   // Process each entity with primary weapons
-  for (const entity of queryEntities(world, ['transform', 'primaryWeapons', 'heat'])) {
+  for (const entity of queryEntities(world, [
+    'transform',
+    'primaryWeapons',
+    'heat',
+  ])) {
     // Skip dying entities (can't fire while exploding)
     const health = getComponent<Health>(world, entity, 'health');
     if (health && isDying(health)) continue;
 
-    const transform = getComponent<Transform>(world, entity, 'transform')!;
-    const weapons = getComponent<PrimaryWeapons>(world, entity, 'primaryWeapons')!;
-    const heat = getComponent<Heat>(world, entity, 'heat')!;
+    // Query guarantees these components exist
+    const transform = getComponent<Transform>(
+      world,
+      entity,
+      'transform',
+    ) as Transform;
+    const weapons = getComponent<PrimaryWeapons>(
+      world,
+      entity,
+      'primaryWeapons',
+    ) as PrimaryWeapons;
+    const heat = getComponent<Heat>(world, entity, 'heat') as Heat;
     const faction = getComponent<FactionComponent>(world, entity, 'faction');
-    const player = getComponent<PlayerControlled>(world, entity, 'playerControlled');
+    const player = getComponent<PlayerControlled>(
+      world,
+      entity,
+      'playerControlled',
+    );
 
     // Check if firing (player or AI)
     let isFiring = false;
@@ -72,7 +89,16 @@ export function beamSystem(world: World, dt: number): void {
     // Determine which beams to fire based on linked mode
     if (weapons.linked) {
       // Linked mode: fire all beams simultaneously
-      fireLinkedBeams(world, entity, transform, weapons, heat, faction, dt, activeBeams);
+      fireLinkedBeams(
+        world,
+        entity,
+        transform,
+        weapons,
+        heat,
+        faction,
+        dt,
+        activeBeams,
+      );
     } else {
       // Single mode: only fire if current weapon is a beam
       const weapon = getCurrentPrimary(weapons);
@@ -83,7 +109,16 @@ export function beamSystem(world: World, dt: number): void {
       if (!addHeat(heat, heatToAdd)) continue; // Overheated
 
       // Fire single beam
-      fireBeam(world, entity, transform, weapon, weapons.currentIndex, faction, dt, activeBeams);
+      fireBeam(
+        world,
+        entity,
+        transform,
+        weapon,
+        weapons.currentIndex,
+        faction,
+        dt,
+        activeBeams,
+      );
     }
   }
 }
@@ -97,7 +132,7 @@ function fireLinkedBeams(
   heat: Heat,
   faction: FactionComponent | undefined,
   dt: number,
-  activeBeams: Map<Entity, ActiveBeam[]>
+  activeBeams: Map<Entity, ActiveBeam[]>,
 ): void {
   // Find all beam weapons
   const beamWeapons: { weapon: PrimaryWeapon; index: number }[] = [];
@@ -111,7 +146,10 @@ function fireLinkedBeams(
   if (beamWeapons.length === 0) return;
 
   // Calculate total heat per second for all beams
-  const totalHeat = beamWeapons.reduce((sum, { weapon }) => sum + weapon.heatPerShot, 0);
+  const totalHeat = beamWeapons.reduce(
+    (sum, { weapon }) => sum + weapon.heatPerShot,
+    0,
+  );
   const heatToAdd = totalHeat * dt;
 
   // Check if we can add all the heat
@@ -132,7 +170,7 @@ function fireBeam(
   weaponIndex: number,
   faction: FactionComponent | undefined,
   dt: number,
-  activeBeams: Map<Entity, ActiveBeam[]>
+  activeBeams: Map<Entity, ActiveBeam[]>,
 ): void {
   const forward = getForward(transform);
   rayOrigin.copy(transform.position);
@@ -146,7 +184,7 @@ function fireBeam(
   }
 
   // Find or create beam state for this weapon slot
-  let beam = beams.find(b => b.weaponIndex === weaponIndex);
+  let beam = beams.find((b) => b.weaponIndex === weaponIndex);
   if (!beam) {
     beam = {
       origin: new THREE.Vector3(),
@@ -168,27 +206,50 @@ function fireBeam(
   // Find nearest enemy in beam path
   let closestHit: { entity: Entity; distance: number } | null = null;
 
-  for (const other of queryEntities(world, ['transform', 'collision', 'health'])) {
+  for (const other of queryEntities(world, [
+    'transform',
+    'collision',
+    'health',
+  ])) {
     if (other === owner) continue;
     if (hasComponent(world, other, 'projectile')) continue;
     if (hasComponent(world, other, 'missile')) continue;
 
     // Skip dying targets (already exploding)
-    const otherHealth = getComponent<Health>(world, other, 'health')!;
+    // Query guarantees health component exists
+    const otherHealth = getComponent<Health>(world, other, 'health') as Health;
     if (isDying(otherHealth)) continue;
 
-    const otherFaction = getComponent<FactionComponent>(world, other, 'faction');
-    if (faction && otherFaction && !areEnemies(faction.faction, otherFaction.faction)) continue;
+    const otherFaction = getComponent<FactionComponent>(
+      world,
+      other,
+      'faction',
+    );
+    if (
+      faction &&
+      otherFaction &&
+      !areEnemies(faction.faction, otherFaction.faction)
+    )
+      continue;
 
-    const otherTransform = getComponent<Transform>(world, other, 'transform')!;
-    const collision = getComponent<Collision>(world, other, 'collision')!;
+    // Query guarantees these components exist
+    const otherTransform = getComponent<Transform>(
+      world,
+      other,
+      'transform',
+    ) as Transform;
+    const collision = getComponent<Collision>(
+      world,
+      other,
+      'collision',
+    ) as Collision;
 
     // Simple sphere intersection test
     const distance = rayIntersectsSphere(
       rayOrigin,
       rayDirection,
       otherTransform.position,
-      collision.radius
+      collision.radius,
     );
 
     if (distance !== null && distance <= weapon.range) {
@@ -211,7 +272,10 @@ function fireBeam(
       .add(rayOrigin);
 
     // Apply damage with falloff (damage is per-second, multiply by dt)
-    const falloffDamage = calculateFalloffDamage(weapon.damage, closestHit.distance);
+    const falloffDamage = calculateFalloffDamage(
+      weapon.damage,
+      closestHit.distance,
+    );
     dealDamage(world, closestHit.entity, falloffDamage * dt);
   } else {
     // No hit - beam extends to max range
@@ -225,7 +289,7 @@ function fireBeam(
 /** Calculate damage with 1/d² falloff */
 function calculateFalloffDamage(baseDamage: number, distance: number): number {
   const effectiveDistance = Math.max(MIN_FALLOFF_DISTANCE, distance);
-  return baseDamage / Math.pow(effectiveDistance / MIN_FALLOFF_DISTANCE, 2);
+  return baseDamage / (effectiveDistance / MIN_FALLOFF_DISTANCE) ** 2;
 }
 
 /** Ray-sphere intersection test, returns distance or null */
@@ -233,7 +297,7 @@ function rayIntersectsSphere(
   origin: THREE.Vector3,
   direction: THREE.Vector3,
   center: THREE.Vector3,
-  radius: number
+  radius: number,
 ): number | null {
   // Use reusable tempOC to avoid per-call allocation
   tempOC.subVectors(origin, center);

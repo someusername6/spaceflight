@@ -17,7 +17,7 @@ export interface Shields extends ComponentBase {
 export function createShields(
   max: number,
   regenRate: number,
-  regenDelay: number
+  regenDelay: number,
 ): Shields {
   return {
     type: 'shields',
@@ -30,7 +30,11 @@ export function createShields(
 }
 
 /** Apply damage to shields, returns damage that passed through */
-export function damageShields(shields: Shields, damage: number, gameTime: number): number {
+export function damageShields(
+  shields: Shields,
+  damage: number,
+  gameTime: number,
+): number {
   shields.lastDamageTime = gameTime;
 
   if (shields.current >= damage) {
@@ -50,9 +54,16 @@ export function hasShields(shields: Shields): boolean {
 }
 
 /** Regenerate shields if delay has passed */
-export function regenerateShields(shields: Shields, gameTime: number, dt: number): void {
+export function regenerateShields(
+  shields: Shields,
+  gameTime: number,
+  dt: number,
+): void {
   if (shields.current >= shields.max) return;
   if (gameTime - shields.lastDamageTime < shields.regenDelay) return;
 
-  shields.current = Math.min(shields.max, shields.current + shields.regenRate * dt);
+  shields.current = Math.min(
+    shields.max,
+    shields.current + shields.regenRate * dt,
+  );
 }

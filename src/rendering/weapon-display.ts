@@ -2,22 +2,27 @@
  * Weapon banks display - shows equipped weapons, ammo, heat, and selection state.
  * Performance: Caches DOM elements and only updates when values change.
  */
-import type { World, Entity } from '../core/types';
-import { getComponent } from '../core/ecs';
-import type { PrimaryWeapons, SecondaryWeapons, PrimaryWeapon } from '../components/weapons';
-import type { Targeting } from '../components/targeting';
+
 import type { Heat } from '../components/heat';
+import type { Targeting } from '../components/targeting';
+import type {
+  PrimaryWeapon,
+  PrimaryWeapons,
+  SecondaryWeapons,
+} from '../components/weapons';
+import { getComponent } from '../core/ecs';
+import type { Entity, World } from '../core/types';
 import {
-  type WeaponBankCache,
+  rebuildSecondaryBanks,
+  showSecondaryNone,
+  updateSecondaryDisplay,
+} from './weapon-display-secondary';
+import {
   createBankElement,
   getPrimarySignature,
   getSecondarySignature,
+  type WeaponBankCache,
 } from './weapon-display-utils';
-import {
-  rebuildSecondaryBanks,
-  updateSecondaryDisplay,
-  showSecondaryNone,
-} from './weapon-display-secondary';
 
 /** Weapon display state */
 export interface WeaponDisplay {
@@ -89,7 +94,10 @@ export function createWeaponDisplay(parent: HTMLElement): WeaponDisplay {
 }
 
 /** Rebuild primary weapon bank elements when loadout changes */
-function rebuildPrimaryBanks(display: WeaponDisplay, weapons: PrimaryWeapon[]): void {
+function rebuildPrimaryBanks(
+  display: WeaponDisplay,
+  weapons: PrimaryWeapon[],
+): void {
   // Remove old elements and NONE div if present
   for (const bank of display.primaryBanks) bank.element.remove();
   if (display.primaryNoneEl) {
@@ -114,10 +122,14 @@ function rebuildPrimaryBanks(display: WeaponDisplay, weapons: PrimaryWeapon[]): 
 export function updateWeaponDisplay(
   display: WeaponDisplay,
   world: World,
-  player: Entity
+  player: Entity,
 ): void {
   const primary = getComponent<PrimaryWeapons>(world, player, 'primaryWeapons');
-  const secondary = getComponent<SecondaryWeapons>(world, player, 'secondaryWeapons');
+  const secondary = getComponent<SecondaryWeapons>(
+    world,
+    player,
+    'secondaryWeapons',
+  );
   const heat = getComponent<Heat>(world, player, 'heat');
   const targeting = getComponent<Targeting>(world, player, 'targeting');
 
@@ -149,12 +161,17 @@ export function updateWeaponDisplay(
 
     // In linked mode, calculate slowest projectile fire rate (for cooldown display)
     const linkedFireRate = primary.linked
-      ? Math.max(...primary.weapons.filter(w => w.category !== 'beam').map(w => w.fireRate), 0)
+      ? Math.max(
+          ...primary.weapons
+            .filter((w) => w.category !== 'beam')
+            .map((w) => w.fireRate),
+          0,
+        )
       : 0;
 
     for (let i = 0; i < primary.weapons.length; i++) {
-      const w = primary.weapons[i]!;
-      const bank = display.primaryBanks[i]!;
+      const w = primary.weapons[i] as (typeof primary.weapons)[0];
+      const bank = display.primaryBanks[i] as (typeof display.primaryBanks)[0];
       const isSelected = i === primary.currentIndex;
       const ammoText = w.ammo !== undefined ? `${w.ammo}/${w.maxAmmo}` : '∞';
 
@@ -228,7 +245,7 @@ export function updateWeaponDisplay(
       secondary.lastFireTime,
       lockProgress,
       hasTarget,
-      currentTime
+      currentTime,
     );
   } else {
     showSecondaryNone(display);

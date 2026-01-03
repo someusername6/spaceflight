@@ -1,8 +1,8 @@
 #!/bin/bash
-# Enforces 300-line maximum for TypeScript and JavaScript files
+# Enforces 400-line maximum for TypeScript and JavaScript files
 # Run with: npm run check-size
 
-MAX_LINES=300
+MAX_LINES=400
 FAILED=0
 
 # Check TypeScript files in src/

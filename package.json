@@ -8,6 +8,9 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "check-size": "bash scripts/build/check-file-size.sh",
+    "format": "biome format --write src/ scripts/",
+    "lint": "biome check src/ scripts/",
+    "lint:fix": "biome check --write src/ scripts/",
     "sim": "node scripts/simulation/run-all.mjs",
     "sim:dust": "node scripts/simulation/dust.mjs",
     "sim:ai": "npx tsx scripts/simulation/ai-tests.mjs",
@@ -19,6 +22,7 @@
     "three": "^0.170.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.3.11",
     "@types/three": "^0.170.0",
     "puppeteer": "^24.34.0",
     "typescript": "^5.7.0",

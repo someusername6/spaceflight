@@ -3,32 +3,32 @@
  */
 
 import type { Camera } from 'three';
-import type { World, Entity } from '../core/types';
-import { getComponent, findEntity } from '../core/ecs';
-import type { Transform } from '../components/transform';
 import type { Health } from '../components/health';
-import type { Shields } from '../components/shields';
 import type { Heat } from '../components/heat';
 import type { Physics } from '../components/physics';
+import type { Shields } from '../components/shields';
+import type { Transform } from '../components/transform';
+import { findEntity, getComponent } from '../core/ecs';
+import type { Entity, World } from '../core/types';
+import { getHUDStyles, HUD_STYLE_ID } from './hud-styles';
 import {
-  type ReticleCanvas,
-  createReticleCanvas,
-  updateReticles,
-  resizeReticleCanvas,
-} from './reticles';
-import { HUD_STYLE_ID, getHUDStyles } from './hud-styles';
-import {
-  type WeaponDisplay,
-  createWeaponDisplay,
-  updateWeaponDisplay,
-  getWeaponDisplayStyles,
-} from './weapon-display';
-import {
-  type RadarDisplay,
   createRadar,
-  updateRadar,
   getRadarStyles,
+  type RadarDisplay,
+  updateRadar,
 } from './radar';
+import {
+  createReticleCanvas,
+  type ReticleCanvas,
+  resizeReticleCanvas,
+  updateReticles,
+} from './reticles';
+import {
+  createWeaponDisplay,
+  getWeaponDisplayStyles,
+  updateWeaponDisplay,
+  type WeaponDisplay,
+} from './weapon-display';
 
 /** HUD state */
 export interface HUD {
@@ -105,7 +105,8 @@ export function createHUD(parent: HTMLElement): HUD {
   if (!document.getElementById(HUD_STYLE_ID)) {
     const style = document.createElement('style');
     style.id = HUD_STYLE_ID;
-    style.textContent = getHUDStyles() + getWeaponDisplayStyles() + getRadarStyles();
+    style.textContent =
+      getHUDStyles() + getWeaponDisplayStyles() + getRadarStyles();
     document.head.appendChild(style);
   }
   parent.appendChild(container);
@@ -126,9 +127,15 @@ export function createHUD(parent: HTMLElement): HUD {
   window.addEventListener('resize', onResize);
 
   // Cache segment elements (convert NodeList to array)
-  const shieldSegments = Array.from(container.querySelectorAll('.shield-bar .segment')) as HTMLElement[];
-  const hullSegments = Array.from(container.querySelectorAll('.hull-bar .segment')) as HTMLElement[];
-  const heatSegments = Array.from(container.querySelectorAll('.heat-bar .segment')) as HTMLElement[];
+  const shieldSegments = Array.from(
+    container.querySelectorAll('.shield-bar .segment'),
+  ) as HTMLElement[];
+  const hullSegments = Array.from(
+    container.querySelectorAll('.hull-bar .segment'),
+  ) as HTMLElement[];
+  const heatSegments = Array.from(
+    container.querySelectorAll('.heat-bar .segment'),
+  ) as HTMLElement[];
 
   // Cleanup function
   const dispose = () => {
@@ -136,22 +143,27 @@ export function createHUD(parent: HTMLElement): HUD {
     container.remove();
   };
 
+  // These elements are created in createStatusBarHTML above
   return {
     container,
-    speedFill: container.querySelector('.speed-fill')!,
-    afterburnerFill: container.querySelector('.afterburner-fill')!,
-    maxSpeedTick: container.querySelector('.max-speed-tick')!,
-    speedValue: container.querySelector('.speed-value')!,
-    throttleMarker: container.querySelector('.throttle-marker')!,
+    speedFill: container.querySelector('.speed-fill') as HTMLElement,
+    afterburnerFill: container.querySelector(
+      '.afterburner-fill',
+    ) as HTMLElement,
+    maxSpeedTick: container.querySelector('.max-speed-tick') as HTMLElement,
+    speedValue: container.querySelector('.speed-value') as HTMLElement,
+    throttleMarker: container.querySelector('.throttle-marker') as HTMLElement,
     shieldSegments,
     hullSegments,
     heatSegments,
-    shieldContainer: container.querySelector('.shield-container')!,
-    hullContainer: container.querySelector('.hull-container')!,
-    heatContainer: container.querySelector('.heat-container')!,
-    hullValue: container.querySelector('.hull-value')!,
-    shieldValue: container.querySelector('.shield-value')!,
-    heatValue: container.querySelector('.heat-value')!,
+    shieldContainer: container.querySelector(
+      '.shield-container',
+    ) as HTMLElement,
+    hullContainer: container.querySelector('.hull-container') as HTMLElement,
+    heatContainer: container.querySelector('.heat-container') as HTMLElement,
+    hullValue: container.querySelector('.hull-value') as HTMLElement,
+    shieldValue: container.querySelector('.shield-value') as HTMLElement,
+    heatValue: container.querySelector('.heat-value') as HTMLElement,
     reticleCanvas,
     weaponDisplay,
     radarDisplay,
@@ -166,7 +178,7 @@ export function updateHUD(
   camera: Camera,
   entityMeshes: Map<number, import('three').Object3D>,
   screenWidth: number,
-  screenHeight: number
+  screenHeight: number,
 ): void {
   const player = findEntity(world, ['playerControlled', 'transform']);
   if (player === undefined) return;
@@ -186,7 +198,7 @@ export function updateHUD(
     camera,
     entityMeshes,
     screenWidth,
-    screenHeight
+    screenHeight,
   );
 }
 
@@ -202,12 +214,18 @@ function updatePlayerStatus(hud: HUD, world: World, player: Entity): void {
     hud.maxSpeedTick.style.left = `${tickPosition}%`;
 
     // Speed fill: green portion up to maxSpeed
-    const normalSpeedPct = Math.min((actualSpeed / afterburnerMax) * 100, tickPosition);
+    const normalSpeedPct = Math.min(
+      (actualSpeed / afterburnerMax) * 100,
+      tickPosition,
+    );
     hud.speedFill.style.width = `${normalSpeedPct}%`;
 
     // Afterburner fill: orange portion beyond maxSpeed
     if (actualSpeed > physics.maxSpeed) {
-      const abSpeedPct = ((actualSpeed - physics.maxSpeed) / (afterburnerMax - physics.maxSpeed)) * (100 - tickPosition);
+      const abSpeedPct =
+        ((actualSpeed - physics.maxSpeed) /
+          (afterburnerMax - physics.maxSpeed)) *
+        (100 - tickPosition);
       hud.afterburnerFill.style.width = `${abSpeedPct}%`;
       hud.afterburnerFill.style.left = `${tickPosition}%`;
     } else {

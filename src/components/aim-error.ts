@@ -6,8 +6,8 @@
  */
 
 import * as THREE from 'three';
+import { type PRNGState, random, randomRange } from '../core/prng';
 import type { ComponentBase } from '../core/types';
-import { random, randomRange, type PRNGState } from '../core/prng';
 
 export interface AimError extends ComponentBase {
   readonly type: 'aimError';
@@ -27,7 +27,7 @@ export interface AimError extends ComponentBase {
 export function createAimError(
   prng: PRNGState,
   maxError = 0.05, // ~3 degrees
-  driftSpeed = 0.02 // ~1 degree per second
+  driftSpeed = 0.02, // ~1 degree per second
 ): AimError {
   return {
     type: 'aimError',
@@ -51,7 +51,11 @@ function randomDriftTime(prng: PRNGState): number {
 }
 
 /** Update aim error drift */
-export function updateAimError(error: AimError, prng: PRNGState, dt: number): void {
+export function updateAimError(
+  error: AimError,
+  prng: PRNGState,
+  dt: number,
+): void {
   // Update drift timer
   error.driftTimer -= dt;
   if (error.driftTimer <= 0) {
@@ -71,17 +75,20 @@ export function updateAimError(error: AimError, prng: PRNGState, dt: number): vo
 }
 
 /** Apply aim error to a direction vector */
-export function applyAimError(direction: THREE.Vector3, error: AimError): THREE.Vector3 {
+export function applyAimError(
+  direction: THREE.Vector3,
+  error: AimError,
+): THREE.Vector3 {
   const result = direction.clone();
 
   // Create rotation from error offset
   const pitchQuat = new THREE.Quaternion().setFromAxisAngle(
     new THREE.Vector3(1, 0, 0),
-    error.offset.x
+    error.offset.x,
   );
   const yawQuat = new THREE.Quaternion().setFromAxisAngle(
     new THREE.Vector3(0, 1, 0),
-    error.offset.y
+    error.offset.y,
   );
 
   result.applyQuaternion(pitchQuat).applyQuaternion(yawQuat);

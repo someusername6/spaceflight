@@ -3,15 +3,19 @@
  */
 
 import * as THREE from 'three';
-import type { World, Entity } from '../core/types';
-import { getComponent, queryEntities } from '../core/ecs';
-import type { Transform } from '../components/transform';
-import type { Targeting } from '../components/targeting';
 import { Faction, type FactionComponent } from '../components/faction';
-import { drawOnScreenReticle, drawOffScreenArrow, drawLockIndicator } from './reticle-drawing';
-import { drawLeadIndicators } from './lead-indicators';
 import type { Physics } from '../components/physics';
+import type { Targeting } from '../components/targeting';
+import type { Transform } from '../components/transform';
 import type { PrimaryWeapons, SecondaryWeapons } from '../components/weapons';
+import { getComponent, queryEntities } from '../core/ecs';
+import type { Entity, World } from '../core/types';
+import { drawLeadIndicators } from './lead-indicators';
+import {
+  drawLockIndicator,
+  drawOffScreenArrow,
+  drawOnScreenReticle,
+} from './reticle-drawing';
 
 /** Reticle canvas state */
 export interface ReticleCanvas {
@@ -57,17 +61,25 @@ export function createReticleCanvas(parent: HTMLElement): ReticleCanvas {
   canvas.style.pointerEvents = 'none';
   parent.appendChild(canvas);
 
-  const ctx = canvas.getContext('2d')!;
+  const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
   const dpr = window.devicePixelRatio || 1;
 
   // Initial size
-  resizeReticleCanvas({ canvas, ctx, dpr }, parent.clientWidth, parent.clientHeight);
+  resizeReticleCanvas(
+    { canvas, ctx, dpr },
+    parent.clientWidth,
+    parent.clientHeight,
+  );
 
   return { canvas, ctx, dpr };
 }
 
 /** Resize canvas for current container size */
-export function resizeReticleCanvas(rc: ReticleCanvas, width: number, height: number): void {
+export function resizeReticleCanvas(
+  rc: ReticleCanvas,
+  width: number,
+  height: number,
+): void {
   rc.dpr = window.devicePixelRatio || 1;
   rc.canvas.width = width * rc.dpr;
   rc.canvas.height = height * rc.dpr;
@@ -84,7 +96,7 @@ export function updateReticles(
   camera: THREE.Camera,
   entityMeshes: Map<Entity, THREE.Object3D>,
   screenWidth: number,
-  screenHeight: number
+  screenHeight: number,
 ): void {
   const { ctx, dpr } = rc;
 
@@ -97,10 +109,18 @@ export function updateReticles(
   const currentTarget = targeting?.currentTarget;
 
   // Get player's weapons for lead calculation
-  const playerWeapons = getComponent<PrimaryWeapons>(world, player, 'primaryWeapons');
+  const playerWeapons = getComponent<PrimaryWeapons>(
+    world,
+    player,
+    'primaryWeapons',
+  );
 
   // Get lock-on progress for secondary weapons
-  const secondaryWeapons = getComponent<SecondaryWeapons>(world, player, 'secondaryWeapons');
+  const secondaryWeapons = getComponent<SecondaryWeapons>(
+    world,
+    player,
+    'secondaryWeapons',
+  );
   const lockProgress = secondaryWeapons?.lockProgress ?? 0;
   const lockTarget = secondaryWeapons?.lockTarget;
 
@@ -108,14 +128,28 @@ export function updateReticles(
   targets.length = 0;
 
   // Collect all targetable entities
-  for (const entity of queryEntities(world, ['transform', 'health', 'faction'])) {
+  for (const entity of queryEntities(world, [
+    'transform',
+    'health',
+    'faction',
+  ])) {
     if (entity === player) continue;
 
-    const transform = getComponent<Transform>(world, entity, 'transform')!;
-    const faction = getComponent<FactionComponent>(world, entity, 'faction')!;
+    // Query guarantees these components exist
+    const transform = getComponent<Transform>(
+      world,
+      entity,
+      'transform',
+    ) as Transform;
+    const faction = getComponent<FactionComponent>(
+      world,
+      entity,
+      'faction',
+    ) as FactionComponent;
     const physics = getComponent<Physics>(world, entity, 'physics');
     const mesh = entityMeshes.get(entity);
-    const distance = playerTransform?.position.distanceTo(transform.position) ?? 0;
+    const distance =
+      playerTransform?.position.distanceTo(transform.position) ?? 0;
 
     const isLockTarget = entity === lockTarget;
     targets.push({
@@ -148,7 +182,7 @@ export function updateReticles(
       screenHeight,
       playerTransform,
       playerVelocity,
-      playerWeapons
+      playerWeapons,
     );
   }
 }
@@ -162,7 +196,7 @@ function renderTarget(
   screenHeight: number,
   playerTransform: Transform | undefined,
   playerVelocity: THREE.Vector3 | undefined,
-  playerWeapons: PrimaryWeapons | undefined
+  playerWeapons: PrimaryWeapons | undefined,
 ): void {
   // Colors matching radar: dim for non-selected, bright for selected
   // Enemy: red, Ally: green, Neutral: yellow
@@ -191,16 +225,29 @@ function renderTarget(
   const centerY = (1 - tempVec3.y) * 0.5 * screenHeight;
 
   // Compute screen bounds from mesh (only used if target is in front of camera)
-  let bounds: { minX: number; maxX: number; minY: number; maxY: number } | null = null;
+  let bounds: {
+    minX: number;
+    maxX: number;
+    minY: number;
+    maxY: number;
+  } | null = null;
   if (target.mesh && !behindCamera) {
-    bounds = computeScreenBounds(target.mesh, camera, screenWidth, screenHeight);
+    bounds = computeScreenBounds(
+      target.mesh,
+      camera,
+      screenWidth,
+      screenHeight,
+    );
   }
 
   // Check if on screen
   const margin = 50;
-  const onScreen = !behindCamera &&
-    centerX >= -margin && centerX <= screenWidth + margin &&
-    centerY >= -margin && centerY <= screenHeight + margin;
+  const onScreen =
+    !behindCamera &&
+    centerX >= -margin &&
+    centerX <= screenWidth + margin &&
+    centerY >= -margin &&
+    centerY <= screenHeight + margin;
 
   if (onScreen && bounds) {
     drawOnScreenReticle(ctx, bounds, target.distance, color);
@@ -213,14 +260,30 @@ function renderTarget(
     // Draw lead indicator(s) for selected target
     if (target.isSelected && playerTransform && playerWeapons) {
       drawLeadIndicators(
-        ctx, camera, screenWidth, screenHeight,
-        playerTransform, playerVelocity ?? zeroVec3,
-        target.transform.position, target.velocity,
-        playerWeapons, color, cameraForward
+        ctx,
+        camera,
+        screenWidth,
+        screenHeight,
+        playerTransform,
+        playerVelocity ?? zeroVec3,
+        target.transform.position,
+        target.velocity,
+        playerWeapons,
+        color,
+        cameraForward,
       );
     }
   } else {
-    drawOffScreenArrow(ctx, centerX, centerY, target.distance, color, behindCamera, screenWidth, screenHeight);
+    drawOffScreenArrow(
+      ctx,
+      centerX,
+      centerY,
+      target.distance,
+      color,
+      behindCamera,
+      screenWidth,
+      screenHeight,
+    );
   }
 }
 
@@ -229,24 +292,26 @@ function computeScreenBounds(
   mesh: THREE.Object3D,
   camera: THREE.Camera,
   screenWidth: number,
-  screenHeight: number
+  screenHeight: number,
 ): { minX: number; maxX: number; minY: number; maxY: number } | null {
   // Compute world-space bounding box (fresh each frame since meshes move)
   tempBox3.setFromObject(mesh);
   if (tempBox3.isEmpty()) return null;
 
   const { min, max } = tempBox3;
-  boxCorners[0]!.set(min.x, min.y, min.z);
-  boxCorners[1]!.set(min.x, min.y, max.z);
-  boxCorners[2]!.set(min.x, max.y, min.z);
-  boxCorners[3]!.set(min.x, max.y, max.z);
-  boxCorners[4]!.set(max.x, min.y, min.z);
-  boxCorners[5]!.set(max.x, min.y, max.z);
-  boxCorners[6]!.set(max.x, max.y, min.z);
-  boxCorners[7]!.set(max.x, max.y, max.z);
+  boxCorners[0]?.set(min.x, min.y, min.z);
+  boxCorners[1]?.set(min.x, min.y, max.z);
+  boxCorners[2]?.set(min.x, max.y, min.z);
+  boxCorners[3]?.set(min.x, max.y, max.z);
+  boxCorners[4]?.set(max.x, min.y, min.z);
+  boxCorners[5]?.set(max.x, min.y, max.z);
+  boxCorners[6]?.set(max.x, max.y, min.z);
+  boxCorners[7]?.set(max.x, max.y, max.z);
 
-  let minX = Infinity, maxX = -Infinity;
-  let minY = Infinity, maxY = -Infinity;
+  let minX = Infinity,
+    maxX = -Infinity;
+  let minY = Infinity,
+    maxY = -Infinity;
 
   for (const c of boxCorners) {
     tempVec3.copy(c);

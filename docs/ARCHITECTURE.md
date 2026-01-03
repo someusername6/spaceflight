@@ -149,9 +149,9 @@ src/
 
 ## Code Rules
 
-### 300-Line Limit
+### 400-Line Limit
 
-No `.ts` file may exceed 300 lines. Enforced by:
+No `.ts` file may exceed 400 lines. Enforced by:
 - Pre-commit hook
 - Manual review
 

@@ -10,14 +10,14 @@
  */
 
 import * as THREE from 'three';
-import type { World, Entity } from '../core/types';
-import { Faction } from '../core/types';
-import { queryEntities, getComponent, hasComponent } from '../core/ecs';
-import type { Transform } from '../components/transform';
 import type { FactionComponent } from '../components/faction';
-import type { Targeting } from '../components/targeting';
 import type { Health } from '../components/health';
 import { isDying } from '../components/health';
+import type { Targeting } from '../components/targeting';
+import type { Transform } from '../components/transform';
+import { getComponent, hasComponent, queryEntities } from '../core/ecs';
+import type { Entity, World } from '../core/types';
+import { Faction } from '../core/types';
 
 /** Radar display state */
 export interface RadarDisplay {
@@ -70,7 +70,7 @@ export function createRadar(parent: HTMLElement): RadarDisplay {
 
   parent.appendChild(container);
 
-  const ctx = canvas.getContext('2d')!;
+  const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
 
   return { canvas, ctx };
 }
@@ -86,7 +86,7 @@ function distanceToRadar(distance: number, maxRadius: number): number {
 export function updateRadar(
   radar: RadarDisplay,
   world: World,
-  player: Entity
+  player: Entity,
 ): void {
   const { ctx, canvas } = radar;
   const centerX = canvas.width / 2;
@@ -138,7 +138,11 @@ export function updateRadar(
 
   // Get player transform and faction
   const playerTransform = getComponent<Transform>(world, player, 'transform');
-  const playerFaction = getComponent<FactionComponent>(world, player, 'faction');
+  const playerFaction = getComponent<FactionComponent>(
+    world,
+    player,
+    'faction',
+  );
   const targeting = getComponent<Targeting>(world, player, 'targeting');
   if (!playerTransform || !playerFaction) return;
 
@@ -155,7 +159,11 @@ export function updateRadar(
   ctx.fill();
 
   // Draw all other ships
-  for (const entity of queryEntities(world, ['transform', 'faction', 'health'])) {
+  for (const entity of queryEntities(world, [
+    'transform',
+    'faction',
+    'health',
+  ])) {
     if (entity === player) continue;
 
     // Skip projectiles and missiles
@@ -176,11 +184,17 @@ export function updateRadar(
     // Now: localPos.x = right, localPos.y = up, localPos.z = forward (ship space)
 
     // Check total 3D distance for range limit
-    const totalDist = Math.sqrt(localPos.x * localPos.x + localPos.y * localPos.y + localPos.z * localPos.z);
+    const totalDist = Math.sqrt(
+      localPos.x * localPos.x +
+        localPos.y * localPos.y +
+        localPos.z * localPos.z,
+    );
     if (totalDist > RADAR_RANGE) continue;
 
     // Calculate horizontal distance for radar position (Y/height is compressed)
-    const horizDist = Math.sqrt(localPos.x * localPos.x + localPos.z * localPos.z);
+    const horizDist = Math.sqrt(
+      localPos.x * localPos.x + localPos.z * localPos.z,
+    );
 
     // Convert to radar coordinates with logarithmic scaling
     const radarDist = distanceToRadar(horizDist, maxRadius);
@@ -189,8 +203,9 @@ export function updateRadar(
     const blipY = centerY - Math.cos(angle) * radarDist; // Negative because screen Y is inverted
 
     // Determine colors based on faction and target status
-    const isEnemy = faction.faction !== playerFaction.faction &&
-                    faction.faction !== Faction.Neutral;
+    const isEnemy =
+      faction.faction !== playerFaction.faction &&
+      faction.faction !== Faction.Neutral;
     const isNeutral = faction.faction === Faction.Neutral;
     const isTarget = targeting?.currentTarget === entity;
 

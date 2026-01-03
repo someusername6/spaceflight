@@ -8,9 +8,15 @@
  * - World holds all state
  */
 
-import type { Entity, ComponentBase, ComponentType, ComponentMap, World } from './types';
-import { MissionResult } from './types';
 import { createPRNG } from './prng';
+import type {
+  ComponentBase,
+  ComponentMap,
+  ComponentType,
+  Entity,
+  World,
+} from './types';
+import { MissionResult } from './types';
 
 /** Creates a new empty world with given seed for PRNG */
 export function createWorld(seed: number = 0): World {
@@ -71,7 +77,7 @@ export function processRemovals(world: World): void {
 export function addComponent<T extends ComponentBase>(
   world: World,
   entity: Entity,
-  component: T
+  component: T,
 ): void {
   const entityComponents = world.components.get(entity);
   if (!entityComponents) {
@@ -84,7 +90,7 @@ export function addComponent<T extends ComponentBase>(
 export function getComponent<T extends ComponentBase>(
   world: World,
   entity: Entity,
-  type: ComponentType
+  type: ComponentType,
 ): T | undefined {
   const entityComponents = world.components.get(entity);
   if (!entityComponents) return undefined;
@@ -95,7 +101,7 @@ export function getComponent<T extends ComponentBase>(
 export function hasComponent(
   world: World,
   entity: Entity,
-  type: ComponentType
+  type: ComponentType,
 ): boolean {
   const entityComponents = world.components.get(entity);
   if (!entityComponents) return false;
@@ -106,7 +112,7 @@ export function hasComponent(
 export function hasComponents(
   world: World,
   entity: Entity,
-  types: ComponentType[]
+  types: ComponentType[],
 ): boolean {
   const entityComponents = world.components.get(entity);
   if (!entityComponents) return false;
@@ -117,7 +123,7 @@ export function hasComponents(
 export function removeComponent(
   world: World,
   entity: Entity,
-  type: ComponentType
+  type: ComponentType,
 ): void {
   const entityComponents = world.components.get(entity);
   if (entityComponents) {
@@ -131,11 +137,12 @@ export function removeComponent(
  */
 export function* query(
   world: World,
-  requiredTypes: ComponentType[]
+  requiredTypes: ComponentType[],
 ): Generator<[Entity, ComponentMap]> {
   for (const entity of world.entities) {
     if (hasComponents(world, entity, requiredTypes)) {
-      const components = world.components.get(entity)!;
+      // hasComponents guarantees entity exists in components map
+      const components = world.components.get(entity) as ComponentMap;
       yield [entity, components];
     }
   }
@@ -146,7 +153,7 @@ export function* query(
  */
 export function* queryEntities(
   world: World,
-  requiredTypes: ComponentType[]
+  requiredTypes: ComponentType[],
 ): Generator<Entity> {
   for (const entity of world.entities) {
     if (hasComponents(world, entity, requiredTypes)) {
@@ -165,7 +172,10 @@ export function getAllEntities(world: World): Entity[] {
 /**
  * Count entities matching a query.
  */
-export function countEntities(world: World, requiredTypes: ComponentType[]): number {
+export function countEntities(
+  world: World,
+  requiredTypes: ComponentType[],
+): number {
   let count = 0;
   for (const entity of world.entities) {
     if (hasComponents(world, entity, requiredTypes)) {
@@ -180,7 +190,7 @@ export function countEntities(world: World, requiredTypes: ComponentType[]): num
  */
 export function findEntity(
   world: World,
-  requiredTypes: ComponentType[]
+  requiredTypes: ComponentType[],
 ): Entity | undefined {
   for (const entity of world.entities) {
     if (hasComponents(world, entity, requiredTypes)) {
@@ -195,7 +205,9 @@ export function findEntity(
  * Ships are the main combatants - player and AI controlled vessels.
  */
 export function isShip(world: World, entity: Entity): boolean {
-  return hasComponent(world, entity, 'collision') &&
-         !hasComponent(world, entity, 'projectile') &&
-         !hasComponent(world, entity, 'missile');
+  return (
+    hasComponent(world, entity, 'collision') &&
+    !hasComponent(world, entity, 'projectile') &&
+    !hasComponent(world, entity, 'missile')
+  );
 }
