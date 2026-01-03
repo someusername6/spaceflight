@@ -35,7 +35,7 @@ function main(): void {
   const dustSystem = createDustSystem(getScene(renderer));
 
   // Create explosion renderer
-  const explosionRenderer = createExplosionRenderer(getScene(renderer));
+  const explosionRenderer = createExplosionRenderer();
 
   // Create HUD
   const hud = createHUD(container);

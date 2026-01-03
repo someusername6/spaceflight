@@ -80,7 +80,7 @@ function createParticleVelocities(entitySeed: Entity): Float32Array {
 }
 
 /** Creates the explosion renderer */
-export function createExplosionRenderer(_scene: THREE.Scene): ExplosionRenderer {
+export function createExplosionRenderer(): ExplosionRenderer {
   // Shared sphere geometry (cloned per explosion)
   const sphereGeometry = new THREE.SphereGeometry(1, 16, 12);
 
@@ -153,14 +153,8 @@ function createExplosionVisual(
   sphere.scale.setScalar(0.1); // Start small
   scene.add(sphere);
 
-  // Create particles
+  // Create particles (positions set by updateExplosionVisual)
   const particlePositions = new Float32Array(PARTICLES_PER_EXPLOSION * 3);
-  for (let i = 0; i < PARTICLES_PER_EXPLOSION * 3; i += 3) {
-    particlePositions[i] = position.x;
-    particlePositions[i + 1] = position.y;
-    particlePositions[i + 2] = position.z;
-  }
-
   const particleGeometry = new THREE.BufferGeometry();
   particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
 
