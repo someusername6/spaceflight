@@ -5,7 +5,7 @@ import { createMT } from '../core/mersenne-twister';
 // Star generation constants
 const STAR_COUNT = 100000;
 const STAR_DISTANCE = 128.0;
-const STAR_QUAD_SIZE = 0.05;
+const STAR_QUAD_SIZE = 0.02;
 const STAR_BRIGHTNESS_POWER = 4.0; // Higher = more dim stars
 const STAR_RNG_OFFSET = 5000;
 

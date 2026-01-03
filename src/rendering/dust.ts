@@ -10,7 +10,7 @@ import * as THREE from 'three';
 
 /** Dust system configuration */
 const CUBE_SIZE = 100;
-const PARTICLES_PER_CUBE = 3;
+const PARTICLES_PER_CUBE = 4;
 const RENDER_DISTANCE = 600;
 const PARTICLE_SIZE = 8;
 const PARTICLE_COLOR = new THREE.Color(0xffffff);
