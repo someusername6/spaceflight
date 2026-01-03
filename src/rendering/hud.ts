@@ -150,11 +150,13 @@ export function updateHUD(
   updatePlayerStatus(hud, world, player);
 
   const playerTransform = getComponent<Transform>(world, player, 'transform');
+  const playerPhysics = getComponent<Physics>(world, player, 'physics');
   updateReticles(
     hud.reticleCanvas,
     world,
     player,
     playerTransform,
+    playerPhysics?.velocity,
     camera,
     entityMeshes,
     screenWidth,

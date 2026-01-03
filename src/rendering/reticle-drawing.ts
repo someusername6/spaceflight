@@ -11,6 +11,7 @@ export const ARROW_SIZE = 12;
 export const FONT_SIZE = 18;
 export const FONT_FAMILY = '"Lucida Console", "Consolas", monospace';
 export const EDGE_MARGIN = 12;
+export const LEAD_INDICATOR_SIZE = 6;
 
 /** Draw text with black outline for readability (uses strokeText for efficiency) */
 export function drawOutlinedText(
@@ -92,6 +93,71 @@ export function drawOnScreenReticle(
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
   drawOutlinedText(ctx, `${Math.round(distance)}`, left + width / 2, bottom + 4, color);
+}
+
+/** Draw lock-on progress indicator (arc around target) */
+export function drawLockIndicator(
+  ctx: CanvasRenderingContext2D,
+  bounds: { minX: number; maxX: number; minY: number; maxY: number },
+  progress: number, // 0-1
+  color: string
+): void {
+  const centerX = (bounds.minX + bounds.maxX) / 2;
+  const centerY = (bounds.minY + bounds.maxY) / 2;
+  // Apply same sizing logic as drawOnScreenReticle (padding + minimum size)
+  const rawWidth = bounds.maxX - bounds.minX + RETICLE_PADDING * 2;
+  const rawHeight = bounds.maxY - bounds.minY + RETICLE_PADDING * 2;
+  const width = Math.max(rawWidth, MIN_RETICLE_SIZE);
+  const height = Math.max(rawHeight, MIN_RETICLE_SIZE);
+  const radius = Math.max(width, height) / 2 + 4;
+
+  // Draw progress arc (starts at top, goes clockwise)
+  const startAngle = -Math.PI / 2;
+  const endAngle = startAngle + progress * Math.PI * 2;
+
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+  ctx.stroke();
+
+  // When fully locked, draw a complete bright ring
+  if (progress >= 1) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius + 3, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+}
+
+/** Draw lead indicator (pip showing where to aim) */
+export function drawLeadIndicator(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  color: string
+): void {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+
+  // Draw a small circle/pip
+  ctx.beginPath();
+  ctx.arc(x, y, LEAD_INDICATOR_SIZE, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Draw crosshair lines through the pip
+  const half = LEAD_INDICATOR_SIZE + 3;
+  ctx.beginPath();
+  ctx.moveTo(x - half, y);
+  ctx.lineTo(x - LEAD_INDICATOR_SIZE - 1, y);
+  ctx.moveTo(x + LEAD_INDICATOR_SIZE + 1, y);
+  ctx.lineTo(x + half, y);
+  ctx.moveTo(x, y - half);
+  ctx.lineTo(x, y - LEAD_INDICATOR_SIZE - 1);
+  ctx.moveTo(x, y + LEAD_INDICATOR_SIZE + 1);
+  ctx.lineTo(x, y + half);
+  ctx.stroke();
 }
 
 /** Draw off-screen arrow pointing to target */

@@ -8,7 +8,11 @@ import { getComponent, queryEntities } from '../core/ecs';
 import type { Transform } from '../components/transform';
 import type { Targeting } from '../components/targeting';
 import { Faction, type FactionComponent } from '../components/faction';
-import { drawOnScreenReticle, drawOffScreenArrow } from './reticle-drawing';
+import { drawOnScreenReticle, drawOffScreenArrow, drawLeadIndicator, drawLockIndicator } from './reticle-drawing';
+import { calculateInterceptPoint } from './lead-calculation';
+import type { Physics } from '../components/physics';
+import type { PrimaryWeapons, SecondaryWeapons } from '../components/weapons';
+import { getCurrentPrimary } from '../components/weapons';
 
 /** Reticle canvas state */
 export interface ReticleCanvas {
@@ -21,6 +25,8 @@ export interface ReticleCanvas {
 const tempVec3 = new THREE.Vector3();
 const toTarget = new THREE.Vector3();
 const cameraForward = new THREE.Vector3();
+const leadVec3 = new THREE.Vector3();
+const zeroVec3 = new THREE.Vector3(); // Shared zero vector for fallbacks
 const tempBox3 = new THREE.Box3();
 const boxCorners: THREE.Vector3[] = [];
 for (let i = 0; i < 8; i++) boxCorners.push(new THREE.Vector3());
@@ -28,17 +34,17 @@ for (let i = 0; i < 8; i++) boxCorners.push(new THREE.Vector3());
 // Reusable targets array (cleared each frame, avoids allocation)
 const targets: TargetInfo[] = [];
 
-// Cache bounding boxes to avoid traverse() every frame (auto-cleaned via WeakMap)
-const boundingBoxCache = new WeakMap<THREE.Object3D, THREE.Box3>();
-
 /** Target info for rendering */
 interface TargetInfo {
   entity: Entity;
   transform: Transform;
+  velocity: THREE.Vector3;
   mesh: THREE.Object3D | undefined;
   distance: number;
   isSelected: boolean;
   isEnemy: boolean;
+  isLockTarget: boolean;
+  lockProgress: number;
 }
 
 /** Create the reticle canvas */
@@ -75,6 +81,7 @@ export function updateReticles(
   world: World,
   player: Entity,
   playerTransform: Transform | undefined,
+  playerVelocity: THREE.Vector3 | undefined,
   camera: THREE.Camera,
   entityMeshes: Map<Entity, THREE.Object3D>,
   screenWidth: number,
@@ -90,6 +97,17 @@ export function updateReticles(
   const targeting = getComponent<Targeting>(world, player, 'targeting');
   const currentTarget = targeting?.currentTarget;
 
+  // Get player's current weapon stats for lead calculation
+  const playerWeapons = getComponent<PrimaryWeapons>(world, player, 'primaryWeapons');
+  const currentWeapon = playerWeapons ? getCurrentPrimary(playerWeapons) : undefined;
+  const projectileSpeed = currentWeapon?.projectileSpeed ?? 0;
+  const weaponRange = currentWeapon?.range ?? 0;
+
+  // Get lock-on progress for secondary weapons
+  const secondaryWeapons = getComponent<SecondaryWeapons>(world, player, 'secondaryWeapons');
+  const lockProgress = secondaryWeapons?.lockProgress ?? 0;
+  const lockTarget = secondaryWeapons?.lockTarget;
+
   // Clear and reuse targets array (avoids allocation each frame)
   targets.length = 0;
 
@@ -99,28 +117,43 @@ export function updateReticles(
 
     const transform = getComponent<Transform>(world, entity, 'transform')!;
     const faction = getComponent<FactionComponent>(world, entity, 'faction')!;
+    const physics = getComponent<Physics>(world, entity, 'physics');
     const mesh = entityMeshes.get(entity);
     const distance = playerTransform?.position.distanceTo(transform.position) ?? 0;
 
+    const isLockTarget = entity === lockTarget;
     targets.push({
       entity,
       transform,
+      velocity: physics?.velocity ?? zeroVec3,
       mesh,
       distance,
       isSelected: entity === currentTarget,
       isEnemy: faction.faction === Faction.Enemy,
+      isLockTarget,
+      lockProgress: isLockTarget ? lockProgress : 0,
     });
   }
 
-  // Sort: selected first, then by distance
+  // Sort: selected last (so it renders on top), then by distance descending (far first)
   targets.sort((a, b) => {
-    if (a.isSelected !== b.isSelected) return a.isSelected ? -1 : 1;
-    return a.distance - b.distance;
+    if (a.isSelected !== b.isSelected) return a.isSelected ? 1 : -1;
+    return b.distance - a.distance; // Far targets first, close targets on top
   });
 
   // Render all targets
   for (const t of targets) {
-    renderTarget(ctx, t, camera, screenWidth, screenHeight);
+    renderTarget(
+      ctx,
+      t,
+      camera,
+      screenWidth,
+      screenHeight,
+      playerTransform,
+      playerVelocity,
+      projectileSpeed,
+      weaponRange
+    );
   }
 }
 
@@ -130,7 +163,11 @@ function renderTarget(
   target: TargetInfo,
   camera: THREE.Camera,
   screenWidth: number,
-  screenHeight: number
+  screenHeight: number,
+  playerTransform: Transform | undefined,
+  playerVelocity: THREE.Vector3 | undefined,
+  projectileSpeed: number,
+  weaponRange: number
 ): void {
   const baseColor = target.isEnemy ? '#ff0000' : '#00ff00';
   const dimColor = target.isEnemy ? '#880000' : '#008800';
@@ -160,20 +197,47 @@ function renderTarget(
 
   if (onScreen && bounds) {
     drawOnScreenReticle(ctx, bounds, target.distance, color);
+
+    // Draw lock-on progress indicator for targets being locked
+    if (target.isLockTarget && target.lockProgress > 0) {
+      drawLockIndicator(ctx, bounds, target.lockProgress, color);
+    }
+
+    // Draw lead indicator for selected target (only for projectile weapons, not beams)
+    if (target.isSelected && playerTransform && projectileSpeed > 0) {
+      const interceptPoint = calculateInterceptPoint(
+        playerTransform.position,
+        playerVelocity ?? zeroVec3,
+        target.transform.position,
+        target.velocity,
+        projectileSpeed
+      );
+
+      if (interceptPoint) {
+        // Check if intercept is within weapon range
+        const interceptDistance = playerTransform.position.distanceTo(interceptPoint);
+        if (interceptDistance <= weaponRange) {
+          // Check if intercept point is in front of camera
+          toTarget.copy(interceptPoint).sub(camera.position);
+          const interceptBehind = toTarget.dot(cameraForward) < 0;
+
+          if (!interceptBehind) {
+            // Project intercept point to screen
+            leadVec3.copy(interceptPoint).project(camera);
+            const leadX = (leadVec3.x + 1) * 0.5 * screenWidth;
+            const leadY = (1 - leadVec3.y) * 0.5 * screenHeight;
+
+            // Only draw if on screen
+            if (leadX >= 0 && leadX <= screenWidth && leadY >= 0 && leadY <= screenHeight) {
+              drawLeadIndicator(ctx, leadX, leadY, color);
+            }
+          }
+        }
+      }
+    }
   } else {
     drawOffScreenArrow(ctx, centerX, centerY, target.distance, color, behindCamera, screenWidth, screenHeight);
   }
-}
-
-/** Get or compute cached bounding box for a mesh (in local space) */
-function getCachedBoundingBox(mesh: THREE.Object3D): THREE.Box3 | null {
-  let cached = boundingBoxCache.get(mesh);
-  if (!cached) {
-    cached = new THREE.Box3().setFromObject(mesh);
-    if (cached.isEmpty()) return null;
-    boundingBoxCache.set(mesh, cached);
-  }
-  return cached;
 }
 
 /** Compute screen bounds from mesh bounding box */
@@ -183,12 +247,9 @@ function computeScreenBounds(
   screenWidth: number,
   screenHeight: number
 ): { minX: number; maxX: number; minY: number; maxY: number } | null {
-  // Use cached world-space bounding box (handles hierarchies correctly)
-  const cachedBox = getCachedBoundingBox(mesh);
-  if (!cachedBox) return null;
-
-  // Copy to temp and transform to current world position
-  tempBox3.copy(cachedBox);
+  // Compute world-space bounding box (fresh each frame since meshes move)
+  tempBox3.setFromObject(mesh);
+  if (tempBox3.isEmpty()) return null;
 
   const { min, max } = tempBox3;
   boxCorners[0]!.set(min.x, min.y, min.z);

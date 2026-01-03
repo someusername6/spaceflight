@@ -1,7 +1,7 @@
 # Implementation Progress
 
 Tracks actual implementation status with file references as evidence.
-**Last verified:** 2026-01-03
+**Last updated:** 2026-01-03
 
 ---
 
@@ -66,8 +66,8 @@ Tracks actual implementation status with file references as evidence.
 - [x] Target reticles (corner brackets) → `src/rendering/reticles.ts:72-125`
 - [x] Off-screen arrows → `src/rendering/reticle-drawing.ts:98-181`
 - [x] Distance display → `src/rendering/reticle-drawing.ts:94`
-- [ ] Lead indicator
-- [ ] Lock-on indicator (visual)
+- [x] Lead indicator → `src/rendering/lead-calculation.ts:16-68` (intercept calculation), `src/rendering/reticles.ts:206-238` (rendering with range check)
+- [x] Lock-on indicator (visual) → `src/rendering/reticle-drawing.ts:99-132`, `src/rendering/reticles.ts:201-205`
 - [ ] Weapon banks display
 - [ ] Allied health bars
 - [ ] Target camera + stats
@@ -100,7 +100,7 @@ Tracks actual implementation status with file references as evidence.
 | 3.3 Shield System | 3 | 3 | 100% |
 | 3.4 AI Implementation | 4 | 7 | 57% |
 | 3.5 Targeting System | 4 | 4 | 100% |
-| 3.6 HUD Implementation | 7 | 13 | 54% |
+| 3.6 HUD Implementation | 9 | 13 | 69% |
 | 3.7 Visual Effects | 1 | 5 | 20% |
 | 3.8 Dust Particles | 1 | 1 | 100% |
-| **Phase 3 Total** | **28** | **41** | **68%** |
+| **Phase 3 Total** | **30** | **41** | **73%** |
