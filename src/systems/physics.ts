@@ -31,12 +31,16 @@ function moveToward(current: number, target: number, maxDelta: number): number {
 /** Physics system - updates positions and velocities */
 export function physicsSystem(world: World, dt: number): void {
   for (const entity of queryEntities(world, ['transform', 'physics'])) {
-    // Skip dying entities (they freeze in place during death animation)
-    const health = getComponent<Health>(world, entity, 'health');
-    if (health && isDying(health)) continue;
-
     const transform = getComponent<Transform>(world, entity, 'transform')!;
     const physics = getComponent<Physics>(world, entity, 'physics')!;
+
+    // Dying entities coast with current velocity (no control input)
+    const health = getComponent<Health>(world, entity, 'health');
+    if (health && isDying(health)) {
+      // Just update position, no control
+      transform.position.addScaledVector(physics.velocity, dt);
+      continue;
+    }
 
     // Get control input (either from player or AI)
     const player = getComponent<PlayerControlled>(world, entity, 'playerControlled');
