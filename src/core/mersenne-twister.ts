@@ -11,7 +11,8 @@ export class MersenneTwister {
 
   constructor(seed: number) {
     this._state = new Array<number>(624);
-    this._state[0] = seed != null ? seed : (Math.random() * 0xffffffff) | 0;
+    // Seed is always required - no Math.random() fallback for determinism
+    this._state[0] = seed | 0;
 
     for (let i = 1; i < 624; i++) {
       const prev = this._state[i - 1] as number;

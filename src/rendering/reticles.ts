@@ -12,6 +12,7 @@ import { getComponent, queryEntities } from '../core/ecs';
 import type { Entity, World } from '../core/types';
 import { drawLeadIndicators } from './lead-indicators';
 import {
+  drawCenterCrosshair,
   drawLockIndicator,
   drawOffScreenArrow,
   drawOnScreenReticle,
@@ -33,9 +34,6 @@ const tempBox3 = new THREE.Box3();
 const boxCorners: THREE.Vector3[] = [];
 for (let i = 0; i < 8; i++) boxCorners.push(new THREE.Vector3());
 
-// Reusable targets array (cleared each frame, avoids allocation)
-const targets: TargetInfo[] = [];
-
 /** Target info for rendering */
 interface TargetInfo {
   entity: Entity;
@@ -48,6 +46,41 @@ interface TargetInfo {
   isNeutral: boolean;
   isLockTarget: boolean;
   lockProgress: number;
+}
+
+// Pool of reusable TargetInfo objects (avoids per-frame object allocation)
+const targetPool: TargetInfo[] = [];
+let targetPoolIndex = 0;
+
+/** Get a TargetInfo from pool, expanding if needed */
+function getTargetInfo(): TargetInfo {
+  if (targetPoolIndex >= targetPool.length) {
+    // Expand pool with a new object
+    targetPool.push({
+      entity: 0 as Entity,
+      transform: null as unknown as Transform,
+      velocity: zeroVec3,
+      mesh: undefined,
+      distance: 0,
+      isSelected: false,
+      isEnemy: false,
+      isNeutral: false,
+      isLockTarget: false,
+      lockProgress: 0,
+    });
+  }
+  return targetPool[targetPoolIndex++] as TargetInfo;
+}
+
+// Reusable targets array (stores references from pool, cleared each frame)
+const targets: TargetInfo[] = [];
+
+// Module-level sort comparator (avoid per-frame callback allocation)
+function compareTargetsForRendering(a: TargetInfo, b: TargetInfo): number {
+  // Selected target renders last (on top)
+  if (a.isSelected !== b.isSelected) return a.isSelected ? 1 : -1;
+  // Far targets first, close targets on top
+  return b.distance - a.distance;
 }
 
 /** Create the reticle canvas */
@@ -105,6 +138,9 @@ export function updateReticles(
   ctx.clearRect(0, 0, rc.canvas.width, rc.canvas.height);
   ctx.scale(dpr, dpr);
 
+  // Draw center crosshair (fixed aiming point)
+  drawCenterCrosshair(ctx, screenWidth, screenHeight);
+
   const targeting = getComponent<Targeting>(world, player, 'targeting');
   const currentTarget = targeting?.currentTarget;
 
@@ -124,7 +160,8 @@ export function updateReticles(
   const lockProgress = secondaryWeapons?.lockProgress ?? 0;
   const lockTarget = secondaryWeapons?.lockTarget;
 
-  // Clear and reuse targets array (avoids allocation each frame)
+  // Reset pool index and clear targets array (avoids allocation each frame)
+  targetPoolIndex = 0;
   targets.length = 0;
 
   // Collect all targetable entities
@@ -152,25 +189,24 @@ export function updateReticles(
       playerTransform?.position.distanceTo(transform.position) ?? 0;
 
     const isLockTarget = entity === lockTarget;
-    targets.push({
-      entity,
-      transform,
-      velocity: physics?.velocity ?? zeroVec3,
-      mesh,
-      distance,
-      isSelected: entity === currentTarget,
-      isEnemy: faction.faction === Faction.Enemy,
-      isNeutral: faction.faction === Faction.Neutral,
-      isLockTarget,
-      lockProgress: isLockTarget ? lockProgress : 0,
-    });
+
+    // Get reusable object from pool (avoids per-frame allocation)
+    const target = getTargetInfo();
+    target.entity = entity;
+    target.transform = transform;
+    target.velocity = physics?.velocity ?? zeroVec3;
+    target.mesh = mesh;
+    target.distance = distance;
+    target.isSelected = entity === currentTarget;
+    target.isEnemy = faction.faction === Faction.Enemy;
+    target.isNeutral = faction.faction === Faction.Neutral;
+    target.isLockTarget = isLockTarget;
+    target.lockProgress = isLockTarget ? lockProgress : 0;
+    targets.push(target);
   }
 
   // Sort: selected last (so it renders on top), then by distance descending (far first)
-  targets.sort((a, b) => {
-    if (a.isSelected !== b.isSelected) return a.isSelected ? 1 : -1;
-    return b.distance - a.distance; // Far targets first, close targets on top
-  });
+  targets.sort(compareTargetsForRendering);
 
   // Render all targets
   for (const t of targets) {

@@ -176,13 +176,7 @@ export function updateDustSystem(
     }
   }
 
-  // Hide unused particles
-  for (let i = particleIndex; i < dust.maxParticles; i++) {
-    const idx = i * 3;
-    positions[idx] = 0;
-    positions[idx + 1] = 0;
-    positions[idx + 2] = -999999;
-  }
+  // setDrawRange excludes unused particles from rendering - no need to reposition them
 
   const positionAttr = geometry.attributes.position;
   if (positionAttr) {

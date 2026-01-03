@@ -16,6 +16,37 @@ import type { ComponentBase, Entity, World } from '../core/types';
 /** Default collision radius for ships */
 const DEFAULT_SHIP_RADIUS = 5;
 
+// Pool for collidable info objects (avoid per-frame allocations)
+interface CollidableInfo {
+  entity: Entity;
+  transform: Transform;
+  collision: Collision;
+}
+const collidablePool: CollidableInfo[] = [];
+let collidablePoolIndex = 0;
+
+function getCollidableInfo(
+  entity: Entity,
+  transform: Transform,
+  collision: Collision,
+): CollidableInfo {
+  if (collidablePoolIndex >= collidablePool.length) {
+    collidablePool.push({
+      entity: 0 as Entity,
+      transform: null as unknown as Transform,
+      collision: null as unknown as Collision,
+    });
+  }
+  const info = collidablePool[collidablePoolIndex++] as CollidableInfo;
+  info.entity = entity;
+  info.transform = transform;
+  info.collision = collision;
+  return info;
+}
+
+// Reusable array for collidables (stores pool references)
+const collidables: CollidableInfo[] = [];
+
 /** Collision component - stores collision info for this frame */
 export interface Collision extends ComponentBase {
   readonly type: 'collision';
@@ -42,15 +73,12 @@ export function collisionSystem(world: World, _dt: number): void {
       entity,
       'collision',
     ) as Collision;
-    collision.collidedWith = [];
+    collision.collidedWith.length = 0; // Clear without allocation
   }
 
-  // Get all collidable entities
-  const collidables: Array<{
-    entity: Entity;
-    transform: Transform;
-    collision: Collision;
-  }> = [];
+  // Reset pool and clear collidables array
+  collidablePoolIndex = 0;
+  collidables.length = 0;
 
   for (const entity of queryEntities(world, ['transform', 'collision'])) {
     // Query guarantees these components exist
@@ -64,7 +92,7 @@ export function collisionSystem(world: World, _dt: number): void {
       entity,
       'collision',
     ) as Collision;
-    collidables.push({ entity, transform, collision });
+    collidables.push(getCollidableInfo(entity, transform, collision));
   }
 
   // Check all pairs (O(n²) - fine for small entity counts)

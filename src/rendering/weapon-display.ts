@@ -160,14 +160,15 @@ export function updateWeaponDisplay(
     const timeSinceFire = currentTime - primary.lastFireTime;
 
     // In linked mode, calculate slowest projectile fire rate (for cooldown display)
-    const linkedFireRate = primary.linked
-      ? Math.max(
-          ...primary.weapons
-            .filter((w) => w.category !== 'beam')
-            .map((w) => w.fireRate),
-          0,
-        )
-      : 0;
+    // Use loop to avoid per-frame filter/map allocations
+    let linkedFireRate = 0;
+    if (primary.linked) {
+      for (const w of primary.weapons) {
+        if (w.category !== 'beam' && w.fireRate > linkedFireRate) {
+          linkedFireRate = w.fireRate;
+        }
+      }
+    }
 
     for (let i = 0; i < primary.weapons.length; i++) {
       const w = primary.weapons[i] as (typeof primary.weapons)[0];

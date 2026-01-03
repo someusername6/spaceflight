@@ -33,11 +33,12 @@ function main(): void {
   // Initialize input
   initInput();
 
-  // Create game
-  const game = createGame(Date.now()); // Use current time as seed for variety
+  // Create game with seed (Date.now for variety in single-player)
+  const seed = Date.now();
+  const game = createGame(seed);
 
-  // Create renderer
-  const renderer = createRenderer(container);
+  // Create renderer with same seed for deterministic skybox
+  const renderer = createRenderer(container, seed);
 
   // Create dust particle system
   const dustSystem = createDustSystem(getScene(renderer));

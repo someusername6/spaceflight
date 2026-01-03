@@ -23,6 +23,9 @@ const EXPANSION_SPEED = 3;
 /** Particle speed multiplier */
 const PARTICLE_SPEED = 4;
 
+// Reusable Set for tracking seen explosions (avoid per-frame allocations)
+const seenExplosions = new Set<Entity>();
+
 /** Explosion visual state */
 interface ExplosionVisual {
   sphere: THREE.Mesh;
@@ -96,7 +99,8 @@ export function updateExplosionRenderer(
   scene: THREE.Scene,
   world: World,
 ): void {
-  const seenExplosions = new Set<Entity>();
+  // Clear reusable Set (avoid per-frame allocations)
+  seenExplosions.clear();
 
   // Update or create visuals for explosion entities
   for (const entity of queryEntities(world, ['explosion', 'transform'])) {

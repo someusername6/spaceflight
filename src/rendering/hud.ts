@@ -273,7 +273,8 @@ function updatePlayerStatus(hud: HUD, world: World, player: Entity): void {
 /** Update segmented bar display by toggling classes (no DOM recreation) */
 function updateSegmentedBar(segments: HTMLElement[], percentage: number): void {
   const filledCount = Math.round(percentage / SEGMENT_COUNT);
-  segments.forEach((segment, i) => {
-    segment.classList.toggle('filled', i < filledCount);
-  });
+  // Use for loop instead of .forEach() to avoid per-call callback allocation
+  for (let i = 0; i < segments.length; i++) {
+    (segments[i] as HTMLElement).classList.toggle('filled', i < filledCount);
+  }
 }

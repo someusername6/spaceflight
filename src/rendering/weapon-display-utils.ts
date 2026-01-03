@@ -72,12 +72,28 @@ export function createBankElement(
   };
 }
 
-/** Generate signature for primary weapons (name + category) */
+/** Generate signature for primary weapons (name + category) - uses loop to avoid .map() allocation */
 export function getPrimarySignature(weapons: PrimaryWeapon[]): string {
-  return weapons.map((w) => `${w.name}:${w.category}`).join(',');
+  let sig = '';
+  for (let i = 0; i < weapons.length; i++) {
+    const w = weapons[i] as PrimaryWeapon;
+    if (i > 0) sig += ',';
+    sig += w.name;
+    sig += ':';
+    sig += w.category;
+  }
+  return sig;
 }
 
-/** Generate signature for secondary weapons (name + requiresLock) */
+/** Generate signature for secondary weapons (name + requiresLock) - uses loop to avoid .map() allocation */
 export function getSecondarySignature(weapons: SecondaryWeapon[]): string {
-  return weapons.map((w) => `${w.name}:${w.requiresLock}`).join(',');
+  let sig = '';
+  for (let i = 0; i < weapons.length; i++) {
+    const w = weapons[i] as SecondaryWeapon;
+    if (i > 0) sig += ',';
+    sig += w.name;
+    sig += ':';
+    sig += w.requiresLock;
+  }
+  return sig;
 }

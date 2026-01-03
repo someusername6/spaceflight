@@ -34,6 +34,34 @@ const rayOrigin = new THREE.Vector3();
 const rayDirection = new THREE.Vector3();
 const tempOC = new THREE.Vector3(); // For ray-sphere intersection
 
+// Pool for beam weapon info objects (avoid per-frame allocations)
+interface BeamWeaponInfo {
+  weapon: PrimaryWeapon;
+  index: number;
+}
+const beamWeaponPool: BeamWeaponInfo[] = [];
+let beamWeaponPoolIndex = 0;
+
+function getBeamWeaponInfo(
+  weapon: PrimaryWeapon,
+  index: number,
+): BeamWeaponInfo {
+  if (beamWeaponPoolIndex >= beamWeaponPool.length) {
+    beamWeaponPool.push({ weapon: null as unknown as PrimaryWeapon, index: 0 });
+  }
+  const info = beamWeaponPool[beamWeaponPoolIndex++] as BeamWeaponInfo;
+  info.weapon = weapon;
+  info.index = index;
+  return info;
+}
+
+// Reusable array for linked beam firing (stores pool references)
+const beamWeaponsCollector: BeamWeaponInfo[] = [];
+
+// Reusable object for beam hit detection (avoid per-frame allocations)
+const closestHitResult = { entity: 0 as Entity, distance: 0 };
+let hasClosestHit = false;
+
 /** Distance for falloff calculation (caps damage when very close) */
 const MIN_FALLOFF_DISTANCE = 100;
 
@@ -134,29 +162,32 @@ function fireLinkedBeams(
   dt: number,
   activeBeams: Map<Entity, ActiveBeam[]>,
 ): void {
+  // Reset pool and clear collector (avoid per-frame allocations)
+  beamWeaponPoolIndex = 0;
+  beamWeaponsCollector.length = 0;
+
   // Find all beam weapons
-  const beamWeapons: { weapon: PrimaryWeapon; index: number }[] = [];
   for (let i = 0; i < weapons.weapons.length; i++) {
     const weapon = weapons.weapons[i];
     if (weapon && weapon.category === 'beam') {
-      beamWeapons.push({ weapon, index: i });
+      beamWeaponsCollector.push(getBeamWeaponInfo(weapon, i));
     }
   }
 
-  if (beamWeapons.length === 0) return;
+  if (beamWeaponsCollector.length === 0) return;
 
-  // Calculate total heat per second for all beams
-  const totalHeat = beamWeapons.reduce(
-    (sum, { weapon }) => sum + weapon.heatPerShot,
-    0,
-  );
+  // Calculate total heat per second for all beams (avoid reduce callback allocation)
+  let totalHeat = 0;
+  for (const { weapon } of beamWeaponsCollector) {
+    totalHeat += weapon.heatPerShot;
+  }
   const heatToAdd = totalHeat * dt;
 
   // Check if we can add all the heat
   if (!addHeat(heat, heatToAdd)) return; // Overheated
 
   // Fire all beams
-  for (const { weapon, index } of beamWeapons) {
+  for (const { weapon, index } of beamWeaponsCollector) {
     fireBeam(world, owner, transform, weapon, index, faction, dt, activeBeams);
   }
 }
@@ -183,8 +214,14 @@ function fireBeam(
     activeBeams.set(owner, beams);
   }
 
-  // Find or create beam state for this weapon slot
-  let beam = beams.find((b) => b.weaponIndex === weaponIndex);
+  // Find or create beam state for this weapon slot (loop instead of .find())
+  let beam: ActiveBeam | undefined;
+  for (let i = 0; i < beams.length; i++) {
+    if (beams[i]?.weaponIndex === weaponIndex) {
+      beam = beams[i];
+      break;
+    }
+  }
   if (!beam) {
     beam = {
       origin: new THREE.Vector3(),
@@ -203,8 +240,9 @@ function fireBeam(
   beam.hitPoint = null;
   beam.color.copy(getBeamColor(weapon.name)); // Update color in case weapon changed
 
-  // Find nearest enemy in beam path
-  let closestHit: { entity: Entity; distance: number } | null = null;
+  // Find nearest enemy in beam path (use reusable object instead of allocating)
+  hasClosestHit = false;
+  closestHitResult.distance = Infinity;
 
   for (const other of queryEntities(world, [
     'transform',
@@ -253,8 +291,10 @@ function fireBeam(
     );
 
     if (distance !== null && distance <= weapon.range) {
-      if (!closestHit || distance < closestHit.distance) {
-        closestHit = { entity: other, distance };
+      if (distance < closestHitResult.distance) {
+        hasClosestHit = true;
+        closestHitResult.entity = other;
+        closestHitResult.distance = distance;
       }
     }
   }
@@ -264,19 +304,19 @@ function fireBeam(
     beam.hitPoint = new THREE.Vector3();
   }
 
-  if (closestHit) {
+  if (hasClosestHit) {
     // Calculate hit point
     beam.hitPoint
       .copy(rayDirection)
-      .multiplyScalar(closestHit.distance)
+      .multiplyScalar(closestHitResult.distance)
       .add(rayOrigin);
 
     // Apply damage with falloff (damage is per-second, multiply by dt)
     const falloffDamage = calculateFalloffDamage(
       weapon.damage,
-      closestHit.distance,
+      closestHitResult.distance,
     );
-    dealDamage(world, closestHit.entity, falloffDamage * dt);
+    dealDamage(world, closestHitResult.entity, falloffDamage * dt);
   } else {
     // No hit - beam extends to max range
     beam.hitPoint

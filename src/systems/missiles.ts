@@ -19,9 +19,11 @@ import type { Entity, World } from '../core/types';
 import type { Collision } from './collision';
 import { dealDamage } from './damage';
 
-// Reusable vectors
+// Reusable vectors and quaternions (avoid per-frame allocations)
 const toTarget = new THREE.Vector3();
 const rotationAxis = new THREE.Vector3();
+const tempForward = new THREE.Vector3();
+const tempQuat = new THREE.Quaternion();
 
 /** Missile system - tracking and collision handling */
 export function missileSystem(world: World, dt: number): void {
@@ -59,12 +61,9 @@ export function missileSystem(world: World, dt: number): void {
     missile.distanceTraveled += distance;
 
     // Update transform rotation to match direction
-    const forward = new THREE.Vector3(0, 0, -1);
-    const quat = new THREE.Quaternion().setFromUnitVectors(
-      forward,
-      missile.direction,
-    );
-    transform.rotation.copy(quat);
+    tempForward.set(0, 0, -1);
+    tempQuat.setFromUnitVectors(tempForward, missile.direction);
+    transform.rotation.copy(tempQuat);
 
     // Check if expired
     if (isMissileExpired(missile)) {
@@ -141,7 +140,7 @@ function trackTarget(
       // Parallel vectors - pick arbitrary axis
       rotationAxis.set(0, 1, 0);
     }
-    const quat = new THREE.Quaternion().setFromAxisAngle(rotationAxis, maxTurn);
-    missile.direction.applyQuaternion(quat).normalize();
+    tempQuat.setFromAxisAngle(rotationAxis, maxTurn);
+    missile.direction.applyQuaternion(tempQuat).normalize();
   }
 }

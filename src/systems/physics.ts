@@ -74,8 +74,8 @@ export function physicsSystem(world: World, dt: number): void {
       decelerating = player.input.decelerate;
       afterburner = player.input.afterburner;
     } else if (ai) {
-      // AI will set these values through AI system (TODO)
-      // For now, simple pursue behavior handled here
+      // AI movement handled directly in ai.ts via transform.rotation and physics.currentSpeed
+      // AI does not use the input abstraction - it sets rotation/speed directly each frame
     }
 
     // Calculate target angular velocity from input

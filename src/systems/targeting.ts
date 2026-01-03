@@ -18,15 +18,43 @@ import type { Transform } from '../components/transform';
 import { entityExists, getComponent, queryEntities } from '../core/ecs';
 import type { Entity, World } from '../core/types';
 
-/** Track previous input state for edge detection (only trigger on key press, not hold) */
-const prevInput = {
-  cycleTargetNext: false,
-  cycleTargetPrev: false,
-  targetNearest: false,
-};
+// Pool for target info objects (avoid per-frame allocations)
+interface TargetCollectorInfo {
+  entity: Entity;
+  distance: number;
+}
+const targetCollectorPool: TargetCollectorInfo[] = [];
+let targetCollectorPoolIndex = 0;
+
+function getTargetCollectorInfo(
+  entity: Entity,
+  distance: number,
+): TargetCollectorInfo {
+  if (targetCollectorPoolIndex >= targetCollectorPool.length) {
+    targetCollectorPool.push({ entity: 0 as Entity, distance: 0 });
+  }
+  const info = targetCollectorPool[
+    targetCollectorPoolIndex++
+  ] as TargetCollectorInfo;
+  info.entity = entity;
+  info.distance = distance;
+  return info;
+}
+
+// Module-level sort comparator (avoid per-frame callback allocation)
+function compareByDistance(
+  a: TargetCollectorInfo,
+  b: TargetCollectorInfo,
+): number {
+  return a.distance - b.distance;
+}
+
+// Reusable array for target collection (stores pool references)
+const targetCollector: TargetCollectorInfo[] = [];
 
 /** Targeting system - updates target selection based on input */
 export function targetingSystem(world: World, _dt: number): void {
+  const prevInput = world.systemState.targeting.prevInput;
   for (const entity of queryEntities(world, [
     'playerControlled',
     'targeting',
@@ -93,7 +121,9 @@ function updateValidTargets(
   selfTransform: Transform,
   selfFaction: Faction,
 ): void {
-  const targets: { entity: Entity; distance: number }[] = [];
+  // Reset pool and clear collector array
+  targetCollectorPoolIndex = 0;
+  targetCollector.length = 0;
 
   for (const other of queryEntities(world, [
     'transform',
@@ -123,14 +153,19 @@ function updateValidTargets(
     ) as Transform;
     const distance = selfTransform.position.distanceTo(otherTransform.position);
 
-    targets.push({ entity: other, distance });
+    targetCollector.push(getTargetCollectorInfo(other, distance));
   }
 
-  // Sort by distance (nearest first)
-  targets.sort((a, b) => a.distance - b.distance);
+  // Sort by distance (nearest first) - use module-level comparator
+  targetCollector.sort(compareByDistance);
 
-  // Update the valid targets list
-  targeting.validTargets = targets.map((t) => t.entity);
+  // Update the valid targets list (reuse array, just update length and contents)
+  targeting.validTargets.length = targetCollector.length;
+  for (let i = 0; i < targetCollector.length; i++) {
+    targeting.validTargets[i] = (
+      targetCollector[i] as { entity: Entity }
+    ).entity;
+  }
 
   // Update target index if current target is still valid
   if (targeting.currentTarget !== undefined) {

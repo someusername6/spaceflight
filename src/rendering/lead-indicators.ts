@@ -13,6 +13,28 @@ import { drawLeadIndicator } from './reticle-drawing';
 const leadVec3 = new THREE.Vector3();
 const leadCalcVec = new THREE.Vector3();
 
+// Pool of reusable value objects for uniqueSpeeds Map (avoid per-frame allocations)
+interface SpeedInfo {
+  name: string;
+  range: number;
+}
+const speedInfoPool: SpeedInfo[] = [];
+let speedInfoPoolIndex = 0;
+
+/** Get a SpeedInfo from pool, expanding if needed */
+function getSpeedInfo(name: string, range: number): SpeedInfo {
+  if (speedInfoPoolIndex >= speedInfoPool.length) {
+    speedInfoPool.push({ name: '', range: 0 });
+  }
+  const info = speedInfoPool[speedInfoPoolIndex++] as SpeedInfo;
+  info.name = name;
+  info.range = range;
+  return info;
+}
+
+// Reusable Map for linked weapon speeds (avoid per-frame allocations)
+const uniqueSpeeds = new Map<number, SpeedInfo>();
+
 /** Draw lead indicator(s) based on weapon mode */
 export function drawLeadIndicators(
   ctx: CanvasRenderingContext2D,
@@ -45,24 +67,77 @@ export function drawLeadIndicators(
   } else {
     // Single mode: show one lead indicator for current weapon
     const weapon = getCurrentPrimary(weapons);
-    if (!weapon || weapon.projectileSpeed <= 0) return; // Beams don't need lead
+    if (!weapon) return;
 
-    drawSingleLeadIndicator(
-      ctx,
-      camera,
-      screenWidth,
-      screenHeight,
-      playerTransform,
-      playerVelocity,
-      targetPosition,
-      targetVelocity,
-      weapon.projectileSpeed,
-      weapon.range,
-      weapon.name,
-      color,
-      cameraForward,
-      false, // Don't show label in single mode
-    );
+    if (weapon.projectileSpeed <= 0) {
+      // Beam weapon: indicator at target center (instant hit, no lead needed)
+      drawBeamIndicator(
+        ctx,
+        camera,
+        screenWidth,
+        screenHeight,
+        playerTransform,
+        targetPosition,
+        weapon.range,
+        color,
+        cameraForward,
+      );
+    } else {
+      // Projectile weapon: calculate intercept point
+      drawSingleLeadIndicator(
+        ctx,
+        camera,
+        screenWidth,
+        screenHeight,
+        playerTransform,
+        playerVelocity,
+        targetPosition,
+        targetVelocity,
+        weapon.projectileSpeed,
+        weapon.range,
+        weapon.name,
+        color,
+        cameraForward,
+        false, // Don't show label in single mode
+      );
+    }
+  }
+}
+
+/** Draw beam weapon indicator at target center (beams are instant hit, no lead needed) */
+function drawBeamIndicator(
+  ctx: CanvasRenderingContext2D,
+  camera: THREE.Camera,
+  screenWidth: number,
+  screenHeight: number,
+  playerTransform: Transform,
+  targetPosition: THREE.Vector3,
+  weaponRange: number,
+  color: string,
+  cameraForward: THREE.Vector3,
+): void {
+  // Check if target is within weapon range
+  const distance = playerTransform.position.distanceTo(targetPosition);
+  const outOfRange = distance > weaponRange;
+
+  // Check if target is in front of camera
+  leadCalcVec.copy(targetPosition).sub(camera.position);
+  const targetBehind = leadCalcVec.dot(cameraForward) < 0;
+  if (targetBehind) return;
+
+  // Project target position to screen
+  leadVec3.copy(targetPosition).project(camera);
+  const screenX = (leadVec3.x + 1) * 0.5 * screenWidth;
+  const screenY = (1 - leadVec3.y) * 0.5 * screenHeight;
+
+  // Only draw if on screen
+  if (
+    screenX >= 0 &&
+    screenX <= screenWidth &&
+    screenY >= 0 &&
+    screenY <= screenHeight
+  ) {
+    drawLeadIndicator(ctx, screenX, screenY, color, outOfRange, undefined);
   }
 }
 
@@ -133,15 +208,40 @@ function drawLinkedLeadIndicators(
   color: string,
   cameraForward: THREE.Vector3,
 ): void {
-  // Collect unique projectile speeds and their weapon names
-  // (beams have speed 0 and don't need lead indicators)
-  const uniqueSpeeds = new Map<number, { name: string; range: number }>();
+  // Reset pool index and clear Map (avoid per-frame allocations)
+  speedInfoPoolIndex = 0;
+  uniqueSpeeds.clear();
+
+  // Track beam with longest range for beam indicator
+  let longestBeamRange = 0;
 
   for (const w of weapons.weapons) {
-    if (w.projectileSpeed <= 0) continue; // Skip beams
-    if (!uniqueSpeeds.has(w.projectileSpeed)) {
-      uniqueSpeeds.set(w.projectileSpeed, { name: w.name, range: w.range });
+    if (w.projectileSpeed <= 0) {
+      // Beam weapon: track longest range for single beam indicator
+      if (w.range > longestBeamRange) {
+        longestBeamRange = w.range;
+      }
+    } else {
+      // Projectile weapon: collect unique speeds (use pool to avoid allocation)
+      if (!uniqueSpeeds.has(w.projectileSpeed)) {
+        uniqueSpeeds.set(w.projectileSpeed, getSpeedInfo(w.name, w.range));
+      }
     }
+  }
+
+  // Draw beam indicator if any beams equipped (uses longest range)
+  if (longestBeamRange > 0) {
+    drawBeamIndicator(
+      ctx,
+      camera,
+      screenWidth,
+      screenHeight,
+      playerTransform,
+      targetPosition,
+      longestBeamRange,
+      color,
+      cameraForward,
+    );
   }
 
   // If only one unique speed, don't show labels

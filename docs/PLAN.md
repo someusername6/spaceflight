@@ -204,7 +204,7 @@ Finite State Machine design:
 - `PURSUE` - Close distance to target
 - `ENGAGE` - Maintain distance, fire weapons
 - `EVADE` - Break away when threatened
-- `PROTECT` - Position between threat and protectee
+- `PROTECT` - Aggressively engage threats to protectee, driving them away
 - `REGROUP` - Large loop, then re-engage
 - `IDLE` - No current objective
 

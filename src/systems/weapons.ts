@@ -12,7 +12,11 @@ import { addHeat } from '../components/heat';
 import type { PlayerControlled } from '../components/player';
 import type { Targeting } from '../components/targeting';
 import type { Transform } from '../components/transform';
-import type { PrimaryWeapons, SecondaryWeapons } from '../components/weapons';
+import type {
+  PrimaryWeapon,
+  PrimaryWeapons,
+  SecondaryWeapons,
+} from '../components/weapons';
 import {
   cycleNextPrimary,
   cyclePrevPrimary,
@@ -27,6 +31,9 @@ import {
   spawnProjectileWithAimError,
 } from './weapon-spawning';
 import { handleAIPrimaryWeapons, handleAISecondaryWeapons } from './weapons-ai';
+
+// Reusable array for projectile weapons in linked fire (avoid per-frame allocations)
+const projectileWeaponsCollector: PrimaryWeapon[] = [];
 
 /** Weapon system - handles firing and heat */
 export function weaponSystem(world: World, dt: number): void {
@@ -251,32 +258,40 @@ export function fireLinkedPrimaries(
   gameTime: number,
   aimError?: AimError,
 ): void {
+  // Clear and reuse collector (avoid per-frame allocations)
+  projectileWeaponsCollector.length = 0;
+
   // Find projectile weapons (non-beam) that can fire
-  const projectileWeapons = weapons.weapons.filter(
-    (w) => w.category !== 'beam' && (w.ammo === undefined || w.ammo > 0),
-  );
+  for (const w of weapons.weapons) {
+    if (w.category !== 'beam' && (w.ammo === undefined || w.ammo > 0)) {
+      projectileWeaponsCollector.push(w);
+    }
+  }
 
-  if (projectileWeapons.length === 0) return;
+  if (projectileWeaponsCollector.length === 0) return;
 
-  // Calculate slowest fire rate among projectile weapons
-  const slowestRate = Math.max(...projectileWeapons.map((w) => w.fireRate));
+  // Calculate slowest fire rate among projectile weapons (avoid .map() allocation)
+  let slowestRate = 0;
+  for (const w of projectileWeaponsCollector) {
+    if (w.fireRate > slowestRate) slowestRate = w.fireRate;
+  }
 
   // Check if enough time has passed
   const timeSinceFire = gameTime - weapons.lastFireTime;
   if (timeSinceFire < slowestRate) return;
 
-  // Calculate total heat for all weapons
-  const totalHeat = projectileWeapons.reduce(
-    (sum, w) => sum + w.heatPerShot,
-    0,
-  );
+  // Calculate total heat for all weapons (avoid .reduce() allocation)
+  let totalHeat = 0;
+  for (const w of projectileWeaponsCollector) {
+    totalHeat += w.heatPerShot;
+  }
 
   // Check if we can add all heat
   if (!addHeat(heat, totalHeat)) return;
 
   // Fire all projectile weapons (with optional aim error for AI)
   weapons.lastFireTime = gameTime;
-  for (const weapon of projectileWeapons) {
+  for (const weapon of projectileWeaponsCollector) {
     if (weapon.ammo !== undefined) weapon.ammo--;
     spawnProjectileWithAimError(
       world,

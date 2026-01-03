@@ -9,6 +9,13 @@ import * as THREE from 'three';
 import { type PRNGState, random, randomRange } from '../core/prng';
 import type { ComponentBase } from '../core/types';
 
+// Reusable objects for applyAimError (avoid per-call allocations)
+const tempResult = new THREE.Vector3();
+const pitchAxis = new THREE.Vector3(1, 0, 0);
+const yawAxis = new THREE.Vector3(0, 1, 0);
+const pitchQuat = new THREE.Quaternion();
+const yawQuat = new THREE.Quaternion();
+
 export interface AimError extends ComponentBase {
   readonly type: 'aimError';
   /** Current aim offset in radians (pitch, yaw) */
@@ -23,6 +30,18 @@ export interface AimError extends ComponentBase {
   driftTimer: number;
 }
 
+/** Create a random normalized direction Vector2 (for initialization only) */
+function createRandomDirection(prng: PRNGState): THREE.Vector2 {
+  const angle = random(prng) * Math.PI * 2;
+  return new THREE.Vector2(Math.cos(angle), Math.sin(angle));
+}
+
+/** Set a random normalized direction for drift (updates vector in place, no allocation) */
+function setRandomDirection(target: THREE.Vector2, prng: PRNGState): void {
+  const angle = random(prng) * Math.PI * 2;
+  target.set(Math.cos(angle), Math.sin(angle));
+}
+
 /** Creates an AimError component with default values */
 export function createAimError(
   prng: PRNGState,
@@ -34,15 +53,9 @@ export function createAimError(
     offset: new THREE.Vector2(0, 0),
     maxError,
     driftSpeed,
-    driftDirection: randomDirection(prng),
+    driftDirection: createRandomDirection(prng),
     driftTimer: randomDriftTime(prng),
   };
-}
-
-/** Get a random normalized direction for drift */
-function randomDirection(prng: PRNGState): THREE.Vector2 {
-  const angle = random(prng) * Math.PI * 2;
-  return new THREE.Vector2(Math.cos(angle), Math.sin(angle));
 }
 
 /** Get random time until next drift direction change */
@@ -59,7 +72,7 @@ export function updateAimError(
   // Update drift timer
   error.driftTimer -= dt;
   if (error.driftTimer <= 0) {
-    error.driftDirection = randomDirection(prng);
+    setRandomDirection(error.driftDirection, prng);
     error.driftTimer = randomDriftTime(prng);
   }
 
@@ -74,23 +87,17 @@ export function updateAimError(
   }
 }
 
-/** Apply aim error to a direction vector */
+/** Apply aim error to a direction vector (returns reusable vector - clone if storing) */
 export function applyAimError(
   direction: THREE.Vector3,
   error: AimError,
 ): THREE.Vector3 {
-  const result = direction.clone();
+  tempResult.copy(direction);
 
-  // Create rotation from error offset
-  const pitchQuat = new THREE.Quaternion().setFromAxisAngle(
-    new THREE.Vector3(1, 0, 0),
-    error.offset.x,
-  );
-  const yawQuat = new THREE.Quaternion().setFromAxisAngle(
-    new THREE.Vector3(0, 1, 0),
-    error.offset.y,
-  );
+  // Create rotation from error offset using reusable quaternions
+  pitchQuat.setFromAxisAngle(pitchAxis, error.offset.x);
+  yawQuat.setFromAxisAngle(yawAxis, error.offset.y);
 
-  result.applyQuaternion(pitchQuat).applyQuaternion(yawQuat);
-  return result.normalize();
+  tempResult.applyQuaternion(pitchQuat).applyQuaternion(yawQuat);
+  return tempResult.normalize();
 }

@@ -28,6 +28,9 @@ export function missionSystem(world: World, _dt: number): void {
   }
 
   // Check for no enemies remaining (victory)
+  // Note: Dying enemies (currently exploding) are intentionally counted until
+  // they are fully removed by cleanup system. This ensures victory only triggers
+  // after all explosion effects complete, providing better visual feedback.
   let enemyCount = 0;
   for (const entity of queryEntities(world, ['faction', 'health'])) {
     // Query guarantees this component exists

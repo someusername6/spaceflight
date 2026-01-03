@@ -16,7 +16,12 @@ export interface ComponentBase {
 /** System function signature - pure function operating on world state */
 export type SystemFn = (world: World, dt: number) => void;
 
-/** Component type names for querying */
+/**
+ * Component type names for querying.
+ * Note: Using `string` instead of a literal union type is a known limitation.
+ * A future improvement could define: type ComponentType = 'transform' | 'health' | ...
+ * This would provide compile-time checking but requires updating all component files.
+ */
 export type ComponentType = string;
 
 /** Map of component type to component data for an entity */
@@ -40,6 +45,14 @@ export interface SystemState {
       cycleWeaponPrev: boolean;
       fireSecondary: boolean;
       toggleLink: boolean;
+    };
+  };
+  /** Targeting system state */
+  targeting: {
+    prevInput: {
+      cycleTargetNext: boolean;
+      cycleTargetPrev: boolean;
+      targetNearest: boolean;
     };
   };
   /** Beam system state - stores active beams for renderer */
@@ -102,7 +115,6 @@ export interface InputState {
   cycleTargetNext: boolean;
   cycleTargetPrev: boolean;
   targetNearest: boolean;
-  fireDecoy: boolean;
   toggleLink: boolean;
 }
 
@@ -125,7 +137,6 @@ export function createInputState(): InputState {
     cycleTargetNext: false,
     cycleTargetPrev: false,
     targetNearest: false,
-    fireDecoy: false,
     toggleLink: false,
   };
 }

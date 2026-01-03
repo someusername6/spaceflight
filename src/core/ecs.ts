@@ -35,6 +35,13 @@ export function createWorld(seed: number = 0): World {
           toggleLink: false,
         },
       },
+      targeting: {
+        prevInput: {
+          cycleTargetNext: false,
+          cycleTargetPrev: false,
+          targetNearest: false,
+        },
+      },
       beams: {
         activeBeams: new Map(),
       },
@@ -108,7 +115,7 @@ export function hasComponent(
   return entityComponents.has(type);
 }
 
-/** Checks if an entity has all specified components */
+/** Checks if an entity has all specified components (loop instead of .every() to avoid callback) */
 export function hasComponents(
   world: World,
   entity: Entity,
@@ -116,7 +123,10 @@ export function hasComponents(
 ): boolean {
   const entityComponents = world.components.get(entity);
   if (!entityComponents) return false;
-  return types.every((type) => entityComponents.has(type));
+  for (let i = 0; i < types.length; i++) {
+    if (!entityComponents.has(types[i] as ComponentType)) return false;
+  }
+  return true;
 }
 
 /** Removes a component from an entity */

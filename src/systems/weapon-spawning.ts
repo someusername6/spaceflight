@@ -2,6 +2,7 @@
  * Weapon Spawning - Creates projectile and missile entities.
  */
 
+import { Vector3 } from 'three';
 import type { AimError } from '../components/aim-error';
 import { applyAimError } from '../components/aim-error';
 import type { FactionComponent } from '../components/faction';
@@ -24,6 +25,9 @@ const MISSILE_SPAWN_OFFSET = 4;
 const PROJECTILE_RADIUS = 0.5;
 const MISSILE_RADIUS = 1.0;
 
+// Reusable spawn position vector (avoid per-spawn allocations)
+const spawnPos = new Vector3();
+
 /** Spawn a projectile entity */
 export function spawnProjectile(
   world: World,
@@ -33,8 +37,8 @@ export function spawnProjectile(
   ownerFaction: FactionComponent | undefined,
 ): void {
   const forward = getForward(ownerTransform);
-  const spawnPos = ownerTransform.position
-    .clone()
+  spawnPos
+    .copy(ownerTransform.position)
     .addScaledVector(forward, PROJECTILE_SPAWN_OFFSET);
 
   const projectile = createEntity(world);
@@ -73,8 +77,8 @@ export function spawnProjectileWithAimError(
   aimError: AimError | undefined,
 ): void {
   const forward = getForward(ownerTransform);
-  const spawnPos = ownerTransform.position
-    .clone()
+  spawnPos
+    .copy(ownerTransform.position)
     .addScaledVector(forward, PROJECTILE_SPAWN_OFFSET);
 
   // Apply aim error if present, otherwise use forward direction
@@ -116,8 +120,8 @@ export function spawnMissile(
   target: Entity | undefined,
 ): void {
   const forward = getForward(ownerTransform);
-  const spawnPos = ownerTransform.position
-    .clone()
+  spawnPos
+    .copy(ownerTransform.position)
     .addScaledVector(forward, MISSILE_SPAWN_OFFSET);
 
   const missile = createEntity(world);

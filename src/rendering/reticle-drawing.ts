@@ -12,6 +12,8 @@ export const FONT_SIZE = 18;
 export const FONT_FAMILY = '"Lucida Console", "Consolas", monospace';
 export const EDGE_MARGIN = 12;
 export const LEAD_INDICATOR_SIZE = 6;
+export const CENTER_CROSSHAIR_SIZE = 8;
+export const CENTER_CROSSHAIR_GAP = 3;
 
 /** Draw text with black outline for readability (uses strokeText for efficiency) */
 export function drawOutlinedText(
@@ -33,6 +35,36 @@ export function drawOutlinedText(
   // Draw colored text on top
   ctx.fillStyle = color;
   ctx.fillText(upperText, x, y);
+}
+
+/** Draw center crosshair (fixed aiming point at screen center) */
+export function drawCenterCrosshair(
+  ctx: CanvasRenderingContext2D,
+  screenWidth: number,
+  screenHeight: number,
+): void {
+  const centerX = screenWidth / 2;
+  const centerY = screenHeight / 2;
+  const size = CENTER_CROSSHAIR_SIZE;
+  const gap = CENTER_CROSSHAIR_GAP;
+
+  ctx.strokeStyle = '#00ff00';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+
+  // Horizontal lines with gap in center
+  ctx.moveTo(centerX - size, centerY);
+  ctx.lineTo(centerX - gap, centerY);
+  ctx.moveTo(centerX + gap, centerY);
+  ctx.lineTo(centerX + size, centerY);
+
+  // Vertical lines with gap in center
+  ctx.moveTo(centerX, centerY - size);
+  ctx.lineTo(centerX, centerY - gap);
+  ctx.moveTo(centerX, centerY + gap);
+  ctx.lineTo(centerX, centerY + size);
+
+  ctx.stroke();
 }
 
 /** Draw on-screen reticle with corner brackets */
