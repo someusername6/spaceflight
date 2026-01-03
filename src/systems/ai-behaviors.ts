@@ -31,6 +31,8 @@ const RECOVER_SHIELDS_PERCENT = 0.5;  // 50% - exit regroup
 const RECOVER_HEAT_PERCENT = 0.5;     // 50% - exit regroup
 const EVADE_COOLDOWN = 5.0;           // 5s before can exit evade
 const REGROUP_MIN_TIME = 3.0;         // Minimum time in regroup
+const PROTECT_CHASE_RANGE = 400;      // Max distance from protectee to chase threats
+const PROTECT_PATROL_RANGE = 200;     // Distance to patrol around protectee
 
 /** Check if AI should evade (low shields) */
 export function shouldEvade(shields: Shields | undefined): boolean {
@@ -149,8 +151,7 @@ export function updateProtect(
   const threat = findNearestEnemy(world, ai.protectTarget, faction);
 
   // If too far from protectee, return instead of chasing threats
-  const MAX_PROTECT_RANGE = 400;
-  if (threat && distToProtectee <= MAX_PROTECT_RANGE) {
+  if (threat && distToProtectee <= PROTECT_CHASE_RANGE) {
     ai.target = threat;
     const threatTransform = getComponent<Transform>(world, threat, 'transform');
     if (threatTransform) {
@@ -165,7 +166,7 @@ export function updateProtect(
     }
   } else {
     // No threats or too far from protectee - return to protectee
-    if (distToProtectee > 200) {
+    if (distToProtectee > PROTECT_PATROL_RANGE) {
       // Move closer to protectee
       toTarget.copy(protecteeTransform.position).sub(transform.position).normalize();
       turnToward(transform, physics, toTarget, dt);
