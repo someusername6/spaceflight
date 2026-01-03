@@ -10,6 +10,12 @@ import type { Shields } from '../components/shields';
 import type { Transform } from '../components/transform';
 import { findEntity, getComponent } from '../core/ecs';
 import type { Entity, World } from '../core/types';
+import {
+  type AlliedDisplay,
+  createAlliedDisplay,
+  getAlliedDisplayStyles,
+  updateAlliedDisplay,
+} from './allied-hud';
 import { getHUDStyles, HUD_STYLE_ID } from './hud-styles';
 import {
   createRadar,
@@ -23,6 +29,12 @@ import {
   resizeReticleCanvas,
   updateReticles,
 } from './reticles';
+import {
+  createTargetStats,
+  getTargetStatsStyles,
+  type TargetStatsDisplay,
+  updateTargetStats,
+} from './target-stats';
 import {
   createWeaponDisplay,
   getWeaponDisplayStyles,
@@ -55,6 +67,10 @@ export interface HUD {
   weaponDisplay: WeaponDisplay;
   // Radar display (bottom-left)
   radarDisplay: RadarDisplay;
+  // Target stats (top-right)
+  targetStats: TargetStatsDisplay;
+  // Allied display (top-left)
+  alliedDisplay: AlliedDisplay;
   // Cleanup function
   dispose: () => void;
 }
@@ -106,7 +122,11 @@ export function createHUD(parent: HTMLElement): HUD {
     const style = document.createElement('style');
     style.id = HUD_STYLE_ID;
     style.textContent =
-      getHUDStyles() + getWeaponDisplayStyles() + getRadarStyles();
+      getHUDStyles() +
+      getWeaponDisplayStyles() +
+      getRadarStyles() +
+      getTargetStatsStyles() +
+      getAlliedDisplayStyles();
     document.head.appendChild(style);
   }
   parent.appendChild(container);
@@ -119,6 +139,12 @@ export function createHUD(parent: HTMLElement): HUD {
 
   // Create radar display (bottom-left)
   const radarDisplay = createRadar(container);
+
+  // Create target stats (top-right)
+  const targetStats = createTargetStats(container);
+
+  // Create allied display (top-left)
+  const alliedDisplay = createAlliedDisplay(container);
 
   // Handle resize
   const onResize = () => {
@@ -167,6 +193,8 @@ export function createHUD(parent: HTMLElement): HUD {
     reticleCanvas,
     weaponDisplay,
     radarDisplay,
+    targetStats,
+    alliedDisplay,
     dispose,
   };
 }
@@ -186,6 +214,8 @@ export function updateHUD(
   updatePlayerStatus(hud, world, player);
   updateWeaponDisplay(hud.weaponDisplay, world, player);
   updateRadar(hud.radarDisplay, world, player);
+  updateTargetStats(hud.targetStats, world, player);
+  updateAlliedDisplay(hud.alliedDisplay, world, player);
 
   const playerTransform = getComponent<Transform>(world, player, 'transform');
   const playerPhysics = getComponent<Physics>(world, player, 'physics');

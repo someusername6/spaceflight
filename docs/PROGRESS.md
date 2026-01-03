@@ -1,7 +1,7 @@
 # Implementation Progress
 
 Tracks actual implementation status with file references as evidence.
-**Last updated:** 2026-01-03 (Damage-driven hit effects)
+**Last updated:** 2026-01-03 (Allied health bars + Target stats panel)
 
 ---
 
@@ -80,8 +80,8 @@ Tracks actual implementation status with file references as evidence.
 - [x] Lead indicator → `src/rendering/lead-calculation.ts:16-68` (intercept calculation), `src/rendering/lead-indicators.ts` (multiple indicators in linked mode, out-of-range styling)
 - [x] Lock-on indicator (visual) → `src/rendering/reticle-drawing.ts:99-132`, `src/rendering/reticles.ts:201-205`
 - [x] Weapon banks display → `src/rendering/weapon-display.ts`, `weapon-display-utils.ts`, `weapon-display-styles.ts`, `weapon-display-secondary.ts` (ammo, heat, lock status for all secondaries, cooldown indicator, keyboard hints, link state [V])
-- [ ] Allied health bars
-- [ ] Target camera + stats
+- [x] Allied health bars → `src/rendering/allied-hud.ts` (wingman status, hull/shield bars, distance, critical state pulsing)
+- [x] Target stats panel → `src/rendering/target-stats.ts` (callsign, ship type, hull/shield bars, distance, closure rate/aspect)
 - [x] 2D radar → `src/rendering/radar.ts` (6DOF ship-relative, logarithmic scaling, faction colors)
 
 ### 3.7 Visual Effects
@@ -120,7 +120,7 @@ Tracks actual implementation status with file references as evidence.
 | 3.3 Shield System | 3 | 3 | 100% |
 | 3.4 AI Implementation | 12 | 12 | 100% |
 | 3.5 Targeting System | 4 | 4 | 100% |
-| 3.6 HUD Implementation | 11 | 13 | 85% |
+| 3.6 HUD Implementation | 13 | 13 | 100% |
 | 3.7 Visual Effects | 14 | 14 | 100% |
 | 3.8 Dust Particles | 1 | 1 | 100% |
-| **Phase 3 Total** | **59** | **61** | **97%** |
+| **Phase 3 Total** | **61** | **61** | **100%** |

@@ -13,6 +13,10 @@ import { createPhysics } from '../components/physics';
 import { createPlayerControlled } from '../components/player';
 import { createShieldHit } from '../components/shield-hit';
 import { createShields } from '../components/shields';
+import {
+  createShipIdentity,
+  generateCallsign,
+} from '../components/ship-identity';
 import { createTargeting } from '../components/targeting';
 import { createTransform } from '../components/transform';
 import {
@@ -123,6 +127,7 @@ export function createPlayerShip(
   addComponent(world, entity, createShieldHit());
   addComponent(world, entity, createFaction(Faction.Player));
   addComponent(world, entity, createPlayerControlled());
+  addComponent(world, entity, createShipIdentity(archetype, 'Alpha 1'));
   addComponent(world, entity, createTargeting());
   addComponent(world, entity, createHeat(stats.maxHeat, stats.coolingRate));
   addComponent(world, entity, createPrimaryWeapons(stats.primaryWeapons));
@@ -185,6 +190,12 @@ export function createAIShip(
   );
   addComponent(world, entity, createShieldHit());
   addComponent(world, entity, createFaction(faction));
+
+  // Generate callsign based on faction
+  const callsignPrefix = faction === Faction.Player ? 'Alpha' : 'Bandit';
+  const callsign = generateCallsign(callsignPrefix);
+  addComponent(world, entity, createShipIdentity(archetype, callsign));
+
   addComponent(world, entity, createAIControlled());
   addComponent(world, entity, createAimError(world.prng)); // AI has imperfect aim
   addComponent(world, entity, createHeat(stats.maxHeat, stats.coolingRate));
