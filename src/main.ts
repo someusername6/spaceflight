@@ -93,7 +93,7 @@ function setupSlice1Scene(game: ReturnType<typeof createGame>): void {
   // Create player ship at origin
   createPlayerShip(world, 'interceptor', new Vector3(0, 0, 0));
 
-  // Create some enemies for testing targeting
+  // Create idle enemies for testing (AI disabled)
   createEnemyShip(world, 'scout', new Vector3(100, 20, -200));
   createEnemyShip(world, 'scout', new Vector3(-80, -10, -150));
   createEnemyShip(world, 'interceptor', new Vector3(50, 30, -300));

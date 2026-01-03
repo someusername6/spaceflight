@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "check-size": "bash scripts/build/check-file-size.sh",
     "sim": "node scripts/simulation/run-all.mjs",
-    "sim:dust": "node scripts/simulation/dust.mjs"
+    "sim:dust": "node scripts/simulation/dust.mjs",
+    "test": "npx tsx scripts/test-game.mjs"
   },
   "dependencies": {
     "canvas": "^3.2.0",

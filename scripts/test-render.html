@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Render Test</title>
+  <style>
+    body { margin: 0; background: #000; }
+    #info { position: absolute; top: 10px; left: 10px; color: #fff; font-family: monospace; }
+  </style>
+</head>
+<body>
+  <div id="info">Loading...</div>
+  <script type="module">
+    import * as THREE from 'three';
+
+    // Basic scene setup
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x111122);
+
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 10000);
+    camera.position.set(0, 5, 20);
+    camera.lookAt(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // Lighting
+    const ambient = new THREE.AmbientLight(0x404040, 0.5);
+    scene.add(ambient);
+    const directional = new THREE.DirectionalLight(0xffffff, 1);
+    directional.position.set(1, 1, 1);
+    scene.add(directional);
+
+    // Create ship mesh (same as renderer.ts)
+    const geometry = new THREE.ConeGeometry(2, 8, 4);
+    geometry.rotateX(Math.PI / 2);
+    const material = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
+    const ship = new THREE.Mesh(geometry, material);
+    scene.add(ship);
+
+    // Add axis helper at origin
+    const axisHelper = new THREE.AxesHelper(10);
+    scene.add(axisHelper);
+
+    // Add grid
+    const grid = new THREE.GridHelper(100, 20, 0x444444, 0x222222);
+    scene.add(grid);
+
+    const info = document.getElementById('info');
+    info.textContent = `Ship at (0,0,0), Camera at (0,5,20)
+    Green ship should be visible in center.
+    Red=X, Green=Y, Blue=Z axes visible.`;
+
+    function animate() {
+      requestAnimationFrame(animate);
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>

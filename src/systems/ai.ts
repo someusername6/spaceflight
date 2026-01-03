@@ -9,7 +9,7 @@ import type { World, Entity } from '../core/types';
 import { queryEntities, getComponent } from '../core/ecs';
 import type { Transform } from '../components/transform';
 import type { Physics } from '../components/physics';
-import { AIState, type AIControlled } from '../components/ai';
+import { type AIControlled } from '../components/ai';
 import { Faction, type FactionComponent, areEnemies } from '../components/faction';
 
 // Reusable vectors
@@ -21,46 +21,14 @@ const DEG_TO_RAD = Math.PI / 180;
 
 /** AI system - updates AI state and movement */
 export function aiSystem(world: World, dt: number): void {
-  for (const entity of queryEntities(world, ['aiControlled', 'transform', 'physics'])) {
-    const ai = getComponent<AIControlled>(world, entity, 'aiControlled')!;
-    const transform = getComponent<Transform>(world, entity, 'transform')!;
-    const physics = getComponent<Physics>(world, entity, 'physics')!;
-    const faction = getComponent<FactionComponent>(world, entity, 'faction');
-
-    ai.stateTimer += dt;
-
-    // Find target if none
-    if (ai.target === null) {
-      ai.target = findNearestEnemy(world, entity, faction?.faction ?? Faction.Enemy);
-    }
-
-    // State machine (Slice 1: only IDLE and PURSUE)
-    switch (ai.state) {
-      case AIState.Idle:
-        if (ai.target !== null) {
-          ai.state = AIState.Pursue;
-          ai.stateTimer = 0;
-        }
-        break;
-
-      case AIState.Pursue:
-        if (ai.target === null) {
-          ai.state = AIState.Idle;
-          ai.stateTimer = 0;
-        } else {
-          pursueTarget(world, entity, ai, transform, physics, dt);
-        }
-        break;
-
-      // Other states will be added in Slice 2
-      default:
-        ai.state = AIState.Idle;
-    }
-  }
+  // AI disabled for testing - enemies stay idle
+  // TODO: Re-enable AI when ready for combat testing
+  void world;
+  void dt;
 }
 
 /** Find the nearest enemy entity */
-function findNearestEnemy(
+export function findNearestEnemy(
   world: World,
   self: Entity,
   selfFaction: Faction
@@ -90,7 +58,7 @@ function findNearestEnemy(
 }
 
 /** Pursue behavior - turn toward target and accelerate */
-function pursueTarget(
+export function pursueTarget(
   world: World,
   _entity: Entity,
   ai: AIControlled,
