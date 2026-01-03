@@ -20,6 +20,7 @@ const toTarget = new Vector3();
 const forward = new Vector3();
 const rotationAxis = new Vector3();
 const deltaQuat = new Quaternion();
+const interceptDir = new Vector3(); // For Protect state
 
 const DEG_TO_RAD = Math.PI / 180;
 
@@ -60,10 +61,17 @@ function turnToward(transform: Transform, physics: Physics, direction: Vector3, 
   if (dot < 0.999) {
     rotationAxis.crossVectors(forward, direction);
     const axisLengthSq = rotationAxis.lengthSq();
+
     if (axisLengthSq > 0.0001) {
       rotationAxis.multiplyScalar(1 / Math.sqrt(axisLengthSq));
       const angle = Math.acos(Math.max(-1, Math.min(1, dot)));
       deltaQuat.setFromAxisAngle(rotationAxis, Math.min(angle, turnSpeed));
+      transform.rotation.premultiply(deltaQuat);
+      transform.rotation.normalize();
+    } else if (dot < -0.9) {
+      // Anti-parallel case: pick arbitrary perpendicular axis (up)
+      rotationAxis.set(0, 1, 0);
+      deltaQuat.setFromAxisAngle(rotationAxis, turnSpeed);
       transform.rotation.premultiply(deltaQuat);
       transform.rotation.normalize();
     }
@@ -80,8 +88,9 @@ export function updateEvade(
   shields: Shields | undefined,
   dt: number
 ): void {
-  // Exit condition: shields recovered and cooldown expired
-  if (ai.stateTimer >= EVADE_COOLDOWN && shields && shields.current / shields.max >= LOW_SHIELDS_PERCENT) {
+  // Exit condition: cooldown expired and shields recovered (or no shields)
+  const shieldsRecovered = !shields || shields.current / shields.max >= LOW_SHIELDS_PERCENT;
+  if (ai.stateTimer >= EVADE_COOLDOWN && shieldsRecovered) {
     ai.state = ai.target ? AIState.Pursue : AIState.Idle;
     ai.stateTimer = 0;
     return;
@@ -144,10 +153,10 @@ export function updateProtect(
       // Offset slightly toward threat
       toTarget.lerp(threatTransform.position, 0.3);
 
-      const dirToIntercept = toTarget.clone().sub(transform.position);
-      if (dirToIntercept.lengthSq() > 100) { // More than 10m away from intercept point
-        dirToIntercept.normalize();
-        turnToward(transform, physics, dirToIntercept, dt);
+      interceptDir.copy(toTarget).sub(transform.position);
+      if (interceptDir.lengthSq() > 100) { // More than 10m away from intercept point
+        interceptDir.normalize();
+        turnToward(transform, physics, interceptDir, dt);
         physics.currentSpeed = Math.min(physics.currentSpeed + physics.acceleration * dt, physics.maxSpeed);
       } else {
         // At intercept point - engage the threat
@@ -200,5 +209,8 @@ export function updateRegroup(
   const targetSpeed = physics.maxSpeed * 0.7;
   if (physics.currentSpeed < targetSpeed) {
     physics.currentSpeed = Math.min(physics.currentSpeed + physics.acceleration * dt, targetSpeed);
+  } else if (physics.currentSpeed > targetSpeed) {
+    // Decelerate if going too fast
+    physics.currentSpeed = Math.max(physics.currentSpeed - physics.acceleration * dt, targetSpeed);
   }
 }
