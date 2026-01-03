@@ -50,9 +50,9 @@ Tracks actual implementation status with file references as evidence.
 - [x] Aim error component → `src/components/aim-error.ts:11-23`
 - [x] Aim error system → `src/systems/aim-error.ts:11-14`
 - [x] AI system (Idle/Pursue/Engage) → `src/systems/ai.ts:58-110`
-- [x] AI Evade state → `src/systems/ai-behaviors.ts:74-103` (breaks away, erratic movement)
-- [x] AI Protect state → `src/systems/ai-behaviors.ts:106-155` (positions between ally and threat)
-- [x] AI Regroup state → `src/systems/ai-behaviors.ts:158-196` (loops away to recover)
+- [x] AI Evade state → `src/systems/ai-behaviors.ts:82-121` (breaks away, ship-relative barrel roll)
+- [x] AI Protect state → `src/systems/ai-behaviors.ts:122-170` (aggressively engages threats to protectee)
+- [x] AI Regroup state → `src/systems/ai-behaviors.ts:174-217` (ship-relative loop to recover)
 - [x] AI primary weapon firing → `src/systems/weapons.ts:94-114` (with aim error, always linked)
 - [ ] AI missile firing policy
 - [x] Max-3-on-human constraint → `src/systems/ai.ts:41-50`
