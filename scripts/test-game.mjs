@@ -284,6 +284,34 @@ test('Find decoy returns undefined when no decoys', () => {
   assert(found === undefined, 'Should return undefined when no decoys');
 });
 
+// Test: Missile resistedDecoys prevents re-roll
+test('Missile resistedDecoys tracks resisted decoys', () => {
+  const direction = new THREE.Vector3(0, 0, -1);
+  const missile = createMissile(1, 2, 60, 400, 90, 2000, direction);
+
+  // Decoy entity IDs (simulated)
+  const decoy1 = 10;
+  const decoy2 = 20;
+
+  // Initially no decoys resisted
+  assert(
+    missile.resistedDecoys.size === 0,
+    'Should start with no resisted decoys',
+  );
+  assert(!missile.resistedDecoys.has(decoy1), 'Decoy 1 not resisted initially');
+
+  // Add a resisted decoy
+  missile.resistedDecoys.add(decoy1);
+  assert(missile.resistedDecoys.has(decoy1), 'Decoy 1 should be tracked');
+  assert(!missile.resistedDecoys.has(decoy2), 'Decoy 2 not yet resisted');
+
+  // Add another resisted decoy
+  missile.resistedDecoys.add(decoy2);
+  assert(missile.resistedDecoys.size === 2, 'Should have 2 resisted decoys');
+  assert(missile.resistedDecoys.has(decoy1), 'Decoy 1 still tracked');
+  assert(missile.resistedDecoys.has(decoy2), 'Decoy 2 now tracked');
+});
+
 // Summary
 console.log('');
 console.log(`Tests: ${passed} passed, ${failed} failed`);

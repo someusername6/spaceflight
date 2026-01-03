@@ -29,6 +29,7 @@ export interface Missile extends ComponentBase {
   aoeRadius: number; // Area of effect radius (0 = no AoE)
   isNuke: boolean; // For visual effects (larger explosion)
   missileType: MissileType; // Visual appearance type
+  resistedDecoys: Set<Entity>; // Decoys this missile already resisted (no re-roll)
 }
 
 /** Creates a Missile component */
@@ -57,6 +58,7 @@ export function createMissile(
     aoeRadius,
     isNuke,
     missileType,
+    resistedDecoys: new Set(),
   };
 }
 

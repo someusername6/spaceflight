@@ -74,23 +74,3 @@ export function decoySystem(world: World, dt: number): void {
     removeEntity(world, entity);
   }
 }
-
-/** Get all active decoys (for missile seduction logic) */
-export function getActiveDecoys(
-  world: World,
-): Array<{ entity: Entity; transform: Transform; decoy: Decoy }> {
-  const decoys: Array<{ entity: Entity; transform: Transform; decoy: Decoy }> =
-    [];
-
-  for (const entity of queryEntities(world, ['decoy', 'transform'])) {
-    const decoy = getComponent<Decoy>(world, entity, 'decoy') as Decoy;
-    const transform = getComponent<Transform>(
-      world,
-      entity,
-      'transform',
-    ) as Transform;
-    decoys.push({ entity, transform, decoy });
-  }
-
-  return decoys;
-}
