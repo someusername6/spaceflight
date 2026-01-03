@@ -8,6 +8,15 @@ import * as THREE from 'three';
 import { createMT } from '../core/mersenne-twister';
 import { noise4DGLSL } from './shaders/noise4d.glsl';
 import { createStarGeometry } from './skybox-stars';
+import {
+  RNG_OFFSET_ROTATIONS, RNG_OFFSET_NEBULAE, RNG_OFFSET_STAR_HALOS, RNG_OFFSET_SUN,
+  NEBULA_MAX_COUNT, NEBULA_SCALE_MIN, NEBULA_SCALE_MAX,
+  NEBULA_INTENSITY_MIN, NEBULA_INTENSITY_MAX, NEBULA_FALLOFF_MIN, NEBULA_FALLOFF_MAX,
+  NEBULA_OFFSET_RANGE, NEBULA_CONTINUE_CHANCE,
+  HALO_MAX_COUNT, HALO_FALLOFF_BASE, HALO_CONTINUE_CHANCE,
+  SUN_SIZE_MIN, SUN_SIZE_MAX, SUN_FALLOFF_MIN, SUN_FALLOFF_MAX,
+  ROTATION_MAX_LAYERS, ROTATION_CONTINUE_CHANCE,
+} from './skybox-constants';
 
 export interface SkyboxConfig {
   seed: string;
@@ -38,15 +47,9 @@ float noise(vec3 p) {
 }
 
 float nebula(vec3 p) {
-  const int steps = 6;
-  float scale = pow(2.0, float(steps)); // 64.0
-  vec3 displace = vec3(0.0);
-  for (int i = 0; i < steps; i++) {
-    displace = vec3(
-      noise(p.xyz * scale + displace),
-      noise(p.yzx * scale + displace),
-      noise(p.zxy * scale + displace)
-    );
+  float scale = 64.0; vec3 displace = vec3(0.0);
+  for (int i = 0; i < 6; i++) {
+    displace = vec3(noise(p.xyz * scale + displace), noise(p.yzx * scale + displace), noise(p.zxy * scale + displace));
     scale *= 0.5;
   }
   return noise(p * scale + displace);
@@ -86,77 +89,64 @@ void main() {
 }
 `;
 
-interface SkyboxParams {
-  nebulae: Array<{
-    color: THREE.Vector3;
-    offset: THREE.Vector3;
-    scale: number;
-    intensity: number;
-    falloff: number;
-  }>;
-  starHalos: Array<{
-    direction: THREE.Vector3;
-    color: THREE.Vector3;
-    size: number;
-    falloff: number;
-  }>;
-  sun: {
-    direction: THREE.Vector3;
-    color: THREE.Vector3;
-    size: number;
-    falloff: number;
-  };
-  starRotations: THREE.Matrix4[];
-}
+interface NebulaParams { color: THREE.Vector3; offset: THREE.Vector3; scale: number; intensity: number; falloff: number; }
+interface HaloParams { direction: THREE.Vector3; color: THREE.Vector3; size: number; falloff: number; }
+interface SunParams { direction: THREE.Vector3; color: THREE.Vector3; size: number; falloff: number; }
+interface SkyboxParams { nebulae: NebulaParams[]; starHalos: HaloParams[]; sun: SunParams; starRotations: THREE.Matrix4[]; }
 
 function generateParams(seed: string): SkyboxParams {
-  // Nebulae (matches bundle.js nebulaParams)
-  const rngN = createMT(seed, 2000);
-  const nebulae: SkyboxParams['nebulae'] = [];
+  // Star rotations (multiple rotation layers)
+  const rngR = createMT(seed, RNG_OFFSET_ROTATIONS);
+  const starRotations: THREE.Matrix4[] = [];
   while (true) {
-    nebulae.push({
-      scale: rngN.random() * 0.5 + 0.25, // 0.25-0.75
-      color: new THREE.Vector3(rngN.random(), rngN.random(), rngN.random()),
-      intensity: rngN.random() * 0.2 + 0.9, // 0.9-1.1
-      falloff: rngN.random() * 3.0 + 3.0, // 3.0-6.0
-      offset: new THREE.Vector3(
-        rngN.random() * 2000 - 1000, // -1000 to 1000
-        rngN.random() * 2000 - 1000,
-        rngN.random() * 2000 - 1000
-      ),
-    });
-    if (rngN.random() < 0.5 || nebulae.length >= 5) break;
+    starRotations.push(randomRotation(rngR));
+    if (rngR.random() < ROTATION_CONTINUE_CHANCE || starRotations.length >= ROTATION_MAX_LAYERS) break;
   }
 
-  // Star halos (matches bundle.js starParams with pStar shader)
-  const rngS = createMT(seed, 3000);
+  // Nebulae
+  const rngN = createMT(seed, RNG_OFFSET_NEBULAE);
+  const nebulae: SkyboxParams['nebulae'] = [];
+  while (true) {
+    const scaleRange = NEBULA_SCALE_MAX - NEBULA_SCALE_MIN;
+    const intensityRange = NEBULA_INTENSITY_MAX - NEBULA_INTENSITY_MIN;
+    const falloffRange = NEBULA_FALLOFF_MAX - NEBULA_FALLOFF_MIN;
+    nebulae.push({
+      scale: rngN.random() * scaleRange + NEBULA_SCALE_MIN,
+      color: new THREE.Vector3(rngN.random(), rngN.random(), rngN.random()),
+      intensity: rngN.random() * intensityRange + NEBULA_INTENSITY_MIN,
+      falloff: rngN.random() * falloffRange + NEBULA_FALLOFF_MIN,
+      offset: new THREE.Vector3(
+        rngN.random() * NEBULA_OFFSET_RANGE * 2 - NEBULA_OFFSET_RANGE,
+        rngN.random() * NEBULA_OFFSET_RANGE * 2 - NEBULA_OFFSET_RANGE,
+        rngN.random() * NEBULA_OFFSET_RANGE * 2 - NEBULA_OFFSET_RANGE
+      ),
+    });
+    if (rngN.random() < NEBULA_CONTINUE_CHANCE || nebulae.length >= NEBULA_MAX_COUNT) break;
+  }
+
+  // Star halos
+  const rngS = createMT(seed, RNG_OFFSET_STAR_HALOS);
   const starHalos: SkyboxParams['starHalos'] = [];
   while (true) {
     starHalos.push({
       direction: randomVec3Normalized(rngS),
-      color: new THREE.Vector3(1, 1, 1), // white
-      size: 0.0, // uSize = 0
-      falloff: rngS.random() * Math.pow(2, 20) + Math.pow(2, 20), // huge falloff
+      color: new THREE.Vector3(1, 1, 1),
+      size: 0.0,
+      falloff: rngS.random() * HALO_FALLOFF_BASE + HALO_FALLOFF_BASE,
     });
-    if (rngS.random() < 0.01 || starHalos.length >= 9) break;
+    if (rngS.random() < HALO_CONTINUE_CHANCE || starHalos.length >= HALO_MAX_COUNT) break;
   }
 
-  // Sun (matches bundle.js sunParams with pSun shader)
-  const rngSun = createMT(seed, 4000);
+  // Sun
+  const rngSun = createMT(seed, RNG_OFFSET_SUN);
+  const sizeRange = SUN_SIZE_MAX - SUN_SIZE_MIN;
+  const falloffRange = SUN_FALLOFF_MAX - SUN_FALLOFF_MIN;
   const sun = {
     direction: randomVec3Normalized(rngSun),
     color: new THREE.Vector3(rngSun.random(), rngSun.random(), rngSun.random()),
-    size: rngSun.random() * 0.0001 + 0.0001, // 0.0001-0.0002
-    falloff: rngSun.random() * 16.0 + 8.0, // 8-24
+    size: rngSun.random() * sizeRange + SUN_SIZE_MIN,
+    falloff: rngSun.random() * falloffRange + SUN_FALLOFF_MIN,
   };
-
-  // Star rotations (matches bundle.js pStarParams - multiple rotation layers)
-  const rngR = createMT(seed, 1000);
-  const starRotations: THREE.Matrix4[] = [];
-  while (true) {
-    starRotations.push(randomRotation(rngR));
-    if (rngR.random() < 0.2 || starRotations.length >= 5) break;
-  }
 
   return { nebulae, starHalos, sun, starRotations };
 }
@@ -228,32 +218,32 @@ export function generateSkyboxTexture(
   const boxGeometry = new THREE.BoxGeometry(2, 2, 2);
   const uniforms = {
     uNebulaColors: {
-      value: pad(params.nebulae.map((n) => n.color), 5, new THREE.Vector3()),
+      value: pad(params.nebulae.map((n) => n.color), NEBULA_MAX_COUNT, new THREE.Vector3()),
     },
     uNebulaOffsets: {
-      value: pad(params.nebulae.map((n) => n.offset), 5, new THREE.Vector3()),
+      value: pad(params.nebulae.map((n) => n.offset), NEBULA_MAX_COUNT, new THREE.Vector3()),
     },
     uNebulaScales: {
-      value: pad(params.nebulae.map((n) => n.scale), 5, 0.5),
+      value: pad(params.nebulae.map((n) => n.scale), NEBULA_MAX_COUNT, 0.5),
     },
     uNebulaIntensities: {
-      value: pad(params.nebulae.map((n) => n.intensity), 5, 1),
+      value: pad(params.nebulae.map((n) => n.intensity), NEBULA_MAX_COUNT, 1),
     },
     uNebulaFalloffs: {
-      value: pad(params.nebulae.map((n) => n.falloff), 5, 4),
+      value: pad(params.nebulae.map((n) => n.falloff), NEBULA_MAX_COUNT, 4),
     },
     uNebulaCount: { value: params.nebulae.length },
     uHaloDirections: {
-      value: pad(params.starHalos.map((h) => h.direction), 9, new THREE.Vector3()),
+      value: pad(params.starHalos.map((h) => h.direction), HALO_MAX_COUNT, new THREE.Vector3()),
     },
     uHaloColors: {
-      value: pad(params.starHalos.map((h) => h.color), 9, new THREE.Vector3()),
+      value: pad(params.starHalos.map((h) => h.color), HALO_MAX_COUNT, new THREE.Vector3()),
     },
     uHaloSizes: {
-      value: pad(params.starHalos.map((h) => h.size), 9, 0),
+      value: pad(params.starHalos.map((h) => h.size), HALO_MAX_COUNT, 0),
     },
     uHaloFalloffs: {
-      value: pad(params.starHalos.map((h) => h.falloff), 9, Math.pow(2, 20)),
+      value: pad(params.starHalos.map((h) => h.falloff), HALO_MAX_COUNT, HALO_FALLOFF_BASE),
     },
     uHaloCount: { value: params.starHalos.length },
     uSunDirection: { value: params.sun.direction },
@@ -279,17 +269,22 @@ export function generateSkyboxTexture(
   // Render the cubemap
   cubeCamera.update(renderer, skyboxScene);
 
-  // Cleanup
+  // Extract texture before disposing render target
+  const texture = cubeRT.texture;
+
+  // Cleanup (render target frame buffer, not the texture itself)
   nebulaMaterial.dispose();
   boxGeometry.dispose();
   starGeometry.dispose();
   starMaterial.dispose();
+  // Note: We don't dispose cubeRT as that would destroy the texture we're returning.
+  // The caller owns the texture and should dispose it when done.
 
-  return cubeRT.texture;
+  return texture;
 }
 
 /** Get sun direction from seed for lighting */
 export function getSunDirectionFromSeed(seed: string): THREE.Vector3 {
-  const rng = createMT(seed, 4000);
+  const rng = createMT(seed, RNG_OFFSET_SUN);
   return randomVec3Normalized(rng);
 }

@@ -43,8 +43,8 @@ export function createRenderer(container: HTMLElement): Renderer {
   webglRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   container.appendChild(webglRenderer.domElement);
 
-  // Skybox seed (use string seed for reproducible results)
-  const skyboxSeed = '7alzyiphy3k0';
+  // Skybox seed (use Date.now() for variety, or a fixed string for reproducibility)
+  const skyboxSeed = Date.now().toString();
 
   // Basic lighting
   const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
