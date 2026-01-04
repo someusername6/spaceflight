@@ -69,7 +69,7 @@ export interface AIProfile {
  */
 export const AI_PROFILES: Record<string, AIProfile> = {
   /**
-   * Rookie - Poor aim, slow reactions, bad decisions.
+   * Rookie - Poor aim, slow reactions, panics under fire.
    * Good for tutorial or easy encounters.
    */
   rookie: {
@@ -85,10 +85,10 @@ export const AI_PROFILES: Record<string, AIProfile> = {
     heatSwitchThreshold: 0.95, // Almost overheats before switching
     minFiringAngle: 50, // Wastes ammo at bad angles (high = permissive)
     linkedFireHeatThreshold: 0.8, // Overheats with linked fire
-    // State transitions: Slow to react
-    evadeShieldThreshold: 0.15, // Waits too long to evade
-    regroupShieldThreshold: 0.05, // Nearly dead before retreating
-    recoverShieldThreshold: 0.6, // Returns to fight too early
+    // State transitions: Panics early, returns too early
+    evadeShieldThreshold: 0.35, // Panics at relatively high shields
+    regroupShieldThreshold: 0.2, // Retreats early when scared
+    recoverShieldThreshold: 0.7, // Returns to fight too early (impatient)
     evadeCooldown: 3.0,
     regroupMinTime: 2.0,
     // Missiles: Slow reactions
@@ -115,10 +115,10 @@ export const AI_PROFILES: Record<string, AIProfile> = {
     heatSwitchThreshold: 0.75,
     minFiringAngle: 35, // Moderate selectivity
     linkedFireHeatThreshold: 0.6,
-    // State transitions: Reasonable
-    evadeShieldThreshold: 0.2,
-    regroupShieldThreshold: 0.1,
-    recoverShieldThreshold: 0.5,
+    // State transitions: Moderate composure
+    evadeShieldThreshold: 0.25, // Evades at reasonable threshold
+    regroupShieldThreshold: 0.12, // Retreats when moderately damaged
+    recoverShieldThreshold: 0.55, // Returns at reasonable recovery
     evadeCooldown: 5.0,
     regroupMinTime: 3.0,
     // Missiles: Standard
@@ -129,7 +129,7 @@ export const AI_PROFILES: Record<string, AIProfile> = {
   },
 
   /**
-   * Veteran - Skilled pilot, good decisions.
+   * Veteran - Skilled pilot, stays calm under pressure.
    * Challenging enemy for experienced players.
    */
   veteran: {
@@ -145,10 +145,10 @@ export const AI_PROFILES: Record<string, AIProfile> = {
     heatSwitchThreshold: 0.65,
     minFiringAngle: 25, // Selective - only fires when well-aimed
     linkedFireHeatThreshold: 0.5,
-    // State transitions: Quick reactions
-    evadeShieldThreshold: 0.25,
-    regroupShieldThreshold: 0.12,
-    recoverShieldThreshold: 0.45,
+    // State transitions: Calm under fire, patient recovery
+    evadeShieldThreshold: 0.18, // Stays in fight longer
+    regroupShieldThreshold: 0.08, // Only retreats when seriously damaged
+    recoverShieldThreshold: 0.45, // Patient - waits for good recovery
     evadeCooldown: 6.0,
     regroupMinTime: 3.5,
     // Missiles: Quick reactions
@@ -159,7 +159,7 @@ export const AI_PROFILES: Record<string, AIProfile> = {
   },
 
   /**
-   * Ace - Elite pilot, near-perfect execution.
+   * Ace - Elite pilot, ice cold under fire.
    * Boss-level enemy, very difficult to defeat.
    */
   ace: {
@@ -175,10 +175,10 @@ export const AI_PROFILES: Record<string, AIProfile> = {
     heatSwitchThreshold: 0.55,
     minFiringAngle: 15, // Very selective - only fires when perfectly aimed
     linkedFireHeatThreshold: 0.4,
-    // State transitions: Perfect timing
-    evadeShieldThreshold: 0.3,
-    regroupShieldThreshold: 0.15,
-    recoverShieldThreshold: 0.4,
+    // State transitions: Ice cold - stays in fight, very patient recovery
+    evadeShieldThreshold: 0.12, // Extremely calm - only evades when critical
+    regroupShieldThreshold: 0.05, // Nearly dead before retreating
+    recoverShieldThreshold: 0.35, // Very patient - full recovery before re-engaging
     evadeCooldown: 7.0,
     regroupMinTime: 4.0,
     // Missiles: Instant reactions

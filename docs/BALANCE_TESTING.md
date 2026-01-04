@@ -231,19 +231,25 @@ npx tsx scripts/tests/combat/simulate-combat.mjs profile-rookie-vs-ace 50
 
 ## AI Profiles Reference
 
-| Profile | Aim Error | Angular Factor | Engage Range | Break-off |
-|---------|-----------|----------------|--------------|-----------|
-| Rookie | 0.12 rad | 0.8 | 500m | 1000m |
-| Regular | 0.05 rad | 0.5 | 600m | 1200m |
-| Veteran | 0.03 rad | 0.3 | 700m | 1400m |
-| Ace | 0.015 rad | 0.15 | 800m | 1600m |
+| Profile | Aim Error | Angular Factor | Engage Range | Evade Threshold |
+|---------|-----------|----------------|--------------|-----------------|
+| Rookie | 0.12 rad | 0.8 | 500m | 35% shields (panics early) |
+| Regular | 0.05 rad | 0.5 | 600m | 25% shields |
+| Veteran | 0.03 rad | 0.3 | 700m | 18% shields |
+| Ace | 0.015 rad | 0.15 | 800m | 12% shields (ice cold) |
 
 ---
 
 ## Version History
 
-- **2024-01-04:** Initial testing framework created
+- **2026-01-04:** Initial testing framework created
   - TTK matrix test
   - Skill scaling verification
   - Engagement pattern analysis
   - Fixed angular velocity pursuit anomaly for Ace pilots
+
+- **2026-01-04:** Skill scaling fixes
+  - Made dumbfire rockets use aim error (skill affects missile accuracy)
+  - Inverted defensive thresholds (rookies panic early, aces stay calm)
+  - Fixed aim error to start at random value instead of 0
+  - Result: Regular > Rookie +20%, Veteran > Regular +8%, Ace > Veteran +1%

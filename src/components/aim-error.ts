@@ -75,9 +75,17 @@ export function createAimError(
     angularFactor = 0.5; // Default moderate angular sensitivity
   }
 
+  // Start with random offset within max error (not 0) so skill matters from frame 1
+  const startAngle = random(prng) * Math.PI * 2;
+  const startMagnitude = random(prng) * maxError;
+  const initialOffset = new THREE.Vector2(
+    Math.cos(startAngle) * startMagnitude,
+    Math.sin(startAngle) * startMagnitude,
+  );
+
   return {
     type: 'aimError',
-    offset: new THREE.Vector2(0, 0),
+    offset: initialOffset,
     maxError,
     effectiveMaxError: maxError, // Initially same as base
     angularFactor,

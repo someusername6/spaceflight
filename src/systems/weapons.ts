@@ -138,6 +138,7 @@ export function weaponSystem(world: World, dt: number): void {
       const ai = getComponent<AIControlled>(world, entity, 'aiControlled');
       if (ai) {
         updateLockProgress(world, weapons, ai.target, dt);
+        const aimError = getComponent<AimError>(world, entity, 'aimError');
         handleAISecondaryWeapons(
           world,
           entity,
@@ -146,6 +147,7 @@ export function weaponSystem(world: World, dt: number): void {
           faction,
           ai,
           gameTime,
+          aimError,
         );
       }
     }

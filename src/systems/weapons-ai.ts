@@ -14,6 +14,7 @@
 import * as THREE from 'three';
 import { type AIControlled, AIState } from '../components/ai';
 import type { AimError } from '../components/aim-error';
+import { applyAimError } from '../components/aim-error';
 import type { FactionComponent } from '../components/faction';
 import type { Heat } from '../components/heat';
 import { addHeat } from '../components/heat';
@@ -174,6 +175,7 @@ export function handleAISecondaryWeapons(
   faction: FactionComponent | undefined,
   ai: AIControlled,
   gameTime: number,
+  aimError: AimError | undefined,
 ): void {
   // Check for incoming missiles and launch decoys defensively
   handleAIDecoys(world, entity, transform, weapons, faction, ai, gameTime);
@@ -251,6 +253,7 @@ export function handleAISecondaryWeapons(
   weapon.count--;
 
   // For dumbfire missiles (turnRate === 0), calculate lead intercept
+  // Dumbfire rockets use aim error - rookies miss more often
   if (weapon.turnRate === 0) {
     const ownerPhysics = getComponent<Physics>(world, entity, 'physics');
     const ownerVelocity = ownerPhysics?.velocity ?? tempZeroVec;
@@ -267,6 +270,10 @@ export function handleAISecondaryWeapons(
     if (interceptPoint) {
       // Aim at the lead point
       tempAimDir.copy(interceptPoint).sub(transform.position).normalize();
+      // Apply aim error for skill-based accuracy
+      const finalDir = aimError
+        ? applyAimError(tempAimDir, aimError).clone()
+        : tempAimDir;
       spawnMissile(
         world,
         entity,
@@ -274,7 +281,7 @@ export function handleAISecondaryWeapons(
         weapon,
         faction,
         ai.target,
-        tempAimDir,
+        finalDir,
       );
       return;
     }
@@ -283,6 +290,10 @@ export function handleAISecondaryWeapons(
       .copy(targetTransform.position)
       .sub(transform.position)
       .normalize();
+    // Apply aim error for skill-based accuracy
+    const finalDir = aimError
+      ? applyAimError(tempAimDir, aimError).clone()
+      : tempAimDir;
     spawnMissile(
       world,
       entity,
@@ -290,7 +301,7 @@ export function handleAISecondaryWeapons(
       weapon,
       faction,
       ai.target,
-      tempAimDir,
+      finalDir,
     );
     return;
   }
