@@ -93,7 +93,7 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
     range: 2000,
     damage: 80,
     ammo: 20,
-    autoaimFov: 2, // Smart round corrects within 2° cone (FreeSpace-style)
+    autoaimFov: 2, // Smart round corrects within 2° cone
   },
   flak: {
     name: 'Flak',

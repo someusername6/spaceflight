@@ -37,7 +37,9 @@ export const ARCHETYPES = [
   'sentinel',
   // Variant archetypes (different loadout on existing chassis)
   'sniper', // Raider chassis + railguns, kiting playstyle
-  'lancer', // Sentinel chassis + blue lasers, long-range beams
+  'lancer', // Sentinel chassis + green lasers, mid-range beams
+  'lancerBlue', // Sentinel chassis + blue lasers, longer range
+  'lancerRed', // Sentinel chassis + red lasers, close range high DPS
 ];
 
 /** Spawn position jitter to break determinism (±10m) */

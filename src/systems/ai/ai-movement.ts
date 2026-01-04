@@ -6,8 +6,13 @@
 
 import { Quaternion, Vector3 } from 'three';
 import type { AIControlled } from '../../components/ai';
+import type { AimError } from '../../components/aim-error';
+import { applyAimError } from '../../components/aim-error';
 import type { Physics } from '../../components/physics';
 import type { Transform } from '../../components/transform';
+import type { PrimaryWeapons } from '../../components/weapons';
+import { getComponent } from '../../core/ecs';
+import type { Entity, World } from '../../core/types';
 
 // Reusable vectors (shared across all AI movement code)
 export const tempVectors = {
@@ -91,6 +96,37 @@ export function turnToward(
       transform.rotation.premultiply(deltaQuat);
       transform.rotation.normalize();
     }
+  }
+}
+
+/**
+ * Turn toward target with aim error applied for beam-using ships.
+ * Beam weapons are fixed-mount, so aim error is applied to ship rotation.
+ * Projectile weapons have aim error applied at spawn time instead.
+ *
+ * @param weapons - Optional pre-fetched weapons (avoids redundant lookup)
+ * @param aimError - Optional pre-fetched aim error (avoids redundant lookup)
+ */
+export function aimToward(
+  world: World,
+  entity: Entity,
+  transform: Transform,
+  physics: Physics,
+  direction: Vector3,
+  dt: number,
+  weapons?: PrimaryWeapons | null,
+  aimError?: AimError | null,
+): void {
+  // Use provided components or fetch them
+  const w =
+    weapons ?? getComponent<PrimaryWeapons>(world, entity, 'primaryWeapons');
+  const e = aimError ?? getComponent<AimError>(world, entity, 'aimError');
+
+  if (w?.hasBeams && e) {
+    const perceivedDir = applyAimError(direction, e);
+    turnToward(transform, physics, perceivedDir, dt);
+  } else {
+    turnToward(transform, physics, direction, dt);
   }
 }
 

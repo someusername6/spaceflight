@@ -24,7 +24,9 @@ const MAX_TICKS = MAX_FIGHT_TIME * TICK_RATE;
 const TEST_CASES = [
   { ship: 'scout', opponent: 'interceptor', startRange: 500 },
   { ship: 'sniper', opponent: 'striker', startRange: 900 },
-  { ship: 'lancer', opponent: 'defender', startRange: 1000 },
+  { ship: 'lancer', opponent: 'striker', startRange: 400 }, // Green laser @ 400m
+  { ship: 'lancerBlue', opponent: 'striker', startRange: 500 }, // Blue laser @ 500m
+  { ship: 'lancerRed', opponent: 'striker', startRange: 300 }, // Red laser @ 300m
 ];
 
 const PROFILES = ['rookie', 'regular', 'veteran', 'ace'];
@@ -46,8 +48,8 @@ function runMatchup(
   startRange = 500,
 ) {
   let shipWins = 0;
-  let opponentWins = 0;
-  let draws = 0;
+  let _opponentWins = 0;
+  let _draws = 0;
 
   for (let run = 0; run < runs; run++) {
     const seed = run * 1000;
@@ -84,10 +86,10 @@ function runMatchup(
       if (!shipAlive || !opponentAlive) break;
     }
 
-    if (!shipAlive && !opponentAlive) draws++;
+    if (!shipAlive && !opponentAlive) _draws++;
     else if (!opponentAlive) shipWins++;
-    else if (!shipAlive) opponentWins++;
-    else draws++;
+    else if (!shipAlive) _opponentWins++;
+    else _draws++;
   }
 
   return (shipWins / runs) * 100;
@@ -145,7 +147,7 @@ for (const { ship, opponent, startRange } of TEST_CASES) {
   }
 }
 
-console.log('\n' + '='.repeat(70));
+console.log(`\n${'='.repeat(70)}`);
 console.log(
   'KEY INSIGHT: In typical gameplay (vs brawlers), skill should scale correctly.',
 );

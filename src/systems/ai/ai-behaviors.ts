@@ -21,6 +21,7 @@ import type { Entity, World } from '../../core/types';
 import type { AIProfile } from '../../data/ai-profiles';
 import {
   accelerateTo,
+  aimToward,
   calculateEscapeDirection,
   EVADE_AWAY_WEIGHT,
   EVADE_PERPENDICULAR_WEIGHT,
@@ -184,7 +185,7 @@ export function updateEvade(
 /** Protect state - aggressively engage threats to the protectee */
 export function updateProtect(
   world: World,
-  _entity: Entity,
+  entity: Entity,
   ai: AIControlled,
   transform: Transform,
   physics: Physics,
@@ -227,7 +228,7 @@ export function updateProtect(
       toTarget.copy(threatTransform.position).sub(transform.position);
       if (toTarget.lengthSq() > 0.001) {
         toTarget.normalize();
-        turnToward(transform, physics, toTarget, dt);
+        aimToward(world, entity, transform, physics, toTarget, dt);
       }
       accelerateTo(physics, physics.maxSpeed, dt);
     }

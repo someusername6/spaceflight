@@ -215,12 +215,8 @@ function updateEngage(
   const distance = transform.position.distanceTo(targetTransform.position);
 
   // Break off if target gets too far
-  // Kiting ships use preferredCombatRange as break-off threshold
-  const breakOffRange = isKitingShip(ai)
-    ? (ai.preferredCombatRange ?? ai.profile.breakOffRange)
-    : ai.profile.breakOffRange;
-
-  if (distance > breakOffRange) {
+  // Kiting ships: NEVER break off to pursue - they wait at range
+  if (!isKitingShip(ai) && distance > ai.profile.breakOffRange) {
     ai.state = AIState.Pursue;
     ai.stateTimer = 0;
     return;
@@ -246,8 +242,10 @@ function updateEngage(
   const closeUrgently =
     !isKitingShip(ai) && distance > preferredRange * CLOSE_URGENTLY_THRESHOLD;
 
-  // Kiting ships: maintain distance instead of closing
-  if (isKitingShip(ai) && distance <= preferredRange) {
+  // Kiting ships: always maintain distance, never chase
+  // Enemy close: maintain distance (don't close further)
+  // Enemy far: hold position (turn to face, wait for approach)
+  if (isKitingShip(ai)) {
     maintainDistanceEngage(world, entity, ai, transform, physics, dt);
   } else {
     pursueTarget(world, entity, ai, transform, physics, dt, closeUrgently);

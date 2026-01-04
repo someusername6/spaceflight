@@ -24,6 +24,13 @@ export interface AIProfile {
    * Example: 0.5 factor * 0.1 rad/s angular velocity = 0.05 rad extra error
    */
   aimErrorAngularFactor: number;
+  /**
+   * Beam tracking speed in radians per second.
+   * How fast beam weapons correct toward the perceived target.
+   * Higher = faster lock-on, less hunting behavior.
+   * Ace: ~4.0 (near-instant lock), Rookie: ~0.8 (slow hunting)
+   */
+  beamTrackingSpeed: number;
 
   // === ENGAGEMENT ===
   /** Distance to start engaging (firing weapons) */
@@ -100,6 +107,7 @@ export const AI_PROFILES: Record<string, AIProfile> = {
     aimErrorBase: 0.095, // ~5.5 degrees (tuned iter 5)
     aimErrorDriftSpeed: 0.04,
     aimErrorAngularFactor: 0.68, // Affected by target movement (tuned iter 5)
+    beamTrackingSpeed: 0.8, // Slow hunting, overshoots target
     // Engagement: Conservative, engages closer (needs autoaim help)
     engageRange: 500,
     breakOffRange: 1000,
@@ -137,6 +145,7 @@ export const AI_PROFILES: Record<string, AIProfile> = {
     aimErrorBase: 0.05, // ~3 degrees
     aimErrorDriftSpeed: 0.02,
     aimErrorAngularFactor: 0.5, // Moderately affected by target movement
+    beamTrackingSpeed: 1.5, // Moderate tracking
     // Engagement: Standard
     engageRange: 600,
     breakOffRange: 1200,
@@ -174,6 +183,7 @@ export const AI_PROFILES: Record<string, AIProfile> = {
     aimErrorBase: 0.032, // ~2 degrees (tuned iter 5)
     aimErrorDriftSpeed: 0.016,
     aimErrorAngularFactor: 0.3, // Good at tracking (tuned iter 5)
+    beamTrackingSpeed: 2.5, // Good tracking
     // Engagement: Aggressive but smart
     engageRange: 700,
     breakOffRange: 1400,
@@ -211,6 +221,7 @@ export const AI_PROFILES: Record<string, AIProfile> = {
     aimErrorBase: 0.008, // ~0.5 degrees (tuned iteration 1)
     aimErrorDriftSpeed: 0.008, // Very stable aim (tuned iter 4)
     aimErrorAngularFactor: 0.06, // Excellent at tracking (tuned iter 4)
+    beamTrackingSpeed: 4.0, // Near-instant lock
     // Engagement: Very aggressive
     engageRange: 800,
     breakOffRange: 1600,
@@ -261,128 +272,8 @@ export function createCustomProfile(
   return { ...AI_PROFILES[base], ...overrides } as AIProfile;
 }
 
-/** Playstyle type for skill scaling */
-export type AIPlaystyle = 'brawler' | 'escape' | 'kiting';
-
-/** Skill level as 0-1 value for aim error scaling */
-const SKILL_VALUES: Record<string, number> = {
-  rookie: 0,
-  regular: 0.33,
-  veteran: 0.66,
-  ace: 1,
-};
-
-/**
- * Get engagement range multiplier for kiting playstyle.
- * Lower skill = closer range (compensates for poor aim).
- * Higher skill = farther range (precision makes long-range viable).
- *
- * Uses a moderate spread to balance:
- * - Mirrors: Not too much range asymmetry (prevents chase behavior)
- * - vs Brawlers: Lower skills engage closer to be more effective
- */
-function getKitingRangeMultiplier(skill: number): number {
-  // Ace (skill=1): 1.1x preferred range (sniper: 900 * 1.1 = 990m)
-  // Veteran (skill=0.66): 0.96x (sniper: 864m)
-  // Regular (skill=0.33): 0.83x (sniper: 747m)
-  // Rookie (skill=0): 0.7x (sniper: 630m)
-  return 0.7 + skill * 0.4;
-}
-
-/**
- * Get an AI profile modified for a specific playstyle.
- *
- * Different playstyles express skill differently:
- * - brawler: Standard - better aim, lower panic threshold, more aggressive
- * - escape: Speed-based survival - skilled pilots use speed advantage better
- * - kiting: Range maintenance - skilled pilots maintain optimal distance
- *
- * KEY INSIGHT: "Flee earlier" makes pilots lose because they fight less.
- * Instead, skill should improve EFFECTIVENESS within the ship's role.
- *
- * @param skillLevel - The base skill level (rookie, regular, veteran, ace)
- * @param playstyle - How skill should be expressed for this ship type
- * @returns Modified AI profile for the playstyle
- */
-export function getProfileForPlaystyle(
-  skillLevel: string,
-  playstyle: AIPlaystyle,
-): AIProfile {
-  const base = getAIProfile(skillLevel);
-  const skill = SKILL_VALUES[skillLevel.toLowerCase()] ?? 0.33;
-
-  switch (playstyle) {
-    case 'escape': {
-      // Escape playstyle: skilled pilots are effective at hit-and-run
-      //
-      // In MIRROR matches, many base profile parameters cause inversions.
-      // For escape ships, ONLY aim error should differentiate skill levels.
-      // We use TIERED multipliers similar to kiting but less extreme.
-      const escapeAimMult = 3.0 - skill * 2.0; // Ace 1x, Rookie 3x
-      return {
-        ...base,
-        // TIERED aim error: ace 1x, veteran 1.7x, regular 2.3x, rookie 3x
-        // Scout has a beam weapon so projectile aim matters less
-        aimErrorBase: base.aimErrorBase * escapeAimMult,
-        aimErrorDriftSpeed: base.aimErrorDriftSpeed * escapeAimMult,
-        // Constant defensive thresholds (ace staying longer = getting caught)
-        evadeShieldThreshold: 0.25,
-        regroupShieldThreshold: 0.12,
-        // Constant heat management (lower threshold = less DPS)
-        heatSwitchThreshold: 0.8,
-        linkedFireHeatThreshold: 0.7,
-        // Constant firing angle (speed lets them get close regardless of skill)
-        minFiringAngle: 35,
-        // Constant combat range (closer = caught in mirrors)
-        combatRangeMultiplier: 1.0,
-        // Fast recovery/re-engagement (universal for escape playstyle)
-        evadeCooldown: 2.5,
-        regroupMinTime: 2.0,
-      };
-    }
-
-    case 'kiting': {
-      // Kiting playstyle: skilled pilots maintain optimal range
-      //
-      // KEY INSIGHT: Lower-skill snipers should engage CLOSER to compensate
-      // for poor aim. A rookie sniper at 630m is closer to brawl range,
-      // while ace snipers earn the right to fight at true long range (990m).
-      //
-      // CRITICAL: Flee distance stays CONSTANT to prevent chase asymmetry.
-      // All skill levels flee at the same distance, but prefer different
-      // engagement ranges. This gives skilled pilots a larger "engagement
-      // window" (preferred range - flee distance) to deal damage.
-      //
-      // Engagement windows with sniper (900m base, 400m flee):
-      // - Ace: 990m - 400m = 590m window
-      // - Rookie: 630m - 400m = 230m window
-      // Ace has 2.5x more room to maneuver and deal damage.
-      const rangeMult = getKitingRangeMultiplier(skill);
-      return {
-        ...base,
-        // Constant defensive thresholds
-        evadeShieldThreshold: 0.25,
-        regroupShieldThreshold: 0.12,
-        // SKILL-BASED RANGE: lower skill = closer engagement
-        combatRangeMultiplier: rangeMult,
-        // CONSTANT flee distance - prevents chase asymmetry in mirrors
-        fleeDistanceMultiplier: 1.0,
-        // Constant heat management
-        heatSwitchThreshold: 0.8,
-        linkedFireHeatThreshold: 0.7,
-        // All kiters fire at same angle threshold
-        minFiringAngle: 30,
-        // Constant repositioning
-        repositionCooldown: 4.0,
-        maxRepositionTime: 4.0,
-      };
-    }
-
-    default:
-      // Brawler: use base profile as-is
-      return base;
-  }
-}
+// Re-export playstyle system from dedicated module
+export { type AIPlaystyle, getProfileForPlaystyle } from './ai-playstyles';
 
 /**
  * Global AI settings that affect all AI ships.

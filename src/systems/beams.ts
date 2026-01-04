@@ -14,6 +14,7 @@ import type { PrimaryWeapon, PrimaryWeapons } from '../components/weapons';
 import { getCurrentPrimary, getEffectiveHeat } from '../components/weapons';
 import { entityExists, getComponent, queryEntities } from '../core/ecs';
 import type { ActiveBeam, Entity, World } from '../core/types';
+import { getForward } from './physics';
 
 // Re-export ActiveBeam for backward compatibility
 export type { ActiveBeam } from '../core/types';
@@ -27,7 +28,6 @@ import {
   resetBeamWeaponPool,
 } from './beam-helpers';
 import { dealDamage } from './damage';
-import { getForward } from './physics';
 import { calculateBankOffset } from './weapon-spawning';
 
 // Reusable objects
@@ -74,10 +74,16 @@ export function beamSystem(world: World, dt: number): void {
       'playerControlled',
     );
 
-    // Check if firing (player or AI)
+    // Check if firing and calculate beam direction
     let isFiring = false;
+    let beamDirection: THREE.Vector3 | null = null;
+
     if (player) {
+      // Player uses ship forward direction
       isFiring = player.input.firePrimary;
+      if (isFiring) {
+        beamDirection = getForward(transform);
+      }
     } else {
       // AI fires beams when engaging with valid target
       const ai = getComponent<AIControlled>(world, entity, 'aiControlled');
@@ -96,15 +102,30 @@ export function beamSystem(world: World, dt: number): void {
             isFiring = true;
           }
         }
+
+        if (isFiring) {
+          // Beam fires in ship's forward direction (fixed mount)
+          // Aim error is applied to ship rotation in AI pursuit
+          beamDirection = getForward(transform);
+        }
       }
     }
 
-    if (!isFiring) continue;
+    if (!isFiring || !beamDirection) continue;
 
     // Determine which beams to fire based on linked mode
     if (weapons.linked) {
       // Linked mode: fire all beams simultaneously
-      fireLinkedBeams(world, entity, transform, weapons, heat, dt, activeBeams);
+      fireLinkedBeams(
+        world,
+        entity,
+        transform,
+        weapons,
+        heat,
+        dt,
+        activeBeams,
+        beamDirection,
+      );
     } else {
       // Single mode: only fire if current weapon is a beam
       const weapon = getCurrentPrimary(weapons);
@@ -137,6 +158,7 @@ export function beamSystem(world: World, dt: number): void {
         weapons.weapons.length,
         dt,
         activeBeams,
+        beamDirection,
       );
     }
   }
@@ -151,6 +173,7 @@ function fireLinkedBeams(
   heat: Heat,
   dt: number,
   activeBeams: Map<Entity, ActiveBeam[]>,
+  direction: THREE.Vector3,
 ): void {
   // Reset pool and clear collector (avoid per-frame allocations)
   resetBeamWeaponPool(world);
@@ -188,6 +211,7 @@ function fireLinkedBeams(
       totalBanks,
       dt,
       activeBeams,
+      direction,
     );
   }
 }
@@ -205,9 +229,9 @@ function fireBeam(
   totalBanks: number,
   dt: number,
   activeBeams: Map<Entity, ActiveBeam[]>,
+  direction: THREE.Vector3,
 ): void {
   const gameTime = world.systemState.gameTime;
-  const forward = getForward(transform);
   // Calculate beam origin with bank offset
   const origin = calculateBankOffset(
     transform,
@@ -216,7 +240,7 @@ function fireBeam(
     BEAM_SPAWN_OFFSET,
   );
   rayOrigin.copy(origin);
-  rayDirection.copy(forward);
+  rayDirection.copy(direction); // Use provided direction (ship forward)
 
   // Get or create beam array for this entity
   let beams = activeBeams.get(owner);

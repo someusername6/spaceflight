@@ -33,8 +33,9 @@ console.log('='.repeat(70));
 console.log('LONG-RANGE ARCHETYPE VALIDATION');
 console.log('='.repeat(70));
 
-// Add long-range archetypes to test
-const LONG_RANGE_ARCHETYPES = ['sniper', 'lancer'];
+// Only sniper is a true long-range kiter
+// Lancers are beam brawlers (short/mid range), not kiters
+const LONG_RANGE_ARCHETYPES = ['sniper'];
 const STANDARD_ARCHETYPES = ARCHETYPES.filter(
   (a) => !LONG_RANGE_ARCHETYPES.includes(a),
 );

@@ -15,10 +15,10 @@ import { calculateInterceptPoint } from '../../core/lead-calculation';
 import type { Entity, World } from '../../core/types';
 import {
   accelerateTo,
+  aimToward,
   DEFAULT_PROJECTILE_SPEED,
   decelerateToZero,
   tempVectors,
-  turnToward,
 } from './ai-movement';
 
 /** Get projectile speed from entity's primary weapons (first projectile weapon) */
@@ -60,10 +60,17 @@ export function pursueTarget(
     return;
   }
 
+  // Fetch components once for reuse
+  const weapons = getComponent<PrimaryWeapons>(world, entity, 'primaryWeapons');
+  const aimError = getComponent<AimError>(world, entity, 'aimError');
+
   // When closing urgently, aim directly at target (closes distance vs circling)
   let aimPoint = targetTransform.position;
 
-  if (!closeUrgently) {
+  // Skip lead calculation for beam-only ships (beams are hitscan)
+  const needsLead = !closeUrgently && weapons && !weapons.hasOnlyBeams;
+
+  if (needsLead) {
     // Get target velocity for lead calculation
     const targetPhysics = getComponent<Physics>(
       world,
@@ -72,7 +79,6 @@ export function pursueTarget(
     );
 
     // Skip lead if target moving erratically (high angular velocity)
-    const aimError = getComponent<AimError>(world, entity, 'aimError');
     const highAngularVelocity =
       aimError && aimError.currentAngularVelocity > 0.15;
 
@@ -92,11 +98,20 @@ export function pursueTarget(
     }
   }
 
-  // Calculate direction to aim point and turn
+  // Calculate direction to aim point and turn (with aim error for beam ships)
   toTarget.copy(aimPoint).sub(transform.position);
   if (toTarget.lengthSq() > 0.001) {
     toTarget.normalize();
-    turnToward(transform, physics, toTarget, dt);
+    aimToward(
+      world,
+      entity,
+      transform,
+      physics,
+      toTarget,
+      dt,
+      weapons,
+      aimError,
+    );
   }
 
   accelerateTo(physics, physics.maxSpeed, dt);
@@ -123,34 +138,50 @@ export function maintainDistanceEngage(
   );
   if (!targetTransform) return;
 
-  // Calculate lead point for aiming
-  const targetPhysics = getComponent<Physics>(
-    world,
-    ai.target as Entity,
-    'physics',
-  );
+  // Fetch components once for reuse
+  const weapons = getComponent<PrimaryWeapons>(world, entity, 'primaryWeapons');
+  const aimError = getComponent<AimError>(world, entity, 'aimError');
 
   let aimPoint = targetTransform.position;
-  if (targetPhysics) {
-    const projectileSpeed = getProjectileSpeed(world, entity);
-    const intercept = calculateInterceptPoint(
-      transform.position,
-      physics.velocity,
-      targetTransform.position,
-      targetPhysics.velocity,
-      projectileSpeed,
+
+  // Only calculate lead for ships with projectile weapons (beams are hitscan)
+  if (weapons && !weapons.hasOnlyBeams) {
+    const targetPhysics = getComponent<Physics>(
+      world,
+      ai.target as Entity,
+      'physics',
     );
-    if (intercept) {
-      leadPoint.copy(intercept);
-      aimPoint = leadPoint;
+
+    if (targetPhysics) {
+      const projectileSpeed = getProjectileSpeed(world, entity);
+      const intercept = calculateInterceptPoint(
+        transform.position,
+        physics.velocity,
+        targetTransform.position,
+        targetPhysics.velocity,
+        projectileSpeed,
+      );
+      if (intercept) {
+        leadPoint.copy(intercept);
+        aimPoint = leadPoint;
+      }
     }
   }
 
-  // Turn toward aim point
+  // Turn toward aim point (with aim error for beam ships)
   toTarget.copy(aimPoint).sub(transform.position);
   if (toTarget.lengthSq() > 0.001) {
     toTarget.normalize();
-    turnToward(transform, physics, toTarget, dt);
+    aimToward(
+      world,
+      entity,
+      transform,
+      physics,
+      toTarget,
+      dt,
+      weapons,
+      aimError,
+    );
   }
 
   // Stop moving - we're facing the target for aiming, so any forward

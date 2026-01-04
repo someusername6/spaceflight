@@ -87,6 +87,10 @@ export interface PrimaryWeapons extends ComponentBase {
   currentIndex: number;
   lastFireTime: number; // Timestamp of last fire (for fire rate)
   linked: boolean; // true = fire all weapons together, false = fire selected only
+  /** Cached: true if any weapon is a beam (computed at creation) */
+  readonly hasBeams: boolean;
+  /** Cached: true if ALL weapons are beams (computed at creation) */
+  readonly hasOnlyBeams: boolean;
 }
 
 /** Secondary weapons component */
@@ -136,12 +140,20 @@ export function createPrimaryWeapons(
     return { ...def, bankSize };
   });
 
+  // Compute cached beam flags
+  let beamCount = 0;
+  for (const weapon of weapons) {
+    if (weapon.category === 'beam') beamCount++;
+  }
+
   return {
     type: 'primaryWeapons',
     weapons,
     currentIndex: 0,
     lastFireTime: 0,
     linked: false, // Default to single-fire mode
+    hasBeams: beamCount > 0,
+    hasOnlyBeams: beamCount === weapons.length,
   };
 }
 
@@ -216,4 +228,9 @@ export function findDecoyWeapon(
     }
   }
   return undefined;
+}
+
+/** Check if primary weapons include any beam weapons (uses cached value) */
+export function hasBeamWeapons(weapons: PrimaryWeapons): boolean {
+  return weapons.hasBeams;
 }

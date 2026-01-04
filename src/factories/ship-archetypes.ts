@@ -178,12 +178,29 @@ export const SHIP_ARCHETYPES: Record<string, ShipStats> = {
     fleeDistance: 400, // Flee when enemy closes
   }),
 
-  // Lancer: Sentinel chassis with blue laser loadout - long-range beam platform
-  // Uses burst-disengage: maintains optimal beam range, repositions if closed on
+  // Lancer: Sentinel chassis with green laser loadout - mid-range beam brawler
+  // Engages at medium range where beam falloff is manageable
   lancer: createArchetype('sentinel', {
-    playstyle: 'kiting', // Skilled lancers maintain optimal beam range
+    playstyle: 'brawler', // Mid-range beam fighter, not a kiter
     primaryWeapons: [
-      { name: 'blueLaser', size: 2 },
+      { name: 'greenLaser', size: 3 }, // Sentinel bank 1 is size 3
+      { name: 'greenLaser', size: 2 },
+      { name: 'greenLaser', size: 2 },
+    ],
+    secondaryWeapons: [
+      { name: 'dart', count: 4, size: 1 },
+      { name: 'decoy', count: 4, size: 1 },
+    ],
+    preferredCombatRange: 400, // Close enough for beam damage
+  }),
+
+  // Lancer Blue: Sentinel chassis with blue laser - mid-range beam fighter
+  // Blue laser: 50 DPS base, 1200m range - but heavy falloff means close is better
+  // Brawler playstyle at medium range balances reach vs damage output
+  lancerBlue: createArchetype('sentinel', {
+    playstyle: 'brawler',
+    primaryWeapons: [
+      { name: 'blueLaser', size: 3 },
       { name: 'blueLaser', size: 2 },
       { name: 'blueLaser', size: 2 },
     ],
@@ -191,7 +208,22 @@ export const SHIP_ARCHETYPES: Record<string, ShipStats> = {
       { name: 'dart', count: 4, size: 1 },
       { name: 'decoy', count: 4, size: 1 },
     ],
-    preferredCombatRange: 1000,
-    fleeDistance: 500, // Flee when enemy closes inside beam range
+    preferredCombatRange: 450, // Close enough for decent damage (50 / 4.5 = 11 DPS/beam)
+  }),
+
+  // Lancer Red: Sentinel chassis with red laser - close range high DPS variant
+  // Red laser: 120 DPS, 400m range
+  lancerRed: createArchetype('sentinel', {
+    playstyle: 'brawler',
+    primaryWeapons: [
+      { name: 'redLaser', size: 3 },
+      { name: 'redLaser', size: 2 },
+      { name: 'redLaser', size: 2 },
+    ],
+    secondaryWeapons: [
+      { name: 'dart', count: 4, size: 1 },
+      { name: 'decoy', count: 4, size: 1 },
+    ],
+    preferredCombatRange: 300, // Close range for red laser effectiveness
   }),
 };
