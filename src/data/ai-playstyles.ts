@@ -21,6 +21,25 @@ const SKILL_VALUES: Record<string, number> = {
 };
 
 /**
+ * Get aim error multiplier for kiting playstyle.
+ * Lower skill = higher multiplier = more error.
+ * This creates asymmetric advantages: ace is precise, rookie misses a lot.
+ *
+ * The values are calibrated so that with railgun's 2° autoaim:
+ * - Ace (0.5° base): 0.5° → within autoaim, always hits
+ * - Veteran (2° base): 4° → outside autoaim, mostly misses
+ * - Regular (3° base): 9° → rarely in autoaim, often misses
+ * - Rookie (5.5° base): 22° → never in autoaim, misses badly
+ */
+function getKitingAimMultiplier(skill: number): number {
+  // Ace (skill=1): 1.0x (base aim error ~0.5°)
+  // Veteran (skill=0.66): 2.0x (base aim error ~2° → 4°)
+  // Regular (skill=0.33): 3.0x (base aim error ~3° → 9°)
+  // Rookie (skill=0): 4.0x (base aim error ~5.5° → 22°)
+  return 4.0 - skill * 3.0;
+}
+
+/**
  * Get engagement range multiplier for kiting playstyle.
  * Lower skill = closer range (compensates for poor aim).
  * Higher skill = farther range (precision makes long-range viable).
@@ -85,28 +104,28 @@ export function getProfileForPlaystyle(
     }
 
     case 'kiting': {
-      // Kiting playstyle: skilled pilots maintain optimal range
+      // Kiting playstyle: skilled pilots maintain optimal range AND hit more
       //
-      // KEY INSIGHT: Lower-skill snipers should engage CLOSER to compensate
-      // for poor aim. A rookie sniper at 630m is closer to brawl range,
-      // while ace snipers earn the right to fight at true long range (990m).
+      // PRIMARY: Tiered aim error overcomes railgun's 2° autoaim
+      // - Ace stays precise (0.5°), rookie misses badly (22°)
+      // - This is the main skill differentiator for projectile weapons
       //
-      // CRITICAL: Flee distance stays CONSTANT to prevent chase asymmetry.
-      // All skill levels flee at the same distance, but prefer different
-      // engagement ranges. This gives skilled pilots a larger "engagement
-      // window" (preferred range - flee distance) to deal damage.
+      // SECONDARY: Skill-based engagement range
+      // - Aces earn the right to fight at true long range
+      // - Rookies engage closer where they might land more hits
       //
-      // Engagement windows with sniper (900m base, 400m flee):
-      // - Ace: 990m - 400m = 590m window
-      // - Rookie: 630m - 400m = 230m window
-      // Ace has 2.5x more room to maneuver and deal damage.
+      // CONSTANT: Flee distance prevents chase asymmetry in mirrors
+      const aimMult = getKitingAimMultiplier(skill);
       const rangeMult = getKitingRangeMultiplier(skill);
       return {
         ...base,
+        // PRIMARY: Tiered aim error - overcomes autoaim for skill differentiation
+        aimErrorBase: base.aimErrorBase * aimMult,
+        aimErrorDriftSpeed: base.aimErrorDriftSpeed * aimMult,
         // Constant defensive thresholds
         evadeShieldThreshold: 0.25,
         regroupShieldThreshold: 0.12,
-        // SKILL-BASED RANGE: lower skill = closer engagement
+        // SECONDARY: Skill-based range (aces earn long-range fighting)
         combatRangeMultiplier: rangeMult,
         // CONSTANT flee distance - prevents chase asymmetry in mirrors
         fleeDistanceMultiplier: 1.0,
