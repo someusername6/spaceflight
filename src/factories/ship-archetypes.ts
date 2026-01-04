@@ -73,6 +73,7 @@ export const SHIP_ARCHETYPES: Record<string, ShipStats> = {
     secondaryWeapons: [
       { name: 'seeker', count: 8, size: 1 },
       { name: 'rocket', count: 6, size: 2 },
+      { name: 'decoy', count: 4, size: 1 },
     ],
   },
   // Striker: Heavy gun platform - GUNS focus
@@ -120,6 +121,7 @@ export const SHIP_ARCHETYPES: Record<string, ShipStats> = {
       { name: 'rocket', count: 6, size: 1 },
       { name: 'rocket', count: 6, size: 1 },
       { name: 'dart', count: 4, size: 1 },
+      { name: 'decoy', count: 4, size: 1 },
     ],
   },
   // Defender: Tanky missile platform - MISSILES focus
@@ -145,6 +147,7 @@ export const SHIP_ARCHETYPES: Record<string, ShipStats> = {
       { name: 'seeker', count: 8, size: 2 },
       { name: 'rocket', count: 6, size: 1 },
       { name: 'dart', count: 4, size: 1 },
+      { name: 'decoy', count: 4, size: 1 },
     ],
   },
   // Raider: Glass cannon gun platform - GUNS focus
@@ -170,6 +173,7 @@ export const SHIP_ARCHETYPES: Record<string, ShipStats> = {
     secondaryWeapons: [
       { name: 'dart', count: 4, size: 1 },
       { name: 'rocket', count: 4, size: 1 },
+      { name: 'decoy', count: 4, size: 1 },
     ],
   },
   // Sentinel: Long-range support - BALANCED (beam-optimized)
@@ -196,6 +200,7 @@ export const SHIP_ARCHETYPES: Record<string, ShipStats> = {
       { name: 'torpedo', count: 2, size: 2 },
       { name: 'rocket', count: 6, size: 1 },
       { name: 'dart', count: 4, size: 1 },
+      { name: 'decoy', count: 4, size: 1 },
     ],
   },
 };

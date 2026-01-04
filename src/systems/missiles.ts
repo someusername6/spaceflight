@@ -31,6 +31,11 @@ const MISSILE_EXPLOSION_SIZE = 4;
 const MISSILE_EXPLOSION_COLOR = new THREE.Color(1.0, 0.5, 0.1);
 const NUKE_EXPLOSION_SIZE = 15;
 
+// Safe distance before missile can collide with owner (avoids spawn-inside-hitbox issues)
+// Set high enough that missiles never hit their owner in normal combat scenarios
+// (torpedoes at 200 m/s with 382m turn radius need significant buffer)
+const MISSILE_OWNER_SAFE_DISTANCE = 100;
+
 // Reusable vectors and quaternions (avoid per-frame allocations)
 const toTarget = new THREE.Vector3();
 const rotationAxis = new THREE.Vector3();
@@ -144,16 +149,17 @@ export function missileSystem(world: World, dt: number): void {
     const collision = getComponent<Collision>(world, entity, 'collision');
     if (collision && collision.collidedWith.length > 0) {
       for (const other of collision.collidedWith) {
-        // Skip owner collision for first 25m (missile spawns inside owner's hitbox)
+        // Skip owner collision until missile clears safe distance
         if (other === missile.owner) {
-          if (missile.distanceTraveled < 25) {
+          if (missile.distanceTraveled < MISSILE_OWNER_SAFE_DISTANCE) {
             continue;
           }
-          // Track owner collision after safe distance (shouldn't happen)
+          // Missile looped back and hit owner - destroy it (no damage)
           if (world.systemState.combatStats) {
             world.systemState.combatStats.missilesHitOwner++;
           }
-          continue;
+          toRemove.push(entity);
+          break;
         }
         if (hasComponent(world, other, 'projectile')) continue;
         if (hasComponent(world, other, 'missile')) continue;

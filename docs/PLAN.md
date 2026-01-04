@@ -167,9 +167,9 @@ Full specifications for each weapon:
 | Autocannon | Finite | Low | Medium | Very Fast | Short | Low | - |
 | Railgun | Finite | Low | Very Fast | Slow | Very Long | High | - |
 | Flak | Finite | Low | Medium | Medium | Short | Low | Shrapnel AoE |
-| Red Laser | ∞ | Over time | Instant | Continuous | Long | High | Inverse square falloff |
-| Green Laser | ∞ | Over time | Instant | Continuous | Medium | Medium | Inverse square falloff |
-| Blue Laser | ∞ | Over time | Instant | Continuous | Short | Low | Inverse square falloff |
+| Red Laser | ∞ | Over time | Instant | Continuous | Long | High | Linear falloff (1/r) |
+| Green Laser | ∞ | Over time | Instant | Continuous | Medium | Medium | Linear falloff (1/r) |
+| Blue Laser | ∞ | Over time | Instant | Continuous | Short | Low | Linear falloff (1/r) |
 | Lightning | ∞ | Over time | Instant | Flicker | Short | Medium | Constant damage/distance |
 | Nuclear Lance | 1 | None | Instant | Single | Very Long | Extreme | One-shot |
 

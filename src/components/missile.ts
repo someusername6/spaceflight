@@ -144,6 +144,17 @@ export const MISSILE_DEFS: Record<
     aoeRadius: 100, // Large AoE damage radius
     isNuke: true, // Special explosion effects
   },
+  decoy: {
+    name: 'Decoy',
+    requiresLock: false,
+    speed: 50,
+    turnRate: 0,
+    range: 0, // Decoys don't travel far
+    damage: 0, // No damage
+    fireRate: 0.5,
+    lockSpeed: 0,
+    isDecoy: true, // Mark as countermeasure
+  },
 };
 
 /** Creates a SecondaryWeapon from a missile definition (count is scaled by bankSize) */

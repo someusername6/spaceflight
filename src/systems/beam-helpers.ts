@@ -48,7 +48,8 @@ const tempOC = new THREE.Vector3();
 export const MIN_FALLOFF_DISTANCE = 100;
 
 /**
- * Calculate damage with 1/d² falloff.
+ * Calculate damage with 1/d falloff (linear inverse).
+ * Less aggressive than 1/d² - beams are still useful at medium range.
  * @param baseDamage - Base damage value at reference distance
  * @param distance - Actual distance to target
  * @returns Damage adjusted for distance falloff
@@ -58,7 +59,7 @@ export function calculateFalloffDamage(
   distance: number,
 ): number {
   const effectiveDistance = Math.max(MIN_FALLOFF_DISTANCE, distance);
-  return baseDamage / (effectiveDistance / MIN_FALLOFF_DISTANCE) ** 2;
+  return baseDamage / (effectiveDistance / MIN_FALLOFF_DISTANCE);
 }
 
 /**

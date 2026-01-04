@@ -93,6 +93,11 @@ export function handleAIPrimaryWeapons(
   // Set linked flag so beam system knows to fire beams alongside projectiles
   weapons.linked = selection.mode === 'linked';
 
+  // Update currentIndex for single mode (so beam system knows which weapon is active)
+  if (selection.mode === 'single' && selection.index !== undefined) {
+    weapons.currentIndex = selection.index;
+  }
+
   // Execute weapon selection
   if (selection.mode === 'linked') {
     fireLinkedPrimaries(

@@ -1,13 +1,6 @@
 /**
  * AI Weapon Selection - Smart weapon choice based on tactical situation.
- *
- * AI selects weapons based on:
- * - Range to target (match weapon range to distance)
- * - Heat level (prefer cooler weapons when hot)
- * - Ammo conservation (don't waste finite ammo at poor angles)
- * - Target shields (prefer Ion against shielded targets)
- * - Missile selection (pick optimal missile for situation)
- *
+ * Considers range, heat, ammo, shields, and missile selection.
  * Uses AIProfile for per-entity behavior thresholds.
  */
 
@@ -182,9 +175,14 @@ function scoreWeapon(
     score += 40;
   }
 
-  // Beam weapons get bonus at short range (hitscan advantage)
+  // Beam weapons get hitscan bonus at close-medium range
   if (weapon.category === 'beam' && distanceCategory === RangeCategory.Short) {
-    score += 20;
+    score += 30;
+  } else if (
+    weapon.category === 'beam' &&
+    distanceCategory === RangeCategory.Medium
+  ) {
+    score += 15;
   }
 
   // High DPS weapons preferred at close range
