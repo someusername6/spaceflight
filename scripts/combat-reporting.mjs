@@ -143,6 +143,44 @@ export function printDecoyStats(aggregatedStats, runs) {
 }
 
 /**
+ * Print first strike advantage stats
+ */
+export function printFirstStrikeStats(results, runs) {
+  const firstKillByA = results.filter((r) => r.firstKillTeam === 'A').length;
+  const firstKillByB = results.filter((r) => r.firstKillTeam === 'B').length;
+  console.log(`\nFirst Strike Advantage:`);
+  console.log(
+    `  First kill: A=${firstKillByA} (${((firstKillByA / runs) * 100).toFixed(0)}%), B=${firstKillByB} (${((firstKillByB / runs) * 100).toFixed(0)}%)`,
+  );
+}
+
+/**
+ * Print spawn order analysis to detect entity ID bias
+ */
+export function printSpawnOrderAnalysis(results) {
+  const spawnAFirstRuns = results.filter((r) => r.spawnAFirst);
+  const spawnBFirstRuns = results.filter((r) => !r.spawnAFirst);
+  if (spawnAFirstRuns.length === 0 || spawnBFirstRuns.length === 0) return;
+
+  const aWinsWhenAFirst = spawnAFirstRuns.filter(
+    (r) => r.winner === 'A',
+  ).length;
+  const aWinsWhenBFirst = spawnBFirstRuns.filter(
+    (r) => r.winner === 'A',
+  ).length;
+  const aWinRateWhenAFirst = (aWinsWhenAFirst / spawnAFirstRuns.length) * 100;
+  const aWinRateWhenBFirst = (aWinsWhenBFirst / spawnBFirstRuns.length) * 100;
+
+  console.log(`\nSpawn Order Analysis:`);
+  console.log(
+    `  A spawns first (${spawnAFirstRuns.length} runs): A wins ${aWinRateWhenAFirst.toFixed(1)}%`,
+  );
+  console.log(
+    `  B spawns first (${spawnBFirstRuns.length} runs): A wins ${aWinRateWhenBFirst.toFixed(1)}%`,
+  );
+}
+
+/**
  * Print summary table for all scenarios
  */
 export function printSummaryTable(allResults) {

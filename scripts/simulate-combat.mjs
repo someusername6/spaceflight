@@ -34,13 +34,14 @@ import { missileSystem } from '../src/systems/missiles.ts';
 import { physicsSystem } from '../src/systems/physics.ts';
 import { projectileSystem } from '../src/systems/projectiles.ts';
 import { shieldSystem } from '../src/systems/shields.ts';
-// Import systems (same order as game.ts, minus input)
 import { targetingSystem } from '../src/systems/targeting.ts';
 import { weaponSystem } from '../src/systems/weapons.ts';
 import {
   aggregateCombatStats,
   printDecoyStats,
+  printFirstStrikeStats,
   printMissileStats,
+  printSpawnOrderAnalysis,
   printSummaryTable,
   printWeaponStats,
 } from './combat-reporting.mjs';
@@ -176,6 +177,7 @@ function runSimulation(scenario, seed) {
     firstKillTeam: null,
     teamADamageDealt: 0,
     teamBDamageDealt: 0,
+    spawnAFirst, // Track spawn order for bias analysis
   };
 
   // Run simulation
@@ -229,7 +231,13 @@ function runSimulation(scenario, seed) {
     metrics.teamARemaining = teamACount;
     metrics.teamBRemaining = teamBCount;
 
-    // Check for victory
+    // Check for victory (check mutual destruction first to avoid bias)
+    if (teamACount === 0 && teamBCount === 0) {
+      // Both teams eliminated on same tick - true draw
+      metrics.winner = 'draw';
+      metrics.timeToVictory = (tick + 1) / TICK_RATE;
+      break;
+    }
     if (teamACount === 0) {
       metrics.winner = 'B';
       metrics.timeToVictory = (tick + 1) / TICK_RATE;
@@ -305,16 +313,6 @@ function runScenario(scenarioKey, runs = 50) {
     times.reduce((sum, t) => sum + (t - avgTime) ** 2, 0) / times.length,
   );
 
-  // First damage stats
-  const firstDamageByA = results.filter(
-    (r) => r.firstDamageTeam === 'A',
-  ).length;
-  const firstDamageByB = results.filter(
-    (r) => r.firstDamageTeam === 'B',
-  ).length;
-  const firstKillByA = results.filter((r) => r.firstKillTeam === 'A').length;
-  const firstKillByB = results.filter((r) => r.firstKillTeam === 'B').length;
-
   console.log(`\nResults:`);
   console.log(
     `  Team A wins: ${teamAWins}/${runs} (${((teamAWins / runs) * 100).toFixed(1)}%)`,
@@ -325,13 +323,8 @@ function runScenario(scenarioKey, runs = 50) {
   if (draws > 0) console.log(`  Draws: ${draws}/${runs}`);
   if (timeouts > 0) console.log(`  Timeouts: ${timeouts}/${runs}`);
 
-  console.log(`\nFirst Strike Advantage:`);
-  console.log(
-    `  First damage: A=${firstDamageByA} (${((firstDamageByA / runs) * 100).toFixed(0)}%), B=${firstDamageByB} (${((firstDamageByB / runs) * 100).toFixed(0)}%)`,
-  );
-  console.log(
-    `  First kill: A=${firstKillByA} (${((firstKillByA / runs) * 100).toFixed(0)}%), B=${firstKillByB} (${((firstKillByB / runs) * 100).toFixed(0)}%)`,
-  );
+  printFirstStrikeStats(results, runs);
+  printSpawnOrderAnalysis(results);
 
   console.log(`\nTime to Victory:`);
   console.log(`  Average: ${avgTime.toFixed(1)}s (σ=${stdDev.toFixed(1)}s)`);
