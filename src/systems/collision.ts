@@ -24,21 +24,23 @@ interface CollidableInfo {
   collision: Collision;
 }
 const collidablePool: CollidableInfo[] = [];
-let collidablePoolIndex = 0;
 
 function getCollidableInfo(
+  world: World,
   entity: Entity,
   transform: Transform,
   collision: Collision,
 ): CollidableInfo {
-  if (collidablePoolIndex >= collidablePool.length) {
+  const poolIndex = world.systemState.pools.collidable;
+  if (poolIndex >= collidablePool.length) {
     collidablePool.push({
       entity: 0 as Entity,
       transform: null as unknown as Transform,
       collision: null as unknown as Collision,
     });
   }
-  const info = collidablePool[collidablePoolIndex++] as CollidableInfo;
+  const info = collidablePool[poolIndex] as CollidableInfo;
+  world.systemState.pools.collidable++;
   info.entity = entity;
   info.transform = transform;
   info.collision = collision;
@@ -62,7 +64,7 @@ export function collisionSystem(world: World, _dt: number): void {
   }
 
   // Reset pool and clear collidables array
-  collidablePoolIndex = 0;
+  world.systemState.pools.collidable = 0;
   collidables.length = 0;
 
   for (const entity of queryEntities(world, ['transform', 'collision'])) {
@@ -77,7 +79,7 @@ export function collisionSystem(world: World, _dt: number): void {
       entity,
       'collision',
     ) as Collision;
-    collidables.push(getCollidableInfo(entity, transform, collision));
+    collidables.push(getCollidableInfo(world, entity, transform, collision));
   }
 
   // Check all pairs (O(n²) - fine for small entity counts)

@@ -96,6 +96,12 @@ export interface SystemState {
       category: 'energy' | 'ballistic';
     }>;
   };
+  /** Object pool indices - reset each frame */
+  pools: {
+    beamWeapon: number;
+    collidable: number;
+    targetCollector: number;
+  };
 }
 
 /** Forward declaration - full definition in ecs.ts */

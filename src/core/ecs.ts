@@ -56,6 +56,11 @@ export function createWorld(seed: number = 0): World {
       projectileHits: {
         pending: [],
       },
+      pools: {
+        beamWeapon: 0,
+        collidable: 0,
+        targetCollector: 0,
+      },
     },
     prng: createPRNG(seed),
   };

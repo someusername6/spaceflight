@@ -31,15 +31,17 @@ const KEY_BINDINGS = {
 /** Currently pressed keys */
 const pressedKeys = new Set<string>();
 
-/** Stored event handlers for cleanup */
-let keydownHandler: ((e: KeyboardEvent) => void) | null = null;
-let keyupHandler: ((e: KeyboardEvent) => void) | null = null;
-let blurHandler: (() => void) | null = null;
+/** Stored event handlers for cleanup (const object avoids module-level let) */
+const eventHandlers = {
+  keydown: null as ((e: KeyboardEvent) => void) | null,
+  keyup: null as ((e: KeyboardEvent) => void) | null,
+  blur: null as (() => void) | null,
+};
 
 /** Initialize keyboard listeners (call once at startup) */
 export function initInput(): void {
   // Create handlers that can be removed later
-  keydownHandler = (e: KeyboardEvent) => {
+  eventHandlers.keydown = (e: KeyboardEvent) => {
     pressedKeys.add(e.code);
     // Prevent browser defaults for game keys
     if (
@@ -51,32 +53,32 @@ export function initInput(): void {
     }
   };
 
-  keyupHandler = (e: KeyboardEvent) => {
+  eventHandlers.keyup = (e: KeyboardEvent) => {
     pressedKeys.delete(e.code);
   };
 
-  blurHandler = () => {
+  eventHandlers.blur = () => {
     pressedKeys.clear();
   };
 
-  window.addEventListener('keydown', keydownHandler);
-  window.addEventListener('keyup', keyupHandler);
-  window.addEventListener('blur', blurHandler);
+  window.addEventListener('keydown', eventHandlers.keydown);
+  window.addEventListener('keyup', eventHandlers.keyup);
+  window.addEventListener('blur', eventHandlers.blur);
 }
 
 /** Clean up keyboard listeners (call on game shutdown) */
 export function cleanupInput(): void {
-  if (keydownHandler) {
-    window.removeEventListener('keydown', keydownHandler);
-    keydownHandler = null;
+  if (eventHandlers.keydown) {
+    window.removeEventListener('keydown', eventHandlers.keydown);
+    eventHandlers.keydown = null;
   }
-  if (keyupHandler) {
-    window.removeEventListener('keyup', keyupHandler);
-    keyupHandler = null;
+  if (eventHandlers.keyup) {
+    window.removeEventListener('keyup', eventHandlers.keyup);
+    eventHandlers.keyup = null;
   }
-  if (blurHandler) {
-    window.removeEventListener('blur', blurHandler);
-    blurHandler = null;
+  if (eventHandlers.blur) {
+    window.removeEventListener('blur', eventHandlers.blur);
+    eventHandlers.blur = null;
   }
   pressedKeys.clear();
 }

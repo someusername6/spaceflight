@@ -134,14 +134,14 @@ function fireLinkedBeams(
   activeBeams: Map<Entity, ActiveBeam[]>,
 ): void {
   // Reset pool and clear collector (avoid per-frame allocations)
-  resetBeamWeaponPool();
+  resetBeamWeaponPool(world);
   beamWeaponsCollector.length = 0;
 
   // Find all beam weapons
   for (let i = 0; i < weapons.weapons.length; i++) {
     const weapon = weapons.weapons[i];
     if (weapon && weapon.category === 'beam') {
-      beamWeaponsCollector.push(getBeamWeaponInfo(weapon, i));
+      beamWeaponsCollector.push(getBeamWeaponInfo(world, weapon, i));
     }
   }
 

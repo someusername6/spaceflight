@@ -24,18 +24,18 @@ interface TargetCollectorInfo {
   distance: number;
 }
 const targetCollectorPool: TargetCollectorInfo[] = [];
-let targetCollectorPoolIndex = 0;
 
 function getTargetCollectorInfo(
+  world: World,
   entity: Entity,
   distance: number,
 ): TargetCollectorInfo {
-  if (targetCollectorPoolIndex >= targetCollectorPool.length) {
+  const poolIndex = world.systemState.pools.targetCollector;
+  if (poolIndex >= targetCollectorPool.length) {
     targetCollectorPool.push({ entity: 0 as Entity, distance: 0 });
   }
-  const info = targetCollectorPool[
-    targetCollectorPoolIndex++
-  ] as TargetCollectorInfo;
+  const info = targetCollectorPool[poolIndex] as TargetCollectorInfo;
+  world.systemState.pools.targetCollector++;
   info.entity = entity;
   info.distance = distance;
   return info;
@@ -122,7 +122,7 @@ function updateValidTargets(
   selfFaction: Faction,
 ): void {
   // Reset pool and clear collector array
-  targetCollectorPoolIndex = 0;
+  world.systemState.pools.targetCollector = 0;
   targetCollector.length = 0;
 
   for (const other of queryEntities(world, [
@@ -153,7 +153,7 @@ function updateValidTargets(
     ) as Transform;
     const distance = selfTransform.position.distanceTo(otherTransform.position);
 
-    targetCollector.push(getTargetCollectorInfo(other, distance));
+    targetCollector.push(getTargetCollectorInfo(world, other, distance));
   }
 
   // Sort by distance (nearest first) - use module-level comparator

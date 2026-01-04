@@ -19,25 +19,26 @@ export interface BeamWeaponInfo {
 }
 
 const beamWeaponPool: BeamWeaponInfo[] = [];
-let beamWeaponPoolIndex = 0;
-
 /** Get a pooled BeamWeaponInfo object */
 export function getBeamWeaponInfo(
+  world: World,
   weapon: PrimaryWeapon,
   index: number,
 ): BeamWeaponInfo {
-  if (beamWeaponPoolIndex >= beamWeaponPool.length) {
+  const poolIndex = world.systemState.pools.beamWeapon;
+  if (poolIndex >= beamWeaponPool.length) {
     beamWeaponPool.push({ weapon: null as unknown as PrimaryWeapon, index: 0 });
   }
-  const info = beamWeaponPool[beamWeaponPoolIndex++] as BeamWeaponInfo;
+  const info = beamWeaponPool[poolIndex] as BeamWeaponInfo;
+  world.systemState.pools.beamWeapon++;
   info.weapon = weapon;
   info.index = index;
   return info;
 }
 
 /** Reset the beam weapon pool for a new frame */
-export function resetBeamWeaponPool(): void {
-  beamWeaponPoolIndex = 0;
+export function resetBeamWeaponPool(world: World): void {
+  world.systemState.pools.beamWeapon = 0;
 }
 
 // Reusable vector for ray-sphere intersection
@@ -111,8 +112,7 @@ export function getBeamColor(name: string): THREE.Color {
 }
 
 // Reusable object for beam hit detection (avoid per-frame allocations)
-const closestHitResult = { entity: 0 as Entity, distance: 0 };
-let hasClosestHit = false;
+const closestHitResult = { entity: 0 as Entity, distance: 0, hit: false };
 
 /** Result of a beam hit check */
 export interface BeamHitResult {
@@ -137,7 +137,7 @@ export function findBeamHit(
   rayDirection: THREE.Vector3,
   maxRange: number,
 ): BeamHitResult {
-  hasClosestHit = false;
+  closestHitResult.hit = false;
   closestHitResult.distance = Infinity;
 
   for (const other of queryEntities(world, [
@@ -175,7 +175,7 @@ export function findBeamHit(
 
     if (distance !== null && distance <= maxRange) {
       if (distance < closestHitResult.distance) {
-        hasClosestHit = true;
+        closestHitResult.hit = true;
         closestHitResult.entity = other;
         closestHitResult.distance = distance;
       }
@@ -183,7 +183,7 @@ export function findBeamHit(
   }
 
   return {
-    hit: hasClosestHit,
+    hit: closestHitResult.hit,
     entity: closestHitResult.entity,
     distance: closestHitResult.distance,
   };
