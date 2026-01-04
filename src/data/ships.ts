@@ -20,6 +20,10 @@ export interface ShipClassStats {
   maxHeat: number;
   coolingRate: number;
   afterburnerHeatRate: number;
+  /** Primary weapon bank sizes (e.g., [2, 2, 1] = 3 banks of sizes 2, 2, 1) */
+  primaryBanks: number[];
+  /** Secondary weapon bank sizes (e.g., [2, 1, 1] = 3 banks of sizes 2, 1, 1) */
+  secondaryBanks: number[];
 }
 
 /**
@@ -42,6 +46,8 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     maxHeat: 80,
     coolingRate: 15,
     afterburnerHeatRate: 25,
+    primaryBanks: [1, 1],
+    secondaryBanks: [1],
   },
 
   // Interceptor: Quick dogfighter - BALANCED
@@ -58,6 +64,8 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     maxHeat: 100,
     coolingRate: 18,
     afterburnerHeatRate: 40,
+    primaryBanks: [1, 1, 2],
+    secondaryBanks: [1, 2, 1],
   },
 
   // Striker: Heavy assault fighter - DURABLE
@@ -74,6 +82,8 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     maxHeat: 150,
     coolingRate: 25,
     afterburnerHeatRate: 60,
+    primaryBanks: [2, 2, 2, 1, 1],
+    secondaryBanks: [1],
   },
 
   // Bomber: Slow, missile-focused - FRAGILE (relies on range)
@@ -90,6 +100,8 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     maxHeat: 80,
     coolingRate: 12,
     afterburnerHeatRate: 55,
+    primaryBanks: [2],
+    secondaryBanks: [2, 2, 2, 1, 1, 1, 1],
   },
 
   // Defender: Tanky shield boat - DURABLE
@@ -106,6 +118,8 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     maxHeat: 100,
     coolingRate: 18,
     afterburnerHeatRate: 50,
+    primaryBanks: [2, 2],
+    secondaryBanks: [2, 2, 1, 1, 1],
   },
 
   // Raider: Glass cannon - FRAGILE
@@ -122,6 +136,8 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     maxHeat: 140,
     coolingRate: 22,
     afterburnerHeatRate: 35,
+    primaryBanks: [3, 3, 1, 1],
+    secondaryBanks: [1, 1, 1],
   },
 
   // Sentinel: Long-range support - BALANCED (beam-optimized)
@@ -138,6 +154,8 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     maxHeat: 130,
     coolingRate: 22,
     afterburnerHeatRate: 45,
+    primaryBanks: [3, 2, 2],
+    secondaryBanks: [2, 2, 1],
   },
 };
 

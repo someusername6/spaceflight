@@ -34,7 +34,10 @@ interface WeaponLoadout {
 }
 
 /** Complete ship archetype (ship class stats + loadout) */
-export interface ShipStats extends ShipClassStats, WeaponLoadout {}
+export interface ShipStats extends ShipClassStats, WeaponLoadout {
+  /** The ship class this archetype is based on */
+  shipClassName: string;
+}
 
 /** Helper to create an archetype from a ship class and loadout */
 function createArchetype(shipClass: string, loadout: WeaponLoadout): ShipStats {
@@ -42,7 +45,7 @@ function createArchetype(shipClass: string, loadout: WeaponLoadout): ShipStats {
   if (!classStats) {
     throw new Error(`Unknown ship class: ${shipClass}`);
   }
-  return { ...classStats, ...loadout };
+  return { ...classStats, ...loadout, shipClassName: shipClass };
 }
 
 /**
