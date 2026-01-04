@@ -2,7 +2,7 @@
  * Missile Owner Collision Tests
  */
 
-import { entityExists } from '../src/core/ecs.ts';
+import { entityExists } from '../../../src/core/ecs.ts';
 import {
   assert,
   createShip,
@@ -12,7 +12,7 @@ import {
   runFrame,
   summarize,
   test,
-} from './test-utils.mjs';
+} from '../shared/test-utils.mjs';
 
 console.log('\n=== MISSILE OWNER COLLISION TESTS ===\n');
 

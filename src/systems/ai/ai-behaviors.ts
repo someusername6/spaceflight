@@ -28,6 +28,7 @@ const forward = new Vector3();
 const rotationAxis = new Vector3();
 const deltaQuat = new Quaternion();
 const localUp = new Vector3(); // For ship-relative calculations
+const escapeDir = new Vector3(); // For smart evade direction
 
 const DEG_TO_RAD = Math.PI / 180;
 
@@ -95,7 +96,7 @@ function turnToward(
   }
 }
 
-/** Evade state - break away from combat */
+/** Evade state - break away from combat using afterburner */
 export function updateEvade(
   world: World,
   _entity: Entity,
@@ -103,6 +104,7 @@ export function updateEvade(
   transform: Transform,
   physics: Physics,
   shields: Shields | undefined,
+  heat: Heat | undefined,
   dt: number,
 ): void {
   const profile = ai.profile;
@@ -112,10 +114,15 @@ export function updateEvade(
   if (ai.stateTimer >= profile.evadeCooldown && shieldsRecovered) {
     ai.state = ai.target ? AIState.Pursue : AIState.Idle;
     ai.stateTimer = 0;
+    physics.isAfterburning = false;
     return;
   }
 
-  // Evade behavior: turn away from target and fly erratically
+  // Calculate current forward direction
+  forward.set(0, 0, -1).applyQuaternion(transform.rotation);
+
+  // Smart evade: prefer perpendicular movement to maximize angular velocity
+  // (harder for enemy to track), with slight bias toward away for distance
   if (ai.target && entityExists(world, ai.target)) {
     const targetTransform = getComponent<Transform>(
       world,
@@ -123,11 +130,35 @@ export function updateEvade(
       'transform',
     );
     if (targetTransform) {
-      // Turn AWAY from target
+      // Direction away from target (normalized)
       toTarget.copy(transform.position).sub(targetTransform.position);
       if (toTarget.lengthSq() > 0.001) {
         toTarget.normalize();
-        turnToward(transform, physics, toTarget, dt);
+
+        // Calculate perpendicular direction (maximizes angular velocity)
+        // Use world up to get a horizontal perpendicular direction
+        localUp.set(0, 1, 0);
+        escapeDir.crossVectors(toTarget, localUp);
+        if (escapeDir.lengthSq() < 0.001) {
+          // Target is directly above/below - use world X instead
+          escapeDir.set(1, 0, 0);
+        } else {
+          escapeDir.normalize();
+        }
+
+        // Pick left or right based on which requires less turn
+        if (forward.dot(escapeDir) < 0) {
+          escapeDir.negate();
+        }
+
+        // Blend: 70% perpendicular (hard to hit) + 30% away (gain distance)
+        // This creates a spiral escape pattern that's both evasive and effective
+        escapeDir
+          .multiplyScalar(0.7)
+          .addScaledVector(toTarget, 0.3)
+          .normalize();
+
+        turnToward(transform, physics, escapeDir, dt);
       }
     }
   }
@@ -139,11 +170,33 @@ export function updateEvade(
   transform.rotation.multiply(wobbleQuat);
   transform.rotation.normalize();
 
-  // Accelerate to max speed
-  physics.currentSpeed = Math.min(
-    physics.currentSpeed + physics.acceleration * dt,
-    physics.maxSpeed,
-  );
+  // Afterburner escape - use boosted speed if not heat-locked
+  const canAfterburn = !physics.afterburnerLocked;
+  const afterburnerSpeed = physics.maxSpeed * physics.afterburnerMultiplier;
+
+  if (canAfterburn) {
+    // Accelerate to afterburner speed
+    physics.currentSpeed = Math.min(
+      physics.currentSpeed + physics.acceleration * 1.5 * dt,
+      afterburnerSpeed,
+    );
+    physics.isAfterburning = true;
+
+    // Generate heat while afterburning
+    if (heat) {
+      heat.current = Math.min(
+        heat.max,
+        heat.current + physics.afterburnerHeatRate * dt,
+      );
+    }
+  } else {
+    // Heat-locked - use normal max speed
+    physics.currentSpeed = Math.min(
+      physics.currentSpeed + physics.acceleration * dt,
+      physics.maxSpeed,
+    );
+    physics.isAfterburning = false;
+  }
 }
 
 /** Protect state - aggressively engage threats to the protectee */

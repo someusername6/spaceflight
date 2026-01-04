@@ -7,16 +7,19 @@ import {
   areEnemies,
   createFaction,
   Faction,
-} from '../src/components/faction.ts';
-import { createHealth } from '../src/components/health.ts';
-import { createMissile, isMissileExpired } from '../src/components/missile.ts';
-import { createTransform } from '../src/components/transform.ts';
+} from '../../../src/components/faction.ts';
+import { createHealth } from '../../../src/components/health.ts';
+import {
+  createMissile,
+  isMissileExpired,
+} from '../../../src/components/missile.ts';
+import { createTransform } from '../../../src/components/transform.ts';
 import {
   addComponent,
   createEntity,
   createWorld,
   getComponent,
-} from '../src/core/ecs.ts';
+} from '../../../src/core/ecs.ts';
 
 let passed = 0;
 let failed = 0;

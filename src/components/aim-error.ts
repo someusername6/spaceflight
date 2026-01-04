@@ -21,8 +21,15 @@ export interface AimError extends ComponentBase {
   readonly type: 'aimError';
   /** Current aim offset in radians (pitch, yaw) */
   offset: THREE.Vector2;
-  /** Maximum aim error in radians */
+  /** Base maximum aim error in radians (from AI profile) */
   maxError: number;
+  /**
+   * Effective maximum aim error including angular velocity contribution.
+   * Updated each frame: maxError + (angularFactor * targetAngularVelocity)
+   */
+  effectiveMaxError: number;
+  /** Multiplier for angular velocity contribution (from AI profile) */
+  angularFactor: number;
   /** How fast aim drifts (radians per second) */
   driftSpeed: number;
   /** Current drift direction */
@@ -52,21 +59,26 @@ export function createAimError(
   // Support both profile-based and explicit value creation
   let maxError: number;
   let drift: number;
+  let angularFactor: number;
 
   if (typeof profileOrMaxError === 'object') {
     // AIProfile provided
     maxError = profileOrMaxError.aimErrorBase;
     drift = profileOrMaxError.aimErrorDriftSpeed;
+    angularFactor = profileOrMaxError.aimErrorAngularFactor;
   } else {
     // Explicit values (backwards compatible)
     maxError = profileOrMaxError ?? 0.05;
     drift = driftSpeed ?? 0.02;
+    angularFactor = 0.5; // Default moderate angular sensitivity
   }
 
   return {
     type: 'aimError',
     offset: new THREE.Vector2(0, 0),
     maxError,
+    effectiveMaxError: maxError, // Initially same as base
+    angularFactor,
     driftSpeed: drift,
     driftDirection: createRandomDirection(prng),
     driftTimer: randomDriftTime(prng),
@@ -76,6 +88,29 @@ export function createAimError(
 /** Get random time until next drift direction change */
 function randomDriftTime(prng: PRNGState): number {
   return randomRange(prng, 0.5, 2.0); // 0.5-2 seconds
+}
+
+/**
+ * Update effective max error based on target angular velocity.
+ *
+ * Angular velocity = perpendicular_speed / distance (in radians/second).
+ * A target moving perpendicular to the shooter's aim at 100 m/s at 500m range
+ * has angular velocity = 100/500 = 0.2 rad/s.
+ *
+ * @param error - The aim error component to update
+ * @param targetAngularVelocity - Target's angular velocity in rad/s
+ */
+export function updateEffectiveMaxError(
+  error: AimError,
+  targetAngularVelocity: number,
+): void {
+  // Effective error = base + (angular factor * angular velocity)
+  // Clamp angular contribution to prevent extreme values
+  const angularContribution = Math.min(
+    error.angularFactor * targetAngularVelocity,
+    0.3, // Cap at ~17 degrees additional error
+  );
+  error.effectiveMaxError = error.maxError + angularContribution;
 }
 
 /** Update aim error drift */
@@ -95,10 +130,10 @@ export function updateAimError(
   error.offset.x += error.driftDirection.x * error.driftSpeed * dt;
   error.offset.y += error.driftDirection.y * error.driftSpeed * dt;
 
-  // Clamp to max error
+  // Clamp to effective max error (includes angular velocity contribution)
   const len = error.offset.length();
-  if (len > error.maxError) {
-    error.offset.multiplyScalar(error.maxError / len);
+  if (len > error.effectiveMaxError) {
+    error.offset.multiplyScalar(error.effectiveMaxError / len);
   }
 }
 

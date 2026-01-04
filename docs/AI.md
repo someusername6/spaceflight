@@ -96,44 +96,67 @@ To prevent rapid state oscillation:
 
 ## Aim Error System
 
-**Core concept:** AI doesn't miss randomly—it aims at the wrong spot consistently, then adjusts.
+**Core concept:** AI doesn't miss randomly—it aims at the wrong spot consistently, then adjusts. Moving perpendicular to the enemy's line of fire makes you much harder to hit.
 
-### Error Calculation
+### Error Components
+
+The AI aim error has three components:
+
+1. **Base Error** - Constant angular offset from AI profile (radians)
+2. **Drift** - Aim wanders slowly over time, changing direction every 0.5-2s
+3. **Angular Velocity Error** - Additional error based on target's perpendicular movement
+
+### Angular Velocity Formula
 
 ```
-aimTarget = leadPosition + errorVector
-errorVector = baseError + speedError
+effectiveError = baseError + (angularFactor × angularVelocity)
+angularVelocity = perpendicularSpeed / distance
 ```
 
 Where:
-- `baseError`: Fixed magnitude error, direction changes slowly
-- `speedError`: Scales with target velocity
+- `perpendicularSpeed`: Target velocity component perpendicular to shooter's line of sight
+- `distance`: Distance from shooter to target
+- `angularFactor`: AI profile sensitivity (higher = more affected by movement)
 
-### Parameters
+### Why Perpendicular Movement Matters
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| baseErrorMagnitude | 15m | Constant aim offset |
-| speedErrorScale | 0.1 | Error per m/s of target speed |
-| errorRotationSpeed | 30°/s | How fast error direction changes |
+A target at 500m moving at 100 m/s:
+- **Moving directly toward/away**: Angular velocity ≈ 0 rad/s (easy to track)
+- **Moving perpendicular**: Angular velocity = 100/500 = 0.2 rad/s (hard to track)
+- **Moving diagonally**: Somewhere in between
 
-### Example
+This means evading ships should fly **perpendicular** to their attacker, not directly away!
 
-Target moving at 200 m/s:
-- Base error: 15m
-- Speed error: 200 * 0.1 = 20m
-- Total error: ~25m (vector sum)
+### AI Profile Parameters
 
-At 300m range, this makes hitting a fast target notably harder.
+| Profile | Base Error | Angular Factor | Effect |
+|---------|------------|----------------|--------|
+| Rookie | 0.12 rad (~7°) | 0.8 | Very affected by movement |
+| Regular | 0.05 rad (~3°) | 0.5 | Moderate tracking ability |
+| Veteran | 0.03 rad (~2°) | 0.3 | Good at tracking |
+| Ace | 0.015 rad (~1°) | 0.15 | Excellent tracker |
 
-### Difficulty Scaling
+### Example: Evading a Regular AI
 
-| Difficulty | baseError | speedScale | Notes |
-|------------|-----------|------------|-------|
-| Easy | 25m | 0.15 | Very forgiving |
-| Normal | 15m | 0.10 | Default |
-| Hard | 8m | 0.05 | Challenging |
-| Elite | 3m | 0.02 | Near-perfect |
+Target at 400m, afterburning perpendicular at 450 m/s:
+- Angular velocity = 450 / 400 = 1.125 rad/s
+- Angular contribution = 0.5 × 1.125 = 0.5625 rad (capped at 0.3)
+- Effective error = 0.05 + 0.3 = 0.35 rad (~20°)
+
+This makes hitting a fast, perpendicular target very difficult!
+
+### Implementation Files
+
+- `src/components/aim-error.ts` - AimError component and update functions
+- `src/systems/aim-error.ts` - System that calculates angular velocity each frame
+- `src/data/ai-profiles.ts` - Profile definitions with aim error parameters
+
+### Evade Behavior Integration
+
+The evade state (`AIState.Evade`) now prioritizes perpendicular escape:
+- 70% perpendicular movement (maximizes angular velocity, harder to hit)
+- 30% away from target (still gaining distance)
+- Creates a spiral escape pattern that's both evasive and effective
 
 ## Target Selection
 

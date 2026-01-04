@@ -6,7 +6,7 @@ import {
   createShipIdentity,
   generateCallsign,
   resetCallsignCounters,
-} from '../src/components/ship-identity.ts';
+} from '../../../src/components/ship-identity.ts';
 
 let passed = 0;
 let failed = 0;

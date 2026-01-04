@@ -2,7 +2,7 @@
  * AI Missile Selection Tests
  */
 
-import { selectOptimalMissile } from '../src/systems/ai-missile-selection.ts';
+import { selectOptimalMissile } from '../../../src/systems/ai-missile-selection.ts';
 
 let passed = 0;
 let failed = 0;

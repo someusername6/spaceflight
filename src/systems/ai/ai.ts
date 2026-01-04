@@ -126,7 +126,7 @@ export function aiSystem(world: World, dt: number): void {
         updateEngage(world, entity, ai, transform, physics, dt);
         break;
       case AIState.Evade:
-        updateEvade(world, entity, ai, transform, physics, shields, dt);
+        updateEvade(world, entity, ai, transform, physics, shields, heat, dt);
         break;
       case AIState.Protect:
         updateProtect(

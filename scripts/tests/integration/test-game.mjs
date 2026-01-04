@@ -9,26 +9,26 @@ import {
   DECOY_SEDUCE_CHANCE,
   DECOY_SEDUCE_RANGE,
   isDecoyExpired,
-} from '../src/components/decoy.ts';
-import { createFaction } from '../src/components/faction.ts';
-import { createHealth } from '../src/components/health.ts';
-import { createHeat } from '../src/components/heat.ts';
+} from '../../../src/components/decoy.ts';
+import { createFaction } from '../../../src/components/faction.ts';
+import { createHealth } from '../../../src/components/health.ts';
+import { createHeat } from '../../../src/components/heat.ts';
 import {
   createMissile,
   createSecondaryWeaponFromDef,
   isMissileExpired,
-} from '../src/components/missile.ts';
-import { createPhysics } from '../src/components/physics.ts';
-import { createPlayerControlled } from '../src/components/player.ts';
-import { createShields } from '../src/components/shields.ts';
-import { createTargeting } from '../src/components/targeting.ts';
-import { createTransform } from '../src/components/transform.ts';
+} from '../../../src/components/missile.ts';
+import { createPhysics } from '../../../src/components/physics.ts';
+import { createPlayerControlled } from '../../../src/components/player.ts';
+import { createShields } from '../../../src/components/shields.ts';
+import { createTargeting } from '../../../src/components/targeting.ts';
+import { createTransform } from '../../../src/components/transform.ts';
 import {
   createDecoyWeapon,
   createPrimaryWeapons,
   createSecondaryWeapons,
   findDecoyWeapon,
-} from '../src/components/weapons.ts';
+} from '../../../src/components/weapons.ts';
 import {
   addComponent,
   createEntity,
@@ -36,10 +36,10 @@ import {
   findEntity,
   getComponent,
   queryEntities,
-} from '../src/core/ecs.ts';
-import { Faction } from '../src/core/types.ts';
-import { createCollision } from '../src/systems/collision.ts';
-import { dealDamage } from '../src/systems/damage.ts';
+} from '../../../src/core/ecs.ts';
+import { Faction } from '../../../src/core/types.ts';
+import { createCollision } from '../../../src/systems/collision.ts';
+import { dealDamage } from '../../../src/systems/damage.ts';
 
 let passed = 0;
 let failed = 0;

@@ -14,8 +14,8 @@ import {
   isOverheated,
   WEAPON_LOCK_THRESHOLD,
   WEAPON_UNLOCK_THRESHOLD,
-} from '../src/components/heat.ts';
-import { SHIP_ARCHETYPES } from '../src/factories/ship.ts';
+} from '../../../src/components/heat.ts';
+import { SHIP_ARCHETYPES } from '../../../src/factories/ship.ts';
 
 let passed = 0;
 let failed = 0;

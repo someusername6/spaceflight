@@ -17,6 +17,13 @@ export interface AIProfile {
   aimErrorBase: number;
   /** Aim drift speed in radians per second */
   aimErrorDriftSpeed: number;
+  /**
+   * Multiplier for target angular velocity contribution to aim error.
+   * Higher = target movement affects accuracy more.
+   * Angular velocity (rad/s) * factor = additional error (rad).
+   * Example: 0.5 factor * 0.1 rad/s angular velocity = 0.05 rad extra error
+   */
+  aimErrorAngularFactor: number;
 
   // === ENGAGEMENT ===
   /** Distance to start engaging (firing weapons) */
@@ -70,6 +77,7 @@ export const AI_PROFILES: Record<string, AIProfile> = {
     // Accuracy: Very poor
     aimErrorBase: 0.12, // ~7 degrees
     aimErrorDriftSpeed: 0.04,
+    aimErrorAngularFactor: 0.8, // Very affected by target movement
     // Engagement: Conservative
     engageRange: 500,
     breakOffRange: 1000,
@@ -99,6 +107,7 @@ export const AI_PROFILES: Record<string, AIProfile> = {
     // Accuracy: Moderate
     aimErrorBase: 0.05, // ~3 degrees
     aimErrorDriftSpeed: 0.02,
+    aimErrorAngularFactor: 0.5, // Moderately affected by target movement
     // Engagement: Standard
     engageRange: 600,
     breakOffRange: 1200,
@@ -128,6 +137,7 @@ export const AI_PROFILES: Record<string, AIProfile> = {
     // Accuracy: Good
     aimErrorBase: 0.03, // ~2 degrees
     aimErrorDriftSpeed: 0.015,
+    aimErrorAngularFactor: 0.3, // Good at tracking moving targets
     // Engagement: Aggressive but smart
     engageRange: 700,
     breakOffRange: 1400,
@@ -157,6 +167,7 @@ export const AI_PROFILES: Record<string, AIProfile> = {
     // Accuracy: Excellent
     aimErrorBase: 0.015, // ~1 degree
     aimErrorDriftSpeed: 0.01,
+    aimErrorAngularFactor: 0.15, // Excellent at tracking fast targets
     // Engagement: Very aggressive
     engageRange: 800,
     breakOffRange: 1600,

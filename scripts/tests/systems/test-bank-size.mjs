@@ -2,12 +2,12 @@
  * Bank Size Scaling Tests - validates weapon bank size effects.
  */
 
-import { createSecondaryWeaponFromDef } from '../src/components/missile.ts';
+import { createSecondaryWeaponFromDef } from '../../../src/components/missile.ts';
 import {
   createDecoyWeapon,
   createPrimaryWeapons,
   getEffectiveHeat,
-} from '../src/components/weapons.ts';
+} from '../../../src/components/weapons.ts';
 
 let passed = 0;
 let failed = 0;

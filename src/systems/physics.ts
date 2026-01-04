@@ -81,6 +81,12 @@ export function physicsSystem(world: World, dt: number): void {
     } else if (ai) {
       // AI movement handled directly in ai.ts via transform.rotation and physics.currentSpeed
       // AI does not use the input abstraction - it sets rotation/speed directly each frame
+      // Skip the rest of speed control for AI - they manage their own speed and afterburner
+      forward.set(0, 0, -1);
+      forward.applyQuaternion(transform.rotation);
+      physics.velocity.copy(forward).multiplyScalar(physics.currentSpeed);
+      transform.position.addScaledVector(physics.velocity, dt);
+      continue;
     }
 
     // Calculate target angular velocity from input

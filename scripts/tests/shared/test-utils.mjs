@@ -3,18 +3,21 @@
  */
 
 import * as THREE from 'three';
-import { createFaction } from '../src/components/faction.ts';
-import { createHealth } from '../src/components/health.ts';
-import { createMissile } from '../src/components/missile.ts';
-import { createTransform } from '../src/components/transform.ts';
+import { createFaction } from '../../../src/components/faction.ts';
+import { createHealth } from '../../../src/components/health.ts';
+import { createMissile } from '../../../src/components/missile.ts';
+import { createTransform } from '../../../src/components/transform.ts';
 import {
   addComponent,
   createEntity,
   createWorld,
   processRemovals,
-} from '../src/core/ecs.ts';
-import { collisionSystem, createCollision } from '../src/systems/collision.ts';
-import { missileSystem } from '../src/systems/missiles.ts';
+} from '../../../src/core/ecs.ts';
+import {
+  collisionSystem,
+  createCollision,
+} from '../../../src/systems/collision.ts';
+import { missileSystem } from '../../../src/systems/missiles.ts';
 
 // Test state
 let passed = 0;
@@ -130,5 +133,5 @@ export function runFrame(
 }
 
 // Re-export commonly used items
-export { Faction } from '../src/components/faction.ts';
+export { Faction } from '../../../src/components/faction.ts';
 export { THREE };

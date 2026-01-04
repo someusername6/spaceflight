@@ -5,10 +5,10 @@
  * (within 30% ratio), preventing weapons from aiming at different lead points.
  */
 
-import { createHeat } from '../src/components/heat.ts';
-import { createPrimaryWeapons } from '../src/components/weapons.ts';
-import { DEFAULT_TEST_PROFILE } from '../src/data/test-fixtures.ts';
-import { selectOptimalPrimaryWeapon } from '../src/systems/ai/ai-weapon-selection.ts';
+import { createHeat } from '../../../src/components/heat.ts';
+import { createPrimaryWeapons } from '../../../src/components/weapons.ts';
+import { DEFAULT_TEST_PROFILE } from '../../../src/data/test-fixtures.ts';
+import { selectOptimalPrimaryWeapon } from '../../../src/systems/ai/ai-weapon-selection.ts';
 
 let passed = 0;
 let failed = 0;

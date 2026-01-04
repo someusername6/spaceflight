@@ -2,7 +2,7 @@
  * Weapon System Tests - validates weapon definitions including Lightning and Nuclear Lance.
  */
 
-import { WEAPON_DEFS } from '../src/components/weapons.ts';
+import { WEAPON_DEFS } from '../../../src/components/weapons.ts';
 
 let passed = 0;
 let failed = 0;

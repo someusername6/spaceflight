@@ -3,19 +3,19 @@
  */
 
 import * as THREE from 'three';
-import { createFaction, Faction } from '../src/components/faction.ts';
-import { createHealth } from '../src/components/health.ts';
-import { createMissile } from '../src/components/missile.ts';
-import { createProjectile } from '../src/components/projectile.ts';
-import { createTransform } from '../src/components/transform.ts';
+import { createFaction, Faction } from '../../../src/components/faction.ts';
+import { createHealth } from '../../../src/components/health.ts';
+import { createMissile } from '../../../src/components/missile.ts';
+import { createProjectile } from '../../../src/components/projectile.ts';
+import { createTransform } from '../../../src/components/transform.ts';
 import {
   addComponent,
   createEntity,
   createWorld,
   getComponent,
   queryEntities,
-} from '../src/core/ecs.ts';
-import { createCollision } from '../src/systems/collision.ts';
+} from '../../../src/core/ecs.ts';
+import { createCollision } from '../../../src/systems/collision.ts';
 
 let passed = 0;
 let failed = 0;
