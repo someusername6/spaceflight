@@ -19,6 +19,7 @@ import { createAIShip } from '../../../src/factories/ship.ts';
 import { SHIP_ARCHETYPES } from '../../../src/factories/ship-archetypes.ts';
 import {
   initCombatStats,
+  jitter,
   runFrame,
   TICK_RATE,
 } from '../shared/combat-utils.mjs';
@@ -26,8 +27,6 @@ import {
 const RUNS_PER_TEST = 40;
 const MAX_FIGHT_TIME = 45;
 const MAX_TICKS = MAX_FIGHT_TIME * TICK_RATE;
-
-const jitter = () => (Math.random() - 0.5) * 20;
 
 console.log(`\n${'='.repeat(70)}`);
 console.log('RAIDER VARIANT TESTING');

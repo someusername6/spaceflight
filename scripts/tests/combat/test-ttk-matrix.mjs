@@ -16,20 +16,12 @@ import { createWorld, getComponent } from '../../../src/core/ecs.ts';
 import { Faction } from '../../../src/core/types.ts';
 import { createAIShip } from '../../../src/factories/ship.ts';
 import {
+  ARCHETYPES,
   initCombatStats,
+  jitter,
   runFrame,
   TICK_RATE,
 } from '../shared/combat-utils.mjs';
-
-const ARCHETYPES = [
-  'scout',
-  'interceptor',
-  'striker',
-  'defender',
-  'bomber',
-  'raider',
-  'sentinel',
-];
 
 const RUNS_PER_MATCHUP = 50;
 const MAX_FIGHT_TIME = 60; // 60 seconds max per fight
@@ -41,9 +33,6 @@ console.log('='.repeat(70));
 console.log(
   `Running ${ARCHETYPES.length}x${ARCHETYPES.length} = ${ARCHETYPES.length ** 2} matchups, ${RUNS_PER_MATCHUP} runs each\n`,
 );
-
-// Jitter function like combat sim (prevents perfect alignment)
-const jitter = () => (Math.random() - 0.5) * 20;
 
 // Store results for matrix output
 const results = {};

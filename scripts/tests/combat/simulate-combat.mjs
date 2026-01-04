@@ -21,21 +21,13 @@ import {
 } from '../../../src/core/ecs.ts';
 import { Faction } from '../../../src/core/types.ts';
 import { createAIShip } from '../../../src/factories/ship.ts';
-import { aiSystem } from '../../../src/systems/ai/ai.ts';
-import { aimErrorSystem } from '../../../src/systems/aim-error.ts';
-import { beamSystem } from '../../../src/systems/beams.ts';
-import { cleanupSystem } from '../../../src/systems/cleanup.ts';
-import { collisionSystem } from '../../../src/systems/collision.ts';
-import { damageSystem } from '../../../src/systems/damage.ts';
-import { decoySystem } from '../../../src/systems/decoys.ts';
-import { explosionSystem } from '../../../src/systems/explosions.ts';
-import { heatSystem } from '../../../src/systems/heat.ts';
-import { missileSystem } from '../../../src/systems/missiles.ts';
-import { physicsSystem } from '../../../src/systems/physics.ts';
-import { projectileSystem } from '../../../src/systems/projectiles.ts';
-import { shieldSystem } from '../../../src/systems/shields.ts';
-import { targetingSystem } from '../../../src/systems/targeting.ts';
-import { weaponSystem } from '../../../src/systems/weapons.ts';
+import {
+  initCombatStats,
+  jitter,
+  SYSTEMS,
+  TICK_RATE,
+  TICK_SEC,
+} from '../shared/combat-utils.mjs';
 import {
   aggregateCombatStats,
   printDecoyStats,
@@ -47,63 +39,24 @@ import {
 } from './combat-reporting.mjs';
 import { SCENARIOS } from './combat-scenarios.mjs';
 
-// Constants
-const TICK_RATE = 60;
-const TICK_SEC = 1 / TICK_RATE;
 const MAX_SIMULATION_TIME = 120; // 2 minutes max per fight
 const MAX_TICKS = MAX_SIMULATION_TIME * TICK_RATE;
 
 // Debug flag
 const DEBUG = process.argv.includes('--debug');
 
-// Systems to run (no input system - all AI)
-const SYSTEMS = [
-  targetingSystem,
-  aiSystem,
-  aimErrorSystem,
-  weaponSystem,
-  beamSystem,
-  physicsSystem,
-  projectileSystem,
-  missileSystem,
-  decoySystem,
-  collisionSystem,
-  damageSystem,
-  shieldSystem,
-  heatSystem,
-  cleanupSystem,
-  explosionSystem,
-];
-
 /**
  * Run a single simulation
  */
 function runSimulation(scenario, seed) {
   const world = createWorld(seed);
-
-  // Initialize combat stats tracking
-  world.systemState.combatStats = {
-    shotsFired: {},
-    damageDealt: {},
-    missilesFired: {},
-    missilesHit: {},
-    missileDamage: {},
-    missilesExpired: 0,
-    missilesHitOwner: 0,
-    missilesSeduced: 0,
-    missilesInFlight: 0,
-    beamDamage: {},
-    decoysLaunched: 0,
-    decoysSuccessful: 0,
-  };
+  initCombatStats(world);
 
   // Spawn teams facing each other with slight positional jitter
-  // This breaks pure determinism so identical ships have varied outcomes
   const facingPosZ = new Quaternion().setFromAxisAngle(
     new Vector3(0, 1, 0),
     Math.PI,
   );
-  const jitter = () => (Math.random() - 0.5) * 20; // ±10m random offset
   const startDistance = scenario.startDistance ?? 500;
 
   // Alternate spawn order each run to eliminate entity ID bias

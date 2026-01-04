@@ -21,21 +21,14 @@ import { createWorld, getComponent } from '../../../src/core/ecs.ts';
 import { Faction } from '../../../src/core/types.ts';
 import { createAIShip } from '../../../src/factories/ship.ts';
 import {
+  ARCHETYPES,
   initCombatStats,
+  jitter,
   runFrame,
   TICK_RATE,
   TICK_SEC,
 } from '../shared/combat-utils.mjs';
 
-const ARCHETYPES = [
-  'scout',
-  'interceptor',
-  'striker',
-  'defender',
-  'bomber',
-  'raider',
-  'sentinel',
-];
 const RUNS_PER_ARCHETYPE = 20;
 const MAX_FIGHT_TIME = 60;
 const MAX_TICKS = MAX_FIGHT_TIME * TICK_RATE;
@@ -43,9 +36,6 @@ const MAX_TICKS = MAX_FIGHT_TIME * TICK_RATE;
 console.log(`\n${'='.repeat(70)}`);
 console.log('ENGAGEMENT PATTERN ANALYSIS');
 console.log('='.repeat(70));
-
-// Jitter function like combat sim (prevents perfect alignment)
-const jitter = () => (Math.random() - 0.5) * 20;
 
 // Track a single fight's engagement patterns
 function analyzeFight(archetype, seed) {

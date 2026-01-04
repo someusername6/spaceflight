@@ -15,20 +15,12 @@ import { createWorld, getComponent } from '../../../src/core/ecs.ts';
 import { Faction } from '../../../src/core/types.ts';
 import { createAIShip } from '../../../src/factories/ship.ts';
 import {
+  ARCHETYPES,
   initCombatStats,
+  jitter,
   runFrame,
   TICK_RATE,
 } from '../shared/combat-utils.mjs';
-
-const ARCHETYPES = [
-  'scout',
-  'interceptor',
-  'striker',
-  'defender',
-  'bomber',
-  'raider',
-  'sentinel',
-];
 
 const _PROFILES = ['rookie', 'regular', 'veteran', 'ace'];
 const RUNS_PER_MATCHUP = 50;
@@ -38,9 +30,6 @@ const MAX_TICKS = MAX_FIGHT_TIME * TICK_RATE;
 console.log(`\n${'='.repeat(70)}`);
 console.log('SKILL SCALING VERIFICATION');
 console.log('='.repeat(70));
-
-// Jitter function like combat sim (prevents perfect alignment)
-const jitter = () => (Math.random() - 0.5) * 20;
 
 // Run a single matchup
 function runMatchup(archetype, profileA, profileB, runs) {

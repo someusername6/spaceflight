@@ -18,6 +18,7 @@ import { createAIShip } from '../../../src/factories/ship.ts';
 import { SHIP_ARCHETYPES } from '../../../src/factories/ship-archetypes.ts';
 import {
   initCombatStats,
+  jitter,
   runFrame,
   TICK_RATE,
 } from '../shared/combat-utils.mjs';
@@ -62,7 +63,6 @@ function runSimulation(archetypeA, archetypeB, startDistance, seed) {
   const world = createWorld(seed);
   initCombatStats(world);
 
-  const jitter = () => (Math.random() - 0.5) * 20;
   const facingPosZ = new Quaternion().setFromAxisAngle(
     new Vector3(0, 1, 0),
     Math.PI,

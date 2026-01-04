@@ -1,5 +1,5 @@
 /**
- * Shared utilities for evade effectiveness tests.
+ * Shared utilities for combat simulation tests.
  */
 
 import { aiSystem } from '../../../src/systems/ai/ai.ts';
@@ -18,10 +18,35 @@ import { shieldSystem } from '../../../src/systems/shields.ts';
 import { targetingSystem } from '../../../src/systems/targeting.ts';
 import { weaponSystem } from '../../../src/systems/weapons.ts';
 
+// ============================================================================
+// Constants
+// ============================================================================
+
 export const TICK_RATE = 60;
 export const TICK_SEC = 1 / TICK_RATE;
 
-const SYSTEMS = [
+/** All 7 ship archetypes */
+export const ARCHETYPES = [
+  'scout',
+  'interceptor',
+  'striker',
+  'defender',
+  'bomber',
+  'raider',
+  'sentinel',
+];
+
+/** Spawn position jitter to break determinism (±10m) */
+export function jitter() {
+  return (Math.random() - 0.5) * 20;
+}
+
+// ============================================================================
+// Systems
+// ============================================================================
+
+/** Combat systems in execution order */
+export const SYSTEMS = [
   targetingSystem,
   aiSystem,
   aimErrorSystem,
@@ -39,6 +64,10 @@ const SYSTEMS = [
   explosionSystem,
 ];
 
+// ============================================================================
+// Combat Stats
+// ============================================================================
+
 export function initCombatStats(world) {
   world.systemState.combatStats = {
     shotsFired: {},
@@ -55,6 +84,11 @@ export function initCombatStats(world) {
   };
 }
 
+// ============================================================================
+// Simulation
+// ============================================================================
+
+/** Run one frame of combat simulation */
 export function runFrame(world) {
   world.systemState.gameTime += TICK_SEC;
   for (const system of SYSTEMS) {
