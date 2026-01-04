@@ -14,7 +14,7 @@ import {
   getWeaponRangeCategory,
   RangeCategory,
   selectOptimalPrimaryWeapon,
-} from '../src/systems/ai-weapon-selection.ts';
+} from '../src/systems/ai/ai-weapon-selection.ts';
 
 let passed = 0;
 let failed = 0;

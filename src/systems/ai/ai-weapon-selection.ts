@@ -61,6 +61,48 @@ export function getWeaponRangeCategory(weapon: PrimaryWeapon): RangeCategory {
 }
 
 /**
+ * Maximum speed ratio for weapons to be considered "lead compatible".
+ * Weapons with speeds differing by more than this ratio will aim at very
+ * different points, causing one to miss if fired together.
+ * 1.3 = 30% difference (e.g., 400 vs 520 m/s is compatible)
+ */
+const MAX_SPEED_RATIO = 1.3;
+
+/**
+ * Check if two projectile speeds are "lead compatible" - similar enough
+ * that they'll aim at approximately the same point.
+ */
+function areSpeedsCompatible(speed1: number, speed2: number): boolean {
+  // Beams (speed 0) are only compatible with other beams
+  if (speed1 === 0 || speed2 === 0) {
+    return speed1 === 0 && speed2 === 0;
+  }
+  // Check ratio is within threshold
+  const ratio = speed1 > speed2 ? speed1 / speed2 : speed2 / speed1;
+  return ratio <= MAX_SPEED_RATIO;
+}
+
+/**
+ * Check if all projectile weapons have compatible speeds for linked fire.
+ * Beams are ignored (they fire separately).
+ */
+function areProjectileSpeedsCompatible(weapons: PrimaryWeapons): boolean {
+  let firstSpeed: number | null = null;
+
+  for (const weapon of weapons.weapons) {
+    if (!weapon || weapon.category === 'beam') continue;
+    if (!hasAmmo(weapon)) continue;
+
+    if (firstSpeed === null) {
+      firstSpeed = weapon.projectileSpeed;
+    } else if (!areSpeedsCompatible(firstSpeed, weapon.projectileSpeed)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
  * Check if a weapon is suitable for the given distance.
  */
 function isWeaponInRange(weapon: PrimaryWeapon, distance: number): boolean {
@@ -239,11 +281,13 @@ export function selectOptimalPrimaryWeapon(
   // - All weapons can reach target and have ammo
   // - Heat is manageable (use profile's linked fire threshold)
   // - Not targeting shields with Ion available (prefer focused fire)
+  // - Projectile weapons have compatible speeds (similar lead points)
   if (
     allWeaponsValid &&
     validWeaponCount > 1 &&
     heatPercent < profile.linkedFireHeatThreshold &&
-    !(targetHasShields && hasIonWeapon(weapons))
+    !(targetHasShields && hasIonWeapon(weapons)) &&
+    areProjectileSpeedsCompatible(weapons)
   ) {
     return { mode: 'linked' };
   }

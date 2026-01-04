@@ -3,6 +3,7 @@
  */
 
 import * as THREE from 'three';
+import { type AIControlled, AIState } from '../components/ai';
 import type { Health } from '../components/health';
 import { isDying } from '../components/health';
 import type { Heat } from '../components/heat';
@@ -11,7 +12,7 @@ import type { PlayerControlled } from '../components/player';
 import type { Transform } from '../components/transform';
 import type { PrimaryWeapon, PrimaryWeapons } from '../components/weapons';
 import { getCurrentPrimary, getEffectiveHeat } from '../components/weapons';
-import { getComponent, queryEntities } from '../core/ecs';
+import { entityExists, getComponent, queryEntities } from '../core/ecs';
 import type { ActiveBeam, Entity, World } from '../core/types';
 
 // Re-export ActiveBeam for backward compatibility
@@ -77,8 +78,26 @@ export function beamSystem(world: World, dt: number): void {
     let isFiring = false;
     if (player) {
       isFiring = player.input.firePrimary;
+    } else {
+      // AI fires beams when engaging with valid target
+      const ai = getComponent<AIControlled>(world, entity, 'aiControlled');
+      if (
+        ai &&
+        ai.state === AIState.Engage &&
+        ai.target !== null &&
+        entityExists(world, ai.target)
+      ) {
+        // Fire beams in linked mode, or when current weapon is a beam
+        if (weapons.linked) {
+          isFiring = true;
+        } else {
+          const currentWeapon = getCurrentPrimary(weapons);
+          if (currentWeapon?.category === 'beam') {
+            isFiring = true;
+          }
+        }
+      }
     }
-    // AI beam firing would go here (AI doesn't use beams currently)
 
     if (!isFiring) continue;
 

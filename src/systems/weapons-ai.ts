@@ -90,6 +90,9 @@ export function handleAIPrimaryWeapons(
   // Get aim error if present (makes AI imperfect)
   const aimError = getComponent<AimError>(world, entity, 'aimError');
 
+  // Set linked flag so beam system knows to fire beams alongside projectiles
+  weapons.linked = selection.mode === 'linked';
+
   // Execute weapon selection
   if (selection.mode === 'linked') {
     fireLinkedPrimaries(
