@@ -4,7 +4,7 @@
 
 import * as THREE from 'three';
 import { Faction, type FactionComponent } from '../components/faction';
-import type { Missile, MissileType } from '../components/missile';
+import type { Missile } from '../components/missile';
 import type { Transform } from '../components/transform';
 import {
   entityExists,
@@ -13,7 +13,12 @@ import {
   queryEntities,
 } from '../core/ecs';
 import type { Entity, World } from '../core/types';
-import { getActiveBeams } from '../systems/beams';
+import {
+  createDecoyMesh,
+  createMissileMesh,
+  createProjectileMesh,
+  createShipMesh,
+} from './mesh-factory';
 import { generateSkyboxTexture, getSunDirectionFromSeed } from './skybox';
 
 /** Beam fade-out duration in seconds */
@@ -34,14 +39,9 @@ export interface Renderer {
   webglRenderer: THREE.WebGLRenderer;
   entityMeshes: Map<Entity, THREE.Object3D>;
   beamLines: Map<string, BeamLineEntry>; // Key: "${entity}-${weaponIndex}"
+  /** Resize handler for cleanup */
+  resizeHandler: () => void;
 }
-
-/** Colors for factions: Green=Player, Red=Enemy, Yellow=Neutral */
-const FACTION_COLORS = {
-  [Faction.Player]: 0x00ff00,
-  [Faction.Enemy]: 0xff0000,
-  [Faction.Neutral]: 0xffff00,
-};
 
 // Reusable objects (avoid per-frame allocations)
 const cameraOffset = new THREE.Vector3();
@@ -85,12 +85,13 @@ export function createRenderer(container: HTMLElement, seed: number): Renderer {
   // Generate procedural skybox
   scene.background = generateSkyboxTexture(webglRenderer, { seed: skyboxSeed });
 
-  // Handle resize
-  window.addEventListener('resize', () => {
+  // Handle resize (stored for cleanup)
+  const resizeHandler = () => {
     camera.aspect = container.clientWidth / container.clientHeight;
     camera.updateProjectionMatrix();
     webglRenderer.setSize(container.clientWidth, container.clientHeight);
-  });
+  };
+  window.addEventListener('resize', resizeHandler);
 
   return {
     scene,
@@ -98,111 +99,8 @@ export function createRenderer(container: HTMLElement, seed: number): Renderer {
     webglRenderer,
     entityMeshes: new Map(),
     beamLines: new Map(),
+    resizeHandler,
   };
-}
-
-/** Creates a placeholder ship mesh */
-function createShipMesh(faction: Faction): THREE.Mesh {
-  // Simple arrow-like shape pointing in -Z direction
-  const geometry = new THREE.ConeGeometry(2, 8, 4);
-  geometry.rotateX(Math.PI / 2);
-
-  const color = FACTION_COLORS[faction] ?? 0xffffff;
-  const material = new THREE.MeshPhongMaterial({ color });
-
-  return new THREE.Mesh(geometry, material);
-}
-
-/** Creates a projectile mesh */
-function createProjectileMesh(faction: Faction): THREE.Mesh {
-  // Small glowing sphere
-  const geometry = new THREE.SphereGeometry(0.3, 8, 6);
-  const color = FACTION_COLORS[faction] ?? 0xffff00;
-  const material = new THREE.MeshBasicMaterial({ color }); // Unlit for glow effect
-
-  return new THREE.Mesh(geometry, material);
-}
-
-/** Missile visual configs per type */
-const MISSILE_VISUALS: Record<
-  MissileType,
-  { radius: number; length: number; color: number; emissive?: number }
-> = {
-  rocket: { radius: 0.6, length: 2.5, color: 0xff4400 }, // Chunky red-orange
-  seeker: { radius: 0.4, length: 3.0, color: 0x00ffcc }, // Sleek cyan
-  dart: { radius: 0.25, length: 3.5, color: 0xaaddff, emissive: 0x4488ff }, // Thin blue-white
-  cluster: { radius: 0.35, length: 2.0, color: 0xffaa00 }, // Small yellow-orange
-  swarm: { radius: 0.2, length: 1.5, color: 0xff8800, emissive: 0xff4400 }, // Tiny orange glow
-  torpedo: { radius: 0.7, length: 4.0, color: 0x6688aa }, // Large blue-silver
-  nuke: { radius: 0.9, length: 5.0, color: 0xff2200, emissive: 0xff0000 }, // Massive red glow
-};
-
-/** Creates a missile mesh with type-specific appearance */
-function createMissileMesh(missileType: MissileType): THREE.Group {
-  const visual = MISSILE_VISUALS[missileType];
-  const group = new THREE.Group();
-
-  // Main body (cone pointing in -Z)
-  const bodyGeom = new THREE.ConeGeometry(visual.radius, visual.length, 8);
-  bodyGeom.rotateX(Math.PI / 2);
-  const bodyMat = new THREE.MeshBasicMaterial({
-    color: visual.color,
-    transparent: true,
-    opacity: 0.9,
-  });
-  if (visual.emissive) {
-    bodyMat.color.lerp(new THREE.Color(visual.emissive), 0.3);
-  }
-  const body = new THREE.Mesh(bodyGeom, bodyMat);
-  group.add(body);
-
-  // Add fins for larger missiles (torpedo, nuke)
-  if (missileType === 'torpedo' || missileType === 'nuke') {
-    const finGeom = new THREE.BoxGeometry(visual.radius * 2.5, 0.1, 0.8);
-    const finMat = new THREE.MeshBasicMaterial({ color: 0x444444 });
-    for (let i = 0; i < 4; i++) {
-      const fin = new THREE.Mesh(finGeom, finMat);
-      fin.position.z = visual.length * 0.35;
-      fin.rotation.z = (i * Math.PI) / 2;
-      group.add(fin);
-    }
-  }
-
-  // Add glow sphere for emissive missiles
-  if (visual.emissive) {
-    const glowGeom = new THREE.SphereGeometry(visual.radius * 1.3, 8, 6);
-    const glowMat = new THREE.MeshBasicMaterial({
-      color: visual.emissive,
-      transparent: true,
-      opacity: 0.4,
-      blending: THREE.AdditiveBlending,
-    });
-    const glow = new THREE.Mesh(glowGeom, glowMat);
-    glow.position.z = -visual.length * 0.3; // Near tip
-    group.add(glow);
-  }
-
-  return group;
-}
-
-function createDecoyMesh(faction: Faction): THREE.Group {
-  const group = new THREE.Group();
-  const color = FACTION_COLORS[faction] ?? 0xffff00;
-  const inner = new THREE.Mesh(
-    new THREE.SphereGeometry(0.8, 12, 8),
-    new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.9 }),
-  );
-  const outer = new THREE.Mesh(
-    new THREE.SphereGeometry(1.2, 12, 8),
-    new THREE.MeshBasicMaterial({
-      color,
-      transparent: true,
-      opacity: 0.3,
-      blending: THREE.AdditiveBlending,
-    }),
-  );
-  group.add(inner, outer);
-  return group;
 }
 
 /** Syncs Three.js scene with ECS world */
@@ -267,7 +165,7 @@ function updateBeamLines(
   beamLines: Map<string, BeamLineEntry>,
   gameTime: number,
 ): void {
-  const activeBeams = getActiveBeams(world);
+  const activeBeams = world.systemState.beams.activeBeams;
   // Clear reusable Set (avoid per-frame allocations)
   seenBeams.clear();
 
@@ -395,6 +293,9 @@ export function getScene(renderer: Renderer): THREE.Scene {
 
 /** Disposes of renderer resources */
 export function disposeRenderer(renderer: Renderer): void {
+  // Remove resize event listener
+  window.removeEventListener('resize', renderer.resizeHandler);
+
   renderer.webglRenderer.dispose();
   renderer.entityMeshes.clear();
 }

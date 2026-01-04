@@ -31,9 +31,15 @@ const KEY_BINDINGS = {
 /** Currently pressed keys */
 const pressedKeys = new Set<string>();
 
+/** Stored event handlers for cleanup */
+let keydownHandler: ((e: KeyboardEvent) => void) | null = null;
+let keyupHandler: ((e: KeyboardEvent) => void) | null = null;
+let blurHandler: (() => void) | null = null;
+
 /** Initialize keyboard listeners (call once at startup) */
 export function initInput(): void {
-  window.addEventListener('keydown', (e) => {
+  // Create handlers that can be removed later
+  keydownHandler = (e: KeyboardEvent) => {
     pressedKeys.add(e.code);
     // Prevent browser defaults for game keys
     if (
@@ -43,16 +49,36 @@ export function initInput(): void {
     ) {
       e.preventDefault();
     }
-  });
+  };
 
-  window.addEventListener('keyup', (e) => {
+  keyupHandler = (e: KeyboardEvent) => {
     pressedKeys.delete(e.code);
-  });
+  };
 
-  // Clear keys when window loses focus
-  window.addEventListener('blur', () => {
+  blurHandler = () => {
     pressedKeys.clear();
-  });
+  };
+
+  window.addEventListener('keydown', keydownHandler);
+  window.addEventListener('keyup', keyupHandler);
+  window.addEventListener('blur', blurHandler);
+}
+
+/** Clean up keyboard listeners (call on game shutdown) */
+export function cleanupInput(): void {
+  if (keydownHandler) {
+    window.removeEventListener('keydown', keydownHandler);
+    keydownHandler = null;
+  }
+  if (keyupHandler) {
+    window.removeEventListener('keyup', keyupHandler);
+    keyupHandler = null;
+  }
+  if (blurHandler) {
+    window.removeEventListener('blur', blurHandler);
+    blurHandler = null;
+  }
+  pressedKeys.clear();
 }
 
 /** Input system - updates player input state each frame */

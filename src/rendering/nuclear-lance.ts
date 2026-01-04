@@ -7,7 +7,6 @@
 
 import * as THREE from 'three';
 import type { World } from '../core/types';
-import { getActiveBeams } from '../systems/beams';
 
 /** Lance shot visual state */
 interface LanceShot {
@@ -80,7 +79,7 @@ export function updateNuclearLanceRenderer(
   world: World,
 ): void {
   const gameTime = world.systemState.gameTime;
-  const activeBeams = getActiveBeams(world);
+  const activeBeams = world.systemState.beams.activeBeams;
   const seenShots = new Set<string>();
 
   // Check for new lance shots

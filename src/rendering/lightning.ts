@@ -5,7 +5,6 @@
 
 import * as THREE from 'three';
 import type { World } from '../core/types';
-import { getActiveBeams } from '../systems/beams';
 import {
   generateBoltPath,
   generateBranches,
@@ -81,7 +80,7 @@ export function updateLightningRenderer(
   world: World,
 ): void {
   const gameTime = world.systemState.gameTime;
-  const activeBeams = getActiveBeams(world);
+  const activeBeams = world.systemState.beams.activeBeams;
   const seenBolts = new Set<string>();
 
   // Update active lightning bolts
@@ -107,7 +106,12 @@ export function updateLightningRenderer(
           ? OFF_TARGET_CHAOS
           : DISPLACEMENT_SCALE;
         const endPoint = isOffTarget
-          ? generateOffTargetEnd(beam.origin, beam.direction, OFF_TARGET_RANGE)
+          ? generateOffTargetEnd(
+              beam.origin,
+              beam.direction,
+              OFF_TARGET_RANGE,
+              world.prng,
+            )
           : beam.hitPoint.clone();
 
         const segments = generateBoltPath(
@@ -115,11 +119,17 @@ export function updateLightningRenderer(
           endPoint,
           BOLT_SUBDIVISIONS,
           displacementScale,
+          world.prng,
         );
 
         const branches = isOffTarget
           ? [] // No branches for off-target arcs
-          : generateBranches(segments, BRANCH_PROBABILITY, DISPLACEMENT_SCALE);
+          : generateBranches(
+              segments,
+              BRANCH_PROBABILITY,
+              DISPLACEMENT_SCALE,
+              world.prng,
+            );
 
         bolt = {
           segments,

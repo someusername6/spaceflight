@@ -10,7 +10,6 @@ import { Faction, type FactionComponent } from '../components/faction';
 import type { Transform } from '../components/transform';
 import { getComponent, queryEntities } from '../core/ecs';
 import type { Entity, World } from '../core/types';
-import { getActiveBeams } from '../systems/beams';
 
 /** Flash duration in seconds */
 const FLASH_DURATION = 0.08;
@@ -195,7 +194,7 @@ function updateBeamGlows(
   scene: THREE.Scene,
   world: World,
 ): void {
-  const activeBeams = getActiveBeams(world);
+  const activeBeams = world.systemState.beams.activeBeams;
   const seenGlows = new Set<string>();
 
   for (const [entity, beams] of activeBeams) {

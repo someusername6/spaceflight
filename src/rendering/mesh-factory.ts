@@ -1,0 +1,117 @@
+/**
+ * Mesh Factory - Creates Three.js meshes for different entity types.
+ */
+
+import * as THREE from 'three';
+import { Faction } from '../components/faction';
+import type { MissileType } from '../components/missile';
+
+/** Colors for factions: Green=Player, Red=Enemy, Yellow=Neutral */
+export const FACTION_COLORS = {
+  [Faction.Player]: 0x00ff00,
+  [Faction.Enemy]: 0xff0000,
+  [Faction.Neutral]: 0xffff00,
+};
+
+/** Missile visual configs per type */
+const MISSILE_VISUALS: Record<
+  MissileType,
+  { radius: number; length: number; color: number; emissive?: number }
+> = {
+  rocket: { radius: 0.6, length: 2.5, color: 0xff4400 },
+  seeker: { radius: 0.4, length: 3.0, color: 0x00ffcc },
+  dart: { radius: 0.25, length: 3.5, color: 0xaaddff, emissive: 0x4488ff },
+  cluster: { radius: 0.35, length: 2.0, color: 0xffaa00 },
+  swarm: { radius: 0.2, length: 1.5, color: 0xff8800, emissive: 0xff4400 },
+  torpedo: { radius: 0.7, length: 4.0, color: 0x6688aa },
+  nuke: { radius: 0.9, length: 5.0, color: 0xff2200, emissive: 0xff0000 },
+};
+
+/** Creates a placeholder ship mesh */
+export function createShipMesh(faction: Faction): THREE.Mesh {
+  const geometry = new THREE.ConeGeometry(2, 8, 4);
+  geometry.rotateX(Math.PI / 2);
+
+  const color = FACTION_COLORS[faction] ?? 0xffffff;
+  const material = new THREE.MeshPhongMaterial({ color });
+
+  return new THREE.Mesh(geometry, material);
+}
+
+/** Creates a projectile mesh */
+export function createProjectileMesh(faction: Faction): THREE.Mesh {
+  const geometry = new THREE.SphereGeometry(0.3, 8, 6);
+  const color = FACTION_COLORS[faction] ?? 0xffff00;
+  const material = new THREE.MeshBasicMaterial({ color });
+
+  return new THREE.Mesh(geometry, material);
+}
+
+/** Creates a missile mesh with type-specific appearance */
+export function createMissileMesh(missileType: MissileType): THREE.Group {
+  const visual = MISSILE_VISUALS[missileType];
+  const group = new THREE.Group();
+
+  // Main body (cone pointing in -Z)
+  const bodyGeom = new THREE.ConeGeometry(visual.radius, visual.length, 8);
+  bodyGeom.rotateX(Math.PI / 2);
+  const bodyMat = new THREE.MeshBasicMaterial({
+    color: visual.color,
+    transparent: true,
+    opacity: 0.9,
+  });
+  if (visual.emissive) {
+    bodyMat.color.lerp(new THREE.Color(visual.emissive), 0.3);
+  }
+  const body = new THREE.Mesh(bodyGeom, bodyMat);
+  group.add(body);
+
+  // Add fins for larger missiles (torpedo, nuke)
+  if (missileType === 'torpedo' || missileType === 'nuke') {
+    const finGeom = new THREE.BoxGeometry(visual.radius * 2.5, 0.1, 0.8);
+    const finMat = new THREE.MeshBasicMaterial({ color: 0x444444 });
+    for (let i = 0; i < 4; i++) {
+      const fin = new THREE.Mesh(finGeom, finMat);
+      fin.position.z = visual.length * 0.35;
+      fin.rotation.z = (i * Math.PI) / 2;
+      group.add(fin);
+    }
+  }
+
+  // Add glow sphere for emissive missiles
+  if (visual.emissive) {
+    const glowGeom = new THREE.SphereGeometry(visual.radius * 1.3, 8, 6);
+    const glowMat = new THREE.MeshBasicMaterial({
+      color: visual.emissive,
+      transparent: true,
+      opacity: 0.4,
+      blending: THREE.AdditiveBlending,
+    });
+    const glow = new THREE.Mesh(glowGeom, glowMat);
+    glow.position.z = -visual.length * 0.3;
+    group.add(glow);
+  }
+
+  return group;
+}
+
+/** Creates a decoy mesh */
+export function createDecoyMesh(faction: Faction): THREE.Group {
+  const group = new THREE.Group();
+  const color = FACTION_COLORS[faction] ?? 0xffff00;
+  const inner = new THREE.Mesh(
+    new THREE.SphereGeometry(0.8, 12, 8),
+    new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.9 }),
+  );
+  const outer = new THREE.Mesh(
+    new THREE.SphereGeometry(1.2, 12, 8),
+    new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: 0.3,
+      blending: THREE.AdditiveBlending,
+    }),
+  );
+  group.add(inner, outer);
+  return group;
+}

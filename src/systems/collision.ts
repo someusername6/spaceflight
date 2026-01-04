@@ -4,6 +4,7 @@
  * Slice 1: Simple sphere-sphere collision only.
  */
 
+import { type Collision, createCollision } from '../components/collision';
 import type { Transform } from '../components/transform';
 import {
   addComponent,
@@ -11,10 +12,10 @@ import {
   hasComponent,
   queryEntities,
 } from '../core/ecs';
-import type { ComponentBase, Entity, World } from '../core/types';
+import type { Entity, World } from '../core/types';
 
-/** Default collision radius for ships */
-const DEFAULT_SHIP_RADIUS = 5;
+// Re-export for backward compatibility
+export { type Collision, createCollision } from '../components/collision';
 
 // Pool for collidable info objects (avoid per-frame allocations)
 interface CollidableInfo {
@@ -46,22 +47,6 @@ function getCollidableInfo(
 
 // Reusable array for collidables (stores pool references)
 const collidables: CollidableInfo[] = [];
-
-/** Collision component - stores collision info for this frame */
-export interface Collision extends ComponentBase {
-  readonly type: 'collision';
-  collidedWith: Entity[];
-  radius: number;
-}
-
-/** Creates a Collision component */
-export function createCollision(radius = DEFAULT_SHIP_RADIUS): Collision {
-  return {
-    type: 'collision',
-    collidedWith: [],
-    radius,
-  };
-}
 
 /** Collision detection system */
 export function collisionSystem(world: World, _dt: number): void {

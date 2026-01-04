@@ -4,9 +4,10 @@
  */
 
 import * as THREE from 'three';
+import type { Collision } from '../components/collision';
 import type { FactionComponent } from '../components/faction';
 import { areEnemies } from '../components/faction';
-import type { Projectile } from '../components/projectile';
+import type { Projectile, ProjectileCategory } from '../components/projectile';
 import { isExpired } from '../components/projectile';
 import type { Transform } from '../components/transform';
 import {
@@ -16,10 +17,22 @@ import {
   removeEntity,
 } from '../core/ecs';
 import type { Entity, World } from '../core/types';
-import { queueHitEffect } from '../rendering/projectile-hits';
-import type { Collision } from './collision';
 import { dealDamage } from './damage';
 import { spawnShrapnel } from './weapon-spawning';
+
+/** Queue a hit effect via world state (consumed by rendering layer) */
+function queueHitEffect(
+  world: World,
+  position: THREE.Vector3,
+  category: ProjectileCategory,
+): void {
+  world.systemState.projectileHits.pending.push({
+    x: position.x,
+    y: position.y,
+    z: position.z,
+    category,
+  });
+}
 
 // Reusable vector for distance checks
 const distanceVec = new THREE.Vector3();
@@ -110,7 +123,7 @@ export function projectileSystem(world: World, dt: number): void {
         );
 
         // Queue hit effect for the explosion
-        queueHitEffect(transform.position, 'ballistic');
+        queueHitEffect(world, transform.position, 'ballistic');
 
         // Remove the flak projectile
         toRemove.push(entity);
@@ -140,7 +153,7 @@ export function projectileSystem(world: World, dt: number): void {
 
         // Queue hit effect only if hull took damage (shields-only = no sparks)
         if (result.hullDamage > 0) {
-          queueHitEffect(transform.position, projectile.category);
+          queueHitEffect(world, transform.position, projectile.category);
         }
 
         // Projectile is consumed

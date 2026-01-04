@@ -8,6 +8,7 @@
 import * as THREE from 'three';
 import type { ProjectileCategory } from '../components/projectile';
 import { createPRNG, random } from '../core/prng';
+import type { World } from '../core/types';
 
 /** Effect duration in seconds */
 const HIT_DURATION = 0.25;
@@ -53,20 +54,8 @@ export function createProjectileHitRenderer(): ProjectileHitRenderer {
   };
 }
 
-/** Queue for new hits to spawn (populated by projectile system) */
-export interface PendingHit {
-  position: THREE.Vector3;
-  category: ProjectileCategory;
-}
-const pendingHits: PendingHit[] = [];
-
-/** Add a hit effect to spawn */
-export function queueHitEffect(
-  position: THREE.Vector3,
-  category: ProjectileCategory,
-): void {
-  pendingHits.push({ position: position.clone(), category });
-}
+// Reusable vector for processing pending hits
+const hitPosition = new THREE.Vector3();
 
 /** Create particle velocities for hit effect */
 function createParticleVelocities(seed: number): Float32Array {
@@ -156,14 +145,18 @@ function createHitEffect(
 export function updateProjectileHitRenderer(
   renderer: ProjectileHitRenderer,
   scene: THREE.Scene,
-  gameTime: number,
+  world: World,
 ): void {
+  const gameTime = world.systemState.gameTime;
+  const pendingHits = world.systemState.projectileHits.pending;
+
   // Create effects for pending hits
   for (const hit of pendingHits) {
+    hitPosition.set(hit.x, hit.y, hit.z);
     const effect = createHitEffect(
       renderer,
       scene,
-      hit.position,
+      hitPosition,
       hit.category,
       gameTime,
     );
@@ -244,5 +237,4 @@ export function disposeProjectileHitRenderer(
   }
   renderer.effects.length = 0;
   renderer.flashGeometry.dispose();
-  pendingHits.length = 0;
 }

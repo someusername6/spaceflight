@@ -4,7 +4,13 @@
  */
 
 import * as THREE from 'three';
+import type { Collision } from '../components/collision';
+import type { Health } from '../components/health';
+import { isDying } from '../components/health';
+import type { Transform } from '../components/transform';
 import type { PrimaryWeapon } from '../components/weapons';
+import { getComponent, hasComponent, queryEntities } from '../core/ecs';
+import type { Entity, World } from '../core/types';
 
 /** Beam weapon info for pooling (avoid per-frame allocations) */
 export interface BeamWeaponInfo {
@@ -102,4 +108,83 @@ const DEFAULT_BEAM_COLOR = new THREE.Color(1, 1, 1);
  */
 export function getBeamColor(name: string): THREE.Color {
   return BEAM_COLORS[name] ?? DEFAULT_BEAM_COLOR;
+}
+
+// Reusable object for beam hit detection (avoid per-frame allocations)
+const closestHitResult = { entity: 0 as Entity, distance: 0 };
+let hasClosestHit = false;
+
+/** Result of a beam hit check */
+export interface BeamHitResult {
+  hit: boolean;
+  entity: Entity;
+  distance: number;
+}
+
+/**
+ * Find the closest entity hit by a beam ray.
+ * @param world - The game world
+ * @param owner - The entity firing the beam (excluded from hits)
+ * @param rayOrigin - Origin point of the ray
+ * @param rayDirection - Direction of the ray (normalized)
+ * @param maxRange - Maximum range to check
+ * @returns Hit result with entity and distance, or hit=false if no hit
+ */
+export function findBeamHit(
+  world: World,
+  owner: Entity,
+  rayOrigin: THREE.Vector3,
+  rayDirection: THREE.Vector3,
+  maxRange: number,
+): BeamHitResult {
+  hasClosestHit = false;
+  closestHitResult.distance = Infinity;
+
+  for (const other of queryEntities(world, [
+    'transform',
+    'collision',
+    'health',
+  ])) {
+    if (other === owner) continue;
+    if (hasComponent(world, other, 'projectile')) continue;
+    if (hasComponent(world, other, 'missile')) continue;
+
+    // Skip dying targets (already exploding)
+    const otherHealth = getComponent<Health>(world, other, 'health') as Health;
+    if (isDying(otherHealth)) continue;
+
+    // Query guarantees these components exist
+    const otherTransform = getComponent<Transform>(
+      world,
+      other,
+      'transform',
+    ) as Transform;
+    const collision = getComponent<Collision>(
+      world,
+      other,
+      'collision',
+    ) as Collision;
+
+    // Simple sphere intersection test
+    const distance = rayIntersectsSphere(
+      rayOrigin,
+      rayDirection,
+      otherTransform.position,
+      collision.radius,
+    );
+
+    if (distance !== null && distance <= maxRange) {
+      if (distance < closestHitResult.distance) {
+        hasClosestHit = true;
+        closestHitResult.entity = other;
+        closestHitResult.distance = distance;
+      }
+    }
+  }
+
+  return {
+    hit: hasClosestHit,
+    entity: closestHitResult.entity,
+    distance: closestHitResult.distance,
+  };
 }

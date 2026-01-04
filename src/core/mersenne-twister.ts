@@ -51,7 +51,7 @@ export class MersenneTwister {
   }
 }
 
-/** Hash a string to a number (matches space-2d random.js) */
+/** Hash a string to a number */
 export function hashcode(str: string): number {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {

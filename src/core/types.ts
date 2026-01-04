@@ -2,7 +2,9 @@
  * Core type definitions shared across the game.
  */
 
-// Three.js vector/quaternion types (re-exported for convenience)
+// Three.js types used in interfaces (import first for use, then re-export)
+import type { Color, Vector3 as Vec3 } from 'three';
+
 export { Euler, Quaternion, Vector3 } from 'three';
 
 /** Entity is just a numeric ID */
@@ -34,6 +36,22 @@ export enum MissionResult {
   Defeat = 'defeat',
 }
 
+/** Active beam state for rendering (defined here to avoid circular dependencies) */
+export interface ActiveBeam {
+  origin: Vec3;
+  direction: Vec3;
+  hitPoint: Vec3 | null;
+  color: Color;
+  active: boolean;
+  weaponIndex: number;
+  isPulseBeam?: boolean;
+  pulseActive?: boolean;
+  lastPulseTime?: number;
+  isLance?: boolean;
+  lanceFireTime?: number;
+  weaponName?: string;
+}
+
 /** System-specific state stored in World (not module-level) */
 export interface SystemState {
   /** Shared game time (used by weapons, shields, damage) */
@@ -59,11 +77,24 @@ export interface SystemState {
   };
   /** Beam system state - stores active beams for renderer */
   beams: {
-    activeBeams: Map<Entity, import('../systems/beams').ActiveBeam[]>;
+    activeBeams: Map<Entity, ActiveBeam[]>;
   };
   /** Mission system state */
   mission: {
     result: MissionResult;
+  };
+  /** Ship identity state - callsign counters per prefix */
+  shipIdentity: {
+    callsignCounters: Record<string, number>;
+  };
+  /** Projectile hit queue - systems add, rendering consumes */
+  projectileHits: {
+    pending: Array<{
+      x: number;
+      y: number;
+      z: number;
+      category: 'energy' | 'ballistic';
+    }>;
   };
 }
 

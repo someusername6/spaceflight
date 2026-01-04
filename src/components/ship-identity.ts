@@ -2,7 +2,7 @@
  * Ship Identity component - stores ship type and callsign for HUD display.
  */
 
-import type { ComponentBase } from '../core/types';
+import type { ComponentBase, World } from '../core/types';
 
 export interface ShipIdentity extends ComponentBase {
   readonly type: 'shipIdentity';
@@ -12,20 +12,19 @@ export interface ShipIdentity extends ComponentBase {
   callsign: string;
 }
 
-/** Callsign counters for each prefix */
-const callsignCounters: Record<string, number> = {};
-
 /** Reset callsign counters (call at mission start) */
-export function resetCallsignCounters(): void {
-  for (const key of Object.keys(callsignCounters)) {
-    delete callsignCounters[key];
+export function resetCallsignCounters(world: World): void {
+  const counters = world.systemState.shipIdentity.callsignCounters;
+  for (const key of Object.keys(counters)) {
+    delete counters[key];
   }
 }
 
-/** Generate next callsign for a given prefix */
-export function generateCallsign(prefix: string): string {
-  const count = (callsignCounters[prefix] ?? 0) + 1;
-  callsignCounters[prefix] = count;
+/** Generate next callsign for a given prefix (uses world state for determinism) */
+export function generateCallsign(world: World, prefix: string): string {
+  const counters = world.systemState.shipIdentity.callsignCounters;
+  const count = (counters[prefix] ?? 0) + 1;
+  counters[prefix] = count;
   return `${prefix} ${count}`;
 }
 

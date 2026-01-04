@@ -30,6 +30,10 @@ import {
   updateNuclearLanceRenderer,
 } from './rendering/nuclear-lance';
 import {
+  createProjectileHitRenderer,
+  updateProjectileHitRenderer,
+} from './rendering/projectile-hits';
+import {
   createRenderer,
   followEntity,
   getScene,
@@ -43,6 +47,27 @@ import {
 import { createTrailRenderer, updateTrailRenderer } from './rendering/trails';
 import { initInput } from './systems/input';
 
+/** Default seed for deterministic testing */
+const DEFAULT_TEST_SEED = 12345;
+
+/**
+ * Get game seed from URL parameter or use random seed.
+ * Use ?seed=12345 for deterministic testing.
+ * Use ?seed=random or omit for variety.
+ */
+function getGameSeed(): number {
+  const params = new URLSearchParams(window.location.search);
+  const seedParam = params.get('seed');
+
+  if (seedParam === null || seedParam === 'random') {
+    // Use current timestamp for variety in normal play
+    return performance.now() | 0;
+  }
+
+  const parsed = Number.parseInt(seedParam, 10);
+  return Number.isNaN(parsed) ? DEFAULT_TEST_SEED : parsed;
+}
+
 /** Initialize and start the game */
 function main(): void {
   // Get container
@@ -54,8 +79,8 @@ function main(): void {
   // Initialize input
   initInput();
 
-  // Create game with seed (Date.now for variety in single-player)
-  const seed = Date.now();
+  // Create game with seed (configurable via URL ?seed=12345)
+  const seed = getGameSeed();
   const game = createGame(seed);
 
   // Create renderer with same seed for deterministic skybox
@@ -84,6 +109,9 @@ function main(): void {
 
   // Create nuclear lance renderer
   const nuclearLanceRenderer = createNuclearLanceRenderer(getScene(renderer));
+
+  // Create projectile hit renderer
+  const projectileHitRenderer = createProjectileHitRenderer();
 
   // Create HUD
   const hud = createHUD(container);
@@ -121,6 +149,13 @@ function main(): void {
 
     // Update nuclear lance effects
     updateNuclearLanceRenderer(nuclearLanceRenderer, getScene(renderer), world);
+
+    // Update projectile hit effects
+    updateProjectileHitRenderer(
+      projectileHitRenderer,
+      getScene(renderer),
+      world,
+    );
 
     // Follow player and update dust
     const player = findEntity(world, ['playerControlled', 'transform']);

@@ -4,6 +4,8 @@
  */
 
 import * as THREE from 'three';
+import type { PRNGState } from '../core/prng';
+import { random } from '../core/prng';
 
 // Reusable vectors for calculations
 const tempVec = new THREE.Vector3();
@@ -20,6 +22,7 @@ const BRANCH_SUBDIVISIONS = 3;
  * @param end - End point of the bolt
  * @param subdivisions - Number of recursive subdivisions
  * @param displacementScale - How much to displace (fraction of segment length)
+ * @param prng - Seeded random number generator for determinism
  * @returns Array of points forming the bolt path
  */
 export function generateBoltPath(
@@ -27,6 +30,7 @@ export function generateBoltPath(
   end: THREE.Vector3,
   subdivisions: number,
   displacementScale: number,
+  prng: PRNGState,
 ): THREE.Vector3[] {
   // Start with just the endpoints
   let points: THREE.Vector3[] = [start.clone(), end.clone()];
@@ -59,13 +63,13 @@ export function generateBoltPath(
 
       // Apply random displacement
       const displacement =
-        (Math.random() - 0.5) * segmentLength * displacementScale;
+        (random(prng) - 0.5) * segmentLength * displacementScale;
       midpoint.addScaledVector(perpendicular, displacement);
 
       // Also add some displacement in another perpendicular direction
       const perp2 = tempVec.clone().cross(perpendicular).normalize();
       const displacement2 =
-        (Math.random() - 0.5) * segmentLength * displacementScale;
+        (random(prng) - 0.5) * segmentLength * displacementScale;
       midpoint.addScaledVector(perp2, displacement2);
 
       newPoints.push(midpoint.clone());
@@ -84,12 +88,14 @@ export function generateBoltPath(
  * @param mainPath - The main bolt path
  * @param branchProbability - Probability of branch at each segment
  * @param displacementScale - Displacement scale for branch generation
+ * @param prng - Seeded random number generator for determinism
  * @returns Array of branch paths
  */
 export function generateBranches(
   mainPath: THREE.Vector3[],
   branchProbability: number,
   displacementScale: number,
+  prng: PRNGState,
 ): THREE.Vector3[][] {
   const branches: THREE.Vector3[][] = [];
 
@@ -98,7 +104,7 @@ export function generateBranches(
   const endIdx = Math.floor(mainPath.length * 0.8);
 
   for (let i = startIdx; i < endIdx; i++) {
-    if (Math.random() > branchProbability) continue;
+    if (random(prng) > branchProbability) continue;
 
     const branchStart = mainPath[i] as THREE.Vector3;
     const mainEnd = mainPath[mainPath.length - 1] as THREE.Vector3;
@@ -116,13 +122,13 @@ export function generateBranches(
     perpendicular.cross(toEnd).normalize();
 
     // Rotate perpendicular randomly
-    const angle = Math.random() * Math.PI * 2;
+    const angle = random(prng) * Math.PI * 2;
     const perp2 = toEnd.clone().normalize();
     perpendicular.applyAxisAngle(perp2, angle);
 
     // Branch end point: perpendicular with slight forward bias
     const branchLength =
-      remainingDist * BRANCH_LENGTH_SCALE * (0.5 + Math.random() * 0.5);
+      remainingDist * BRANCH_LENGTH_SCALE * (0.5 + random(prng) * 0.5);
     const branchEnd = branchStart
       .clone()
       .addScaledVector(perpendicular, branchLength * 0.8)
@@ -134,6 +140,7 @@ export function generateBranches(
       branchEnd,
       BRANCH_SUBDIVISIONS,
       displacementScale * 1.2,
+      prng,
     );
 
     branches.push(branchPath);
@@ -147,20 +154,22 @@ export function generateBranches(
  * @param origin - Starting point
  * @param direction - Forward direction
  * @param range - Maximum range for the arc
+ * @param prng - Seeded random number generator for determinism
  * @returns End point for the arc
  */
 export function generateOffTargetEnd(
   origin: THREE.Vector3,
   direction: THREE.Vector3,
   range: number,
+  prng: PRNGState,
 ): THREE.Vector3 {
   // Start with direction but add random deviation
   const end = origin.clone();
   const deviated = direction.clone();
 
   // Add random angular deviation (up to 30 degrees)
-  const deviationAngle = ((Math.random() - 0.5) * Math.PI) / 3;
-  const deviationAngle2 = ((Math.random() - 0.5) * Math.PI) / 3;
+  const deviationAngle = ((random(prng) - 0.5) * Math.PI) / 3;
+  const deviationAngle2 = ((random(prng) - 0.5) * Math.PI) / 3;
 
   // Find perpendicular axes
   if (Math.abs(deviated.x) < 0.9) {
@@ -175,7 +184,7 @@ export function generateOffTargetEnd(
   deviated.applyAxisAngle(perp2a, deviationAngle2);
 
   // Random length (shorter than max range)
-  const length = range * (0.4 + Math.random() * 0.4);
+  const length = range * (0.4 + random(prng) * 0.4);
   end.addScaledVector(deviated, length);
 
   return end;

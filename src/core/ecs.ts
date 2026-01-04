@@ -50,13 +50,27 @@ export function createWorld(seed: number = 0): World {
       mission: {
         result: MissionResult.InProgress,
       },
+      shipIdentity: {
+        callsignCounters: {},
+      },
+      projectileHits: {
+        pending: [],
+      },
     },
     prng: createPRNG(seed),
   };
 }
 
+/** Maximum safe entity ID (Number.MAX_SAFE_INTEGER) */
+const MAX_ENTITY_ID = 9007199254740991;
+
 /** Creates a new entity and returns its ID */
 export function createEntity(world: World): Entity {
+  // Check for ID overflow (extremely unlikely in practice)
+  if (world.nextEntityId >= MAX_ENTITY_ID) {
+    throw new Error('Entity ID overflow - too many entities created');
+  }
+
   const id = world.nextEntityId++;
   world.entities.add(id);
   world.components.set(id, new Map());

@@ -11,48 +11,28 @@ import type { PlayerControlled } from '../components/player';
 import type { Transform } from '../components/transform';
 import type { PrimaryWeapon, PrimaryWeapons } from '../components/weapons';
 import { getCurrentPrimary, getEffectiveHeat } from '../components/weapons';
-import { getComponent, hasComponent, queryEntities } from '../core/ecs';
-import type { Entity, World } from '../core/types';
+import { getComponent, queryEntities } from '../core/ecs';
+import type { ActiveBeam, Entity, World } from '../core/types';
+
+// Re-export ActiveBeam for backward compatibility
+export type { ActiveBeam } from '../core/types';
+
 import {
   type BeamWeaponInfo,
   calculateFalloffDamage,
+  findBeamHit,
   getBeamColor,
   getBeamWeaponInfo,
-  rayIntersectsSphere,
   resetBeamWeaponPool,
 } from './beam-helpers';
-import type { Collision } from './collision';
 import { dealDamage } from './damage';
 import { getForward } from './physics';
 import { calculateBankOffset } from './weapon-spawning';
-
-/** Active beam state for rendering */
-export interface ActiveBeam {
-  origin: THREE.Vector3;
-  direction: THREE.Vector3;
-  hitPoint: THREE.Vector3 | null;
-  color: THREE.Color;
-  active: boolean;
-  weaponIndex: number; // Which weapon slot this beam is from
-  // Pulse beam state
-  isPulseBeam?: boolean;
-  pulseActive?: boolean; // Whether the current pulse is visually active
-  lastPulseTime?: number;
-  // Nuclear lance state
-  isLance?: boolean;
-  lanceFireTime?: number; // When lance was fired (for fade effect)
-  // Weapon name for special rendering
-  weaponName?: string;
-}
 
 // Reusable objects
 const rayOrigin = new THREE.Vector3();
 const rayDirection = new THREE.Vector3();
 const beamWeaponsCollector: BeamWeaponInfo[] = [];
-
-// Reusable object for beam hit detection (avoid per-frame allocations)
-const closestHitResult = { entity: 0 as Entity, distance: 0 };
-let hasClosestHit = false;
 
 /** Beam system - handles continuous beam damage */
 export function beamSystem(world: World, dt: number): void {
@@ -290,65 +270,25 @@ function fireBeam(
     }
   }
 
-  // Find nearest enemy in beam path (use reusable object instead of allocating)
-  hasClosestHit = false;
-  closestHitResult.distance = Infinity;
-
-  for (const other of queryEntities(world, [
-    'transform',
-    'collision',
-    'health',
-  ])) {
-    if (other === owner) continue;
-    if (hasComponent(world, other, 'projectile')) continue;
-    if (hasComponent(world, other, 'missile')) continue;
-
-    // Skip dying targets (already exploding)
-    // Query guarantees health component exists
-    const otherHealth = getComponent<Health>(world, other, 'health') as Health;
-    if (isDying(otherHealth)) continue;
-
-    // Friendly fire enabled - beams damage anyone except owner
-
-    // Query guarantees these components exist
-    const otherTransform = getComponent<Transform>(
-      world,
-      other,
-      'transform',
-    ) as Transform;
-    const collision = getComponent<Collision>(
-      world,
-      other,
-      'collision',
-    ) as Collision;
-
-    // Simple sphere intersection test
-    const distance = rayIntersectsSphere(
-      rayOrigin,
-      rayDirection,
-      otherTransform.position,
-      collision.radius,
-    );
-
-    if (distance !== null && distance <= weapon.range) {
-      if (distance < closestHitResult.distance) {
-        hasClosestHit = true;
-        closestHitResult.entity = other;
-        closestHitResult.distance = distance;
-      }
-    }
-  }
+  // Find nearest enemy in beam path
+  const hitResult = findBeamHit(
+    world,
+    owner,
+    rayOrigin,
+    rayDirection,
+    weapon.range,
+  );
 
   // Reuse or create hitPoint vector (avoid per-frame allocation)
   if (!beam.hitPoint) {
     beam.hitPoint = new THREE.Vector3();
   }
 
-  if (hasClosestHit) {
+  if (hitResult.hit) {
     // Calculate hit point
     beam.hitPoint
       .copy(rayDirection)
-      .multiplyScalar(closestHitResult.distance)
+      .multiplyScalar(hitResult.distance)
       .add(rayOrigin);
 
     // Apply damage if appropriate
@@ -358,23 +298,22 @@ function fireBeam(
         // Pulse beams deal fixed damage per pulse (no dt scaling)
         damage = weapon.noFalloff
           ? weapon.damage
-          : calculateFalloffDamage(weapon.damage, closestHitResult.distance);
+          : calculateFalloffDamage(weapon.damage, hitResult.distance);
       } else {
         // Continuous beams deal damage per second (scaled by dt)
         const falloffDamage = calculateFalloffDamage(
           weapon.damage,
-          closestHitResult.distance,
+          hitResult.distance,
         );
         damage = falloffDamage * dt;
       }
-      dealDamage(world, closestHitResult.entity, damage, beam.hitPoint);
+      dealDamage(world, hitResult.entity, damage, beam.hitPoint);
     }
   } else {
     // No hit - beam extends to max range (or shorter for off-target pulse beams)
-    const range =
-      weapon.isPulseBeam && !hasClosestHit
-        ? Math.min(weapon.range, 150) // Tesla arc into nothingness
-        : weapon.range;
+    const range = weapon.isPulseBeam
+      ? Math.min(weapon.range, 150) // Tesla arc into nothingness
+      : weapon.range;
     beam.hitPoint.copy(rayDirection).multiplyScalar(range).add(rayOrigin);
   }
 }

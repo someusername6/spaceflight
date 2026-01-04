@@ -9,6 +9,7 @@ import * as THREE from 'three';
 import type { Missile } from '../components/missile';
 import type { Transform } from '../components/transform';
 import { getComponent, queryEntities } from '../core/ecs';
+import { random } from '../core/prng';
 import type { Entity, World } from '../core/types';
 
 /** Exhaust colors - orange/yellow flame */
@@ -61,6 +62,7 @@ export function createExhaustRenderer(): ExhaustRenderer {
 function createExhaust(
   renderer: ExhaustRenderer,
   scene: THREE.Scene,
+  world: World,
 ): MissileExhaust {
   // Exhaust cone (additive blending for glow)
   const material = new THREE.MeshBasicMaterial({
@@ -81,7 +83,7 @@ function createExhaust(
   return {
     cone,
     glow,
-    flickerPhase: Math.random() * Math.PI * 2, // Random start phase
+    flickerPhase: random(world.prng) * Math.PI * 2, // Deterministic random start phase
   };
 }
 
@@ -108,7 +110,7 @@ export function updateExhaustRenderer(
     let exhaust = renderer.exhausts.get(entity);
 
     if (!exhaust) {
-      exhaust = createExhaust(renderer, scene);
+      exhaust = createExhaust(renderer, scene, world);
       renderer.exhausts.set(entity, exhaust);
     }
 
