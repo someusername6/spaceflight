@@ -30,12 +30,12 @@ const ARCHETYPES = [
   'sentinel',
 ];
 
-const PROFILES = ['rookie', 'regular', 'veteran', 'ace'];
+const _PROFILES = ['rookie', 'regular', 'veteran', 'ace'];
 const RUNS_PER_MATCHUP = 50;
 const MAX_FIGHT_TIME = 60;
 const MAX_TICKS = MAX_FIGHT_TIME * TICK_RATE;
 
-console.log('\n' + '='.repeat(70));
+console.log(`\n${'='.repeat(70)}`);
 console.log('SKILL SCALING VERIFICATION');
 console.log('='.repeat(70));
 
@@ -143,10 +143,10 @@ for (const archetype of ARCHETYPES) {
 
   console.log(
     archetype.slice(0, 12).padEnd(14) +
-      (rrResult.bWinRate.toFixed(0) + '%').padStart(8) +
-      (rvResult.bWinRate.toFixed(0) + '%').padStart(8) +
-      (vaResult.bWinRate.toFixed(0) + '%').padStart(8) +
-      (raResult.bWinRate.toFixed(0) + '%').padStart(8),
+      `${rrResult.bWinRate.toFixed(0)}%`.padStart(8) +
+      `${rvResult.bWinRate.toFixed(0)}%`.padStart(8) +
+      `${vaResult.bWinRate.toFixed(0)}%`.padStart(8) +
+      `${raResult.bWinRate.toFixed(0)}%`.padStart(8),
   );
 }
 
@@ -250,6 +250,6 @@ if (tier1Gap < 10 || tier2Gap < 10 || tier3Gap < 5) {
   console.log('\nWARNING: Some skill tiers provide minimal advantage');
 }
 
-console.log('\n' + '='.repeat(70));
+console.log(`\n${'='.repeat(70)}`);
 console.log('SKILL SCALING VERIFICATION COMPLETE');
-console.log('='.repeat(70) + '\n');
+console.log(`${'='.repeat(70)}\n`);

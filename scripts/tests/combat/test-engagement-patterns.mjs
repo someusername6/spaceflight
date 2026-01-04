@@ -40,7 +40,7 @@ const RUNS_PER_ARCHETYPE = 20;
 const MAX_FIGHT_TIME = 60;
 const MAX_TICKS = MAX_FIGHT_TIME * TICK_RATE;
 
-console.log('\n' + '='.repeat(70));
+console.log(`\n${'='.repeat(70)}`);
 console.log('ENGAGEMENT PATTERN ANALYSIS');
 console.log('='.repeat(70));
 
@@ -300,11 +300,11 @@ for (const archetype of ARCHETYPES) {
 
   console.log(
     archetype.slice(0, 12).padEnd(14) +
-      (avgStateTime.pursue.toFixed(0) + '%').padStart(8) +
-      (avgStateTime.engage.toFixed(0) + '%').padStart(8) +
-      (avgStateTime.evade.toFixed(0) + '%').padStart(8) +
-      (avgStateTime.regroup.toFixed(0) + '%').padStart(8) +
-      (avgStateTime.idle.toFixed(0) + '%').padStart(8),
+      `${avgStateTime.pursue.toFixed(0)}%`.padStart(8) +
+      `${avgStateTime.engage.toFixed(0)}%`.padStart(8) +
+      `${avgStateTime.evade.toFixed(0)}%`.padStart(8) +
+      `${avgStateTime.regroup.toFixed(0)}%`.padStart(8) +
+      `${avgStateTime.idle.toFixed(0)}%`.padStart(8),
   );
 }
 
@@ -323,7 +323,7 @@ for (const archetype of ARCHETYPES) {
   const breakOffsPer10s = (r.avgBreakOffs / r.avgDuration) * 10;
   console.log(
     archetype.slice(0, 12).padEnd(14) +
-      (r.avgDuration.toFixed(1) + 's').padStart(14) +
+      `${r.avgDuration.toFixed(1)}s`.padStart(14) +
       r.avgBreakOffs.toFixed(1).padStart(12) +
       breakOffsPer10s.toFixed(1).padStart(10),
   );
@@ -391,6 +391,6 @@ if (issues.length > 0) {
   console.log('All archetypes show healthy engagement patterns!');
 }
 
-console.log('\n' + '='.repeat(70));
+console.log(`\n${'='.repeat(70)}`);
 console.log('ENGAGEMENT PATTERN ANALYSIS COMPLETE');
-console.log('='.repeat(70) + '\n');
+console.log(`${'='.repeat(70)}\n`);

@@ -29,14 +29,20 @@ export interface AIControlled extends ComponentBase {
   lastDecoyTime: number; // When AI last launched a decoy
   /** AI behavior profile (determines competence level) */
   profile: AIProfile;
+  /**
+   * Preferred combat range. AI will actively close to this distance.
+   * If undefined, uses profile.engageRange as the threshold.
+   */
+  preferredCombatRange?: number;
 }
 
 /** Creates an AIControlled component with a profile */
 export function createAIControlled(
   profileName: ProfileName = 'regular',
+  preferredCombatRange?: number,
 ): AIControlled {
-  return {
-    type: 'aiControlled',
+  const base = {
+    type: 'aiControlled' as const,
     state: AIState.Idle,
     target: null,
     protectTarget: null,
@@ -45,4 +51,10 @@ export function createAIControlled(
     lastDecoyTime: 0,
     profile: getAIProfile(profileName),
   };
+
+  // Only add preferredCombatRange if defined (exactOptionalPropertyTypes)
+  if (preferredCombatRange !== undefined) {
+    return { ...base, preferredCombatRange };
+  }
+  return base;
 }

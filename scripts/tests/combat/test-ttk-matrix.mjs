@@ -12,11 +12,7 @@
  */
 
 import { Quaternion, Vector3 } from 'three';
-import {
-  createWorld,
-  getComponent,
-  queryEntities,
-} from '../../../src/core/ecs.ts';
+import { createWorld, getComponent } from '../../../src/core/ecs.ts';
 import { Faction } from '../../../src/core/types.ts';
 import { createAIShip } from '../../../src/factories/ship.ts';
 import {
@@ -39,7 +35,7 @@ const RUNS_PER_MATCHUP = 50;
 const MAX_FIGHT_TIME = 60; // 60 seconds max per fight
 const MAX_TICKS = MAX_FIGHT_TIME * TICK_RATE;
 
-console.log('\n' + '='.repeat(70));
+console.log(`\n${'='.repeat(70)}`);
 console.log('TTK MATRIX: All Archetype Matchups (Regular vs Regular)');
 console.log('='.repeat(70));
 console.log(
@@ -166,7 +162,7 @@ for (const attacker of ARCHETYPES) {
   let row = attacker.slice(0, 12).padEnd(14);
   for (const defender of ARCHETYPES) {
     const winRate = results[attacker][defender].attackerWinRate;
-    row += (winRate.toFixed(0) + '%').padStart(8);
+    row += `${winRate.toFixed(0)}%`.padStart(8);
   }
   console.log(row);
 }
@@ -237,6 +233,6 @@ console.log(
   `Overall TTK: avg=${overallAvg.toFixed(1)}s, range=${overallMin.toFixed(1)}-${overallMax.toFixed(1)}s`,
 );
 
-console.log('\n' + '='.repeat(70));
+console.log(`\n${'='.repeat(70)}`);
 console.log('TTK MATRIX COMPLETE');
-console.log('='.repeat(70) + '\n');
+console.log(`${'='.repeat(70)}\n`);

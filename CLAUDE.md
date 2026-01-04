@@ -45,6 +45,7 @@ This project uses Biome for formatting and linting. A pre-commit hook enforces t
 1. Split the file into logical modules
 2. Do NOT put multiple statements on one line
 3. Do NOT remove blank lines or compress formatting
+4. Do NOT remove comments or documentation to reduce line count
 
 **Correct formatting:**
 ```typescript

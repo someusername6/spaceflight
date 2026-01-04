@@ -86,23 +86,50 @@ Analyzes combat flow to ensure proper phases.
 
 ## Priority 1: Core Systems Balance
 
-### 4. Defensive Systems
-**Tests to create:**
-- Shield recovery during disengagement
-- Decoy effectiveness by missile type
-- Evade survival by archetype (angular velocity impact)
+### 4. Defensive Systems ✓
+**Test:** `npx tsx scripts/tests/combat/test-decoy-missile.mjs`
 
-### 5. Weapon System Diversity
-**Metrics to track:**
-- Damage % by weapon type (projectile/beam/missile)
-- No single type should exceed 60% of total damage
-- Each type should contribute in its niche
+**Results (2026-01-04):**
+- Decoy launches scale with skill: Ace 179% more than Rookie
+- Higher skill = shorter fights = fewer missiles in play to seduce
+- Shield recovery during regroup: 49-70% (exceeds 20-50% target)
 
-### 6. Missile Economy
-**Metrics to track:**
-- Hit rates by missile type
-- Decoy/countermeasure effectiveness
-- Damage proportion (missiles vs guns)
+### 5. Weapon System Diversity ✓
+**Test:** `npx tsx scripts/tests/combat/test-weapon-diversity.mjs`
+
+**Results (2026-01-04, updated after beam improvements):**
+| Type | Damage % | Status |
+|------|----------|--------|
+| Projectile | 32% | ✓ Healthy |
+| Beam | 13% | ✓ Improved (was 11%) |
+| Missile | 54% | ✓ Healthy |
+
+No single type exceeds 60% ✓
+
+**Per-Archetype Weapon Mix:**
+| Ship | Projectile | Beam | Missile |
+|------|------------|------|---------|
+| Scout | 33% | 10% | 57% |
+| Interceptor | 43% | 12% | 45% |
+| Striker | 35% | 11% | 54% |
+| Defender | 40% | 8% | 51% |
+| Bomber | 38% | 7% | 55% |
+| Raider | 34% | 4% | 62% |
+| Sentinel | 32% | 17% | 51% |
+
+**Note:** Beam-specialized ships (Sentinel) don't yet feel beam-focused.
+This is a Priority 2 issue - see "Beam Specialization" below.
+
+### 6. Missile Economy ✓
+**Test:** `npx tsx scripts/tests/combat/test-decoy-missile.mjs`
+
+**Results (2026-01-04):**
+| Type | Fired | Hit Rate | Notes |
+|------|-------|----------|-------|
+| Tracking (Torpedo, Seeker) | 66 | 50% | Can be decoyed |
+| Dumbfire (Rocket) | 265 | 38% | Aim error only |
+
+Tracking advantage (50% vs 38%) balances decoy vulnerability.
 
 ---
 
@@ -131,11 +158,25 @@ Every archetype should have clear counters:
 - Raider: Dies if caught, can't sustain
 - Sentinel: Slow, can be kited
 
+### 9. Beam Specialization (TODO)
+**Problem:** Beam-specialized ships (Sentinel) only deal 17% beam damage.
+Ships should feel like their weapon specialty is their primary damage source.
+
+**Target:** Sentinel should deal 40-50% beam damage to feel beam-focused.
+
+**Possible approaches (within bank count constraints):**
+- Reduce missile counts on beam ships (e.g., seeker 8→4)
+- Swap non-beam primaries for beams (Sentinel's plasma → beam)
+- Further buff beam DPS for sustained engagement advantage
+
+**Constraint:** Non-beam ships should stay at 10-15% beam. Beams should not
+become the only viable build - they should be a specialization, not dominant.
+
 ---
 
 ## Priority 3: Roguelike Readiness
 
-### 9. Multi-Encounter Survivability
+### 10. Multi-Encounter Survivability
 **Key Question:** Can a ship fight 3-5 encounters before needing repair?
 
 **Test Scenarios:**
@@ -143,7 +184,7 @@ Every archetype should have clear counters:
 - Health/shield trend across fights
 - Resource depletion (missiles, heat)
 
-### 10. Risk/Reward Framework
+### 11. Risk/Reward Framework
 Some fights should be avoidable. Player needs:
 - Enemy composition visible before engagement
 - Difficulty assessment (skill + archetype)
@@ -160,6 +201,8 @@ Some fights should be avoidable. Player needs:
 npx tsx scripts/tests/combat/test-ttk-matrix.mjs
 npx tsx scripts/tests/combat/test-skill-scaling.mjs
 npx tsx scripts/tests/combat/test-engagement-patterns.mjs
+npx tsx scripts/tests/combat/test-decoy-missile.mjs
+npx tsx scripts/tests/combat/test-weapon-diversity.mjs
 
 # Run existing combat simulations
 npx tsx scripts/tests/combat/simulate-combat.mjs
@@ -254,3 +297,32 @@ npx tsx scripts/tests/combat/simulate-combat.mjs profile-rookie-vs-ace 50
   - Fixed aim error to start at random value instead of 0
   - Iteratively tuned profiles across 5 iterations to hit targets
   - Final result: Regular > Rookie +19%, Veteran > Regular +13%, Ace > Veteran +5%
+
+- **2026-01-04:** Defensive systems analysis (Priority 1 complete)
+  - Created test-defensive-systems.mjs for decoys, missiles, and weapon diversity
+  - Decoy skill scaling verified: Ace launches 179% more decoys than Rookie
+  - Weapon diversity healthy: Projectile 37.5%, Beam 11%, Missile 51.5%
+  - Missile economy balanced: Tracking 50% hit rate, Dumbfire 38%
+  - Noted: Beam damage low at 11%, may need investigation
+
+- **2026-01-04:** Beam weapon balance improvements
+  - Red laser range: 400m → 500m (still shortest, now usable at typical ranges)
+  - Blue laser damage: 25 → 30 DPS (still lowest, but competitive)
+  - Ship beam reassignments:
+    - Scout: Added red laser (replaces one pulse) - fast brawler role
+    - Striker: Changed red → green laser (medium range for heavy assault)
+    - Defender: Replaced pulse with green laser (sustained defensive fire)
+  - Added preferredCombatRange system for AI engagement
+  - Dynamic range calculation based on shortest-range weapon
+  - Result: Beam damage ~15% (up from ~11%)
+
+- **2026-01-04:** Raider balance adjustments (BIGGER PRIMARIES variant)
+  - Primary weapon sizes increased: plasma(2→3), autocannon(2→3)
+  - Missile counts reduced: dart(4→2), rocket(4→2)
+  - Result: Missile dependency reduced from 66% to ~62%
+
+- **2026-01-04:** Ship loadout validation system
+  - Added ARCHETYPE_WEAPON_SPECS with expected bank counts AND sizes
+  - Validation runs on module load AND ship creation
+  - Catches both static errors and runtime modifications
+  - Prevents accidental weapon bank additions (must replace instead)

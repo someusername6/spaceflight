@@ -91,8 +91,8 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
     heatPerShot: 15, // Per second
     projectileSpeed: 0,
     fireRate: 0,
-    range: 400,
-    damage: 60, // Per second
+    range: 500, // Increased from 400 to be usable at typical engagement ranges
+    damage: 60, // Per second (highest DPS, shortest range)
     category: 'beam',
   },
   'green laser': {
@@ -108,7 +108,7 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
     projectileSpeed: 0,
     fireRate: 0,
     range: 1200,
-    damage: 25,
+    damage: 30, // Increased from 25 to be competitive (still lowest DPS)
     category: 'beam',
   },
 

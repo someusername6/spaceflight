@@ -73,22 +73,10 @@ export function aiSystem(world: World, dt: number): void {
     if (health && isDying(health)) continue;
 
     // Query guarantees these components exist
-    const ai = getComponent<AIControlled>(
-      world,
-      entity,
-      'aiControlled',
-    ) as AIControlled;
-    const transform = getComponent<Transform>(
-      world,
-      entity,
-      'transform',
-    ) as Transform;
-    const physics = getComponent<Physics>(world, entity, 'physics') as Physics;
-    const faction = getComponent<FactionComponent>(
-      world,
-      entity,
-      'faction',
-    ) as FactionComponent;
+    const ai = getComponent(world, entity, 'aiControlled') as AIControlled;
+    const transform = getComponent(world, entity, 'transform') as Transform;
+    const physics = getComponent(world, entity, 'physics') as Physics;
+    const faction = getComponent(world, entity, 'faction') as FactionComponent;
 
     // Update state timer
     ai.stateTimer += dt;
@@ -243,7 +231,11 @@ function updateEngage(
     ai.stateTimer = 0;
   }
 
-  pursueTarget(world, entity, ai, transform, physics, dt);
+  // Close urgently if beyond preferred range (ensures short-range weapons work)
+  const preferredRange = ai.preferredCombatRange ?? ai.profile.engageRange;
+  const closeUrgently = distance > preferredRange * 1.1;
+
+  pursueTarget(world, entity, ai, transform, physics, dt, closeUrgently);
 }
 
 /** Find the nearest enemy entity */
@@ -307,7 +299,10 @@ function getProjectileSpeed(world: World, entity: Entity): number {
   return DEFAULT_PROJECTILE_SPEED; // Fallback
 }
 
-/** Pursue behavior - turn toward target (with lead) and accelerate */
+/**
+ * Pursue behavior - turn toward target (with lead) and accelerate.
+ * @param closeUrgently If true, aim directly at target (skip lead) to close distance faster
+ */
 export function pursueTarget(
   world: World,
   entity: Entity,
@@ -315,6 +310,7 @@ export function pursueTarget(
   transform: Transform,
   physics: Physics,
   dt: number,
+  closeUrgently = false,
 ): void {
   // ai.target is checked by caller before calling pursueTarget
   const targetTransform = getComponent<Transform>(
@@ -327,32 +323,35 @@ export function pursueTarget(
     return;
   }
 
-  // Get target velocity for lead calculation
-  const targetPhysics = getComponent<Physics>(
-    world,
-    ai.target as Entity,
-    'physics',
-  );
-
-  // Skip lead if target has high angular velocity (moving erratically/perpendicular)
-  // Threshold of 0.15 rad/s = 75 m/s perpendicular at 500m range
-  const aimError = getComponent<AimError>(world, entity, 'aimError');
-  const highAngularVelocity =
-    aimError && aimError.currentAngularVelocity > 0.15;
+  // When closing urgently, aim directly at target (closes distance vs circling)
   let aimPoint = targetTransform.position;
 
-  if (targetPhysics && !highAngularVelocity) {
-    const projectileSpeed = getProjectileSpeed(world, entity);
-    const intercept = calculateInterceptPoint(
-      transform.position,
-      physics.velocity,
-      targetTransform.position,
-      targetPhysics.velocity,
-      projectileSpeed,
+  if (!closeUrgently) {
+    // Get target velocity for lead calculation
+    const targetPhysics = getComponent<Physics>(
+      world,
+      ai.target as Entity,
+      'physics',
     );
-    if (intercept) {
-      leadPoint.copy(intercept);
-      aimPoint = leadPoint;
+
+    // Skip lead if target moving erratically (high angular velocity)
+    const aimError = getComponent<AimError>(world, entity, 'aimError');
+    const highAngularVelocity =
+      aimError && aimError.currentAngularVelocity > 0.15;
+
+    if (targetPhysics && !highAngularVelocity) {
+      const projectileSpeed = getProjectileSpeed(world, entity);
+      const intercept = calculateInterceptPoint(
+        transform.position,
+        physics.velocity,
+        targetTransform.position,
+        targetPhysics.velocity,
+        projectileSpeed,
+      );
+      if (intercept) {
+        leadPoint.copy(intercept);
+        aimPoint = leadPoint;
+      }
     }
   }
 

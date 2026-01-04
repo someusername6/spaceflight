@@ -28,9 +28,50 @@ import { addComponent, createEntity } from '../core/ecs';
 import type { Entity, World } from '../core/types';
 import { Faction } from '../core/types';
 import type { ProfileName } from '../data/ai-profiles';
-import { SHIP_ARCHETYPES } from './ship-archetypes';
+import { getWeaponStats } from '../data/weapons';
+import {
+  SHIP_ARCHETYPES,
+  type ShipStats,
+  validateArchetypeLoadout,
+} from './ship-archetypes';
 
 export type { SecondaryBankSpec, ShipStats } from './ship-archetypes';
+
+/**
+ * Calculate preferred combat range from weapon loadout.
+ * Returns a range that ensures the ship's shortest-range weapon can be used.
+ * This makes AI behavior adapt to the actual weapons equipped.
+ */
+function calculatePreferredCombatRange(stats: ShipStats): number {
+  // If explicitly set, use that value
+  if (stats.preferredCombatRange !== undefined) {
+    return stats.preferredCombatRange;
+  }
+
+  // Find the shortest-range primary weapon
+  let shortestRange = Infinity;
+
+  for (const weaponSpec of stats.primaryWeapons) {
+    const weaponStats = getWeaponStats(weaponSpec.name);
+    if (
+      weaponStats &&
+      weaponStats.range > 0 &&
+      weaponStats.range < shortestRange
+    ) {
+      shortestRange = weaponStats.range;
+    }
+  }
+
+  // If no weapons found, use default engage range
+  if (shortestRange === Infinity) {
+    return 600; // Default
+  }
+
+  // Set preferred range to 90% of shortest weapon range
+  // This ensures the AI closes enough for all weapons to be effective
+  return Math.floor(shortestRange * 0.9);
+}
+
 // Re-export for backwards compatibility
 export { SHIP_ARCHETYPES } from './ship-archetypes';
 
@@ -45,6 +86,9 @@ export function createPlayerShip(
   if (!stats) {
     throw new Error(`Unknown ship archetype: ${archetype}`);
   }
+
+  // Validate loadout on ship creation (catches runtime modifications)
+  validateArchetypeLoadout(archetype);
 
   const entity = createEntity(world);
 
@@ -112,6 +156,9 @@ export function createAIShip(
     throw new Error(`Unknown ship archetype: ${archetype}`);
   }
 
+  // Validate loadout on ship creation (catches runtime modifications)
+  validateArchetypeLoadout(archetype);
+
   const entity = createEntity(world);
 
   addComponent(
@@ -152,7 +199,9 @@ export function createAIShip(
   addComponent(world, entity, createShipIdentity(archetype, callsign));
 
   // Create AI with profile - aim error derived from profile
-  const ai = createAIControlled(profileName);
+  // Calculate preferred combat range from weapon loadout (or use explicit value)
+  const preferredRange = calculatePreferredCombatRange(stats);
+  const ai = createAIControlled(profileName, preferredRange);
   addComponent(world, entity, ai);
   addComponent(world, entity, createAimError(world.prng, ai.profile));
 
