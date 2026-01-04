@@ -3,7 +3,12 @@
  */
 
 import type { ComponentBase, Entity, Vector3 } from '../core/types';
+import { MISSILES } from '../data/missiles';
 import type { SecondaryWeapon } from './weapons';
+
+// Re-export for convenience
+export type { MissileStats } from '../data/missiles';
+export { MISSILES } from '../data/missiles';
 
 /** Missile type for visual differentiation */
 export type MissileType =
@@ -67,95 +72,11 @@ export function isMissileExpired(missile: Missile): boolean {
   return missile.distanceTraveled >= missile.range;
 }
 
-/** Missile definitions from WEAPONS.md (bankSize, count, maxCount set at creation) */
-export const MISSILE_DEFS: Record<
-  string,
-  Omit<SecondaryWeapon, 'count' | 'maxCount' | 'bankSize'>
-> = {
-  rocket: {
-    name: 'Rocket',
-    requiresLock: false,
-    speed: 600,
-    turnRate: 0,
-    range: 1000,
-    damage: 50,
-    fireRate: 0.5,
-    lockSpeed: 0,
-  },
-  seeker: {
-    name: 'Seeker',
-    requiresLock: true,
-    speed: 400,
-    turnRate: 90,
-    range: 2000,
-    damage: 60,
-    fireRate: 1.0,
-    lockSpeed: 0.5, // 2 seconds to lock
-  },
-  dart: {
-    name: 'Dart',
-    requiresLock: true,
-    speed: 600,
-    turnRate: 120,
-    range: 800,
-    damage: 30,
-    fireRate: 0.5,
-    lockSpeed: 1.0, // 1 second to lock
-  },
-  cluster: {
-    name: 'Cluster',
-    requiresLock: false,
-    speed: 400,
-    turnRate: 60,
-    range: 1200,
-    damage: 25,
-    fireRate: 0.8,
-    lockSpeed: 0,
-  },
-  swarm: {
-    name: 'Swarm',
-    requiresLock: true,
-    speed: 500,
-    turnRate: 100,
-    range: 600,
-    damage: 10,
-    fireRate: 0.1, // Rapid fire
-    lockSpeed: 0.8,
-  },
-  torpedo: {
-    name: 'Torpedo',
-    requiresLock: true,
-    speed: 200,
-    turnRate: 30,
-    range: 4000,
-    damage: 150,
-    fireRate: 2.0,
-    lockSpeed: 0.25, // 4 seconds to lock
-  },
-  nuke: {
-    name: 'Nuke',
-    requiresLock: true,
-    speed: 150,
-    turnRate: 20,
-    range: 3000,
-    damage: 300,
-    fireRate: 3.0,
-    lockSpeed: 0.2, // 5 seconds to lock
-    aoeRadius: 100, // Large AoE damage radius
-    isNuke: true, // Special explosion effects
-  },
-  decoy: {
-    name: 'Decoy',
-    requiresLock: false,
-    speed: 50,
-    turnRate: 0,
-    range: 0, // Decoys don't travel far
-    damage: 0, // No damage
-    fireRate: 0.5,
-    lockSpeed: 0,
-    isDecoy: true, // Mark as countermeasure
-  },
-};
+/**
+ * Missile definitions - derived from data/missiles.ts (single source of truth).
+ * @deprecated Use MISSILES directly instead.
+ */
+export const MISSILE_DEFS = MISSILES;
 
 /** Creates a SecondaryWeapon from a missile definition (count is scaled by bankSize) */
 export function createSecondaryWeaponFromDef(

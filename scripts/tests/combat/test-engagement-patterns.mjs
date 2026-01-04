@@ -69,6 +69,7 @@ function analyzeFight(archetype, seed) {
     evade: 0,
     protect: 0,
     regroup: 0,
+    reposition: 0,
   };
   const stateTimeB = {
     idle: 0,
@@ -77,6 +78,7 @@ function analyzeFight(archetype, seed) {
     evade: 0,
     protect: 0,
     regroup: 0,
+    reposition: 0,
   };
 
   let breakOffsA = 0;
@@ -218,6 +220,8 @@ function getStateName(state) {
       return 'protect';
     case AIState.Regroup:
       return 'regroup';
+    case AIState.Reposition:
+      return 'reposition';
     default:
       return null;
   }
@@ -231,9 +235,10 @@ console.log(
     'Engage'.padStart(8) +
     'Evade'.padStart(8) +
     'Regroup'.padStart(8) +
+    'Repos'.padStart(8) +
     'Idle'.padStart(8),
 );
-console.log('-'.repeat(14 + 40));
+console.log('-'.repeat(14 + 48));
 
 const archetypeResults = {};
 
@@ -246,7 +251,14 @@ for (const archetype of ARCHETYPES) {
   }
 
   // Average state times
-  const avgStateTime = { pursue: 0, engage: 0, evade: 0, regroup: 0, idle: 0 };
+  const avgStateTime = {
+    pursue: 0,
+    engage: 0,
+    evade: 0,
+    regroup: 0,
+    reposition: 0,
+    idle: 0,
+  };
   let totalDuration = 0;
   let totalBreakOffs = 0;
   let totalShieldRecovery = 0;
@@ -294,6 +306,7 @@ for (const archetype of ARCHETYPES) {
       `${avgStateTime.engage.toFixed(0)}%`.padStart(8) +
       `${avgStateTime.evade.toFixed(0)}%`.padStart(8) +
       `${avgStateTime.regroup.toFixed(0)}%`.padStart(8) +
+      `${avgStateTime.reposition.toFixed(0)}%`.padStart(8) +
       `${avgStateTime.idle.toFixed(0)}%`.padStart(8),
   );
 }

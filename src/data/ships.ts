@@ -1,12 +1,13 @@
 /**
- * Ship Archetype Definitions - Central source of truth for ship stats.
+ * Ship Class Definitions - SINGLE SOURCE OF TRUTH for ship chassis stats.
  *
- * All ship stats are defined here and imported by factories/ship.ts.
- * Tests should import from here (via fixtures) to stay in sync.
+ * Ship classes define the base stats (hull, shields, speed, etc.).
+ * Archetypes/builds in factories/ship-archetypes.ts combine a ship class
+ * with a weapon loadout to create playable configurations.
  */
 
-/** Ship archetype stats */
-export interface ShipStats {
+/** Ship class stats (the chassis) */
+export interface ShipClassStats {
   hull: number;
   shields: number;
   shieldRegen: number;
@@ -22,10 +23,11 @@ export interface ShipStats {
 }
 
 /**
- * All ship archetype definitions.
- * Key is the ship class (lowercase), value is the base stats.
+ * All ship class definitions.
+ * Key is the ship class name (lowercase), value is the chassis stats.
+ * These are the authoritative values used in testing.
  */
-export const SHIP_ARCHETYPES: Record<string, ShipStats> = {
+export const SHIP_CLASSES: Record<string, ShipClassStats> = {
   // Scout: Fast and fragile - FRAGILE
   scout: {
     hull: 50,
@@ -140,11 +142,11 @@ export const SHIP_ARCHETYPES: Record<string, ShipStats> = {
 };
 
 /** Ship class names for type safety */
-export type ShipClass = keyof typeof SHIP_ARCHETYPES;
+export type ShipClassName = keyof typeof SHIP_CLASSES;
 
-/** Get ship stats by class (case-insensitive) */
-export function getShipStats(shipClass: string): ShipStats | undefined {
-  return SHIP_ARCHETYPES[shipClass.toLowerCase()];
+/** Get ship class stats by name (case-insensitive) */
+export function getShipClassStats(name: string): ShipClassStats | undefined {
+  return SHIP_CLASSES[name.toLowerCase()];
 }
 
 /** AI collision radius multiplier (AI ships have larger hitboxes) */

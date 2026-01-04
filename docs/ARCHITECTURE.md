@@ -142,10 +142,54 @@ src/
 ├── components/     # Component interfaces (data only)
 ├── systems/        # System functions (logic only)
 ├── factories/      # Entity creation helpers (ships, etc.)
+├── data/           # Game data definitions (single source of truth)
 ├── rendering/      # Three.js, HUD, effects (non-deterministic)
 ├── game.ts         # Main loop, system order
 └── main.ts         # Entry point
 ```
+
+## Data Layer Architecture
+
+All game data has a single source of truth in `src/data/`. Components and factories derive from these, never duplicate.
+
+### Hierarchy
+
+```
+data/weapons.ts     ─── PRIMARY_WEAPONS (weapon stats)
+                         └── components/weapons.ts imports and re-exports
+
+data/missiles.ts    ─── MISSILES (missile stats)
+                         └── components/missile.ts imports and re-exports
+
+data/ships.ts       ─── SHIP_CLASSES (7 chassis types)
+                         └── factories/ship-archetypes.ts combines with loadouts
+                              └── SHIP_ARCHETYPES (ship class + weapons)
+```
+
+### Ship Classes vs Archetypes
+
+**Ship Class** (in `data/ships.ts`): The chassis - hull, shields, speed, etc.
+- 7 classes: scout, interceptor, striker, bomber, defender, raider, sentinel
+
+**Archetype** (in `factories/ship-archetypes.ts`): Ship class + weapon loadout
+- Base archetypes: One per ship class with standard loadout
+- Variant archetypes: Same chassis, different loadout (e.g., "lancer" = sentinel + blue lasers)
+
+```typescript
+// Archetypes derive from ship classes
+const lancer = createArchetype('sentinel', {
+  primaryWeapons: [
+    { name: 'blueLaser', size: 2 },
+    { name: 'blueLaser', size: 2 },
+    { name: 'blueLaser', size: 2 },
+  ],
+  preferredCombatRange: 1000,
+});
+```
+
+### Validation
+
+`factories/archetype-validation.ts` validates weapon/missile names reference valid definitions. It does NOT duplicate loadout specs - archetypes are the source of truth.
 
 ## Code Rules
 

@@ -29,11 +29,8 @@ import type { Entity, World } from '../core/types';
 import { Faction } from '../core/types';
 import type { ProfileName } from '../data/ai-profiles';
 import { getWeaponStats } from '../data/weapons';
-import {
-  SHIP_ARCHETYPES,
-  type ShipStats,
-  validateArchetypeLoadout,
-} from './ship-archetypes';
+import { validateArchetypeLoadout } from './archetype-validation';
+import { SHIP_ARCHETYPES, type ShipStats } from './ship-archetypes';
 
 export type { SecondaryBankSpec, ShipStats } from './ship-archetypes';
 

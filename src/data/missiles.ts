@@ -1,119 +1,125 @@
 /**
- * Missile/Secondary Weapon Definitions - Central source of truth for missile stats.
+ * Missile/Secondary Weapon Definitions - SINGLE SOURCE OF TRUTH for missile stats.
  *
- * All missile stats are defined here and imported by components/missile.ts.
- * Tests should import from here (via fixtures) to stay in sync.
+ * All missile stats are defined here and consumed by components/missile.ts.
+ * Tests should use these values via the factories, never duplicate them.
  */
 
 /** Missile stats */
 export interface MissileStats {
+  /** Display name */
+  name: string;
+  /** Requires lock-on before firing */
+  requiresLock: boolean;
   speed: number;
   turnRate: number; // Degrees per second (0 = dumbfire)
   range: number;
   damage: number;
   fireRate: number;
   lockSpeed: number; // Lock acquisition speed (0-1 per second, 0 = no lock needed)
-  bankSize: number; // How many missiles in a bank
-  maxCount: number; // Maximum ammo count
   /** Area of effect radius (undefined = no AoE) */
   aoeRadius?: number;
   /** Is this a decoy rather than a weapon? */
   isDecoy?: boolean;
+  /** Is this a nuke (special explosion effects)? */
+  isNuke?: boolean;
 }
 
 /**
  * All missile/secondary weapon definitions.
- * Key is the missile name (lowercase), value is the base stats.
+ * Key is the missile ID (lowercase), value is the base stats.
+ * These are the authoritative values used in testing.
  */
 export const MISSILES: Record<string, MissileStats> = {
   // === DUMBFIRE (no lock required) ===
   rocket: {
+    name: 'Rocket',
+    requiresLock: false,
     speed: 600,
     turnRate: 0,
     range: 1000,
     damage: 50,
     fireRate: 0.5,
     lockSpeed: 0,
-    bankSize: 4,
-    maxCount: 16,
   },
   cluster: {
+    name: 'Cluster',
+    requiresLock: false,
     speed: 400,
     turnRate: 60,
     range: 1200,
     damage: 25,
     fireRate: 0.8,
     lockSpeed: 0,
-    bankSize: 6,
-    maxCount: 24,
   },
 
   // === HOMING (lock required) ===
   seeker: {
+    name: 'Seeker',
+    requiresLock: true,
     speed: 400,
     turnRate: 90,
     range: 2000,
     damage: 60,
     fireRate: 1.0,
     lockSpeed: 0.5, // 2 seconds to lock
-    bankSize: 2,
-    maxCount: 8,
   },
   dart: {
+    name: 'Dart',
+    requiresLock: true,
     speed: 600,
     turnRate: 120,
     range: 800,
     damage: 30,
     fireRate: 0.5,
     lockSpeed: 1.0, // 1 second to lock
-    bankSize: 4,
-    maxCount: 16,
   },
   swarm: {
+    name: 'Swarm',
+    requiresLock: true,
     speed: 500,
     turnRate: 100,
     range: 600,
     damage: 10,
     fireRate: 0.1, // Rapid fire
     lockSpeed: 0.8,
-    bankSize: 8,
-    maxCount: 32,
   },
 
   // === HEAVY (slow lock, high damage) ===
   torpedo: {
+    name: 'Torpedo',
+    requiresLock: true,
     speed: 200,
     turnRate: 30,
     range: 4000,
     damage: 150,
     fireRate: 2.0,
     lockSpeed: 0.25, // 4 seconds to lock
-    bankSize: 1,
-    maxCount: 4,
   },
   nuke: {
+    name: 'Nuke',
+    requiresLock: true,
     speed: 150,
     turnRate: 20,
     range: 3000,
     damage: 300,
     fireRate: 3.0,
     lockSpeed: 0.2, // 5 seconds to lock
-    bankSize: 1,
-    maxCount: 2,
-    aoeRadius: 100,
+    aoeRadius: 100, // Large AoE damage radius
+    isNuke: true, // Special explosion effects
   },
 
   // === COUNTERMEASURES ===
   decoy: {
+    name: 'Decoy',
+    requiresLock: false,
     speed: 50,
     turnRate: 0,
-    range: 0,
-    damage: 0,
+    range: 0, // Decoys don't travel far
+    damage: 0, // No damage
     fireRate: 0.5,
     lockSpeed: 0,
-    bankSize: 4,
-    maxCount: 8,
-    isDecoy: true,
+    isDecoy: true, // Mark as countermeasure
   },
 };
 

@@ -3,9 +3,11 @@
  */
 
 import type { ComponentBase, Entity } from '../core/types';
+import { PRIMARY_WEAPONS, type WeaponCategory } from '../data/weapons';
 
-/** Weapon type categories */
-export type WeaponCategory = 'energy' | 'ballistic' | 'beam';
+// Re-export for convenience
+export type { WeaponCategory, WeaponStats } from '../data/weapons';
+export { PRIMARY_WEAPONS } from '../data/weapons';
 
 /** Primary weapon definition */
 export interface PrimaryWeapon {
@@ -96,129 +98,11 @@ export interface SecondaryWeapons extends ComponentBase {
   lockWeaponIndex: number; // Which weapon the current lock is for (-1 = none)
 }
 
-/** Weapon definitions - all stats from WEAPONS.md */
-export const WEAPON_DEFS = {
-  // Energy weapons (infinite ammo)
-  plasma: {
-    name: 'Plasma',
-    category: 'energy' as WeaponCategory,
-    heatPerShot: 8,
-    projectileSpeed: 400,
-    fireRate: 0.2, // 200ms
-    range: 800,
-    damage: 25,
-  },
-  pulse: {
-    name: 'Pulse',
-    category: 'energy' as WeaponCategory,
-    heatPerShot: 5,
-    projectileSpeed: 600,
-    fireRate: 0.1, // 100ms
-    range: 500,
-    damage: 12,
-  },
-  ion: {
-    name: 'Ion',
-    category: 'energy' as WeaponCategory,
-    heatPerShot: 6,
-    projectileSpeed: 400,
-    fireRate: 0.18, // 180ms
-    range: 700,
-    damage: 15,
-  },
-
-  // Ballistic weapons (finite ammo)
-  autocannon: {
-    name: 'Autocannon',
-    category: 'ballistic' as WeaponCategory,
-    heatPerShot: 2,
-    projectileSpeed: 500,
-    fireRate: 0.065, // 65ms
-    range: 400,
-    damage: 9, // Was 8, +12.5% for close-range advantage (not +25%, was too strong)
-    ammo: 200,
-    maxAmmo: 200,
-  },
-  railgun: {
-    name: 'Railgun',
-    category: 'ballistic' as WeaponCategory,
-    heatPerShot: 3,
-    projectileSpeed: 2000,
-    fireRate: 1.0, // Was 0.8s, slower for alpha strike fantasy
-    range: 2000,
-    damage: 160, // Was 80, +100% for devastating alpha strikes
-    ammo: 20,
-    maxAmmo: 20,
-  },
-  flak: {
-    name: 'Flak',
-    category: 'ballistic' as WeaponCategory,
-    heatPerShot: 4,
-    projectileSpeed: 350,
-    fireRate: 0.25, // Was 0.4s, faster for rapid area denial (120 DPS)
-    range: 600,
-    damage: 30, // Was 15, +100% for viable primary weapon
-    ammo: 50,
-    maxAmmo: 50,
-    flakRadius: 100, // Was 80, larger AoE for area denial
-    shrapnelCount: 8, // Spawns 8 shrapnel projectiles
-  },
-
-  // Beam weapons (projectileSpeed=0 means instant hit, damage is per second)
-  // +100% damage buff to make beam specialization viable (see BALANCE_TESTING.md)
-  redLaser: {
-    name: 'Red Laser',
-    category: 'beam' as WeaponCategory,
-    heatPerShot: 15, // Per second
-    projectileSpeed: 0, // Instant
-    fireRate: 0, // Continuous
-    range: 400,
-    damage: 120, // Per second (was 60, +100% buff)
-  },
-  greenLaser: {
-    name: 'Green Laser',
-    category: 'beam' as WeaponCategory,
-    heatPerShot: 12,
-    projectileSpeed: 0,
-    fireRate: 0,
-    range: 800,
-    damage: 80, // Was 40, +100% buff
-  },
-  blueLaser: {
-    name: 'Blue Laser',
-    category: 'beam' as WeaponCategory,
-    heatPerShot: 10,
-    projectileSpeed: 0,
-    fireRate: 0,
-    range: 1200,
-    damage: 50, // Was 25, +100% buff
-  },
-
-  // Special beam weapons
-  lightning: {
-    name: 'Lightning',
-    category: 'beam' as WeaponCategory,
-    heatPerShot: 2, // 20/sec at 10 pulses/sec
-    projectileSpeed: 0,
-    fireRate: 0, // Continuous (pulse handled separately)
-    range: 300,
-    damage: 5, // 50/sec at 10 pulses/sec
-    isPulseBeam: true,
-    pulseInterval: 0.1, // 100ms between bolts
-    noFalloff: true,
-  },
-  nuclearLance: {
-    name: 'Nuclear Lance',
-    category: 'beam' as WeaponCategory,
-    heatPerShot: 0, // No heat
-    projectileSpeed: 0,
-    fireRate: 0.5, // Single shot with cooldown
-    range: 3000,
-    damage: 500, // Single massive hit
-    ammo: 1, // Limited ammo
-    maxAmmo: 1,
-  },
-} as const;
+/**
+ * Weapon definitions - derived from data/weapons.ts (single source of truth).
+ * @deprecated Use PRIMARY_WEAPONS directly instead.
+ */
+export const WEAPON_DEFS = PRIMARY_WEAPONS;
 
 /** Weapon bank specification (name + size) */
 export interface WeaponBankSpec {

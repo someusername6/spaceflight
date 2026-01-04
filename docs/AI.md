@@ -84,6 +84,34 @@ Disengaging to recover.
 **Transitions:**
 - → PURSUE: Shields > 50% and heat < 50%
 
+### REPOSITION (Burst-Disengage)
+
+Kiting behavior for long-range ships. Only active when `preferredCombatRange > 780m` (130% of default 600m).
+
+**Behavior:**
+- Flee from target to regain distance
+- Use afterburner if available
+- Do not fire (focus on creating distance)
+
+**Transitions:**
+- → ENGAGE: Reposition complete (distance regained or timeout)
+
+**Burst-Disengage Pattern:**
+1. Ship engages for burst duration (2s default)
+2. Transitions to REPOSITION
+3. Flies away until distance > preferredCombatRange or max time reached
+4. Cooldown before next burst-disengage can trigger
+
+**Best suited for:**
+- Sustained damage weapons (beams) that benefit from range
+- Tanky chassis that survive long enough to reposition
+- Example: Lancer (sentinel chassis + blue lasers)
+
+**Not suited for:**
+- Alpha strike weapons (railguns) - fights end too fast
+- Glass cannon chassis - dies during reposition
+- Close-range weapons - negates their advantage
+
 ## State Transition Cooldowns
 
 To prevent rapid state oscillation:

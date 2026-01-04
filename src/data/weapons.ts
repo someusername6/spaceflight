@@ -1,23 +1,31 @@
 /**
- * Primary Weapon Definitions - Central source of truth for all weapon stats.
+ * Primary Weapon Definitions - SINGLE SOURCE OF TRUTH for all weapon stats.
  *
- * All weapon stats are defined here and imported by components/weapons.ts.
- * Tests should import from here (via fixtures) to stay in sync.
+ * All weapon stats are defined here and consumed by components/weapons.ts.
+ * Tests should use these values via the factories, never duplicate them.
  */
+
+/** Weapon type categories */
+export type WeaponCategory = 'energy' | 'ballistic' | 'beam';
 
 /** Primary weapon stats (before bank size scaling) */
 export interface WeaponStats {
+  /** Display name */
+  name: string;
+  category: WeaponCategory;
   heatPerShot: number;
   projectileSpeed: number;
   fireRate: number;
   range: number;
   damage: number;
-  category: 'energy' | 'ballistic' | 'beam';
+  /** Base ammo (undefined = infinite) */
   ammo?: number;
   /** Flak explosion radius */
   flakRadius?: number;
   /** Number of shrapnel pieces */
   shrapnelCount?: number;
+  /** Pulse beam fires discrete bolts instead of continuous */
+  isPulseBeam?: boolean;
   /** Pulse beam interval (for Lightning) */
   pulseInterval?: number;
   /** No damage falloff (constant damage at any range) */
@@ -26,61 +34,68 @@ export interface WeaponStats {
 
 /**
  * All primary weapon definitions.
- * Key is the weapon name (lowercase), value is the base stats.
+ * Key is the weapon ID (camelCase), value is the base stats.
+ * These are the authoritative values used in testing.
  */
 export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
   // === ENERGY WEAPONS (infinite ammo) ===
   plasma: {
+    name: 'Plasma',
+    category: 'energy',
     heatPerShot: 8,
     projectileSpeed: 400,
-    fireRate: 0.2,
+    fireRate: 0.2, // 200ms
     range: 800,
     damage: 25,
-    category: 'energy',
   },
   pulse: {
+    name: 'Pulse',
+    category: 'energy',
     heatPerShot: 5,
     projectileSpeed: 600,
-    fireRate: 0.1,
+    fireRate: 0.1, // 100ms
     range: 500,
     damage: 12,
-    category: 'energy',
   },
   ion: {
+    name: 'Ion',
+    category: 'energy',
     heatPerShot: 6,
     projectileSpeed: 400,
-    fireRate: 0.18,
+    fireRate: 0.18, // 180ms
     range: 700,
     damage: 15,
-    category: 'energy',
   },
 
   // === BALLISTIC WEAPONS (finite ammo) ===
   autocannon: {
+    name: 'Autocannon',
+    category: 'ballistic',
     heatPerShot: 2,
     projectileSpeed: 500,
-    fireRate: 0.065,
+    fireRate: 0.065, // 65ms
     range: 400,
     damage: 9, // Was 8, +12.5% for close-range advantage (not +25%, was too strong)
-    category: 'ballistic',
     ammo: 200,
   },
   railgun: {
+    name: 'Railgun',
+    category: 'ballistic',
     heatPerShot: 3,
     projectileSpeed: 2000,
     fireRate: 1.0, // Was 0.8s, slower for alpha strike fantasy
     range: 2000,
     damage: 160, // Was 80, +100% for devastating alpha strikes
-    category: 'ballistic',
     ammo: 20,
   },
   flak: {
+    name: 'Flak',
+    category: 'ballistic',
     heatPerShot: 4,
     projectileSpeed: 350,
     fireRate: 0.25, // Was 0.4s, faster for rapid area denial (120 DPS)
     range: 600,
     damage: 30, // Was 15, +100% for viable primary weapon
-    category: 'ballistic',
     ammo: 50,
     flakRadius: 100, // Was 80, larger AoE for area denial
     shrapnelCount: 8,
@@ -88,50 +103,56 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
 
   // === BEAM WEAPONS (continuous, damage per second) ===
   // +100% damage buff to make beam specialization viable (see BALANCE_TESTING.md)
-  'red laser': {
-    heatPerShot: 15, // Per second
-    projectileSpeed: 0,
-    fireRate: 0,
-    range: 500,
-    damage: 120, // Per second (was 60, +100% buff)
+  redLaser: {
+    name: 'Red Laser',
     category: 'beam',
+    heatPerShot: 15, // Per second
+    projectileSpeed: 0, // Instant
+    fireRate: 0, // Continuous
+    range: 400,
+    damage: 120, // Per second (was 60, +100% buff)
   },
-  'green laser': {
+  greenLaser: {
+    name: 'Green Laser',
+    category: 'beam',
     heatPerShot: 12,
     projectileSpeed: 0,
     fireRate: 0,
     range: 800,
     damage: 80, // Was 40, +100% buff
-    category: 'beam',
   },
-  'blue laser': {
+  blueLaser: {
+    name: 'Blue Laser',
+    category: 'beam',
     heatPerShot: 10,
     projectileSpeed: 0,
     fireRate: 0,
     range: 1200,
     damage: 50, // Was 25, +100% buff
-    category: 'beam',
   },
 
-  // === SPECIAL WEAPONS ===
+  // === SPECIAL BEAM WEAPONS ===
   lightning: {
-    heatPerShot: 2, // Per pulse
-    projectileSpeed: 0,
-    fireRate: 0,
-    range: 300,
-    damage: 5, // Per pulse (50/sec at 10 pulses/sec)
+    name: 'Lightning',
     category: 'beam',
-    pulseInterval: 0.1,
+    heatPerShot: 2, // 20/sec at 10 pulses/sec
+    projectileSpeed: 0,
+    fireRate: 0, // Continuous (pulse handled separately)
+    range: 300,
+    damage: 5, // 50/sec at 10 pulses/sec
+    isPulseBeam: true,
+    pulseInterval: 0.1, // 100ms between bolts
     noFalloff: true,
   },
-  'nuclear lance': {
-    heatPerShot: 0,
-    projectileSpeed: 0,
-    fireRate: 0.5,
-    range: 3000,
-    damage: 500,
+  nuclearLance: {
+    name: 'Nuclear Lance',
     category: 'beam',
-    ammo: 1,
+    heatPerShot: 0, // No heat
+    projectileSpeed: 0,
+    fireRate: 0.5, // Single shot with cooldown
+    range: 3000,
+    damage: 500, // Single massive hit
+    ammo: 1, // Limited ammo
     noFalloff: true,
   },
 };

@@ -17,6 +17,8 @@ export enum AIState {
   Evade = 'evade',
   Protect = 'protect',
   Regroup = 'regroup',
+  /** Repositioning to preferred combat range after burst attack */
+  Reposition = 'reposition',
 }
 
 export interface AIControlled extends ComponentBase {
@@ -27,6 +29,8 @@ export interface AIControlled extends ComponentBase {
   stateTimer: number; // Time in current state
   lastStateChange: number; // For cooldowns
   lastDecoyTime: number; // When AI last launched a decoy
+  /** When AI last repositioned (for cooldown between repositions) */
+  lastRepositionTime: number;
   /** AI behavior profile (determines competence level) */
   profile: AIProfile;
   /**
@@ -49,6 +53,7 @@ export function createAIControlled(
     stateTimer: 0,
     lastStateChange: 0,
     lastDecoyTime: 0,
+    lastRepositionTime: 0,
     profile: getAIProfile(profileName),
   };
 

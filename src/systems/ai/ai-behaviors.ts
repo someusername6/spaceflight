@@ -20,7 +20,7 @@ import type { Transform } from '../../components/transform';
 import { entityExists, getComponent } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
 import type { AIProfile } from '../../data/ai-profiles';
-import { findNearestEnemy } from './ai';
+import { findNearestEnemy } from './ai-utils';
 
 // Reusable vectors
 const toTarget = new Vector3();

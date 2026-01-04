@@ -34,13 +34,13 @@ export {
   type MissileName,
   type MissileStats,
 } from './missiles';
-// Ship definitions
+// Ship class definitions
 export {
   AI_COLLISION_MULTIPLIER,
-  getShipStats,
-  SHIP_ARCHETYPES,
-  type ShipClass,
-  type ShipStats,
+  getShipClassStats,
+  SHIP_CLASSES,
+  type ShipClassName,
+  type ShipClassStats,
 } from './ships';
 // Test fixtures
 export {

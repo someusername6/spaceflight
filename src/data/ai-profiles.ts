@@ -60,6 +60,14 @@ export interface AIProfile {
   protectChaseRange: number;
   /** Distance to patrol around protectee */
   protectPatrolRange: number;
+
+  // === BURST-DISENGAGE (for long-range ships) ===
+  /** How long to engage before repositioning (seconds) */
+  burstDuration: number;
+  /** Cooldown between repositioning attempts (seconds) */
+  repositionCooldown: number;
+  /** Max time to spend repositioning before re-engaging (seconds) */
+  maxRepositionTime: number;
 }
 
 /**
@@ -96,6 +104,10 @@ export const AI_PROFILES: Record<string, AIProfile> = {
     // Protect: Tight formation (easier to hit)
     protectChaseRange: 300,
     protectPatrolRange: 150,
+    // Burst-disengage: Long bursts, slow to reposition (easier to catch)
+    burstDuration: 3.0,
+    repositionCooldown: 6.0,
+    maxRepositionTime: 6.0,
   },
 
   /**
@@ -126,6 +138,10 @@ export const AI_PROFILES: Record<string, AIProfile> = {
     // Protect: Standard spacing
     protectChaseRange: 400,
     protectPatrolRange: 200,
+    // Burst-disengage: Moderate timing
+    burstDuration: 2.5,
+    repositionCooldown: 5.0,
+    maxRepositionTime: 5.0,
   },
 
   /**
@@ -156,6 +172,10 @@ export const AI_PROFILES: Record<string, AIProfile> = {
     // Protect: Wide coverage
     protectChaseRange: 500,
     protectPatrolRange: 250,
+    // Burst-disengage: Efficient timing (hard to pin down)
+    burstDuration: 2.0,
+    repositionCooldown: 4.0,
+    maxRepositionTime: 4.0,
   },
 
   /**
@@ -186,6 +206,10 @@ export const AI_PROFILES: Record<string, AIProfile> = {
     // Protect: Maximum coverage
     protectChaseRange: 600,
     protectPatrolRange: 300,
+    // Burst-disengage: Optimal timing (extremely hard to catch)
+    burstDuration: 1.5,
+    repositionCooldown: 3.0,
+    maxRepositionTime: 3.0,
   },
 };
 
