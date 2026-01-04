@@ -264,7 +264,7 @@ export function createCustomProfile(
 /** Playstyle type for skill scaling */
 export type AIPlaystyle = 'brawler' | 'escape' | 'kiting';
 
-/** Skill level as 0-1 value for interpolation */
+/** Skill level as 0-1 value for aim error scaling */
 const SKILL_VALUES: Record<string, number> = {
   rookie: 0,
   regular: 0.33,
@@ -272,9 +272,23 @@ const SKILL_VALUES: Record<string, number> = {
   ace: 1,
 };
 
-/** Linear interpolation helper */
-function lerp(a: number, b: number, t: number): number {
-  return a + (b - a) * t;
+/**
+ * Get aim error multiplier for kiting playstyle.
+ * Lower skill = higher multiplier = more error.
+ * This creates asymmetric advantages: ace is precise, rookie misses a lot.
+ *
+ * The values are calibrated so that with railgun's 2° autoaim:
+ * - Ace (0.5° base): 0.5° → within autoaim, always hits
+ * - Veteran (2° base): 4° → sometimes in autoaim, mostly hits
+ * - Regular (3° base): 9° → rarely in autoaim, often misses
+ * - Rookie (5.5° base): 22° → never in autoaim, misses badly
+ */
+function getKitingAimMultiplier(skill: number): number {
+  // Ace (skill=1): 1.0x (base aim error ~0.5°)
+  // Veteran (skill=0.66): 2.0x (base aim error ~2° → 4°)
+  // Regular (skill=0.33): 3.0x (base aim error ~3° → 9°)
+  // Rookie (skill=0): 4.0x (base aim error ~5.5° → 22°)
+  return 4.0 - skill * 3.0;
 }
 
 /**
@@ -300,52 +314,67 @@ export function getProfileForPlaystyle(
   const skill = SKILL_VALUES[skillLevel.toLowerCase()] ?? 0.33;
 
   switch (playstyle) {
-    case 'escape':
+    case 'escape': {
       // Escape playstyle: skilled pilots are effective at hit-and-run
-      // CRITICAL: Several base profile behaviors cause inversion in mirrors:
-      // 1. Lower minFiringAngle = more selective = fewer shots = less damage
-      // 2. Lower evade threshold = stays longer = gets caught instead of escaping
       //
-      // Solution: Use CONSTANT values for these. Skill comes from aim error.
+      // In MIRROR matches, many base profile parameters cause inversions.
+      // For escape ships, ONLY aim error should differentiate skill levels.
+      // We use TIERED multipliers similar to kiting but less extreme.
+      const escapeAimMult = 3.0 - skill * 2.0; // Ace 1x, Rookie 3x
       return {
         ...base,
-        // All escape ships fire at same angle threshold (speed lets them get close)
-        minFiringAngle: 35,
-        // All escape ships use same evade threshold (survival-focused)
-        evadeShieldThreshold: 0.3,
-        regroupShieldThreshold: 0.15,
-        // Skilled escape pilots recover faster and re-engage
-        evadeCooldown: lerp(4.0, 2.0, skill),
-        regroupMinTime: lerp(3.0, 1.5, skill),
-        // Skilled escape pilots engage closer (speed advantage)
-        combatRangeMultiplier: lerp(1.0, 0.8, skill),
-      };
-
-    case 'kiting':
-      // Kiting playstyle: skilled pilots maintain optimal range
-      // CRITICAL: Several base profile behaviors cause skill inversion:
-      // 1. Lower evade threshold = stay longer = more damage (but kiters should kite)
-      // 2. Higher combatRangeMultiplier = farther range = LESS DPS
-      // 3. Lower minFiringAngle = more selective = fewer shots = less DPS
-      // 4. Higher fleeDistanceMultiplier = flee earlier = less engagement time
-      //
-      // Solution: Use CONSTANT values for all of these. For kiters,
-      // the ONLY skill differentiator is aim error (which helps sniper but not lancer).
-      return {
-        ...base,
-        // All kiters use same defensive thresholds
+        // TIERED aim error: ace 1x, veteran 1.7x, regular 2.3x, rookie 3x
+        // Scout has a beam weapon so projectile aim matters less
+        aimErrorBase: base.aimErrorBase * escapeAimMult,
+        aimErrorDriftSpeed: base.aimErrorDriftSpeed * escapeAimMult,
+        // Constant defensive thresholds (ace staying longer = getting caught)
         evadeShieldThreshold: 0.25,
         regroupShieldThreshold: 0.12,
-        // All kiters engage at same range
+        // Constant heat management (lower threshold = less DPS)
+        heatSwitchThreshold: 0.8,
+        linkedFireHeatThreshold: 0.7,
+        // Constant firing angle (speed lets them get close regardless of skill)
+        minFiringAngle: 35,
+        // Constant combat range (closer = caught in mirrors)
         combatRangeMultiplier: 1.0,
-        // All kiters flee at same distance (use archetype's base fleeDistance)
+        // Fast recovery/re-engagement (universal for escape playstyle)
+        evadeCooldown: 2.5,
+        regroupMinTime: 2.0,
+      };
+    }
+
+    case 'kiting': {
+      // Kiting playstyle: skilled pilots maintain optimal range
+      //
+      // In MIRROR matches, many base profile parameters cause inversions.
+      // For kiting ships, ONLY aim error should differentiate skill levels.
+      // We use TIERED multipliers: ace stays precise, lower skills get much worse.
+      // Note: This helps sniper (projectile) but not lancer (hitscan beam).
+      const aimMult = getKitingAimMultiplier(skill);
+      return {
+        ...base,
+        // TIERED aim error: ace 1x, veteran 2x, regular 3x, rookie 4x
+        // This overcomes railgun's 2° autoaim by making rookies miss badly
+        aimErrorBase: base.aimErrorBase * aimMult,
+        aimErrorDriftSpeed: base.aimErrorDriftSpeed * aimMult,
+        // Constant defensive thresholds (prevents damage accumulation)
+        evadeShieldThreshold: 0.25,
+        regroupShieldThreshold: 0.12,
+        // Constant engagement range (farther = less DPS)
+        engageRange: 700,
+        combatRangeMultiplier: 1.0,
+        // All kiters flee at same distance
         fleeDistanceMultiplier: 1.0,
+        // Constant heat management (lower threshold = linked fire less = less DPS)
+        heatSwitchThreshold: 0.8,
+        linkedFireHeatThreshold: 0.7,
         // All kiters fire at same angle threshold
         minFiringAngle: 30,
-        // Skilled kiters recover faster after repositioning (minor advantage)
-        repositionCooldown: lerp(5.0, 2.5, skill),
-        maxRepositionTime: lerp(5.0, 3.0, skill),
+        // Constant repositioning
+        repositionCooldown: 4.0,
+        maxRepositionTime: 4.0,
       };
+    }
 
     default:
       // Brawler: use base profile as-is

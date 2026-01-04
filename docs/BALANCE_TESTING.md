@@ -48,31 +48,44 @@ Measures kill times across all archetype matchups (now includes sniper/lancer va
 - >85% win rate in non-mirror: Matchup too one-sided
 
 ### 2. Skill Scaling Verification ⚠️
-**Test:** `npx tsx scripts/tests/combat/test-skill-scaling.mjs`
+**Tests:**
+- Mirror matches: `npx tsx scripts/tests/combat/test-skill-scaling.mjs`
+- vs Brawlers: `npx tsx scripts/tests/combat/test-skill-vs-brawler.mjs`
 
 Verifies AI skill progression works across ALL archetypes.
 
-**Results (2026-01-04):**
-- Regular > Rookie: avg=74% (target ~65%) ✓
-- Veteran > Regular: avg=66% (target ~60%) ✓
-- Ace > Veteran: avg=60% (target ~55%) ✓
-- Ace > Rookie: avg=85% (target ~80%) ✓
+**Playstyle System (Implemented 2026-01-04):**
+Different ship types express skill differently via `getProfileForPlaystyle()`:
+- **Brawler**: Uses base profile (aim, composure, aggression all scale)
+- **Escape**: Constant behavior params, skill via aim error (1x-3x multiplier)
+- **Kiting**: Constant behavior params, skill via aim error (1x-4x multiplier)
 
-**Known Issues:**
-- Scout has inverted/flat skill scaling:
-  - Regular 54% vs Rookie (should be ~65%)
-  - Ace 38% vs Veteran (should be ~55%)
-  - Ace 46% vs Rookie (should be ~80%)
-- Likely cause: Scout's speed makes evasion skill-independent; low damage makes aim less impactful
-- Acceptable for recon role - "skill-independent escape ship"
+**Mirror Match Results (2026-01-04):**
+| Archetype | R>Rk | V>R | A>V | A>Rk | Notes |
+|-----------|------|-----|-----|------|-------|
+| Brawlers | 66-82% | 46-70% | 48-74% | 78-100% | ✓ Working |
+| Scout | 60% | 72% | 62% | 80% | ✓ Fixed via escape playstyle |
+| Sniper | 28% | 42% | 36% | 58% | ⚠️ R>Rk still inverted |
+| Lancer | 10% | 0% | 0% | 0% | ✗ Hitscan beams bypass aim |
 
-- **Kiting archetypes (Sniper, Lancer) have broken skill scaling:**
-  - Sniper: 38% R>Rk, 38% V>R, 20% A>V (inverted)
-  - Lancer: 10% R>Rk, 0% V>R, 0% A>V (completely broken)
-  - Root cause: AI profiles designed for brawling, not kiting
-  - Higher skill → longer range → less damage → worse performance
-  - Blue laser is hitscan so aim error doesn't matter for Lancer
-  - **Needs design work**: kiting AI behavior should improve with skill (better range maintenance, better flee timing)
+**Skill vs Brawler Results (2026-01-04):**
+More realistic scenario - how each skill level performs against regular brawler.
+
+| Ship vs Opponent | Rookie | Regular | Veteran | Ace |
+|------------------|--------|---------|---------|-----|
+| Scout vs Interceptor (500m) | 28% | 38% | 58% | 64% |
+| Sniper vs Striker (900m) | 2% | 0% | 8% | 78% |
+| Lancer vs Defender (1000m) | 0% | 0% | 0% | 0% |
+
+**Key Findings:**
+1. **Scout skill scaling working** - Clear 28%→38%→58%→64% progression
+2. **Sniper has skill cliff at Ace** - Only ace (0.5° aim error) is within railgun's 2° autoaim cone
+3. **Lancer fundamentally broken** - Hitscan beams bypass aim error, can't kill tanky defender before it closes
+
+**Remaining Issues:**
+- Sniper mirror R>Rk still inverted (28%) - both miss too much at long range
+- Lancer needs different skill expression (reaction time, beam tracking jitter)
+- Consider accepting sniper/lancer limitations for specialized roles
 
 **Expected Progression:**
 ```
