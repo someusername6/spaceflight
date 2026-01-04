@@ -75,24 +75,24 @@ export const AI_PROFILES: Record<string, AIProfile> = {
   rookie: {
     name: 'Rookie',
     // Accuracy: Very poor
-    aimErrorBase: 0.12, // ~7 degrees
+    aimErrorBase: 0.095, // ~5.5 degrees (tuned iter 5)
     aimErrorDriftSpeed: 0.04,
-    aimErrorAngularFactor: 0.8, // Very affected by target movement
+    aimErrorAngularFactor: 0.68, // Affected by target movement (tuned iter 5)
     // Engagement: Conservative
     engageRange: 500,
     breakOffRange: 1000,
     // Weapon selection: Poor choices
     heatSwitchThreshold: 0.95, // Almost overheats before switching
-    minFiringAngle: 50, // Wastes ammo at bad angles (high = permissive)
+    minFiringAngle: 45, // Wastes ammo at bad angles (tuned)
     linkedFireHeatThreshold: 0.8, // Overheats with linked fire
     // State transitions: Panics early, returns too early
-    evadeShieldThreshold: 0.35, // Panics at relatively high shields
-    regroupShieldThreshold: 0.2, // Retreats early when scared
+    evadeShieldThreshold: 0.31, // Panics at relatively high shields (tuned iter 5)
+    regroupShieldThreshold: 0.17, // Retreats early when scared (tuned iter 5)
     recoverShieldThreshold: 0.7, // Returns to fight too early (impatient)
     evadeCooldown: 3.0,
     regroupMinTime: 2.0,
     // Missiles: Slow reactions
-    decoyCooldown: 4.0,
+    decoyCooldown: 3.5, // (tuned)
     // Protect: Tight formation (easier to hit)
     protectChaseRange: 300,
     protectPatrolRange: 150,
@@ -135,24 +135,24 @@ export const AI_PROFILES: Record<string, AIProfile> = {
   veteran: {
     name: 'Veteran',
     // Accuracy: Good
-    aimErrorBase: 0.03, // ~2 degrees
-    aimErrorDriftSpeed: 0.015,
-    aimErrorAngularFactor: 0.3, // Good at tracking moving targets
+    aimErrorBase: 0.032, // ~2 degrees (tuned iter 5)
+    aimErrorDriftSpeed: 0.016,
+    aimErrorAngularFactor: 0.3, // Good at tracking (tuned iter 5)
     // Engagement: Aggressive but smart
     engageRange: 700,
     breakOffRange: 1400,
     // Weapon selection: Optimal
     heatSwitchThreshold: 0.65,
-    minFiringAngle: 25, // Selective - only fires when well-aimed
+    minFiringAngle: 24, // Selective (tuned iter 3)
     linkedFireHeatThreshold: 0.5,
     // State transitions: Calm under fire, patient recovery
-    evadeShieldThreshold: 0.18, // Stays in fight longer
-    regroupShieldThreshold: 0.08, // Only retreats when seriously damaged
+    evadeShieldThreshold: 0.2, // Stays in fight (tuned iter 5)
+    regroupShieldThreshold: 0.09, // Retreats when damaged (tuned iter 5)
     recoverShieldThreshold: 0.45, // Patient - waits for good recovery
     evadeCooldown: 6.0,
     regroupMinTime: 3.5,
     // Missiles: Quick reactions
-    decoyCooldown: 1.5,
+    decoyCooldown: 1.4, // (tuned iter 3)
     // Protect: Wide coverage
     protectChaseRange: 500,
     protectPatrolRange: 250,
@@ -165,24 +165,24 @@ export const AI_PROFILES: Record<string, AIProfile> = {
   ace: {
     name: 'Ace',
     // Accuracy: Excellent
-    aimErrorBase: 0.015, // ~1 degree
-    aimErrorDriftSpeed: 0.01,
-    aimErrorAngularFactor: 0.15, // Excellent at tracking fast targets
+    aimErrorBase: 0.008, // ~0.5 degrees (tuned iteration 1)
+    aimErrorDriftSpeed: 0.008, // Very stable aim (tuned iter 4)
+    aimErrorAngularFactor: 0.06, // Excellent at tracking (tuned iter 4)
     // Engagement: Very aggressive
     engageRange: 800,
     breakOffRange: 1600,
     // Weapon selection: Perfect
-    heatSwitchThreshold: 0.55,
-    minFiringAngle: 15, // Very selective - only fires when perfectly aimed
-    linkedFireHeatThreshold: 0.4,
+    heatSwitchThreshold: 0.5, // Perfect heat management (tuned iter 4)
+    minFiringAngle: 12, // Very selective (tuned iter 3)
+    linkedFireHeatThreshold: 0.35, // Can sustain linked fire longer (tuned iter 4)
     // State transitions: Ice cold - stays in fight, very patient recovery
-    evadeShieldThreshold: 0.12, // Extremely calm - only evades when critical
-    regroupShieldThreshold: 0.05, // Nearly dead before retreating
-    recoverShieldThreshold: 0.35, // Very patient - full recovery before re-engaging
+    evadeShieldThreshold: 0.12, // Very calm (tuned iter 5)
+    regroupShieldThreshold: 0.05, // Nearly dead before retreating (tuned iter 5)
+    recoverShieldThreshold: 0.3, // Patient (tuned iter 2)
     evadeCooldown: 7.0,
     regroupMinTime: 4.0,
     // Missiles: Instant reactions
-    decoyCooldown: 1.0,
+    decoyCooldown: 0.5, // Lightning fast (tuned iter 4)
     // Protect: Maximum coverage
     protectChaseRange: 600,
     protectPatrolRange: 300,
