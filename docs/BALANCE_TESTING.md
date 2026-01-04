@@ -349,3 +349,23 @@ npx tsx scripts/tests/combat/simulate-combat.mjs profile-rookie-vs-ace 50
     - Long-range kiting (blue laser, railgun) underperforms vs close-range
     - +100% is sweet spot: Sentinel goes from weak (41%) to balanced (52%)
   - Result: 55% beam damage with 52% win rate (balanced, exceeds 40-50% target)
+
+- **2026-01-04:** Ballistic weapon balance (Priority 2 continued)
+  - **Autocannon**: 8 → 9 damage (+12.5%, was +25% but too strong)
+    - 138 DPS, competitive with red laser (120 DPS) but finite ammo
+    - Close-range brawler fantasy achieved
+  - **Railgun**: 80 → 160 damage (+100%), 0.8s → 1.0s fire rate
+    - 160 DPS with 120 damage per shot (alpha strike)
+    - Functions as "anti-capital" weapon: 72% vs Bomber, 52% vs Striker
+    - Weak vs fast movers (14-32% vs Interceptor) - intentional counterplay
+    - 2000m range useful for first-strike, but AI doesn't kite (future enhancement)
+  - **Flak**: 15 → 30 damage (+100%), 0.4s → 0.25s fire rate (+60%)
+    - 120 DPS with 100m AoE radius
+    - Rapid-fire area denial fantasy achieved
+    - Tournament: 14% → 43% win rate after fire rate buff
+  - Created test-ballistic-builds.mjs for variant loadout testing
+  - Key findings:
+    - Autocannon stacking (3x banks) is very strong but has ammo limits
+    - Railgun excels vs slow targets, struggles vs agile - realistic sniper behavior
+    - Flak needed fire rate buff, not just damage - rapid fire fits fantasy better
+  - Kiting AI attempted but reverted - needs proper design (strafe or burst-disengage)

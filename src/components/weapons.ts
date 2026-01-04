@@ -135,7 +135,7 @@ export const WEAPON_DEFS = {
     projectileSpeed: 500,
     fireRate: 0.065, // 65ms
     range: 400,
-    damage: 8,
+    damage: 9, // Was 8, +12.5% for close-range advantage (not +25%, was too strong)
     ammo: 200,
     maxAmmo: 200,
   },
@@ -144,9 +144,9 @@ export const WEAPON_DEFS = {
     category: 'ballistic' as WeaponCategory,
     heatPerShot: 3,
     projectileSpeed: 2000,
-    fireRate: 0.8, // 800ms
+    fireRate: 1.0, // Was 0.8s, slower for alpha strike fantasy
     range: 2000,
-    damage: 80,
+    damage: 160, // Was 80, +100% for devastating alpha strikes
     ammo: 20,
     maxAmmo: 20,
   },
@@ -155,12 +155,12 @@ export const WEAPON_DEFS = {
     category: 'ballistic' as WeaponCategory,
     heatPerShot: 4,
     projectileSpeed: 350,
-    fireRate: 0.4, // 400ms
+    fireRate: 0.25, // Was 0.4s, faster for rapid area denial (120 DPS)
     range: 600,
-    damage: 15, // Direct hit damage (shrapnel does separate damage)
+    damage: 30, // Was 15, +100% for viable primary weapon
     ammo: 50,
     maxAmmo: 50,
-    flakRadius: 80, // Explodes when enemies within 80 units
+    flakRadius: 100, // Was 80, larger AoE for area denial
     shrapnelCount: 8, // Spawns 8 shrapnel projectiles
   },
 

@@ -61,28 +61,28 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
     projectileSpeed: 500,
     fireRate: 0.065,
     range: 400,
-    damage: 8,
+    damage: 9, // Was 8, +12.5% for close-range advantage (not +25%, was too strong)
     category: 'ballistic',
     ammo: 200,
   },
   railgun: {
     heatPerShot: 3,
     projectileSpeed: 2000,
-    fireRate: 0.8,
+    fireRate: 1.0, // Was 0.8s, slower for alpha strike fantasy
     range: 2000,
-    damage: 80,
+    damage: 160, // Was 80, +100% for devastating alpha strikes
     category: 'ballistic',
     ammo: 20,
   },
   flak: {
     heatPerShot: 4,
     projectileSpeed: 350,
-    fireRate: 0.4,
+    fireRate: 0.25, // Was 0.4s, faster for rapid area denial (120 DPS)
     range: 600,
-    damage: 15,
+    damage: 30, // Was 15, +100% for viable primary weapon
     category: 'ballistic',
     ammo: 50,
-    flakRadius: 80,
+    flakRadius: 100, // Was 80, larger AoE for area denial
     shrapnelCount: 8,
   },
 
