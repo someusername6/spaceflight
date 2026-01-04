@@ -613,23 +613,30 @@ exit $FAILED
 - Run as pre-commit hook
 - I will check before each commit
 
-### 2. System Responsibility Registry
+### 2. Directory Organization
 
-**Implementation:** Create `src/systems/REGISTRY.md` that lists every system with a one-line purpose:
+**Implementation:** Systems and rendering modules are organized into subdirectories by domain:
 
-```markdown
-| System | Purpose | Max Entities |
-|--------|---------|--------------|
-| InputSystem | Reads keyboard state, sets player intent flags | 1 |
-| PhysicsSystem | Applies velocity and drag to transforms | ~50 |
-| WeaponSystem | Handles firing, heat generation, ammo consumption | ~50 |
-...
+```
+src/systems/
+├── ai/              # AI decision-making (ai.ts, ai-behaviors.ts, etc.)
+├── weapons.ts       # Weapon firing logic
+└── ...
+
+src/rendering/
+├── effects/         # Visual effects (explosions, trails, etc.)
+├── hud/             # HUD elements (status bars, radar, etc.)
+├── reticle/         # Targeting UI (brackets, lead indicators)
+├── skybox/          # Space background generation
+├── weapon-display/  # Weapon status UI
+├── beam-effects/    # Beam weapon visuals
+└── renderer.ts      # Core Three.js scene management
 ```
 
 **Enforcement:**
-- Every new system must be added to registry before merge
 - If a system's purpose can't be described in one line, it's too broad
-- Review registry when adding features to identify correct system
+- Related files should be grouped in subdirectories
+- Directory structure is self-documenting
 
 ### 3. No Conversion/Legacy Code Policy
 
@@ -728,7 +735,7 @@ function tick(world: World, dt: number) {
 Before marking a slice complete:
 
 - [ ] All new files under 400 lines
-- [ ] All new systems in REGISTRY.md
+- [ ] Related files grouped in appropriate subdirectories
 - [ ] All components are interfaces (not classes)
 - [ ] No `Math.random()` or `Date.now()` in game logic
 - [ ] System order updated in game.ts

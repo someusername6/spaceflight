@@ -6,12 +6,12 @@ This document describes all weapon-related visual effects (VFX) in the game, inc
 
 | Effect Type | File | Description |
 |-------------|------|-------------|
-| Projectile Trails | `src/rendering/trails.ts` | Fading line trails behind projectiles |
+| Projectile Trails | `src/rendering/effects/trails.ts` | Fading line trails behind projectiles |
 | Missile Exhaust | `src/rendering/missile-exhaust.ts` | Flickering flame cone behind missiles |
-| Muzzle Flash | `src/rendering/muzzle-flash.ts` | Brief flash when weapons fire |
+| Muzzle Flash | `src/rendering/effects/muzzle-flash.ts` | Brief flash when weapons fire |
 | Beam Rendering | `src/rendering/renderer.ts` | Continuous beam lines with fade-out |
-| Shield Hit Effects | `src/rendering/shield-effects.ts` | Cyan flash when shields absorb damage |
-| Explosions | `src/rendering/explosions.ts` | Expanding spheres + particles on impacts |
+| Shield Hit Effects | `src/rendering/effects/shield-effects.ts` | Cyan flash when shields absorb damage |
+| Explosions | `src/rendering/effects/explosions.ts` | Expanding spheres + particles on impacts |
 | Decoys | `src/rendering/renderer.ts` | Glowing spheres that seduce missiles |
 
 ---
@@ -47,7 +47,7 @@ This document describes all weapon-related visual effects (VFX) in the game, inc
 
 ## Projectile Trails
 
-**File:** `src/rendering/trails.ts`
+**File:** `src/rendering/effects/trails.ts`
 
 Each projectile type has distinct visual characteristics:
 
@@ -96,7 +96,7 @@ When a flak projectile detonates (enemy enters proximity):
 
 ## Muzzle Flash Effects
 
-**File:** `src/rendering/muzzle-flash.ts`
+**File:** `src/rendering/effects/muzzle-flash.ts`
 
 ### Projectile Muzzle Flash
 
@@ -264,7 +264,7 @@ Hit effects are triggered based on what actually takes damage, providing clear v
 
 ### Projectile Hit Effects
 
-**File:** `src/rendering/projectile-hits.ts`
+**File:** `src/rendering/effects/projectile-hits.ts`
 
 When projectiles deal hull damage, a hit effect spawns based on weapon category:
 
@@ -278,7 +278,7 @@ When projectiles deal hull damage, a hit effect spawns based on weapon category:
 
 ### Shield Hit Effects
 
-**File:** `src/rendering/shield-effects.ts`
+**File:** `src/rendering/effects/shield-effects.ts`
 
 When shields absorb any amount of damage:
 
@@ -295,7 +295,7 @@ When shields absorb any amount of damage:
 
 ### Standard Explosions
 
-**File:** `src/rendering/explosions.ts`
+**File:** `src/rendering/effects/explosions.ts`
 
 When missiles hit targets:
 
@@ -310,7 +310,7 @@ When missiles hit targets:
 
 ### Nuke Explosion
 
-**File:** `src/rendering/explosions.ts` (variant: 'nuke')
+**File:** `src/rendering/effects/explosions.ts` (variant: 'nuke')
 
 The nuke has a unique multi-stage explosion:
 
