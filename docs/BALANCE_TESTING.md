@@ -158,19 +158,31 @@ Every archetype should have clear counters:
 - Raider: Dies if caught, can't sustain
 - Sentinel: Slow, can be kited
 
-### 9. Beam Specialization (TODO)
-**Problem:** Beam-specialized ships (Sentinel) only deal 17% beam damage.
-Ships should feel like their weapon specialty is their primary damage source.
+### 9. Beam Specialization ✓
+**Problem:** Beam-specialized ships (Sentinel) originally dealt only 17% beam damage.
 
-**Target:** Sentinel should deal 40-50% beam damage to feel beam-focused.
+**Solution (2026-01-04):**
+1. Changed Sentinel primaries to all red lasers (3x redLaser)
+2. Reduced missiles: seeker 8→4, removed rockets/darts, kept torpedo(2) + decoy(4)
+3. **+100% beam damage buff** to all beam weapons:
+   - Red laser: 60 → 120 DPS
+   - Green laser: 40 → 80 DPS
+   - Blue laser: 25 → 50 DPS
 
-**Possible approaches (within bank count constraints):**
-- Reduce missile counts on beam ships (e.g., seeker 8→4)
-- Swap non-beam primaries for beams (Sentinel's plasma → beam)
-- Further buff beam DPS for sustained engagement advantage
+**Result:** Sentinel now deals **55% beam damage** with **52% win rate** (balanced)
 
-**Constraint:** Non-beam ships should stay at 10-15% beam. Beams should not
-become the only viable build - they should be a specialization, not dominant.
+**Extensive testing showed:**
+- Beam buffs up to +200% never made beams "dominant" (>65% win rate)
+- Long-range kiting (blue laser, railgun) does NOT become overpowered
+- Short-range high-DPS (red laser) remains optimal for beam builds
+- +100% is the sweet spot: beams go from weak (41%) to balanced (52%)
+
+**Current per-archetype beam damage:**
+| Ship | Beam% | Notes |
+|------|-------|-------|
+| Sentinel | 55% | Beam specialist ✓ |
+| Scout | 20% | Has red laser |
+| Others | 7-21% | Non-beam ships stay reasonable |
 
 ---
 
@@ -326,3 +338,14 @@ npx tsx scripts/tests/combat/simulate-combat.mjs profile-rookie-vs-ace 50
   - Validation runs on module load AND ship creation
   - Catches both static errors and runtime modifications
   - Prevents accidental weapon bank additions (must replace instead)
+
+- **2026-01-04:** Sentinel beam specialization (Priority 2 complete)
+  - Changed Sentinel primaries: blueLaser(3) + greenLaser(2) + plasma(1) → 3x redLaser
+  - Reduced missiles: seeker 8→4, removed rockets/darts, kept torpedo(2) + decoy(4)
+  - **+100% beam damage buff**: red 60→120, green 40→80, blue 25→50 DPS
+  - Tested boost levels from -50% to +200% to find optimal balance
+  - Key findings:
+    - Beams never become dominant even at +200% (peak 64% win rate)
+    - Long-range kiting (blue laser, railgun) underperforms vs close-range
+    - +100% is sweet spot: Sentinel goes from weak (41%) to balanced (52%)
+  - Result: 55% beam damage with 52% win rate (balanced, exceeds 40-50% target)

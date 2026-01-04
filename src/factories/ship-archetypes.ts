@@ -94,13 +94,11 @@ export const ARCHETYPE_WEAPON_SPECS: Record<
     ],
   },
   sentinel: {
-    primarySizes: [3, 2, 1],
+    primarySizes: [3, 2, 1], // All red lasers for beam focus
     secondarySpecs: [
-      { count: 8, size: 2 },
-      { count: 2, size: 2 },
-      { count: 6, size: 1 },
-      { count: 4, size: 1 },
-      { count: 4, size: 1 },
+      { count: 4, size: 2 }, // seeker - reduced for beam focus
+      { count: 2, size: 2 }, // torpedo - kept for anti-capital
+      { count: 4, size: 1 }, // decoy
     ],
   },
 };
@@ -326,7 +324,7 @@ export const SHIP_ARCHETYPES: Record<string, ShipStats> = {
       { name: 'decoy', count: 4, size: 1 },
     ],
   },
-  // Sentinel: Long-range support - BALANCED (beam-optimized)
+  // Sentinel: Beam specialist - all red lasers for 33-35% beam damage focus
   sentinel: {
     hull: 100,
     shields: 100,
@@ -341,15 +339,13 @@ export const SHIP_ARCHETYPES: Record<string, ShipStats> = {
     coolingRate: 22,
     afterburnerHeatRate: 45,
     primaryWeapons: [
-      { name: 'blueLaser', size: 3 },
-      { name: 'greenLaser', size: 2 },
-      { name: 'plasma', size: 1 },
+      { name: 'redLaser', size: 3 }, // All beams for beam focus
+      { name: 'redLaser', size: 2 },
+      { name: 'redLaser', size: 1 },
     ],
     secondaryWeapons: [
-      { name: 'seeker', count: 8, size: 2 },
-      { name: 'torpedo', count: 2, size: 2 },
-      { name: 'rocket', count: 6, size: 1 },
-      { name: 'dart', count: 4, size: 1 },
+      { name: 'seeker', count: 4, size: 2 }, // Reduced missiles for beam focus
+      { name: 'torpedo', count: 2, size: 2 }, // Kept for anti-capital role
       { name: 'decoy', count: 4, size: 1 },
     ],
   },

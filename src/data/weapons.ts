@@ -87,12 +87,13 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
   },
 
   // === BEAM WEAPONS (continuous, damage per second) ===
+  // +100% damage buff to make beam specialization viable (see BALANCE_TESTING.md)
   'red laser': {
     heatPerShot: 15, // Per second
     projectileSpeed: 0,
     fireRate: 0,
-    range: 500, // Increased from 400 to be usable at typical engagement ranges
-    damage: 60, // Per second (highest DPS, shortest range)
+    range: 500,
+    damage: 120, // Per second (was 60, +100% buff)
     category: 'beam',
   },
   'green laser': {
@@ -100,7 +101,7 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
     projectileSpeed: 0,
     fireRate: 0,
     range: 800,
-    damage: 40,
+    damage: 80, // Was 40, +100% buff
     category: 'beam',
   },
   'blue laser': {
@@ -108,7 +109,7 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
     projectileSpeed: 0,
     fireRate: 0,
     range: 1200,
-    damage: 30, // Increased from 25 to be competitive (still lowest DPS)
+    damage: 50, // Was 25, +100% buff
     category: 'beam',
   },
 

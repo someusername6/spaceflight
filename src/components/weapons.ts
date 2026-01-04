@@ -165,6 +165,7 @@ export const WEAPON_DEFS = {
   },
 
   // Beam weapons (projectileSpeed=0 means instant hit, damage is per second)
+  // +100% damage buff to make beam specialization viable (see BALANCE_TESTING.md)
   redLaser: {
     name: 'Red Laser',
     category: 'beam' as WeaponCategory,
@@ -172,7 +173,7 @@ export const WEAPON_DEFS = {
     projectileSpeed: 0, // Instant
     fireRate: 0, // Continuous
     range: 400,
-    damage: 60, // Per second
+    damage: 120, // Per second (was 60, +100% buff)
   },
   greenLaser: {
     name: 'Green Laser',
@@ -181,7 +182,7 @@ export const WEAPON_DEFS = {
     projectileSpeed: 0,
     fireRate: 0,
     range: 800,
-    damage: 40,
+    damage: 80, // Was 40, +100% buff
   },
   blueLaser: {
     name: 'Blue Laser',
@@ -190,7 +191,7 @@ export const WEAPON_DEFS = {
     projectileSpeed: 0,
     fireRate: 0,
     range: 1200,
-    damage: 25,
+    damage: 50, // Was 25, +100% buff
   },
 
   // Special beam weapons
