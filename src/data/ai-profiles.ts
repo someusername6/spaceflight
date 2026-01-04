@@ -30,6 +30,12 @@ export interface AIProfile {
   engageRange: number;
   /** Distance to give up pursuit */
   breakOffRange: number;
+  /**
+   * Multiplier for preferred combat range based on skill.
+   * Ace pilots engage from farther (precision makes long-range viable).
+   * Rookie pilots engage closer (autoaim helps more at close range).
+   */
+  combatRangeMultiplier: number;
 
   // === WEAPON SELECTION ===
   /** Heat percentage to switch to cooler weapons (0-1) */
@@ -86,9 +92,10 @@ export const AI_PROFILES: Record<string, AIProfile> = {
     aimErrorBase: 0.095, // ~5.5 degrees (tuned iter 5)
     aimErrorDriftSpeed: 0.04,
     aimErrorAngularFactor: 0.68, // Affected by target movement (tuned iter 5)
-    // Engagement: Conservative
+    // Engagement: Conservative, engages closer (needs autoaim help)
     engageRange: 500,
     breakOffRange: 1000,
+    combatRangeMultiplier: 0.8, // Engages 20% closer than base range
     // Weapon selection: Poor choices
     heatSwitchThreshold: 0.95, // Almost overheats before switching
     minFiringAngle: 45, // Wastes ammo at bad angles (tuned)
@@ -123,9 +130,10 @@ export const AI_PROFILES: Record<string, AIProfile> = {
     // Engagement: Standard
     engageRange: 600,
     breakOffRange: 1200,
+    combatRangeMultiplier: 1.0, // Baseline combat range
     // Weapon selection: Sensible
     heatSwitchThreshold: 0.75,
-    minFiringAngle: 35, // Moderate selectivity
+    minFiringAngle: 24, // More selective for skill progression
     linkedFireHeatThreshold: 0.6,
     // State transitions: Moderate composure
     evadeShieldThreshold: 0.25, // Evades at reasonable threshold
@@ -157,9 +165,10 @@ export const AI_PROFILES: Record<string, AIProfile> = {
     // Engagement: Aggressive but smart
     engageRange: 700,
     breakOffRange: 1400,
+    combatRangeMultiplier: 1.15, // Engages 15% farther (better aim)
     // Weapon selection: Optimal
     heatSwitchThreshold: 0.65,
-    minFiringAngle: 24, // Selective (tuned iter 3)
+    minFiringAngle: 18, // More selective than regular, closer to ace (tuned for kiting)
     linkedFireHeatThreshold: 0.5,
     // State transitions: Calm under fire, patient recovery
     evadeShieldThreshold: 0.2, // Stays in fight (tuned iter 5)
@@ -191,9 +200,10 @@ export const AI_PROFILES: Record<string, AIProfile> = {
     // Engagement: Very aggressive
     engageRange: 800,
     breakOffRange: 1600,
+    combatRangeMultiplier: 1.3, // Engages 30% farther (precision makes it viable)
     // Weapon selection: Perfect
     heatSwitchThreshold: 0.5, // Perfect heat management (tuned iter 4)
-    minFiringAngle: 12, // Very selective (tuned iter 3)
+    minFiringAngle: 14, // Very selective but viable for kiting
     linkedFireHeatThreshold: 0.35, // Can sustain linked fire longer (tuned iter 4)
     // State transitions: Ice cold - stays in fight, very patient recovery
     evadeShieldThreshold: 0.12, // Very calm (tuned iter 5)

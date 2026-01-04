@@ -37,6 +37,7 @@ import {
   selectOptimalPrimaryWeapon,
 } from './ai/ai-weapon-selection';
 import {
+  type AutoaimParams,
   spawnDecoy,
   spawnMissile,
   spawnProjectileWithAimError,
@@ -110,6 +111,7 @@ export function handleAIPrimaryWeapons(
       faction,
       gameTime,
       aimError,
+      ai.target,
     );
   } else if (selection.mode === 'single' && selection.index !== undefined) {
     fireSinglePrimaryAI(
@@ -122,6 +124,7 @@ export function handleAIPrimaryWeapons(
       gameTime,
       selection.index,
       aimError,
+      ai.target,
     );
   }
   // mode === 'none' - don't fire (conserving heat/ammo)
@@ -138,6 +141,7 @@ function fireSinglePrimaryAI(
   gameTime: number,
   weaponIndex: number,
   aimError?: AimError,
+  target?: Entity,
 ): void {
   const weapon = weapons.weapons[weaponIndex] as PrimaryWeapon | undefined;
   if (!weapon || weapon.category === 'beam') return; // Beams handled by beam system
@@ -154,6 +158,27 @@ function fireSinglePrimaryAI(
   weapons.lastFireTime = gameTime;
   if (weapon.ammo !== undefined) weapon.ammo--;
 
+  // Calculate autoaim params if weapon has autoaim and we have a target
+  let autoaim: AutoaimParams | undefined;
+  if (weapon.autoaimFov && target && entityExists(world, target)) {
+    const targetTransform = getComponent<Transform>(world, target, 'transform');
+    const targetPhysics = getComponent<Physics>(world, target, 'physics');
+    const ownerPhysics = getComponent<Physics>(world, entity, 'physics');
+
+    if (targetTransform) {
+      const interceptPoint = calculateInterceptPoint(
+        transform.position,
+        ownerPhysics?.velocity ?? tempZeroVec,
+        targetTransform.position,
+        targetPhysics?.velocity ?? tempZeroVec,
+        weapon.projectileSpeed,
+      );
+      if (interceptPoint) {
+        autoaim = { interceptPoint, fovDegrees: weapon.autoaimFov };
+      }
+    }
+  }
+
   spawnProjectileWithAimError(
     world,
     entity,
@@ -163,6 +188,7 @@ function fireSinglePrimaryAI(
     aimError,
     weaponIndex,
     weapons.weapons.length,
+    autoaim,
   );
 }
 

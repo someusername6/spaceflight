@@ -4,9 +4,11 @@
  * Extracted from weapons.ts to stay under 400 line limit.
  */
 
+import * as THREE from 'three';
 import type { FactionComponent } from '../components/faction';
 import type { Heat } from '../components/heat';
 import { addHeat } from '../components/heat';
+import type { Physics } from '../components/physics';
 import type { PlayerControlled } from '../components/player';
 import type { Transform } from '../components/transform';
 import type { PrimaryWeapons, SecondaryWeapons } from '../components/weapons';
@@ -18,9 +20,18 @@ import {
   getCurrentSecondary,
   getEffectiveHeat,
 } from '../components/weapons';
+import { entityExists, getComponent } from '../core/ecs';
+import { calculateInterceptPoint } from '../core/lead-calculation';
 import type { Entity, World } from '../core/types';
-import { spawnDecoy, spawnMissile, spawnProjectile } from './weapon-spawning';
+import {
+  type AutoaimParams,
+  spawnDecoy,
+  spawnMissile,
+  spawnProjectileWithAimError,
+} from './weapon-spawning';
 import { fireLinkedPrimaries } from './weapons';
+
+const tempZeroVec = new THREE.Vector3(0, 0, 0);
 
 /** Handle player primary weapon input */
 export function handlePlayerPrimaryWeapons(
@@ -33,6 +44,7 @@ export function handlePlayerPrimaryWeapons(
   player: PlayerControlled,
   state: World['systemState']['weapons'],
   gameTime: number,
+  target?: Entity,
 ): void {
   const input = player.input;
   const prevInput = state.prevInput;
@@ -61,6 +73,8 @@ export function handlePlayerPrimaryWeapons(
         heat,
         faction,
         gameTime,
+        undefined, // No aim error for player
+        target,
       );
     } else {
       fireSinglePrimary(
@@ -71,6 +85,7 @@ export function handlePlayerPrimaryWeapons(
         heat,
         faction,
         gameTime,
+        target,
       );
     }
   }
@@ -85,6 +100,7 @@ function fireSinglePrimary(
   heat: Heat,
   faction: FactionComponent | undefined,
   gameTime: number,
+  target?: Entity,
 ): void {
   const weapon = getCurrentPrimary(weapons);
   if (!weapon || weapon.category === 'beam') return; // Beams handled by beam system
@@ -99,14 +115,42 @@ function fireSinglePrimary(
 
     weapons.lastFireTime = gameTime;
     if (weapon.ammo !== undefined) weapon.ammo--;
-    spawnProjectile(
+
+    // Calculate autoaim if weapon has autoaimFov and we have a target
+    let autoaim: AutoaimParams | undefined;
+    if (weapon.autoaimFov && target && entityExists(world, target)) {
+      const targetTransform = getComponent<Transform>(
+        world,
+        target,
+        'transform',
+      );
+      const targetPhysics = getComponent<Physics>(world, target, 'physics');
+      const ownerPhysics = getComponent<Physics>(world, entity, 'physics');
+
+      if (targetTransform) {
+        const interceptPoint = calculateInterceptPoint(
+          transform.position,
+          ownerPhysics?.velocity ?? tempZeroVec,
+          targetTransform.position,
+          targetPhysics?.velocity ?? tempZeroVec,
+          weapon.projectileSpeed,
+        );
+        if (interceptPoint) {
+          autoaim = { interceptPoint, fovDegrees: weapon.autoaimFov };
+        }
+      }
+    }
+
+    spawnProjectileWithAimError(
       world,
       entity,
       transform,
       weapon,
       faction,
+      undefined, // No aim error for player
       weapons.currentIndex,
       weapons.weapons.length,
+      autoaim,
     );
   }
 }

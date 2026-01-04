@@ -286,12 +286,12 @@ npx tsx scripts/tests/combat/simulate-combat.mjs profile-rookie-vs-ace 50
 
 ## AI Profiles Reference
 
-| Profile | Aim Error | Angular Factor | Engage Range | Evade Threshold |
-|---------|-----------|----------------|--------------|-----------------|
-| Rookie | 0.095 rad | 0.68 | 500m | 31% shields (panics early) |
-| Regular | 0.05 rad | 0.5 | 600m | 25% shields |
-| Veteran | 0.032 rad | 0.3 | 700m | 20% shields |
-| Ace | 0.008 rad | 0.06 | 800m | 12% shields (ice cold) |
+| Profile | Aim Error | Angular Factor | Engage Range | Evade Threshold | minFiringAngle | combatRangeMultiplier |
+|---------|-----------|----------------|--------------|-----------------|----------------|----------------------|
+| Rookie | 0.095 rad | 0.68 | 500m | 31% shields (panics early) | 45° | 0.8x |
+| Regular | 0.05 rad | 0.5 | 600m | 25% shields | 24° | 1.0x |
+| Veteran | 0.032 rad | 0.3 | 700m | 20% shields | 18° | 1.15x |
+| Ace | 0.008 rad | 0.06 | 800m | 12% shields (ice cold) | 14° | 1.3x |
 
 ---
 
@@ -369,3 +369,24 @@ npx tsx scripts/tests/combat/simulate-combat.mjs profile-rookie-vs-ace 50
     - Railgun excels vs slow targets, struggles vs agile - realistic sniper behavior
     - Flak needed fire rate buff, not just damage - rapid fire fits fantasy better
   - Kiting AI attempted but reverted - needs proper design (strafe or burst-disengage)
+
+- **2026-01-04:** Autoaim system and skill ladder tuning
+  - **Railgun autoaim**: 2° FOV correction (FreeSpace-style "smart round")
+    - Projectiles correct toward intercept point if aim is within 2° cone
+    - Applies equally to AI (after aim error) and players (fair, not cheating)
+    - Extends effective firing threshold: ace 14° + 2° = 16° effective
+  - **minFiringAngle rebalanced** for skill ladder at low autoaim FOV:
+    - Rookie: 45° (unchanged - wastes ammo at bad angles)
+    - Regular: 35° → 24° (more selective)
+    - Veteran: 24° → 18° (closer to ace, prevents outperforming ace)
+    - Ace: 12° → 14° (slightly looser for kiting viability)
+  - **combatRangeMultiplier** added to AI profiles:
+    - Scales preferred engagement distance by skill
+    - Ace: 1.3x (engages 30% farther - precision viable at range)
+    - Veteran: 1.15x, Regular: 1.0x, Rookie: 0.8x (engages closer)
+  - **Skill ladder verified at 2° FOV**:
+    - Win rate vs same-skill: ace (33%) > veteran (18%) > regular (7%) > rookie (0%)
+    - Hit rate: ace (8%) > veteran (4%) ≈ regular (3%) > rookie (0%)
+  - Key insight: Original minFiringAngle gap (ace 12° vs veteran 24°) caused
+    veteran to fire more in kiting scenarios, outperforming ace. Narrowing
+    the gap while giving ace slightly looser threshold fixed the ladder.

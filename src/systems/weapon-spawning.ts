@@ -40,6 +40,15 @@ const spawnPos = new THREE.Vector3();
 const rightAxis = new THREE.Vector3();
 const tempForward = new THREE.Vector3();
 const downAxis = new THREE.Vector3();
+const toIntercept = new THREE.Vector3();
+
+/** Autoaim parameters for projectile correction */
+export interface AutoaimParams {
+  /** The calculated intercept point to aim at */
+  interceptPoint: THREE.Vector3;
+  /** Autoaim field of view in degrees */
+  fovDegrees: number;
+}
 
 /**
  * Calculate spawn position for a weapon bank.
@@ -136,7 +145,7 @@ export function spawnProjectile(
   }
 }
 
-/** Spawn a projectile with aim error (for AI) */
+/** Spawn a projectile with aim error and optional autoaim correction */
 export function spawnProjectileWithAimError(
   world: World,
   owner: Entity,
@@ -149,11 +158,13 @@ export function spawnProjectileWithAimError(
     category?: string;
     flakRadius?: number;
     shrapnelCount?: number;
+    autoaimFov?: number;
   },
   ownerFaction: FactionComponent | undefined,
   aimError: AimError | undefined,
   bankIndex = 0,
   totalBanks = 1,
+  autoaim?: AutoaimParams,
 ): void {
   const forward = getForward(ownerTransform);
   const pos = calculateBankOffset(
@@ -164,7 +175,23 @@ export function spawnProjectileWithAimError(
   );
 
   // Apply aim error if present, otherwise use forward direction
-  const direction = aimError ? applyAimError(forward, aimError) : forward;
+  let direction = aimError ? applyAimError(forward, aimError) : forward;
+
+  // Apply autoaim correction if within cone
+  if (autoaim && autoaim.fovDegrees > 0) {
+    // Calculate direction to intercept point
+    toIntercept.copy(autoaim.interceptPoint).sub(pos).normalize();
+
+    // Check if current aim is within autoaim cone of intercept
+    const dot = direction.dot(toIntercept);
+    const angleRad = Math.acos(Math.max(-1, Math.min(1, dot)));
+    const angleDeg = angleRad * (180 / Math.PI);
+
+    if (angleDeg <= autoaim.fovDegrees) {
+      // Within cone - correct to intercept point
+      direction = toIntercept;
+    }
+  }
 
   const projectile = createEntity(world);
   const category: ProjectileCategory =

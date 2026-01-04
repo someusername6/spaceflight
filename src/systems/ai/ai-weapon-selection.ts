@@ -7,18 +7,23 @@
 import type { Heat } from '../../components/heat';
 import { getHeatPercent, HEAT_WARNING_THRESHOLD } from '../../components/heat';
 import type { Shields } from '../../components/shields';
-import type { Transform } from '../../components/transform';
 import type { PrimaryWeapon, PrimaryWeapons } from '../../components/weapons';
 import { getEffectiveHeat } from '../../components/weapons';
 import type { AIProfile } from '../../data/ai-profiles';
 import {
+  calculateFiringAngle,
   getDistanceCategory,
   getWeaponRangeCategory,
   RangeCategory,
 } from './ai-weapon-categories';
 
 // Re-export for backwards compatibility
-export { getDistanceCategory, getWeaponRangeCategory, RangeCategory };
+export {
+  calculateFiringAngle,
+  getDistanceCategory,
+  getWeaponRangeCategory,
+  RangeCategory,
+};
 
 /** Result of weapon selection */
 export interface WeaponSelection {
@@ -205,18 +210,28 @@ export function selectOptimalPrimaryWeapon(
   }
 
   // Don't waste finite ammo at poor firing angles (use profile threshold)
+  // However, weapons with autoaim can fire at wider angles since the
+  // projectile will correct toward the target within the autoaim cone
   if (firingAngle > profile.minFiringAngle) {
     // Try infinite ammo weapons first
     const infiniteWeapon = findInfiniteAmmoWeapon(weapons, distance);
     if (infiniteWeapon !== null) {
       return { mode: 'single', index: infiniteWeapon };
     }
-    // If no infinite ammo options, allow finite ammo at moderate angles (< 60°)
-    // This prevents ships with only finite ammo from never shooting
-    if (firingAngle > 60) {
-      return { mode: 'none' };
+
+    // Check if any finite ammo weapon has autoaim that extends the effective threshold
+    const autoaimWeapon = findAutoaimWeapon(
+      weapons,
+      distance,
+      firingAngle,
+      profile,
+    );
+    if (autoaimWeapon !== null) {
+      return { mode: 'single', index: autoaimWeapon };
     }
-    // Fall through to normal weapon selection for finite ammo at 35-60°
+
+    // No infinite ammo or autoaim at this angle - wait for better angle
+    return { mode: 'none' };
   }
 
   // Count valid weapons and find best
@@ -336,43 +351,29 @@ function findInfiniteAmmoWeapon(
 }
 
 /**
- * Calculate firing angle between shooter and target.
- * Returns angle in degrees (0 = dead ahead, 180 = behind).
+ * Find a finite ammo weapon with autoaim that can fire at the current angle.
+ * Autoaim extends the effective firing threshold by the autoaim FOV.
+ * e.g., ace (14° threshold) with 2° autoaim can fire at 16° since autoaim corrects.
  */
-export function calculateFiringAngle(
-  shooterTransform: Transform,
-  targetPosition: { x: number; y: number; z: number },
-): number {
-  // Get forward direction from quaternion (Three.js convention: -Z is forward)
-  // Formula: rotate (0, 0, -1) by the quaternion
-  const q = shooterTransform.rotation;
-  const forward = {
-    x: -2 * (q.x * q.z - q.w * q.y),
-    y: -2 * (q.y * q.z + q.w * q.x),
-    z: -(1 - 2 * (q.x * q.x + q.y * q.y)),
-  };
+function findAutoaimWeapon(
+  weapons: PrimaryWeapons,
+  distance: number,
+  firingAngle: number,
+  profile: AIProfile,
+): number | null {
+  for (let i = 0; i < weapons.weapons.length; i++) {
+    const weapon = weapons.weapons[i];
+    if (!weapon || weapon.category === 'beam') continue;
+    if (!isWeaponInRange(weapon, distance)) continue;
+    if (weapon.ammo !== undefined && weapon.ammo <= 0) continue;
 
-  // Direction to target
-  const toTarget = {
-    x: targetPosition.x - shooterTransform.position.x,
-    y: targetPosition.y - shooterTransform.position.y,
-    z: targetPosition.z - shooterTransform.position.z,
-  };
-
-  // Normalize
-  const toTargetLen = Math.sqrt(
-    toTarget.x * toTarget.x + toTarget.y * toTarget.y + toTarget.z * toTarget.z,
-  );
-  if (toTargetLen < 0.001) return 0;
-
-  toTarget.x /= toTargetLen;
-  toTarget.y /= toTargetLen;
-  toTarget.z /= toTargetLen;
-
-  // Dot product gives cosine of angle
-  const dot =
-    forward.x * toTarget.x + forward.y * toTarget.y + forward.z * toTarget.z;
-  const angle = Math.acos(Math.max(-1, Math.min(1, dot))) * (180 / Math.PI);
-
-  return angle;
+    // Check if weapon has autoaim that extends the effective threshold
+    if (weapon.autoaimFov && weapon.autoaimFov > 0) {
+      const effectiveThreshold = profile.minFiringAngle + weapon.autoaimFov;
+      if (firingAngle <= effectiveThreshold) {
+        return i;
+      }
+    }
+  }
+  return null;
 }

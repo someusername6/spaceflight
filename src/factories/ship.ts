@@ -27,7 +27,7 @@ import {
 import { addComponent, createEntity } from '../core/ecs';
 import type { Entity, World } from '../core/types';
 import { Faction } from '../core/types';
-import type { ProfileName } from '../data/ai-profiles';
+import { getAIProfile, type ProfileName } from '../data/ai-profiles';
 import { getWeaponStats } from '../data/weapons';
 import { validateArchetypeLoadout } from './archetype-validation';
 import { SHIP_ARCHETYPES, type ShipStats } from './ship-archetypes';
@@ -196,8 +196,14 @@ export function createAIShip(
   addComponent(world, entity, createShipIdentity(archetype, callsign));
 
   // Create AI with profile - aim error derived from profile
-  // Calculate preferred combat range from weapon loadout (or use explicit value)
-  const preferredRange = calculatePreferredCombatRange(stats);
+  // Calculate preferred combat range from weapon loadout, scaled by skill
+  // Ace pilots engage farther (precision viable at range)
+  // Rookie pilots engage closer (autoaim helps at close range)
+  const profile = getAIProfile(profileName);
+  const baseRange = calculatePreferredCombatRange(stats);
+  const preferredRange = Math.floor(baseRange * profile.combatRangeMultiplier);
+  // Don't scale flee distance - it's a ship property, not skill-based
+  // Higher-skill pilots still flee at the same distance but return to farther range
   const ai = createAIControlled(
     profileName,
     preferredRange,

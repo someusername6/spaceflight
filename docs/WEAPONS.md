@@ -49,6 +49,21 @@ The Flak cannon fires proximity-fused projectiles that explode into shrapnel:
 
 The projectile does NOT explode based on time or distance - only on enemy proximity. This makes it effective against clustered enemies and ineffective against isolated targets at extreme range.
 
+### Railgun Autoaim
+
+The Railgun features a "smart round" autoaim system inspired by FreeSpace:
+
+1. **Autoaim FOV:** 2° cone of correction
+2. **Behavior:** If projectile aim is within 2° of the intercept point, the projectile corrects to that point
+3. **Fair System:** Applies equally to AI (after aim error) and players - not an AI advantage
+
+This makes the railgun viable at extreme range while still requiring reasonable aim. The narrow 2° cone ensures precision matters but forgives minor tracking errors.
+
+**Interaction with AI skill:**
+- AI `minFiringAngle` determines when AI will fire finite-ammo weapons
+- Autoaim extends effective threshold: ace (14°) + autoaim (2°) = 16° effective
+- Higher skill = tighter discipline but same autoaim benefit
+
 ### Beam Weapons (Continuous)
 
 | Weapon | Heat/sec | Range | Damage/sec | Falloff | Notes |

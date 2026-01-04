@@ -1,5 +1,6 @@
 /** Weapon System - Handles firing primary and secondary weapons. */
 
+import * as THREE from 'three';
 import type { AIControlled } from '../components/ai';
 import type { AimError } from '../components/aim-error';
 import type { FactionComponent } from '../components/faction';
@@ -7,6 +8,7 @@ import type { Health } from '../components/health';
 import { isDying } from '../components/health';
 import type { Heat } from '../components/heat';
 import { addHeat } from '../components/heat';
+import type { Physics } from '../components/physics';
 import type { PlayerControlled } from '../components/player';
 import type { Targeting } from '../components/targeting';
 import type { Transform } from '../components/transform';
@@ -17,8 +19,12 @@ import type {
 } from '../components/weapons';
 import { getCurrentSecondary, getEffectiveHeat } from '../components/weapons';
 import { entityExists, getComponent, queryEntities } from '../core/ecs';
+import { calculateInterceptPoint } from '../core/lead-calculation';
 import type { Entity, World } from '../core/types';
-import { spawnProjectileWithAimError } from './weapon-spawning';
+import {
+  type AutoaimParams,
+  spawnProjectileWithAimError,
+} from './weapon-spawning';
 import { handleAIPrimaryWeapons, handleAISecondaryWeapons } from './weapons-ai';
 import {
   handlePlayerPrimaryWeapons,
@@ -31,6 +37,7 @@ interface WeaponWithIndex {
   index: number;
 }
 const projectileWeaponsCollector: WeaponWithIndex[] = [];
+const tempZeroVec = new THREE.Vector3(0, 0, 0);
 
 /** Weapon system - handles firing and heat */
 export function weaponSystem(world: World, dt: number): void {
@@ -66,6 +73,8 @@ export function weaponSystem(world: World, dt: number): void {
     );
 
     if (player) {
+      // Get targeting for autoaim (use current target if locked)
+      const targeting = getComponent<Targeting>(world, entity, 'targeting');
       handlePlayerPrimaryWeapons(
         world,
         entity,
@@ -76,6 +85,7 @@ export function weaponSystem(world: World, dt: number): void {
         player,
         state,
         gameTime,
+        targeting?.currentTarget,
       );
     } else {
       // Check for AI-controlled entity
@@ -174,6 +184,7 @@ export function fireLinkedPrimaries(
   faction: FactionComponent | undefined,
   gameTime: number,
   aimError?: AimError,
+  target?: Entity,
 ): void {
   // Clear and reuse collector (avoid per-frame allocations)
   projectileWeaponsCollector.length = 0;
@@ -207,11 +218,39 @@ export function fireLinkedPrimaries(
   // Check if we can add all heat
   if (!addHeat(heat, totalHeat)) return;
 
+  // Pre-calculate target info for autoaim (once, not per-weapon)
+  let targetTransform: Transform | undefined;
+  let targetVelocity = tempZeroVec;
+  let ownerVelocity = tempZeroVec;
+  if (target && entityExists(world, target)) {
+    targetTransform = getComponent<Transform>(world, target, 'transform');
+    const targetPhysics = getComponent<Physics>(world, target, 'physics');
+    const ownerPhysics = getComponent<Physics>(world, entity, 'physics');
+    if (targetPhysics) targetVelocity = targetPhysics.velocity;
+    if (ownerPhysics) ownerVelocity = ownerPhysics.velocity;
+  }
+
   // Fire all projectile weapons (with optional aim error for AI)
   weapons.lastFireTime = gameTime;
   const totalBanks = weapons.weapons.length;
   for (const { weapon, index } of projectileWeaponsCollector) {
     if (weapon.ammo !== undefined) weapon.ammo--;
+
+    // Calculate autoaim for this specific weapon if it has autoaimFov
+    let autoaim: AutoaimParams | undefined;
+    if (weapon.autoaimFov && targetTransform) {
+      const interceptPoint = calculateInterceptPoint(
+        transform.position,
+        ownerVelocity,
+        targetTransform.position,
+        targetVelocity,
+        weapon.projectileSpeed,
+      );
+      if (interceptPoint) {
+        autoaim = { interceptPoint, fovDegrees: weapon.autoaimFov };
+      }
+    }
+
     spawnProjectileWithAimError(
       world,
       entity,
@@ -221,6 +260,7 @@ export function fireLinkedPrimaries(
       aimError,
       index,
       totalBanks,
+      autoaim,
     );
   }
 }

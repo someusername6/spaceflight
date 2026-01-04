@@ -159,8 +159,8 @@ export const SHIP_ARCHETYPES: Record<string, ShipStats> = {
       { name: 'railgun', size: 2 },
     ],
     secondaryWeapons: [{ name: 'decoy', count: 4, size: 1 }],
-    preferredCombatRange: 900, // Closer range for better accuracy
-    fleeDistance: 400, // Flee threshold proportionally lower
+    preferredCombatRange: 900, // Long range for railgun effectiveness
+    fleeDistance: 400, // Flee when enemy closes
   }),
 
   // Lancer: Sentinel chassis with blue laser loadout - long-range beam platform

@@ -30,6 +30,12 @@ export interface WeaponStats {
   pulseInterval?: number;
   /** No damage falloff (constant damage at any range) */
   noFalloff?: boolean;
+  /**
+   * Autoaim field of view in degrees. If set, projectiles will correct
+   * toward the target intercept point when aim is within this cone.
+   * Applies equally to AI (after aim error) and players.
+   */
+  autoaimFov?: number;
 }
 
 /**
@@ -87,6 +93,7 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
     range: 2000,
     damage: 80,
     ammo: 20,
+    autoaimFov: 2, // Smart round corrects within 2° cone (FreeSpace-style)
   },
   flak: {
     name: 'Flak',

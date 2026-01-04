@@ -32,6 +32,8 @@ export interface PrimaryWeapon {
   pulseInterval?: number;
   /** No damage falloff (constant damage at any range) */
   noFalloff?: boolean;
+  /** Autoaim FOV in degrees - projectiles correct toward target within cone */
+  autoaimFov?: number;
 }
 
 /** Secondary weapon definition */
