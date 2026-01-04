@@ -10,6 +10,8 @@ for file in $(find src -name "*.ts" 2>/dev/null); do
   lines=$(wc -l < "$file")
   if [ "$lines" -gt "$MAX_LINES" ]; then
     echo "ERROR: $file has $lines lines (max $MAX_LINES)"
+    echo "  REQUIRED: Split into modules. Do NOT compress code or shorten output."
+    echo "  See CLAUDE.md 'Formatting Rules' section."
     FAILED=1
   fi
 done
@@ -19,6 +21,8 @@ for file in $(find scripts -name "*.mjs" 2>/dev/null); do
   lines=$(wc -l < "$file")
   if [ "$lines" -gt "$MAX_LINES" ]; then
     echo "ERROR: $file has $lines lines (max $MAX_LINES)"
+    echo "  REQUIRED: Split into modules. Do NOT compress code or shorten output."
+    echo "  See CLAUDE.md 'Formatting Rules' section."
     FAILED=1
   fi
 done

@@ -47,6 +47,20 @@ This project uses Biome for formatting and linting. A pre-commit hook enforces t
 3. Do NOT remove blank lines or compress formatting
 4. Do NOT remove comments or documentation to reduce line count
 
+**STOP SIGNAL:** If a pre-commit hook fails due to file size, or if you are about to edit code solely to reduce line count, STOP. The only correct response is to split into modules. Re-read this section before proceeding.
+
+**Wrong responses to "file too long":**
+- Merging comment lines or shortening documentation
+- Removing console.log/output statements
+- Removing blank lines between functions
+- Removing tests or functionality
+- Any edit whose primary purpose is "make file shorter"
+
+**Correct response:**
+- Identify logically separable code (utilities, constants, types, sub-tests)
+- Create new module file(s) for that code
+- Import from the new module(s)
+
 **Correct formatting:**
 ```typescript
 if (condition) {

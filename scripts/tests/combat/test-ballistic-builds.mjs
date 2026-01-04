@@ -16,45 +16,15 @@ import {
 import { Faction } from '../../../src/core/types.ts';
 import { createAIShip } from '../../../src/factories/ship.ts';
 import { SHIP_ARCHETYPES } from '../../../src/factories/ship-archetypes.ts';
-import { aiSystem } from '../../../src/systems/ai/ai.ts';
-import { aimErrorSystem } from '../../../src/systems/aim-error.ts';
-import { beamSystem } from '../../../src/systems/beams.ts';
-import { cleanupSystem } from '../../../src/systems/cleanup.ts';
-import { collisionSystem } from '../../../src/systems/collision.ts';
-import { damageSystem } from '../../../src/systems/damage.ts';
-import { decoySystem } from '../../../src/systems/decoys.ts';
-import { explosionSystem } from '../../../src/systems/explosions.ts';
-import { heatSystem } from '../../../src/systems/heat.ts';
-import { missileSystem } from '../../../src/systems/missiles.ts';
-import { physicsSystem } from '../../../src/systems/physics.ts';
-import { projectileSystem } from '../../../src/systems/projectiles.ts';
-import { shieldSystem } from '../../../src/systems/shields.ts';
-import { targetingSystem } from '../../../src/systems/targeting.ts';
-import { weaponSystem } from '../../../src/systems/weapons.ts';
+import {
+  initCombatStats,
+  runFrame,
+  TICK_RATE,
+} from '../shared/combat-utils.mjs';
 
-const TICK_RATE = 60;
-const TICK_SEC = 1 / TICK_RATE;
 const MAX_SIMULATION_TIME = 120;
 const MAX_TICKS = MAX_SIMULATION_TIME * TICK_RATE;
 const RUNS_PER_TEST = 50;
-
-const SYSTEMS = [
-  targetingSystem,
-  aiSystem,
-  aimErrorSystem,
-  weaponSystem,
-  beamSystem,
-  physicsSystem,
-  projectileSystem,
-  missileSystem,
-  decoySystem,
-  collisionSystem,
-  damageSystem,
-  shieldSystem,
-  heatSystem,
-  cleanupSystem,
-  explosionSystem,
-];
 
 // Store original archetypes to restore after tests
 const originalArchetypes = { ...SHIP_ARCHETYPES };
@@ -90,21 +60,7 @@ function restoreArchetypes() {
  */
 function runSimulation(archetypeA, archetypeB, startDistance, seed) {
   const world = createWorld(seed);
-
-  world.systemState.combatStats = {
-    shotsFired: {},
-    damageDealt: {},
-    missilesFired: {},
-    missilesHit: {},
-    missileDamage: {},
-    missilesExpired: 0,
-    missilesHitOwner: 0,
-    missilesSeduced: 0,
-    missilesInFlight: 0,
-    beamDamage: {},
-    decoysLaunched: 0,
-    decoysSuccessful: 0,
-  };
+  initCombatStats(world);
 
   const jitter = () => (Math.random() - 0.5) * 20;
   const facingPosZ = new Quaternion().setFromAxisAngle(
@@ -113,10 +69,8 @@ function runSimulation(archetypeA, archetypeB, startDistance, seed) {
   );
   const facingNegZ = new Quaternion();
 
-  // Alternate spawn order
-  const spawnAFirst = Math.random() > 0.5;
-
-  const spawnA = () => {
+  // Alternate spawn order to avoid bias
+  if (Math.random() > 0.5) {
     createAIShip(
       world,
       archetypeA,
@@ -125,9 +79,6 @@ function runSimulation(archetypeA, archetypeB, startDistance, seed) {
       facingPosZ,
       'regular',
     );
-  };
-
-  const spawnB = () => {
     createAIShip(
       world,
       archetypeB,
@@ -136,32 +87,32 @@ function runSimulation(archetypeA, archetypeB, startDistance, seed) {
       facingNegZ,
       'regular',
     );
-  };
-
-  if (spawnAFirst) {
-    spawnA();
-    spawnB();
   } else {
-    spawnB();
-    spawnA();
+    createAIShip(
+      world,
+      archetypeB,
+      Faction.Enemy,
+      new Vector3(jitter(), jitter(), startDistance + jitter()),
+      facingNegZ,
+      'regular',
+    );
+    createAIShip(
+      world,
+      archetypeA,
+      Faction.Player,
+      new Vector3(jitter(), jitter(), jitter()),
+      facingPosZ,
+      'regular',
+    );
   }
 
-  const metrics = {
-    winner: null,
-    timeToVictory: 0,
-    timeout: false,
-  };
+  const metrics = { winner: null, timeToVictory: 0, timeout: false };
 
   for (let tick = 0; tick < MAX_TICKS; tick++) {
-    world.systemState.gameTime += TICK_SEC;
-
-    for (const system of SYSTEMS) {
-      system(world, TICK_SEC);
-    }
+    runFrame(world);
 
     let teamACount = 0;
     let teamBCount = 0;
-
     for (const entity of queryEntities(world, ['faction', 'health'])) {
       const faction = getComponent(world, entity, 'faction');
       if (faction.faction === Faction.Player) teamACount++;
