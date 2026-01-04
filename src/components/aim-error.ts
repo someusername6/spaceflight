@@ -36,6 +36,8 @@ export interface AimError extends ComponentBase {
   driftDirection: THREE.Vector2;
   /** Time until drift direction changes */
   driftTimer: number;
+  /** Current target angular velocity in rad/s (updated by aimErrorSystem) */
+  currentAngularVelocity: number;
 }
 
 /** Create a random normalized direction Vector2 (for initialization only) */
@@ -82,6 +84,7 @@ export function createAimError(
     driftSpeed: drift,
     driftDirection: createRandomDirection(prng),
     driftTimer: randomDriftTime(prng),
+    currentAngularVelocity: 0,
   };
 }
 
@@ -104,6 +107,8 @@ export function updateEffectiveMaxError(
   error: AimError,
   targetAngularVelocity: number,
 ): void {
+  // Store raw angular velocity for other systems (e.g., pursueTarget)
+  error.currentAngularVelocity = targetAngularVelocity;
   // Effective error = base + (angular factor * angular velocity)
   // Clamp angular contribution to prevent extreme values
   const angularContribution = Math.min(

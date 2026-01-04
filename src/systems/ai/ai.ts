@@ -4,6 +4,7 @@
 
 import { Quaternion, Vector3 } from 'three';
 import { type AIControlled, AIState } from '../../components/ai';
+import type { AimError } from '../../components/aim-error';
 import {
   areEnemies,
   type Faction,
@@ -28,17 +29,14 @@ import {
   updateRegroup,
 } from './ai-behaviors';
 
-/** Default projectile speed for lead calculation (typical energy weapon) */
-const DEFAULT_PROJECTILE_SPEED = 500;
-
+const DEFAULT_PROJECTILE_SPEED = 500; // Default projectile speed
+const DEG_TO_RAD = Math.PI / 180;
 // Reusable vectors
 const toTarget = new Vector3();
 const forward = new Vector3();
 const rotationAxis = new Vector3();
 const deltaQuat = new Quaternion();
 const leadPoint = new Vector3();
-
-const DEG_TO_RAD = Math.PI / 180;
 
 /** Count how many AI are currently engaging a specific target */
 function countEngagingTarget(world: World, target: Entity): number {
@@ -336,10 +334,14 @@ export function pursueTarget(
     'physics',
   );
 
-  // Calculate aim point (lead if we have velocity data)
+  // Skip lead if target has high angular velocity (moving erratically/perpendicular)
+  // Threshold of 0.15 rad/s = 75 m/s perpendicular at 500m range
+  const aimError = getComponent<AimError>(world, entity, 'aimError');
+  const highAngularVelocity =
+    aimError && aimError.currentAngularVelocity > 0.15;
   let aimPoint = targetTransform.position;
 
-  if (targetPhysics) {
+  if (targetPhysics && !highAngularVelocity) {
     const projectileSpeed = getProjectileSpeed(world, entity);
     const intercept = calculateInterceptPoint(
       transform.position,
