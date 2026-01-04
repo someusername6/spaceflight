@@ -25,8 +25,9 @@ import { weaponSystem } from '../../../src/systems/weapons.ts';
 export const TICK_RATE = 60;
 export const TICK_SEC = 1 / TICK_RATE;
 
-/** All 7 ship archetypes */
+/** All ship archetypes (base + variants) */
 export const ARCHETYPES = [
+  // Base archetypes (one per ship class)
   'scout',
   'interceptor',
   'striker',
@@ -34,6 +35,9 @@ export const ARCHETYPES = [
   'bomber',
   'raider',
   'sentinel',
+  // Variant archetypes (different loadout on existing chassis)
+  'sniper', // Raider chassis + railguns, kiting playstyle
+  'lancer', // Sentinel chassis + blue lasers, long-range beams
 ];
 
 /** Spawn position jitter to break determinism (±10m) */

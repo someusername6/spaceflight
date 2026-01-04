@@ -1,13 +1,13 @@
 /**
  * TTK Matrix Test - Time-to-Kill across all archetype matchups
  *
- * Runs all 7x7 archetype pairs to establish baseline TTK values.
+ * Runs all archetype pairs to establish baseline TTK values.
  * This is critical for understanding combat pacing.
  *
  * Target TTK ranges:
- * - Glass cannon (Scout, Raider): 2-5s
+ * - Glass cannon (Scout, Raider, Sniper): 2-5s
  * - Standard (Interceptor, Striker): 8-15s
- * - Tanky (Defender, Sentinel): 15-25s
+ * - Tanky (Defender, Sentinel, Lancer): 15-25s
  * - Bomber: 5-10s (vulnerable but not instant)
  */
 
