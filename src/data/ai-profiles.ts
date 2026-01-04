@@ -273,22 +273,20 @@ const SKILL_VALUES: Record<string, number> = {
 };
 
 /**
- * Get aim error multiplier for kiting playstyle.
- * Lower skill = higher multiplier = more error.
- * This creates asymmetric advantages: ace is precise, rookie misses a lot.
+ * Get engagement range multiplier for kiting playstyle.
+ * Lower skill = closer range (compensates for poor aim).
+ * Higher skill = farther range (precision makes long-range viable).
  *
- * The values are calibrated so that with railgun's 2° autoaim:
- * - Ace (0.5° base): 0.5° → within autoaim, always hits
- * - Veteran (2° base): 4° → sometimes in autoaim, mostly hits
- * - Regular (3° base): 9° → rarely in autoaim, often misses
- * - Rookie (5.5° base): 22° → never in autoaim, misses badly
+ * Uses a moderate spread to balance:
+ * - Mirrors: Not too much range asymmetry (prevents chase behavior)
+ * - vs Brawlers: Lower skills engage closer to be more effective
  */
-function getKitingAimMultiplier(skill: number): number {
-  // Ace (skill=1): 1.0x (base aim error ~0.5°)
-  // Veteran (skill=0.66): 2.0x (base aim error ~2° → 4°)
-  // Regular (skill=0.33): 3.0x (base aim error ~3° → 9°)
-  // Rookie (skill=0): 4.0x (base aim error ~5.5° → 22°)
-  return 4.0 - skill * 3.0;
+function getKitingRangeMultiplier(skill: number): number {
+  // Ace (skill=1): 1.1x preferred range (sniper: 900 * 1.1 = 990m)
+  // Veteran (skill=0.66): 0.96x (sniper: 864m)
+  // Regular (skill=0.33): 0.83x (sniper: 747m)
+  // Rookie (skill=0): 0.7x (sniper: 630m)
+  return 0.7 + skill * 0.4;
 }
 
 /**
@@ -346,26 +344,30 @@ export function getProfileForPlaystyle(
     case 'kiting': {
       // Kiting playstyle: skilled pilots maintain optimal range
       //
-      // In MIRROR matches, many base profile parameters cause inversions.
-      // For kiting ships, ONLY aim error should differentiate skill levels.
-      // We use TIERED multipliers: ace stays precise, lower skills get much worse.
-      // Note: This helps sniper (projectile) but not lancer (hitscan beam).
-      const aimMult = getKitingAimMultiplier(skill);
+      // KEY INSIGHT: Lower-skill snipers should engage CLOSER to compensate
+      // for poor aim. A rookie sniper at 630m is closer to brawl range,
+      // while ace snipers earn the right to fight at true long range (990m).
+      //
+      // CRITICAL: Flee distance stays CONSTANT to prevent chase asymmetry.
+      // All skill levels flee at the same distance, but prefer different
+      // engagement ranges. This gives skilled pilots a larger "engagement
+      // window" (preferred range - flee distance) to deal damage.
+      //
+      // Engagement windows with sniper (900m base, 400m flee):
+      // - Ace: 990m - 400m = 590m window
+      // - Rookie: 630m - 400m = 230m window
+      // Ace has 2.5x more room to maneuver and deal damage.
+      const rangeMult = getKitingRangeMultiplier(skill);
       return {
         ...base,
-        // TIERED aim error: ace 1x, veteran 2x, regular 3x, rookie 4x
-        // This overcomes railgun's 2° autoaim by making rookies miss badly
-        aimErrorBase: base.aimErrorBase * aimMult,
-        aimErrorDriftSpeed: base.aimErrorDriftSpeed * aimMult,
-        // Constant defensive thresholds (prevents damage accumulation)
+        // Constant defensive thresholds
         evadeShieldThreshold: 0.25,
         regroupShieldThreshold: 0.12,
-        // Constant engagement range (farther = less DPS)
-        engageRange: 700,
-        combatRangeMultiplier: 1.0,
-        // All kiters flee at same distance
+        // SKILL-BASED RANGE: lower skill = closer engagement
+        combatRangeMultiplier: rangeMult,
+        // CONSTANT flee distance - prevents chase asymmetry in mirrors
         fleeDistanceMultiplier: 1.0,
-        // Constant heat management (lower threshold = linked fire less = less DPS)
+        // Constant heat management
         heatSwitchThreshold: 0.8,
         linkedFireHeatThreshold: 0.7,
         // All kiters fire at same angle threshold

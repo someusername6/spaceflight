@@ -58,34 +58,40 @@ Verifies AI skill progression works across ALL archetypes.
 Different ship types express skill differently via `getProfileForPlaystyle()`:
 - **Brawler**: Uses base profile (aim, composure, aggression all scale)
 - **Escape**: Constant behavior params, skill via aim error (1x-3x multiplier)
-- **Kiting**: Constant behavior params, skill via aim error (1x-4x multiplier)
+- **Kiting**: Skill-based engagement range (0.7x-1.1x), constant flee distance
+
+**Kiting Range Scaling:**
+Lower-skill snipers engage CLOSER to compensate for poor aim:
+- Ace: 990m preferred (900 × 1.1), 400m flee → 590m engagement window
+- Rookie: 630m preferred (900 × 0.7), 400m flee → 230m engagement window
+Constant flee distance prevents chase asymmetry in mirrors.
 
 **Mirror Match Results (2026-01-04):**
 | Archetype | R>Rk | V>R | A>V | A>Rk | Notes |
 |-----------|------|-----|-----|------|-------|
-| Brawlers | 66-82% | 46-70% | 48-74% | 78-100% | ✓ Working |
-| Scout | 60% | 72% | 62% | 80% | ✓ Fixed via escape playstyle |
-| Sniper | 28% | 42% | 36% | 58% | ⚠️ R>Rk still inverted |
-| Lancer | 10% | 0% | 0% | 0% | ✗ Hitscan beams bypass aim |
+| Brawlers | 62-82% | 52-60% | 54-64% | 82-98% | ✓ Working |
+| Scout | 56% | 62% | 54% | 94% | ✓ Working via escape playstyle |
+| Sniper | 38% | 34% | 22% | 38% | ⚠️ Improved but still weak |
+| Lancer | 2% | 2% | 0% | 0% | ✗ Hitscan beams bypass aim |
 
 **Skill vs Brawler Results (2026-01-04):**
 More realistic scenario - how each skill level performs against regular brawler.
 
 | Ship vs Opponent | Rookie | Regular | Veteran | Ace |
 |------------------|--------|---------|---------|-----|
-| Scout vs Interceptor (500m) | 28% | 38% | 58% | 64% |
-| Sniper vs Striker (900m) | 2% | 0% | 8% | 78% |
+| Scout vs Interceptor (500m) | 24% | 38% | 52% | 56% |
+| Sniper vs Striker (900m) | 0% | 24% | 54% | 96% |
 | Lancer vs Defender (1000m) | 0% | 0% | 0% | 0% |
 
 **Key Findings:**
-1. **Scout skill scaling working** - Clear 28%→38%→58%→64% progression
-2. **Sniper has skill cliff at Ace** - Only ace (0.5° aim error) is within railgun's 2° autoaim cone
-3. **Lancer fundamentally broken** - Hitscan beams bypass aim error, can't kill tanky defender before it closes
+1. **Scout skill scaling working** - Clear 24%→38%→52%→56% progression
+2. **Sniper skill scaling working** - Smooth 0%→24%→54%→96% progression via range compensation
+3. **Lancer fundamentally broken** - Hitscan beams bypass aim error, can't kill tanky defender
 
 **Remaining Issues:**
-- Sniper mirror R>Rk still inverted (28%) - both miss too much at long range
-- Lancer needs different skill expression (reaction time, beam tracking jitter)
-- Consider accepting sniper/lancer limitations for specialized roles
+- Rookie sniper can't solo brawlers (0%) - may need team support
+- Lancer needs different skill expression (beam tracking jitter mechanic)
+- Lancer vs defender is a fundamental matchup issue (can't kill before closed on)
 
 **Expected Progression:**
 ```
