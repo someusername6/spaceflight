@@ -13,7 +13,10 @@
  * 2. Lock-requiring missiles when locked
  */
 
-import type { SecondaryWeapon, SecondaryWeapons } from '../components/weapons';
+import type {
+  SecondaryWeapon,
+  SecondaryWeapons,
+} from '../../components/weapons';
 
 /** Result of missile selection */
 export interface MissileSelection {

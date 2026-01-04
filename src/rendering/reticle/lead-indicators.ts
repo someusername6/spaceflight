@@ -3,9 +3,9 @@
  */
 
 import * as THREE from 'three';
-import type { Transform } from '../components/transform';
-import type { PrimaryWeapons } from '../components/weapons';
-import { getCurrentPrimary } from '../components/weapons';
+import type { Transform } from '../../components/transform';
+import type { PrimaryWeapons } from '../../components/weapons';
+import { getCurrentPrimary } from '../../components/weapons';
 import { calculateInterceptPoint } from './lead-calculation';
 import { drawLeadIndicator } from './reticle-drawing';
 

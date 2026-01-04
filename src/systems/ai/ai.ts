@@ -3,21 +3,21 @@
  */
 
 import { Quaternion, Vector3 } from 'three';
-import { type AIControlled, AIState } from '../components/ai';
+import { type AIControlled, AIState } from '../../components/ai';
 import {
   areEnemies,
   type Faction,
   type FactionComponent,
-} from '../components/faction';
-import type { Health } from '../components/health';
-import { isDying } from '../components/health';
-import type { Heat } from '../components/heat';
-import type { Physics } from '../components/physics';
-import type { Shields } from '../components/shields';
-import type { Transform } from '../components/transform';
-import { entityExists, getComponent, queryEntities } from '../core/ecs';
-import type { Entity, World } from '../core/types';
-import { AI_GLOBAL_SETTINGS } from '../data/ai-profiles';
+} from '../../components/faction';
+import type { Health } from '../../components/health';
+import { isDying } from '../../components/health';
+import type { Heat } from '../../components/heat';
+import type { Physics } from '../../components/physics';
+import type { Shields } from '../../components/shields';
+import type { Transform } from '../../components/transform';
+import { entityExists, getComponent, queryEntities } from '../../core/ecs';
+import type { Entity, World } from '../../core/types';
+import { AI_GLOBAL_SETTINGS } from '../../data/ai-profiles';
 import {
   shouldEvade,
   shouldRegroup,

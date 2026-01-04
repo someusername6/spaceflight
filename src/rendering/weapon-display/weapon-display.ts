@@ -3,15 +3,15 @@
  * Performance: Caches DOM elements and only updates when values change.
  */
 
-import type { Heat } from '../components/heat';
-import type { Targeting } from '../components/targeting';
+import type { Heat } from '../../components/heat';
+import type { Targeting } from '../../components/targeting';
 import type {
   PrimaryWeapon,
   PrimaryWeapons,
   SecondaryWeapons,
-} from '../components/weapons';
-import { getComponent } from '../core/ecs';
-import type { Entity, World } from '../core/types';
+} from '../../components/weapons';
+import { getComponent } from '../../core/ecs';
+import type { Entity, World } from '../../core/types';
 import {
   rebuildSecondaryBanks,
   showSecondaryNone,

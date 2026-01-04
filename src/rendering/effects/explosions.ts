@@ -3,11 +3,11 @@
  */
 
 import * as THREE from 'three';
-import type { Explosion } from '../components/explosion';
-import { getExplosionProgress } from '../components/explosion';
-import type { Transform } from '../components/transform';
-import { getComponent, queryEntities } from '../core/ecs';
-import type { Entity, World } from '../core/types';
+import type { Explosion } from '../../components/explosion';
+import { getExplosionProgress } from '../../components/explosion';
+import type { Transform } from '../../components/transform';
+import { getComponent, queryEntities } from '../../core/ecs';
+import type { Entity, World } from '../../core/types';
 import {
   createExplosionVisual,
   disposeExplosionVisual,

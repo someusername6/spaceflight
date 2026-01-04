@@ -3,8 +3,8 @@
  */
 
 import * as THREE from 'three';
-import type { Transform } from '../components/transform';
-import type { Entity } from '../core/types';
+import type { Transform } from '../../components/transform';
+import type { Entity } from '../../core/types';
 
 // Reusable objects for bounds computation
 const tempVec3 = new THREE.Vector3();

@@ -11,13 +11,13 @@
  * Uses AIProfile for per-entity behavior thresholds.
  */
 
-import type { Heat } from '../components/heat';
-import { getHeatPercent, HEAT_WARNING_THRESHOLD } from '../components/heat';
-import type { Shields } from '../components/shields';
-import type { Transform } from '../components/transform';
-import type { PrimaryWeapon, PrimaryWeapons } from '../components/weapons';
-import { getEffectiveHeat } from '../components/weapons';
-import type { AIProfile } from '../data/ai-profiles';
+import type { Heat } from '../../components/heat';
+import { getHeatPercent, HEAT_WARNING_THRESHOLD } from '../../components/heat';
+import type { Shields } from '../../components/shields';
+import type { Transform } from '../../components/transform';
+import type { PrimaryWeapon, PrimaryWeapons } from '../../components/weapons';
+import { getEffectiveHeat } from '../../components/weapons';
+import type { AIProfile } from '../../data/ai-profiles';
 
 /** Result of weapon selection */
 export interface WeaponSelection {

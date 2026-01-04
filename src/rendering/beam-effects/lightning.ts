@@ -4,7 +4,7 @@
  */
 
 import * as THREE from 'three';
-import type { World } from '../core/types';
+import type { World } from '../../core/types';
 import {
   generateBoltPath,
   generateBranches,

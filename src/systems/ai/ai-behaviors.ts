@@ -6,20 +6,20 @@
  */
 
 import { Quaternion, Vector3 } from 'three';
-import { type AIControlled, AIState } from '../components/ai';
-import type { Faction } from '../components/faction';
-import type { Heat } from '../components/heat';
+import { type AIControlled, AIState } from '../../components/ai';
+import type { Faction } from '../../components/faction';
+import type { Heat } from '../../components/heat';
 import {
   AFTERBURNER_UNLOCK_THRESHOLD,
   getHeatPercent,
   isHeatWarning,
-} from '../components/heat';
-import type { Physics } from '../components/physics';
-import type { Shields } from '../components/shields';
-import type { Transform } from '../components/transform';
-import { entityExists, getComponent } from '../core/ecs';
-import type { Entity, World } from '../core/types';
-import type { AIProfile } from '../data/ai-profiles';
+} from '../../components/heat';
+import type { Physics } from '../../components/physics';
+import type { Shields } from '../../components/shields';
+import type { Transform } from '../../components/transform';
+import { entityExists, getComponent } from '../../core/ecs';
+import type { Entity, World } from '../../core/types';
+import type { AIProfile } from '../../data/ai-profiles';
 import { findNearestEnemy } from './ai';
 
 // Reusable vectors

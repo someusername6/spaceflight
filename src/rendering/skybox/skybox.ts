@@ -5,7 +5,7 @@
  */
 
 import * as THREE from 'three';
-import { createMT } from '../core/mersenne-twister';
+import { createMT } from '../../core/mersenne-twister';
 import {
   skyboxFragmentShader,
   skyboxVertexShader,

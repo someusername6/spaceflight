@@ -1,6 +1,6 @@
 /** Star geometry generation for skybox - matches bundle.js */
 import * as THREE from 'three';
-import { createMT } from '../core/mersenne-twister';
+import { createMT } from '../../core/mersenne-twister';
 
 // Star generation constants
 const STAR_COUNT = 100000;

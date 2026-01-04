@@ -2,7 +2,7 @@
  * Secondary weapons display update logic - extracted for file size management.
  */
 
-import type { SecondaryWeapon } from '../components/weapons';
+import type { SecondaryWeapon } from '../../components/weapons';
 import type { WeaponBankCache } from './weapon-display-utils';
 import {
   createBankElement,

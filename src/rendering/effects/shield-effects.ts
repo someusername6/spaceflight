@@ -9,9 +9,9 @@ import {
   getActiveHits,
   SHIELD_HIT_DURATION,
   type ShieldHit,
-} from '../components/shield-hit';
-import { getComponent, queryEntities } from '../core/ecs';
-import type { World } from '../core/types';
+} from '../../components/shield-hit';
+import { getComponent, queryEntities } from '../../core/ecs';
+import type { World } from '../../core/types';
 
 /** Shield hit flash color */
 const SHIELD_COLOR = new THREE.Color(0.3, 0.7, 1.0); // Cyan-blue

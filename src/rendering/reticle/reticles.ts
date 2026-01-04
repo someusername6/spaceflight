@@ -3,13 +3,16 @@
  */
 
 import * as THREE from 'three';
-import { Faction, type FactionComponent } from '../components/faction';
-import type { Physics } from '../components/physics';
-import type { Targeting } from '../components/targeting';
-import type { Transform } from '../components/transform';
-import type { PrimaryWeapons, SecondaryWeapons } from '../components/weapons';
-import { getComponent, queryEntities } from '../core/ecs';
-import type { Entity, World } from '../core/types';
+import { Faction, type FactionComponent } from '../../components/faction';
+import type { Physics } from '../../components/physics';
+import type { Targeting } from '../../components/targeting';
+import type { Transform } from '../../components/transform';
+import type {
+  PrimaryWeapons,
+  SecondaryWeapons,
+} from '../../components/weapons';
+import { getComponent, queryEntities } from '../../core/ecs';
+import type { Entity, World } from '../../core/types';
 import { drawLeadIndicators } from './lead-indicators';
 import {
   drawCenterCrosshair,

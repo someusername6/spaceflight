@@ -3,15 +3,15 @@
  * Position: top-left corner
  */
 
-import type { FactionComponent } from '../components/faction';
-import type { Health } from '../components/health';
-import { isDying } from '../components/health';
-import type { Shields } from '../components/shields';
-import type { ShipIdentity } from '../components/ship-identity';
-import type { Transform } from '../components/transform';
-import { getComponent, hasComponent, queryEntities } from '../core/ecs';
-import type { Entity, World } from '../core/types';
-import { Faction } from '../core/types';
+import type { FactionComponent } from '../../components/faction';
+import type { Health } from '../../components/health';
+import { isDying } from '../../components/health';
+import type { Shields } from '../../components/shields';
+import type { ShipIdentity } from '../../components/ship-identity';
+import type { Transform } from '../../components/transform';
+import { getComponent, hasComponent, queryEntities } from '../../core/ecs';
+import type { Entity, World } from '../../core/types';
+import { Faction } from '../../core/types';
 
 /** Maximum allies to display */
 const MAX_ALLIES_SHOWN = 5;

@@ -4,14 +4,14 @@
  */
 
 import * as THREE from 'three';
-import type { Health } from '../components/health';
-import type { Physics } from '../components/physics';
-import type { Shields } from '../components/shields';
-import type { ShipIdentity } from '../components/ship-identity';
-import type { Targeting } from '../components/targeting';
-import type { Transform } from '../components/transform';
-import { getComponent } from '../core/ecs';
-import type { Entity, World } from '../core/types';
+import type { Health } from '../../components/health';
+import type { Physics } from '../../components/physics';
+import type { Shields } from '../../components/shields';
+import type { ShipIdentity } from '../../components/ship-identity';
+import type { Targeting } from '../../components/targeting';
+import type { Transform } from '../../components/transform';
+import { getComponent } from '../../core/ecs';
+import type { Entity, World } from '../../core/types';
 
 /** Target stats display state */
 export interface TargetStatsDisplay {

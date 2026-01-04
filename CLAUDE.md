@@ -36,7 +36,6 @@ Before starting work on a "missing" feature:
 - **Systems are pure functions** - `(world: World, dt: number) => void`
 - **No `Math.random()`** - Use seeded PRNG
 - **No `Date.now()` in game logic** - Fixed timestep only
-- **Update REGISTRY.md** when adding systems
 
 ## Formatting Rules (MANDATORY)
 

@@ -4,8 +4,8 @@
  */
 
 import * as THREE from 'three';
-import type { PRNGState } from '../core/prng';
-import { random } from '../core/prng';
+import type { PRNGState } from '../../core/prng';
+import { random } from '../../core/prng';
 
 // Reusable vectors for calculations
 const tempVec = new THREE.Vector3();

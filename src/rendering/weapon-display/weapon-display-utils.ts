@@ -1,7 +1,7 @@
 /**
  * Weapon display utility functions - extracted for file size management.
  */
-import type { PrimaryWeapon, SecondaryWeapon } from '../components/weapons';
+import type { PrimaryWeapon, SecondaryWeapon } from '../../components/weapons';
 
 /** Cached state for a single weapon bank element */
 export interface WeaponBankCache {

@@ -6,7 +6,7 @@
 
 import { createWorld } from './core/ecs';
 import type { SystemFn, World } from './core/types';
-import { aiSystem } from './systems/ai';
+import { aiSystem } from './systems/ai/ai';
 import { aimErrorSystem } from './systems/aim-error';
 import { beamSystem } from './systems/beams';
 import { cleanupSystem } from './systems/cleanup';

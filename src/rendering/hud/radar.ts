@@ -10,14 +10,14 @@
  */
 
 import * as THREE from 'three';
-import type { FactionComponent } from '../components/faction';
-import type { Health } from '../components/health';
-import { isDying } from '../components/health';
-import type { Targeting } from '../components/targeting';
-import type { Transform } from '../components/transform';
-import { getComponent, hasComponent, queryEntities } from '../core/ecs';
-import type { Entity, World } from '../core/types';
-import { Faction } from '../core/types';
+import type { FactionComponent } from '../../components/faction';
+import type { Health } from '../../components/health';
+import { isDying } from '../../components/health';
+import type { Targeting } from '../../components/targeting';
+import type { Transform } from '../../components/transform';
+import { getComponent, hasComponent, queryEntities } from '../../core/ecs';
+import type { Entity, World } from '../../core/types';
+import { Faction } from '../../core/types';
 
 /** Radar display state */
 export interface RadarDisplay {

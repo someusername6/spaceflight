@@ -6,7 +6,7 @@
  */
 
 import * as THREE from 'three';
-import type { World } from '../core/types';
+import type { World } from '../../core/types';
 
 /** Lance shot visual state */
 interface LanceShot {

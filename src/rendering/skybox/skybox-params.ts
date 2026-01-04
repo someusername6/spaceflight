@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three';
-import { createMT } from '../core/mersenne-twister';
+import { createMT } from '../../core/mersenne-twister';
 import {
   HALO_CONTINUE_CHANCE,
   HALO_FALLOFF_BASE,

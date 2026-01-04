@@ -28,11 +28,11 @@ import type {
 import { findDecoyWeapon, getEffectiveHeat } from '../components/weapons';
 import { entityExists, getComponent, queryEntities } from '../core/ecs';
 import type { Entity, World } from '../core/types';
-import { selectOptimalMissile } from './ai-missile-selection';
+import { selectOptimalMissile } from './ai/ai-missile-selection';
 import {
   calculateFiringAngle,
   selectOptimalPrimaryWeapon,
-} from './ai-weapon-selection';
+} from './ai/ai-weapon-selection';
 import {
   spawnDecoy,
   spawnMissile,

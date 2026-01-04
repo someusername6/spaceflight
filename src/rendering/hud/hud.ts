@@ -3,13 +3,25 @@
  */
 
 import type { Camera } from 'three';
-import type { Health } from '../components/health';
-import type { Heat } from '../components/heat';
-import type { Physics } from '../components/physics';
-import type { Shields } from '../components/shields';
-import type { Transform } from '../components/transform';
-import { findEntity, getComponent } from '../core/ecs';
-import type { Entity, World } from '../core/types';
+import type { Health } from '../../components/health';
+import type { Heat } from '../../components/heat';
+import type { Physics } from '../../components/physics';
+import type { Shields } from '../../components/shields';
+import type { Transform } from '../../components/transform';
+import { findEntity, getComponent } from '../../core/ecs';
+import type { Entity, World } from '../../core/types';
+import {
+  createReticleCanvas,
+  type ReticleCanvas,
+  resizeReticleCanvas,
+  updateReticles,
+} from '../reticle/reticles';
+import {
+  createWeaponDisplay,
+  getWeaponDisplayStyles,
+  updateWeaponDisplay,
+  type WeaponDisplay,
+} from '../weapon-display/weapon-display';
 import {
   type AlliedDisplay,
   createAlliedDisplay,
@@ -24,23 +36,11 @@ import {
   updateRadar,
 } from './radar';
 import {
-  createReticleCanvas,
-  type ReticleCanvas,
-  resizeReticleCanvas,
-  updateReticles,
-} from './reticles';
-import {
   createTargetStats,
   getTargetStatsStyles,
   type TargetStatsDisplay,
   updateTargetStats,
 } from './target-stats';
-import {
-  createWeaponDisplay,
-  getWeaponDisplayStyles,
-  updateWeaponDisplay,
-  type WeaponDisplay,
-} from './weapon-display';
 
 /** HUD state */
 export interface HUD {

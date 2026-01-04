@@ -6,9 +6,9 @@
  */
 
 import * as THREE from 'three';
-import type { ProjectileCategory } from '../components/projectile';
-import { createPRNG, random } from '../core/prng';
-import type { World } from '../core/types';
+import type { ProjectileCategory } from '../../components/projectile';
+import { createPRNG, random } from '../../core/prng';
+import type { World } from '../../core/types';
 
 /** Effect duration in seconds */
 const HIT_DURATION = 0.25;

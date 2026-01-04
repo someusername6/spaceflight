@@ -19,7 +19,10 @@ import {
   createProjectileMesh,
   createShipMesh,
 } from './mesh-factory';
-import { generateSkyboxTexture, getSunDirectionFromSeed } from './skybox';
+import {
+  generateSkyboxTexture,
+  getSunDirectionFromSeed,
+} from './skybox/skybox';
 
 /** Beam fade-out duration in seconds */
 const BEAM_FADE_DURATION = 0.15;

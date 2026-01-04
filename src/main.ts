@@ -7,32 +7,40 @@ import type { Transform } from './components/transform';
 import { findEntity, getComponent } from './core/ecs';
 import { createEnemyShip, createPlayerShip } from './factories/ship';
 import { createGame, startGame } from './game';
-import { createDustSystem, updateDustSystem } from './rendering/dust';
-import {
-  createExplosionRenderer,
-  updateExplosionRenderer,
-} from './rendering/explosions';
-import { createHUD, updateHUD } from './rendering/hud';
 import {
   createLightningRenderer,
   updateLightningRenderer,
-} from './rendering/lightning';
+} from './rendering/beam-effects/lightning';
+import {
+  createNuclearLanceRenderer,
+  updateNuclearLanceRenderer,
+} from './rendering/beam-effects/nuclear-lance';
+import { createDustSystem, updateDustSystem } from './rendering/effects/dust';
+import {
+  createExplosionRenderer,
+  updateExplosionRenderer,
+} from './rendering/effects/explosions';
+import {
+  createMuzzleFlashRenderer,
+  updateMuzzleFlashRenderer,
+} from './rendering/effects/muzzle-flash';
+import {
+  createProjectileHitRenderer,
+  updateProjectileHitRenderer,
+} from './rendering/effects/projectile-hits';
+import {
+  createShieldEffectRenderer,
+  updateShieldEffectRenderer,
+} from './rendering/effects/shield-effects';
+import {
+  createTrailRenderer,
+  updateTrailRenderer,
+} from './rendering/effects/trails';
+import { createHUD, updateHUD } from './rendering/hud/hud';
 import {
   createExhaustRenderer,
   updateExhaustRenderer,
 } from './rendering/missile-exhaust';
-import {
-  createMuzzleFlashRenderer,
-  updateMuzzleFlashRenderer,
-} from './rendering/muzzle-flash';
-import {
-  createNuclearLanceRenderer,
-  updateNuclearLanceRenderer,
-} from './rendering/nuclear-lance';
-import {
-  createProjectileHitRenderer,
-  updateProjectileHitRenderer,
-} from './rendering/projectile-hits';
 import {
   createRenderer,
   followEntity,
@@ -40,11 +48,6 @@ import {
   render,
   syncScene,
 } from './rendering/renderer';
-import {
-  createShieldEffectRenderer,
-  updateShieldEffectRenderer,
-} from './rendering/shield-effects';
-import { createTrailRenderer, updateTrailRenderer } from './rendering/trails';
 import { initInput } from './systems/input';
 
 /** Default seed for deterministic testing */

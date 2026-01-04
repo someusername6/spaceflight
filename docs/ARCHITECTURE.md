@@ -162,14 +162,25 @@ When approaching 200 lines, proactively split:
 - Split rendering modules (e.g., `weapon-display-secondary.ts`)
 - Split component definitions into groups
 
-### System Registry
+### Directory Organization
 
-Every system must be documented in `src/systems/REGISTRY.md`:
+Systems and rendering modules are organized into subdirectories by domain:
 
-| System | Purpose | Max Entities |
-|--------|---------|--------------|
-| inputSystem | Reads keyboard, sets player intent | 1 |
-| physicsSystem | Applies velocity and drag | ~50 |
+```
+src/systems/
+├── ai/              # AI decision-making (ai.ts, ai-behaviors.ts, etc.)
+├── weapons.ts       # Weapon firing logic
+└── ...
+
+src/rendering/
+├── effects/         # Visual effects (explosions, trails, etc.)
+├── hud/             # HUD elements (status bars, radar, etc.)
+├── reticle/         # Targeting UI (brackets, lead indicators)
+├── skybox/          # Space background generation
+├── weapon-display/  # Weapon status UI
+├── beam-effects/    # Beam weapon visuals
+└── renderer.ts      # Core Three.js scene management
+```
 
 If you can't describe a system's purpose in one line, it's too broad.
 

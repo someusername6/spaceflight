@@ -3,10 +3,10 @@
  */
 
 import * as THREE from 'three';
-import type { Explosion } from '../components/explosion';
-import { createPRNG, random } from '../core/prng';
-import type { Entity } from '../core/types';
-import { getNukeColor } from './nuke-colors';
+import type { Explosion } from '../../components/explosion';
+import { createPRNG, random } from '../../core/prng';
+import type { Entity } from '../../core/types';
+import { getNukeColor } from '../beam-effects/nuke-colors';
 
 const PARTICLES_PER_EXPLOSION = 24;
 const NUKE_PARTICLES = 64;

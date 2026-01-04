@@ -13,11 +13,11 @@
  */
 
 import * as THREE from 'three';
-import { Faction, type FactionComponent } from '../components/faction';
-import type { Projectile, WeaponName } from '../components/projectile';
-import type { Transform } from '../components/transform';
-import { getComponent, queryEntities } from '../core/ecs';
-import type { Entity, World } from '../core/types';
+import { Faction, type FactionComponent } from '../../components/faction';
+import type { Projectile, WeaponName } from '../../components/projectile';
+import type { Transform } from '../../components/transform';
+import { getComponent, queryEntities } from '../../core/ecs';
+import type { Entity, World } from '../../core/types';
 
 /** Weapon-specific visual configuration */
 interface WeaponVisualConfig {
