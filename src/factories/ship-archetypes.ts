@@ -15,10 +15,23 @@ export interface SecondaryBankSpec {
   size: number;
 }
 
+/**
+ * AI playstyle determines how skill parameters scale.
+ * - brawler: Standard combat, skill improves aim and composure
+ * - escape: Hit-and-run, skill improves flee timing and survival
+ * - kiting: Ranged combat, skill improves range maintenance
+ */
+export type AIPlaystyle = 'brawler' | 'escape' | 'kiting';
+
 /** Weapon loadout for an archetype */
 interface WeaponLoadout {
   primaryWeapons: WeaponBankSpec[];
   secondaryWeapons?: SecondaryBankSpec[];
+  /**
+   * AI playstyle for skill parameter scaling.
+   * Defaults to 'brawler' if not specified.
+   */
+  playstyle?: AIPlaystyle;
   /**
    * Preferred combat range for AI. If specified, AI will actively close
    * to this distance during engagement. Ships with short-range weapons
@@ -55,8 +68,9 @@ function createArchetype(shipClass: string, loadout: WeaponLoadout): ShipStats {
 export const SHIP_ARCHETYPES: Record<string, ShipStats> = {
   // === BASE ARCHETYPES (one per ship class, standard loadout) ===
 
-  // Scout: Fast, fragile brawler - close-range beam + guns
+  // Scout: Fast escape ship - hit-and-run playstyle
   scout: createArchetype('scout', {
+    playstyle: 'escape', // Skilled scouts know when to run
     primaryWeapons: [
       { name: 'pulse', size: 1 },
       { name: 'redLaser', size: 1 }, // Close-range beam for fast brawler
@@ -154,6 +168,7 @@ export const SHIP_ARCHETYPES: Record<string, ShipStats> = {
   // Uses distance-flee: engages from range, flees when enemy closes
   // Raider has speed 280 (only scout at 300 is faster) + glass cannon profile
   sniper: createArchetype('raider', {
+    playstyle: 'kiting', // Skilled snipers maintain range
     primaryWeapons: [
       { name: 'railgun', size: 2 },
       { name: 'railgun', size: 2 },
@@ -166,6 +181,7 @@ export const SHIP_ARCHETYPES: Record<string, ShipStats> = {
   // Lancer: Sentinel chassis with blue laser loadout - long-range beam platform
   // Uses burst-disengage: maintains optimal beam range, repositions if closed on
   lancer: createArchetype('sentinel', {
+    playstyle: 'kiting', // Skilled lancers maintain optimal beam range
     primaryWeapons: [
       { name: 'blueLaser', size: 2 },
       { name: 'blueLaser', size: 2 },
@@ -176,5 +192,6 @@ export const SHIP_ARCHETYPES: Record<string, ShipStats> = {
       { name: 'decoy', count: 4, size: 1 },
     ],
     preferredCombatRange: 1000,
+    fleeDistance: 500, // Flee when enemy closes inside beam range
   }),
 };

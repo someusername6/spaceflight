@@ -3,11 +3,7 @@
  */
 
 import type { ComponentBase, Entity } from '../core/types';
-import {
-  type AIProfile,
-  getAIProfile,
-  type ProfileName,
-} from '../data/ai-profiles';
+import type { AIProfile } from '../data/ai-profiles';
 
 /** AI behavior states */
 export enum AIState {
@@ -47,7 +43,7 @@ export interface AIControlled extends ComponentBase {
 
 /** Creates an AIControlled component with a profile */
 export function createAIControlled(
-  profileName: ProfileName = 'regular',
+  profile: AIProfile,
   preferredCombatRange?: number,
   fleeDistance?: number,
 ): AIControlled {
@@ -60,7 +56,7 @@ export function createAIControlled(
     lastStateChange: 0,
     lastDecoyTime: 0,
     lastRepositionTime: 0,
-    profile: getAIProfile(profileName),
+    profile,
   };
 
   // Only add optional fields if defined (exactOptionalPropertyTypes)

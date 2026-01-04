@@ -27,7 +27,7 @@ import {
 import { addComponent, createEntity } from '../core/ecs';
 import type { Entity, World } from '../core/types';
 import { Faction } from '../core/types';
-import { getAIProfile, type ProfileName } from '../data/ai-profiles';
+import { getProfileForPlaystyle, type ProfileName } from '../data/ai-profiles';
 import { getWeaponStats } from '../data/weapons';
 import { validateArchetypeLoadout } from './archetype-validation';
 import { SHIP_ARCHETYPES, type ShipStats } from './ship-archetypes';
@@ -195,22 +195,27 @@ export function createAIShip(
   const callsign = generateCallsign(world, callsignPrefix);
   addComponent(world, entity, createShipIdentity(archetype, callsign));
 
-  // Create AI with profile - aim error derived from profile
+  // Create AI with profile modified for archetype's playstyle
+  // Different playstyles express skill differently:
+  // - brawler: better aim, lower panic, more aggressive
+  // - escape: flee earlier (smarter), hit-and-run
+  // - kiting: maintain distance, selective firing
+  const playstyle = stats.playstyle ?? 'brawler';
+  const profile = getProfileForPlaystyle(profileName, playstyle);
+
   // Calculate preferred combat range from weapon loadout, scaled by skill
-  // Ace pilots engage farther (precision viable at range)
-  // Rookie pilots engage closer (autoaim helps at close range)
-  const profile = getAIProfile(profileName);
   const baseRange = calculatePreferredCombatRange(stats);
   const preferredRange = Math.floor(baseRange * profile.combatRangeMultiplier);
-  // Don't scale flee distance - it's a ship property, not skill-based
-  // Higher-skill pilots still flee at the same distance but return to farther range
-  const ai = createAIControlled(
-    profileName,
-    preferredRange,
-    stats.fleeDistance,
-  );
+
+  // Scale flee distance by profile's fleeDistanceMultiplier
+  // Skilled kiters react to closing enemies at greater distances
+  const fleeDistance = stats.fleeDistance
+    ? Math.floor(stats.fleeDistance * profile.fleeDistanceMultiplier)
+    : undefined;
+
+  const ai = createAIControlled(profile, preferredRange, fleeDistance);
   addComponent(world, entity, ai);
-  addComponent(world, entity, createAimError(world.prng, ai.profile));
+  addComponent(world, entity, createAimError(world.prng, profile));
 
   addComponent(world, entity, createHeat(stats.maxHeat, stats.coolingRate));
   addComponent(world, entity, createPrimaryWeapons(stats.primaryWeapons));

@@ -74,6 +74,14 @@ export interface AIProfile {
   repositionCooldown: number;
   /** Max time to spend repositioning before re-engaging (seconds) */
   maxRepositionTime: number;
+
+  // === KITING (for ranged ships) ===
+  /**
+   * Multiplier for archetype's fleeDistance.
+   * Skilled kiters maintain larger distances (react faster to closing enemies).
+   * Only affects ships with fleeDistance defined.
+   */
+  fleeDistanceMultiplier: number;
 }
 
 /**
@@ -115,6 +123,8 @@ export const AI_PROFILES: Record<string, AIProfile> = {
     burstDuration: 3.0,
     repositionCooldown: 6.0,
     maxRepositionTime: 6.0,
+    // Kiting: Poor range maintenance (flees late when enemy is already close)
+    fleeDistanceMultiplier: 0.8,
   },
 
   /**
@@ -150,6 +160,8 @@ export const AI_PROFILES: Record<string, AIProfile> = {
     burstDuration: 2.5,
     repositionCooldown: 5.0,
     maxRepositionTime: 5.0,
+    // Kiting: Moderate range maintenance
+    fleeDistanceMultiplier: 0.9,
   },
 
   /**
@@ -185,6 +197,8 @@ export const AI_PROFILES: Record<string, AIProfile> = {
     burstDuration: 2.0,
     repositionCooldown: 4.0,
     maxRepositionTime: 4.0,
+    // Kiting: Good range maintenance
+    fleeDistanceMultiplier: 1.0,
   },
 
   /**
@@ -220,6 +234,8 @@ export const AI_PROFILES: Record<string, AIProfile> = {
     burstDuration: 1.5,
     repositionCooldown: 3.0,
     maxRepositionTime: 3.0,
+    // Kiting: Excellent range maintenance (reacts to closing enemy)
+    fleeDistanceMultiplier: 1.1,
   },
 };
 
@@ -243,6 +259,98 @@ export function createCustomProfile(
   overrides: Partial<AIProfile>,
 ): AIProfile {
   return { ...AI_PROFILES[base], ...overrides } as AIProfile;
+}
+
+/** Playstyle type for skill scaling */
+export type AIPlaystyle = 'brawler' | 'escape' | 'kiting';
+
+/** Skill level as 0-1 value for interpolation */
+const SKILL_VALUES: Record<string, number> = {
+  rookie: 0,
+  regular: 0.33,
+  veteran: 0.66,
+  ace: 1,
+};
+
+/** Linear interpolation helper */
+function lerp(a: number, b: number, t: number): number {
+  return a + (b - a) * t;
+}
+
+/**
+ * Get an AI profile modified for a specific playstyle.
+ *
+ * Different playstyles express skill differently:
+ * - brawler: Standard - better aim, lower panic threshold, more aggressive
+ * - escape: Speed-based survival - skilled pilots use speed advantage better
+ * - kiting: Range maintenance - skilled pilots maintain optimal distance
+ *
+ * KEY INSIGHT: "Flee earlier" makes pilots lose because they fight less.
+ * Instead, skill should improve EFFECTIVENESS within the ship's role.
+ *
+ * @param skillLevel - The base skill level (rookie, regular, veteran, ace)
+ * @param playstyle - How skill should be expressed for this ship type
+ * @returns Modified AI profile for the playstyle
+ */
+export function getProfileForPlaystyle(
+  skillLevel: string,
+  playstyle: AIPlaystyle,
+): AIProfile {
+  const base = getAIProfile(skillLevel);
+  const skill = SKILL_VALUES[skillLevel.toLowerCase()] ?? 0.33;
+
+  switch (playstyle) {
+    case 'escape':
+      // Escape playstyle: skilled pilots are effective at hit-and-run
+      // CRITICAL: Several base profile behaviors cause inversion in mirrors:
+      // 1. Lower minFiringAngle = more selective = fewer shots = less damage
+      // 2. Lower evade threshold = stays longer = gets caught instead of escaping
+      //
+      // Solution: Use CONSTANT values for these. Skill comes from aim error.
+      return {
+        ...base,
+        // All escape ships fire at same angle threshold (speed lets them get close)
+        minFiringAngle: 35,
+        // All escape ships use same evade threshold (survival-focused)
+        evadeShieldThreshold: 0.3,
+        regroupShieldThreshold: 0.15,
+        // Skilled escape pilots recover faster and re-engage
+        evadeCooldown: lerp(4.0, 2.0, skill),
+        regroupMinTime: lerp(3.0, 1.5, skill),
+        // Skilled escape pilots engage closer (speed advantage)
+        combatRangeMultiplier: lerp(1.0, 0.8, skill),
+      };
+
+    case 'kiting':
+      // Kiting playstyle: skilled pilots maintain optimal range
+      // CRITICAL: Several base profile behaviors cause skill inversion:
+      // 1. Lower evade threshold = stay longer = more damage (but kiters should kite)
+      // 2. Higher combatRangeMultiplier = farther range = LESS DPS
+      // 3. Lower minFiringAngle = more selective = fewer shots = less DPS
+      // 4. Higher fleeDistanceMultiplier = flee earlier = less engagement time
+      //
+      // Solution: Use CONSTANT values for all of these. For kiters,
+      // the ONLY skill differentiator is aim error (which helps sniper but not lancer).
+      return {
+        ...base,
+        // All kiters use same defensive thresholds
+        evadeShieldThreshold: 0.25,
+        regroupShieldThreshold: 0.12,
+        // All kiters engage at same range
+        combatRangeMultiplier: 1.0,
+        // All kiters flee at same distance (use archetype's base fleeDistance)
+        fleeDistanceMultiplier: 1.0,
+        // All kiters fire at same angle threshold
+        minFiringAngle: 30,
+        // Skilled kiters recover faster after repositioning (minor advantage)
+        repositionCooldown: lerp(5.0, 2.5, skill),
+        maxRepositionTime: lerp(5.0, 3.0, skill),
+      };
+
+    default:
+      // Brawler: use base profile as-is
+      return base;
+  }
 }
 
 /**

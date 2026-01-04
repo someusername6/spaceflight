@@ -444,11 +444,32 @@ npx tsx scripts/tests/combat/simulate-combat.mjs profile-rookie-vs-ace 50
     - TTK Matrix: ✓ Healthy (avg=8.6s for base archetypes)
     - Skill Scaling: ⚠️ Scout has inverted skill ladder (acceptable for recon role)
     - Engagement Patterns: ⚠️ Scout/Sentinel engage too little (17-21%)
-  - Scout skill anomaly accepted: Speed makes evasion skill-independent,
-    fitting the "escape ship" fantasy
   - **Kiting variant findings**:
     - Sniper/Lancer have clear counters: Defender 100%/98% win rate (tanks and closes)
     - Many timeouts in kiter vs kiter matchups (both want range, low DPS)
     - Skill scaling broken: AI profiles designed for brawling, not kiting
     - Lancer especially bad: hitscan beams + longer range = skill doesn't help
-    - **Future work**: Kiting AI needs skill-scaled range maintenance and flee timing
+
+- **2026-01-04:** Playstyle-based skill expression system
+  - **Added playstyle field** to archetype definitions (brawler, escape, kiting)
+  - **Created getProfileForPlaystyle()** function in ai-profiles.ts
+  - **Key insight**: Several base profile parameters cause skill INVERSION:
+    1. Lower minFiringAngle = more selective = fewer shots = less damage
+    2. Lower evadeShieldThreshold = stays longer = counterproductive for escape/kiting
+    3. Higher combatRangeMultiplier = farther range = less DPS for kiters
+    4. Higher fleeDistanceMultiplier = flee earlier = less engagement time
+  - **Solution**: For escape/kiting, use CONSTANT values for these parameters
+    so skill comes purely from aim error (for projectile weapons)
+  - **Results after fix**:
+    - Brawlers: All working well (56-100% higher skill win rates)
+    - Scout: R>Rk 70% ✓, V>R 46%, A>V 30% (improved from 0%, still imperfect)
+    - Sniper: Still inverted (32-40% range) - railgun autoaim equalizes aim
+    - Lancer: Completely broken (0%) - beams are hitscan, aim doesn't matter
+  - **Key finding**: Skill scales correctly vs brawlers (typical opponents):
+    - Scout vs Interceptor: Rookie 33% → Ace 89% ✓
+    - Sniper vs Interceptor: Rookie 2% → Ace 39% ✓
+  - **Mirror matches are fundamentally different** - both ships using same
+    tactics means skill expression is limited
+  - **Future work needed**:
+    - Beam skill expression (tracking stability, heat management)
+    - Railgun skill expression (reduce autoaim or add other differentiator)
