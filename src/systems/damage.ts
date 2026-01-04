@@ -11,7 +11,7 @@ import { applyDamage } from '../components/health';
 import { recordShieldHit, type ShieldHit } from '../components/shield-hit';
 import type { Shields } from '../components/shields';
 import { damageShields } from '../components/shields';
-import { getComponent, queryEntities } from '../core/ecs';
+import { getComponent, hasComponent, queryEntities } from '../core/ecs';
 import type { Entity, World } from '../core/types';
 import type { Collision } from './collision';
 
@@ -26,6 +26,11 @@ export function damageSystem(world: World, _dt: number): void {
     'collision',
     'faction',
   ])) {
+    // Skip missiles and decoys - they handle their own impact logic
+    // and shouldn't receive "ramming" damage from ships
+    if (hasComponent(world, entity, 'missile')) continue;
+    if (hasComponent(world, entity, 'decoy')) continue;
+
     // Query guarantees these components exist
     const collision = getComponent<Collision>(
       world,

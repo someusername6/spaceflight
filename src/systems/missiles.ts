@@ -61,6 +61,11 @@ export function missileSystem(world: World, dt: number): void {
         // Seduction chance check - only roll once per (missile, decoy) pair
         if (random(world.prng) < DECOY_SEDUCE_CHANCE) {
           missile.target = nearestDecoy;
+          // Track seduction stats
+          if (world.systemState.combatStats) {
+            world.systemState.combatStats.missilesSeduced++;
+            world.systemState.combatStats.decoysSuccessful++;
+          }
         } else {
           // Missile resisted this decoy - don't re-roll
           missile.resistedDecoys.add(nearestDecoy);
@@ -97,6 +102,10 @@ export function missileSystem(world: World, dt: number): void {
 
     // Check if expired
     if (isMissileExpired(missile)) {
+      // Track expired missiles
+      if (world.systemState.combatStats) {
+        world.systemState.combatStats.missilesExpired++;
+      }
       // Nukes explode when out of range if enemies are in AoE
       if (missile.isNuke && missile.aoeRadius > 0) {
         const hasEnemiesInRange = checkForEnemiesInRange(
@@ -135,14 +144,42 @@ export function missileSystem(world: World, dt: number): void {
     const collision = getComponent<Collision>(world, entity, 'collision');
     if (collision && collision.collidedWith.length > 0) {
       for (const other of collision.collidedWith) {
-        if (other === missile.owner) continue;
+        // Skip owner collision for first 25m (missile spawns inside owner's hitbox)
+        if (other === missile.owner) {
+          if (missile.distanceTraveled < 25) {
+            continue;
+          }
+          // Track owner collision after safe distance (shouldn't happen)
+          if (world.systemState.combatStats) {
+            world.systemState.combatStats.missilesHitOwner++;
+          }
+          continue;
+        }
         if (hasComponent(world, other, 'projectile')) continue;
         if (hasComponent(world, other, 'missile')) continue;
 
         // Friendly fire enabled - missiles damage anyone except owner
 
         // Deal direct damage to the hit target
-        dealDamage(world, other, missile.damage, transform.position);
+        const damageResult = dealDamage(
+          world,
+          other,
+          missile.damage,
+          transform.position,
+        );
+
+        // Track missile hit and damage stats (capitalize to match missilesFired keys)
+        if (world.systemState.combatStats && missile.missileType) {
+          const stats = world.systemState.combatStats;
+          const key =
+            missile.missileType.charAt(0).toUpperCase() +
+            missile.missileType.slice(1);
+          stats.missilesHit[key] = (stats.missilesHit[key] || 0) + 1;
+          const totalDamage =
+            damageResult.shieldDamage + damageResult.hullDamage;
+          stats.missileDamage[key] =
+            (stats.missileDamage[key] || 0) + totalDamage;
+        }
 
         // Handle AoE damage if missile has AoE radius
         if (missile.aoeRadius > 0) {

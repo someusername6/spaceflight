@@ -11,6 +11,7 @@
  * Uses AIProfile for per-entity behavior thresholds.
  */
 
+import * as THREE from 'three';
 import { type AIControlled, AIState } from '../components/ai';
 import type { AimError } from '../components/aim-error';
 import type { FactionComponent } from '../components/faction';
@@ -27,6 +28,7 @@ import type {
 } from '../components/weapons';
 import { findDecoyWeapon, getEffectiveHeat } from '../components/weapons';
 import { entityExists, getComponent, queryEntities } from '../core/ecs';
+import { calculateInterceptPoint } from '../core/lead-calculation';
 import type { Entity, World } from '../core/types';
 import { selectOptimalMissile } from './ai/ai-missile-selection';
 import {
@@ -39,6 +41,10 @@ import {
   spawnProjectileWithAimError,
 } from './weapon-spawning';
 import { fireLinkedPrimaries } from './weapons';
+
+// Reusable vectors for dumbfire lead calculation
+const tempAimDir = new THREE.Vector3();
+const tempZeroVec = new THREE.Vector3(0, 0, 0);
 
 /** Handle AI primary weapon firing with smart weapon selection */
 export function handleAIPrimaryWeapons(
@@ -201,9 +207,29 @@ export function handleAISecondaryWeapons(
 
   if (!selection.shouldFire) return;
 
-  // Set AI's selected weapon (for lock tracking consistency with player)
-  // This ensures lock progress is tracked for the correct weapon
-  weapons.currentIndex = selection.index;
+  // For AI: Only update currentIndex to lock-requiring weapons
+  // This allows lock to build for homing missiles while dumbfire missiles fire
+  // Dumbfire missiles don't need the lock tracker, so we preserve the lock-requiring weapon index
+  const selectedWeapon = weapons.weapons[selection.index];
+  if (selectedWeapon?.requiresLock) {
+    weapons.currentIndex = selection.index;
+  } else {
+    // When firing dumbfire, try to keep currentIndex on a lock-requiring weapon
+    // so lock continues to build. Find the first lock-requiring weapon with ammo.
+    let hasLockWeapon = false;
+    for (let i = 0; i < weapons.weapons.length; i++) {
+      const w = weapons.weapons[i];
+      if (w?.requiresLock && w.count > 0 && !w.isDecoy) {
+        weapons.currentIndex = i;
+        hasLockWeapon = true;
+        break;
+      }
+    }
+    // If no lock-requiring weapons, just use the dumbfire index
+    if (!hasLockWeapon) {
+      weapons.currentIndex = selection.index;
+    }
+  }
 
   const weapon = weapons.weapons[selection.index];
   if (!weapon || weapon.isDecoy || weapon.count <= 0) return;
@@ -215,6 +241,53 @@ export function handleAISecondaryWeapons(
   // Fire the selected missile
   weapons.lastFireTime = gameTime;
   weapon.count--;
+
+  // For dumbfire missiles (turnRate === 0), calculate lead intercept
+  if (weapon.turnRate === 0) {
+    const ownerPhysics = getComponent<Physics>(world, entity, 'physics');
+    const ownerVelocity = ownerPhysics?.velocity ?? tempZeroVec;
+    const targetVelocity = targetPhysics?.velocity ?? tempZeroVec;
+
+    const interceptPoint = calculateInterceptPoint(
+      transform.position,
+      ownerVelocity,
+      targetTransform.position,
+      targetVelocity,
+      weapon.speed,
+    );
+
+    if (interceptPoint) {
+      // Aim at the lead point
+      tempAimDir.copy(interceptPoint).sub(transform.position).normalize();
+      spawnMissile(
+        world,
+        entity,
+        transform,
+        weapon,
+        faction,
+        ai.target,
+        tempAimDir,
+      );
+      return;
+    }
+    // No intercept solution - fire straight at target as fallback
+    tempAimDir
+      .copy(targetTransform.position)
+      .sub(transform.position)
+      .normalize();
+    spawnMissile(
+      world,
+      entity,
+      transform,
+      weapon,
+      faction,
+      ai.target,
+      tempAimDir,
+    );
+    return;
+  }
+
+  // Tracking missiles or no intercept solution - fire at target
   spawnMissile(world, entity, transform, weapon, faction, weapons.lockTarget);
 }
 

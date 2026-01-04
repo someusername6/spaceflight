@@ -102,6 +102,31 @@ export interface SystemState {
     collidable: number;
     targetCollector: number;
   };
+  /** Combat statistics for balance analysis (optional, only tracked in simulation) */
+  combatStats?: {
+    /** Shots fired by weapon name */
+    shotsFired: Record<string, number>;
+    /** Damage dealt by weapon name */
+    damageDealt: Record<string, number>;
+    /** Missiles fired by type */
+    missilesFired: Record<string, number>;
+    /** Missiles that hit targets */
+    missilesHit: Record<string, number>;
+    /** Damage dealt by missiles */
+    missileDamage: Record<string, number>;
+    /** Missiles that expired (ran out of range) */
+    missilesExpired: number;
+    /** Missiles that collided with owner */
+    missilesHitOwner: number;
+    /** Missiles seduced by decoys */
+    missilesSeduced: number;
+    /** Beam damage dealt (continuous weapons) */
+    beamDamage: Record<string, number>;
+    /** Decoys launched */
+    decoysLaunched: number;
+    /** Decoys that successfully seduced a missile */
+    decoysSuccessful: number;
+  };
 }
 
 /** Forward declaration - full definition in ecs.ts */

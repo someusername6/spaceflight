@@ -308,6 +308,13 @@ function fireBeam(
         damage = falloffDamage * dt;
       }
       dealDamage(world, hitResult.entity, damage, beam.hitPoint);
+
+      // Track beam damage stats
+      if (world.systemState.combatStats) {
+        const stats = world.systemState.combatStats;
+        stats.beamDamage[weapon.name] =
+          (stats.beamDamage[weapon.name] || 0) + damage;
+      }
     }
   } else {
     // No hit - beam extends to max range (or shorter for off-target pulse beams)

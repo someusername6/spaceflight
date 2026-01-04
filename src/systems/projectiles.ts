@@ -141,6 +141,9 @@ export function projectileSystem(world: World, dt: number): void {
         // Skip collision with other projectiles
         if (hasComponent(world, other, 'projectile')) continue;
 
+        // Skip collision with missiles (need dedicated point-defense logic)
+        if (hasComponent(world, other, 'missile')) continue;
+
         // Friendly fire enabled - damage anyone except owner
 
         // Deal damage at projectile's current position
@@ -150,6 +153,14 @@ export function projectileSystem(world: World, dt: number): void {
           projectile.damage,
           transform.position,
         );
+
+        // Track damage stats by weapon
+        if (world.systemState.combatStats) {
+          const stats = world.systemState.combatStats;
+          const totalDamage = result.shieldDamage + result.hullDamage;
+          stats.damageDealt[projectile.weaponName] =
+            (stats.damageDealt[projectile.weaponName] || 0) + totalDamage;
+        }
 
         // Queue hit effect only if hull took damage (shields-only = no sparks)
         if (result.hullDamage > 0) {

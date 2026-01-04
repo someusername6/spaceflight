@@ -255,9 +255,19 @@ function updateLockProgress(
     weapons.lockWeaponIndex = weapons.currentIndex;
   }
 
-  // Reset lock if weapon changed (different missiles have different lock speeds)
+  // Reset lock if weapon changed between lock-requiring weapons
+  // (different missiles have different lock speeds)
+  // BUT: Don't reset when switching to/from dumbfire - preserve lock for homing missiles
   if (weapons.lockWeaponIndex !== weapons.currentIndex) {
-    weapons.lockProgress = 0;
+    const oldWeapon = weapons.weapons[weapons.lockWeaponIndex];
+    const newWeapon = weapons.weapons[weapons.currentIndex];
+    const oldRequiresLock = oldWeapon?.requiresLock ?? false;
+    const newRequiresLock = newWeapon?.requiresLock ?? false;
+
+    // Only reset lock when switching between two lock-requiring weapons
+    if (oldRequiresLock && newRequiresLock) {
+      weapons.lockProgress = 0;
+    }
     weapons.lockWeaponIndex = weapons.currentIndex;
   }
 

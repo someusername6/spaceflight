@@ -13,7 +13,10 @@ import type {
 } from '../../components/weapons';
 import { getComponent, queryEntities } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
-import { drawLeadIndicators } from './lead-indicators';
+import {
+  drawDumbfireMissileLeadIndicator,
+  drawLeadIndicators,
+} from './lead-indicators';
 import {
   drawCenterCrosshair,
   drawLockIndicator,
@@ -180,6 +183,7 @@ export function updateReticles(
       playerTransform,
       playerVelocity,
       playerWeapons,
+      secondaryWeapons,
     );
   }
 }
@@ -194,6 +198,7 @@ function renderTarget(
   playerTransform: Transform | undefined,
   playerVelocity: THREE.Vector3 | undefined,
   playerWeapons: PrimaryWeapons | undefined,
+  secondaryWeapons: SecondaryWeapons | undefined,
 ): void {
   // Colors matching radar: dim for non-selected, bright for selected
   // Enemy: red, Ally: green, Neutral: yellow
@@ -266,6 +271,23 @@ function renderTarget(
         target.transform.position,
         target.velocity,
         playerWeapons,
+        color,
+        cameraForward,
+      );
+    }
+
+    // Draw dumbfire missile lead indicator for selected target
+    if (target.isSelected && playerTransform && secondaryWeapons) {
+      drawDumbfireMissileLeadIndicator(
+        ctx,
+        camera,
+        screenWidth,
+        screenHeight,
+        playerTransform,
+        playerVelocity ?? zeroVec3,
+        target.transform.position,
+        target.velocity,
+        secondaryWeapons,
         color,
         cameraForward,
       );

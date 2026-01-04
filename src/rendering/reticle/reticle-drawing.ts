@@ -232,6 +232,44 @@ function dimColor(color: string): string {
   return `${color}80`; // Add alpha if not handled
 }
 
+/** Draw missile lead marker (diamond shape, distinct from primary weapon lead) */
+export function drawMissileLeadMarker(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  color: string,
+  outOfRange: boolean,
+  label: string,
+): void {
+  const size = 8;
+  const alpha = outOfRange ? 0.5 : 1.0;
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+
+  // Diamond shape
+  ctx.beginPath();
+  ctx.moveTo(x, y - size);
+  ctx.lineTo(x + size, y);
+  ctx.lineTo(x, y + size);
+  ctx.lineTo(x - size, y);
+  ctx.closePath();
+  ctx.stroke();
+
+  // Center dot and label
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x, y, 2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.font = '10px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(label, x, y + size + 12);
+
+  ctx.restore();
+}
+
 /** Draw off-screen arrow pointing to target */
 export function drawOffScreenArrow(
   ctx: CanvasRenderingContext2D,

@@ -25,7 +25,7 @@ import { getForward } from './physics';
 
 /** Spawn offsets from ship center */
 const PROJECTILE_SPAWN_OFFSET = 3;
-const MISSILE_SPAWN_OFFSET = 4;
+const MISSILE_SPAWN_OFFSET = 4; // Owner collision ignored for first 20m of travel
 const DECOY_SPAWN_OFFSET = 3; // Below the ship (downward)
 
 /** Lateral offset between weapon banks */
@@ -128,6 +128,12 @@ export function spawnProjectile(
   if (ownerFaction) {
     addComponent(world, projectile, createFaction(ownerFaction.faction));
   }
+
+  // Track stats if enabled
+  if (world.systemState.combatStats) {
+    const stats = world.systemState.combatStats;
+    stats.shotsFired[weapon.name] = (stats.shotsFired[weapon.name] || 0) + 1;
+  }
 }
 
 /** Spawn a projectile with aim error (for AI) */
@@ -185,6 +191,12 @@ export function spawnProjectileWithAimError(
   // Projectiles inherit owner's faction
   if (ownerFaction) {
     addComponent(world, projectile, createFaction(ownerFaction.faction));
+  }
+
+  // Track stats if enabled
+  if (world.systemState.combatStats) {
+    const stats = world.systemState.combatStats;
+    stats.shotsFired[weapon.name] = (stats.shotsFired[weapon.name] || 0) + 1;
   }
 }
 
@@ -252,11 +264,15 @@ export function spawnMissile(
   weapon: SecondaryWeapon,
   ownerFaction: FactionComponent | undefined,
   target: Entity | undefined,
+  aimDirection?: THREE.Vector3, // Optional aim direction for dumbfire lead
 ): void {
   const forward = getForward(ownerTransform);
   spawnPos
     .copy(ownerTransform.position)
     .addScaledVector(forward, MISSILE_SPAWN_OFFSET);
+
+  // Use provided aim direction for dumbfire, or forward for tracking missiles
+  const direction = aimDirection ?? forward;
 
   const missile = createEntity(world);
 
@@ -277,7 +293,7 @@ export function spawnMissile(
       weapon.speed,
       weapon.turnRate,
       weapon.range,
-      forward,
+      direction,
       weapon.aoeRadius ?? 0,
       weapon.isNuke ?? false,
       missileType,
@@ -293,6 +309,13 @@ export function spawnMissile(
   // Missiles inherit owner's faction
   if (ownerFaction) {
     addComponent(world, missile, createFaction(ownerFaction.faction));
+  }
+
+  // Track stats if enabled
+  if (world.systemState.combatStats) {
+    const stats = world.systemState.combatStats;
+    stats.missilesFired[weapon.name] =
+      (stats.missilesFired[weapon.name] || 0) + 1;
   }
 }
 
@@ -339,5 +362,10 @@ export function spawnDecoy(
   // Decoys inherit owner's faction
   if (ownerFaction) {
     addComponent(world, decoy, createFaction(ownerFaction.faction));
+  }
+
+  // Track stats if enabled
+  if (world.systemState.combatStats) {
+    world.systemState.combatStats.decoysLaunched++;
   }
 }

@@ -75,7 +75,7 @@ export const AI_PROFILES: Record<string, AIProfile> = {
     breakOffRange: 1000,
     // Weapon selection: Poor choices
     heatSwitchThreshold: 0.95, // Almost overheats before switching
-    minFiringAngle: 15, // Wastes ammo at bad angles
+    minFiringAngle: 50, // Wastes ammo at bad angles (high = permissive)
     linkedFireHeatThreshold: 0.8, // Overheats with linked fire
     // State transitions: Slow to react
     evadeShieldThreshold: 0.15, // Waits too long to evade
@@ -104,7 +104,7 @@ export const AI_PROFILES: Record<string, AIProfile> = {
     breakOffRange: 1200,
     // Weapon selection: Sensible
     heatSwitchThreshold: 0.75,
-    minFiringAngle: 30,
+    minFiringAngle: 35, // Moderate selectivity
     linkedFireHeatThreshold: 0.6,
     // State transitions: Reasonable
     evadeShieldThreshold: 0.2,
@@ -133,7 +133,7 @@ export const AI_PROFILES: Record<string, AIProfile> = {
     breakOffRange: 1400,
     // Weapon selection: Optimal
     heatSwitchThreshold: 0.65,
-    minFiringAngle: 40,
+    minFiringAngle: 25, // Selective - only fires when well-aimed
     linkedFireHeatThreshold: 0.5,
     // State transitions: Quick reactions
     evadeShieldThreshold: 0.25,
@@ -162,7 +162,7 @@ export const AI_PROFILES: Record<string, AIProfile> = {
     breakOffRange: 1600,
     // Weapon selection: Perfect
     heatSwitchThreshold: 0.55,
-    minFiringAngle: 50,
+    minFiringAngle: 15, // Very selective - only fires when perfectly aimed
     linkedFireHeatThreshold: 0.4,
     // State transitions: Perfect timing
     evadeShieldThreshold: 0.3,

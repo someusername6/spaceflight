@@ -15,7 +15,9 @@ import type { Heat } from '../../components/heat';
 import type { Physics } from '../../components/physics';
 import type { Shields } from '../../components/shields';
 import type { Transform } from '../../components/transform';
+import type { PrimaryWeapons } from '../../components/weapons';
 import { entityExists, getComponent, queryEntities } from '../../core/ecs';
+import { calculateInterceptPoint } from '../../core/lead-calculation';
 import type { Entity, World } from '../../core/types';
 import { AI_GLOBAL_SETTINGS } from '../../data/ai-profiles';
 import {
@@ -26,11 +28,15 @@ import {
   updateRegroup,
 } from './ai-behaviors';
 
+/** Default projectile speed for lead calculation (typical energy weapon) */
+const DEFAULT_PROJECTILE_SPEED = 500;
+
 // Reusable vectors
 const toTarget = new Vector3();
 const forward = new Vector3();
 const rotationAxis = new Vector3();
 const deltaQuat = new Quaternion();
+const leadPoint = new Vector3();
 
 const DEG_TO_RAD = Math.PI / 180;
 
@@ -290,10 +296,23 @@ export function findNearestEnemy(
   return nearest;
 }
 
-/** Pursue behavior - turn toward target and accelerate */
+/** Get projectile speed from entity's primary weapons (first projectile weapon) */
+function getProjectileSpeed(world: World, entity: Entity): number {
+  const weapons = getComponent<PrimaryWeapons>(world, entity, 'primaryWeapons');
+  if (weapons) {
+    for (const weapon of weapons.weapons) {
+      if (weapon && weapon.category !== 'beam') {
+        return weapon.projectileSpeed;
+      }
+    }
+  }
+  return DEFAULT_PROJECTILE_SPEED; // Fallback
+}
+
+/** Pursue behavior - turn toward target (with lead) and accelerate */
 export function pursueTarget(
   world: World,
-  _entity: Entity,
+  entity: Entity,
   ai: AIControlled,
   transform: Transform,
   physics: Physics,
@@ -310,7 +329,33 @@ export function pursueTarget(
     return;
   }
 
-  toTarget.copy(targetTransform.position).sub(transform.position);
+  // Get target velocity for lead calculation
+  const targetPhysics = getComponent<Physics>(
+    world,
+    ai.target as Entity,
+    'physics',
+  );
+
+  // Calculate aim point (lead if we have velocity data)
+  let aimPoint = targetTransform.position;
+
+  if (targetPhysics) {
+    const projectileSpeed = getProjectileSpeed(world, entity);
+    const intercept = calculateInterceptPoint(
+      transform.position,
+      physics.velocity,
+      targetTransform.position,
+      targetPhysics.velocity,
+      projectileSpeed,
+    );
+    if (intercept) {
+      leadPoint.copy(intercept);
+      aimPoint = leadPoint;
+    }
+  }
+
+  // Calculate direction to aim point
+  toTarget.copy(aimPoint).sub(transform.position);
   const distToTarget = toTarget.length();
 
   if (distToTarget > 0.001) {

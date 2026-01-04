@@ -62,16 +62,7 @@ export function selectOptimalMissile(
   _targetSpeed: number, // Reserved for future use
   isLocked: boolean,
 ): MissileSelection {
-  // First pass: find dumbfire missiles that can fire now (immediate option)
-  for (let i = 0; i < weapons.weapons.length; i++) {
-    const weapon = weapons.weapons[i];
-    if (!weapon || weapon.isDecoy) continue;
-    if (!weapon.requiresLock && canMissileFire(weapon, distance, isLocked)) {
-      return { shouldFire: true, index: i };
-    }
-  }
-
-  // Second pass: find lock-requiring missiles (only valid if locked)
+  // When locked, prefer homing missiles (they track and are more effective)
   if (isLocked) {
     for (let i = 0; i < weapons.weapons.length; i++) {
       const weapon = weapons.weapons[i];
@@ -79,6 +70,15 @@ export function selectOptimalMissile(
       if (weapon.requiresLock && canMissileFire(weapon, distance, isLocked)) {
         return { shouldFire: true, index: i };
       }
+    }
+  }
+
+  // Fallback: dumbfire missiles (no lock needed, immediate option)
+  for (let i = 0; i < weapons.weapons.length; i++) {
+    const weapon = weapons.weapons[i];
+    if (!weapon || weapon.isDecoy) continue;
+    if (!weapon.requiresLock && canMissileFire(weapon, distance, isLocked)) {
+      return { shouldFire: true, index: i };
     }
   }
 

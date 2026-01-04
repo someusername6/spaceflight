@@ -4,10 +4,17 @@
 
 import * as THREE from 'three';
 import type { Transform } from '../../components/transform';
-import type { PrimaryWeapons } from '../../components/weapons';
-import { getCurrentPrimary } from '../../components/weapons';
+import type {
+  PrimaryWeapons,
+  SecondaryWeapon,
+  SecondaryWeapons,
+} from '../../components/weapons';
+import {
+  getCurrentPrimary,
+  getCurrentSecondary,
+} from '../../components/weapons';
 import { calculateInterceptPoint } from './lead-calculation';
-import { drawLeadIndicator } from './reticle-drawing';
+import { drawLeadIndicator, drawMissileLeadMarker } from './reticle-drawing';
 
 // Reusable vectors for lead calculation
 const leadVec3 = new THREE.Vector3();
@@ -265,5 +272,94 @@ function drawLinkedLeadIndicators(
       cameraForward,
       showLabels,
     );
+  }
+}
+
+/** Draw lead indicator for dumbfire missiles (turnRate === 0) */
+export function drawDumbfireMissileLeadIndicator(
+  ctx: CanvasRenderingContext2D,
+  camera: THREE.Camera,
+  screenWidth: number,
+  screenHeight: number,
+  playerTransform: Transform,
+  playerVelocity: THREE.Vector3,
+  targetPosition: THREE.Vector3,
+  targetVelocity: THREE.Vector3,
+  weapons: SecondaryWeapons,
+  color: string,
+  cameraForward: THREE.Vector3,
+): void {
+  const weapon = getCurrentSecondary(weapons);
+  if (!weapon) return;
+
+  // Only show lead indicator for dumbfire missiles (turnRate === 0)
+  // Tracking missiles lock on and follow, so lead isn't needed
+  if (weapon.turnRate !== 0) return;
+
+  // Skip decoys
+  if (weapon.isDecoy) return;
+
+  drawMissileLeadIndicator(
+    ctx,
+    camera,
+    screenWidth,
+    screenHeight,
+    playerTransform,
+    playerVelocity,
+    targetPosition,
+    targetVelocity,
+    weapon,
+    color,
+    cameraForward,
+  );
+}
+
+/** Draw a single missile lead indicator */
+function drawMissileLeadIndicator(
+  ctx: CanvasRenderingContext2D,
+  camera: THREE.Camera,
+  screenWidth: number,
+  screenHeight: number,
+  playerTransform: Transform,
+  playerVelocity: THREE.Vector3,
+  targetPosition: THREE.Vector3,
+  targetVelocity: THREE.Vector3,
+  weapon: SecondaryWeapon,
+  color: string,
+  cameraForward: THREE.Vector3,
+): void {
+  const interceptPoint = calculateInterceptPoint(
+    playerTransform.position,
+    playerVelocity,
+    targetPosition,
+    targetVelocity,
+    weapon.speed,
+  );
+
+  if (!interceptPoint) return;
+
+  // Check if intercept is within weapon range
+  const interceptDistance = playerTransform.position.distanceTo(interceptPoint);
+  const outOfRange = interceptDistance > weapon.range;
+
+  // Check if intercept point is in front of camera
+  leadCalcVec.copy(interceptPoint).sub(camera.position);
+  const interceptBehind = leadCalcVec.dot(cameraForward) < 0;
+  if (interceptBehind) return;
+
+  // Project intercept point to screen
+  leadVec3.copy(interceptPoint).project(camera);
+  const leadX = (leadVec3.x + 1) * 0.5 * screenWidth;
+  const leadY = (1 - leadVec3.y) * 0.5 * screenHeight;
+
+  // Only draw if on screen
+  if (
+    leadX >= 0 &&
+    leadX <= screenWidth &&
+    leadY >= 0 &&
+    leadY <= screenHeight
+  ) {
+    // Use a distinct style for missile lead - diamond shape with label
+    drawMissileLeadMarker(ctx, leadX, leadY, color, outOfRange, weapon.name);
   }
 }

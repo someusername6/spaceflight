@@ -158,6 +158,15 @@ export function createAIShip(
 
   addComponent(world, entity, createHeat(stats.maxHeat, stats.coolingRate));
   addComponent(world, entity, createPrimaryWeapons(stats.primaryWeapons));
+
+  // Add secondary weapons if defined (AI can fire missiles too)
+  if (stats.secondaryWeapons && stats.secondaryWeapons.length > 0) {
+    const secondaryWeapons = stats.secondaryWeapons.map((w) =>
+      createSecondaryWeaponFromDef(w.name, w.count, w.size),
+    );
+    addComponent(world, entity, createSecondaryWeapons(secondaryWeapons));
+  }
+
   addComponent(world, entity, createCollision(stats.collisionRadius * 1.5)); // AI has larger hitbox
 
   return entity;
