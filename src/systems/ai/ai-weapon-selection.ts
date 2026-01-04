@@ -11,46 +11,19 @@ import type { Transform } from '../../components/transform';
 import type { PrimaryWeapon, PrimaryWeapons } from '../../components/weapons';
 import { getEffectiveHeat } from '../../components/weapons';
 import type { AIProfile } from '../../data/ai-profiles';
+import {
+  getDistanceCategory,
+  getWeaponRangeCategory,
+  RangeCategory,
+} from './ai-weapon-categories';
+
+// Re-export for backwards compatibility
+export { getDistanceCategory, getWeaponRangeCategory, RangeCategory };
 
 /** Result of weapon selection */
 export interface WeaponSelection {
   mode: 'linked' | 'single' | 'none';
   index?: number; // Weapon index for single mode
-}
-
-/** Range categories for weapon selection */
-export enum RangeCategory {
-  VeryLong = 'veryLong', // 1500+ (railgun, nuclear lance)
-  Long = 'long', // 800-1500 (blue/green laser, plasma)
-  Medium = 'medium', // 400-800 (ion, flak, pulse)
-  Short = 'short', // <400 (red laser, autocannon, lightning)
-}
-
-/** Thresholds for range categories */
-const RANGE_THRESHOLDS = {
-  veryLong: 1500,
-  long: 800,
-  medium: 400,
-};
-
-/**
- * Categorize distance into range category.
- */
-export function getDistanceCategory(distance: number): RangeCategory {
-  if (distance >= RANGE_THRESHOLDS.veryLong) return RangeCategory.VeryLong;
-  if (distance >= RANGE_THRESHOLDS.long) return RangeCategory.Long;
-  if (distance >= RANGE_THRESHOLDS.medium) return RangeCategory.Medium;
-  return RangeCategory.Short;
-}
-
-/**
- * Get the effective range category for a weapon.
- */
-export function getWeaponRangeCategory(weapon: PrimaryWeapon): RangeCategory {
-  if (weapon.range >= RANGE_THRESHOLDS.veryLong) return RangeCategory.VeryLong;
-  if (weapon.range >= RANGE_THRESHOLDS.long) return RangeCategory.Long;
-  if (weapon.range >= RANGE_THRESHOLDS.medium) return RangeCategory.Medium;
-  return RangeCategory.Short;
 }
 
 /**
@@ -147,6 +120,8 @@ function scoreWeapon(
   if (weaponCategory === distanceCategory) {
     score += 50; // Perfect range match
   } else if (
+    (weaponCategory === RangeCategory.VeryLong &&
+      distanceCategory === RangeCategory.Long) ||
     (weaponCategory === RangeCategory.Long &&
       distanceCategory === RangeCategory.Medium) ||
     (weaponCategory === RangeCategory.Medium &&
@@ -231,12 +206,17 @@ export function selectOptimalPrimaryWeapon(
 
   // Don't waste finite ammo at poor firing angles (use profile threshold)
   if (firingAngle > profile.minFiringAngle) {
-    // Only fire infinite ammo weapons
+    // Try infinite ammo weapons first
     const infiniteWeapon = findInfiniteAmmoWeapon(weapons, distance);
     if (infiniteWeapon !== null) {
       return { mode: 'single', index: infiniteWeapon };
     }
-    return { mode: 'none' };
+    // If no infinite ammo options, allow finite ammo at moderate angles (< 60°)
+    // This prevents ships with only finite ammo from never shooting
+    if (firingAngle > 60) {
+      return { mode: 'none' };
+    }
+    // Fall through to normal weapon selection for finite ammo at 35-60°
   }
 
   // Count valid weapons and find best

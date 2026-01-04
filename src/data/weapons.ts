@@ -83,9 +83,9 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
     category: 'ballistic',
     heatPerShot: 3,
     projectileSpeed: 2000,
-    fireRate: 1.0, // Was 0.8s, slower for alpha strike fantasy
+    fireRate: 1.0,
     range: 2000,
-    damage: 160, // Was 80, +100% for devastating alpha strikes
+    damage: 80,
     ammo: 20,
   },
   flak: {

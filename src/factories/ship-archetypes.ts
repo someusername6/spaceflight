@@ -25,6 +25,12 @@ interface WeaponLoadout {
    * should have lower values to ensure weapons are in range.
    */
   preferredCombatRange?: number;
+  /**
+   * Distance at which AI will flee (enter EVADE). Used for kiting ships
+   * that want to maintain range. AI returns to ENGAGE when distance
+   * exceeds preferredCombatRange.
+   */
+  fleeDistance?: number;
 }
 
 /** Complete ship archetype (ship class stats + loadout) */
@@ -141,17 +147,17 @@ export const SHIP_ARCHETYPES: Record<string, ShipStats> = {
 
   // === VARIANT ARCHETYPES (different loadout on existing ship class) ===
 
-  // Sniper: Interceptor chassis with railgun loadout - long-range alpha striker
-  // Uses burst-disengage: fires devastating volleys then repositions
-  // (Interceptor chosen over raider for better survivability during repositioning)
-  sniper: createArchetype('interceptor', {
+  // Sniper: Raider chassis with railgun loadout - fast alpha striker
+  // Uses distance-flee: engages from range, flees when enemy closes
+  // Raider has speed 280 (only scout at 300 is faster) + glass cannon profile
+  sniper: createArchetype('raider', {
     primaryWeapons: [
       { name: 'railgun', size: 2 },
       { name: 'railgun', size: 2 },
-      { name: 'plasma', size: 1 },
     ],
     secondaryWeapons: [{ name: 'decoy', count: 4, size: 1 }],
-    preferredCombatRange: 1200,
+    preferredCombatRange: 900, // Closer range for better accuracy
+    fleeDistance: 400, // Flee threshold proportionally lower
   }),
 
   // Lancer: Sentinel chassis with blue laser loadout - long-range beam platform

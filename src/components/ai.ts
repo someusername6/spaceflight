@@ -38,12 +38,18 @@ export interface AIControlled extends ComponentBase {
    * If undefined, uses profile.engageRange as the threshold.
    */
   preferredCombatRange?: number;
+  /**
+   * Distance at which AI will flee (enter EVADE). Used for kiting ships.
+   * AI returns to ENGAGE when distance exceeds preferredCombatRange.
+   */
+  fleeDistance?: number;
 }
 
 /** Creates an AIControlled component with a profile */
 export function createAIControlled(
   profileName: ProfileName = 'regular',
   preferredCombatRange?: number,
+  fleeDistance?: number,
 ): AIControlled {
   const base = {
     type: 'aiControlled' as const,
@@ -57,9 +63,14 @@ export function createAIControlled(
     profile: getAIProfile(profileName),
   };
 
-  // Only add preferredCombatRange if defined (exactOptionalPropertyTypes)
+  // Only add optional fields if defined (exactOptionalPropertyTypes)
+  const result: AIControlled = base;
   if (preferredCombatRange !== undefined) {
-    return { ...base, preferredCombatRange };
+    (result as { preferredCombatRange?: number }).preferredCombatRange =
+      preferredCombatRange;
   }
-  return base;
+  if (fleeDistance !== undefined) {
+    (result as { fleeDistance?: number }).fleeDistance = fleeDistance;
+  }
+  return result;
 }

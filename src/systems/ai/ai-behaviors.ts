@@ -5,7 +5,6 @@
  * Uses AIProfile for per-entity behavior configuration.
  */
 
-import { Quaternion, Vector3 } from 'three';
 import { type AIControlled, AIState } from '../../components/ai';
 import type { Faction } from '../../components/faction';
 import type { Heat } from '../../components/heat';
@@ -20,17 +19,17 @@ import type { Transform } from '../../components/transform';
 import { entityExists, getComponent } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
 import type { AIProfile } from '../../data/ai-profiles';
+import {
+  accelerateTo,
+  calculateEscapeDirection,
+  EVADE_AWAY_WEIGHT,
+  EVADE_PERPENDICULAR_WEIGHT,
+  FLEE_RETURN_THRESHOLD,
+  isKitingShip,
+  tempVectors,
+  turnToward,
+} from './ai-movement';
 import { findNearestEnemy } from './ai-utils';
-
-// Reusable vectors
-const toTarget = new Vector3();
-const forward = new Vector3();
-const rotationAxis = new Vector3();
-const deltaQuat = new Quaternion();
-const localUp = new Vector3(); // For ship-relative calculations
-const escapeDir = new Vector3(); // For smart evade direction
-
-const DEG_TO_RAD = Math.PI / 180;
 
 /** Check if AI should evade (low shields) - uses profile threshold */
 export function shouldEvade(
@@ -39,6 +38,15 @@ export function shouldEvade(
 ): boolean {
   if (!shields) return false;
   return shields.current / shields.max < profile.evadeShieldThreshold;
+}
+
+/** Check if AI should flee based on distance (for kiting ships) */
+export function shouldFleeDistance(
+  ai: AIControlled,
+  distance: number,
+): boolean {
+  if (!isKitingShip(ai)) return false;
+  return distance < (ai.fleeDistance as number);
 }
 
 /** Check if AI should regroup (very low shields or overheated) - uses profile threshold */
@@ -65,37 +73,6 @@ function hasRecovered(
   return shieldsOk && heatOk;
 }
 
-/** Helper: Turn toward a direction */
-function turnToward(
-  transform: Transform,
-  physics: Physics,
-  direction: Vector3,
-  dt: number,
-): void {
-  forward.set(0, 0, -1).applyQuaternion(transform.rotation);
-  const dot = forward.dot(direction);
-  const turnSpeed = physics.turnRate * DEG_TO_RAD * dt;
-
-  if (dot < 0.999) {
-    rotationAxis.crossVectors(forward, direction);
-    const axisLengthSq = rotationAxis.lengthSq();
-
-    if (axisLengthSq > 0.0001) {
-      rotationAxis.multiplyScalar(1 / Math.sqrt(axisLengthSq));
-      const angle = Math.acos(Math.max(-1, Math.min(1, dot)));
-      deltaQuat.setFromAxisAngle(rotationAxis, Math.min(angle, turnSpeed));
-      transform.rotation.premultiply(deltaQuat);
-      transform.rotation.normalize();
-    } else if (dot < -0.9) {
-      // Anti-parallel case: pick arbitrary perpendicular axis (up)
-      rotationAxis.set(0, 1, 0);
-      deltaQuat.setFromAxisAngle(rotationAxis, turnSpeed);
-      transform.rotation.premultiply(deltaQuat);
-      transform.rotation.normalize();
-    }
-  }
-}
-
 /** Evade state - break away from combat using afterburner */
 export function updateEvade(
   world: World,
@@ -108,21 +85,41 @@ export function updateEvade(
   dt: number,
 ): void {
   const profile = ai.profile;
-  // Exit condition: cooldown expired and shields recovered (or no shields)
-  const shieldsRecovered =
-    !shields || shields.current / shields.max >= profile.evadeShieldThreshold;
-  if (ai.stateTimer >= profile.evadeCooldown && shieldsRecovered) {
-    ai.state = ai.target ? AIState.Pursue : AIState.Idle;
-    ai.stateTimer = 0;
-    physics.isAfterburning = false;
-    return;
+  const { toTarget, forward, deltaQuat } = tempVectors;
+
+  // Distance-flee (kiting) ships: return to ENGAGE when distance regained
+  if (isKitingShip(ai) && ai.target && entityExists(world, ai.target)) {
+    const targetTransform = getComponent<Transform>(
+      world,
+      ai.target,
+      'transform',
+    );
+    if (targetTransform) {
+      const distance = transform.position.distanceTo(targetTransform.position);
+      const returnRange = ai.preferredCombatRange ?? profile.engageRange;
+      if (distance >= returnRange * FLEE_RETURN_THRESHOLD) {
+        ai.state = AIState.Engage;
+        ai.stateTimer = 0;
+        physics.isAfterburning = false;
+        return;
+      }
+    }
   }
 
-  // Calculate current forward direction
-  forward.set(0, 0, -1).applyQuaternion(transform.rotation);
+  // Normal exit condition: cooldown expired and shields recovered
+  // Skip for kiting ships (they only exit via distance check above)
+  if (!isKitingShip(ai)) {
+    const shieldsRecovered =
+      !shields || shields.current / shields.max >= profile.evadeShieldThreshold;
+    if (ai.stateTimer >= profile.evadeCooldown && shieldsRecovered) {
+      ai.state = ai.target ? AIState.Pursue : AIState.Idle;
+      ai.stateTimer = 0;
+      physics.isAfterburning = false;
+      return;
+    }
+  }
 
-  // Smart evade: prefer perpendicular movement to maximize angular velocity
-  // (harder for enemy to track), with slight bias toward away for distance
+  // Calculate escape direction and turn
   if (ai.target && entityExists(world, ai.target)) {
     const targetTransform = getComponent<Transform>(
       world,
@@ -130,56 +127,44 @@ export function updateEvade(
       'transform',
     );
     if (targetTransform) {
-      // Direction away from target (normalized)
+      // Direction away from target
       toTarget.copy(transform.position).sub(targetTransform.position);
       if (toTarget.lengthSq() > 0.001) {
         toTarget.normalize();
 
-        // Calculate perpendicular direction (maximizes angular velocity)
-        // Use world up to get a horizontal perpendicular direction
-        localUp.set(0, 1, 0);
-        escapeDir.crossVectors(toTarget, localUp);
-        if (escapeDir.lengthSq() < 0.001) {
-          // Target is directly above/below - use world X instead
-          escapeDir.set(1, 0, 0);
+        if (isKitingShip(ai)) {
+          // Kiting ships: flee DIRECTLY away to maximize distance gain
+          turnToward(transform, physics, toTarget, dt);
         } else {
-          escapeDir.normalize();
+          // Normal evade: perpendicular movement to maximize angular velocity
+          forward.set(0, 0, -1).applyQuaternion(transform.rotation);
+          const escapeDir = calculateEscapeDirection(
+            toTarget,
+            forward,
+            EVADE_PERPENDICULAR_WEIGHT,
+            EVADE_AWAY_WEIGHT,
+          );
+          turnToward(transform, physics, escapeDir, dt);
         }
-
-        // Pick left or right based on which requires less turn
-        if (forward.dot(escapeDir) < 0) {
-          escapeDir.negate();
-        }
-
-        // Blend: 70% perpendicular (hard to hit) + 30% away (gain distance)
-        // This creates a spiral escape pattern that's both evasive and effective
-        escapeDir
-          .multiplyScalar(0.7)
-          .addScaledVector(toTarget, 0.3)
-          .normalize();
-
-        turnToward(transform, physics, escapeDir, dt);
       }
     }
   }
 
-  // Add erratic movement (barrel roll effect around ship's forward axis)
-  const wobble = Math.sin(ai.stateTimer * 8) * 0.3;
-  forward.set(0, 0, -1).applyQuaternion(transform.rotation);
-  const wobbleQuat = deltaQuat.setFromAxisAngle(forward, wobble * dt);
-  transform.rotation.multiply(wobbleQuat);
-  transform.rotation.normalize();
+  // Add erratic movement (barrel roll effect) - skip for kiting ships
+  if (!isKitingShip(ai)) {
+    const wobble = Math.sin(ai.stateTimer * 8) * 0.3;
+    forward.set(0, 0, -1).applyQuaternion(transform.rotation);
+    deltaQuat.setFromAxisAngle(forward, wobble * dt);
+    transform.rotation.multiply(deltaQuat);
+    transform.rotation.normalize();
+  }
 
   // Afterburner escape - use boosted speed if not heat-locked
   const canAfterburn = !physics.afterburnerLocked;
   const afterburnerSpeed = physics.maxSpeed * physics.afterburnerMultiplier;
 
   if (canAfterburn) {
-    // Accelerate to afterburner speed
-    physics.currentSpeed = Math.min(
-      physics.currentSpeed + physics.acceleration * 1.5 * dt,
-      afterburnerSpeed,
-    );
+    accelerateTo(physics, afterburnerSpeed, dt, 1.5);
     physics.isAfterburning = true;
 
     // Generate heat while afterburning
@@ -191,10 +176,7 @@ export function updateEvade(
     }
   } else {
     // Heat-locked - use normal max speed
-    physics.currentSpeed = Math.min(
-      physics.currentSpeed + physics.acceleration * dt,
-      physics.maxSpeed,
-    );
+    accelerateTo(physics, physics.maxSpeed, dt);
     physics.isAfterburning = false;
   }
 }
@@ -210,6 +192,7 @@ export function updateProtect(
   dt: number,
 ): void {
   const profile = ai.profile;
+  const { toTarget } = tempVectors;
 
   // Check if we have someone to protect
   if (!ai.protectTarget || !entityExists(world, ai.protectTarget)) {
@@ -246,11 +229,7 @@ export function updateProtect(
         toTarget.normalize();
         turnToward(transform, physics, toTarget, dt);
       }
-      // Full speed pursuit
-      physics.currentSpeed = Math.min(
-        physics.currentSpeed + physics.acceleration * dt,
-        physics.maxSpeed,
-      );
+      accelerateTo(physics, physics.maxSpeed, dt);
     }
   } else {
     // No threats or too far from protectee - return to protectee
@@ -261,16 +240,10 @@ export function updateProtect(
         .sub(transform.position)
         .normalize();
       turnToward(transform, physics, toTarget, dt);
-      physics.currentSpeed = Math.min(
-        physics.currentSpeed + physics.acceleration * dt,
-        physics.maxSpeed * 0.7,
-      );
+      accelerateTo(physics, physics.maxSpeed * 0.7, dt);
     } else {
       // Close enough - slow down and patrol
-      physics.currentSpeed = Math.max(
-        physics.currentSpeed - physics.acceleration * dt,
-        physics.maxSpeed * 0.3,
-      );
+      accelerateTo(physics, physics.maxSpeed * 0.3, dt);
     }
   }
 }
@@ -287,6 +260,8 @@ export function updateRegroup(
   dt: number,
 ): void {
   const profile = ai.profile;
+  const { toTarget, localUp } = tempVectors;
+
   // Exit condition: recovered and minimum time passed
   if (
     ai.stateTimer >= profile.regroupMinTime &&
@@ -319,17 +294,5 @@ export function updateRegroup(
   }
 
   // Cruise at moderate speed to conserve heat
-  const targetSpeed = physics.maxSpeed * 0.7;
-  if (physics.currentSpeed < targetSpeed) {
-    physics.currentSpeed = Math.min(
-      physics.currentSpeed + physics.acceleration * dt,
-      targetSpeed,
-    );
-  } else if (physics.currentSpeed > targetSpeed) {
-    // Decelerate if going too fast
-    physics.currentSpeed = Math.max(
-      physics.currentSpeed - physics.acceleration * dt,
-      targetSpeed,
-    );
-  }
+  accelerateTo(physics, physics.maxSpeed * 0.7, dt);
 }

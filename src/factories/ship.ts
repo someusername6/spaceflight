@@ -198,7 +198,11 @@ export function createAIShip(
   // Create AI with profile - aim error derived from profile
   // Calculate preferred combat range from weapon loadout (or use explicit value)
   const preferredRange = calculatePreferredCombatRange(stats);
-  const ai = createAIControlled(profileName, preferredRange);
+  const ai = createAIControlled(
+    profileName,
+    preferredRange,
+    stats.fleeDistance,
+  );
   addComponent(world, entity, ai);
   addComponent(world, entity, createAimError(world.prng, ai.profile));
 

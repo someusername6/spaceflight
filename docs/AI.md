@@ -112,6 +112,38 @@ Kiting behavior for long-range ships. Only active when `preferredCombatRange > 7
 - Glass cannon chassis - dies during reposition
 - Close-range weapons - negates their advantage
 
+## Distance-Flee Behavior
+
+Alternative kiting behavior for alpha-strike ships. Configured via `fleeDistance` in ship archetypes.
+
+**Core mechanic:**
+- **Flee trigger**: Enemy within `fleeDistance` → enter EVADE
+- **Return trigger**: Distance > `preferredCombatRange * 0.95` → return to ENGAGE
+
+**Key difference from burst-disengage:**
+- Burst-disengage: Time-based (engage 2s, then flee)
+- Distance-flee: Distance-based (flee when too close, engage when far enough)
+
+**Behavior:**
+1. Ship enters EVADE when enemy closes within fleeDistance
+2. Does NOT exit EVADE via normal cooldown (only via distance check)
+3. Returns to ENGAGE when at preferred range
+4. Creates a kiting loop: engage from range → flee when closed on → repeat
+
+**Best suited for:**
+- Alpha strike weapons (railguns) - maximizes time at optimal range
+- Ships that need distance to be effective
+- Example: Sniper (interceptor chassis + railguns, fleeDistance: 600m, preferredCombatRange: 1200m)
+
+**Configuration (in ship-archetypes.ts):**
+```typescript
+sniper: createArchetype('interceptor', {
+  primaryWeapons: [{ name: 'railgun', size: 2 }, ...],
+  preferredCombatRange: 1200,  // Optimal engagement range
+  fleeDistance: 600,           // Flee when enemy this close
+}),
+```
+
 ## State Transition Cooldowns
 
 To prevent rapid state oscillation:
@@ -178,6 +210,30 @@ This makes hitting a fast, perpendicular target very difficult!
 - `src/components/aim-error.ts` - AimError component and update functions
 - `src/systems/aim-error.ts` - System that calculates angular velocity each frame
 - `src/data/ai-profiles.ts` - Profile definitions with aim error parameters
+
+## AI Module Structure
+
+The AI system is split across several files for maintainability (400 line limit):
+
+```
+src/systems/ai/
+├── ai.ts                 - Main state machine and aiSystem()
+├── ai-behaviors.ts       - State update functions (evade, protect, regroup)
+├── ai-movement.ts        - Shared movement utilities (turnToward, accelerateTo)
+├── ai-pursuit.ts         - Target pursuit logic (pursueTarget, maintainDistanceEngage)
+├── ai-reposition.ts      - Burst-disengage behavior
+├── ai-utils.ts           - Entity queries (findNearestEnemy, setAITarget)
+├── ai-weapon-selection.ts    - Weapon choice logic
+├── ai-weapon-categories.ts   - Range classification
+└── ai-missile-selection.ts   - Missile targeting
+```
+
+**Shared utilities in ai-movement.ts:**
+- `turnToward()` - Rotate ship toward direction
+- `accelerateTo()` / `decelerateToZero()` - Speed control
+- `calculateEscapeDirection()` - Evade/reposition escape vector
+- `isKitingShip()` - Check if ship uses distance-flee behavior
+- Constants: `FLEE_RETURN_THRESHOLD`, `REPOSITION_DISTANCE_THRESHOLD`, etc.
 
 ### Evade Behavior Integration
 

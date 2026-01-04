@@ -2,9 +2,7 @@
  * AI System - State machine and behavior for AI-controlled ships.
  */
 
-import { Quaternion, Vector3 } from 'three';
 import { type AIControlled, AIState } from '../../components/ai';
-import type { AimError } from '../../components/aim-error';
 import type { Faction, FactionComponent } from '../../components/faction';
 import type { Health } from '../../components/health';
 import { isDying } from '../../components/health';
@@ -12,18 +10,19 @@ import type { Heat } from '../../components/heat';
 import type { Physics } from '../../components/physics';
 import type { Shields } from '../../components/shields';
 import type { Transform } from '../../components/transform';
-import type { PrimaryWeapons } from '../../components/weapons';
 import { entityExists, getComponent, queryEntities } from '../../core/ecs';
-import { calculateInterceptPoint } from '../../core/lead-calculation';
 import type { Entity, World } from '../../core/types';
 import { AI_GLOBAL_SETTINGS } from '../../data/ai-profiles';
 import {
   shouldEvade,
+  shouldFleeDistance,
   shouldRegroup,
   updateEvade,
   updateProtect,
   updateRegroup,
 } from './ai-behaviors';
+import { CLOSE_URGENTLY_THRESHOLD, isKitingShip } from './ai-movement';
+import { maintainDistanceEngage, pursueTarget } from './ai-pursuit';
 import { shouldReposition, updateReposition } from './ai-reposition';
 import {
   countEngagingTarget,
@@ -33,16 +32,7 @@ import {
 } from './ai-utils';
 
 // Re-export for backwards compatibility
-export { findNearestEnemy, setAITarget };
-
-const DEFAULT_PROJECTILE_SPEED = 500; // Default projectile speed
-const DEG_TO_RAD = Math.PI / 180;
-// Reusable vectors
-const toTarget = new Vector3();
-const forward = new Vector3();
-const rotationAxis = new Vector3();
-const deltaQuat = new Quaternion();
-const leadPoint = new Vector3();
+export { findNearestEnemy, setAITarget, pursueTarget };
 
 /** AI system - updates AI state and movement */
 export function aiSystem(world: World, dt: number): void {
@@ -165,8 +155,20 @@ function updatePursue(
 
   const distance = transform.position.distanceTo(targetTransform.position);
 
-  // Transition to engage if close enough (use profile's engage range)
-  if (distance <= ai.profile.engageRange) {
+  // Kiting ships flee when enemy gets too close
+  if (shouldFleeDistance(ai, distance)) {
+    ai.state = AIState.Evade;
+    ai.stateTimer = 0;
+    return;
+  }
+
+  // Transition to engage if close enough
+  // Kiting ships engage at preferredCombatRange instead of profile.engageRange
+  const engageThreshold = isKitingShip(ai)
+    ? (ai.preferredCombatRange ?? ai.profile.engageRange)
+    : ai.profile.engageRange;
+
+  if (distance <= engageThreshold) {
     const targetIsPlayer = isPlayer(world, ai.target);
     const canEngage =
       !targetIsPlayer ||
@@ -212,9 +214,21 @@ function updateEngage(
 
   const distance = transform.position.distanceTo(targetTransform.position);
 
-  // Break off if target gets too far (use profile's break-off range)
-  if (distance > ai.profile.breakOffRange) {
+  // Break off if target gets too far
+  // Kiting ships use preferredCombatRange as break-off threshold
+  const breakOffRange = isKitingShip(ai)
+    ? (ai.preferredCombatRange ?? ai.profile.breakOffRange)
+    : ai.profile.breakOffRange;
+
+  if (distance > breakOffRange) {
     ai.state = AIState.Pursue;
+    ai.stateTimer = 0;
+    return;
+  }
+
+  // Kiting ships flee when enemy gets too close
+  if (shouldFleeDistance(ai, distance)) {
+    ai.state = AIState.Evade;
     ai.stateTimer = 0;
     return;
   }
@@ -227,115 +241,15 @@ function updateEngage(
   }
 
   // Close urgently if beyond preferred range (ensures short-range weapons work)
+  // Kiting ships: NEVER close urgently (they want to maintain range)
   const preferredRange = ai.preferredCombatRange ?? ai.profile.engageRange;
-  const closeUrgently = distance > preferredRange * 1.1;
+  const closeUrgently =
+    !isKitingShip(ai) && distance > preferredRange * CLOSE_URGENTLY_THRESHOLD;
 
-  pursueTarget(world, entity, ai, transform, physics, dt, closeUrgently);
-}
-
-/** Get projectile speed from entity's primary weapons (first projectile weapon) */
-function getProjectileSpeed(world: World, entity: Entity): number {
-  const weapons = getComponent<PrimaryWeapons>(world, entity, 'primaryWeapons');
-  if (weapons) {
-    for (const weapon of weapons.weapons) {
-      if (weapon && weapon.category !== 'beam') {
-        return weapon.projectileSpeed;
-      }
-    }
+  // Kiting ships: maintain distance instead of closing
+  if (isKitingShip(ai) && distance <= preferredRange) {
+    maintainDistanceEngage(world, entity, ai, transform, physics, dt);
+  } else {
+    pursueTarget(world, entity, ai, transform, physics, dt, closeUrgently);
   }
-  return DEFAULT_PROJECTILE_SPEED; // Fallback
-}
-
-/**
- * Pursue behavior - turn toward target (with lead) and accelerate.
- * @param closeUrgently If true, aim directly at target (skip lead) to close distance faster
- */
-export function pursueTarget(
-  world: World,
-  entity: Entity,
-  ai: AIControlled,
-  transform: Transform,
-  physics: Physics,
-  dt: number,
-  closeUrgently = false,
-): void {
-  // ai.target is checked by caller before calling pursueTarget
-  const targetTransform = getComponent<Transform>(
-    world,
-    ai.target as Entity,
-    'transform',
-  );
-  if (!targetTransform) {
-    ai.target = null;
-    return;
-  }
-
-  // When closing urgently, aim directly at target (closes distance vs circling)
-  let aimPoint = targetTransform.position;
-
-  if (!closeUrgently) {
-    // Get target velocity for lead calculation
-    const targetPhysics = getComponent<Physics>(
-      world,
-      ai.target as Entity,
-      'physics',
-    );
-
-    // Skip lead if target moving erratically (high angular velocity)
-    const aimError = getComponent<AimError>(world, entity, 'aimError');
-    const highAngularVelocity =
-      aimError && aimError.currentAngularVelocity > 0.15;
-
-    if (targetPhysics && !highAngularVelocity) {
-      const projectileSpeed = getProjectileSpeed(world, entity);
-      const intercept = calculateInterceptPoint(
-        transform.position,
-        physics.velocity,
-        targetTransform.position,
-        targetPhysics.velocity,
-        projectileSpeed,
-      );
-      if (intercept) {
-        leadPoint.copy(intercept);
-        aimPoint = leadPoint;
-      }
-    }
-  }
-
-  // Calculate direction to aim point
-  toTarget.copy(aimPoint).sub(transform.position);
-  const distToTarget = toTarget.length();
-
-  if (distToTarget > 0.001) {
-    toTarget.multiplyScalar(1 / distToTarget);
-    forward.set(0, 0, -1).applyQuaternion(transform.rotation);
-
-    const dot = forward.dot(toTarget);
-    const turnSpeed = physics.turnRate * DEG_TO_RAD * dt;
-
-    if (dot < 0.999) {
-      rotationAxis.crossVectors(forward, toTarget);
-      const axisLengthSq = rotationAxis.lengthSq();
-
-      if (axisLengthSq > 0.0001) {
-        rotationAxis.multiplyScalar(1 / Math.sqrt(axisLengthSq));
-        const angle = Math.acos(Math.max(-1, Math.min(1, dot)));
-        const rotateAngle = Math.min(angle, turnSpeed);
-
-        deltaQuat.setFromAxisAngle(rotationAxis, rotateAngle);
-        transform.rotation.premultiply(deltaQuat);
-        transform.rotation.normalize();
-      } else if (dot < -0.9) {
-        rotationAxis.set(0, 1, 0);
-        deltaQuat.setFromAxisAngle(rotationAxis, turnSpeed);
-        transform.rotation.premultiply(deltaQuat);
-        transform.rotation.normalize();
-      }
-    }
-  }
-
-  physics.currentSpeed = Math.min(
-    physics.currentSpeed + physics.acceleration * dt,
-    physics.maxSpeed,
-  );
 }

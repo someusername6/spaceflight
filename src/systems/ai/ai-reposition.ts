@@ -10,71 +10,46 @@
  * rather than brawling at close range.
  */
 
-import { Quaternion, Vector3 } from 'three';
 import { type AIControlled, AIState } from '../../components/ai';
 import type { Physics } from '../../components/physics';
 import type { Transform } from '../../components/transform';
 import { entityExists, getComponent } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
-
-// Reusable vectors
-const toTarget = new Vector3();
-const forward = new Vector3();
-const rotationAxis = new Vector3();
-const deltaQuat = new Quaternion();
-const localUp = new Vector3();
-const escapeDir = new Vector3();
-
-const DEG_TO_RAD = Math.PI / 180;
-
-/** Helper: Turn toward a direction */
-function turnToward(
-  transform: Transform,
-  physics: Physics,
-  direction: Vector3,
-  dt: number,
-): void {
-  forward.set(0, 0, -1).applyQuaternion(transform.rotation);
-  const dot = forward.dot(direction);
-  const turnSpeed = physics.turnRate * DEG_TO_RAD * dt;
-
-  if (dot < 0.999) {
-    rotationAxis.crossVectors(forward, direction);
-    const axisLengthSq = rotationAxis.lengthSq();
-
-    if (axisLengthSq > 0.0001) {
-      rotationAxis.multiplyScalar(1 / Math.sqrt(axisLengthSq));
-      const angle = Math.acos(Math.max(-1, Math.min(1, dot)));
-      deltaQuat.setFromAxisAngle(rotationAxis, Math.min(angle, turnSpeed));
-      transform.rotation.premultiply(deltaQuat);
-      transform.rotation.normalize();
-    } else if (dot < -0.9) {
-      // Anti-parallel case: pick arbitrary perpendicular axis (up)
-      rotationAxis.set(0, 1, 0);
-      deltaQuat.setFromAxisAngle(rotationAxis, turnSpeed);
-      transform.rotation.premultiply(deltaQuat);
-      transform.rotation.normalize();
-    }
-  }
-}
+import {
+  accelerateTo,
+  calculateEscapeDirection,
+  FLEE_RETURN_THRESHOLD,
+  isKitingShip,
+  LONG_RANGE_MULTIPLIER,
+  REPOSITION_AWAY_WEIGHT,
+  REPOSITION_DISTANCE_THRESHOLD,
+  REPOSITION_PERPENDICULAR_WEIGHT,
+  tempVectors,
+  turnToward,
+} from './ai-movement';
 
 /** Check if AI should reposition (burst-disengage for long-range ships) */
 export function shouldReposition(ai: AIControlled, distance: number): boolean {
   // Only ships with preferredCombatRange use burst-disengage
   if (ai.preferredCombatRange === undefined) return false;
 
+  // Kiting ships use EVADE for range control, not REPOSITION
+  if (isKitingShip(ai)) return false;
+
   const profile = ai.profile;
 
-  // Only trigger for explicitly long-range ships (preferredCombatRange > 130% of engage range)
-  // This prevents brawlers from incorrectly using burst-disengage
-  if (ai.preferredCombatRange <= profile.engageRange * 1.3) return false;
+  // Only trigger for explicitly long-range ships
+  if (ai.preferredCombatRange <= profile.engageRange * LONG_RANGE_MULTIPLIER) {
+    return false;
+  }
 
   // Must have been engaging long enough (completed burst)
-  // The state timer reset on state change provides natural cooldown
   if (ai.stateTimer < profile.burstDuration) return false;
 
   // Only reposition if too close (inside preferred range)
-  if (distance >= ai.preferredCombatRange * 0.9) return false;
+  if (distance >= ai.preferredCombatRange * REPOSITION_DISTANCE_THRESHOLD) {
+    return false;
+  }
 
   return true;
 }
@@ -89,6 +64,7 @@ export function updateReposition(
   dt: number,
 ): void {
   const profile = ai.profile;
+  const { toTarget, forward } = tempVectors;
 
   // Check if target is still valid
   if (!ai.target || !entityExists(world, ai.target)) {
@@ -115,7 +91,7 @@ export function updateReposition(
 
   // Exit condition: reached preferred range or max reposition time
   if (
-    distance >= preferredRange * 0.95 ||
+    distance >= preferredRange * FLEE_RETURN_THRESHOLD ||
     ai.stateTimer >= profile.maxRepositionTime
   ) {
     ai.state = AIState.Engage;
@@ -130,36 +106,22 @@ export function updateReposition(
     return;
   }
 
-  // Fly away from target - perpendicular escape for maximum angular velocity
+  // Fly away from target with evasive maneuvers
   toTarget.copy(transform.position).sub(targetTransform.position);
   if (toTarget.lengthSq() > 0.001) {
     toTarget.normalize();
-
-    // Calculate perpendicular direction
-    localUp.set(0, 1, 0);
-    escapeDir.crossVectors(toTarget, localUp);
-    if (escapeDir.lengthSq() < 0.001) {
-      escapeDir.set(1, 0, 0);
-    } else {
-      escapeDir.normalize();
-    }
-
-    // Pick direction requiring less turn
     forward.set(0, 0, -1).applyQuaternion(transform.rotation);
-    if (forward.dot(escapeDir) < 0) {
-      escapeDir.negate();
-    }
 
-    // Blend: 60% perpendicular + 40% away (gain distance while staying evasive)
-    escapeDir.multiplyScalar(0.6).addScaledVector(toTarget, 0.4).normalize();
-
+    const escapeDir = calculateEscapeDirection(
+      toTarget,
+      forward,
+      REPOSITION_PERPENDICULAR_WEIGHT,
+      REPOSITION_AWAY_WEIGHT,
+    );
     turnToward(transform, physics, escapeDir, dt);
   }
 
-  // Use afterburner for fast repositioning
+  // Use afterburner for fast repositioning (80% of max afterburner speed)
   const afterburnerSpeed = physics.maxSpeed * physics.afterburnerMultiplier;
-  physics.currentSpeed = Math.min(
-    physics.currentSpeed + physics.acceleration * 1.3 * dt,
-    afterburnerSpeed * 0.8,
-  );
+  accelerateTo(physics, afterburnerSpeed * 0.8, dt, 1.3);
 }
