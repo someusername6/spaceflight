@@ -233,10 +233,10 @@ npx tsx scripts/tests/combat/simulate-combat.mjs profile-rookie-vs-ace 50
 
 | Profile | Aim Error | Angular Factor | Engage Range | Evade Threshold |
 |---------|-----------|----------------|--------------|-----------------|
-| Rookie | 0.12 rad | 0.8 | 500m | 35% shields (panics early) |
+| Rookie | 0.095 rad | 0.68 | 500m | 31% shields (panics early) |
 | Regular | 0.05 rad | 0.5 | 600m | 25% shields |
-| Veteran | 0.03 rad | 0.3 | 700m | 18% shields |
-| Ace | 0.015 rad | 0.15 | 800m | 12% shields (ice cold) |
+| Veteran | 0.032 rad | 0.3 | 700m | 20% shields |
+| Ace | 0.008 rad | 0.06 | 800m | 12% shields (ice cold) |
 
 ---
 
@@ -252,4 +252,5 @@ npx tsx scripts/tests/combat/simulate-combat.mjs profile-rookie-vs-ace 50
   - Made dumbfire rockets use aim error (skill affects missile accuracy)
   - Inverted defensive thresholds (rookies panic early, aces stay calm)
   - Fixed aim error to start at random value instead of 0
-  - Result: Regular > Rookie +20%, Veteran > Regular +8%, Ace > Veteran +1%
+  - Iteratively tuned profiles across 5 iterations to hit targets
+  - Final result: Regular > Rookie +19%, Veteran > Regular +13%, Ace > Veteran +5%
