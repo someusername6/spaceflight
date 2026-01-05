@@ -46,6 +46,7 @@ const COLORS = {
   neutralDim: '#aa0',
   neutralBright: '#ff0',
   player: '#0f0',
+  missile: '#888',
 };
 
 // Reusable vector for ship-local transformation
@@ -237,6 +238,71 @@ export function updateRadar(
       ctx.fill();
     }
   }
+
+  // Draw missiles as grey Xs
+  drawMissiles(
+    ctx,
+    world,
+    playerTransform,
+    inverseQuat,
+    centerX,
+    centerY,
+    maxRadius,
+  );
+}
+
+/** Draw missiles on radar as grey Xs */
+function drawMissiles(
+  ctx: CanvasRenderingContext2D,
+  world: World,
+  playerTransform: Transform,
+  invQuat: THREE.Quaternion,
+  centerX: number,
+  centerY: number,
+  maxRadius: number,
+): void {
+  ctx.strokeStyle = COLORS.missile;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+
+  for (const entity of queryEntities(world, [
+    'transform',
+    'missile',
+    'health',
+  ])) {
+    const health = getComponent<Health>(world, entity, 'health');
+    if (!health || health.hull <= 0) continue;
+    if (isDying(health)) continue;
+
+    const transform = getComponent<Transform>(world, entity, 'transform');
+    if (!transform) continue;
+
+    // Transform to ship-local coordinates
+    localPos.copy(transform.position).sub(playerTransform.position);
+    localPos.applyQuaternion(invQuat);
+
+    // Check range
+    const totalDist = localPos.length();
+    if (totalDist > RADAR_RANGE) continue;
+
+    // Calculate radar position
+    const horizDist = Math.sqrt(
+      localPos.x * localPos.x + localPos.z * localPos.z,
+    );
+    const radarDist = distanceToRadar(horizDist, maxRadius);
+    const angle = Math.atan2(localPos.x, -localPos.z);
+    const blipX = centerX + Math.sin(angle) * radarDist;
+    const blipY = centerY - Math.cos(angle) * radarDist;
+
+    // Draw X shape (batched into single path)
+    const xSize = 2;
+    ctx.moveTo(blipX - xSize, blipY - xSize);
+    ctx.lineTo(blipX + xSize, blipY + xSize);
+    ctx.moveTo(blipX + xSize, blipY - xSize);
+    ctx.lineTo(blipX - xSize, blipY + xSize);
+  }
+
+  ctx.stroke();
 }
 
 /** Get CSS styles for radar */

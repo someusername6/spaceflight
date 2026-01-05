@@ -27,6 +27,7 @@ export interface TargetInfo {
   isNeutral: boolean;
   isLockTarget: boolean;
   lockProgress: number;
+  isMissile: boolean;
 }
 
 // Pool of reusable TargetInfo objects (avoids per-frame object allocation)
@@ -48,6 +49,7 @@ export function getTargetInfo(): TargetInfo {
       isNeutral: false,
       isLockTarget: false,
       lockProgress: 0,
+      isMissile: false,
     });
   }
   return targetPool[targetPoolIndex++] as TargetInfo;

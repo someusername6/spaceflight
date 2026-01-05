@@ -4,6 +4,8 @@
 
 import * as THREE from 'three';
 import { Faction, type FactionComponent } from '../../components/faction';
+import type { Health } from '../../components/health';
+import { isDying } from '../../components/health';
 import type { Physics } from '../../components/physics';
 import type { Targeting } from '../../components/targeting';
 import type { Transform } from '../../components/transform';
@@ -11,7 +13,7 @@ import type {
   PrimaryWeapons,
   SecondaryWeapons,
 } from '../../components/weapons';
-import { getComponent, queryEntities } from '../../core/ecs';
+import { getComponent, hasComponent, queryEntities } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
 import {
   drawDumbfireMissileLeadIndicator,
@@ -154,6 +156,13 @@ export function updateReticles(
   ])) {
     if (entity === player) continue;
 
+    // Skip projectiles (they don't need reticles)
+    if (hasComponent(world, entity, 'projectile')) continue;
+
+    // Skip dying entities (already exploding)
+    const health = getComponent<Health>(world, entity, 'health');
+    if (health && isDying(health)) continue;
+
     // Query guarantees these components exist
     const transform = getComponent<Transform>(
       world,
@@ -171,6 +180,7 @@ export function updateReticles(
       playerTransform?.position.distanceTo(transform.position) ?? 0;
 
     const isLockTarget = entity === lockTarget;
+    const isMissile = hasComponent(world, entity, 'missile');
 
     // Get reusable object from pool (avoids per-frame allocation)
     const target = getTargetInfo();
@@ -184,6 +194,7 @@ export function updateReticles(
     target.isNeutral = faction.faction === Faction.Neutral;
     target.isLockTarget = isLockTarget;
     target.lockProgress = isLockTarget ? lockProgress : 0;
+    target.isMissile = isMissile;
     targets.push(target);
   }
 
@@ -219,20 +230,17 @@ function renderTarget(
   secondaryWeapons: SecondaryWeapons | undefined,
 ): void {
   // Colors matching radar: dim for non-selected, bright for selected
-  // Enemy: red, Ally: green, Neutral: yellow
-  let baseColor: string;
-  let dimColor: string;
-  if (target.isNeutral) {
-    baseColor = '#ffff00';
-    dimColor = '#888800';
+  // Missiles always grey, ships use faction colors
+  let color: string;
+  if (target.isMissile) {
+    color = '#888888';
+  } else if (target.isNeutral) {
+    color = target.isSelected ? '#ffff00' : '#888800';
   } else if (target.isEnemy) {
-    baseColor = '#ff0000';
-    dimColor = '#880000';
+    color = target.isSelected ? '#ff0000' : '#880000';
   } else {
-    baseColor = '#00ff00';
-    dimColor = '#008800';
+    color = target.isSelected ? '#00ff00' : '#008800';
   }
-  const color = target.isSelected ? baseColor : dimColor;
 
   // Check if target is behind camera using dot product (works at any distance)
   toTarget.copy(target.transform.position).sub(camera.position);
@@ -277,8 +285,13 @@ function renderTarget(
       drawLockIndicator(ctx, bounds, target.lockProgress, color);
     }
 
-    // Draw lead indicator(s) for selected target
-    if (target.isSelected && playerTransform && playerWeapons) {
+    // Draw lead indicator(s) for selected target (not for missiles)
+    if (
+      target.isSelected &&
+      !target.isMissile &&
+      playerTransform &&
+      playerWeapons
+    ) {
       drawLeadIndicators(
         ctx,
         camera,
@@ -294,8 +307,13 @@ function renderTarget(
       );
     }
 
-    // Draw dumbfire missile lead indicator for selected target
-    if (target.isSelected && playerTransform && secondaryWeapons) {
+    // Draw dumbfire missile lead indicator for selected target (not for missiles)
+    if (
+      target.isSelected &&
+      !target.isMissile &&
+      playerTransform &&
+      secondaryWeapons
+    ) {
       drawDumbfireMissileLeadIndicator(
         ctx,
         camera,
