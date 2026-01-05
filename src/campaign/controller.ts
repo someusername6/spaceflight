@@ -349,11 +349,11 @@ function launchMission(
     missionEndState.delayRemaining = MISSION_END_DELAY;
     missionEndState.victory = result === MissionResult.Victory;
 
-    // Show victory/defeat overlay immediately
+    // Show victory/defeat overlay immediately (slightly above center)
     const overlay = document.createElement('div');
     overlay.style.cssText = `
       position: absolute;
-      top: 50%;
+      top: 35%;
       left: 50%;
       transform: translate(-50%, -50%);
       font-size: 72px;

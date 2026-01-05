@@ -15,7 +15,12 @@ import { isDead } from '../components/health';
 import type { PlayerControlled } from '../components/player';
 import type { Targeting } from '../components/targeting';
 import type { Transform } from '../components/transform';
-import { entityExists, getComponent, queryEntities } from '../core/ecs';
+import {
+  entityExists,
+  getComponent,
+  hasComponent,
+  queryEntities,
+} from '../core/ecs';
 import type { Entity, World } from '../core/types';
 
 // Pool for target info objects (avoid per-frame allocations)
@@ -150,16 +155,21 @@ function updateValidTargets(
   world.systemState.pools.targetCollector = 0;
   targetCollector.length = 0;
 
-  // Query for ships only (shipIdentity distinguishes ships from missiles/decoys)
+  // Query for all entities with targeting-relevant components, then filter
+  // to include only ships (shipIdentity) or decoys (which appear as ships)
   for (const other of queryEntities(world, [
     'transform',
     'faction',
     'health',
-    'shipIdentity',
   ])) {
     if (other === self) continue;
 
-    // Skip dead or dying enemies (already exploding)
+    // Only target ships and decoys (not missiles or projectiles)
+    const isShip = hasComponent(world, other, 'shipIdentity');
+    const isDecoy = hasComponent(world, other, 'decoy');
+    if (!isShip && !isDecoy) continue;
+
+    // Skip dead or dying entities
     const otherHealth = getComponent<Health>(world, other, 'health');
     if (otherHealth && isDead(otherHealth)) continue;
 

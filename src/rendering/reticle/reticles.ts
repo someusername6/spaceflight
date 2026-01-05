@@ -163,9 +163,9 @@ export function updateReticles(
   ])) {
     if (entity === player) continue;
 
-    // Skip projectiles and decoys (they don't need reticles)
+    // Skip projectiles (they don't need reticles)
+    // Note: Decoys ARE rendered with faction colors to appear as ships
     if (hasComponent(world, entity, 'projectile')) continue;
-    if (hasComponent(world, entity, 'decoy')) continue;
 
     // Skip dead or dying entities (no reticle drawn for them)
     const health = getComponent<Health>(world, entity, 'health');

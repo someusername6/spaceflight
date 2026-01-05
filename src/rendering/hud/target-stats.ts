@@ -4,13 +4,18 @@
  */
 
 import * as THREE from 'three';
+import {
+  DECOY_LIFETIME,
+  DECOY_SPEED,
+  type Decoy,
+} from '../../components/decoy';
 import type { Health } from '../../components/health';
 import type { Physics } from '../../components/physics';
 import type { Shields } from '../../components/shields';
 import type { ShipIdentity } from '../../components/ship-identity';
 import type { Targeting } from '../../components/targeting';
 import type { Transform } from '../../components/transform';
-import { getComponent } from '../../core/ecs';
+import { getComponent, hasComponent } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
 
 /** Target stats display state */
@@ -20,8 +25,10 @@ export interface TargetStatsDisplay {
   callsignEl: HTMLElement;
   typeEl: HTMLElement;
   distanceEl: HTMLElement;
+  hullLabel: HTMLElement;
   hullBar: HTMLElement;
   hullValue: HTMLElement;
+  shieldRow: HTMLElement;
   shieldBar: HTMLElement;
   shieldValue: HTMLElement;
   aspectEl: HTMLElement;
@@ -30,6 +37,7 @@ export interface TargetStatsDisplay {
 // Reusable vectors for aspect calculation
 const relVel = new THREE.Vector3();
 const bearing = new THREE.Vector3();
+const decoyVelocity = new THREE.Vector3();
 
 /** Create target stats display */
 export function createTargetStats(parent: HTMLElement): TargetStatsDisplay {
@@ -44,11 +52,11 @@ export function createTargetStats(parent: HTMLElement): TargetStatsDisplay {
       <span class="target-distance">---</span>
     </div>
     <div class="target-row">
-      <span class="target-label">HULL</span>
+      <span class="target-label hull-label">HULL</span>
       <div class="target-bar hull"><div class="target-bar-fill"></div></div>
       <span class="target-bar-value">---</span>
     </div>
-    <div class="target-row">
+    <div class="target-row shield-row">
       <span class="target-label">SHLD</span>
       <div class="target-bar shield"><div class="target-bar-fill"></div></div>
       <span class="target-bar-value">---</span>
@@ -66,12 +74,14 @@ export function createTargetStats(parent: HTMLElement): TargetStatsDisplay {
     callsignEl: container.querySelector('.target-callsign') as HTMLElement,
     typeEl: container.querySelector('.target-type') as HTMLElement,
     distanceEl: container.querySelector('.target-distance') as HTMLElement,
+    hullLabel: container.querySelector('.hull-label') as HTMLElement,
     hullBar: container.querySelector(
       '.target-bar.hull .target-bar-fill',
     ) as HTMLElement,
     hullValue: container.querySelector(
       '.target-bar.hull + .target-bar-value',
     ) as HTMLElement,
+    shieldRow: container.querySelector('.shield-row') as HTMLElement,
     shieldBar: container.querySelector(
       '.target-bar.shield .target-bar-fill',
     ) as HTMLElement,
@@ -96,6 +106,7 @@ export function updateTargetStats(
     display.callsignEl.textContent = '---';
     display.typeEl.textContent = 'NO TARGET';
     display.distanceEl.textContent = '---';
+    display.hullLabel.textContent = 'HULL';
     display.hullBar.style.width = '0%';
     display.hullValue.textContent = '---';
     display.shieldBar.style.width = '0%';
@@ -116,8 +127,17 @@ export function updateTargetStats(
   const playerTransform = getComponent<Transform>(world, player, 'transform');
   const playerPhysics = getComponent<Physics>(world, player, 'physics');
 
+  // Check if target is a decoy
+  const isDecoy = hasComponent(world, target, 'decoy');
+  const decoy = isDecoy
+    ? getComponent<Decoy>(world, target, 'decoy')
+    : undefined;
+
   // Callsign and type
-  if (identity) {
+  if (isDecoy) {
+    display.callsignEl.textContent = 'DECOY';
+    display.typeEl.textContent = 'COUNTERMEASURE';
+  } else if (identity) {
     display.callsignEl.textContent = identity.callsign;
     display.typeEl.textContent = identity.archetype.toUpperCase();
   } else {
@@ -135,8 +155,16 @@ export function updateTargetStats(
     display.distanceEl.textContent = '---';
   }
 
-  // Hull
-  if (health) {
+  // Hull - for decoys, show lifetime countdown instead
+  if (isDecoy && decoy) {
+    display.hullLabel.textContent = 'TIME';
+    // Show remaining lifetime as a countdown bar
+    const lifetimePct = (decoy.timeRemaining / DECOY_LIFETIME) * 100;
+    display.hullBar.style.width = `${lifetimePct}%`;
+    display.hullValue.textContent = `${decoy.timeRemaining.toFixed(1)}s`;
+    display.hullBar.style.background = lifetimePct < 30 ? '#f80' : '#0af';
+  } else if (health) {
+    display.hullLabel.textContent = 'HULL';
     const hullPct = (health.hull / health.maxHull) * 100;
     display.hullBar.style.width = `${hullPct}%`;
     display.hullValue.textContent = `${Math.round(hullPct)}%`;
@@ -154,23 +182,41 @@ export function updateTargetStats(
     display.hullValue.textContent = '---';
   }
 
-  // Shields
-  if (shields) {
-    const shieldPct = (shields.current / shields.max) * 100;
-    display.shieldBar.style.width = `${shieldPct}%`;
-    display.shieldValue.textContent = `${Math.round(shieldPct)}%`;
+  // Shields - hide row for decoys (they don't have shields)
+  if (isDecoy) {
+    display.shieldRow.style.display = 'none';
   } else {
-    display.shieldBar.style.width = '0%';
-    display.shieldValue.textContent = '---';
+    display.shieldRow.style.display = '';
+    if (shields) {
+      const shieldPct = (shields.current / shields.max) * 100;
+      display.shieldBar.style.width = `${shieldPct}%`;
+      display.shieldValue.textContent = `${Math.round(shieldPct)}%`;
+    } else {
+      display.shieldBar.style.width = '0%';
+      display.shieldValue.textContent = '---';
+    }
   }
 
-  // Aspect (closing/separating)
-  if (targetTransform && playerTransform && targetPhysics && playerPhysics) {
+  // Aspect (closing/separating) - works for ships and decoys
+  if (targetTransform && playerTransform && playerPhysics) {
+    // Get target velocity: from physics for ships, from direction for decoys
+    let targetVel: THREE.Vector3;
+    if (isDecoy && decoy) {
+      decoyVelocity.copy(decoy.direction).multiplyScalar(DECOY_SPEED);
+      targetVel = decoyVelocity;
+    } else if (targetPhysics) {
+      targetVel = targetPhysics.velocity;
+    } else {
+      display.aspectEl.textContent = '---';
+      display.aspectEl.className = 'target-aspect';
+      return;
+    }
+
     const closureRate = calculateClosureRate(
       playerTransform.position,
       playerPhysics.velocity,
       targetTransform.position,
-      targetPhysics.velocity,
+      targetVel,
     );
     display.aspectEl.textContent = formatAspect(closureRate);
     display.aspectEl.className = `target-aspect ${closureRate > 10 ? 'closing' : closureRate < -10 ? 'separating' : ''}`;

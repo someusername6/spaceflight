@@ -299,41 +299,18 @@ export function handleAISecondaryWeapons(
   // Dumbfire rockets use aim error - rookies miss more often
   if (weapon.turnRate === 0) {
     const ownerPhysics = getComponent<Physics>(world, entity, 'physics');
-    const ownerVelocity = ownerPhysics?.velocity ?? tempZeroVec;
-    const targetVelocity = targetPhysics?.velocity ?? tempZeroVec;
-
     const interceptPoint = calculateInterceptPoint(
       transform.position,
-      ownerVelocity,
+      ownerPhysics?.velocity ?? tempZeroVec,
       targetTransform.position,
-      targetVelocity,
+      targetPhysics?.velocity ?? tempZeroVec,
       weapon.speed,
     );
 
-    if (interceptPoint) {
-      // Aim at the lead point
-      tempAimDir.copy(interceptPoint).sub(transform.position).normalize();
-      // Apply aim error for skill-based accuracy
-      const finalDir = aimError
-        ? applyAimError(tempAimDir, aimError).clone()
-        : tempAimDir;
-      spawnMissile(
-        world,
-        entity,
-        transform,
-        weapon,
-        faction,
-        ai.target,
-        finalDir,
-      );
-      return;
-    }
-    // No intercept solution - fire straight at target as fallback
-    tempAimDir
-      .copy(targetTransform.position)
-      .sub(transform.position)
-      .normalize();
-    // Apply aim error for skill-based accuracy
+    // Use intercept point if available, otherwise aim directly at target
+    const aimPoint = interceptPoint ?? targetTransform.position;
+    tempAimDir.copy(aimPoint).sub(transform.position).normalize();
+
     const finalDir = aimError
       ? applyAimError(tempAimDir, aimError).clone()
       : tempAimDir;
@@ -346,11 +323,15 @@ export function handleAISecondaryWeapons(
       ai.target,
       finalDir,
     );
+    // Reset lock progress - must re-acquire lock for next missile
+    weapons.lockProgress = 0;
     return;
   }
 
   // Tracking missiles or no intercept solution - fire at target
   spawnMissile(world, entity, transform, weapon, faction, weapons.lockTarget);
+  // Reset lock progress - must re-acquire lock for next missile
+  weapons.lockProgress = 0;
 }
 
 /** Get fastest fire rate among non-decoy missiles */

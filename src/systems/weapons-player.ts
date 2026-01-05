@@ -212,6 +212,9 @@ export function handlePlayerSecondaryWeapons(
 
       const target = weapons.lockProgress >= 1 ? weapons.lockTarget : undefined;
       spawnMissile(world, entity, transform, weapon, faction, target);
+
+      // Reset lock progress - must re-acquire lock for next missile
+      weapons.lockProgress = 0;
     }
   }
 }
