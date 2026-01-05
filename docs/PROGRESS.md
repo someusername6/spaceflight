@@ -99,3 +99,10 @@ Balance targets achieved:
 - **Controller integration** (`src/campaign/controller.ts:79-105,284-298`): `setupHangarScreen` helper wires up resupply callback. Mission end extracts ammo and persists to campaign state.
 - **Salvage bonus** (`src/campaign/state.ts:151-163`): 50 credits per enemy kill, awarded regardless of victory/defeat. `calculateSalvageBonus` counts enemy kills from match stats.
 - **Results UI breakdown** (`src/ui/results.ts:35-46`): Shows base reward and salvage bonus separately in mission results.
+
+#### Future: Enhanced Salvage System (depends on inventory + store)
+Once inventory management and buy/sell are implemented, enhance salvage to yield:
+- **Scrap by ship class**: Accumulate to build ships of that type, or sell for credits
+- **Functional weapons**: Random chance to recover enemy weapons
+- **Unspent ammo**: Random chance to recover ammo from enemy loadout
+Requires: Equipment inventory, store UI, randomization via seeded PRNG.
