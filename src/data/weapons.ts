@@ -109,15 +109,14 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
   },
 
   // === BEAM WEAPONS (continuous, damage per second) ===
-  // +100% damage buff to make beam specialization viable (see BALANCE_TESTING.md)
   redLaser: {
     name: 'Red Laser',
     category: 'beam',
-    heatPerShot: 15, // Per second
-    projectileSpeed: 0, // Instant
-    fireRate: 0, // Continuous
+    heatPerShot: 15,
+    projectileSpeed: 0,
+    fireRate: 0,
     range: 400,
-    damage: 120, // Per second (was 60, +100% buff)
+    damage: 120,
   },
   greenLaser: {
     name: 'Green Laser',
@@ -126,7 +125,7 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
     projectileSpeed: 0,
     fireRate: 0,
     range: 800,
-    damage: 80, // Was 40, +100% buff
+    damage: 80,
   },
   blueLaser: {
     name: 'Blue Laser',
@@ -135,7 +134,7 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
     projectileSpeed: 0,
     fireRate: 0,
     range: 1200,
-    damage: 50, // Was 25, +100% buff
+    damage: 50,
   },
 
   // === SPECIAL BEAM WEAPONS ===

@@ -30,6 +30,8 @@ Weapon components and systems (projectiles, missiles, beams, decoys), shield sys
 
 - **LancerBlue R>Rk weakness** (`src/factories/ship-archetypes.ts:197-212`): Blue laser's heavy damage falloff at range (50 DPS base / distance factor) causes long fights where skill differences matter less. R>Rk at 30-40%. Brawler playstyle helps but blue laser is inherently weak at the ranges where skill would differentiate.
 
+- **Striker mirror variance** (`src/factories/ship-archetypes.ts:96-105`): Striker skill scaling hovers around 50-55% for all matchups (R>Rk, V>R, A>V), making mirrors near coin-flips. This is **inherent** to striker's design: 5 primary weapons (plasma, autocannon, greenLaser, 2x pulse) dilute per-shot accuracy differences, high tankiness (200 HP) extends fights, and equal slow speed (200 m/s) prevents decisive chases. Unlike sniper where skill clearly differentiates (ace hits, rookie misses), striker's multi-weapon DPS averages out skill differences. Thematically appropriate for a heavily-armed slugfest brawler.
+
 ---
 
 ## Phase 4: Slice 3 - Campaign Loop
