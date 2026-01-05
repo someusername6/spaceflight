@@ -43,7 +43,7 @@ export function createShipFromArchetype(
 
   return {
     id: generateId(),
-    archetype,
+    shipClass: stats.shipClassName, // Use the underlying ship class
     primaryWeapons,
     secondaryWeapons,
     pilot: null,
@@ -81,6 +81,7 @@ export function createNewCampaign(): CampaignState {
     credits: 1000,
     ships: [playerShip, wingman1, wingman2, wingman3],
     pilots: [], // All pilots assigned
+    storedHulls: [], // No spare hulls at start
     storedWeapons: [],
     currentSector: 1,
     completedContracts: [],

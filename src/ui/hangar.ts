@@ -7,7 +7,7 @@
 
 import { calculateResupplyCost } from '../campaign/state';
 import type { CampaignState, OwnedShip } from '../campaign/types';
-import { SHIP_ARCHETYPES } from '../factories/ship-archetypes';
+import { SHIP_CLASSES } from '../data/ships';
 
 /** Hangar UI state */
 export interface HangarUI {
@@ -16,9 +16,9 @@ export interface HangarUI {
   onResupply?: () => void;
 }
 
-/** Get hull stats for a ship archetype */
-function getMaxHull(archetype: string): number {
-  const stats = SHIP_ARCHETYPES[archetype];
+/** Get hull stats for a ship class */
+function getMaxHull(shipClass: string): number {
+  const stats = SHIP_CLASSES[shipClass];
   return stats?.hull ?? 100;
 }
 
@@ -33,7 +33,7 @@ function getTotalResupplyCost(state: CampaignState): number {
 
 /** Render a single ship item */
 function renderShipItem(ship: OwnedShip): string {
-  const maxHull = getMaxHull(ship.archetype);
+  const maxHull = getMaxHull(ship.shipClass);
   const currentHull = maxHull - ship.hullDamage;
   const hullPercent = Math.round((currentHull / maxHull) * 100);
   const isDamaged = ship.hullDamage > 0;
@@ -50,10 +50,10 @@ function renderShipItem(ship: OwnedShip): string {
 
   return `
     <div class="ship-item" data-ship-id="${ship.id}">
-      <div class="ship-icon">${ship.archetype.substring(0, 3).toUpperCase()}</div>
+      <div class="ship-icon">${ship.shipClass.substring(0, 3).toUpperCase()}</div>
       <div class="ship-info">
         <div class="ship-name">${pilotName}${pilotSkill}</div>
-        <div class="ship-archetype">${ship.archetype}</div>
+        <div class="ship-class">${ship.shipClass}</div>
         <div class="ship-status ${isDamaged ? 'damaged' : 'ok'}">
           Hull: ${hullPercent}%
           ${isDamaged ? `(${ship.hullDamage} damage)` : ''}

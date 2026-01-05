@@ -100,6 +100,29 @@ Balance targets achieved:
 - **Salvage bonus** (`src/campaign/state.ts:151-163`): 50 credits per enemy kill, awarded regardless of victory/defeat. `calculateSalvageBonus` counts enemy kills from match stats.
 - **Results UI breakdown** (`src/ui/results.ts:35-46`): Shows base reward and salvage bonus separately in mission results.
 
+#### Next: Inventory & Loadout System
+**Phase B - Equipment Inventory:**
+- Stored weapons (unequipped, available to install)
+- Stored ships (hulls without pilots assigned)
+- Display inventory in hangar UI
+
+**Phase C - Store UI:**
+- Buy/sell weapons
+- Buy/sell ship hulls
+- Prices defined per item type
+
+**Phase D - Loadout Customization:**
+- Swap ship types (assign pilot to different hull)
+- Equip/unequip weapons on ships
+- Track which equipment is attached to which ship
+- Validate loadout constraints (weapon slots per ship class)
+
+**Ship Destruction Rules:**
+- Destroyed ship → hull lost from inventory
+- Equipped weapons on destroyed ship → also lost
+- Spent ammo → already tracked and persisted
+- Pilot fate: TBD (killed or ejected to pilot pool)
+
 #### Future: Enhanced Salvage System (depends on inventory + store)
 Once inventory management and buy/sell are implemented, enhance salvage to yield:
 - **Scrap by ship class**: Accumulate to build ships of that type, or sell for credits

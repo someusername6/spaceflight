@@ -29,15 +29,22 @@ export interface EquippedSecondary {
   maxCount: number; // for resupply reference
 }
 
-/** A ship owned by the player's squadron */
+/** A ship owned by the player's squadron (active, with pilot assigned) */
 export interface OwnedShip {
   id: string;
-  archetype: string; // 'interceptor', 'striker', etc.
+  shipClass: string; // 'interceptor', 'striker', etc. (from SHIP_CLASSES)
   primaryWeapons: EquippedPrimary[];
   secondaryWeapons: EquippedSecondary[];
   pilot: Pilot | null; // null = player-controlled or unassigned
   hullDamage: number; // 0 = full health, positive = damage taken
   isPlayerShip: boolean; // true for the ship player flies
+}
+
+/** A ship hull in storage (no pilot, no weapons equipped) */
+export interface StoredHull {
+  id: string;
+  shipClass: string; // 'interceptor', 'striker', etc.
+  hullDamage: number;
 }
 
 /** A contract (mission) available to accept */
@@ -71,6 +78,7 @@ export interface CampaignState {
   credits: number;
   ships: OwnedShip[];
   pilots: Pilot[]; // unassigned pilots
+  storedHulls: StoredHull[]; // ship hulls in storage (no pilot/weapons)
   storedWeapons: StoredWeapon[]; // weapons in storage
   currentSector: number;
   completedContracts: string[];

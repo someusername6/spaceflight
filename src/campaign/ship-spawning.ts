@@ -33,8 +33,8 @@ import type { Entity, World } from '../core/types';
 import { Faction } from '../core/types';
 import { getProfileForPlaystyle, type ProfileName } from '../data/ai-profiles';
 import { MISSILES } from '../data/missiles';
+import { SHIP_CLASSES } from '../data/ships';
 import { PRIMARY_WEAPONS } from '../data/weapons';
-import { SHIP_ARCHETYPES } from '../factories/ship-archetypes';
 import { initWeaponAmmoCounts } from '../systems/stats';
 import type { EquippedPrimary, EquippedSecondary, OwnedShip } from './types';
 
@@ -164,9 +164,9 @@ export function spawnPlayerFromCampaign(
   position?: Vector3,
   rotation?: Quaternion,
 ): Entity {
-  const stats = SHIP_ARCHETYPES[ship.archetype];
+  const stats = SHIP_CLASSES[ship.shipClass];
   if (!stats) {
-    throw new Error(`Unknown ship archetype: ${ship.archetype}`);
+    throw new Error(`Unknown ship class: ${ship.shipClass}`);
   }
 
   const entity = createEntity(world);
@@ -208,7 +208,7 @@ export function spawnPlayerFromCampaign(
   addComponent(
     world,
     entity,
-    createShipIdentity(ship.archetype, 'Alpha 1', ship.id),
+    createShipIdentity(ship.shipClass, 'Alpha 1', ship.id),
   );
   addComponent(world, entity, createTargeting());
   addComponent(world, entity, createHeat(stats.maxHeat, stats.coolingRate));
@@ -242,9 +242,9 @@ export function spawnWingmanFromCampaign(
   position?: Vector3,
   rotation?: Quaternion,
 ): Entity {
-  const stats = SHIP_ARCHETYPES[ship.archetype];
+  const stats = SHIP_CLASSES[ship.shipClass];
   if (!stats) {
-    throw new Error(`Unknown ship archetype: ${ship.archetype}`);
+    throw new Error(`Unknown ship class: ${ship.shipClass}`);
   }
 
   const entity = createEntity(world);
@@ -288,19 +288,16 @@ export function spawnWingmanFromCampaign(
   addComponent(
     world,
     entity,
-    createShipIdentity(ship.archetype, callsign, ship.id),
+    createShipIdentity(ship.shipClass, callsign, ship.id),
   );
 
-  // AI setup
+  // AI setup - default to brawler playstyle for campaign wingmen
   const profileName: ProfileName = ship.pilot?.skill ?? 'regular';
-  const playstyle = stats.playstyle ?? 'brawler';
-  const profile = getProfileForPlaystyle(profileName, playstyle);
+  const profile = getProfileForPlaystyle(profileName, 'brawler');
 
-  const baseRange = stats.preferredCombatRange ?? 600;
+  const baseRange = 600; // Default combat range
   const preferredRange = Math.floor(baseRange * profile.combatRangeMultiplier);
-  const fleeDistance = stats.fleeDistance
-    ? Math.floor(stats.fleeDistance * profile.fleeDistanceMultiplier)
-    : undefined;
+  const fleeDistance: number | undefined = undefined; // No flee by default
 
   addComponent(
     world,
