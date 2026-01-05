@@ -133,7 +133,13 @@ export function weaponSystem(world: World, dt: number): void {
 
     if (player) {
       const targeting = getComponent<Targeting>(world, entity, 'targeting');
-      updateLockProgress(world, weapons, targeting?.currentTarget, dt);
+      updateLockProgress(
+        world,
+        weapons,
+        targeting?.currentTarget,
+        transform,
+        dt,
+      );
       handlePlayerSecondaryWeapons(
         world,
         entity,
@@ -147,7 +153,7 @@ export function weaponSystem(world: World, dt: number): void {
     } else {
       const ai = getComponent<AIControlled>(world, entity, 'aiControlled');
       if (ai) {
-        updateLockProgress(world, weapons, ai.target, dt);
+        updateLockProgress(world, weapons, ai.target, transform, dt);
         const aimError = getComponent<AimError>(world, entity, 'aimError');
         handleAISecondaryWeapons(
           world,
@@ -271,6 +277,7 @@ export function fireLinkedPrimaries(
  * Lock resets when:
  * - Target changes (different enemy)
  * - Weapon changes (different missile type has different lock speed)
+ * - Target moves outside missile range
  *
  * This ensures consistent behavior between player and AI.
  */
@@ -278,16 +285,31 @@ function updateLockProgress(
   world: World,
   weapons: SecondaryWeapons,
   target: Entity | null | undefined,
+  selfTransform: Transform,
   dt: number,
 ): void {
   const weapon = getCurrentSecondary(weapons);
   if (!weapon) return;
 
-  // No valid target - decay lock
+  // No valid target - lose lock
   if (target === undefined || target === null || !entityExists(world, target)) {
-    weapons.lockProgress = Math.max(0, weapons.lockProgress - dt * 2);
+    weapons.lockProgress = 0;
     weapons.lockTarget = undefined;
     return;
+  }
+
+  // Check if target is within missile range
+  const targetTransform = getComponent<Transform>(world, target, 'transform');
+  if (targetTransform) {
+    const distance = selfTransform.position.distanceTo(
+      targetTransform.position,
+    );
+    if (distance > weapon.range) {
+      // Target out of range - lose lock
+      weapons.lockProgress = 0;
+      weapons.lockTarget = undefined;
+      return;
+    }
   }
 
   // Reset lock if target changed
