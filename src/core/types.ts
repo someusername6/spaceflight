@@ -133,6 +133,19 @@ export interface SystemState {
     /** Decoys that successfully seduced a missile */
     decoysSuccessful: number;
   };
+  /** Match statistics for debrief screen (per-ship stats, assists, kills) */
+  matchStats?: {
+    /** Track who damaged each ship (for assist calculation) */
+    damageSources: Map<Entity, Set<Entity>>;
+    /** Track last damage source for each ship (for kill attribution) */
+    lastDamageSource: Map<Entity, Entity>;
+    /** Stats for destroyed ships (preserved after entity removal) */
+    destroyedShips: import('../components/combat-stats').DestroyedShipRecord[];
+    /** Mission start time (gameTime when mission started) */
+    missionStartTime: number;
+    /** Mission end time (gameTime when mission ended) */
+    missionEndTime: number;
+  };
 }
 
 /** Forward declaration - full definition in ecs.ts */

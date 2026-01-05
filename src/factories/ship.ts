@@ -6,6 +6,7 @@ import type { Quaternion, Vector3 } from 'three';
 import { createAIControlled } from '../components/ai';
 import { createAimError } from '../components/aim-error';
 import { createCollision } from '../components/collision';
+import { createCombatStats } from '../components/combat-stats';
 import { createFaction } from '../components/faction';
 import { createHealth } from '../components/health';
 import { createHeat } from '../components/heat';
@@ -29,6 +30,7 @@ import type { Entity, World } from '../core/types';
 import { Faction } from '../core/types';
 import { getProfileForPlaystyle, type ProfileName } from '../data/ai-profiles';
 import { getWeaponStats } from '../data/weapons';
+import { initWeaponAmmoCounts } from '../systems/stats';
 import { validateArchetypeLoadout } from './archetype-validation';
 import { SHIP_ARCHETYPES, type ShipStats } from './ship-archetypes';
 
@@ -136,6 +138,10 @@ export function createPlayerShip(
 
   addComponent(world, entity, createCollision(stats.collisionRadius));
 
+  // Add combat stats tracking
+  addComponent(world, entity, createCombatStats());
+  initWeaponAmmoCounts(world, entity);
+
   return entity;
 }
 
@@ -231,6 +237,10 @@ export function createAIShip(
   }
 
   addComponent(world, entity, createCollision(stats.collisionRadius * 1.5)); // AI has larger hitbox
+
+  // Add combat stats tracking
+  addComponent(world, entity, createCombatStats());
+  initWeaponAmmoCounts(world, entity);
 
   return entity;
 }

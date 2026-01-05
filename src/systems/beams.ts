@@ -31,6 +31,13 @@ import {
   resetBeamWeaponPool,
 } from './beam-helpers';
 import { dealDamage } from './damage';
+import {
+  recordBeamFired,
+  recordBeamHit,
+  recordDamage,
+  recordShotFired,
+  recordShotHit,
+} from './stats';
 import { calculateBankOffset } from './weapon-spawning';
 
 // Reusable objects
@@ -270,6 +277,9 @@ function fireBeam(
           // Overheated - don't fire this pulse
           beam.pulseActive = false;
           shouldDealDamage = false;
+        } else {
+          // Track pulse as a shot (pulse beams track shots, not time)
+          recordShotFired(world, owner, weapon.name, 'beam', true);
         }
       }
     } else {
@@ -291,6 +301,11 @@ function fireBeam(
   // Reuse or create hitPoint vector (avoid per-frame allocation)
   if (!beam.hitPoint) {
     beam.hitPoint = new THREE.Vector3();
+  }
+
+  // Track beam time fired (for continuous beams)
+  if (!weapon.isPulseBeam) {
+    recordBeamFired(world, owner, weapon.name, dt);
   }
 
   if (hitResult.hit) {
@@ -318,7 +333,25 @@ function fireBeam(
       }
       dealDamage(world, hitResult.entity, damage, beam.hitPoint);
 
-      // Track beam damage stats
+      // Track per-ship stats
+      recordDamage(
+        world,
+        owner,
+        hitResult.entity,
+        weapon.name,
+        'beam',
+        damage,
+        weapon.isPulseBeam,
+      );
+      if (weapon.isPulseBeam) {
+        // Pulse beams track shots on target
+        recordShotHit(world, owner, weapon.name, 'beam', true);
+      } else {
+        // Continuous beams track time on target
+        recordBeamHit(world, owner, weapon.name, dt);
+      }
+
+      // Track aggregate beam damage stats (for balance analysis)
       if (world.systemState.combatStats) {
         const stats = world.systemState.combatStats;
         stats.beamDamage[weapon.name] =

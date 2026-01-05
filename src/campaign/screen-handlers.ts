@@ -4,6 +4,7 @@
  * Extracted from controller.ts to stay under 400 line limit.
  */
 
+import type { World } from '../core/types';
 import { createHangarUI, updateHangarUI } from '../ui/hangar';
 import { createGameOverUI, createResultsUI } from '../ui/results';
 import {
@@ -24,6 +25,7 @@ export function showResults(
   victory: boolean,
   contract: Contract,
   setupContractsScreen: (controller: CampaignController) => void,
+  world?: World,
 ): void {
   const { screenManager } = controller;
   const resultsElement = getScreenElement(screenManager, Screen.RESULTS);
@@ -48,6 +50,7 @@ export function showResults(
         screenManager.campaignState,
       );
     },
+    world,
   );
 }
 

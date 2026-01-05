@@ -18,6 +18,7 @@ import {
 } from '../core/ecs';
 import type { Entity, World } from '../core/types';
 import { dealDamage } from './damage';
+import { recordDamage } from './stats';
 
 // Reusable vector for AoE distance calculation
 const aoeTempVec = new THREE.Vector3();
@@ -30,6 +31,7 @@ export function dealAoeDamage(
   maxDamage: number,
   owner: Entity,
   exclude: Entity,
+  weaponName?: string,
 ): void {
   // Find all entities with health and transform within radius
   for (const entity of queryEntities(world, ['transform', 'health'])) {
@@ -56,7 +58,19 @@ export function dealAoeDamage(
       const falloff = 1 - distance / radius;
       const damage = maxDamage * falloff;
       if (damage > 0) {
-        dealDamage(world, entity, damage, center);
+        const result = dealDamage(world, entity, damage, center);
+        // Track AoE damage to ships (attribute to weapon that caused it)
+        if (weaponName) {
+          const totalDamage = result.shieldDamage + result.hullDamage;
+          recordDamage(
+            world,
+            owner,
+            entity,
+            weaponName,
+            'missile',
+            totalDamage,
+          );
+        }
       }
     }
   }

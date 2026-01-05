@@ -16,6 +16,7 @@ import {
   stopGame,
 } from '../game';
 import { initInput } from '../systems/input';
+import { finalizeMatchStats, initMatchStats } from '../systems/stats';
 import { createContractsUI } from '../ui/contracts';
 import { createHangarUI, updateHangarUI } from '../ui/hangar';
 import {
@@ -185,6 +186,9 @@ function launchMission(
     );
   });
 
+  // Initialize match stats for debrief
+  initMatchStats(game.world);
+
   // Wave state for tracking progress
   const waveState = createWaveState(contract.waves.length);
 
@@ -216,6 +220,9 @@ function launchMission(
     console.log(
       `[MISSION ${performance.now().toFixed(0)}ms] Transitioning to results`,
     );
+
+    // Finalize match stats before stopping
+    finalizeMatchStats(game.world);
 
     // Stop the game loop
     stopGame(game);
@@ -249,6 +256,7 @@ function launchMission(
         missionEndState.victory,
         contract,
         setupContractsScreen,
+        game.world,
       );
     }
   };

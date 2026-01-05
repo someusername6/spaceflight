@@ -77,3 +77,13 @@ Balance targets achieved:
 - **Decoy target stats display** (`src/rendering/hud/target-stats.ts:131-226`): When targeting a decoy, shows "DECOY" callsign, "COUNTERMEASURE" type, lifetime countdown bar instead of hull (with dynamic "TIME" label), hides shield row entirely, calculates closing/separating using decoy direction × speed.
 - **Mission end overlay position** (`src/campaign/controller.ts:354-358`): VICTORY/DEFEAT overlay positioned at 35% from top (was 50%) for better visibility during post-mission explosions.
 - **Missile lock reset on fire** (`src/systems/weapons-player.ts:217`, `src/systems/weapons-ai.ts:330,352,359`): Lock progress resets to 0 after each missile fired, requiring re-acquisition for subsequent missiles. Applies to both player and AI.
+
+### Phase 4.4: Combat Stats & Debrief ✅
+
+- **Combat stats component** (`src/components/combat-stats.ts`): Per-ship stats tracking kills, assists, damage dealt/received. Per-weapon stats with category-specific tracking (projectiles: shots/hits, beams: time fired/on target, missiles: launched/hit/seduced, decoys: deployed/seduced).
+- **Stats recording system** (`src/systems/stats.ts`): Helper functions called by weapon systems to record damage, shots, beam time, missile events. Tracks damage sources for kill/assist attribution. Handles posthumous kills when killer dies before victim.
+- **isPulseBeam flag** (`src/components/combat-stats.ts:22,43-44,96-109`): Explicit flag distinguishes pulse beams (Lightning) from continuous beams. Set at creation time via `getOrCreateWeaponStats`. Consistency assertion warns and fixes if called with conflicting values.
+- **Debrief UI** (`src/ui/debrief.ts`, `src/ui/debrief-styles.ts`): Post-mission stats display with per-pilot cards showing kills, assists, damage, hull status. Weapon breakdown table with category-specific formatting.
+- **Match stats integration** (`src/core/types.ts:90-97`): SystemState tracks damageSources (Map of target → Set of attackers), lastDamageSource (Map of target → killer), destroyedShips (array of DestroyedShipRecord), missionStartTime/missionEndTime.
+- **Results screen integration** (`src/ui/results.ts:28-40`): Victory/defeat screen now includes full combat debrief section.
+- **Tests** (`scripts/tests/systems/test-combat-stats.mjs`, `test-weapon-stats.mjs`, `test-kill-attribution.mjs`): 30 tests covering component creation, damage recording, weapon stats, kill/assist attribution, and posthumous kills.

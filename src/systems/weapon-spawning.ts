@@ -22,6 +22,14 @@ import { randomUnitVector } from '../core/prng';
 import type { Entity, World } from '../core/types';
 import { createCollision } from './collision';
 import { getForward } from './physics';
+import {
+  recordDecoyDeployed,
+  recordMissileLaunched,
+  recordShotFired,
+} from './stats';
+
+// Re-export for backward compatibility
+export { spawnShrapnel } from './shrapnel';
 
 /** Spawn offsets from ship center */
 const PROJECTILE_SPAWN_OFFSET = 3;
@@ -138,7 +146,10 @@ export function spawnProjectile(
     addComponent(world, projectile, createFaction(ownerFaction.faction));
   }
 
-  // Track stats if enabled
+  // Track per-ship stats
+  recordShotFired(world, owner, weapon.name);
+
+  // Track aggregate stats if enabled (for balance analysis)
   if (world.systemState.combatStats) {
     const stats = world.systemState.combatStats;
     stats.shotsFired[weapon.name] = (stats.shotsFired[weapon.name] || 0) + 1;
@@ -220,66 +231,13 @@ export function spawnProjectileWithAimError(
     addComponent(world, projectile, createFaction(ownerFaction.faction));
   }
 
-  // Track stats if enabled
+  // Track per-ship stats
+  recordShotFired(world, owner, weapon.name);
+
+  // Track aggregate stats if enabled (for balance analysis)
   if (world.systemState.combatStats) {
     const stats = world.systemState.combatStats;
     stats.shotsFired[weapon.name] = (stats.shotsFired[weapon.name] || 0) + 1;
-  }
-}
-
-/** Shrapnel projectile stats */
-const SHRAPNEL_SPEED = 450;
-const SHRAPNEL_RANGE = 120;
-const SHRAPNEL_DAMAGE = 8;
-const SHRAPNEL_RADIUS = 0.3;
-
-/** Spawn shrapnel projectiles from a flak explosion */
-export function spawnShrapnel(
-  world: World,
-  position: THREE.Vector3,
-  count: number,
-  owner: Entity,
-  ownerFaction: FactionComponent | undefined,
-): void {
-  const goldenAngle = Math.PI * (3 - Math.sqrt(5)); // ~137.5 degrees
-
-  for (let i = 0; i < count; i++) {
-    // Distribute shrapnel in a sphere using golden ratio
-    const y = 1 - (i / (count - 1)) * 2; // y goes from 1 to -1
-    const radiusAtY = Math.sqrt(1 - y * y);
-    const theta = goldenAngle * i;
-
-    const direction = new THREE.Vector3(
-      radiusAtY * Math.cos(theta),
-      y,
-      radiusAtY * Math.sin(theta),
-    ).normalize();
-
-    const shrapnel = createEntity(world);
-
-    addComponent(
-      world,
-      shrapnel,
-      createTransform(position.x, position.y, position.z),
-    );
-    addComponent(
-      world,
-      shrapnel,
-      createProjectile(
-        owner,
-        SHRAPNEL_DAMAGE,
-        SHRAPNEL_SPEED,
-        SHRAPNEL_RANGE,
-        direction,
-        'ballistic',
-        'Shrapnel',
-      ),
-    );
-    addComponent(world, shrapnel, createCollision(SHRAPNEL_RADIUS));
-
-    if (ownerFaction) {
-      addComponent(world, shrapnel, createFaction(ownerFaction.faction));
-    }
   }
 }
 
@@ -338,7 +296,10 @@ export function spawnMissile(
     addComponent(world, missile, createFaction(ownerFaction.faction));
   }
 
-  // Track stats if enabled
+  // Track per-ship stats
+  recordMissileLaunched(world, owner, weapon.name);
+
+  // Track aggregate stats if enabled (for balance analysis)
   if (world.systemState.combatStats) {
     const stats = world.systemState.combatStats;
     stats.missilesFired[weapon.name] =
@@ -391,7 +352,10 @@ export function spawnDecoy(
     addComponent(world, decoy, createFaction(ownerFaction.faction));
   }
 
-  // Track stats if enabled
+  // Track per-ship stats
+  recordDecoyDeployed(world, owner);
+
+  // Track aggregate stats if enabled (for balance analysis)
   if (world.systemState.combatStats) {
     world.systemState.combatStats.decoysLaunched++;
   }

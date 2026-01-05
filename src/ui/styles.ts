@@ -2,6 +2,8 @@
  * Campaign UI styles - shared styles for hangar, contracts, results screens.
  */
 
+import { getDebriefStyles } from './debrief';
+
 export const UI_STYLE_ID = 'campaign-ui-styles';
 
 export function getCampaignStyles(): string {
@@ -276,6 +278,15 @@ export function getCampaignStyles(): string {
       font-size: 1.3em;
       margin: 20px 0;
     }
+
+    /* Results panel with debrief */
+    .results-panel {
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    /* Debrief styles */
+    ${getDebriefStyles()}
   `;
 }
 

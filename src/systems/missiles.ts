@@ -1,7 +1,11 @@
 /** Missile System - Handles missile tracking, movement, and hits. */
 
 import * as THREE from 'three';
-import { DECOY_SEDUCE_CHANCE, DECOY_SEDUCE_RANGE } from '../components/decoy';
+import {
+  DECOY_SEDUCE_CHANCE,
+  DECOY_SEDUCE_RANGE,
+  type Decoy,
+} from '../components/decoy';
 import { createExplosion } from '../components/explosion';
 import type { FactionComponent } from '../components/faction';
 import type { Missile } from '../components/missile';
@@ -26,6 +30,7 @@ import {
   dealAoeDamage,
   destroyProjectilesInRadius,
 } from './missile-aoe';
+import { recordDamage, recordMissileHit, recordMissileSeduced } from './stats';
 
 const MISSILE_EXPLOSION_SIZE = 4;
 const MISSILE_EXPLOSION_COLOR = new THREE.Color(1.0, 0.5, 0.1);
@@ -65,8 +70,21 @@ export function missileSystem(world: World, dt: number): void {
       if (nearestDecoy && !missile.resistedDecoys.has(nearestDecoy)) {
         // Seduction chance check - only roll once per (missile, decoy) pair
         if (random(world.prng) < DECOY_SEDUCE_CHANCE) {
+          // Get decoy owner for stat tracking
+          const decoy = getComponent<Decoy>(world, nearestDecoy, 'decoy');
+          const decoyOwner = decoy?.owner;
+
           missile.target = nearestDecoy;
-          // Track seduction stats
+
+          // Track per-ship seduction stats
+          const missileName =
+            missile.missileType.charAt(0).toUpperCase() +
+            missile.missileType.slice(1);
+          if (decoyOwner !== undefined) {
+            recordMissileSeduced(world, missile.owner, missileName, decoyOwner);
+          }
+
+          // Track aggregate seduction stats
           if (world.systemState.combatStats) {
             world.systemState.combatStats.missilesSeduced++;
             world.systemState.combatStats.decoysSuccessful++;
@@ -123,6 +141,9 @@ export function missileSystem(world: World, dt: number): void {
 
         if (hasEnemiesInRange) {
           // Trigger AoE explosion
+          const missileName =
+            missile.missileType.charAt(0).toUpperCase() +
+            missile.missileType.slice(1);
           dealAoeDamage(
             world,
             transform.position,
@@ -130,6 +151,7 @@ export function missileSystem(world: World, dt: number): void {
             missile.damage * 0.5,
             missile.owner,
             -1 as Entity, // No direct hit target to exclude
+            missileName, // For damage attribution
           );
           // Nuke also destroys projectiles within blast radius
           destroyProjectilesInRadius(
@@ -174,17 +196,28 @@ export function missileSystem(world: World, dt: number): void {
           transform.position,
         );
 
-        // Track missile hit and damage stats (capitalize to match missilesFired keys)
+        // Track per-ship missile hit and damage stats
+        const missileName =
+          missile.missileType.charAt(0).toUpperCase() +
+          missile.missileType.slice(1);
+        const totalDamage = damageResult.shieldDamage + damageResult.hullDamage;
+        recordMissileHit(world, missile.owner, missileName);
+        recordDamage(
+          world,
+          missile.owner,
+          other,
+          missileName,
+          'missile',
+          totalDamage,
+        );
+
+        // Track aggregate missile hit and damage stats (for balance analysis)
         if (world.systemState.combatStats && missile.missileType) {
           const stats = world.systemState.combatStats;
-          const key =
-            missile.missileType.charAt(0).toUpperCase() +
-            missile.missileType.slice(1);
-          stats.missilesHit[key] = (stats.missilesHit[key] || 0) + 1;
-          const totalDamage =
-            damageResult.shieldDamage + damageResult.hullDamage;
-          stats.missileDamage[key] =
-            (stats.missileDamage[key] || 0) + totalDamage;
+          stats.missilesHit[missileName] =
+            (stats.missilesHit[missileName] || 0) + 1;
+          stats.missileDamage[missileName] =
+            (stats.missileDamage[missileName] || 0) + totalDamage;
         }
 
         // Handle AoE damage if missile has AoE radius
@@ -196,6 +229,7 @@ export function missileSystem(world: World, dt: number): void {
             missile.damage * 0.5, // AoE does half damage
             missile.owner,
             other, // Exclude the directly-hit target
+            missileName, // For damage attribution
           );
           // Nuke also destroys projectiles within blast radius
           if (missile.isNuke) {

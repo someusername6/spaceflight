@@ -1,8 +1,14 @@
 /**
- * Results screen - displays mission outcome.
+ * Results screen - displays mission outcome and combat debrief.
  */
 
 import type { CampaignState, Contract } from '../campaign/types';
+import type { World } from '../core/types';
+import {
+  collectDebriefData,
+  type MissionDebriefData,
+  renderDebrief,
+} from './debrief';
 
 /** Results UI state */
 export interface ResultsUI {
@@ -15,15 +21,18 @@ function renderResults(
   victory: boolean,
   contract: Contract | null,
   state: CampaignState,
+  debriefData: MissionDebriefData | null,
 ): string {
   const title = victory ? 'VICTORY' : 'DEFEAT';
   const titleClass = victory ? 'victory' : 'defeat';
   const creditsEarned = victory && contract ? contract.reward : 0;
 
+  const debriefSection = debriefData ? renderDebrief(debriefData) : '';
+
   return `
     <h1 class="result-title ${titleClass}">${title}</h1>
 
-    <div class="screen-panel">
+    <div class="screen-panel results-panel">
       <div class="result-stats">
         ${contract ? `<div>Mission: ${contract.name}</div>` : ''}
         ${victory ? `<div style="color: #44cc66;">+ ${creditsEarned} credits</div>` : ''}
@@ -38,7 +47,9 @@ function renderResults(
         </div>
       </div>
 
-      <button class="btn btn-primary" id="btn-continue">
+      ${debriefSection}
+
+      <button class="btn btn-primary" id="btn-continue" style="margin-top: 20px;">
         ${victory ? 'Return to Hangar' : 'Continue'}
       </button>
     </div>
@@ -52,8 +63,10 @@ export function createResultsUI(
   contract: Contract | null,
   state: CampaignState,
   onContinue: () => void,
+  world?: World,
 ): ResultsUI {
-  element.innerHTML = renderResults(victory, contract, state);
+  const debriefData = world ? collectDebriefData(world) : null;
+  element.innerHTML = renderResults(victory, contract, state, debriefData);
 
   // Bind continue button
   const btn = element.querySelector('#btn-continue');

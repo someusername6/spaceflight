@@ -21,6 +21,7 @@ import {
 } from '../core/ecs';
 import type { World } from '../core/types';
 import type { Collision } from './collision';
+import { handleShipDeath } from './stats';
 
 /**
  * How long ships stay visible after death (for explosion to engulf them).
@@ -51,7 +52,8 @@ export function cleanupSystem(world: World, dt: number): void {
     if (isShip(world, entity)) {
       // Ships have a death delay so explosion can engulf them
       if (health.deathDelay === undefined) {
-        // First frame of death: spawn explosion and start delay
+        // First frame of death: handle stats, spawn explosion, and start delay
+        handleShipDeath(world, entity);
         spawnExplosion(world, entity);
         health.deathDelay = SHIP_DEATH_DELAY;
       } else {

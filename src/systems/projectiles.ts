@@ -18,6 +18,7 @@ import {
 } from '../core/ecs';
 import type { Entity, World } from '../core/types';
 import { dealDamage } from './damage';
+import { recordDamage, recordShotHit } from './stats';
 import { spawnShrapnel } from './weapon-spawning';
 
 /** Queue a hit effect via world state (consumed by rendering layer) */
@@ -154,10 +155,21 @@ export function projectileSystem(world: World, dt: number): void {
           transform.position,
         );
 
-        // Track damage stats by weapon
+        // Track per-ship damage stats
+        const totalDamage = result.shieldDamage + result.hullDamage;
+        recordDamage(
+          world,
+          projectile.owner,
+          other,
+          projectile.weaponName,
+          'projectile',
+          totalDamage,
+        );
+        recordShotHit(world, projectile.owner, projectile.weaponName);
+
+        // Track aggregate damage stats by weapon (for balance analysis)
         if (world.systemState.combatStats) {
           const stats = world.systemState.combatStats;
-          const totalDamage = result.shieldDamage + result.hullDamage;
           stats.damageDealt[projectile.weaponName] =
             (stats.damageDealt[projectile.weaponName] || 0) + totalDamage;
         }
