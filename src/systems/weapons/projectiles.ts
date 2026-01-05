@@ -4,21 +4,24 @@
  */
 
 import * as THREE from 'three';
-import type { Collision } from '../components/collision';
-import type { FactionComponent } from '../components/faction';
-import { areEnemies } from '../components/faction';
-import type { Projectile, ProjectileCategory } from '../components/projectile';
-import { isExpired } from '../components/projectile';
-import type { Transform } from '../components/transform';
+import type { Collision } from '../../components/collision';
+import type { FactionComponent } from '../../components/faction';
+import { areEnemies } from '../../components/faction';
+import type {
+  Projectile,
+  ProjectileCategory,
+} from '../../components/projectile';
+import { isExpired } from '../../components/projectile';
+import type { Transform } from '../../components/transform';
 import {
   getComponent,
   hasComponent,
   queryEntities,
   removeEntity,
-} from '../core/ecs';
-import type { Entity, World } from '../core/types';
-import { dealDamage } from './damage';
-import { recordDamage, recordShotHit } from './stats';
+} from '../../core/ecs';
+import type { Entity, World } from '../../core/types';
+import { dealDamage } from '../damage';
+import { recordDamage, recordShotHit } from '../stats';
 import { spawnShrapnel } from './weapon-spawning';
 
 /** Queue a hit effect via world state (consumed by rendering layer) */

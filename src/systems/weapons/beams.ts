@@ -3,25 +3,33 @@
  */
 
 import * as THREE from 'three';
-import { type AIControlled, AIState } from '../components/ai';
-import type { Health } from '../components/health';
-import { isDead } from '../components/health';
-import type { Heat } from '../components/heat';
-import { addHeat } from '../components/heat';
-import type { PlayerControlled } from '../components/player';
-import type { Transform } from '../components/transform';
-import type { PrimaryWeapon, PrimaryWeapons } from '../components/weapons';
+import { type AIControlled, AIState } from '../../components/ai';
+import type { Health } from '../../components/health';
+import { isDead } from '../../components/health';
+import type { Heat } from '../../components/heat';
+import { addHeat } from '../../components/heat';
+import type { PlayerControlled } from '../../components/player';
+import type { Transform } from '../../components/transform';
+import type { PrimaryWeapon, PrimaryWeapons } from '../../components/weapons';
 import {
   getEffectiveHeat,
   getWeaponIndicesForCurrentMode,
-} from '../components/weapons';
-import { entityExists, getComponent, queryEntities } from '../core/ecs';
-import type { ActiveBeam, Entity, World } from '../core/types';
-import { getForward } from './physics';
+} from '../../components/weapons';
+import { entityExists, getComponent, queryEntities } from '../../core/ecs';
+import type { ActiveBeam, Entity, World } from '../../core/types';
+import { getForward } from '../physics';
 
 // Re-export ActiveBeam for backward compatibility
-export type { ActiveBeam } from '../core/types';
+export type { ActiveBeam } from '../../core/types';
 
+import { dealDamage } from '../damage';
+import {
+  recordBeamFired,
+  recordBeamHit,
+  recordDamage,
+  recordShotFired,
+  recordShotHit,
+} from '../stats';
 import {
   type BeamWeaponInfo,
   calculateFalloffDamage,
@@ -30,14 +38,6 @@ import {
   getBeamWeaponInfo,
   resetBeamWeaponPool,
 } from './beam-helpers';
-import { dealDamage } from './damage';
-import {
-  recordBeamFired,
-  recordBeamHit,
-  recordDamage,
-  recordShotFired,
-  recordShotHit,
-} from './stats';
 import { calculateBankOffset } from './weapon-spawning';
 
 // Reusable objects

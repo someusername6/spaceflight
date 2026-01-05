@@ -4,13 +4,13 @@
  */
 
 import * as THREE from 'three';
-import type { Collision } from '../components/collision';
-import type { Health } from '../components/health';
-import { isDead } from '../components/health';
-import type { Transform } from '../components/transform';
-import type { PrimaryWeapon } from '../components/weapons';
-import { getComponent, hasComponent, queryEntities } from '../core/ecs';
-import type { Entity, World } from '../core/types';
+import type { Collision } from '../../components/collision';
+import type { Health } from '../../components/health';
+import { isDead } from '../../components/health';
+import type { Transform } from '../../components/transform';
+import type { PrimaryWeapon } from '../../components/weapons';
+import { getComponent, hasComponent, queryEntities } from '../../core/ecs';
+import type { Entity, World } from '../../core/types';
 
 /** Beam weapon info for pooling (avoid per-frame allocations) */
 export interface BeamWeaponInfo {

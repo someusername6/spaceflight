@@ -5,13 +5,13 @@ import {
   DECOY_SEDUCE_CHANCE,
   DECOY_SEDUCE_RANGE,
   type Decoy,
-} from '../components/decoy';
-import { createExplosion } from '../components/explosion';
-import type { FactionComponent } from '../components/faction';
-import type { Missile } from '../components/missile';
-import { isMissileExpired } from '../components/missile';
-import type { Transform } from '../components/transform';
-import { createTransform } from '../components/transform';
+} from '../../components/decoy';
+import { createExplosion } from '../../components/explosion';
+import type { FactionComponent } from '../../components/faction';
+import type { Missile } from '../../components/missile';
+import { isMissileExpired } from '../../components/missile';
+import type { Transform } from '../../components/transform';
+import { createTransform } from '../../components/transform';
 import {
   addComponent,
   createEntity,
@@ -20,17 +20,17 @@ import {
   hasComponent,
   queryEntities,
   removeEntity,
-} from '../core/ecs';
-import { random } from '../core/prng';
-import type { Entity, World } from '../core/types';
-import type { Collision } from './collision';
-import { dealDamage } from './damage';
+} from '../../core/ecs';
+import { random } from '../../core/prng';
+import type { Entity, World } from '../../core/types';
+import type { Collision } from '../collision';
+import { dealDamage } from '../damage';
+import { recordDamage, recordMissileHit, recordMissileSeduced } from '../stats';
 import {
   checkForEnemiesInRange,
   dealAoeDamage,
   destroyProjectilesInRadius,
 } from './missile-aoe';
-import { recordDamage, recordMissileHit, recordMissileSeduced } from './stats';
 
 const MISSILE_EXPLOSION_SIZE = 4;
 const MISSILE_EXPLOSION_COLOR = new THREE.Color(1.0, 0.5, 0.1);

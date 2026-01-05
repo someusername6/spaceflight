@@ -5,20 +5,20 @@
  */
 
 import * as THREE from 'three';
-import type { FactionComponent } from '../components/faction';
-import { areEnemies } from '../components/faction';
-import type { Health } from '../components/health';
-import type { Projectile } from '../components/projectile';
-import type { Transform } from '../components/transform';
+import type { FactionComponent } from '../../components/faction';
+import { areEnemies } from '../../components/faction';
+import type { Health } from '../../components/health';
+import type { Projectile } from '../../components/projectile';
+import type { Transform } from '../../components/transform';
 import {
   getComponent,
   hasComponent,
   queryEntities,
   removeEntity,
-} from '../core/ecs';
-import type { Entity, World } from '../core/types';
-import { dealDamage } from './damage';
-import { recordDamage } from './stats';
+} from '../../core/ecs';
+import type { Entity, World } from '../../core/types';
+import { dealDamage } from '../damage';
+import { recordDamage } from '../stats';
 
 // Reusable vector for AoE distance calculation
 const aoeTempVec = new THREE.Vector3();

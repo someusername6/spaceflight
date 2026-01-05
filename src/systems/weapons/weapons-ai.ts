@@ -12,35 +12,35 @@
  */
 
 import * as THREE from 'three';
-import { type AIControlled, AIState } from '../components/ai';
-import type { AimError } from '../components/aim-error';
-import { applyAimError } from '../components/aim-error';
-import type { FactionComponent } from '../components/faction';
-import type { Heat } from '../components/heat';
-import { addHeat } from '../components/heat';
-import type { Missile } from '../components/missile';
-import type { Physics } from '../components/physics';
-import type { Shields } from '../components/shields';
-import type { Transform } from '../components/transform';
+import { type AIControlled, AIState } from '../../components/ai';
+import type { AimError } from '../../components/aim-error';
+import { applyAimError } from '../../components/aim-error';
+import type { FactionComponent } from '../../components/faction';
+import type { Heat } from '../../components/heat';
+import { addHeat } from '../../components/heat';
+import type { Missile } from '../../components/missile';
+import type { Physics } from '../../components/physics';
+import type { Shields } from '../../components/shields';
+import type { Transform } from '../../components/transform';
 import type {
   PrimaryWeapon,
   PrimaryWeapons,
   SecondaryWeapons,
-} from '../components/weapons';
+} from '../../components/weapons';
 import {
   findDecoyWeapon,
   getEffectiveHeat,
   getWeaponIndicesForCurrentMode,
   setLinkModeByType,
-} from '../components/weapons';
-import { entityExists, getComponent, queryEntities } from '../core/ecs';
-import { calculateInterceptPoint } from '../core/lead-calculation';
-import type { Entity, World } from '../core/types';
-import { selectOptimalMissile } from './ai/ai-missile-selection';
+} from '../../components/weapons';
+import { entityExists, getComponent, queryEntities } from '../../core/ecs';
+import { calculateInterceptPoint } from '../../core/lead-calculation';
+import type { Entity, World } from '../../core/types';
+import { selectOptimalMissile } from '../ai/ai-missile-selection';
 import {
   calculateFiringAngle,
   selectOptimalPrimaryWeapon,
-} from './ai/ai-weapon-selection';
+} from '../ai/ai-weapon-selection';
 import {
   type AutoaimParams,
   spawnDecoy,

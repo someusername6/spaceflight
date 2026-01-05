@@ -5,28 +5,31 @@
  */
 
 import * as THREE from 'three';
-import type { AimError } from '../components/aim-error';
-import { applyAimError } from '../components/aim-error';
-import { createDecoy } from '../components/decoy';
-import type { FactionComponent } from '../components/faction';
-import { createFaction } from '../components/faction';
-import { createHealth } from '../components/health';
-import { createMissile, type MissileType } from '../components/missile';
-import type { ProjectileCategory, WeaponName } from '../components/projectile';
-import { createProjectile } from '../components/projectile';
-import type { Transform } from '../components/transform';
-import { createTransform } from '../components/transform';
-import type { SecondaryWeapon } from '../components/weapons';
-import { addComponent, createEntity } from '../core/ecs';
-import { randomUnitVector } from '../core/prng';
-import type { Entity, World } from '../core/types';
-import { createCollision } from './collision';
-import { getForward } from './physics';
+import type { AimError } from '../../components/aim-error';
+import { applyAimError } from '../../components/aim-error';
+import { createDecoy } from '../../components/decoy';
+import type { FactionComponent } from '../../components/faction';
+import { createFaction } from '../../components/faction';
+import { createHealth } from '../../components/health';
+import { createMissile, type MissileType } from '../../components/missile';
+import type {
+  ProjectileCategory,
+  WeaponName,
+} from '../../components/projectile';
+import { createProjectile } from '../../components/projectile';
+import type { Transform } from '../../components/transform';
+import { createTransform } from '../../components/transform';
+import type { SecondaryWeapon } from '../../components/weapons';
+import { addComponent, createEntity } from '../../core/ecs';
+import { randomUnitVector } from '../../core/prng';
+import type { Entity, World } from '../../core/types';
+import { createCollision } from '../collision';
+import { getForward } from '../physics';
 import {
   recordDecoyDeployed,
   recordMissileLaunched,
   recordShotFired,
-} from './stats';
+} from '../stats';
 
 // Re-export for backward compatibility
 export { spawnShrapnel } from './shrapnel';

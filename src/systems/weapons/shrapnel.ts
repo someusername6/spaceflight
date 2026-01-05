@@ -3,13 +3,13 @@
  */
 
 import * as THREE from 'three';
-import type { FactionComponent } from '../components/faction';
-import { createFaction } from '../components/faction';
-import { createProjectile } from '../components/projectile';
-import { createTransform } from '../components/transform';
-import { addComponent, createEntity } from '../core/ecs';
-import type { Entity, World } from '../core/types';
-import { createCollision } from './collision';
+import type { FactionComponent } from '../../components/faction';
+import { createFaction } from '../../components/faction';
+import { createProjectile } from '../../components/projectile';
+import { createTransform } from '../../components/transform';
+import { addComponent, createEntity } from '../../core/ecs';
+import type { Entity, World } from '../../core/types';
+import { createCollision } from '../collision';
 
 /** Shrapnel projectile stats */
 const SHRAPNEL_SPEED = 450;

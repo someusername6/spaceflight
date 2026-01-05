@@ -8,7 +8,6 @@ import { createWorld } from './core/ecs';
 import type { SystemFn, World } from './core/types';
 import { aiSystem } from './systems/ai/ai';
 import { aimErrorSystem } from './systems/aim-error';
-import { beamSystem } from './systems/beams';
 import { cleanupSystem } from './systems/cleanup';
 import { collisionSystem } from './systems/collision';
 import { damageSystem } from './systems/damage';
@@ -17,7 +16,6 @@ import { explosionSystem } from './systems/explosions';
 import { heatSystem } from './systems/heat';
 // Systems (in execution order)
 import { inputSystem } from './systems/input';
-import { missileSystem } from './systems/missiles';
 import {
   countLivingEnemyShips,
   getMissionResult,
@@ -26,10 +24,12 @@ import {
   resetMissionState,
 } from './systems/mission';
 import { physicsSystem } from './systems/physics';
-import { projectileSystem } from './systems/projectiles';
 import { shieldSystem } from './systems/shields';
 import { targetingSystem } from './systems/targeting';
-import { weaponSystem } from './systems/weapons';
+import { beamSystem } from './systems/weapons/beams';
+import { missileSystem } from './systems/weapons/missiles';
+import { projectileSystem } from './systems/weapons/projectiles';
+import { weaponSystem } from './systems/weapons/weapons';
 
 /** Fixed timestep: 60 ticks per second */
 const TICK_RATE = 60;

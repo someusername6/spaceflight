@@ -1,26 +1,29 @@
 /** Weapon System - Handles firing primary and secondary weapons. */
 
 import * as THREE from 'three';
-import type { AIControlled } from '../components/ai';
-import type { AimError } from '../components/aim-error';
-import type { FactionComponent } from '../components/faction';
-import type { Health } from '../components/health';
-import { isDead } from '../components/health';
-import type { Heat } from '../components/heat';
-import { addHeat } from '../components/heat';
-import type { Physics } from '../components/physics';
-import type { PlayerControlled } from '../components/player';
-import type { Targeting } from '../components/targeting';
-import type { Transform } from '../components/transform';
+import type { AIControlled } from '../../components/ai';
+import type { AimError } from '../../components/aim-error';
+import type { FactionComponent } from '../../components/faction';
+import type { Health } from '../../components/health';
+import { isDead } from '../../components/health';
+import type { Heat } from '../../components/heat';
+import { addHeat } from '../../components/heat';
+import type { Physics } from '../../components/physics';
+import type { PlayerControlled } from '../../components/player';
+import type { Targeting } from '../../components/targeting';
+import type { Transform } from '../../components/transform';
 import type {
   PrimaryWeapon,
   PrimaryWeapons,
   SecondaryWeapons,
-} from '../components/weapons';
-import { getCurrentSecondary, getEffectiveHeat } from '../components/weapons';
-import { entityExists, getComponent, queryEntities } from '../core/ecs';
-import { calculateInterceptPoint } from '../core/lead-calculation';
-import type { Entity, World } from '../core/types';
+} from '../../components/weapons';
+import {
+  getCurrentSecondary,
+  getEffectiveHeat,
+} from '../../components/weapons';
+import { entityExists, getComponent, queryEntities } from '../../core/ecs';
+import { calculateInterceptPoint } from '../../core/lead-calculation';
+import type { Entity, World } from '../../core/types';
 import {
   type AutoaimParams,
   spawnProjectileWithAimError,

@@ -5,13 +5,16 @@
  */
 
 import * as THREE from 'three';
-import type { FactionComponent } from '../components/faction';
-import type { Heat } from '../components/heat';
-import { addHeat } from '../components/heat';
-import type { Physics } from '../components/physics';
-import type { PlayerControlled } from '../components/player';
-import type { Transform } from '../components/transform';
-import type { PrimaryWeapons, SecondaryWeapons } from '../components/weapons';
+import type { FactionComponent } from '../../components/faction';
+import type { Heat } from '../../components/heat';
+import { addHeat } from '../../components/heat';
+import type { Physics } from '../../components/physics';
+import type { PlayerControlled } from '../../components/player';
+import type { Transform } from '../../components/transform';
+import type {
+  PrimaryWeapons,
+  SecondaryWeapons,
+} from '../../components/weapons';
 import {
   cycleNextLinkMode,
   cyclePrevLinkMode,
@@ -19,10 +22,10 @@ import {
   getCurrentSecondary,
   getEffectiveHeat,
   getWeaponIndicesForCurrentMode,
-} from '../components/weapons';
-import { entityExists, getComponent } from '../core/ecs';
-import { calculateInterceptPoint } from '../core/lead-calculation';
-import type { Entity, World } from '../core/types';
+} from '../../components/weapons';
+import { entityExists, getComponent } from '../../core/ecs';
+import { calculateInterceptPoint } from '../../core/lead-calculation';
+import type { Entity, World } from '../../core/types';
 import {
   type AutoaimParams,
   spawnDecoy,
