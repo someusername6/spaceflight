@@ -4,6 +4,7 @@
 
 import type { DestroyedShipRecord } from '../components/combat-stats';
 import { SHIP_ARCHETYPES } from '../factories/ship-archetypes';
+import { createInitialStoreStock } from './store';
 import { getMaxAmmoCapacity } from './store-ammo';
 import type {
   CampaignState,
@@ -90,6 +91,7 @@ export function createNewCampaign(): CampaignState {
     storedHulls: [], // No spare hulls at start
     storedWeapons: [],
     storedAmmo: [], // No spare ammo at start
+    storeStock: createInitialStoreStock(),
     currentSector: 1,
     completedContracts: [],
     missionCount: 0,

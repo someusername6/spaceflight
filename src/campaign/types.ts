@@ -73,6 +73,14 @@ export interface ContractEnemy {
   count: number;
 }
 
+/** Store inventory - stock of items available for purchase */
+export interface StoreStock {
+  hulls: Record<string, number>; // shipClass -> count
+  primaries: Record<string, number>; // weaponType -> count
+  secondaries: Record<string, number>; // weaponType -> count (missiles)
+  ammo: Record<string, number>; // weaponType -> count (rounds)
+}
+
 /** Full campaign state */
 export interface CampaignState {
   credits: number;
@@ -81,6 +89,7 @@ export interface CampaignState {
   storedHulls: StoredHull[]; // ship hulls in storage (no pilot/weapons)
   storedWeapons: StoredWeapon[]; // weapons in storage
   storedAmmo: StoredAmmo[]; // ammo in storage (for ballistic primaries)
+  storeStock: StoreStock; // store inventory (finite stock)
   currentSector: number;
   completedContracts: string[];
   missionCount: number;

@@ -14,7 +14,12 @@ import {
 import { SHIP_CLASSES } from '../data/ships';
 import { PRIMARY_WEAPONS } from '../data/weapons';
 import { mergeSecondaryIntoStorage } from './ship-utils';
-import type { CampaignState, StoredHull, StoredWeapon } from './types';
+import type {
+  CampaignState,
+  StoredHull,
+  StoredWeapon,
+  StoreStock,
+} from './types';
 
 // Re-export ammo functions
 export {
@@ -38,7 +43,8 @@ export function buyHull(
   shipClass: string,
 ): CampaignState {
   const price = getHullPrice(shipClass, 'buy');
-  if (price === 0 || state.credits < price) {
+  const stock = state.storeStock.hulls[shipClass] ?? 0;
+  if (price === 0 || state.credits < price || stock <= 0) {
     return state;
   }
 
@@ -52,6 +58,10 @@ export function buyHull(
     ...state,
     credits: state.credits - price,
     storedHulls: [...state.storedHulls, newHull],
+    storeStock: {
+      ...state.storeStock,
+      hulls: { ...state.storeStock.hulls, [shipClass]: stock - 1 },
+    },
   };
 }
 
@@ -67,11 +77,16 @@ export function sellHull(
 
   const price = getHullPrice(hull.shipClass, 'sell');
   const newStoredHulls = state.storedHulls.filter((_, i) => i !== hullIndex);
+  const currentStock = state.storeStock.hulls[hull.shipClass] ?? 0;
 
   return {
     ...state,
     credits: state.credits + price,
     storedHulls: newStoredHulls,
+    storeStock: {
+      ...state.storeStock,
+      hulls: { ...state.storeStock.hulls, [hull.shipClass]: currentStock + 1 },
+    },
   };
 }
 
@@ -83,7 +98,8 @@ export function buyPrimaryWeapon(
   weaponType: string,
 ): CampaignState {
   const price = getPrimaryPrice(weaponType, 'buy');
-  if (price === 0 || state.credits < price) {
+  const stock = state.storeStock.primaries[weaponType] ?? 0;
+  if (price === 0 || state.credits < price || stock <= 0) {
     return state;
   }
 
@@ -97,6 +113,10 @@ export function buyPrimaryWeapon(
     ...state,
     credits: state.credits - price,
     storedWeapons: [...state.storedWeapons, newWeapon],
+    storeStock: {
+      ...state.storeStock,
+      primaries: { ...state.storeStock.primaries, [weaponType]: stock - 1 },
+    },
   };
 }
 
@@ -114,11 +134,19 @@ export function sellPrimaryWeapon(
   const newStoredWeapons = state.storedWeapons.filter(
     (_, i) => i !== storageIndex,
   );
+  const currentStock = state.storeStock.primaries[weapon.weaponType] ?? 0;
 
   return {
     ...state,
     credits: state.credits + price,
     storedWeapons: newStoredWeapons,
+    storeStock: {
+      ...state.storeStock,
+      primaries: {
+        ...state.storeStock.primaries,
+        [weapon.weaponType]: currentStock + 1,
+      },
+    },
   };
 }
 
@@ -131,8 +159,14 @@ export function buySecondaryWeapon(
   count: number,
 ): CampaignState {
   const pricePerUnit = getSecondaryPrice(weaponType, 'buy');
-  const totalPrice = pricePerUnit * count;
-  if (pricePerUnit === 0 || state.credits < totalPrice) {
+  const stock = state.storeStock.secondaries[weaponType] ?? 0;
+  // Can only buy up to available stock
+  const toBuy = Math.min(count, stock);
+  if (pricePerUnit === 0 || toBuy <= 0) {
+    return state;
+  }
+  const totalPrice = pricePerUnit * toBuy;
+  if (state.credits < totalPrice) {
     return state;
   }
 
@@ -142,8 +176,15 @@ export function buySecondaryWeapon(
     storedWeapons: mergeSecondaryIntoStorage(
       state.storedWeapons,
       weaponType,
-      count,
+      toBuy,
     ),
+    storeStock: {
+      ...state.storeStock,
+      secondaries: {
+        ...state.storeStock.secondaries,
+        [weaponType]: stock - toBuy,
+      },
+    },
   };
 }
 
@@ -166,6 +207,7 @@ export function sellSecondaryWeapon(
   const pricePerUnit = getSecondaryPrice(weapon.weaponType, 'sell');
   const totalPrice = pricePerUnit * toSell;
   const remaining = weapon.count - toSell;
+  const currentStock = state.storeStock.secondaries[weapon.weaponType] ?? 0;
 
   let newStoredWeapons: StoredWeapon[];
   if (remaining <= 0) {
@@ -180,6 +222,13 @@ export function sellSecondaryWeapon(
     ...state,
     credits: state.credits + totalPrice,
     storedWeapons: newStoredWeapons,
+    storeStock: {
+      ...state.storeStock,
+      secondaries: {
+        ...state.storeStock.secondaries,
+        [weapon.weaponType]: currentStock + toSell,
+      },
+    },
   };
 }
 
@@ -236,4 +285,27 @@ export function getAvailableAmmo(): Array<{
       buyPrice: getAmmoPrice(weaponType, 'buy'),
     }))
     .filter((item) => item.buyPrice > 0);
+}
+
+// ============ Store Stock ============
+
+/** Default stock for all items (high value for testing) */
+const DEFAULT_STOCK = 10000;
+
+/** Create initial store stock with default quantities */
+export function createInitialStoreStock(): StoreStock {
+  return {
+    hulls: Object.fromEntries(
+      getAvailableHulls().map((h) => [h.shipClass, DEFAULT_STOCK]),
+    ),
+    primaries: Object.fromEntries(
+      getAvailablePrimaries().map((w) => [w.weaponType, DEFAULT_STOCK]),
+    ),
+    secondaries: Object.fromEntries(
+      getAvailableSecondaries().map((w) => [w.weaponType, DEFAULT_STOCK]),
+    ),
+    ammo: Object.fromEntries(
+      getAvailableAmmo().map((a) => [a.weaponType, DEFAULT_STOCK]),
+    ),
+  };
 }

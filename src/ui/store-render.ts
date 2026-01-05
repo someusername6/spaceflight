@@ -8,7 +8,7 @@ import {
   getAvailablePrimaries,
   getAvailableSecondaries,
 } from '../campaign/store';
-import type { CampaignState } from '../campaign/types';
+import type { CampaignState, StoreStock } from '../campaign/types';
 import { MISSILES } from '../data/missiles';
 import {
   getAmmoPrice,
@@ -110,33 +110,47 @@ export function renderAmmoStats(weaponType: string): string {
   `;
 }
 
-/** Get items for current category (uses catalog functions that filter by price > 0) */
+/** Get items for current category (filters by price > 0 and stock > 0) */
 export function getCategoryItems(
   category: StoreCategory,
-): Array<{ id: string; name: string }> {
+  storeStock: StoreStock,
+): Array<{ id: string; name: string; stock: number }> {
   switch (category) {
     case 'hulls':
-      return getAvailableHulls().map(({ shipClass }) => ({
-        id: shipClass,
-        name: shipClass.charAt(0).toUpperCase() + shipClass.slice(1),
-      }));
+      return getAvailableHulls()
+        .filter(({ shipClass }) => (storeStock.hulls[shipClass] ?? 0) > 0)
+        .map(({ shipClass }) => ({
+          id: shipClass,
+          name: shipClass.charAt(0).toUpperCase() + shipClass.slice(1),
+          stock: storeStock.hulls[shipClass] ?? 0,
+        }));
     case 'primaries':
-      return getAvailablePrimaries().map(({ weaponType }) => ({
-        id: weaponType,
-        name: PRIMARY_WEAPONS[weaponType]?.name ?? weaponType,
-      }));
+      return getAvailablePrimaries()
+        .filter(({ weaponType }) => (storeStock.primaries[weaponType] ?? 0) > 0)
+        .map(({ weaponType }) => ({
+          id: weaponType,
+          name: PRIMARY_WEAPONS[weaponType]?.name ?? weaponType,
+          stock: storeStock.primaries[weaponType] ?? 0,
+        }));
     case 'secondaries':
       return getAvailableSecondaries()
         .filter(({ weaponType }) => !MISSILES[weaponType]?.isDecoy)
+        .filter(
+          ({ weaponType }) => (storeStock.secondaries[weaponType] ?? 0) > 0,
+        )
         .map(({ weaponType }) => ({
           id: weaponType,
           name: MISSILES[weaponType]?.name ?? weaponType,
+          stock: storeStock.secondaries[weaponType] ?? 0,
         }));
     case 'ammo':
-      return getAvailableAmmo().map(({ weaponType }) => ({
-        id: weaponType,
-        name: `${PRIMARY_WEAPONS[weaponType]?.name ?? weaponType} Ammo`,
-      }));
+      return getAvailableAmmo()
+        .filter(({ weaponType }) => (storeStock.ammo[weaponType] ?? 0) > 0)
+        .map(({ weaponType }) => ({
+          id: weaponType,
+          name: `${PRIMARY_WEAPONS[weaponType]?.name ?? weaponType} Ammo`,
+          stock: storeStock.ammo[weaponType] ?? 0,
+        }));
   }
 }
 

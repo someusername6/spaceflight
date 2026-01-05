@@ -166,6 +166,12 @@ Balance targets achieved:
 - **Hangar integration** (`src/ui/hangar.ts`): "Equipment Store" button navigates to store
 - **Missile capacity** (`src/data/missiles.ts`): Added `capacity` field to all missiles (2-8 per bank)
 - **Tests** (`scripts/tests/campaign/test-store-ammo.mjs`): Ammo capacity limits, bank size scaling
+- **Finite store stock** (`src/campaign/types.ts:76-82`, `src/campaign/store.ts:248-267`):
+  - `StoreStock` type tracks inventory per category (hulls, primaries, secondaries, ammo)
+  - `createInitialStoreStock()` initializes all items with 10,000 stock (for testing)
+  - Buying decrements stock, selling increments stock
+  - Items with 0 stock don't appear in store UI
+  - Stock displayed in item list `[count]` and detail panel `Store Stock: N`
 
 **Ship Destruction Rules:**
 - Destroyed ship → hull lost from inventory

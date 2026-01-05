@@ -61,6 +61,13 @@ export function getStoreStyles(): string {
       color: #aaccee;
     }
 
+    .item-stock {
+      color: #8899aa;
+      font-size: 0.9em;
+      margin-left: auto;
+      margin-right: 10px;
+    }
+
     .item-price {
       color: #44cc66;
       font-weight: bold;
@@ -138,6 +145,14 @@ export function getStoreStyles(): string {
       justify-content: space-between;
       padding: 3px 0;
       color: #88aa88;
+    }
+
+    .price-row.stock-count {
+      color: #8899aa;
+    }
+
+    .price-row.storage-count {
+      color: #88aacc;
     }
 
     /* Detail actions */

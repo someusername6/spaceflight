@@ -31,7 +31,7 @@ export type { StoreCategory, StoreUI } from './store-render';
 
 /** Render the store content */
 function renderStore(ui: StoreUI): string {
-  const items = getCategoryItems(ui.selectedCategory);
+  const items = getCategoryItems(ui.selectedCategory, ui.state.storeStock);
   const selected = ui.selectedItem;
 
   const itemList = items
@@ -43,6 +43,7 @@ function renderStore(ui: StoreUI): string {
       return `
         <div class="store-item ${isSelected ? 'selected' : ''}" data-item="${item.id}">
           <span class="item-name">${item.name}</span>
+          <span class="item-stock">[${item.stock}]</span>
           <span class="item-price ${canAfford ? '' : 'expensive'}">${buyPrice} cr</span>
         </div>
       `;
@@ -54,7 +55,9 @@ function renderStore(ui: StoreUI): string {
   if (selected) {
     const buyPrice = getItemPrice(ui.selectedCategory, selected, 'buy');
     const sellPrice = getItemPrice(ui.selectedCategory, selected, 'sell');
-    const canAfford = ui.state.credits >= buyPrice;
+    const selectedItem = items.find((i) => i.id === selected);
+    const storeStockCount = selectedItem?.stock ?? 0;
+    const canAfford = ui.state.credits >= buyPrice && storeStockCount > 0;
     const storageCount = getStorageCount(ui, ui.selectedCategory, selected);
     const canSell = storageCount > 0;
 
@@ -81,7 +84,8 @@ function renderStore(ui: StoreUI): string {
     const isAmmo = ui.selectedCategory === 'ammo';
     const bulkAmount = isAmmo ? 100 : 10;
     const bulkPrice = buyPrice * bulkAmount;
-    const canAffordBulk = ui.state.credits >= bulkPrice;
+    const canAffordBulk =
+      ui.state.credits >= bulkPrice && storeStockCount >= bulkAmount;
     const canSellBulk = storageCount >= bulkAmount;
     const showBulk = isMissile || isAmmo;
 
@@ -92,6 +96,7 @@ function renderStore(ui: StoreUI): string {
         <div class="detail-prices">
           <div class="price-row">Buy: ${buyPrice} cr${showBulk ? ` (×${bulkAmount}: ${bulkPrice} cr)` : ''}</div>
           <div class="price-row">Sell: ${sellPrice} cr</div>
+          <div class="price-row stock-count">Store Stock: ${storeStockCount}</div>
           ${storageText ? `<div class="price-row storage-count">${storageText}</div>` : ''}
         </div>
         <div class="detail-actions">

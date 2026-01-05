@@ -31,15 +31,25 @@ export function buyAmmo(
   count: number,
 ): CampaignState {
   const pricePerUnit = getAmmoPrice(weaponType, 'buy');
-  const totalPrice = pricePerUnit * count;
-  if (pricePerUnit === 0 || state.credits < totalPrice) {
+  const stock = state.storeStock.ammo[weaponType] ?? 0;
+  // Can only buy up to available stock
+  const toBuy = Math.min(count, stock);
+  if (pricePerUnit === 0 || toBuy <= 0) {
+    return state;
+  }
+  const totalPrice = pricePerUnit * toBuy;
+  if (state.credits < totalPrice) {
     return state;
   }
 
   return {
     ...state,
     credits: state.credits - totalPrice,
-    storedAmmo: mergeAmmoIntoStorage(state.storedAmmo, weaponType, count),
+    storedAmmo: mergeAmmoIntoStorage(state.storedAmmo, weaponType, toBuy),
+    storeStock: {
+      ...state.storeStock,
+      ammo: { ...state.storeStock.ammo, [weaponType]: stock - toBuy },
+    },
   };
 }
 
@@ -67,6 +77,7 @@ export function sellAmmo(
   const pricePerUnit = getAmmoPrice(weaponType, 'sell');
   const totalPrice = pricePerUnit * toSell;
   const remaining = existing.count - toSell;
+  const currentStock = state.storeStock.ammo[weaponType] ?? 0;
 
   const newStoredAmmo = [...state.storedAmmo];
   if (remaining <= 0) {
@@ -82,6 +93,10 @@ export function sellAmmo(
     ...state,
     credits: state.credits + totalPrice,
     storedAmmo: newStoredAmmo,
+    storeStock: {
+      ...state.storeStock,
+      ammo: { ...state.storeStock.ammo, [weaponType]: currentStock + toSell },
+    },
   };
 }
 
