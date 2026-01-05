@@ -3,8 +3,11 @@
  */
 
 import { type AIControlled, AIState } from '../../components/ai';
-import type { FactionComponent } from '../../components/faction';
-import { areEnemies, type Faction } from '../../components/faction';
+import {
+  areEnemies,
+  type Faction,
+  type FactionComponent,
+} from '../../components/faction';
 import { type Health, isDying } from '../../components/health';
 import type { Transform } from '../../components/transform';
 import { getComponent, queryEntities } from '../../core/ecs';
@@ -30,6 +33,74 @@ export function countEngagingTarget(world: World, target: Entity): number {
 /** Check if an entity is the player */
 export function isPlayer(world: World, entity: Entity): boolean {
   return getComponent(world, entity, 'playerControlled') !== undefined;
+}
+
+/** Find the player entity */
+export function findPlayer(world: World): Entity | null {
+  for (const entity of queryEntities(world, [
+    'playerControlled',
+    'transform',
+  ])) {
+    return entity;
+  }
+  return null;
+}
+
+/** Find the nearest enemy that is actively threatening (targeting) the player */
+export function findNearestThreatToPlayer(
+  world: World,
+  self: Entity,
+  selfFaction: Faction,
+): Entity | null {
+  const player = findPlayer(world);
+  if (!player) return null;
+
+  const selfTransform = getComponent<Transform>(world, self, 'transform');
+  if (!selfTransform) return null;
+
+  let nearestThreat: Entity | null = null;
+  let nearestDist = Infinity;
+
+  for (const entity of queryEntities(world, [
+    'aiControlled',
+    'transform',
+    'faction',
+    'health',
+  ])) {
+    const entityFaction = getComponent<FactionComponent>(
+      world,
+      entity,
+      'faction',
+    );
+    if (!entityFaction || !areEnemies(selfFaction, entityFaction.faction))
+      continue;
+
+    const health = getComponent<Health>(world, entity, 'health') as Health;
+    if (isDying(health)) continue;
+
+    // Check if this enemy is targeting the player
+    const ai = getComponent<AIControlled>(
+      world,
+      entity,
+      'aiControlled',
+    ) as AIControlled;
+    if (ai.target !== player) continue;
+    if (ai.state !== AIState.Pursue && ai.state !== AIState.Engage) continue;
+
+    const entityTransform = getComponent<Transform>(
+      world,
+      entity,
+      'transform',
+    ) as Transform;
+    const dist = selfTransform.position.distanceTo(entityTransform.position);
+
+    if (dist < nearestDist) {
+      nearestDist = dist;
+      nearestThreat = entity;
+    }
+  }
+
+  return nearestThreat;
 }
 
 /** Find the nearest enemy entity */

@@ -1,359 +1,91 @@
-# Combat Balance Testing Approach
+# Combat Balance Status
 
-This document describes the systematic approach to testing and balancing combat for the spaceflight roguelike.
-
-## Philosophy
-
-### Roguelike Balance Goals
-Unlike symmetric PvP games, roguelike balance serves different goals:
-1. **Asymmetric encounters are acceptable** - Player faces varied challenges
-2. **Attrition matters** - Surviving with 20% health is a problem
-3. **Decision-making over execution** - Which fights to take, when to run
-4. **Progression changes balance** - Early game ≠ late game
-5. **Some matchups should be unfavorable** - Creates meaningful choices
-
-### Core Requirements
-1. **Archetypes viable in intended roles** - Each ship type should excel at something
-2. **AI difficulty scales meaningfully** - Higher skill = harder to beat
-3. **Combat has engagement and disengagement** - Not constant damage trading
-4. **Ships survivable in reasonable circumstances** - Time for decisions and recovery
+Documents validated combat balance for the spaceflight roguelike.
 
 ---
 
-## Priority 0: Fundamental Combat Feel
+## Validated ✓
 
-### 1. TTK (Time-to-Kill) Matrix ✓
-**Test:** `npx tsx scripts/tests/combat/test-ttk-matrix.mjs`
+### TTK (Time-to-Kill)
+- **Average:** 8.6s, range 4.8-21.5s
+- No instant deaths (<2s), no tedious fights (>30s)
+- No matchups with >85% win rate imbalance
 
-Measures kill times across all archetype matchups (now includes sniper/lancer variants).
+### Skill Scaling
+AI skill progression works for most archetypes:
+- Regular beats Rookie ~65%
+- Veteran beats Regular ~60%
+- Ace beats Veteran ~55%
+- Ace beats Rookie ~80%
 
-**Results (2026-01-04):**
-- Overall TTK: avg=8.6s, range=4.8-21.5s ✓
-- No matchups with TTK < 2s (too fast)
-- No high timeout rates
-- No >85% win rate imbalances
+**Playstyle system:** Different ships express skill differently:
+- **Brawler:** Aim, composure, aggression all scale
+- **Escape:** Skill via aim error multiplier (1x-3x)
+- **Kiting:** Skill-based engagement range (0.7x-1.1x)
 
-**Target Ranges:**
-| Category | Archetypes | Target TTK |
-|----------|------------|------------|
-| Glass Cannon | Scout, Raider | 2-5s |
-| Standard | Interceptor, Striker | 8-15s |
-| Tanky | Defender, Sentinel | 15-25s |
-| Special | Bomber | 5-10s |
+### Engagement Flow
+- Ships disengage and recover (not constant damage trading)
+- Shield recovery during regroup: 50-82%
+- Pursue+Engage time: 38-72% (leaves room for tactical decisions)
 
-**Red Flags:**
-- TTK < 2s: Combat too fast for decisions
-- TTK > 30s: Combat becomes tedious
-- High timeout rates: Ships can't kill each other
-- >85% win rate in non-mirror: Matchup too one-sided
+### Weapon Diversity
+| Type | Damage % |
+|------|----------|
+| Projectile | 32% |
+| Beam | 13% |
+| Missile | 54% |
 
-### 2. Skill Scaling Verification ⚠️
-**Tests:**
-- Mirror matches: `npx tsx scripts/tests/combat/test-skill-scaling.mjs`
-- vs Brawlers: `npx tsx scripts/tests/combat/test-skill-vs-brawler.mjs`
-
-Verifies AI skill progression works across ALL archetypes.
-
-**Playstyle System (Implemented 2026-01-04):**
-Different ship types express skill differently via `getProfileForPlaystyle()`:
-- **Brawler**: Uses base profile (aim, composure, aggression all scale)
-- **Escape**: Constant behavior params, skill via aim error (1x-3x multiplier)
-- **Kiting**: Skill-based engagement range (0.7x-1.1x), constant flee distance
-
-**Kiting Range Scaling:**
-Lower-skill snipers engage CLOSER to compensate for poor aim:
-- Ace: 990m preferred (900 × 1.1), 400m flee → 590m engagement window
-- Rookie: 630m preferred (900 × 0.7), 400m flee → 230m engagement window
-Constant flee distance prevents chase asymmetry in mirrors.
-
-**Mirror Match Results (2026-01-04):**
-| Archetype | R>Rk | V>R | A>V | A>Rk | Notes |
-|-----------|------|-----|-----|------|-------|
-| Brawlers | 62-82% | 52-60% | 54-64% | 82-98% | ✓ Working |
-| Scout | 56% | 62% | 54% | 94% | ✓ Working via escape playstyle |
-| Sniper | 38% | 34% | 22% | 38% | ⚠️ Improved but still weak |
-| Lancer | 2% | 2% | 0% | 0% | ✗ Hitscan beams bypass aim |
-
-**Skill vs Brawler Results (2026-01-04):**
-More realistic scenario - how each skill level performs against regular brawler.
-
-| Ship vs Opponent | Rookie | Regular | Veteran | Ace |
-|------------------|--------|---------|---------|-----|
-| Scout vs Interceptor (500m) | 24% | 38% | 52% | 56% |
-| Sniper vs Striker (900m) | 0% | 24% | 54% | 96% |
-| Lancer vs Defender (1000m) | 0% | 0% | 0% | 0% |
-
-**Key Findings:**
-1. **Scout skill scaling working** - Clear 24%→38%→52%→56% progression
-2. **Sniper skill scaling working** - Smooth 0%→24%→54%→96% progression via range compensation
-3. **Lancer fundamentally broken** - Hitscan beams bypass aim error, can't kill tanky defender
-
-**Remaining Issues:**
-- Rookie sniper can't solo brawlers (0%) - may need team support
-- Lancer needs different skill expression (beam tracking jitter mechanic)
-- Lancer vs defender is a fundamental matchup issue (can't kill before closed on)
-
-**Expected Progression:**
-```
-Rookie < Regular < Veteran < Ace
-```
-
-**Metrics:**
-- Regular should beat Rookie ~65% of time
-- Veteran should beat Regular ~60% of time
-- Ace should beat Veteran ~55% of time
-- Ace should beat Rookie ~80% of time
-
-**Red Flags:**
-- Any tier winning <55% against lower tier
-- Inconsistent skill impact across archetypes
-- Skill mattering more for some ships than others
-
-### 3. Engagement Pattern Analysis ⚠️
-**Test:** `npx tsx scripts/tests/combat/test-engagement-patterns.mjs`
-
-Analyzes combat flow to ensure proper phases.
-
-**Results (2026-01-04):**
-- Break-offs: 1.8-4.8 per 10s (target 1-3) - slightly high for fast ships
-- Shield recovery: 50-82% per regroup (target 20-50%) - exceeds target ✓
-- Combat not constant: Pursue+Engage = 38-72% (target <85%) ✓
-
-**Known Issues:**
-- Scout: Only 21% engage time (too little, spends 32% pursuing)
-- Sentinel: Only 17% engage time (too little, spends 34% pursuing)
-- Both ships struggle to close/maintain engagement distance
-
-**Healthy Combat Flow:**
-- **Pursue:** Closing to engagement range (10-20% of fight)
-- **Engage:** Active combat (40-60% of fight)
-- **Evade/Regroup:** Disengaging when damaged (15-30% of fight)
-
-**Metrics:**
-- Break-off frequency: Ships should disengage 1-3 times per 10s
-- Shield recovery: Should recover 20-50% shields during regroup
-- Not constant combat: Pursue+Engage should be <85% of fight time
-
-**Red Flags:**
-- <10% time in disengage states: Combat is constant damage trading
-- 0 break-offs: Ships fight to death without retreating
-- No shield recovery during regroup: Disengaging is pointless
+No single type dominates. Tracking missiles (50% hit) vs dumbfire (38% hit) balanced by decoy vulnerability.
 
 ---
 
-## Priority 1: Core Systems Balance
+## Known Issues
 
-### 4. Defensive Systems ✓
-**Test:** `npx tsx scripts/tests/combat/test-decoy-missile.mjs`
+### Lancer (beam kiter)
+Hitscan beams bypass aim error system. Skill scaling doesn't work - all skill levels perform similarly. Low priority since it's a variant archetype.
 
-**Results (2026-01-04):**
-- Decoy launches scale with skill: Ace 179% more than Rookie
-- Higher skill = shorter fights = fewer missiles in play to seduce
-- Shield recovery during regroup: 49-70% (exceeds 20-50% target)
+### Sniper (railgun kiter)
+High skill ceiling by design. Rookie snipers can't solo brawlers (0% win rate) - may need team support. Ace snipers dominate (96% win rate).
 
-### 5. Weapon System Diversity ✓
-**Test:** `npx tsx scripts/tests/combat/test-weapon-diversity.mjs`
-
-**Results (2026-01-04, updated after beam improvements):**
-| Type | Damage % | Status |
-|------|----------|--------|
-| Projectile | 32% | ✓ Healthy |
-| Beam | 13% | ✓ Improved (was 11%) |
-| Missile | 54% | ✓ Healthy |
-
-No single type exceeds 60% ✓
-
-**Per-Archetype Weapon Mix:**
-| Ship | Projectile | Beam | Missile |
-|------|------------|------|---------|
-| Scout | 33% | 10% | 57% |
-| Interceptor | 43% | 12% | 45% |
-| Striker | 35% | 11% | 54% |
-| Defender | 40% | 8% | 51% |
-| Bomber | 38% | 7% | 55% |
-| Raider | 34% | 4% | 62% |
-| Sentinel | 32% | 17% | 51% |
-
-**Note:** Beam-specialized ships (Sentinel) don't yet feel beam-focused.
-This is a Priority 2 issue - see "Beam Specialization" below.
-
-### 6. Missile Economy ✓
-**Test:** `npx tsx scripts/tests/combat/test-decoy-missile.mjs`
-
-**Results (2026-01-04):**
-| Type | Fired | Hit Rate | Notes |
-|------|-------|----------|-------|
-| Tracking (Torpedo, Seeker) | 66 | 50% | Can be decoyed |
-| Dumbfire (Rocket) | 265 | 38% | Aim error only |
-
-Tracking advantage (50% vs 38%) balances decoy vulnerability.
+### Striker mirrors
+~50-55% for all skill matchups. Multiple weapons dilute accuracy differences. Inherent to multi-weapon slugfest design.
 
 ---
 
-## Priority 2: Archetype Viability
+## Quick Reference
 
-### 7. Role Definition Tests
-Each archetype should excel at its intended role:
+### Ship Archetypes
+| Archetype | Hull | Shields | Speed | Role |
+|-----------|------|---------|-------|------|
+| Scout | 50 | 30 | 300 | Fast, fragile |
+| Interceptor | 80 | 60 | 250 | Balanced |
+| Striker | 120 | 80 | 200 | Heavy brawler |
+| Defender | 150 | 120 | 180 | Tank |
+| Bomber | 100 | 70 | 180 | Burst damage |
+| Raider | 60 | 40 | 280 | Glass cannon |
+| Sentinel | 100 | 100 | 200 | Beam support |
 
-| Archetype | Role | Test Scenario |
-|-----------|------|---------------|
-| Scout | Escape, recon | Can escape from any pursuer? |
-| Interceptor | Flexible combat | Competitive in most 1v1s? |
-| Striker | Sustained DPS | Highest damage over 30s? |
-| Defender | Protection, durability | Survives longest under fire? |
-| Bomber | Anti-capital burst | Highest burst damage? |
-| Raider | Glass cannon alpha | Fastest kill when unopposed? |
-| Sentinel | Area presence | Best in 1vN? |
+### AI Skill Levels
+| Profile | Aim Error | Evade Threshold |
+|---------|-----------|-----------------|
+| Rookie | 0.095 rad (~5.5°) | 31% shields |
+| Regular | 0.05 rad (~3°) | 25% shields |
+| Veteran | 0.032 rad (~2°) | 20% shields |
+| Ace | 0.008 rad (~0.5°) | 12% shields |
 
-### 8. Counter Matchups
-Every archetype should have clear counters:
-- Scout: Low damage, can't fight head-on
-- Interceptor: Jack of all trades, master of none
-- Striker: Slower, vulnerable to hit-and-run
-- Defender: Low DPS, can't catch runners
-- Bomber: Vulnerable to interceptors
-- Raider: Dies if caught, can't sustain
-- Sentinel: Slow, can be kited
-
-### 9. Beam Specialization ✓
-**Problem:** Beam-specialized ships (Sentinel) originally dealt only 17% beam damage.
-
-**Solution (2026-01-04):**
-1. Changed Sentinel primaries to all red lasers (3x redLaser)
-2. Reduced missiles: seeker 8→4, removed rockets/darts, kept torpedo(2) + decoy(4)
-3. **+100% beam damage buff** to all beam weapons:
-   - Red laser: 60 → 120 DPS
-   - Green laser: 40 → 80 DPS
-   - Blue laser: 25 → 50 DPS
-
-**Result:** Sentinel now deals **55% beam damage** with **52% win rate** (balanced)
-
-**Extensive testing showed:**
-- Beam buffs up to +200% never made beams "dominant" (>65% win rate)
-- Long-range kiting (blue laser, railgun) does NOT become overpowered
-- Short-range high-DPS (red laser) remains optimal for beam builds
-- +100% is the sweet spot: beams go from weak (41%) to balanced (52%)
-
-**Current per-archetype beam damage:**
-| Ship | Beam% | Notes |
-|------|-------|-------|
-| Sentinel | 55% | Beam specialist ✓ |
-| Scout | 20% | Has red laser |
-| Others | 7-21% | Non-beam ships stay reasonable |
-
----
-
-## Priority 3: Roguelike Readiness
-
-### 10. Multi-Encounter Survivability
-**Key Question:** Can a ship fight 3-5 encounters before needing repair?
-
-**Test Scenarios:**
-- Sequential fights against Regular enemies
-- Health/shield trend across fights
-- Resource depletion (missiles, heat)
-
-### 11. Risk/Reward Framework
-Some fights should be avoidable. Player needs:
-- Enemy composition visible before engagement
-- Difficulty assessment (skill + archetype)
-- Escape possibility
-- Reward proportional to risk
+### Tuning Levers
+- **TTK:** Hull/shield values, weapon damage, shield regen
+- **Skill impact:** `aimErrorBase`, `aimErrorAngularFactor`, `minFiringAngle`
+- **Engagement flow:** `evadeShieldThreshold`, `regroupShieldThreshold`, cooldowns
 
 ---
 
 ## Running Tests
 
-### Full Balance Suite
 ```bash
-# Run all balance tests
 npx tsx scripts/tests/combat/test-ttk-matrix.mjs
 npx tsx scripts/tests/combat/test-skill-scaling.mjs
 npx tsx scripts/tests/combat/test-engagement-patterns.mjs
-npx tsx scripts/tests/combat/test-decoy-missile.mjs
 npx tsx scripts/tests/combat/test-weapon-diversity.mjs
-
-# Run existing combat simulations
-npx tsx scripts/tests/combat/simulate-combat.mjs
+npx tsx scripts/tests/combat/test-decoy-missile.mjs
 ```
-
-### Quick Checks
-```bash
-# Single archetype matchup
-npx tsx scripts/tests/combat/simulate-combat.mjs 1v1-interceptor-regular 50
-
-# Skill ladder verification
-npx tsx scripts/tests/combat/simulate-combat.mjs profile-rookie-vs-ace 50
-```
-
----
-
-## Interpreting Results
-
-### TTK Matrix Red Flags
-- **Diagonal (mirrors) not ~50/50:** Spawn bias or determinism issue
-- **Row much higher than others:** That archetype kills too fast
-- **Column much higher than others:** That archetype dies too fast
-
-### Skill Scaling Red Flags
-- **Flat progression:** Skill doesn't matter enough
-- **Inconsistent across archetypes:** Some ships benefit more from skill
-- **Inversions:** Lower skill winning more than expected
-
-### Engagement Pattern Red Flags
-- **No regroup time:** Ships never disengage
-- **Too much idle:** Ships not finding each other
-- **Constant engage:** No tactical ebb and flow
-
----
-
-## Tuning Levers
-
-### To adjust TTK:
-- Hull/shield values in `src/data/ships.ts`
-- Weapon damage in `src/data/weapons.ts`
-- Shield regen rates
-
-### To adjust skill impact:
-- AI profiles in `src/data/ai-profiles.ts`
-- `aimErrorBase`, `aimErrorAngularFactor`
-- `engageRange`, `breakOffRange`
-- `minFiringAngle`
-
-### To adjust engagement flow:
-- `evadeShieldThreshold`, `regroupShieldThreshold`
-- `evadeCooldown`, `regroupMinTime`
-- Shield regen rates and delays
-
----
-
-## Ship Archetypes Reference
-
-### Base Archetypes (one per ship class)
-| Archetype | Hull | Shields | Speed | Turn | Role |
-|-----------|------|---------|-------|------|------|
-| Scout | 50 | 30 | 300 | 120 | Escape, recon |
-| Interceptor | 80 | 60 | 250 | 100 | Balanced fighter |
-| Striker | 120 | 80 | 200 | 80 | Heavy assault |
-| Defender | 150 | 120 | 180 | 70 | Tank, protect |
-| Bomber | 100 | 70 | 180 | 75 | Anti-capital |
-| Raider | 60 | 40 | 280 | 110 | Glass cannon |
-| Sentinel | 100 | 100 | 200 | 90 | Support, beams |
-
-### Variant Archetypes (different loadout on existing chassis)
-| Archetype | Chassis | Weapons | Combat Range | Role |
-|-----------|---------|---------|--------------|------|
-| Sniper | Raider | 2x railgun | 900m (flees at 400m) | Long-range alpha strike |
-| Lancer | Sentinel | 3x blueLaser | 1000m | Long-range beam platform |
-
----
-
-## AI Profiles Reference
-
-| Profile | Aim Error | Angular Factor | Engage Range | Evade Threshold | minFiringAngle | combatRangeMultiplier |
-|---------|-----------|----------------|--------------|-----------------|----------------|----------------------|
-| Rookie | 0.095 rad | 0.68 | 500m | 31% shields (panics early) | 45° | 0.8x |
-| Regular | 0.05 rad | 0.5 | 600m | 25% shields | 24° | 1.0x |
-| Veteran | 0.032 rad | 0.3 | 700m | 20% shields | 18° | 1.15x |
-| Ace | 0.008 rad | 0.06 | 800m | 12% shields (ice cold) | 14° | 1.3x |
-

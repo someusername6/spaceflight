@@ -54,6 +54,7 @@ export const MISSILES: Record<string, MissileStats> = {
   },
 
   // === HOMING (lock required) ===
+  // Lock times doubled for better pacing and player reaction time
   seeker: {
     name: 'Seeker',
     requiresLock: true,
@@ -62,7 +63,7 @@ export const MISSILES: Record<string, MissileStats> = {
     range: 2000,
     damage: 60,
     fireRate: 1.0,
-    lockSpeed: 0.5, // 2 seconds to lock
+    lockSpeed: 0.25, // 4 seconds to lock (was 2s)
   },
   dart: {
     name: 'Dart',
@@ -72,7 +73,7 @@ export const MISSILES: Record<string, MissileStats> = {
     range: 800,
     damage: 30,
     fireRate: 0.5,
-    lockSpeed: 1.0, // 1 second to lock
+    lockSpeed: 0.5, // 2 seconds to lock (was 1s)
   },
   swarm: {
     name: 'Swarm',
@@ -82,7 +83,7 @@ export const MISSILES: Record<string, MissileStats> = {
     range: 600,
     damage: 10,
     fireRate: 0.1, // Rapid fire
-    lockSpeed: 0.8,
+    lockSpeed: 0.4, // 2.5 seconds to lock (was 1.25s)
   },
 
   // === HEAVY (slow lock, high damage) ===
@@ -94,7 +95,7 @@ export const MISSILES: Record<string, MissileStats> = {
     range: 4000,
     damage: 150,
     fireRate: 2.0,
-    lockSpeed: 0.25, // 4 seconds to lock
+    lockSpeed: 0.15, // ~7 seconds to lock (was 4s)
   },
   nuke: {
     name: 'Nuke',
@@ -104,7 +105,7 @@ export const MISSILES: Record<string, MissileStats> = {
     range: 3000,
     damage: 300,
     fireRate: 3.0,
-    lockSpeed: 0.2, // 5 seconds to lock
+    lockSpeed: 0.1, // 10 seconds to lock (was 5s)
     aoeRadius: 100, // Large AoE damage radius
     isNuke: true, // Special explosion effects
   },

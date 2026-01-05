@@ -36,4 +36,28 @@ Weapon components and systems (projectiles, missiles, beams, decoys), shield sys
 
 ## Phase 4: Slice 3 - Campaign Loop
 
-(Not started)
+### Phase 4.1: Minimal Campaign Loop ✅
+
+- **Campaign data types** (`src/campaign/types.ts`): OwnedShip, Contract, Pilot, CampaignState
+- **Campaign state management** (`src/campaign/state.ts`): createNewCampaign, applyMissionResults, isGameOver
+- **Screen state machine** (`src/ui/screens.ts`): Screen enum (HANGAR, CONTRACTS, MISSION, RESULTS, GAME_OVER), transitions
+- **UI styles** (`src/ui/styles.ts`): Dark space theme CSS for campaign screens
+- **Hangar UI** (`src/ui/hangar.ts`): Ship list with hull status, "Select Contract" navigation
+- **Contract UI** (`src/ui/contracts.ts`): 3 hardcoded contracts (easy/medium/hard), enemy details
+- **Results UI** (`src/ui/results.ts`): Victory/defeat screen, credits earned, game over screen
+- **Campaign controller** (`src/campaign/controller.ts`): Orchestrates flow, spawns missions from contracts
+- **Main entry** (`src/main.ts`): Now starts campaign instead of hardcoded scene
+
+### Phase 4.2: Mission Pacing & Balance ✅
+
+- **Wave-based spawning** (`src/campaign/controller.ts:188-207`, `src/ui/contracts.ts:20-66`): Enemies spawn in waves with delays, creating longer engagements. Easy: 3 enemies/2 waves, Medium: 4 enemies/2 waves, Hard: 5 enemies/3 waves.
+- **Contract wave types** (`src/campaign/types.ts`): ContractWave with enemies array and delay between waves.
+- **Wingman protection** (`src/systems/ai/ai-utils.ts:69-107`, `src/systems/ai/ai.ts`): Wingmen prioritize enemies actively targeting the player via `findNearestThreatToPlayer()`.
+- **Removed Protect state** (`src/components/ai.ts`, `src/data/ai-profiles.ts`, `src/systems/ai/ai-behaviors.ts`): Replaced complex Protect state machine with simpler target prioritization in updateIdle.
+- **Missile lock times** (`src/data/missiles.ts`): Doubled lock times for pacing (seeker: 4s, dart: 2s, torpedo: 7s, nuke: 10s).
+- **Mission pacing tests** (`scripts/tests/campaign/test-mission-pacing.mjs`): Smoke tests measuring win rate and time for idle and AI players at each skill level.
+
+Balance targets achieved:
+- Easy: 85% regular AI win rate, ~25s avg
+- Medium: 65% regular AI win rate, ~40s avg
+- Hard: 45% regular AI win rate, ~55s avg

@@ -6,7 +6,6 @@
  */
 
 import { type AIControlled, AIState } from '../../components/ai';
-import type { Faction } from '../../components/faction';
 import type { Heat } from '../../components/heat';
 import {
   AFTERBURNER_UNLOCK_THRESHOLD,
@@ -21,7 +20,6 @@ import type { Entity, World } from '../../core/types';
 import type { AIProfile } from '../../data/ai-profiles';
 import {
   accelerateTo,
-  aimToward,
   calculateEscapeDirection,
   EVADE_AWAY_WEIGHT,
   EVADE_PERPENDICULAR_WEIGHT,
@@ -30,7 +28,6 @@ import {
   tempVectors,
   turnToward,
 } from './ai-movement';
-import { findNearestEnemy } from './ai-utils';
 
 /** Check if AI should evade (low shields) - uses profile threshold */
 export function shouldEvade(
@@ -179,73 +176,6 @@ export function updateEvade(
     // Heat-locked - use normal max speed
     accelerateTo(physics, physics.maxSpeed, dt);
     physics.isAfterburning = false;
-  }
-}
-
-/** Protect state - aggressively engage threats to the protectee */
-export function updateProtect(
-  world: World,
-  entity: Entity,
-  ai: AIControlled,
-  transform: Transform,
-  physics: Physics,
-  faction: Faction,
-  dt: number,
-): void {
-  const profile = ai.profile;
-  const { toTarget } = tempVectors;
-
-  // Check if we have someone to protect
-  if (!ai.protectTarget || !entityExists(world, ai.protectTarget)) {
-    ai.state = AIState.Idle;
-    ai.stateTimer = 0;
-    return;
-  }
-
-  // Find nearest threat to protectee and engage it directly
-  const protecteeTransform = getComponent<Transform>(
-    world,
-    ai.protectTarget,
-    'transform',
-  );
-  if (!protecteeTransform) {
-    ai.state = AIState.Idle;
-    ai.stateTimer = 0;
-    return;
-  }
-
-  const distToProtectee = transform.position.distanceTo(
-    protecteeTransform.position,
-  );
-  const threat = findNearestEnemy(world, ai.protectTarget, faction);
-
-  // If too far from protectee, return instead of chasing threats
-  if (threat && distToProtectee <= profile.protectChaseRange) {
-    ai.target = threat;
-    const threatTransform = getComponent<Transform>(world, threat, 'transform');
-    if (threatTransform) {
-      // Pursue the threat aggressively to force it into evasive state
-      toTarget.copy(threatTransform.position).sub(transform.position);
-      if (toTarget.lengthSq() > 0.001) {
-        toTarget.normalize();
-        aimToward(world, entity, transform, physics, toTarget, dt);
-      }
-      accelerateTo(physics, physics.maxSpeed, dt);
-    }
-  } else {
-    // No threats or too far from protectee - return to protectee
-    if (distToProtectee > profile.protectPatrolRange) {
-      // Move closer to protectee
-      toTarget
-        .copy(protecteeTransform.position)
-        .sub(transform.position)
-        .normalize();
-      turnToward(transform, physics, toTarget, dt);
-      accelerateTo(physics, physics.maxSpeed * 0.7, dt);
-    } else {
-      // Close enough - slow down and patrol
-      accelerateTo(physics, physics.maxSpeed * 0.3, dt);
-    }
   }
 }
 

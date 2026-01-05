@@ -11,7 +11,6 @@ export enum AIState {
   Pursue = 'pursue',
   Engage = 'engage',
   Evade = 'evade',
-  Protect = 'protect',
   Regroup = 'regroup',
   /** Repositioning to preferred combat range after burst attack */
   Reposition = 'reposition',
@@ -21,7 +20,6 @@ export interface AIControlled extends ComponentBase {
   readonly type: 'aiControlled';
   state: AIState;
   target: Entity | null;
-  protectTarget: Entity | null;
   stateTimer: number; // Time in current state
   lastStateChange: number; // For cooldowns
   lastDecoyTime: number; // When AI last launched a decoy
@@ -51,7 +49,6 @@ export function createAIControlled(
     type: 'aiControlled' as const,
     state: AIState.Idle,
     target: null,
-    protectTarget: null,
     stateTimer: 0,
     lastStateChange: 0,
     lastDecoyTime: 0,

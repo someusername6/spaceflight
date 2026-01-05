@@ -3,7 +3,7 @@
  */
 
 import { type AIControlled, AIState } from '../../components/ai';
-import type { Faction, FactionComponent } from '../../components/faction';
+import { Faction, type FactionComponent } from '../../components/faction';
 import type { Health } from '../../components/health';
 import { isDying } from '../../components/health';
 import type { Heat } from '../../components/heat';
@@ -18,7 +18,6 @@ import {
   shouldFleeDistance,
   shouldRegroup,
   updateEvade,
-  updateProtect,
   updateRegroup,
 } from './ai-behaviors';
 import { CLOSE_URGENTLY_THRESHOLD, isKitingShip } from './ai-movement';
@@ -27,6 +26,7 @@ import { shouldReposition, updateReposition } from './ai-reposition';
 import {
   countEngagingTarget,
   findNearestEnemy,
+  findNearestThreatToPlayer,
   isPlayer,
   setAITarget,
 } from './ai-utils';
@@ -60,11 +60,7 @@ export function aiSystem(world: World, dt: number): void {
     const heat = getComponent<Heat>(world, entity, 'heat');
 
     // Check for emergency transitions (can happen from any combat state)
-    if (
-      ai.state === AIState.Pursue ||
-      ai.state === AIState.Engage ||
-      ai.state === AIState.Protect
-    ) {
+    if (ai.state === AIState.Pursue || ai.state === AIState.Engage) {
       if (shouldRegroup(shields, heat, ai.profile)) {
         ai.state = AIState.Regroup;
         ai.stateTimer = 0;
@@ -88,17 +84,6 @@ export function aiSystem(world: World, dt: number): void {
       case AIState.Evade:
         updateEvade(world, entity, ai, transform, physics, shields, heat, dt);
         break;
-      case AIState.Protect:
-        updateProtect(
-          world,
-          entity,
-          ai,
-          transform,
-          physics,
-          faction.faction,
-          dt,
-        );
-        break;
       case AIState.Regroup:
         updateRegroup(world, entity, ai, transform, physics, shields, heat, dt);
         break;
@@ -116,7 +101,18 @@ function updateIdle(
   ai: AIControlled,
   faction: Faction,
 ): void {
-  const target = findNearestEnemy(world, entity, faction);
+  let target: Entity | null = null;
+
+  // Wingmen (Faction.Player) prioritize enemies threatening the player
+  if (faction === Faction.Player) {
+    target = findNearestThreatToPlayer(world, entity, faction);
+  }
+
+  // Fall back to nearest enemy if no threat found (or for enemies)
+  if (target === null) {
+    target = findNearestEnemy(world, entity, faction);
+  }
+
   if (target !== null) {
     ai.target = target;
     ai.state = AIState.Pursue;

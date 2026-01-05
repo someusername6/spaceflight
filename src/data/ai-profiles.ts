@@ -68,12 +68,6 @@ export interface AIProfile {
   /** Cooldown between decoy launches (seconds) */
   decoyCooldown: number;
 
-  // === PROTECT BEHAVIOR ===
-  /** Max distance from protectee to chase threats */
-  protectChaseRange: number;
-  /** Distance to patrol around protectee */
-  protectPatrolRange: number;
-
   // === BURST-DISENGAGE (for long-range ships) ===
   /** How long to engage before repositioning (seconds) */
   burstDuration: number;
@@ -124,9 +118,6 @@ export const AI_PROFILES: Record<string, AIProfile> = {
     regroupMinTime: 2.0,
     // Missiles: Slow reactions
     decoyCooldown: 3.5, // (tuned)
-    // Protect: Tight formation (easier to hit)
-    protectChaseRange: 300,
-    protectPatrolRange: 150,
     // Burst-disengage: Long bursts, slow to reposition (easier to catch)
     burstDuration: 3.0,
     repositionCooldown: 6.0,
@@ -162,9 +153,6 @@ export const AI_PROFILES: Record<string, AIProfile> = {
     regroupMinTime: 3.0,
     // Missiles: Standard
     decoyCooldown: 2.0,
-    // Protect: Standard spacing
-    protectChaseRange: 400,
-    protectPatrolRange: 200,
     // Burst-disengage: Moderate timing
     burstDuration: 2.5,
     repositionCooldown: 5.0,
@@ -200,9 +188,6 @@ export const AI_PROFILES: Record<string, AIProfile> = {
     regroupMinTime: 3.5,
     // Missiles: Quick reactions
     decoyCooldown: 1.4,
-    // Protect: Wide coverage
-    protectChaseRange: 500,
-    protectPatrolRange: 250,
     // Burst-disengage: Efficient timing (hard to pin down)
     burstDuration: 2.0,
     repositionCooldown: 4.0,
@@ -238,9 +223,6 @@ export const AI_PROFILES: Record<string, AIProfile> = {
     regroupMinTime: 4.0,
     // Missiles: Instant reactions
     decoyCooldown: 0.5, // Lightning fast
-    // Protect: Maximum coverage
-    protectChaseRange: 600,
-    protectPatrolRange: 300,
     // Burst-disengage: Optimal timing (extremely hard to catch)
     burstDuration: 1.5,
     repositionCooldown: 3.0,
