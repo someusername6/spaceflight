@@ -4,14 +4,8 @@
  */
 
 import { Vector3 } from 'three';
-import { getEnemyCallsignPrefix } from '../components/ship-identity';
-import type { World } from '../core/types';
 import type { ProfileName } from '../data/ai-profiles';
-import {
-  createEnemyShip,
-  createPlayerShip,
-  createWingman,
-} from '../factories/ship';
+import { createPlayerShip, createWingman } from '../factories/ship';
 import {
   countLivingEnemyShips,
   createGame,
@@ -40,9 +34,15 @@ import {
   createMissionRenderers,
   updateMissionRenderers,
 } from './mission-renderer';
+import {
+  createMissionEndState,
+  createWaveState,
+  MISSION_END_DELAY,
+  spawnWave,
+} from './mission-waves';
 import { showGameOver, showResults } from './screen-handlers';
 import { applyMissionResults, createNewCampaign, isGameOver } from './state';
-import type { Contract, ContractWave } from './types';
+import type { Contract } from './types';
 
 /** Campaign controller state */
 export interface CampaignController {
@@ -131,40 +131,6 @@ function setupContractsScreen(controller: CampaignController): void {
   );
 }
 
-/** Wave state for tracking mission progress */
-interface WaveState {
-  currentWave: number;
-  totalWaves: number;
-  waveCleared: boolean;
-  delayRemaining: number;
-}
-
-/** Spawn a wave of enemies */
-function spawnWave(world: World, wave: ContractWave, waveIndex: number): void {
-  // Get callsign prefix for this wave (Aries, Taurus, Gemini, etc.)
-  const callsignPrefix = getEnemyCallsignPrefix(waveIndex);
-
-  wave.enemies.forEach((enemySpec, groupIndex) => {
-    for (let i = 0; i < enemySpec.count; i++) {
-      const angle = (Math.PI * 2 * i) / enemySpec.count + groupIndex * 0.5;
-      // 1500m base distance = ~5-8 seconds approach (depends on ship speed)
-      const distance = 1500 + waveIndex * 100 + groupIndex * 150;
-      const x = Math.cos(angle) * distance * 0.5;
-      const z = -distance;
-      const y = (groupIndex - 1) * 50 + i * 20;
-
-      createEnemyShip(
-        world,
-        enemySpec.archetype,
-        new Vector3(x, y, z),
-        undefined,
-        enemySpec.skill as ProfileName,
-        callsignPrefix,
-      );
-    }
-  });
-}
-
 /** Launch a mission with the selected contract */
 function launchMission(
   controller: CampaignController,
@@ -219,12 +185,10 @@ function launchMission(
   });
 
   // Wave state for tracking progress
-  const waveState: WaveState = {
-    currentWave: 0,
-    totalWaves: contract.waves.length,
-    waveCleared: false,
-    delayRemaining: 0,
-  };
+  const waveState = createWaveState(contract.waves.length);
+
+  // Mission end state for delayed transition
+  const missionEndState = createMissionEndState();
 
   // Spawn first wave
   const firstWave = contract.waves[0];
@@ -245,11 +209,63 @@ function launchMission(
     );
   };
 
-  // Set tick callback for wave management
+  // Helper to execute the actual mission end transition
+  const executeMissionEnd = () => {
+    controller.missionEnded = true;
+    console.log(
+      `[MISSION ${performance.now().toFixed(0)}ms] Transitioning to results`,
+    );
+
+    // Stop the game loop
+    stopGame(game);
+
+    // Apply results to campaign (simplified - no damage tracking yet)
+    const shipsLost: string[] = [];
+    const hullDamage = new Map<string, number>();
+
+    // For now, just check if player won and if so award credits
+    const creditsEarned = missionEndState.victory ? contract.reward : 0;
+
+    const newState = applyMissionResults(
+      screenManager.campaignState,
+      missionEndState.victory,
+      creditsEarned,
+      shipsLost,
+      hullDamage,
+    );
+
+    // Update campaign state
+    updateCampaignState(screenManager, newState);
+
+    // Transition to results or game over
+    if (isGameOver(newState)) {
+      endMission(screenManager, missionEndState.victory);
+      showGameOver(controller, setupContractsScreen);
+    } else {
+      endMission(screenManager, missionEndState.victory);
+      showResults(
+        controller,
+        missionEndState.victory,
+        contract,
+        setupContractsScreen,
+      );
+    }
+  };
+
+  // Set tick callback for wave management and mission end delay
   const TICK_SEC = 1 / 60;
   game.onTick = (world) => {
     // Skip if mission already ended
     if (controller.missionEnded) return;
+
+    // Handle mission end delay countdown
+    if (missionEndState.pending) {
+      missionEndState.delayRemaining -= TICK_SEC;
+      if (missionEndState.delayRemaining <= 0) {
+        executeMissionEnd();
+      }
+      return; // Don't process waves while ending
+    }
 
     const enemyCount = countLivingEnemyShips(world);
 
@@ -320,50 +336,22 @@ function launchMission(
       return;
     }
 
-    // Prevent multiple calls
-    if (controller.missionEnded) {
+    // Prevent multiple calls (check both flags)
+    if (controller.missionEnded || missionEndState.pending) {
       console.log(
-        `[MISSION ${performance.now().toFixed(0)}ms] Ignoring - already ended`,
+        `[MISSION ${performance.now().toFixed(0)}ms] Ignoring - already ending`,
       );
       return;
     }
-    controller.missionEnded = true;
+
+    // Start the mission end delay (game keeps running so explosions play out)
+    missionEndState.pending = true;
+    missionEndState.delayRemaining = MISSION_END_DELAY;
+    missionEndState.victory = result === MissionResult.Victory;
+
     console.log(
-      `[MISSION ${performance.now().toFixed(0)}ms] Mission ending: ${isDefeat ? 'DEFEAT' : 'VICTORY'}`,
+      `[MISSION ${performance.now().toFixed(0)}ms] ${isDefeat ? 'DEFEAT' : 'VICTORY'} - transitioning in ${MISSION_END_DELAY}s`,
     );
-
-    // Stop the game loop
-    stopGame(game);
-
-    // Determine victory
-    const victory = result === MissionResult.Victory;
-
-    // Apply results to campaign (simplified - no damage tracking yet)
-    const shipsLost: string[] = [];
-    const hullDamage = new Map<string, number>();
-
-    // For now, just check if player won and if so award credits
-    const creditsEarned = victory ? contract.reward : 0;
-
-    const newState = applyMissionResults(
-      screenManager.campaignState,
-      victory,
-      creditsEarned,
-      shipsLost,
-      hullDamage,
-    );
-
-    // Update campaign state
-    updateCampaignState(screenManager, newState);
-
-    // Transition to results or game over
-    if (isGameOver(newState)) {
-      endMission(screenManager, victory);
-      showGameOver(controller, setupContractsScreen);
-    } else {
-      endMission(screenManager, victory);
-      showResults(controller, victory, contract, setupContractsScreen);
-    }
   };
 
   // Start the game
