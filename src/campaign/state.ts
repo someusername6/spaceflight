@@ -147,6 +147,115 @@ export function isGameOver(state: CampaignState): boolean {
   return !state.ships.some((s) => s.isPlayerShip);
 }
 
+/** Apply extracted ammo from mission back to campaign state */
+export function applyAmmoUsage(
+  state: CampaignState,
+  ammoData: Array<{
+    campaignShipId: string;
+    primaryAmmo: Map<number, number>;
+    secondaryAmmo: Map<number, number>;
+  }>,
+): CampaignState {
+  // Create a map for quick lookup
+  const ammoByShipId = new Map(ammoData.map((a) => [a.campaignShipId, a]));
+
+  // Update ships with remaining ammo
+  const updatedShips = state.ships.map((ship) => {
+    const extracted = ammoByShipId.get(ship.id);
+    if (!extracted) return ship;
+
+    // Update primary weapon ammo
+    const updatedPrimaries = ship.primaryWeapons.map((primary, index) => {
+      const remaining = extracted.primaryAmmo.get(index);
+      if (remaining !== undefined) {
+        return { ...primary, currentAmmo: remaining };
+      }
+      return primary;
+    });
+
+    // Update secondary weapon ammo
+    const updatedSecondaries = ship.secondaryWeapons.map((secondary, index) => {
+      const remaining = extracted.secondaryAmmo.get(index);
+      if (remaining !== undefined) {
+        return { ...secondary, count: remaining };
+      }
+      return secondary;
+    });
+
+    return {
+      ...ship,
+      primaryWeapons: updatedPrimaries,
+      secondaryWeapons: updatedSecondaries,
+    };
+  });
+
+  return {
+    ...state,
+    ships: updatedShips,
+  };
+}
+
+/** Calculate resupply cost for a single ship */
+export function calculateResupplyCost(ship: OwnedShip): number {
+  let cost = 0;
+
+  // Primary weapons with finite ammo
+  for (const primary of ship.primaryWeapons) {
+    if (primary.currentAmmo !== undefined) {
+      // Cost based on ammo needed (assume maxAmmo from archetype)
+      // For now, simple calculation: 1 credit per ammo
+      const needed = primary.bankSize * 100 - (primary.currentAmmo ?? 0);
+      cost += Math.max(0, needed);
+    }
+  }
+
+  // Secondary weapons
+  for (const secondary of ship.secondaryWeapons) {
+    const needed = secondary.maxCount - secondary.count;
+    // Missiles cost more: 10 credits per missile
+    cost += needed * 10;
+  }
+
+  return cost;
+}
+
+/** Resupply a ship (refill all ammo) */
+export function resupplyShip(ship: OwnedShip): OwnedShip {
+  return {
+    ...ship,
+    primaryWeapons: ship.primaryWeapons.map((primary) => {
+      if (primary.currentAmmo !== undefined) {
+        // Refill to max (bankSize * base ammo)
+        return { ...primary, currentAmmo: primary.bankSize * 100 };
+      }
+      return primary;
+    }),
+    secondaryWeapons: ship.secondaryWeapons.map((secondary) => ({
+      ...secondary,
+      count: secondary.maxCount,
+    })),
+  };
+}
+
+/** Resupply all ships in campaign (deduct cost from credits) */
+export function resupplyAllShips(state: CampaignState): CampaignState {
+  let totalCost = 0;
+  for (const ship of state.ships) {
+    totalCost += calculateResupplyCost(ship);
+  }
+
+  if (totalCost > state.credits) {
+    // Can't afford - return unchanged
+    return state;
+  }
+
+  return {
+    ...state,
+    credits: state.credits - totalCost,
+    ships: state.ships.map(resupplyShip),
+  };
+}
+
 // Future: localStorage save/load
 // export function saveCampaign(state: CampaignState): void { ... }
 // export function loadCampaign(): CampaignState | null { ... }

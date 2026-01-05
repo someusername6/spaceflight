@@ -4,8 +4,6 @@
  */
 
 import { Vector3 } from 'three';
-import type { ProfileName } from '../data/ai-profiles';
-import { createPlayerShip, createWingman } from '../factories/ship';
 import {
   countLivingEnemyShips,
   createGame,
@@ -18,12 +16,10 @@ import {
 import { initInput } from '../systems/input';
 import { finalizeMatchStats, initMatchStats } from '../systems/stats';
 import { createContractsUI } from '../ui/contracts';
-import { createHangarUI, updateHangarUI } from '../ui/hangar';
 import {
   createScreenManager,
   endMission,
   getScreenElement,
-  goToContracts,
   goToHangar,
   Screen,
   setMissionContainer,
@@ -41,9 +37,24 @@ import {
   MISSION_END_DELAY,
   spawnWave,
 } from './mission-waves';
-import { showGameOver, showResults } from './screen-handlers';
-import { applyMissionResults, createNewCampaign, isGameOver } from './state';
+import {
+  setupHangarScreen,
+  showGameOver,
+  showResults,
+} from './screen-handlers';
+import {
+  extractAmmoFromWorld,
+  spawnPlayerFromCampaign,
+  spawnWingmanFromCampaign,
+} from './ship-spawning';
+import {
+  applyAmmoUsage,
+  applyMissionResults,
+  createNewCampaign,
+  isGameOver,
+} from './state';
 import type { Contract } from './types';
+import { getGameSeed } from './utils';
 
 /** Campaign controller state */
 export interface CampaignController {
@@ -52,19 +63,6 @@ export interface CampaignController {
   missionContainer: HTMLElement | null;
   game: ReturnType<typeof createGame> | null;
   missionEnded: boolean;
-}
-
-/** Get seed from URL or generate random */
-function getGameSeed(): number {
-  const params = new URLSearchParams(window.location.search);
-  const seedParam = params.get('seed');
-
-  if (seedParam === null || seedParam === 'random') {
-    return performance.now() | 0;
-  }
-
-  const parsed = Number.parseInt(seedParam, 10);
-  return Number.isNaN(parsed) ? 12345 : parsed;
 }
 
 /** Create and start the campaign */
@@ -90,12 +88,9 @@ export function startCampaign(container: HTMLElement): CampaignController {
     missionEnded: false,
   };
 
-  // Setup hangar screen
+  // Setup hangar screen with resupply support
   const hangarElement = getScreenElement(screenManager, Screen.HANGAR);
-  createHangarUI(hangarElement, campaignState, () => {
-    goToContracts(screenManager);
-    setupContractsScreen(controller);
-  });
+  setupHangarScreen(controller, hangarElement, setupContractsScreen);
 
   // Show hangar initially
   goToHangar(screenManager);
@@ -116,13 +111,10 @@ function setupContractsScreen(controller: CampaignController): void {
     contractsElement,
     screenManager.campaignState,
     () => {
-      // Back to hangar
+      // Back to hangar - re-setup with resupply support
       goToHangar(screenManager);
       const hangarElement = getScreenElement(screenManager, Screen.HANGAR);
-      updateHangarUI(
-        { element: hangarElement, onSelectContracts: () => {} },
-        screenManager.campaignState,
-      );
+      setupHangarScreen(controller, hangarElement, setupContractsScreen);
     },
     (contract: Contract) => {
       // Accept contract and start mission
@@ -163,13 +155,13 @@ function launchMission(
   // Create all renderers
   const renderers = createMissionRenderers(controller.missionContainer, seed);
 
-  // Spawn player and wingmen from campaign state
+  // Spawn player and wingmen from campaign state (uses campaign loadout/ammo)
   const { campaignState } = screenManager;
   const playerShip = campaignState.ships.find((s) => s.isPlayerShip);
   const wingmen = campaignState.ships.filter((s) => !s.isPlayerShip);
 
   if (playerShip) {
-    createPlayerShip(game.world, playerShip.archetype, new Vector3(0, 0, 0));
+    spawnPlayerFromCampaign(game.world, playerShip, new Vector3(0, 0, 0));
   }
 
   // Spawn wingmen in tight symmetric formation near player
@@ -177,12 +169,10 @@ function launchMission(
     const side = index % 2 === 0 ? 1 : -1;
     const xOffset = 20 * side; // 20m left/right
     const zOffset = -10 - Math.floor(index / 2) * 15; // Staggered rows behind
-    createWingman(
+    spawnWingmanFromCampaign(
       game.world,
-      wingman.archetype,
+      wingman,
       new Vector3(xOffset, 0, zOffset),
-      undefined,
-      (wingman.pilot?.skill as ProfileName) ?? 'regular',
     );
   });
 
@@ -224,6 +214,9 @@ function launchMission(
     // Finalize match stats before stopping
     finalizeMatchStats(game.world);
 
+    // Extract remaining ammo from all player ships before stopping
+    const ammoData = extractAmmoFromWorld(game.world);
+
     // Stop the game loop
     stopGame(game);
 
@@ -234,13 +227,16 @@ function launchMission(
     // For now, just check if player won and if so award credits
     const creditsEarned = missionEndState.victory ? contract.reward : 0;
 
-    const newState = applyMissionResults(
+    let newState = applyMissionResults(
       screenManager.campaignState,
       missionEndState.victory,
       creditsEarned,
       shipsLost,
       hullDamage,
     );
+
+    // Apply ammo usage to campaign state (persist remaining ammo)
+    newState = applyAmmoUsage(newState, ammoData);
 
     // Update campaign state
     updateCampaignState(screenManager, newState);

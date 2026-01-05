@@ -5,6 +5,7 @@
  * Future: Drag-drop equipment, pilot assignment.
  */
 
+import { calculateResupplyCost } from '../campaign/state';
 import type { CampaignState, OwnedShip } from '../campaign/types';
 import { SHIP_ARCHETYPES } from '../factories/ship-archetypes';
 
@@ -12,12 +13,22 @@ import { SHIP_ARCHETYPES } from '../factories/ship-archetypes';
 export interface HangarUI {
   element: HTMLElement;
   onSelectContracts: () => void;
+  onResupply?: () => void;
 }
 
 /** Get hull stats for a ship archetype */
 function getMaxHull(archetype: string): number {
   const stats = SHIP_ARCHETYPES[archetype];
   return stats?.hull ?? 100;
+}
+
+/** Calculate total resupply cost for all ships */
+function getTotalResupplyCost(state: CampaignState): number {
+  let total = 0;
+  for (const ship of state.ships) {
+    total += calculateResupplyCost(ship);
+  }
+  return total;
 }
 
 /** Render a single ship item */
@@ -52,6 +63,27 @@ function renderShipItem(ship: OwnedShip): string {
   `;
 }
 
+/** Render the resupply button */
+function renderResupplyButton(state: CampaignState): string {
+  const cost = getTotalResupplyCost(state);
+  const canAfford = state.credits >= cost && cost > 0;
+  const disabled = !canAfford ? 'disabled' : '';
+
+  if (cost === 0) {
+    return `
+      <button class="btn" disabled style="opacity: 0.5;">
+        Fully Supplied
+      </button>
+    `;
+  }
+
+  return `
+    <button class="btn ${canAfford ? '' : 'btn-disabled'}" id="btn-resupply" ${disabled}>
+      Resupply (${cost} cr)
+    </button>
+  `;
+}
+
 /** Render the hangar screen content */
 function renderHangar(state: CampaignState): string {
   const playerShip = state.ships.find((s) => s.isPlayerShip);
@@ -75,7 +107,8 @@ function renderHangar(state: CampaignState): string {
       </div>
     </div>
 
-    <div style="margin-top: 20px;">
+    <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+      ${renderResupplyButton(state)}
       <button class="btn btn-primary" id="btn-contracts">
         Select Contract →
       </button>
@@ -88,28 +121,43 @@ export function createHangarUI(
   element: HTMLElement,
   state: CampaignState,
   onSelectContracts: () => void,
+  onResupply?: () => void,
 ): HangarUI {
   element.innerHTML = renderHangar(state);
 
-  // Bind button click
-  const btn = element.querySelector('#btn-contracts');
-  if (btn) {
-    btn.addEventListener('click', onSelectContracts);
+  // Bind button clicks
+  const contractsBtn = element.querySelector('#btn-contracts');
+  if (contractsBtn) {
+    contractsBtn.addEventListener('click', onSelectContracts);
   }
 
-  return {
+  const resupplyBtn = element.querySelector('#btn-resupply');
+  if (resupplyBtn && onResupply) {
+    resupplyBtn.addEventListener('click', onResupply);
+  }
+
+  const ui: HangarUI = {
     element,
     onSelectContracts,
   };
+  if (onResupply) {
+    ui.onResupply = onResupply;
+  }
+  return ui;
 }
 
 /** Update hangar UI with new state */
 export function updateHangarUI(ui: HangarUI, state: CampaignState): void {
   ui.element.innerHTML = renderHangar(state);
 
-  // Re-bind button click
-  const btn = ui.element.querySelector('#btn-contracts');
-  if (btn) {
-    btn.addEventListener('click', ui.onSelectContracts);
+  // Re-bind button clicks
+  const contractsBtn = ui.element.querySelector('#btn-contracts');
+  if (contractsBtn) {
+    contractsBtn.addEventListener('click', ui.onSelectContracts);
+  }
+
+  const resupplyBtn = ui.element.querySelector('#btn-resupply');
+  if (resupplyBtn && ui.onResupply) {
+    resupplyBtn.addEventListener('click', ui.onResupply);
   }
 }

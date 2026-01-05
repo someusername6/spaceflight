@@ -87,3 +87,13 @@ Balance targets achieved:
 - **Match stats integration** (`src/core/types.ts:90-97`): SystemState tracks damageSources (Map of target → Set of attackers), lastDamageSource (Map of target → killer), destroyedShips (array of DestroyedShipRecord), missionStartTime/missionEndTime.
 - **Results screen integration** (`src/ui/results.ts:28-40`): Victory/defeat screen now includes full combat debrief section.
 - **Tests** (`scripts/tests/systems/test-combat-stats.mjs`, `test-weapon-stats.mjs`, `test-kill-attribution.mjs`): 30 tests covering component creation, damage recording, weapon stats, kill/assist attribution, and posthumous kills.
+
+### Phase 4.5: Campaign Economy (In Progress)
+
+- **Campaign ship spawning** (`src/campaign/ship-spawning.ts`): New module for spawning player and wingmen from campaign state. `spawnPlayerFromCampaign` and `spawnWingmanFromCampaign` functions create ships with campaign loadout (weapons, ammo counts) instead of archetype defaults.
+- **Campaign ship ID linking** (`src/components/ship-identity.ts:38-40,69-72`): Added `campaignShipId` field to ShipIdentity component to link game entities back to campaign ships.
+- **Ammo extraction** (`src/campaign/ship-spawning.ts:343-391`): `extractAmmoFromWorld` queries all player faction ships and extracts remaining ammo counts for persistence.
+- **Ammo persistence** (`src/campaign/state.ts:150-196`): `applyAmmoUsage` updates campaign state with remaining ammo after missions.
+- **Resupply system** (`src/campaign/state.ts:198-257`): `calculateResupplyCost` (1 credit/ammo for primaries, 10 credits/missile for secondaries), `resupplyShip`, `resupplyAllShips` functions.
+- **Resupply UI** (`src/ui/hangar.ts:66-84,124-146`): Resupply button in hangar showing cost. Disabled if can't afford or already fully supplied. Re-renders UI after purchase.
+- **Controller integration** (`src/campaign/controller.ts:79-105,284-298`): `setupHangarScreen` helper wires up resupply callback. Mission end extracts ammo and persists to campaign state.

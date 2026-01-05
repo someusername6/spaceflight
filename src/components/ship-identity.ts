@@ -35,6 +35,8 @@ export interface ShipIdentity extends ComponentBase {
   archetype: string;
   /** Display callsign (e.g., 'Alpha 2', 'Bandit 1') */
   callsign: string;
+  /** Campaign ship ID for linking back to CampaignState (undefined for enemies) */
+  campaignShipId?: string;
 }
 
 /** Reset callsign counters (call at mission start) */
@@ -57,10 +59,15 @@ export function generateCallsign(world: World, prefix: string): string {
 export function createShipIdentity(
   archetype: string,
   callsign: string,
+  campaignShipId?: string,
 ): ShipIdentity {
-  return {
+  const identity: ShipIdentity = {
     type: 'shipIdentity',
     archetype,
     callsign,
   };
+  if (campaignShipId !== undefined) {
+    identity.campaignShipId = campaignShipId;
+  }
+  return identity;
 }

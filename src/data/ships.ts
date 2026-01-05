@@ -32,7 +32,7 @@ export interface ShipClassStats {
  * These are the authoritative values used in testing.
  */
 export const SHIP_CLASSES: Record<string, ShipClassStats> = {
-  // Patrol: Durable but sluggish craft - balanced HP for extended fights
+  // Patrol: Intro enemy craft
   patrol: {
     hull: 40,
     shields: 40,

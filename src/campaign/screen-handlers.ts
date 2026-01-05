@@ -5,7 +5,7 @@
  */
 
 import type { World } from '../core/types';
-import { createHangarUI, updateHangarUI } from '../ui/hangar';
+import { createHangarUI } from '../ui/hangar';
 import { createGameOverUI, createResultsUI } from '../ui/results';
 import {
   getScreenElement,
@@ -16,8 +16,38 @@ import {
   updateCampaignState,
 } from '../ui/screens';
 import type { CampaignController } from './controller';
-import { createNewCampaign } from './state';
+import { createNewCampaign, resupplyAllShips } from './state';
 import type { Contract } from './types';
+
+/** Setup hangar screen with resupply callback */
+export function setupHangarScreen(
+  controller: CampaignController,
+  hangarElement: HTMLElement,
+  setupContractsScreen: (controller: CampaignController) => void,
+): void {
+  const { screenManager } = controller;
+
+  // Create handlers that reference current state
+  const onSelectContracts = () => {
+    goToContracts(screenManager);
+    setupContractsScreen(controller);
+  };
+
+  // Resupply handler - updates state and re-renders
+  const onResupply = () => {
+    const newState = resupplyAllShips(screenManager.campaignState);
+    updateCampaignState(screenManager, newState);
+    // Re-setup hangar with updated state
+    setupHangarScreen(controller, hangarElement, setupContractsScreen);
+  };
+
+  createHangarUI(
+    hangarElement,
+    screenManager.campaignState,
+    onSelectContracts,
+    onResupply,
+  );
+}
 
 /** Show results screen after mission */
 export function showResults(
@@ -36,19 +66,10 @@ export function showResults(
     contract,
     screenManager.campaignState,
     () => {
-      // Return to hangar
+      // Return to hangar with resupply support
       goToHangar(screenManager);
       const hangarElement = getScreenElement(screenManager, Screen.HANGAR);
-      updateHangarUI(
-        {
-          element: hangarElement,
-          onSelectContracts: () => {
-            goToContracts(screenManager);
-            setupContractsScreen(controller);
-          },
-        },
-        screenManager.campaignState,
-      );
+      setupHangarScreen(controller, hangarElement, setupContractsScreen);
     },
     world,
   );
@@ -67,13 +88,10 @@ export function showGameOver(
     const newState = createNewCampaign();
     updateCampaignState(screenManager, newState);
 
-    // Go to hangar
+    // Go to hangar with resupply support
     goToHangar(screenManager);
     const hangarElement = getScreenElement(screenManager, Screen.HANGAR);
-    createHangarUI(hangarElement, newState, () => {
-      goToContracts(screenManager);
-      setupContractsScreen(controller);
-    });
+    setupHangarScreen(controller, hangarElement, setupContractsScreen);
   });
 
   goToGameOver(screenManager);
