@@ -2,6 +2,13 @@
  * Loadout management - equip/unequip weapons, swap pilots between ships.
  */
 
+import { weaponUsesAmmo } from '../data/prices';
+import {
+  mergeAmmoIntoStorage,
+  mergeSecondaryIntoStorage,
+  transferShipWeaponsToStorage,
+} from './ship-utils';
+import { getMaxMissileCapacity } from './store-ammo';
 import type {
   CampaignState,
   EquippedPrimary,
@@ -11,7 +18,7 @@ import type {
   StoredWeapon,
 } from './types';
 
-/** Unequip a primary weapon from a ship, move to storage */
+/** Unequip a primary weapon from a ship, move to storage (and ammo if any) */
 export function unequipPrimary(
   state: CampaignState,
   shipId: string,
@@ -25,7 +32,7 @@ export function unequipPrimary(
   const weapon = ship.primaryWeapons[weaponIndex];
   if (!weapon) return state;
 
-  // Add to storage
+  // Add weapon to storage
   const stored: StoredWeapon = {
     weaponType: weapon.weaponType,
     category: 'primary',
@@ -37,12 +44,20 @@ export function unequipPrimary(
     (_, i) => i !== weaponIndex,
   );
 
+  // Transfer ammo to storage if weapon had any
+  const newStoredAmmo = mergeAmmoIntoStorage(
+    state.storedAmmo,
+    weapon.weaponType,
+    weapon.currentAmmo ?? 0,
+  );
+
   return {
     ...state,
     ships: state.ships.map((s) =>
       s.id === shipId ? { ...s, primaryWeapons: updatedWeapons } : s,
     ),
     storedWeapons: [...state.storedWeapons, stored],
+    storedAmmo: newStoredAmmo,
   };
 }
 
@@ -60,16 +75,16 @@ export function unequipSecondary(
   const weapon = ship.secondaryWeapons[weaponIndex];
   if (!weapon) return state;
 
-  // Add to storage (preserves ammo count)
-  const stored: StoredWeapon = {
-    weaponType: weapon.weaponType,
-    category: 'secondary',
-    count: weapon.count,
-  };
-
   // Remove from ship
   const updatedWeapons = ship.secondaryWeapons.filter(
     (_, i) => i !== weaponIndex,
+  );
+
+  // Merge into existing storage stack or create new entry
+  const newStoredWeapons = mergeSecondaryIntoStorage(
+    state.storedWeapons,
+    weapon.weaponType,
+    weapon.count,
   );
 
   return {
@@ -77,7 +92,7 @@ export function unequipSecondary(
     ships: state.ships.map((s) =>
       s.id === shipId ? { ...s, secondaryWeapons: updatedWeapons } : s,
     ),
-    storedWeapons: [...state.storedWeapons, stored],
+    storedWeapons: newStoredWeapons,
   };
 }
 
@@ -94,11 +109,10 @@ export function equipPrimary(
     return state;
   }
 
-  // Create equipped weapon
-  const equipped: EquippedPrimary = {
-    weaponType: stored.weaponType,
-    bankSize,
-  };
+  // Create equipped weapon - ballistic weapons start with 0 ammo
+  const equipped: EquippedPrimary = weaponUsesAmmo(stored.weaponType)
+    ? { weaponType: stored.weaponType, bankSize, currentAmmo: 0 }
+    : { weaponType: stored.weaponType, bankSize };
 
   // Remove from storage
   const updatedStorage = state.storedWeapons.filter(
@@ -129,18 +143,31 @@ export function equipSecondary(
     return state;
   }
 
-  // Create equipped weapon (preserves ammo from storage)
+  // Calculate max capacity based on missile type and bank size
+  const maxCapacity = getMaxMissileCapacity(stored.weaponType, bankSize);
+  // Load only up to capacity, leaving remainder in storage
+  const toLoad = Math.min(stored.count, maxCapacity);
+  const remainder = stored.count - toLoad;
+
+  // Create equipped weapon with proper capacity
   const equipped: EquippedSecondary = {
     weaponType: stored.weaponType,
     bankSize,
-    count: stored.count,
-    maxCount: stored.count, // Max is what we had in storage
+    count: toLoad,
+    maxCount: maxCapacity,
   };
 
-  // Remove from storage
-  const updatedStorage = state.storedWeapons.filter(
-    (_, i) => i !== storageIndex,
-  );
+  // Update storage - remove if empty, reduce count if remainder
+  let updatedStorage: StoredWeapon[];
+  if (remainder <= 0) {
+    updatedStorage = state.storedWeapons.filter((_, i) => i !== storageIndex);
+  } else {
+    updatedStorage = state.storedWeapons.map((w, i) =>
+      i === storageIndex
+        ? { weaponType: w.weaponType, category: w.category, count: remainder }
+        : w,
+    );
+  }
 
   return {
     ...state,
@@ -153,7 +180,7 @@ export function equipSecondary(
   };
 }
 
-/** Move pilot from active ship to stored hull, current ship goes to storage */
+/** Move pilot/player from active ship to stored hull, current ship goes to storage */
 export function swapPilotToHull(
   state: CampaignState,
   shipId: string,
@@ -161,23 +188,24 @@ export function swapPilotToHull(
 ): CampaignState {
   const ship = state.ships.find((s) => s.id === shipId);
   const hull = state.storedHulls[hullIndex];
-  if (!ship || !hull || ship.isPlayerShip) {
-    // Don't allow swapping player's ship this way
+  if (!ship || !hull) {
     return state;
   }
 
-  const pilot = ship.pilot;
-  if (!pilot) return state;
+  // Wingman ships require a pilot
+  if (!ship.isPlayerShip && !ship.pilot) {
+    return state;
+  }
 
-  // Create new active ship from hull
+  // Create new active ship from hull (preserve player/pilot status)
   const newShip: OwnedShip = {
     id: hull.id,
     shipClass: hull.shipClass,
     primaryWeapons: [], // Starts empty - needs weapons equipped
     secondaryWeapons: [],
-    pilot,
+    pilot: ship.pilot, // null for player, Pilot for wingman
     hullDamage: hull.hullDamage,
-    isPlayerShip: false,
+    isPlayerShip: ship.isPlayerShip,
   };
 
   // Old ship becomes a stored hull (weapons go to storage)
@@ -187,18 +215,11 @@ export function swapPilotToHull(
     hullDamage: ship.hullDamage,
   };
 
-  // Move old ship's weapons to storage
-  const oldPrimaryWeapons: StoredWeapon[] = ship.primaryWeapons.map((w) => ({
-    weaponType: w.weaponType,
-    category: 'primary' as const,
-    count: 1,
-  }));
-  const oldSecondaryWeapons: StoredWeapon[] = ship.secondaryWeapons.map(
-    (w) => ({
-      weaponType: w.weaponType,
-      category: 'secondary' as const,
-      count: w.count,
-    }),
+  // Transfer all weapons and ammo from old ship to storage
+  const { storedWeapons, storedAmmo } = transferShipWeaponsToStorage(
+    ship,
+    state.storedWeapons,
+    state.storedAmmo,
   );
 
   return {
@@ -208,10 +229,74 @@ export function swapPilotToHull(
       ...state.storedHulls.filter((_, i) => i !== hullIndex),
       oldHull,
     ],
-    storedWeapons: [
-      ...state.storedWeapons,
-      ...oldPrimaryWeapons,
-      ...oldSecondaryWeapons,
-    ],
+    storedWeapons,
+    storedAmmo,
+  };
+}
+
+/** Assign an unassigned pilot to a stored hull, creating a new active ship */
+export function assignPilotToHull(
+  state: CampaignState,
+  pilotIndex: number,
+  hullIndex: number,
+): CampaignState {
+  const pilot = state.pilots[pilotIndex];
+  const hull = state.storedHulls[hullIndex];
+  if (!pilot || !hull) {
+    return state;
+  }
+
+  // Create new active ship from hull + pilot
+  const newShip: OwnedShip = {
+    id: hull.id,
+    shipClass: hull.shipClass,
+    primaryWeapons: [], // Empty - needs weapons equipped
+    secondaryWeapons: [],
+    pilot,
+    hullDamage: hull.hullDamage,
+    isPlayerShip: false,
+  };
+
+  return {
+    ...state,
+    ships: [...state.ships, newShip],
+    pilots: state.pilots.filter((_, i) => i !== pilotIndex),
+    storedHulls: state.storedHulls.filter((_, i) => i !== hullIndex),
+  };
+}
+
+/** Unassign a pilot from a wingman ship, returning pilot to pool and ship to storage */
+export function unassignPilot(
+  state: CampaignState,
+  shipId: string,
+): CampaignState {
+  const ship = state.ships.find((s) => s.id === shipId);
+  if (!ship || ship.isPlayerShip || !ship.pilot) {
+    return state;
+  }
+
+  const pilot = ship.pilot;
+
+  // Ship becomes a stored hull
+  const newHull: StoredHull = {
+    id: ship.id,
+    shipClass: ship.shipClass,
+    hullDamage: ship.hullDamage,
+  };
+
+  // Transfer all weapons and ammo to storage
+  const { storedWeapons, storedAmmo } = transferShipWeaponsToStorage(
+    ship,
+    state.storedWeapons,
+    state.storedAmmo,
+  );
+
+  return {
+    ...state,
+    ships: state.ships.filter((s) => s.id !== shipId),
+    pilots: [...state.pilots, pilot],
+    storedHulls: [...state.storedHulls, newHull],
+    storedWeapons,
+    storedAmmo,
   };
 }

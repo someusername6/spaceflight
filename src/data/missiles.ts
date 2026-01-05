@@ -19,6 +19,8 @@ export interface MissileStats {
   lockSpeed: number; // Lock acquisition speed (0-1 per second, 0 = no lock needed)
   /** Lock cone half-angle in degrees - target must be within this angle of ship's forward */
   lockConeAngle: number;
+  /** Base capacity per bank (scales with bank size) */
+  capacity: number;
   /** Area of effect radius (undefined = no AoE) */
   aoeRadius?: number;
   /** Is this a decoy rather than a weapon? */
@@ -44,6 +46,7 @@ export const MISSILES: Record<string, MissileStats> = {
     fireRate: 0.5,
     lockSpeed: 0,
     lockConeAngle: 60,
+    capacity: 12, // Cheap dumbfire, carry lots
   },
   cluster: {
     name: 'Cluster',
@@ -55,6 +58,7 @@ export const MISSILES: Record<string, MissileStats> = {
     fireRate: 0.8,
     lockSpeed: 0,
     lockConeAngle: 60,
+    capacity: 10,
   },
 
   // === HOMING (lock required) ===
@@ -69,6 +73,7 @@ export const MISSILES: Record<string, MissileStats> = {
     fireRate: 1.0,
     lockSpeed: 0.25, // 4 seconds to lock (was 2s)
     lockConeAngle: 60,
+    capacity: 8, // Standard homing missile
   },
   dart: {
     name: 'Dart',
@@ -80,6 +85,7 @@ export const MISSILES: Record<string, MissileStats> = {
     fireRate: 0.5,
     lockSpeed: 0.5, // 2 seconds to lock (was 1s)
     lockConeAngle: 60,
+    capacity: 10, // Fast light missiles
   },
   swarm: {
     name: 'Swarm',
@@ -91,6 +97,7 @@ export const MISSILES: Record<string, MissileStats> = {
     fireRate: 0.1, // Rapid fire
     lockSpeed: 0.4, // 2.5 seconds to lock (was 1.25s)
     lockConeAngle: 60,
+    capacity: 20, // Many small missiles
   },
 
   // === HEAVY (slow lock, high damage) ===
@@ -104,6 +111,7 @@ export const MISSILES: Record<string, MissileStats> = {
     fireRate: 2.0,
     lockSpeed: 0.15, // ~7 seconds to lock (was 4s)
     lockConeAngle: 60,
+    capacity: 4, // Heavy ordnance, few carried
   },
   nuke: {
     name: 'Nuke',
@@ -115,6 +123,7 @@ export const MISSILES: Record<string, MissileStats> = {
     fireRate: 3.0,
     lockSpeed: 0.1, // 10 seconds to lock (was 5s)
     lockConeAngle: 60,
+    capacity: 2, // Very limited
     aoeRadius: 100, // Large AoE damage radius
     isNuke: true, // Special explosion effects
   },
@@ -130,6 +139,7 @@ export const MISSILES: Record<string, MissileStats> = {
     fireRate: 0.5,
     lockSpeed: 0,
     lockConeAngle: 60,
+    capacity: 6, // Defensive countermeasures
     isDecoy: true, // Mark as countermeasure
   },
 };

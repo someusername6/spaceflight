@@ -12,9 +12,11 @@ import {
   goToContracts,
   goToGameOver,
   goToHangar,
+  goToStore,
   Screen,
   updateCampaignState,
 } from '../ui/screens';
+import { createStoreUI } from '../ui/store';
 import type { CampaignController } from './controller';
 import { createNewCampaign, resupplyAllShips } from './state';
 import type { Contract } from './types';
@@ -33,6 +35,13 @@ export function setupHangarScreen(
     setupContractsScreen(controller);
   };
 
+  // Store handler - go to equipment store
+  const onStore = () => {
+    goToStore(screenManager);
+    const storeElement = getScreenElement(screenManager, Screen.STORE);
+    setupStoreScreen(controller, storeElement, setupContractsScreen);
+  };
+
   // Resupply handler - updates state and re-renders
   const onResupply = () => {
     const newState = resupplyAllShips(screenManager.campaignState);
@@ -41,11 +50,46 @@ export function setupHangarScreen(
     setupHangarScreen(controller, hangarElement, setupContractsScreen);
   };
 
+  // Loadout change handler - updates campaign state
+  const onStateUpdate = (newState: typeof screenManager.campaignState) => {
+    updateCampaignState(screenManager, newState);
+  };
+
   createHangarUI(
     hangarElement,
     screenManager.campaignState,
     onSelectContracts,
+    onStore,
     onResupply,
+    onStateUpdate,
+  );
+}
+
+/** Setup store screen */
+export function setupStoreScreen(
+  controller: CampaignController,
+  storeElement: HTMLElement,
+  setupContractsScreen: (controller: CampaignController) => void,
+): void {
+  const { screenManager } = controller;
+
+  // Back to hangar handler
+  const onBack = () => {
+    goToHangar(screenManager);
+    const hangarElement = getScreenElement(screenManager, Screen.HANGAR);
+    setupHangarScreen(controller, hangarElement, setupContractsScreen);
+  };
+
+  // State update handler
+  const onStateUpdate = (newState: typeof screenManager.campaignState) => {
+    updateCampaignState(screenManager, newState);
+  };
+
+  createStoreUI(
+    storeElement,
+    screenManager.campaignState,
+    onBack,
+    onStateUpdate,
   );
 }
 

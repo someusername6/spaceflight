@@ -106,21 +106,66 @@ Balance targets achieved:
 - **Inventory display** (`src/ui/hangar.ts:71-137`): Shows stored hulls and weapons in hangar. CSS styles in `src/ui/styles.ts:288-333`.
 - **CampaignState** now has `storedHulls: StoredHull[]` array.
 
-#### Phase D - Loadout Customization (In Progress)
+#### Phase D - Loadout Customization ✅
 - **Loadout functions** (`src/campaign/loadout.ts`): Backend functions for equipment management:
-  - `unequipPrimary/Secondary` - move weapon from ship to storage
-  - `equipPrimary/Secondary` - move weapon from storage to ship
-  - `swapPilotToHull` - move pilot to different hull, old ship/weapons go to storage
+  - `unequipPrimary/Secondary` - move weapon from ship to storage (ammo transferred too)
+  - `equipPrimary/Secondary` - move weapon from storage to ship (ballistic weapons start with 0 ammo)
+  - `swapPilotToHull` - move pilot/player to different hull, old ship/weapons/ammo go to storage
+  - `assignPilotToHull` - deploy unassigned pilot to stored hull, creating new active ship
+  - `unassignPilot` - bench wingman pilot, returning pilot to pool and ship/weapons to storage
+- **Ship utilities** (`src/campaign/ship-utils.ts`): Immutable update helpers:
+  - `cloneShipWithPrimary/Secondary` - clone ship with updated weapon at index
+  - `mergeSecondaryIntoStorage` - stack missiles into existing storage entries
+  - `mergeAmmoIntoStorage` - stack ammo into existing storage entries
+  - `transferShipWeaponsToStorage` - move all weapons/ammo from ship to storage (used by swap/unassign)
+- **Loadout UI** (`src/ui/loadout.ts`, `src/ui/loadout-events.ts`): Ship detail panel with weapon management:
+  - `renderShipWeapons()` - displays equipped weapons with ammo/missile controls
+  - `renderAmmoControls()` - +/- buttons (10 ammo), Fill/Empty buttons (▲/▼)
+  - `renderMissileControls()` - +/- buttons (1 missile), Fill/Empty buttons (▲/▼)
+  - `renderEquipOptions()` - shows storage weapons with equip buttons, respects ship bank sizes
+  - `renderHullSwapOptions()` - swap to different hull (works for player and wingmen)
+  - `renderUnassignPilot()` - bench wingman pilot button
+  - `bindLoadoutEvents()` - click handlers for all buttons (split to loadout-events.ts)
+- **Hangar ship selection** (`src/ui/hangar.ts`): Click ships to select, shows loadout panel in sidebar
+- **Pilot deployment** (`src/ui/hangar.ts`): "Deploy New Wingman" section combines unassigned pilots with stored hulls
+- **Storage display** (`src/ui/hangar.ts`): Shows unassigned pilots, stored hulls, stored weapons, stored ammo
+- **Loadout styles** (`src/ui/loadout-styles.ts`): CSS for loadout panel, weapon rows, equip buttons, inventory display
 
-**Next: Loadout UI**
-- Ship detail view (click to expand/select)
-- Equip/unequip buttons
-- Hull swap interface
-
-**Phase C - Store UI (Pending):**
-- Buy/sell weapons
-- Buy/sell ship hulls
-- Prices defined per item type
+#### Phase C - Equipment Store ✅
+- **Price data** (`src/data/prices.ts`): Buy/sell prices for hulls, primaries, secondaries, and ammo
+  - Hulls: 200-900 credits (patrol cheapest, defender most expensive)
+  - Primaries: 80-500 credits (energy cheapest, nuclearLance most expensive)
+  - Ammo: 1-50 credits per round (autocannon 1cr, railgun 5cr, nuclearLance 50cr)
+  - Secondaries: 3-100 credits per missile
+  - `weaponUsesAmmo(weaponType)` - helper to check if weapon needs ammo
+- **Ammo storage** (`src/campaign/types.ts`): New `StoredAmmo` type and `storedAmmo` array in campaign state
+- **Store functions** (`src/campaign/store.ts`, `src/campaign/store-ammo.ts`, `src/campaign/store-missiles.ts`):
+  - `buyHull/sellHull` - purchase/sell ship hulls
+  - `buyPrimaryWeapon/sellPrimaryWeapon` - purchase/sell primary weapons
+  - `buySecondaryWeapon/sellSecondaryWeapon` - purchase/sell missiles (uses `mergeSecondaryIntoStorage`)
+  - `buyAmmo/sellAmmo` - purchase/sell ammo for ballistic weapons
+  - `loadAmmoToWeapon/unloadAmmoFromWeapon` - transfer ammo between storage and equipped weapons
+  - `loadMissilesToWeapon/unloadMissilesFromWeapon` - transfer missiles between storage and equipped weapons
+  - `getMaxAmmoCapacity(weaponType, bankSize)` - ammo capacity scales with bank size
+  - `getMaxMissileCapacity(weaponType, bankSize)` - missile capacity from `MISSILES[type].capacity × bankSize`
+- **Dynamic catalogs** (`src/campaign/store.ts`): Catalog functions derive available items from data:
+  - `getAvailableHulls()` - from `SHIP_CLASSES`, filtered by price > 0
+  - `getAvailablePrimaries()` - from `PRIMARY_WEAPONS`, filtered by price > 0
+  - `getAvailableSecondaries()` - from `MISSILES`, filtered by price > 0
+  - `getAvailableAmmo()` - from `PRIMARY_WEAPONS` where `ammo !== undefined`, filtered by price > 0
+- **Store UI** (`src/ui/store.ts`, `src/ui/store-render.ts`): Equipment shop with category tabs and item stats
+  - Categories: Hulls, Primaries, Missiles, Ammo
+  - Shows detailed stats when item selected (hull/shields/speed, damage/range/fire rate, etc.)
+  - Bulk buy/sell buttons for missiles (×10) and ammo (×100)
+  - Uses catalog functions for consistent item listings
+- **Store styles** (`src/ui/store-styles.ts`): CSS for store layout, item list, detail panel
+- **Screen integration** (`src/ui/screens.ts`, `src/campaign/screen-handlers.ts`):
+  - Added STORE to Screen enum
+  - `goToStore` transition function
+  - `setupStoreScreen` handler wires store UI to campaign controller
+- **Hangar integration** (`src/ui/hangar.ts`): "Equipment Store" button navigates to store
+- **Missile capacity** (`src/data/missiles.ts`): Added `capacity` field to all missiles (2-8 per bank)
+- **Tests** (`scripts/tests/campaign/test-store-ammo.mjs`): Ammo capacity limits, bank size scaling
 
 **Ship Destruction Rules:**
 - Destroyed ship → hull lost from inventory

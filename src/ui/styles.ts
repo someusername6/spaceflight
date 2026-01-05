@@ -3,6 +3,8 @@
  */
 
 import { getDebriefStyles } from './debrief';
+import { getLoadoutStyles } from './loadout-styles';
+import { getStoreStyles } from './store-styles';
 
 export const UI_STYLE_ID = 'campaign-ui-styles';
 
@@ -285,52 +287,11 @@ export function getCampaignStyles(): string {
       overflow-y: auto;
     }
 
-    /* Inventory panel */
-    .inventory-panel {
-      margin-top: 15px;
-    }
+    /* Loadout and inventory styles */
+    ${getLoadoutStyles()}
 
-    .inventory-empty {
-      color: #6a8aaa;
-      font-style: italic;
-      padding: 10px;
-    }
-
-    .inventory-section {
-      margin-bottom: 10px;
-    }
-
-    .inventory-label {
-      color: #8ab4f8;
-      font-size: 0.9em;
-      margin-bottom: 5px;
-      border-bottom: 1px solid #3a5a7a;
-      padding-bottom: 3px;
-    }
-
-    .inventory-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 5px 8px;
-      margin: 3px 0;
-      background: rgba(40, 60, 90, 0.5);
-      border-radius: 3px;
-    }
-
-    .item-name {
-      color: #aaccee;
-    }
-
-    .item-status {
-      color: #88aa88;
-      font-size: 0.9em;
-    }
-
-    .item-category {
-      color: #8888aa;
-      font-size: 0.85em;
-      text-transform: uppercase;
-    }
+    /* Store styles */
+    ${getStoreStyles()}
 
     /* Debrief styles */
     ${getDebriefStyles()}

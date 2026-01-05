@@ -4,6 +4,7 @@
 
 import type { DestroyedShipRecord } from '../components/combat-stats';
 import { SHIP_ARCHETYPES } from '../factories/ship-archetypes';
+import { getMaxAmmoCapacity } from './store-ammo';
 import type {
   CampaignState,
   EquippedPrimary,
@@ -15,6 +16,11 @@ import type {
 /** Generate a unique ID */
 function generateId(): string {
   return Math.random().toString(36).substring(2, 9);
+}
+
+/** Get max ammo capacity for a primary weapon (convenience wrapper) */
+function getMaxPrimaryAmmo(primary: EquippedPrimary): number {
+  return getMaxAmmoCapacity(primary.weaponType, primary.bankSize);
 }
 
 /** Create a ship from an archetype with default loadout */
@@ -83,6 +89,7 @@ export function createNewCampaign(): CampaignState {
     pilots: [], // All pilots assigned
     storedHulls: [], // No spare hulls at start
     storedWeapons: [],
+    storedAmmo: [], // No spare ammo at start
     currentSector: 1,
     completedContracts: [],
     missionCount: 0,
@@ -218,9 +225,9 @@ export function calculateResupplyCost(ship: OwnedShip): number {
   // Primary weapons with finite ammo
   for (const primary of ship.primaryWeapons) {
     if (primary.currentAmmo !== undefined) {
-      // Cost based on ammo needed (assume maxAmmo from archetype)
-      // For now, simple calculation: 1 credit per ammo
-      const needed = primary.bankSize * 100 - (primary.currentAmmo ?? 0);
+      const maxAmmo = getMaxPrimaryAmmo(primary);
+      const needed = maxAmmo - primary.currentAmmo;
+      // 1 credit per ammo round
       cost += Math.max(0, needed);
     }
   }
@@ -241,8 +248,8 @@ export function resupplyShip(ship: OwnedShip): OwnedShip {
     ...ship,
     primaryWeapons: ship.primaryWeapons.map((primary) => {
       if (primary.currentAmmo !== undefined) {
-        // Refill to max (bankSize * base ammo)
-        return { ...primary, currentAmmo: primary.bankSize * 100 };
+        const maxAmmo = getMaxPrimaryAmmo(primary);
+        return { ...primary, currentAmmo: maxAmmo };
       }
       return primary;
     }),

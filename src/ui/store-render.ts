@@ -1,0 +1,207 @@
+/**
+ * Store UI Renderers - stat displays and data helpers for the store.
+ */
+
+import {
+  getAvailableAmmo,
+  getAvailableHulls,
+  getAvailablePrimaries,
+  getAvailableSecondaries,
+} from '../campaign/store';
+import type { CampaignState } from '../campaign/types';
+import { MISSILES } from '../data/missiles';
+import {
+  getAmmoPrice,
+  getHullPrice,
+  getPrimaryPrice,
+  getSecondaryPrice,
+} from '../data/prices';
+import { SHIP_CLASSES } from '../data/ships';
+import { PRIMARY_WEAPONS } from '../data/weapons';
+
+export type StoreCategory = 'hulls' | 'primaries' | 'secondaries' | 'ammo';
+
+export interface StoreUI {
+  element: HTMLElement;
+  state: CampaignState;
+  selectedCategory: StoreCategory;
+  selectedItem: string | null;
+  onBack: () => void;
+  onStateUpdate: (newState: CampaignState) => void;
+}
+
+/** Render ship hull stats */
+export function renderHullStats(shipClass: string): string {
+  const stats = SHIP_CLASSES[shipClass];
+  if (!stats) return '';
+
+  const primarySlots = stats.primaryBanks.length;
+  const secondarySlots = stats.secondaryBanks.length;
+  const primaryBanks = stats.primaryBanks.join(', ');
+  const secondaryBanks = stats.secondaryBanks.join(', ');
+
+  return `
+    <div class="item-stats">
+      <div class="stat-row"><span>Hull:</span><span>${stats.hull}</span></div>
+      <div class="stat-row"><span>Shields:</span><span>${stats.shields}</span></div>
+      <div class="stat-row"><span>Max Speed:</span><span>${stats.maxSpeed} m/s</span></div>
+      <div class="stat-row"><span>Turn Rate:</span><span>${stats.turnRate}°/s</span></div>
+      <div class="stat-row"><span>Primary Slots:</span><span>${primarySlots} (${primaryBanks})</span></div>
+      <div class="stat-row"><span>Secondary Slots:</span><span>${secondarySlots} (${secondaryBanks})</span></div>
+    </div>
+  `;
+}
+
+/** Render primary weapon stats */
+export function renderPrimaryStats(weaponType: string): string {
+  const stats = PRIMARY_WEAPONS[weaponType];
+  if (!stats) return '';
+
+  const ammoText =
+    stats.ammo !== undefined ? `${stats.ammo} rounds` : 'Unlimited';
+  const categoryText =
+    stats.category.charAt(0).toUpperCase() + stats.category.slice(1);
+
+  return `
+    <div class="item-stats">
+      <div class="stat-row"><span>Category:</span><span>${categoryText}</span></div>
+      <div class="stat-row"><span>Damage:</span><span>${stats.damage}</span></div>
+      <div class="stat-row"><span>Range:</span><span>${stats.range} m</span></div>
+      <div class="stat-row"><span>Fire Rate:</span><span>${(1 / stats.fireRate).toFixed(1)}/s</span></div>
+      <div class="stat-row"><span>Heat/Shot:</span><span>${stats.heatPerShot}</span></div>
+      <div class="stat-row"><span>Ammo:</span><span>${ammoText}</span></div>
+    </div>
+  `;
+}
+
+/** Render secondary weapon stats */
+export function renderSecondaryStats(weaponType: string): string {
+  const stats = MISSILES[weaponType];
+  if (!stats) return '';
+
+  const trackingText = stats.turnRate > 0 ? `${stats.turnRate}°/s` : 'None';
+  const lockText = stats.requiresLock
+    ? `${(1 / stats.lockSpeed).toFixed(1)}s`
+    : 'N/A';
+
+  return `
+    <div class="item-stats">
+      <div class="stat-row"><span>Damage:</span><span>${stats.damage}</span></div>
+      <div class="stat-row"><span>Speed:</span><span>${stats.speed} m/s</span></div>
+      <div class="stat-row"><span>Range:</span><span>${stats.range} m</span></div>
+      <div class="stat-row"><span>Tracking:</span><span>${trackingText}</span></div>
+      <div class="stat-row"><span>Lock Time:</span><span>${lockText}</span></div>
+      ${stats.aoeRadius ? `<div class="stat-row"><span>AoE Radius:</span><span>${stats.aoeRadius} m</span></div>` : ''}
+    </div>
+  `;
+}
+
+/** Render ammo stats */
+export function renderAmmoStats(weaponType: string): string {
+  const weapon = PRIMARY_WEAPONS[weaponType];
+  if (!weapon || weapon.ammo === undefined) return '';
+
+  return `
+    <div class="item-stats">
+      <div class="stat-row"><span>For Weapon:</span><span>${weapon.name}</span></div>
+      <div class="stat-row"><span>Base Capacity:</span><span>${weapon.ammo} rounds</span></div>
+      <div class="stat-note">Capacity scales with bank size</div>
+    </div>
+  `;
+}
+
+/** Get items for current category (uses catalog functions that filter by price > 0) */
+export function getCategoryItems(
+  category: StoreCategory,
+): Array<{ id: string; name: string }> {
+  switch (category) {
+    case 'hulls':
+      return getAvailableHulls().map(({ shipClass }) => ({
+        id: shipClass,
+        name: shipClass.charAt(0).toUpperCase() + shipClass.slice(1),
+      }));
+    case 'primaries':
+      return getAvailablePrimaries().map(({ weaponType }) => ({
+        id: weaponType,
+        name: PRIMARY_WEAPONS[weaponType]?.name ?? weaponType,
+      }));
+    case 'secondaries':
+      return getAvailableSecondaries()
+        .filter(({ weaponType }) => !MISSILES[weaponType]?.isDecoy)
+        .map(({ weaponType }) => ({
+          id: weaponType,
+          name: MISSILES[weaponType]?.name ?? weaponType,
+        }));
+    case 'ammo':
+      return getAvailableAmmo().map(({ weaponType }) => ({
+        id: weaponType,
+        name: `${PRIMARY_WEAPONS[weaponType]?.name ?? weaponType} Ammo`,
+      }));
+  }
+}
+
+/** Get price for item */
+export function getItemPrice(
+  category: StoreCategory,
+  id: string,
+  type: 'buy' | 'sell',
+): number {
+  switch (category) {
+    case 'hulls':
+      return getHullPrice(id, type);
+    case 'primaries':
+      return getPrimaryPrice(id, type);
+    case 'secondaries':
+      return getSecondaryPrice(id, type);
+    case 'ammo':
+      return getAmmoPrice(id, type);
+  }
+}
+
+/** Get count of item in player's storage */
+export function getStorageCount(
+  ui: StoreUI,
+  category: StoreCategory,
+  id: string,
+): number {
+  switch (category) {
+    case 'hulls':
+      return ui.state.storedHulls.filter((h) => h.shipClass === id).length;
+    case 'primaries':
+      return ui.state.storedWeapons.filter(
+        (w) => w.category === 'primary' && w.weaponType === id,
+      ).length;
+    case 'secondaries':
+      // Sum all matching entries (in case of fragmented storage)
+      return ui.state.storedWeapons
+        .filter((w) => w.category === 'secondary' && w.weaponType === id)
+        .reduce((sum, w) => sum + w.count, 0);
+    case 'ammo':
+      // Sum all matching entries (in case of fragmented storage)
+      return ui.state.storedAmmo
+        .filter((a) => a.weaponType === id)
+        .reduce((sum, a) => sum + a.count, 0);
+  }
+}
+
+/** Get storage index for selling an item (-1 if not found) */
+export function getStorageIndex(
+  ui: StoreUI,
+  category: StoreCategory,
+  id: string,
+): number {
+  switch (category) {
+    case 'hulls':
+      return ui.state.storedHulls.findIndex((h) => h.shipClass === id);
+    case 'primaries':
+      return ui.state.storedWeapons.findIndex(
+        (w) => w.category === 'primary' && w.weaponType === id,
+      );
+    case 'secondaries':
+      return ui.state.storedWeapons.findIndex(
+        (w) => w.category === 'secondary' && w.weaponType === id,
+      );
+    case 'ammo':
+      return ui.state.storedAmmo.findIndex((a) => a.weaponType === id);
+  }
+}

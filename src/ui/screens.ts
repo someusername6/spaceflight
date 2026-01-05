@@ -14,6 +14,7 @@ import type { CampaignState, Contract } from '../campaign/types';
 /** Game screen states */
 export enum Screen {
   HANGAR = 'hangar',
+  STORE = 'store',
   CONTRACTS = 'contracts',
   MISSION = 'mission',
   RESULTS = 'results',
@@ -30,6 +31,7 @@ export interface ScreenManager {
 
   // Screen elements (created lazily)
   hangarElement: HTMLElement | null;
+  storeElement: HTMLElement | null;
   contractsElement: HTMLElement | null;
   resultsElement: HTMLElement | null;
   gameOverElement: HTMLElement | null;
@@ -52,6 +54,7 @@ export function createScreenManager(
     selectedContract: null,
     lastMissionVictory: false,
     hangarElement: null,
+    storeElement: null,
     contractsElement: null,
     resultsElement: null,
     gameOverElement: null,
@@ -111,6 +114,11 @@ function showScreen(manager: ScreenManager, screen: Screen): void {
 /** Transition to hangar screen */
 export function goToHangar(manager: ScreenManager): void {
   showScreen(manager, Screen.HANGAR);
+}
+
+/** Transition to store screen */
+export function goToStore(manager: ScreenManager): void {
+  showScreen(manager, Screen.STORE);
 }
 
 /** Transition to contracts screen */

@@ -80,6 +80,7 @@ export interface CampaignState {
   pilots: Pilot[]; // unassigned pilots
   storedHulls: StoredHull[]; // ship hulls in storage (no pilot/weapons)
   storedWeapons: StoredWeapon[]; // weapons in storage
+  storedAmmo: StoredAmmo[]; // ammo in storage (for ballistic primaries)
   currentSector: number;
   completedContracts: string[];
   missionCount: number;
@@ -90,6 +91,12 @@ export interface StoredWeapon {
   weaponType: string;
   category: 'primary' | 'secondary';
   count: number; // for secondaries, missiles count; for primaries, always 1
+}
+
+/** Ammo in storage (for ballistic primaries) */
+export interface StoredAmmo {
+  weaponType: string; // 'autocannon', 'railgun', 'flak', 'nuclearLance'
+  count: number;
 }
 
 /** Mission outcome for results screen */

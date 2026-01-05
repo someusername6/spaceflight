@@ -1,24 +1,28 @@
 /**
  * Hangar screen - displays player's squadron and allows loadout management.
- *
- * Phase 4.1: Read-only display of ships.
- * Future: Drag-drop equipment, pilot assignment.
  */
 
+import { assignPilotToHull } from '../campaign/loadout';
 import { calculateResupplyCost } from '../campaign/state';
 import type {
   CampaignState,
   OwnedShip,
+  Pilot,
   StoredHull,
   StoredWeapon,
 } from '../campaign/types';
 import { SHIP_CLASSES } from '../data/ships';
+import { bindLoadoutEvents, renderLoadoutPanel } from './loadout';
 
 /** Hangar UI state */
 export interface HangarUI {
   element: HTMLElement;
+  state: CampaignState;
+  selectedShipId: string | null;
   onSelectContracts: () => void;
+  onStore?: () => void;
   onResupply?: () => void;
+  onStateUpdate?: (newState: CampaignState) => void;
 }
 
 /** Get hull stats for a ship class */
@@ -37,7 +41,7 @@ function getTotalResupplyCost(state: CampaignState): number {
 }
 
 /** Render a single ship item */
-function renderShipItem(ship: OwnedShip): string {
+function renderShipItem(ship: OwnedShip, isSelected: boolean): string {
   const maxHull = getMaxHull(ship.shipClass);
   const currentHull = maxHull - ship.hullDamage;
   const hullPercent = Math.round((currentHull / maxHull) * 100);
@@ -53,8 +57,10 @@ function renderShipItem(ship: OwnedShip): string {
       ? ` (${ship.pilot.skill})`
       : '';
 
+  const selectedClass = isSelected ? 'selected' : '';
+
   return `
-    <div class="ship-item" data-ship-id="${ship.id}">
+    <div class="ship-item ${selectedClass}" data-ship-id="${ship.id}">
       <div class="ship-icon">${ship.shipClass.substring(0, 3).toUpperCase()}</div>
       <div class="ship-info">
         <div class="ship-name">${pilotName}${pilotSkill}</div>
@@ -94,12 +100,34 @@ function renderStoredWeapon(weapon: StoredWeapon): string {
   `;
 }
 
+/** Render a stored ammo item */
+function renderStoredAmmo(ammo: { weaponType: string; count: number }): string {
+  return `
+    <div class="inventory-item ammo-item">
+      <span class="item-name">${ammo.weaponType}</span>
+      <span class="item-count">×${ammo.count}</span>
+    </div>
+  `;
+}
+
+/** Render an unassigned pilot item */
+function renderUnassignedPilot(pilot: Pilot): string {
+  return `
+    <div class="inventory-item pilot-item">
+      <span class="item-name">${pilot.name}</span>
+      <span class="item-status">${pilot.skill}</span>
+    </div>
+  `;
+}
+
 /** Render inventory section */
 function renderInventory(state: CampaignState): string {
   const hasHulls = state.storedHulls.length > 0;
   const hasWeapons = state.storedWeapons.length > 0;
+  const hasAmmo = state.storedAmmo.length > 0;
+  const hasPilots = state.pilots.length > 0;
 
-  if (!hasHulls && !hasWeapons) {
+  if (!hasHulls && !hasWeapons && !hasAmmo && !hasPilots) {
     return `
       <div class="screen-panel inventory-panel">
         <div class="screen-panel-header">Storage</div>
@@ -111,6 +139,16 @@ function renderInventory(state: CampaignState): string {
   return `
     <div class="screen-panel inventory-panel">
       <div class="screen-panel-header">Storage</div>
+      ${
+        hasPilots
+          ? `
+        <div class="inventory-section">
+          <div class="inventory-label">Unassigned Pilots (${state.pilots.length})</div>
+          ${state.pilots.map(renderUnassignedPilot).join('')}
+        </div>
+      `
+          : ''
+      }
       ${
         hasHulls
           ? `
@@ -131,6 +169,53 @@ function renderInventory(state: CampaignState): string {
       `
           : ''
       }
+      ${
+        hasAmmo
+          ? `
+        <div class="inventory-section">
+          <div class="inventory-label">Ammo</div>
+          ${state.storedAmmo.map(renderStoredAmmo).join('')}
+        </div>
+      `
+          : ''
+      }
+    </div>
+  `;
+}
+
+/** Render deploy pilot section (when pilots and hulls available) */
+function renderDeployPilot(state: CampaignState): string {
+  if (state.pilots.length === 0 || state.storedHulls.length === 0) {
+    return '';
+  }
+
+  // Create a grid of pilot × hull options
+  const deployOptions: string[] = [];
+  state.pilots.forEach((pilot, pilotIndex) => {
+    state.storedHulls.forEach((hull, hullIndex) => {
+      const stats = SHIP_CLASSES[hull.shipClass];
+      const maxHull = stats?.hull ?? 100;
+      const hullPercent = Math.round(
+        ((maxHull - hull.hullDamage) / maxHull) * 100,
+      );
+      const damageNote = hull.hullDamage > 0 ? ` (${hullPercent}%)` : '';
+
+      deployOptions.push(`
+        <div class="deploy-row">
+          <span class="deploy-info">${pilot.name} → ${hull.shipClass}${damageNote}</span>
+          <button class="btn-small btn-deploy" data-pilot="${pilotIndex}" data-hull="${hullIndex}">
+            Deploy
+          </button>
+        </div>
+      `);
+    });
+  });
+
+  return `
+    <div class="screen-panel deploy-panel">
+      <div class="screen-panel-header">Deploy New Wingman</div>
+      <div class="deploy-note">Combine pilot + hull (ship starts with empty loadout)</div>
+      ${deployOptions.join('')}
     </div>
   `;
 }
@@ -157,7 +242,10 @@ function renderResupplyButton(state: CampaignState): string {
 }
 
 /** Render the hangar screen content */
-function renderHangar(state: CampaignState): string {
+function renderHangar(
+  state: CampaignState,
+  selectedShipId: string | null,
+): string {
   const playerShip = state.ships.find((s) => s.isPlayerShip);
   const wingmen = state.ships.filter((s) => !s.isPlayerShip);
 
@@ -167,25 +255,37 @@ function renderHangar(state: CampaignState): string {
     <h1>Hangar</h1>
     <h2>Your Squadron</h2>
 
-    <div class="screen-panel">
-      <div class="screen-panel-header">
-        <span>Ships (${state.ships.length})</span>
-        <span>Sector ${state.currentSector}</span>
+    <div class="hangar-layout">
+      <div class="hangar-main">
+        <div class="screen-panel">
+          <div class="screen-panel-header">
+            <span>Ships (${state.ships.length}) - Click to edit loadout</span>
+            <span>Sector ${state.currentSector}</span>
+          </div>
+
+          <div class="ship-list">
+            ${playerShip ? renderShipItem(playerShip, playerShip.id === selectedShipId) : ''}
+            ${wingmen.map((s) => renderShipItem(s, s.id === selectedShipId)).join('')}
+          </div>
+        </div>
+
+        ${renderInventory(state)}
+        ${renderDeployPilot(state)}
+
+        <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+          ${renderResupplyButton(state)}
+          <button class="btn" id="btn-store">
+            Equipment Store
+          </button>
+          <button class="btn btn-primary" id="btn-contracts">
+            Select Contract →
+          </button>
+        </div>
       </div>
 
-      <div class="ship-list">
-        ${playerShip ? renderShipItem(playerShip) : ''}
-        ${wingmen.map(renderShipItem).join('')}
+      <div class="hangar-sidebar" id="loadout-panel-container">
+        <!-- Loadout panel renders here when ship selected -->
       </div>
-    </div>
-
-    ${renderInventory(state)}
-
-    <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
-      ${renderResupplyButton(state)}
-      <button class="btn btn-primary" id="btn-contracts">
-        Select Contract →
-      </button>
     </div>
   `;
 }
@@ -195,43 +295,102 @@ export function createHangarUI(
   element: HTMLElement,
   state: CampaignState,
   onSelectContracts: () => void,
+  onStore?: () => void,
   onResupply?: () => void,
+  onStateUpdate?: (newState: CampaignState) => void,
 ): HangarUI {
-  element.innerHTML = renderHangar(state);
-
-  // Bind button clicks
-  const contractsBtn = element.querySelector('#btn-contracts');
-  if (contractsBtn) {
-    contractsBtn.addEventListener('click', onSelectContracts);
-  }
-
-  const resupplyBtn = element.querySelector('#btn-resupply');
-  if (resupplyBtn && onResupply) {
-    resupplyBtn.addEventListener('click', onResupply);
-  }
-
   const ui: HangarUI = {
     element,
+    state,
+    selectedShipId: null,
     onSelectContracts,
   };
-  if (onResupply) {
-    ui.onResupply = onResupply;
-  }
+
+  if (onStore) ui.onStore = onStore;
+  if (onResupply) ui.onResupply = onResupply;
+  if (onStateUpdate) ui.onStateUpdate = onStateUpdate;
+
+  renderAndBindHangar(ui);
   return ui;
 }
 
-/** Update hangar UI with new state */
-export function updateHangarUI(ui: HangarUI, state: CampaignState): void {
-  ui.element.innerHTML = renderHangar(state);
+/** Internal: render hangar and bind all events */
+function renderAndBindHangar(ui: HangarUI): void {
+  ui.element.innerHTML = renderHangar(ui.state, ui.selectedShipId);
 
-  // Re-bind button clicks
+  // Bind contracts button
   const contractsBtn = ui.element.querySelector('#btn-contracts');
   if (contractsBtn) {
     contractsBtn.addEventListener('click', ui.onSelectContracts);
   }
 
+  // Bind store button
+  const storeBtn = ui.element.querySelector('#btn-store');
+  if (storeBtn && ui.onStore) {
+    storeBtn.addEventListener('click', ui.onStore);
+  }
+
+  // Bind resupply button
   const resupplyBtn = ui.element.querySelector('#btn-resupply');
   if (resupplyBtn && ui.onResupply) {
     resupplyBtn.addEventListener('click', ui.onResupply);
   }
+
+  // Bind ship selection
+  ui.element.querySelectorAll('.ship-item').forEach((item) => {
+    item.addEventListener('click', () => {
+      const shipId = (item as HTMLElement).dataset.shipId;
+      if (shipId) {
+        ui.selectedShipId = shipId === ui.selectedShipId ? null : shipId;
+        renderAndBindHangar(ui);
+      }
+    });
+  });
+
+  // Bind deploy pilot buttons
+  ui.element.querySelectorAll('.btn-deploy').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      const pilotIndex = Number.parseInt(target.dataset.pilot ?? '0', 10);
+      const hullIndex = Number.parseInt(target.dataset.hull ?? '0', 10);
+
+      const newState = assignPilotToHull(ui.state, pilotIndex, hullIndex);
+      if (newState !== ui.state) {
+        ui.state = newState;
+        if (ui.onStateUpdate) ui.onStateUpdate(newState);
+        renderAndBindHangar(ui);
+      }
+    });
+  });
+
+  // Render loadout panel if ship selected
+  const panelContainer = ui.element.querySelector('#loadout-panel-container');
+  if (panelContainer && ui.selectedShipId) {
+    const ship = ui.state.ships.find((s) => s.id === ui.selectedShipId);
+    if (ship) {
+      const handleStateUpdate = (newState: CampaignState) => {
+        ui.state = newState;
+        if (ui.onStateUpdate) ui.onStateUpdate(newState);
+        renderAndBindHangar(ui);
+      };
+      const handleClose = () => {
+        ui.selectedShipId = null;
+        renderAndBindHangar(ui);
+      };
+
+      panelContainer.innerHTML = renderLoadoutPanel(ship, ui.state);
+      bindLoadoutEvents(
+        panelContainer as HTMLElement,
+        ui.state,
+        handleStateUpdate,
+        handleClose,
+      );
+    }
+  }
+}
+
+/** Update hangar UI with new state */
+export function updateHangarUI(ui: HangarUI, state: CampaignState): void {
+  ui.state = state;
+  renderAndBindHangar(ui);
 }
