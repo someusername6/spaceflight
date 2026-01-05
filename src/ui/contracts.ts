@@ -18,17 +18,19 @@ export interface ContractsUI {
  * Each wave is manageable; total enemies add up for pacing.
  */
 export function generateContracts(_sector: number): Contract[] {
+  // Early game uses "fighter" archetype (same as player) for longer engagements.
+  // Rookie skill keeps difficulty manageable while tankier ships extend fight times.
   return [
     {
       id: 'patrol-1',
       name: 'Patrol Duty',
       description: 'Clear hostiles from the shipping lanes.',
       difficulty: 'easy',
-      // 2 waves = 3 total rookie scouts
+      // 2 waves = 2 total rookie fighters (tankier than scouts, longer fights)
       waves: [
-        { enemies: [{ archetype: 'scout', skill: 'rookie', count: 2 }] },
+        { enemies: [{ archetype: 'fighter', skill: 'rookie', count: 1 }] },
         {
-          enemies: [{ archetype: 'scout', skill: 'rookie', count: 1 }],
+          enemies: [{ archetype: 'fighter', skill: 'rookie', count: 1 }],
           delay: 3,
         },
       ],
@@ -39,12 +41,12 @@ export function generateContracts(_sector: number): Contract[] {
       name: 'Escort Mission',
       description: 'Defend cargo ships against raider attack.',
       difficulty: 'medium',
-      // 2 waves: scouts then scout + interceptor = 4 total enemies
+      // 2 waves: fighters then fighter + interceptor = 3 total enemies
       waves: [
-        { enemies: [{ archetype: 'scout', skill: 'rookie', count: 2 }] },
+        { enemies: [{ archetype: 'fighter', skill: 'rookie', count: 1 }] },
         {
           enemies: [
-            { archetype: 'scout', skill: 'rookie', count: 1 },
+            { archetype: 'fighter', skill: 'rookie', count: 1 },
             { archetype: 'interceptor', skill: 'rookie', count: 1 },
           ],
           delay: 3,
@@ -57,11 +59,11 @@ export function generateContracts(_sector: number): Contract[] {
       name: 'Strike Mission',
       description: 'Eliminate enemy patrol. Expect heavy resistance.',
       difficulty: 'hard',
-      // 3 waves - scouts then interceptors = 5 total enemies
+      // 3 waves - fighters then interceptors = 4 total enemies
       waves: [
-        { enemies: [{ archetype: 'scout', skill: 'rookie', count: 2 }] },
+        { enemies: [{ archetype: 'fighter', skill: 'rookie', count: 1 }] },
         {
-          enemies: [{ archetype: 'scout', skill: 'rookie', count: 1 }],
+          enemies: [{ archetype: 'fighter', skill: 'rookie', count: 1 }],
           delay: 3,
         },
         {
