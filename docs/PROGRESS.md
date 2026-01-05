@@ -106,18 +106,21 @@ Balance targets achieved:
 - **Inventory display** (`src/ui/hangar.ts:71-137`): Shows stored hulls and weapons in hangar. CSS styles in `src/ui/styles.ts:288-333`.
 - **CampaignState** now has `storedHulls: StoredHull[]` array.
 
-#### Next: Store & Loadout System
+#### Phase D - Loadout Customization (In Progress)
+- **Loadout functions** (`src/campaign/loadout.ts`): Backend functions for equipment management:
+  - `unequipPrimary/Secondary` - move weapon from ship to storage
+  - `equipPrimary/Secondary` - move weapon from storage to ship
+  - `swapPilotToHull` - move pilot to different hull, old ship/weapons go to storage
 
-**Phase C - Store UI:**
+**Next: Loadout UI**
+- Ship detail view (click to expand/select)
+- Equip/unequip buttons
+- Hull swap interface
+
+**Phase C - Store UI (Pending):**
 - Buy/sell weapons
 - Buy/sell ship hulls
 - Prices defined per item type
-
-**Phase D - Loadout Customization:**
-- Swap ship types (assign pilot to different hull)
-- Equip/unequip weapons on ships
-- Track which equipment is attached to which ship
-- Validate loadout constraints (weapon slots per ship class)
 
 **Ship Destruction Rules:**
 - Destroyed ship → hull lost from inventory
