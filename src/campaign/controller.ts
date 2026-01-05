@@ -349,6 +349,24 @@ function launchMission(
     missionEndState.delayRemaining = MISSION_END_DELAY;
     missionEndState.victory = result === MissionResult.Victory;
 
+    // Show victory/defeat overlay immediately
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 72px;
+      font-weight: bold;
+      font-family: sans-serif;
+      text-shadow: 0 0 20px ${isDefeat ? '#ff0000' : '#00ff00'}, 0 0 40px ${isDefeat ? '#ff0000' : '#00ff00'};
+      color: ${isDefeat ? '#ff0000' : '#00ff00'};
+      pointer-events: none;
+      z-index: 1000;
+    `;
+    overlay.textContent = isDefeat ? 'DEFEAT' : 'VICTORY';
+    controller.missionContainer?.appendChild(overlay);
+
     console.log(
       `[MISSION ${performance.now().toFixed(0)}ms] ${isDefeat ? 'DEFEAT' : 'VICTORY'} - transitioning in ${MISSION_END_DELAY}s`,
     );
