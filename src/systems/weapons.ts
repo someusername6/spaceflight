@@ -39,6 +39,11 @@ interface WeaponWithIndex {
 const projectileWeaponsCollector: WeaponWithIndex[] = [];
 const tempZeroVec = new THREE.Vector3(0, 0, 0);
 
+// Reusable vectors for lock cone calculation (avoid per-frame allocations)
+const tempForward = new THREE.Vector3();
+const tempToTarget = new THREE.Vector3();
+const DEG_TO_RAD = Math.PI / 180;
+
 /** Weapon system - handles firing and heat */
 export function weaponSystem(world: World, dt: number): void {
   const state = world.systemState.weapons;
@@ -278,6 +283,7 @@ export function fireLinkedPrimaries(
  * - Target changes (different enemy)
  * - Weapon changes (different missile type has different lock speed)
  * - Target moves outside missile range
+ * - Target moves outside lock cone (ship must face target)
  *
  * This ensures consistent behavior between player and AI.
  */
@@ -298,7 +304,7 @@ function updateLockProgress(
     return;
   }
 
-  // Check if target is within missile range
+  // Check if target is within missile range and lock cone
   const targetTransform = getComponent<Transform>(world, target, 'transform');
   if (targetTransform) {
     const distance = selfTransform.position.distanceTo(
@@ -309,6 +315,30 @@ function updateLockProgress(
       weapons.lockProgress = 0;
       weapons.lockTarget = undefined;
       return;
+    }
+
+    // Check if target is within lock cone (ship must face target)
+    if (weapon.lockConeAngle !== undefined) {
+      // Calculate ship's forward direction
+      tempForward.set(0, 0, -1).applyQuaternion(selfTransform.rotation);
+
+      // Calculate direction to target (normalized)
+      tempToTarget
+        .copy(targetTransform.position)
+        .sub(selfTransform.position)
+        .normalize();
+
+      // Calculate angle between forward and target direction
+      const dot = tempForward.dot(tempToTarget);
+      const angleRad = Math.acos(Math.min(1, Math.max(-1, dot)));
+      const coneRad = weapon.lockConeAngle * DEG_TO_RAD;
+
+      if (angleRad > coneRad) {
+        // Target outside lock cone - lose lock
+        weapons.lockProgress = 0;
+        weapons.lockTarget = undefined;
+        return;
+      }
     }
   }
 

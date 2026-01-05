@@ -48,6 +48,8 @@ export interface SecondaryWeapon {
   maxCount: number;
   fireRate: number; // Seconds between shots
   lockSpeed: number; // Lock acquisition speed (0-1 per second, 0 = no lock needed)
+  /** Lock cone half-angle in degrees - target must be within this angle of ship's forward */
+  lockConeAngle: number;
   /** Bank size (1, 2, or 3) - affects ammo capacity */
   bankSize: number;
   aoeRadius?: number; // Area of effect radius (undefined = no AoE)
@@ -68,6 +70,7 @@ export const DECOY_DEF: Omit<
   damage: 0, // Non-damaging
   fireRate: 0.5, // 2 per second max
   lockSpeed: 0,
+  lockConeAngle: 60, // Not used for decoys
   isDecoy: true,
 };
 
