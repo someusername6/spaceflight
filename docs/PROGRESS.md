@@ -100,11 +100,13 @@ Balance targets achieved:
 - **Salvage bonus** (`src/campaign/state.ts:151-163`): 50 credits per enemy kill, awarded regardless of victory/defeat. `calculateSalvageBonus` counts enemy kills from match stats.
 - **Results UI breakdown** (`src/ui/results.ts:35-46`): Shows base reward and salvage bonus separately in mission results.
 
-#### Next: Inventory & Loadout System
-**Phase B - Equipment Inventory:**
-- Stored weapons (unequipped, available to install)
-- Stored ships (hulls without pilots assigned)
-- Display inventory in hangar UI
+#### Phase B - Equipment Inventory ✅
+- **Data model refactor** (`src/campaign/types.ts`): `OwnedShip.archetype` → `OwnedShip.shipClass`. Added `StoredHull` type for ship hulls in storage.
+- **Ship spawning update** (`src/campaign/ship-spawning.ts`): Uses `SHIP_CLASSES` for hull stats instead of `SHIP_ARCHETYPES`.
+- **Inventory display** (`src/ui/hangar.ts:71-137`): Shows stored hulls and weapons in hangar. CSS styles in `src/ui/styles.ts:288-333`.
+- **CampaignState** now has `storedHulls: StoredHull[]` array.
+
+#### Next: Store & Loadout System
 
 **Phase C - Store UI:**
 - Buy/sell weapons
