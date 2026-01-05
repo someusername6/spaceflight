@@ -37,7 +37,6 @@ export function createTargetStats(parent: HTMLElement): TargetStatsDisplay {
   container.className = 'target-stats';
   container.innerHTML = `
     <div class="target-camera-container"></div>
-    <div class="target-header">TARGET</div>
     <div class="target-callsign">---</div>
     <div class="target-type">NO TARGET</div>
     <div class="target-row">
@@ -240,15 +239,6 @@ export function getTargetStatsStyles(): string {
     .target-stats.has-target {
       opacity: 1;
       border-color: #f00;
-    }
-    .target-header {
-      font-size: 10px;
-      color: #a00;
-      letter-spacing: 2px;
-      margin-bottom: 4px;
-    }
-    .target-stats.has-target .target-header {
-      color: #f00;
     }
     .target-callsign {
       font-size: 14px;

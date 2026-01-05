@@ -24,6 +24,10 @@ export interface TargetCamera {
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
   pixelBuffer: Uint8Array;
+  /** Fill light for better target visibility (lazy initialized) */
+  fillLight: THREE.PointLight | null;
+  /** Scene reference for cleanup */
+  scene: THREE.Scene | null;
 }
 
 // Reusable vectors for camera positioning
@@ -72,6 +76,8 @@ export function createTargetCamera(): TargetCamera {
     canvas,
     ctx,
     pixelBuffer,
+    fillLight: null,
+    scene: null,
   };
 }
 
@@ -113,12 +119,26 @@ export function updateTargetCamera(
   targetCamera.camera.position.copy(cameraPos);
   targetCamera.camera.lookAt(targetPos);
 
+  // Lazy-init fill light (created once, intensity toggled per frame)
+  if (!targetCamera.fillLight) {
+    targetCamera.fillLight = new THREE.PointLight(0xffffff, 0, 150);
+    targetCamera.scene = scene;
+    scene.add(targetCamera.fillLight);
+  }
+
+  // Position fill light at camera for front-lighting, enable for this render
+  targetCamera.fillLight.position.copy(cameraPos);
+  targetCamera.fillLight.intensity = 1.5;
+
   // Render to target (must explicitly clear for skybox to render)
   const currentRenderTarget = webglRenderer.getRenderTarget();
   webglRenderer.setRenderTarget(targetCamera.renderTarget);
   webglRenderer.clear();
   webglRenderer.render(scene, targetCamera.camera);
   webglRenderer.setRenderTarget(currentRenderTarget);
+
+  // Disable fill light so main camera render isn't affected
+  targetCamera.fillLight.intensity = 0;
 
   // Read pixels and draw to canvas
   webglRenderer.readRenderTargetPixels(
@@ -180,4 +200,8 @@ export function getTargetCameraStyles(): string {
 /** Dispose target camera resources */
 export function disposeTargetCamera(targetCamera: TargetCamera): void {
   targetCamera.renderTarget.dispose();
+  if (targetCamera.fillLight && targetCamera.scene) {
+    targetCamera.scene.remove(targetCamera.fillLight);
+    targetCamera.fillLight.dispose();
+  }
 }
