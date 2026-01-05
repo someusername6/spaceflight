@@ -5,7 +5,7 @@
 import { Euler, Quaternion, Vector3 } from 'three';
 import type { AIControlled } from '../components/ai';
 import type { Health } from '../components/health';
-import { isDying } from '../components/health';
+import { isDead } from '../components/health';
 import type { Heat } from '../components/heat';
 import {
   AFTERBURNER_LOCK_THRESHOLD,
@@ -45,9 +45,9 @@ export function physicsSystem(world: World, dt: number): void {
     ) as Transform;
     const physics = getComponent<Physics>(world, entity, 'physics') as Physics;
 
-    // Dying entities coast with current velocity (no control input)
+    // Dead or dying entities coast with current velocity (no control input)
     const health = getComponent<Health>(world, entity, 'health');
-    if (health && isDying(health)) {
+    if (health && isDead(health)) {
       // Just update position, no control
       transform.position.addScaledVector(physics.velocity, dt);
       continue;

@@ -12,7 +12,7 @@
 import * as THREE from 'three';
 import type { FactionComponent } from '../../components/faction';
 import type { Health } from '../../components/health';
-import { isDying } from '../../components/health';
+import { isDead } from '../../components/health';
 import type { Targeting } from '../../components/targeting';
 import type { Transform } from '../../components/transform';
 import { getComponent, hasComponent, queryEntities } from '../../core/ecs';
@@ -172,8 +172,7 @@ export function updateRadar(
     if (hasComponent(world, entity, 'missile')) continue;
 
     const health = getComponent<Health>(world, entity, 'health');
-    if (!health || health.hull <= 0) continue;
-    if (isDying(health)) continue;
+    if (!health || isDead(health)) continue;
 
     const transform = getComponent<Transform>(world, entity, 'transform');
     const faction = getComponent<FactionComponent>(world, entity, 'faction');
@@ -271,8 +270,7 @@ function drawMissiles(
     'health',
   ])) {
     const health = getComponent<Health>(world, entity, 'health');
-    if (!health || health.hull <= 0) continue;
-    if (isDying(health)) continue;
+    if (!health || isDead(health)) continue;
 
     const transform = getComponent<Transform>(world, entity, 'transform');
     if (!transform) continue;

@@ -5,7 +5,7 @@
 
 import type { FactionComponent } from '../../components/faction';
 import type { Health } from '../../components/health';
-import { isDying } from '../../components/health';
+import { isDead } from '../../components/health';
 import type { Shields } from '../../components/shields';
 import type { ShipIdentity } from '../../components/ship-identity';
 import type { Transform } from '../../components/transform';
@@ -108,8 +108,7 @@ export function updateAlliedDisplay(
     if (!faction || faction.faction !== Faction.Player) continue;
 
     const health = getComponent<Health>(world, entity, 'health');
-    if (!health || health.hull <= 0) continue;
-    if (isDying(health)) continue;
+    if (!health || isDead(health)) continue;
 
     const identity = getComponent<ShipIdentity>(world, entity, 'shipIdentity');
     const shields = getComponent<Shields>(world, entity, 'shields');

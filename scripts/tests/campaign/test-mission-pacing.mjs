@@ -12,81 +12,38 @@
  * - Player survival rate
  */
 
+import { generateContracts } from '../../../src/ui/contracts.ts';
 import { PLAYER_MODES, runScenario } from './mission-sim.mjs';
 
 // ============================================================================
-// Mission Definitions - MUST match src/ui/contracts.ts
+// Mission Definitions - imported from src/ui/contracts.ts
 // ============================================================================
 
-const MISSIONS = {
-  easy: {
-    name: 'Patrol Duty (Easy)',
-    playerSquad: [
-      { archetype: 'interceptor', isPlayer: true },
-      { archetype: 'interceptor', skill: 'regular' },
-      { archetype: 'interceptor', skill: 'regular' },
-    ],
-    // Matches contracts.ts: 2 waves = 3 total rookie scouts
-    waves: [
-      {
-        enemies: [{ archetype: 'scout', skill: 'rookie', count: 2 }],
-        delay: 0,
-      },
-      {
-        enemies: [{ archetype: 'scout', skill: 'rookie', count: 1 }],
-        delay: 3,
-      },
-    ],
-    startDistance: 1500,
-  },
-  medium: {
-    name: 'Escort Mission (Medium)',
-    playerSquad: [
-      { archetype: 'interceptor', isPlayer: true },
-      { archetype: 'interceptor', skill: 'regular' },
-      { archetype: 'interceptor', skill: 'regular' },
-    ],
-    // Matches contracts.ts: 2 waves = scouts then scout + interceptor (4 total)
-    waves: [
-      {
-        enemies: [{ archetype: 'scout', skill: 'rookie', count: 2 }],
-        delay: 0,
-      },
-      {
-        enemies: [
-          { archetype: 'scout', skill: 'rookie', count: 1 },
-          { archetype: 'interceptor', skill: 'rookie', count: 1 },
-        ],
-        delay: 3,
-      },
-    ],
-    startDistance: 1500,
-  },
-  hard: {
-    name: 'Strike Mission (Hard)',
-    playerSquad: [
-      { archetype: 'interceptor', isPlayer: true },
-      { archetype: 'interceptor', skill: 'regular' },
-      { archetype: 'interceptor', skill: 'regular' },
-    ],
-    // Matches contracts.ts: 3 waves = scouts then interceptors (5 total)
-    waves: [
-      {
-        enemies: [{ archetype: 'scout', skill: 'rookie', count: 2 }],
-        delay: 0,
-      },
-      {
-        enemies: [{ archetype: 'scout', skill: 'rookie', count: 1 }],
-        delay: 3,
-      },
-      {
-        enemies: [{ archetype: 'interceptor', skill: 'rookie', count: 2 }],
-        delay: 3,
-      },
-    ],
-    startDistance: 1500,
-  },
-};
+const contracts = generateContracts(1);
+
+// Map contract difficulty to mission key
+const difficultyToKey = { easy: 'easy', medium: 'medium', hard: 'hard' };
+
+// Build MISSIONS object from contracts
+const MISSIONS = {};
+for (const contract of contracts) {
+  const key = difficultyToKey[contract.difficulty];
+  if (key) {
+    MISSIONS[key] = {
+      name: `${contract.name} (${contract.difficulty.charAt(0).toUpperCase() + contract.difficulty.slice(1)})`,
+      playerSquad: [
+        { archetype: 'interceptor', isPlayer: true },
+        { archetype: 'interceptor', skill: 'regular' },
+        { archetype: 'interceptor', skill: 'regular' },
+      ],
+      waves: contract.waves.map((wave, i) => ({
+        enemies: wave.enemies,
+        delay: i === 0 ? 0 : (wave.delay ?? 3),
+      })),
+      startDistance: 1500,
+    };
+  }
+}
 
 // ============================================================================
 // Reporting

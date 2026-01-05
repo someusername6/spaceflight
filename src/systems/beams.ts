@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import { type AIControlled, AIState } from '../components/ai';
 import type { Health } from '../components/health';
-import { isDying } from '../components/health';
+import { isDead } from '../components/health';
 import type { Heat } from '../components/heat';
 import { addHeat } from '../components/heat';
 import type { PlayerControlled } from '../components/player';
@@ -55,9 +55,9 @@ export function beamSystem(world: World, dt: number): void {
     'primaryWeapons',
     'heat',
   ])) {
-    // Skip dying entities (can't fire while exploding)
+    // Skip dead or dying entities (can't fire while exploding)
     const health = getComponent<Health>(world, entity, 'health');
-    if (health && isDying(health)) continue;
+    if (health && isDead(health)) continue;
 
     // Query guarantees these components exist
     const transform = getComponent<Transform>(

@@ -11,7 +11,7 @@ import {
   type FactionComponent,
 } from '../components/faction';
 import type { Health } from '../components/health';
-import { isDying } from '../components/health';
+import { isDead } from '../components/health';
 import type { PlayerControlled } from '../components/player';
 import type { Targeting } from '../components/targeting';
 import type { Transform } from '../components/transform';
@@ -144,10 +144,9 @@ function updateValidTargets(
   ])) {
     if (other === self) continue;
 
-    // Skip dying enemies (already exploding)
-    // Query guarantees health component exists
-    const otherHealth = getComponent<Health>(world, other, 'health') as Health;
-    if (isDying(otherHealth)) continue;
+    // Skip dead or dying enemies (already exploding)
+    const otherHealth = getComponent<Health>(world, other, 'health');
+    if (otherHealth && isDead(otherHealth)) continue;
 
     const otherFaction = getComponent<FactionComponent>(
       world,

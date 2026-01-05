@@ -5,7 +5,7 @@
 import { type AIControlled, AIState } from '../../components/ai';
 import { Faction, type FactionComponent } from '../../components/faction';
 import type { Health } from '../../components/health';
-import { isDying } from '../../components/health';
+import { isDead } from '../../components/health';
 import type { Heat } from '../../components/heat';
 import type { Physics } from '../../components/physics';
 import type { Shields } from '../../components/shields';
@@ -42,9 +42,9 @@ export function aiSystem(world: World, dt: number): void {
     'physics',
     'faction',
   ])) {
-    // Skip dying entities (they freeze during death animation)
+    // Skip dead or dying entities (they freeze during death animation)
     const health = getComponent<Health>(world, entity, 'health');
-    if (health && isDying(health)) continue;
+    if (health && isDead(health)) continue;
 
     // Query guarantees these components exist
     const ai = getComponent(world, entity, 'aiControlled') as AIControlled;

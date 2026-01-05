@@ -8,7 +8,7 @@ import {
   type Faction,
   type FactionComponent,
 } from '../../components/faction';
-import { type Health, isDying } from '../../components/health';
+import { type Health, isDead } from '../../components/health';
 import type { Transform } from '../../components/transform';
 import { getComponent, queryEntities } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
@@ -75,8 +75,8 @@ export function findNearestThreatToPlayer(
     if (!entityFaction || !areEnemies(selfFaction, entityFaction.faction))
       continue;
 
-    const health = getComponent<Health>(world, entity, 'health') as Health;
-    if (isDying(health)) continue;
+    const health = getComponent<Health>(world, entity, 'health');
+    if (!health || isDead(health)) continue;
 
     // Check if this enemy is targeting the player
     const ai = getComponent<AIControlled>(
@@ -122,9 +122,9 @@ export function findNearestEnemy(
   ])) {
     if (other === self) continue;
 
-    // Query guarantees health component exists
-    const otherHealth = getComponent<Health>(world, other, 'health') as Health;
-    if (isDying(otherHealth)) continue;
+    // Skip dead or dying enemies
+    const otherHealth = getComponent<Health>(world, other, 'health');
+    if (otherHealth && isDead(otherHealth)) continue;
 
     const otherFaction = getComponent<FactionComponent>(
       world,

@@ -88,14 +88,23 @@ test('Enemy callsign prefixes array has at least 10 entries', () => {
   );
 });
 
-// Test: Get enemy callsign prefix returns correct values
-test('getEnemyCallsignPrefix returns correct prefixes', () => {
+// Test: Get enemy callsign prefix returns correct values from array
+test('getEnemyCallsignPrefix returns prefixes matching array order', () => {
   const wave0 = getEnemyCallsignPrefix(0);
   const wave1 = getEnemyCallsignPrefix(1);
   const wave2 = getEnemyCallsignPrefix(2);
-  assert(wave0 === 'Draco', 'Wave 0 should be Draco');
-  assert(wave1 === 'Hydra', 'Wave 1 should be Hydra');
-  assert(wave2 === 'Corvus', 'Wave 2 should be Corvus');
+  assert(
+    wave0 === ENEMY_CALLSIGN_PREFIXES[0],
+    'Wave 0 should match first prefix',
+  );
+  assert(
+    wave1 === ENEMY_CALLSIGN_PREFIXES[1],
+    'Wave 1 should match second prefix',
+  );
+  assert(
+    wave2 === ENEMY_CALLSIGN_PREFIXES[2],
+    'Wave 2 should match third prefix',
+  );
 });
 
 // Test: Callsign prefix cycles after exhausting list
@@ -106,15 +115,17 @@ test('getEnemyCallsignPrefix cycles after exhausting list', () => {
   assert(first === cycled, `Wave ${len} should cycle back to first prefix`);
 });
 
-// Test: Enemy callsigns generate correctly
+// Test: Enemy callsigns generate correctly using prefixes from array
 test('Enemy callsigns generate correctly', () => {
   resetCallsignCounters(world);
-  const draco1 = generateCallsign(world, 'Draco');
-  const draco2 = generateCallsign(world, 'Draco');
-  const hydra1 = generateCallsign(world, 'Hydra');
-  assert(draco1 === 'Draco 1', 'First Draco should be Draco 1');
-  assert(draco2 === 'Draco 2', 'Second Draco should be Draco 2');
-  assert(hydra1 === 'Hydra 1', 'First Hydra should be Hydra 1');
+  const prefix0 = ENEMY_CALLSIGN_PREFIXES[0];
+  const prefix1 = ENEMY_CALLSIGN_PREFIXES[1];
+  const call1 = generateCallsign(world, prefix0);
+  const call2 = generateCallsign(world, prefix0);
+  const call3 = generateCallsign(world, prefix1);
+  assert(call1 === `${prefix0} 1`, `First ${prefix0} should be ${prefix0} 1`);
+  assert(call2 === `${prefix0} 2`, `Second ${prefix0} should be ${prefix0} 2`);
+  assert(call3 === `${prefix1} 1`, `First ${prefix1} should be ${prefix1} 1`);
 });
 
 // Summary

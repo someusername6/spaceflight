@@ -6,7 +6,7 @@
 import * as THREE from 'three';
 import type { Collision } from '../components/collision';
 import type { Health } from '../components/health';
-import { isDying } from '../components/health';
+import { isDead } from '../components/health';
 import type { Transform } from '../components/transform';
 import type { PrimaryWeapon } from '../components/weapons';
 import { getComponent, hasComponent, queryEntities } from '../core/ecs';
@@ -150,9 +150,9 @@ export function findBeamHit(
     if (hasComponent(world, other, 'projectile')) continue;
     if (hasComponent(world, other, 'missile')) continue;
 
-    // Skip dying targets (already exploding)
-    const otherHealth = getComponent<Health>(world, other, 'health') as Health;
-    if (isDying(otherHealth)) continue;
+    // Skip dead or dying targets (already exploding)
+    const otherHealth = getComponent<Health>(world, other, 'health');
+    if (otherHealth && isDead(otherHealth)) continue;
 
     // Query guarantees these components exist
     const otherTransform = getComponent<Transform>(

@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import { Faction, type FactionComponent } from '../../components/faction';
 import type { Health } from '../../components/health';
-import { isDying } from '../../components/health';
+import { isDead } from '../../components/health';
 import type { Physics } from '../../components/physics';
 import type { Targeting } from '../../components/targeting';
 import type { Transform } from '../../components/transform';
@@ -159,9 +159,9 @@ export function updateReticles(
     // Skip projectiles (they don't need reticles)
     if (hasComponent(world, entity, 'projectile')) continue;
 
-    // Skip dying entities (already exploding)
+    // Skip dead or dying entities
     const health = getComponent<Health>(world, entity, 'health');
-    if (health && isDying(health)) continue;
+    if (health && isDead(health)) continue;
 
     // Query guarantees these components exist
     const transform = getComponent<Transform>(

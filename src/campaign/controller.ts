@@ -148,7 +148,7 @@ function countEnemies(world: World): number {
 
 /** Spawn a wave of enemies */
 function spawnWave(world: World, wave: ContractWave, waveIndex: number): void {
-  // Get callsign prefix for this wave (Draco, Hydra, Corvus, etc.)
+  // Get callsign prefix for this wave (Aries, Taurus, Gemini, etc.)
   const callsignPrefix = getEnemyCallsignPrefix(waveIndex);
 
   wave.enemies.forEach((enemySpec, groupIndex) => {

@@ -5,26 +5,22 @@
 import type { ComponentBase, World } from '../core/types';
 
 /**
- * Enemy callsign prefixes by wave (1-2 syllables for easy comms).
+ * Enemy callsign prefixes by wave - zodiac signs for thematic consistency.
  * Wave 0 uses first entry, Wave 1 uses second, etc. Cycles if exhausted.
  */
 export const ENEMY_CALLSIGN_PREFIXES = [
-  'Draco',
-  'Hydra',
-  'Corvus',
-  'Lupus',
-  'Lynx',
-  'Cygnus',
-  'Crux',
-  'Vela',
-  'Serpens',
-  'Phoenix',
-  'Cetus',
-  'Pyxis',
-  'Fornax',
-  'Scutum',
-  'Hydrus',
-  'Crater',
+  'Aries',
+  'Taurus',
+  'Gemini',
+  'Cancer',
+  'Leo',
+  'Virgo',
+  'Libra',
+  'Scorpio',
+  'Sagittarius',
+  'Capricorn',
+  'Aquarius',
+  'Pisces',
 ] as const;
 
 /** Get enemy callsign prefix for a given wave index (cycles if exhausted) */
