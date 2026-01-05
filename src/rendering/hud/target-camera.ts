@@ -24,8 +24,8 @@ export interface TargetCamera {
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
   pixelBuffer: Uint8Array;
-  /** Ambient light for even target visibility (lazy initialized) */
-  ambientLight: THREE.AmbientLight | null;
+  /** Directional light from camera for target visibility (lazy initialized) */
+  dirLight: THREE.DirectionalLight | null;
   /** Scene reference for cleanup */
   scene: THREE.Scene | null;
 }
@@ -76,7 +76,7 @@ export function createTargetCamera(): TargetCamera {
     canvas,
     ctx,
     pixelBuffer,
-    ambientLight: null,
+    dirLight: null,
     scene: null,
   };
 }
@@ -119,22 +119,27 @@ export function updateTargetCamera(
   targetCamera.camera.position.copy(cameraPos);
   targetCamera.camera.lookAt(targetPos);
 
-  // Lazy-init ambient light (created once, intensity toggled per frame)
-  if (!targetCamera.ambientLight) {
-    targetCamera.ambientLight = new THREE.AmbientLight(0xffffff, 0);
+  // Lazy-init directional light (created once, intensity toggled per frame)
+  if (!targetCamera.dirLight) {
+    targetCamera.dirLight = new THREE.DirectionalLight(0xffffff, 0);
     targetCamera.scene = scene;
-    scene.add(targetCamera.ambientLight);
+    scene.add(targetCamera.dirLight);
   }
 
-  // Find and disable scene lights, enable our ambient light
+  // Position light at camera, aimed at target
+  targetCamera.dirLight.position.copy(cameraPos);
+  targetCamera.dirLight.target.position.copy(targetPos);
+  targetCamera.dirLight.target.updateMatrixWorld();
+
+  // Find and disable scene lights, enable our directional light
   const sceneLights: { light: THREE.Light; intensity: number }[] = [];
   scene.traverse((obj) => {
-    if (obj !== targetCamera.ambientLight && obj instanceof THREE.Light) {
+    if (obj !== targetCamera.dirLight && obj instanceof THREE.Light) {
       sceneLights.push({ light: obj, intensity: obj.intensity });
       obj.intensity = 0;
     }
   });
-  targetCamera.ambientLight.intensity = 3;
+  targetCamera.dirLight.intensity = 3;
 
   // Render to target (must explicitly clear for skybox to render)
   const currentRenderTarget = webglRenderer.getRenderTarget();
@@ -143,11 +148,11 @@ export function updateTargetCamera(
   webglRenderer.render(scene, targetCamera.camera);
   webglRenderer.setRenderTarget(currentRenderTarget);
 
-  // Restore scene lights, disable our ambient light
+  // Restore scene lights, disable our directional light
   for (const { light, intensity } of sceneLights) {
     light.intensity = intensity;
   }
-  targetCamera.ambientLight.intensity = 0;
+  targetCamera.dirLight.intensity = 0;
 
   // Read pixels and draw to canvas
   webglRenderer.readRenderTargetPixels(
@@ -209,8 +214,8 @@ export function getTargetCameraStyles(): string {
 /** Dispose target camera resources */
 export function disposeTargetCamera(targetCamera: TargetCamera): void {
   targetCamera.renderTarget.dispose();
-  if (targetCamera.ambientLight && targetCamera.scene) {
-    targetCamera.scene.remove(targetCamera.ambientLight);
-    targetCamera.ambientLight.dispose();
+  if (targetCamera.dirLight && targetCamera.scene) {
+    targetCamera.scene.remove(targetCamera.dirLight);
+    targetCamera.dirLight.dispose();
   }
 }
