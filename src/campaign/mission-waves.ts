@@ -46,7 +46,10 @@ export function createMissionEndState(): MissionEndState {
   };
 }
 
-/** Spawn a wave of enemies */
+/** Minimum spawn distance from allied ships */
+const MIN_SPAWN_DISTANCE = 2000;
+
+/** Spawn a wave of enemies in tight formation */
 export function spawnWave(
   world: World,
   wave: ContractWave,
@@ -55,14 +58,17 @@ export function spawnWave(
   // Get callsign prefix for this wave (Aries, Taurus, Gemini, etc.)
   const callsignPrefix = getEnemyCallsignPrefix(waveIndex);
 
-  wave.enemies.forEach((enemySpec, groupIndex) => {
+  // All enemies spawn together at 2000m+ from allies (player at origin)
+  // Tight formation: 20m horizontal spacing, 10m vertical spacing
+  let shipIndex = 0;
+  wave.enemies.forEach((enemySpec) => {
     for (let i = 0; i < enemySpec.count; i++) {
-      const angle = (Math.PI * 2 * i) / enemySpec.count + groupIndex * 0.5;
-      // 1500m base distance = ~5-8 seconds approach (depends on ship speed)
-      const distance = 1500 + waveIndex * 100 + groupIndex * 150;
-      const x = Math.cos(angle) * distance * 0.5;
-      const z = -distance;
-      const y = (groupIndex - 1) * 50 + i * 20;
+      // Tight horizontal spread (20m between ships)
+      const x = (shipIndex - (getTotalEnemies(wave) - 1) / 2) * 20;
+      // Small vertical variation (alternating up/down)
+      const y = (shipIndex % 2 === 0 ? 1 : -1) * 5;
+      // All at same distance from origin (2000m minimum)
+      const z = -(MIN_SPAWN_DISTANCE + waveIndex * 100);
 
       createEnemyShip(
         world,
@@ -72,6 +78,12 @@ export function spawnWave(
         enemySpec.skill as ProfileName,
         callsignPrefix,
       );
+      shipIndex++;
     }
   });
+}
+
+/** Count total enemies in a wave */
+function getTotalEnemies(wave: ContractWave): number {
+  return wave.enemies.reduce((sum, spec) => sum + spec.count, 0);
 }
