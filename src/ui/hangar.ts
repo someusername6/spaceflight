@@ -6,7 +6,12 @@
  */
 
 import { calculateResupplyCost } from '../campaign/state';
-import type { CampaignState, OwnedShip } from '../campaign/types';
+import type {
+  CampaignState,
+  OwnedShip,
+  StoredHull,
+  StoredWeapon,
+} from '../campaign/types';
 import { SHIP_CLASSES } from '../data/ships';
 
 /** Hangar UI state */
@@ -63,6 +68,73 @@ function renderShipItem(ship: OwnedShip): string {
   `;
 }
 
+/** Render a stored hull item */
+function renderStoredHull(hull: StoredHull): string {
+  const stats = SHIP_CLASSES[hull.shipClass];
+  const maxHull = stats?.hull ?? 100;
+  const currentHull = maxHull - hull.hullDamage;
+  const hullPercent = Math.round((currentHull / maxHull) * 100);
+
+  return `
+    <div class="inventory-item hull-item">
+      <span class="item-name">${hull.shipClass}</span>
+      <span class="item-status">Hull: ${hullPercent}%</span>
+    </div>
+  `;
+}
+
+/** Render a stored weapon item */
+function renderStoredWeapon(weapon: StoredWeapon): string {
+  const countStr = weapon.category === 'secondary' ? ` (×${weapon.count})` : '';
+  return `
+    <div class="inventory-item weapon-item">
+      <span class="item-name">${weapon.weaponType}${countStr}</span>
+      <span class="item-category">${weapon.category}</span>
+    </div>
+  `;
+}
+
+/** Render inventory section */
+function renderInventory(state: CampaignState): string {
+  const hasHulls = state.storedHulls.length > 0;
+  const hasWeapons = state.storedWeapons.length > 0;
+
+  if (!hasHulls && !hasWeapons) {
+    return `
+      <div class="screen-panel inventory-panel">
+        <div class="screen-panel-header">Storage</div>
+        <div class="inventory-empty">No items in storage</div>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="screen-panel inventory-panel">
+      <div class="screen-panel-header">Storage</div>
+      ${
+        hasHulls
+          ? `
+        <div class="inventory-section">
+          <div class="inventory-label">Ship Hulls (${state.storedHulls.length})</div>
+          ${state.storedHulls.map(renderStoredHull).join('')}
+        </div>
+      `
+          : ''
+      }
+      ${
+        hasWeapons
+          ? `
+        <div class="inventory-section">
+          <div class="inventory-label">Weapons (${state.storedWeapons.length})</div>
+          ${state.storedWeapons.map(renderStoredWeapon).join('')}
+        </div>
+      `
+          : ''
+      }
+    </div>
+  `;
+}
+
 /** Render the resupply button */
 function renderResupplyButton(state: CampaignState): string {
   const cost = getTotalResupplyCost(state);
@@ -106,6 +178,8 @@ function renderHangar(state: CampaignState): string {
         ${wingmen.map(renderShipItem).join('')}
       </div>
     </div>
+
+    ${renderInventory(state)}
 
     <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
       ${renderResupplyButton(state)}
