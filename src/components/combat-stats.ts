@@ -126,6 +126,26 @@ export interface DestroyedShipRecord {
   timeOfDeath: number;
 }
 
+/** Weapon loadout snapshot for salvage calculation */
+export interface SalvageableWeapon {
+  weaponType: string;
+  ammoRemaining?: number; // For ballistic primaries
+}
+
+/** Secondary weapon snapshot for salvage */
+export interface SalvageableSecondary {
+  weaponType: string;
+  count: number; // Missiles/decoys remaining
+  isDecoy: boolean;
+}
+
+/** Ship data needed for salvage calculation (all destroyed ships) */
+export interface SalvageableShip {
+  shipClass: string;
+  primaryWeapons: SalvageableWeapon[];
+  secondaryWeapons: SalvageableSecondary[];
+}
+
 /** Convert CombatStats to a serializable snapshot */
 export function snapshotStats(
   stats: CombatStats,

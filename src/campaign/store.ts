@@ -4,22 +4,16 @@
  * Ammo functions are in store-ammo.ts
  */
 
-import { MISSILES } from '../data/missiles';
 import {
-  getAmmoPrice,
   getHullPrice,
   getPrimaryPrice,
+  getScrapPrice,
   getSecondaryPrice,
+  SCRAP_CONVERSION_FEE,
+  SCRAP_PER_HULL,
 } from '../data/prices';
-import { SHIP_CLASSES } from '../data/ships';
-import { PRIMARY_WEAPONS } from '../data/weapons';
 import { mergeSecondaryIntoStorage } from './ship-utils';
-import type {
-  CampaignState,
-  StoredHull,
-  StoredWeapon,
-  StoreStock,
-} from './types';
+import type { CampaignState, StoredHull, StoredWeapon } from './types';
 
 // Re-export ammo functions
 export {
@@ -30,9 +24,22 @@ export {
   unloadAmmoFromWeapon,
 } from './store-ammo';
 
-/** Generate unique ID for stored items */
+// Re-export catalog functions
+export {
+  createInitialStoreStock,
+  getAvailableAmmo,
+  getAvailableHulls,
+  getAvailablePrimaries,
+  getAvailableSecondaries,
+  getScrapTypes,
+} from './store-catalog';
+
+/** Counter for deterministic ID generation */
+let itemIdCounter = 0;
+
+/** Generate unique ID for stored items (deterministic, counter-based) */
 function generateId(): string {
-  return `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  return `item_${++itemIdCounter}`;
 }
 
 // ============ Hull Buy/Sell ============
@@ -232,80 +239,101 @@ export function sellSecondaryWeapon(
   };
 }
 
-// ============ Catalog Lists ============
+// ============ Scrap Sell ============
 
-/** Get list of available hulls for purchase (derived from SHIP_CLASSES) */
-export function getAvailableHulls(): Array<{
-  shipClass: string;
-  buyPrice: number;
-}> {
-  return Object.keys(SHIP_CLASSES)
-    .map((shipClass) => ({
-      shipClass,
-      buyPrice: getHullPrice(shipClass, 'buy'),
-    }))
-    .filter((item) => item.buyPrice > 0);
-}
+/**
+ * Sell scrap to the store.
+ * Unlike other items, scrap does NOT increment store stock (it's destroyed).
+ */
+export function sellScrap(
+  state: CampaignState,
+  shipClass: string,
+  count: number,
+): CampaignState {
+  const currentScrap = state.storedScrap[shipClass] ?? 0;
+  const toSell = Math.min(count, currentScrap);
+  if (toSell <= 0) {
+    return state;
+  }
 
-/** Get list of available primary weapons for purchase (derived from PRIMARY_WEAPONS) */
-export function getAvailablePrimaries(): Array<{
-  weaponType: string;
-  buyPrice: number;
-}> {
-  return Object.keys(PRIMARY_WEAPONS)
-    .map((weaponType) => ({
-      weaponType,
-      buyPrice: getPrimaryPrice(weaponType, 'buy'),
-    }))
-    .filter((item) => item.buyPrice > 0);
-}
+  const pricePerUnit = getScrapPrice(shipClass);
+  const totalPrice = pricePerUnit * toSell;
+  const remaining = currentScrap - toSell;
 
-/** Get list of available secondary weapons for purchase (derived from MISSILES) */
-export function getAvailableSecondaries(): Array<{
-  weaponType: string;
-  buyPrice: number;
-}> {
-  return Object.keys(MISSILES)
-    .map((weaponType) => ({
-      weaponType,
-      buyPrice: getSecondaryPrice(weaponType, 'buy'),
-    }))
-    .filter((item) => item.buyPrice > 0);
-}
+  const newStoredScrap = { ...state.storedScrap };
+  if (remaining <= 0) {
+    delete newStoredScrap[shipClass];
+  } else {
+    newStoredScrap[shipClass] = remaining;
+  }
 
-/** Get list of available ammo types for purchase (derived from PRIMARY_WEAPONS with ammo) */
-export function getAvailableAmmo(): Array<{
-  weaponType: string;
-  buyPrice: number;
-}> {
-  return Object.entries(PRIMARY_WEAPONS)
-    .filter(([_, stats]) => stats.ammo !== undefined)
-    .map(([weaponType]) => ({
-      weaponType,
-      buyPrice: getAmmoPrice(weaponType, 'buy'),
-    }))
-    .filter((item) => item.buyPrice > 0);
-}
-
-// ============ Store Stock ============
-
-/** Default stock for all items (high value for testing) */
-const DEFAULT_STOCK = 10000;
-
-/** Create initial store stock with default quantities */
-export function createInitialStoreStock(): StoreStock {
   return {
-    hulls: Object.fromEntries(
-      getAvailableHulls().map((h) => [h.shipClass, DEFAULT_STOCK]),
-    ),
-    primaries: Object.fromEntries(
-      getAvailablePrimaries().map((w) => [w.weaponType, DEFAULT_STOCK]),
-    ),
-    secondaries: Object.fromEntries(
-      getAvailableSecondaries().map((w) => [w.weaponType, DEFAULT_STOCK]),
-    ),
-    ammo: Object.fromEntries(
-      getAvailableAmmo().map((a) => [a.weaponType, DEFAULT_STOCK]),
-    ),
+    ...state,
+    credits: state.credits + totalPrice,
+    storedScrap: newStoredScrap,
+    // Note: scrap doesn't go back to store stock, it's consumed
+  };
+}
+
+// ============ Scrap Conversion ============
+
+/**
+ * Calculate the conversion fee to turn scrap into a hull.
+ * Fee = 5% of hull buy price.
+ */
+export function getScrapConversionFee(shipClass: string): number {
+  const hullPrice = getHullPrice(shipClass, 'buy');
+  return Math.floor(hullPrice * SCRAP_CONVERSION_FEE);
+}
+
+/**
+ * Check if player can convert scrap to a hull.
+ * Requires SCRAP_PER_HULL (100) scrap + conversion fee in credits.
+ */
+export function canConvertScrapToHull(
+  state: CampaignState,
+  shipClass: string,
+): boolean {
+  const scrapCount = state.storedScrap[shipClass] ?? 0;
+  const fee = getScrapConversionFee(shipClass);
+  return scrapCount >= SCRAP_PER_HULL && state.credits >= fee;
+}
+
+/**
+ * Convert scrap to a fully repaired hull.
+ * Consumes SCRAP_PER_HULL scrap + conversion fee, creates new hull in storage.
+ */
+export function convertScrapToHull(
+  state: CampaignState,
+  shipClass: string,
+): CampaignState {
+  if (!canConvertScrapToHull(state, shipClass)) {
+    return state;
+  }
+
+  const fee = getScrapConversionFee(shipClass);
+  const currentScrap = state.storedScrap[shipClass] ?? 0;
+  const remaining = currentScrap - SCRAP_PER_HULL;
+
+  // Update scrap
+  const newStoredScrap = { ...state.storedScrap };
+  if (remaining <= 0) {
+    delete newStoredScrap[shipClass];
+  } else {
+    newStoredScrap[shipClass] = remaining;
+  }
+
+  // Create new fully repaired hull
+  const newHull: StoredHull = {
+    id: generateId(),
+    shipClass,
+    hullDamage: 0,
+  };
+
+  return {
+    ...state,
+    credits: state.credits - fee,
+    storedScrap: newStoredScrap,
+    storedHulls: [...state.storedHulls, newHull],
   };
 }

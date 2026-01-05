@@ -7,6 +7,8 @@ import {
   getAvailableHulls,
   getAvailablePrimaries,
   getAvailableSecondaries,
+  getScrapConversionFee,
+  getScrapTypes,
 } from '../campaign/store';
 import type { CampaignState, StoreStock } from '../campaign/types';
 import { MISSILES } from '../data/missiles';
@@ -14,12 +16,18 @@ import {
   getAmmoPrice,
   getHullPrice,
   getPrimaryPrice,
+  getScrapPrice,
   getSecondaryPrice,
 } from '../data/prices';
 import { SHIP_CLASSES } from '../data/ships';
 import { PRIMARY_WEAPONS } from '../data/weapons';
 
-export type StoreCategory = 'hulls' | 'primaries' | 'secondaries' | 'ammo';
+export type StoreCategory =
+  | 'hulls'
+  | 'primaries'
+  | 'secondaries'
+  | 'ammo'
+  | 'scrap';
 
 export interface StoreUI {
   element: HTMLElement;
@@ -110,10 +118,31 @@ export function renderAmmoStats(weaponType: string): string {
   `;
 }
 
-/** Get items for current category (filters by price > 0 and stock > 0) */
+/** Render scrap stats */
+export function renderScrapStats(shipClass: string): string {
+  const ship = SHIP_CLASSES[shipClass];
+  if (!ship) return '';
+
+  const displayName = shipClass.charAt(0).toUpperCase() + shipClass.slice(1);
+  const conversionFee = getScrapConversionFee(shipClass);
+  return `
+    <div class="item-stats">
+      <div class="stat-row"><span>Ship Type:</span><span>${displayName}</span></div>
+      <div class="stat-note">Scrap can be sold for credits or converted to hulls.</div>
+      <div class="stat-note">100 scrap + ${conversionFee} cr fee → 1 hull (in Hangar)</div>
+    </div>
+  `;
+}
+
+/**
+ * Get items for current category.
+ * Most categories filter by store stock > 0.
+ * Scrap is special: items come from player storage (storedScrap).
+ */
 export function getCategoryItems(
   category: StoreCategory,
   storeStock: StoreStock,
+  storedScrap?: Record<string, number>,
 ): Array<{ id: string; name: string; stock: number }> {
   switch (category) {
     case 'hulls':
@@ -151,6 +180,16 @@ export function getCategoryItems(
           name: `${PRIMARY_WEAPONS[weaponType]?.name ?? weaponType} Ammo`,
           stock: storeStock.ammo[weaponType] ?? 0,
         }));
+    case 'scrap':
+      // Scrap items come from player storage, not store stock
+      // Show all types that the player has
+      return getScrapTypes()
+        .filter(({ shipClass }) => (storedScrap?.[shipClass] ?? 0) > 0)
+        .map(({ shipClass }) => ({
+          id: shipClass,
+          name: `${shipClass.charAt(0).toUpperCase() + shipClass.slice(1)} Scrap`,
+          stock: storedScrap?.[shipClass] ?? 0,
+        }));
   }
 }
 
@@ -169,6 +208,9 @@ export function getItemPrice(
       return getSecondaryPrice(id, type);
     case 'ammo':
       return getAmmoPrice(id, type);
+    case 'scrap':
+      // Scrap can only be sold, not bought
+      return type === 'sell' ? getScrapPrice(id) : 0;
   }
 }
 
@@ -195,10 +237,16 @@ export function getStorageCount(
       return ui.state.storedAmmo
         .filter((a) => a.weaponType === id)
         .reduce((sum, a) => sum + a.count, 0);
+    case 'scrap':
+      // Scrap is stored directly as shipClass -> count
+      return ui.state.storedScrap[id] ?? 0;
   }
 }
 
-/** Get storage index for selling an item (-1 if not found) */
+/**
+ * Get storage index for selling an item (-1 if not found).
+ * For scrap, returns 0 if the player has any (sellScrap uses shipClass directly).
+ */
 export function getStorageIndex(
   ui: StoreUI,
   category: StoreCategory,
@@ -217,5 +265,8 @@ export function getStorageIndex(
       );
     case 'ammo':
       return ui.state.storedAmmo.findIndex((a) => a.weaponType === id);
+    case 'scrap':
+      // Scrap uses shipClass directly, not index. Return 0 if any exists.
+      return (ui.state.storedScrap[id] ?? 0) > 0 ? 0 : -1;
   }
 }

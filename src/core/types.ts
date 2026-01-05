@@ -141,6 +141,8 @@ export interface SystemState {
     lastDamageSource: Map<Entity, Entity>;
     /** Stats for destroyed ships (preserved after entity removal) */
     destroyedShips: import('../components/combat-stats').DestroyedShipRecord[];
+    /** All destroyed ships for salvage calculation (enemies and allies) */
+    salvageableShips: import('../components/combat-stats').SalvageableShip[];
     /** Mission start time (gameTime when mission started) */
     missionStartTime: number;
     /** Mission end time (gameTime when mission ended) */

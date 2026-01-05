@@ -2,7 +2,6 @@
  * Campaign state management - create, save, load campaign state.
  */
 
-import type { DestroyedShipRecord } from '../components/combat-stats';
 import { SHIP_ARCHETYPES } from '../factories/ship-archetypes';
 import { createInitialStoreStock } from './store';
 import { getMaxAmmoCapacity } from './store-ammo';
@@ -14,9 +13,12 @@ import type {
   Pilot,
 } from './types';
 
-/** Generate a unique ID */
+/** Counter for deterministic ID generation */
+let idCounter = 0;
+
+/** Generate a unique ID (deterministic, counter-based) */
 function generateId(): string {
-  return Math.random().toString(36).substring(2, 9);
+  return `ship_${++idCounter}`;
 }
 
 /** Get max ammo capacity for a primary weapon (convenience wrapper) */
@@ -91,6 +93,7 @@ export function createNewCampaign(): CampaignState {
     storedHulls: [], // No spare hulls at start
     storedWeapons: [],
     storedAmmo: [], // No spare ammo at start
+    storedScrap: {}, // No scrap at start
     storeStock: createInitialStoreStock(),
     currentSector: 1,
     completedContracts: [],
@@ -156,20 +159,6 @@ export function applyMissionResults(
 /** Check if game is over (player ship destroyed) */
 export function isGameOver(state: CampaignState): boolean {
   return !state.ships.some((s) => s.isPlayerShip);
-}
-
-/** Credits per enemy kill for salvage bonus */
-const SALVAGE_CREDITS_PER_KILL = 50;
-
-/** Calculate salvage bonus from enemy kills */
-export function calculateSalvageBonus(
-  destroyedShips: DestroyedShipRecord[],
-): number {
-  // Count enemy ships destroyed (not player, not wingman)
-  const enemyKills = destroyedShips.filter(
-    (record) => !record.wasPlayer && !record.isWingman,
-  ).length;
-  return enemyKills * SALVAGE_CREDITS_PER_KILL;
 }
 
 /** Apply extracted ammo from mission back to campaign state */

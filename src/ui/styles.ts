@@ -4,6 +4,7 @@
 
 import { getDebriefStyles } from './debrief';
 import { getLoadoutStyles } from './loadout-styles';
+import { getSalvageStyles } from './salvage-styles';
 import { getStoreStyles } from './store-styles';
 
 export const UI_STYLE_ID = 'campaign-ui-styles';
@@ -295,6 +296,9 @@ export function getCampaignStyles(): string {
 
     /* Debrief styles */
     ${getDebriefStyles()}
+
+    /* Salvage and scrap styles */
+    ${getSalvageStyles()}
   `;
 }
 

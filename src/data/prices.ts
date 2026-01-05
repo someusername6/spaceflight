@@ -5,7 +5,7 @@
  * - Easy contract: ~200 credits + salvage
  * - Medium contract: ~400 credits + salvage
  * - Hard contract: ~600 credits + salvage
- * - Salvage bonus: 50 credits per kill
+ * - Salvage: 0-10% of destroyed ships yield scrap, weapons, ammo
  *
  * Weapons are one-time purchases. Ammo/missiles are consumables.
  */
@@ -103,3 +103,20 @@ export function getSecondaryPrice(
   const price = SECONDARY_PRICES[weaponType];
   return price ? price[type] : 0;
 }
+
+/**
+ * Scrap prices - sell only (80% of hull price / 100).
+ * Scrap cannot be bought, only obtained through salvage.
+ */
+export function getScrapPrice(shipClass: string): number {
+  const hullPrice = getHullPrice(shipClass, 'buy');
+  if (hullPrice === 0) return 0;
+  // Sell value = 80% of (hull price / 100 scrap)
+  return Math.floor((hullPrice / 100) * 0.8);
+}
+
+/** Scrap required to convert to a hull */
+export const SCRAP_PER_HULL = 100;
+
+/** Conversion fee as fraction of hull buy price */
+export const SCRAP_CONVERSION_FEE = 0.05;

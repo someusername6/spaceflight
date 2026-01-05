@@ -4,6 +4,7 @@
  */
 
 import { Vector3 } from 'three';
+import { random } from '../core/prng';
 import {
   countLivingEnemyShips,
   createGame,
@@ -27,6 +28,7 @@ import {
   updateCampaignState,
 } from '../ui/screens';
 import { injectCampaignStyles } from '../ui/styles';
+import type { CampaignController } from './controller-types';
 import {
   createMissionRenderers,
   updateMissionRenderers,
@@ -37,6 +39,7 @@ import {
   MISSION_END_DELAY,
   spawnWave,
 } from './mission-waves';
+import { applySalvage, calculateSalvage } from './salvage';
 import {
   setupHangarScreen,
   showGameOver,
@@ -50,21 +53,13 @@ import {
 import {
   applyAmmoUsage,
   applyMissionResults,
-  calculateSalvageBonus,
   createNewCampaign,
   isGameOver,
 } from './state';
 import type { Contract } from './types';
 import { createMissionResultOverlay, getGameSeed } from './utils';
 
-/** Campaign controller state */
-export interface CampaignController {
-  container: HTMLElement;
-  screenManager: ReturnType<typeof createScreenManager>;
-  missionContainer: HTMLElement | null;
-  game: ReturnType<typeof createGame> | null;
-  missionEnded: boolean;
-}
+export type { CampaignController } from './controller-types';
 
 /** Create and start the campaign */
 export function startCampaign(container: HTMLElement): CampaignController {
@@ -225,30 +220,40 @@ function launchMission(
     const shipsLost: string[] = [];
     const hullDamage = new Map<string, number>();
 
-    // Calculate credits: base reward (victory only) + salvage bonus (any kills)
-    const matchStats = game.world.systemState.matchStats;
-    const salvageBonus = matchStats
-      ? calculateSalvageBonus(matchStats.destroyedShips)
-      : 0;
+    // Base reward (victory only) - salvage is now items, not credits
     const baseReward = missionEndState.victory ? contract.reward : 0;
-    const creditsEarned = baseReward + salvageBonus;
-
-    if (salvageBonus > 0) {
-      console.log(
-        `[MISSION] Salvage bonus: ${salvageBonus} credits from ${matchStats?.destroyedShips.filter((r) => !r.wasPlayer && !r.isWingman).length ?? 0} enemy kills`,
-      );
-    }
 
     let newState = applyMissionResults(
       screenManager.campaignState,
       missionEndState.victory,
-      creditsEarned,
+      baseReward,
       shipsLost,
       hullDamage,
     );
 
     // Apply ammo usage to campaign state (persist remaining ammo)
     newState = applyAmmoUsage(newState, ammoData);
+
+    // Calculate and apply item-based salvage from all destroyed ships
+    const matchStats = game.world.systemState.matchStats;
+    let salvageResult: ReturnType<typeof calculateSalvage> | null = null;
+    if (matchStats && matchStats.salvageableShips.length > 0) {
+      // Use seeded PRNG for deterministic salvage
+      const rng = () => random(game.world.prng);
+      salvageResult = calculateSalvage(matchStats.salvageableShips, rng);
+      newState = applySalvage(newState, salvageResult);
+
+      // Log salvage results
+      const scrapTotal = Object.values(salvageResult.scrap).reduce(
+        (a, b) => a + b,
+        0,
+      );
+      const weaponCount = salvageResult.weapons.length;
+      const ammoCount = salvageResult.ammo.reduce((a, b) => a + b.count, 0);
+      console.log(
+        `[MISSION] Salvage: ${scrapTotal} scrap, ${weaponCount} weapons, ${ammoCount} ammo (value: ~${Math.floor(salvageResult.totalValue)} cr)`,
+      );
+    }
 
     // Update campaign state
     updateCampaignState(screenManager, newState);
@@ -265,6 +270,7 @@ function launchMission(
         contract,
         setupContractsScreen,
         game.world,
+        salvageResult,
       );
     }
   };

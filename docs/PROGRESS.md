@@ -97,8 +97,7 @@ Balance targets achieved:
 - **Resupply system** (`src/campaign/state.ts:198-257`): `calculateResupplyCost` (1 credit/ammo for primaries, 10 credits/missile for secondaries), `resupplyShip`, `resupplyAllShips` functions.
 - **Resupply UI** (`src/ui/hangar.ts:66-84,124-146`): Resupply button in hangar showing cost. Disabled if can't afford or already fully supplied. Re-renders UI after purchase.
 - **Controller integration** (`src/campaign/controller.ts:79-105,284-298`): `setupHangarScreen` helper wires up resupply callback. Mission end extracts ammo and persists to campaign state.
-- **Salvage bonus** (`src/campaign/state.ts:151-163`): 50 credits per enemy kill, awarded regardless of victory/defeat. `calculateSalvageBonus` counts enemy kills from match stats.
-- **Results UI breakdown** (`src/ui/results.ts:35-46`): Shows base reward and salvage bonus separately in mission results.
+- **Results UI breakdown** (`src/ui/results.ts:35-46`): Shows base reward in mission results.
 
 #### Phase B - Equipment Inventory ✅
 - **Data model refactor** (`src/campaign/types.ts`): `OwnedShip.archetype` → `OwnedShip.shipClass`. Added `StoredHull` type for ship hulls in storage.
@@ -179,9 +178,18 @@ Balance targets achieved:
 - Spent ammo → already tracked and persisted
 - Pilot fate: TBD (killed or ejected to pilot pool)
 
-#### Future: Enhanced Salvage System (depends on inventory + store)
-Once inventory management and buy/sell are implemented, enhance salvage to yield:
-- **Scrap by ship class**: Accumulate to build ships of that type, or sell for credits
-- **Functional weapons**: Random chance to recover enemy weapons
-- **Unspent ammo**: Random chance to recover ammo from enemy loadout
-Requires: Equipment inventory, store UI, randomization via seeded PRNG.
+#### Phase E - Item-Based Salvage ✅
+- **Salvage calculation** (`src/campaign/salvage.ts`): `calculateSalvage()` processes destroyed ships with 0-10% random multiplier per ship yielding:
+  - **Scrap**: 0-10 pieces per ship, keyed by ship class
+  - **Weapons**: Primary weapons have (multiplier) chance to drop
+  - **Ammo/missiles**: (multiplier) percentage of remaining count recovered
+- **Salvage application** (`src/campaign/salvage.ts:139-181`): `applySalvage()` merges scrap, weapons, and ammo into campaign state
+- **Scrap storage** (`src/campaign/types.ts:92`): `storedScrap: Record<string, number>` in CampaignState
+- **Scrap selling** (`src/campaign/store.ts:244-272`): `sellScrap()` sells scrap for credits (80% of hull price / 100)
+- **Scrap conversion** (`src/campaign/store.ts:280-335`): `convertScrapToHull()` converts 100 scrap + 5% hull fee into a fully repaired hull
+- **Store scrap category** (`src/ui/store.ts`, `src/ui/store-render.ts`): Scrap tab with sell-only interface, bulk sell buttons (×1, ×10, ×100)
+- **Hangar conversion UI** (`src/ui/hangar.ts:229-271`): Scrap conversion panel shows available scrap types with "Convert" buttons
+- **Results salvage tab** (`src/ui/results.ts:22-109`): Tabbed interface showing debrief and salvage, displays collected scrap/weapons/ammo
+- **Salvage recording** (`src/systems/stats.ts:380-416`): `handleShipDeath()` records ALL destroyed ships for salvage with proper `shipClass` lookup via `SHIP_ARCHETYPES`
+- **Seeded PRNG** (`src/campaign/controller.ts:248`): Salvage uses `random(game.world.prng)` for deterministic results
+- **Scrap prices** (`src/data/prices.ts:111-122`): `getScrapPrice()`, `SCRAP_PER_HULL`, `SCRAP_CONVERSION_FEE` constants

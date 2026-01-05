@@ -77,6 +77,10 @@ export function getStoreStyles(): string {
       color: #cc6666;
     }
 
+    .item-price.sell-price {
+      color: #ffcc44;
+    }
+
     /* Store detail panel */
     .store-detail {
       background: rgba(20, 40, 70, 0.95);

@@ -89,6 +89,7 @@ export interface CampaignState {
   storedHulls: StoredHull[]; // ship hulls in storage (no pilot/weapons)
   storedWeapons: StoredWeapon[]; // weapons in storage
   storedAmmo: StoredAmmo[]; // ammo in storage (for ballistic primaries)
+  storedScrap: Record<string, number>; // shipClass -> scrap count
   storeStock: StoreStock; // store inventory (finite stock)
   currentSector: number;
   completedContracts: string[];

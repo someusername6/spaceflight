@@ -9,8 +9,8 @@ import {
   type CombatStats,
   type DestroyedShipRecord,
   getOrCreateWeaponStats,
+  type SalvageableShip,
   snapshotStats,
-  type WeaponStats,
 } from '../components/combat-stats';
 import { Faction, type FactionComponent } from '../components/faction';
 import type { Health } from '../components/health';
@@ -18,6 +18,19 @@ import type { ShipIdentity } from '../components/ship-identity';
 import type { PrimaryWeapons, SecondaryWeapons } from '../components/weapons';
 import { getComponent, hasComponent } from '../core/ecs';
 import type { Entity, World } from '../core/types';
+import { SHIP_ARCHETYPES } from '../factories/ship-archetypes';
+
+// Re-export weapon recording functions
+export {
+  recordBeamFired,
+  recordBeamHit,
+  recordDecoyDeployed,
+  recordMissileHit,
+  recordMissileLaunched,
+  recordMissileSeduced,
+  recordShotFired,
+  recordShotHit,
+} from './stats-weapons';
 
 /** Initialize match stats at mission start */
 export function initMatchStats(world: World): void {
@@ -25,6 +38,7 @@ export function initMatchStats(world: World): void {
     damageSources: new Map(),
     lastDamageSource: new Map(),
     destroyedShips: [],
+    salvageableShips: [],
     missionStartTime: world.systemState.gameTime,
     missionEndTime: 0,
   };
@@ -102,143 +116,6 @@ export function recordDamage(
   }
 }
 
-/** Record a projectile shot fired (or pulse beam pulse) */
-export function recordShotFired(
-  world: World,
-  source: Entity,
-  weaponName: string,
-  category: WeaponStats['category'] = 'projectile',
-  isPulseBeam = false,
-): void {
-  const stats = getComponent<CombatStats>(world, source, 'combatStats');
-  if (stats) {
-    const weaponStats = getOrCreateWeaponStats(
-      stats,
-      weaponName,
-      category,
-      isPulseBeam,
-    );
-    weaponStats.shotsFired++;
-  }
-}
-
-/** Record a projectile shot that hit a target (or pulse beam pulse) */
-export function recordShotHit(
-  world: World,
-  source: Entity,
-  weaponName: string,
-  category: WeaponStats['category'] = 'projectile',
-  isPulseBeam = false,
-): void {
-  const stats = getComponent<CombatStats>(world, source, 'combatStats');
-  if (stats) {
-    const weaponStats = getOrCreateWeaponStats(
-      stats,
-      weaponName,
-      category,
-      isPulseBeam,
-    );
-    weaponStats.shotsOnTarget++;
-  }
-}
-
-/** Record beam firing time (called each frame while beam is active) */
-export function recordBeamFired(
-  world: World,
-  source: Entity,
-  weaponName: string,
-  dt: number,
-): void {
-  const stats = getComponent<CombatStats>(world, source, 'combatStats');
-  if (stats) {
-    const weaponStats = getOrCreateWeaponStats(stats, weaponName, 'beam');
-    weaponStats.timeFired += dt;
-  }
-}
-
-/** Record beam time on target (called each frame while beam is hitting) */
-export function recordBeamHit(
-  world: World,
-  source: Entity,
-  weaponName: string,
-  dt: number,
-): void {
-  const stats = getComponent<CombatStats>(world, source, 'combatStats');
-  if (stats) {
-    const weaponStats = getOrCreateWeaponStats(stats, weaponName, 'beam');
-    weaponStats.timeOnTarget += dt;
-  }
-}
-
-/** Record missile launched */
-export function recordMissileLaunched(
-  world: World,
-  source: Entity,
-  missileName: string,
-): void {
-  const stats = getComponent<CombatStats>(world, source, 'combatStats');
-  if (stats) {
-    const weaponStats = getOrCreateWeaponStats(stats, missileName, 'missile');
-    weaponStats.missilesLaunched++;
-  }
-}
-
-/** Record missile hit target */
-export function recordMissileHit(
-  world: World,
-  source: Entity,
-  missileName: string,
-): void {
-  const stats = getComponent<CombatStats>(world, source, 'combatStats');
-  if (stats) {
-    const weaponStats = getOrCreateWeaponStats(stats, missileName, 'missile');
-    weaponStats.missilesHit++;
-  }
-}
-
-/** Record missile seduced by a decoy */
-export function recordMissileSeduced(
-  world: World,
-  missileOwner: Entity,
-  missileName: string,
-  decoyOwner: Entity,
-): void {
-  // Record on missile owner's stats
-  const missileStats = getComponent<CombatStats>(
-    world,
-    missileOwner,
-    'combatStats',
-  );
-  if (missileStats) {
-    const weaponStats = getOrCreateWeaponStats(
-      missileStats,
-      missileName,
-      'missile',
-    );
-    weaponStats.missilesSeduced++;
-  }
-
-  // Record on decoy owner's stats
-  const decoyStats = getComponent<CombatStats>(
-    world,
-    decoyOwner,
-    'combatStats',
-  );
-  if (decoyStats) {
-    const weaponStats = getOrCreateWeaponStats(decoyStats, 'Decoy', 'decoy');
-    weaponStats.missilesSeducedByDecoy++;
-  }
-}
-
-/** Record decoy deployed */
-export function recordDecoyDeployed(world: World, source: Entity): void {
-  const stats = getComponent<CombatStats>(world, source, 'combatStats');
-  if (stats) {
-    const weaponStats = getOrCreateWeaponStats(stats, 'Decoy', 'decoy');
-    weaponStats.decoysDeployed++;
-  }
-}
-
 /** Initialize weapon ammo counts on ship (call after creating ship) */
 export function initWeaponAmmoCounts(world: World, entity: Entity): void {
   const stats = getComponent<CombatStats>(world, entity, 'combatStats');
@@ -300,6 +177,16 @@ export function handleShipDeath(world: World, entity: Entity): void {
   const health = getComponent<Health>(world, entity, 'health');
   const faction = getComponent<FactionComponent>(world, entity, 'faction');
   const combatStats = getComponent<CombatStats>(world, entity, 'combatStats');
+  const primaryWeapons = getComponent<PrimaryWeapons>(
+    world,
+    entity,
+    'primaryWeapons',
+  );
+  const secondaryWeapons = getComponent<SecondaryWeapons>(
+    world,
+    entity,
+    'secondaryWeapons',
+  );
 
   if (!identity || !health) return;
 
@@ -363,6 +250,44 @@ export function handleShipDeath(world: World, entity: Entity): void {
     };
     matchStats.destroyedShips.push(record);
   }
+
+  // Record ALL ships for salvage (enemies and allies)
+  // Use shipClassName from archetype (not archetype name) for correct price lookup
+  const archetypeStats = SHIP_ARCHETYPES[identity.archetype];
+  const shipClass = archetypeStats?.shipClassName ?? identity.archetype;
+  const salvageRecord: SalvageableShip = {
+    shipClass,
+    primaryWeapons: [],
+    secondaryWeapons: [],
+  };
+
+  // Capture primary weapons and remaining ammo
+  if (primaryWeapons) {
+    for (const weapon of primaryWeapons.weapons) {
+      if (weapon) {
+        salvageRecord.primaryWeapons.push({
+          weaponType: weapon.name,
+          // Only include ammoRemaining if weapon has finite ammo
+          ...(weapon.ammo !== undefined && { ammoRemaining: weapon.ammo }),
+        });
+      }
+    }
+  }
+
+  // Capture secondary weapons and remaining count
+  if (secondaryWeapons) {
+    for (const weapon of secondaryWeapons.weapons) {
+      if (weapon) {
+        salvageRecord.secondaryWeapons.push({
+          weaponType: weapon.name,
+          count: weapon.count,
+          isDecoy: weapon.isDecoy ?? false,
+        });
+      }
+    }
+  }
+
+  matchStats.salvageableShips.push(salvageRecord);
 
   // Clean up tracking data
   matchStats.damageSources.delete(entity);

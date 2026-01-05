@@ -18,6 +18,7 @@ import {
 } from '../ui/screens';
 import { createStoreUI } from '../ui/store';
 import type { CampaignController } from './controller';
+import type { SalvageResult } from './salvage';
 import { createNewCampaign, resupplyAllShips } from './state';
 import type { Contract } from './types';
 
@@ -100,6 +101,7 @@ export function showResults(
   contract: Contract,
   setupContractsScreen: (controller: CampaignController) => void,
   world?: World,
+  salvage?: SalvageResult | null,
 ): void {
   const { screenManager } = controller;
   const resultsElement = getScreenElement(screenManager, Screen.RESULTS);
@@ -116,6 +118,7 @@ export function showResults(
       setupHangarScreen(controller, hangarElement, setupContractsScreen);
     },
     world,
+    salvage,
   );
 }
 
