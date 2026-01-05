@@ -4,6 +4,35 @@
 
 import type { ComponentBase, World } from '../core/types';
 
+/**
+ * Enemy callsign prefixes by wave (1-2 syllables for easy comms).
+ * Wave 0 uses first entry, Wave 1 uses second, etc. Cycles if exhausted.
+ */
+export const ENEMY_CALLSIGN_PREFIXES = [
+  'Draco',
+  'Hydra',
+  'Corvus',
+  'Lupus',
+  'Lynx',
+  'Cygnus',
+  'Crux',
+  'Vela',
+  'Serpens',
+  'Phoenix',
+  'Cetus',
+  'Pyxis',
+  'Fornax',
+  'Scutum',
+  'Hydrus',
+  'Crater',
+] as const;
+
+/** Get enemy callsign prefix for a given wave index (cycles if exhausted) */
+export function getEnemyCallsignPrefix(waveIndex: number): string {
+  const index = waveIndex % ENEMY_CALLSIGN_PREFIXES.length;
+  return ENEMY_CALLSIGN_PREFIXES[index] as string;
+}
+
 export interface ShipIdentity extends ComponentBase {
   readonly type: 'shipIdentity';
   /** Ship archetype (e.g., 'interceptor', 'scout') */

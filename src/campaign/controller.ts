@@ -5,6 +5,7 @@
 
 import { Vector3 } from 'three';
 import type { FactionComponent } from '../components/faction';
+import { getEnemyCallsignPrefix } from '../components/ship-identity';
 import { getComponent, queryEntities } from '../core/ecs';
 import type { World } from '../core/types';
 import { Faction } from '../core/types';
@@ -147,6 +148,9 @@ function countEnemies(world: World): number {
 
 /** Spawn a wave of enemies */
 function spawnWave(world: World, wave: ContractWave, waveIndex: number): void {
+  // Get callsign prefix for this wave (Draco, Hydra, Corvus, etc.)
+  const callsignPrefix = getEnemyCallsignPrefix(waveIndex);
+
   wave.enemies.forEach((enemySpec, groupIndex) => {
     for (let i = 0; i < enemySpec.count; i++) {
       const angle = (Math.PI * 2 * i) / enemySpec.count + groupIndex * 0.5;
@@ -162,6 +166,7 @@ function spawnWave(world: World, wave: ContractWave, waveIndex: number): void {
         new Vector3(x, y, z),
         undefined,
         enemySpec.skill as ProfileName,
+        callsignPrefix,
       );
     }
   });

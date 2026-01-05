@@ -147,6 +147,7 @@ export function createAIShip(
   position?: Vector3,
   rotation?: Quaternion,
   profileName: ProfileName = 'regular',
+  callsignPrefix?: string,
 ): Entity {
   const stats = SHIP_ARCHETYPES[archetype];
   if (!stats) {
@@ -190,9 +191,10 @@ export function createAIShip(
   addComponent(world, entity, createShieldHit());
   addComponent(world, entity, createFaction(faction));
 
-  // Generate callsign based on faction
-  const callsignPrefix = faction === Faction.Player ? 'Alpha' : 'Bandit';
-  const callsign = generateCallsign(world, callsignPrefix);
+  // Generate callsign: use provided prefix, or default based on faction
+  const prefix =
+    callsignPrefix ?? (faction === Faction.Player ? 'Alpha' : 'Bandit');
+  const callsign = generateCallsign(world, prefix);
   addComponent(world, entity, createShipIdentity(archetype, callsign));
 
   // Create AI with profile modified for archetype's playstyle
@@ -240,6 +242,7 @@ export function createEnemyShip(
   position?: Vector3,
   rotation?: Quaternion,
   profileName: ProfileName = 'regular',
+  callsignPrefix?: string,
 ): Entity {
   return createAIShip(
     world,
@@ -248,6 +251,7 @@ export function createEnemyShip(
     position,
     rotation,
     profileName,
+    callsignPrefix,
   );
 }
 
