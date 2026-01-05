@@ -10,6 +10,7 @@ import {
   entityExists,
   getComponent,
   hasComponent,
+  isShip,
   queryEntities,
 } from '../core/ecs';
 import type { Entity, World } from '../core/types';
@@ -116,6 +117,14 @@ export function syncScene(renderer: Renderer, world: World): void {
 
   // Update or create meshes for entities with transforms
   for (const entity of queryEntities(world, ['transform'])) {
+    // Whitelist: only create meshes for known renderable entity types
+    const isProjectile = hasComponent(world, entity, 'projectile');
+    const isMissile = hasComponent(world, entity, 'missile');
+    const isDecoy = hasComponent(world, entity, 'decoy');
+    const isShipEntity = isShip(world, entity);
+
+    if (!isProjectile && !isMissile && !isDecoy && !isShipEntity) continue;
+
     seenEntities.add(entity);
     // Query guarantees this component exists
     const transform = getComponent<Transform>(
@@ -124,9 +133,6 @@ export function syncScene(renderer: Renderer, world: World): void {
       'transform',
     ) as Transform;
     const faction = getComponent<FactionComponent>(world, entity, 'faction');
-    const isProjectile = hasComponent(world, entity, 'projectile');
-    const isMissile = hasComponent(world, entity, 'missile');
-    const isDecoy = hasComponent(world, entity, 'decoy');
 
     let mesh = entityMeshes.get(entity);
 

@@ -137,10 +137,12 @@ function updateValidTargets(
   world.systemState.pools.targetCollector = 0;
   targetCollector.length = 0;
 
+  // Query for ships only (shipIdentity distinguishes ships from missiles/decoys)
   for (const other of queryEntities(world, [
     'transform',
     'faction',
     'health',
+    'shipIdentity',
   ])) {
     if (other === self) continue;
 
