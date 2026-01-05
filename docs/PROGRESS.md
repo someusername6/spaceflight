@@ -97,3 +97,5 @@ Balance targets achieved:
 - **Resupply system** (`src/campaign/state.ts:198-257`): `calculateResupplyCost` (1 credit/ammo for primaries, 10 credits/missile for secondaries), `resupplyShip`, `resupplyAllShips` functions.
 - **Resupply UI** (`src/ui/hangar.ts:66-84,124-146`): Resupply button in hangar showing cost. Disabled if can't afford or already fully supplied. Re-renders UI after purchase.
 - **Controller integration** (`src/campaign/controller.ts:79-105,284-298`): `setupHangarScreen` helper wires up resupply callback. Mission end extracts ammo and persists to campaign state.
+- **Salvage bonus** (`src/campaign/state.ts:151-163`): 50 credits per enemy kill, awarded regardless of victory/defeat. `calculateSalvageBonus` counts enemy kills from match stats.
+- **Results UI breakdown** (`src/ui/results.ts:35-46`): Shows base reward and salvage bonus separately in mission results.
