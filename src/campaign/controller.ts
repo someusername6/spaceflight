@@ -171,14 +171,15 @@ function launchMission(
     createPlayerShip(game.world, playerShip.archetype, new Vector3(0, 0, 0));
   }
 
-  // Spawn wingmen in tight formation near player
+  // Spawn wingmen in tight symmetric formation near player
   wingmen.forEach((wingman, index) => {
-    const offset = (index + 1) * 15; // Close formation (15m spacing)
     const side = index % 2 === 0 ? 1 : -1;
+    const xOffset = 20 * side; // 20m left/right
+    const zOffset = -10 - Math.floor(index / 2) * 15; // Staggered rows behind
     createWingman(
       game.world,
       wingman.archetype,
-      new Vector3(side * offset, 0, -offset * 0.5),
+      new Vector3(xOffset, 0, zOffset),
       undefined,
       (wingman.pilot?.skill as ProfileName) ?? 'regular',
     );

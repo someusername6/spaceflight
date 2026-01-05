@@ -59,12 +59,13 @@ export function spawnWave(
   const callsignPrefix = getEnemyCallsignPrefix(waveIndex);
 
   // All enemies spawn together at 2000m+ from allies (player at origin)
-  // Tight formation: 20m horizontal spacing, 10m vertical spacing
+  // Tight formation: 20m horizontal spacing, ±5m vertical variation
+  const totalEnemies = getTotalEnemies(wave);
   let shipIndex = 0;
   wave.enemies.forEach((enemySpec) => {
     for (let i = 0; i < enemySpec.count; i++) {
-      // Tight horizontal spread (20m between ships)
-      const x = (shipIndex - (getTotalEnemies(wave) - 1) / 2) * 20;
+      // Tight horizontal spread (20m between ships, centered on x=0)
+      const x = (shipIndex - (totalEnemies - 1) / 2) * 20;
       // Small vertical variation (alternating up/down)
       const y = (shipIndex % 2 === 0 ? 1 : -1) * 5;
       // All at same distance from origin (2000m minimum)
