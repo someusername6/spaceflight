@@ -2,6 +2,7 @@
  * Campaign state management - create, save, load campaign state.
  */
 
+import type { DestroyedShipRecord } from '../components/combat-stats';
 import { SHIP_ARCHETYPES } from '../factories/ship-archetypes';
 import type {
   CampaignState,
@@ -145,6 +146,20 @@ export function applyMissionResults(
 /** Check if game is over (player ship destroyed) */
 export function isGameOver(state: CampaignState): boolean {
   return !state.ships.some((s) => s.isPlayerShip);
+}
+
+/** Credits per enemy kill for salvage bonus */
+const SALVAGE_CREDITS_PER_KILL = 50;
+
+/** Calculate salvage bonus from enemy kills */
+export function calculateSalvageBonus(
+  destroyedShips: DestroyedShipRecord[],
+): number {
+  // Count enemy ships destroyed (not player, not wingman)
+  const enemyKills = destroyedShips.filter(
+    (record) => !record.wasPlayer && !record.isWingman,
+  ).length;
+  return enemyKills * SALVAGE_CREDITS_PER_KILL;
 }
 
 /** Apply extracted ammo from mission back to campaign state */

@@ -2,6 +2,7 @@
  * Results screen - displays mission outcome and combat debrief.
  */
 
+import { calculateSalvageBonus } from '../campaign/state';
 import type { CampaignState, Contract } from '../campaign/types';
 import type { World } from '../core/types';
 import {
@@ -22,12 +23,27 @@ function renderResults(
   contract: Contract | null,
   state: CampaignState,
   debriefData: MissionDebriefData | null,
+  salvageBonus: number,
 ): string {
   const title = victory ? 'VICTORY' : 'DEFEAT';
   const titleClass = victory ? 'victory' : 'defeat';
-  const creditsEarned = victory && contract ? contract.reward : 0;
+  const baseReward = victory && contract ? contract.reward : 0;
+  const totalEarned = baseReward + salvageBonus;
 
   const debriefSection = debriefData ? renderDebrief(debriefData) : '';
+
+  // Build credits breakdown
+  let creditsHtml = '';
+  if (totalEarned > 0) {
+    creditsHtml = '<div class="credits-breakdown">';
+    if (baseReward > 0) {
+      creditsHtml += `<div style="color: #44cc66;">+ ${baseReward} mission reward</div>`;
+    }
+    if (salvageBonus > 0) {
+      creditsHtml += `<div style="color: #66aacc;">+ ${salvageBonus} salvage bonus</div>`;
+    }
+    creditsHtml += '</div>';
+  }
 
   return `
     <h1 class="result-title ${titleClass}">${title}</h1>
@@ -35,7 +51,7 @@ function renderResults(
     <div class="screen-panel results-panel">
       <div class="result-stats">
         ${contract ? `<div>Mission: ${contract.name}</div>` : ''}
-        ${victory ? `<div style="color: #44cc66;">+ ${creditsEarned} credits</div>` : ''}
+        ${creditsHtml}
         <div style="margin-top: 10px;">
           Total Credits: ${state.credits}
         </div>
@@ -66,7 +82,20 @@ export function createResultsUI(
   world?: World,
 ): ResultsUI {
   const debriefData = world ? collectDebriefData(world) : null;
-  element.innerHTML = renderResults(victory, contract, state, debriefData);
+
+  // Calculate salvage bonus from destroyed ships
+  const matchStats = world?.systemState.matchStats;
+  const salvageBonus = matchStats
+    ? calculateSalvageBonus(matchStats.destroyedShips)
+    : 0;
+
+  element.innerHTML = renderResults(
+    victory,
+    contract,
+    state,
+    debriefData,
+    salvageBonus,
+  );
 
   // Bind continue button
   const btn = element.querySelector('#btn-continue');

@@ -46,7 +46,7 @@ function createPrimaryFromEquipped(equipped: EquippedPrimary): PrimaryWeapon {
   }
 
   const weapon: PrimaryWeapon = {
-    name: equipped.weaponType,
+    name: stats.name, // Use display name from PRIMARY_WEAPONS, not the lookup key
     category: stats.category,
     heatPerShot: stats.heatPerShot / equipped.bankSize,
     projectileSpeed: stats.projectileSpeed,
@@ -83,7 +83,7 @@ function createSecondaryFromEquipped(
   }
 
   const weapon: SecondaryWeapon = {
-    name: equipped.weaponType,
+    name: stats.name, // Use display name from MISSILES, not the lookup key
     requiresLock: stats.requiresLock,
     speed: stats.speed,
     turnRate: stats.turnRate,

@@ -50,11 +50,12 @@ import {
 import {
   applyAmmoUsage,
   applyMissionResults,
+  calculateSalvageBonus,
   createNewCampaign,
   isGameOver,
 } from './state';
 import type { Contract } from './types';
-import { getGameSeed } from './utils';
+import { createMissionResultOverlay, getGameSeed } from './utils';
 
 /** Campaign controller state */
 export interface CampaignController {
@@ -224,8 +225,19 @@ function launchMission(
     const shipsLost: string[] = [];
     const hullDamage = new Map<string, number>();
 
-    // For now, just check if player won and if so award credits
-    const creditsEarned = missionEndState.victory ? contract.reward : 0;
+    // Calculate credits: base reward (victory only) + salvage bonus (any kills)
+    const matchStats = game.world.systemState.matchStats;
+    const salvageBonus = matchStats
+      ? calculateSalvageBonus(matchStats.destroyedShips)
+      : 0;
+    const baseReward = missionEndState.victory ? contract.reward : 0;
+    const creditsEarned = baseReward + salvageBonus;
+
+    if (salvageBonus > 0) {
+      console.log(
+        `[MISSION] Salvage bonus: ${salvageBonus} credits from ${matchStats?.destroyedShips.filter((r) => !r.wasPlayer && !r.isWingman).length ?? 0} enemy kills`,
+      );
+    }
 
     let newState = applyMissionResults(
       screenManager.campaignState,
@@ -354,22 +366,8 @@ function launchMission(
     missionEndState.delayRemaining = MISSION_END_DELAY;
     missionEndState.victory = result === MissionResult.Victory;
 
-    // Show victory/defeat overlay immediately (slightly above center)
-    const overlay = document.createElement('div');
-    overlay.style.cssText = `
-      position: absolute;
-      top: 35%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 72px;
-      font-weight: bold;
-      font-family: sans-serif;
-      text-shadow: 0 0 20px ${isDefeat ? '#ff0000' : '#00ff00'}, 0 0 40px ${isDefeat ? '#ff0000' : '#00ff00'};
-      color: ${isDefeat ? '#ff0000' : '#00ff00'};
-      pointer-events: none;
-      z-index: 1000;
-    `;
-    overlay.textContent = isDefeat ? 'DEFEAT' : 'VICTORY';
+    // Show victory/defeat overlay immediately
+    const overlay = createMissionResultOverlay(isDefeat);
     controller.missionContainer?.appendChild(overlay);
 
     console.log(
