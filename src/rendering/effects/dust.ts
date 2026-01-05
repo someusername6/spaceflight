@@ -109,6 +109,7 @@ export function createDustSystem(scene: THREE.Scene): DustSystem {
 
   const points = new THREE.Points(geometry, material);
   points.layers.set(DUST_LAYER); // Only on dust layer (excluded from target camera)
+  points.frustumCulled = false; // Particles reposition each frame; stale bounds would cause culling
   scene.add(points);
 
   return { points, positions, geometry, material, maxParticles };
