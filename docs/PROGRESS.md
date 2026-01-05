@@ -71,3 +71,4 @@ Balance targets achieved:
 - **HUD indicator** (`src/rendering/hud/hud.ts:94`, `src/rendering/hud/hud-styles.ts:36-46`): "[MATCH SPEED]" indicator above status bars when mode is active.
 - **Enemy callsigns** (`src/components/ship-identity.ts:11-34`): Wave-based callsign prefixes for enemies (Draco 1, Hydra 2, etc.). Each wave uses a different prefix from a configurable pool of 16 names.
 - **Wave-based callsign assignment** (`src/campaign/controller.ts:151-152`): Enemies spawned in wave 0 get "Draco", wave 1 gets "Hydra", etc. Cycles if more waves than prefixes.
+- **Target camera** (`src/rendering/hud/target-camera.ts`): Picture-in-picture camera view of current target. Uses WebGLRenderTarget (160x120) to render target from behind/above, displayed in target stats panel.

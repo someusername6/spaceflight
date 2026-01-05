@@ -37,6 +37,12 @@ import {
   updateRadar,
 } from './radar';
 import {
+  createTargetCamera,
+  disposeTargetCamera,
+  getTargetCameraStyles,
+  type TargetCamera,
+} from './target-camera';
+import {
   createTargetStats,
   getTargetStatsStyles,
   type TargetStatsDisplay,
@@ -70,6 +76,8 @@ export interface HUD {
   radarDisplay: RadarDisplay;
   // Target stats (top-right)
   targetStats: TargetStatsDisplay;
+  // Target camera (picture-in-picture view of target)
+  targetCamera: TargetCamera;
   // Allied display (top-left)
   alliedDisplay: AlliedDisplay;
   // Match speed indicator
@@ -130,6 +138,7 @@ export function createHUD(parent: HTMLElement): HUD {
       getWeaponDisplayStyles() +
       getRadarStyles() +
       getTargetStatsStyles() +
+      getTargetCameraStyles() +
       getAlliedDisplayStyles();
     document.head.appendChild(style);
   }
@@ -146,6 +155,10 @@ export function createHUD(parent: HTMLElement): HUD {
 
   // Create target stats (top-right)
   const targetStats = createTargetStats(container);
+
+  // Create target camera and append to target stats
+  const targetCamera = createTargetCamera();
+  targetStats.cameraContainer.appendChild(targetCamera.canvas);
 
   // Create allied display (top-left)
   const alliedDisplay = createAlliedDisplay(container);
@@ -170,6 +183,7 @@ export function createHUD(parent: HTMLElement): HUD {
   // Cleanup function
   const dispose = () => {
     window.removeEventListener('resize', onResize);
+    disposeTargetCamera(targetCamera);
     container.remove();
   };
 
@@ -198,6 +212,7 @@ export function createHUD(parent: HTMLElement): HUD {
     weaponDisplay,
     radarDisplay,
     targetStats,
+    targetCamera,
     alliedDisplay,
     matchSpeedIndicator: container.querySelector(
       '.match-speed-indicator',

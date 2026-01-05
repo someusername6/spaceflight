@@ -37,6 +37,7 @@ import {
   updateTrailRenderer,
 } from '../rendering/effects/trails';
 import { createHUD, updateHUD } from '../rendering/hud/hud';
+import { updateTargetCamera } from '../rendering/hud/target-camera';
 import {
   createExhaustRenderer,
   updateExhaustRenderer,
@@ -120,6 +121,15 @@ export function updateMissionRenderers(
       updateDustSystem(renderers.dustSystem, transform.position);
     }
   }
+
+  // Render target camera (before main render to avoid render target issues)
+  updateTargetCamera(
+    renderers.hud.targetCamera,
+    renderer.webglRenderer,
+    scene,
+    world,
+    player,
+  );
 
   render(renderer);
   updateHUD(

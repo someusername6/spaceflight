@@ -16,6 +16,7 @@ import type { Entity, World } from '../../core/types';
 /** Target stats display state */
 export interface TargetStatsDisplay {
   container: HTMLElement;
+  cameraContainer: HTMLElement;
   callsignEl: HTMLElement;
   typeEl: HTMLElement;
   distanceEl: HTMLElement;
@@ -35,6 +36,7 @@ export function createTargetStats(parent: HTMLElement): TargetStatsDisplay {
   const container = document.createElement('div');
   container.className = 'target-stats';
   container.innerHTML = `
+    <div class="target-camera-container"></div>
     <div class="target-header">TARGET</div>
     <div class="target-callsign">---</div>
     <div class="target-type">NO TARGET</div>
@@ -59,6 +61,9 @@ export function createTargetStats(parent: HTMLElement): TargetStatsDisplay {
 
   return {
     container,
+    cameraContainer: container.querySelector(
+      '.target-camera-container',
+    ) as HTMLElement,
     callsignEl: container.querySelector('.target-callsign') as HTMLElement,
     typeEl: container.querySelector('.target-type') as HTMLElement,
     distanceEl: container.querySelector('.target-distance') as HTMLElement,
