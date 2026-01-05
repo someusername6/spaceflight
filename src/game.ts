@@ -19,9 +19,11 @@ import { heatSystem } from './systems/heat';
 import { inputSystem } from './systems/input';
 import { missileSystem } from './systems/missiles';
 import {
+  countLivingEnemyShips,
   getMissionResult,
   MissionResult,
   missionSystem,
+  resetMissionState,
 } from './systems/mission';
 import { physicsSystem } from './systems/physics';
 import { projectileSystem } from './systems/projectiles';
@@ -81,6 +83,8 @@ export interface Game {
   accumulator: number;
   lastTime: number;
   running: boolean;
+  /** Tracks last notified result to prevent duplicate callbacks */
+  lastNotifiedResult: MissionResult;
   onTick?: (world: World) => void;
   onRender?: (world: World, alpha: number) => void;
   onMissionEnd?: (result: MissionResult) => void;
@@ -93,6 +97,7 @@ export function createGame(seed = 12345): Game {
     accumulator: 0,
     lastTime: 0,
     running: false,
+    lastNotifiedResult: MissionResult.InProgress,
   };
 }
 
@@ -108,9 +113,10 @@ export function tick(game: Game): void {
     system(world, TICK_SEC);
   }
 
-  // Check for mission end
+  // Check for mission end (only notify once per state change)
   const result = getMissionResult(world);
-  if (result !== MissionResult.InProgress && game.onMissionEnd) {
+  if (result !== game.lastNotifiedResult && game.onMissionEnd) {
+    game.lastNotifiedResult = result;
     game.onMissionEnd(result);
   }
 
@@ -173,4 +179,9 @@ export function getWorld(game: Game): World {
   return game.world;
 }
 
-export { MissionResult };
+/** Reset mission notification tracking (for multi-wave missions) */
+export function resetMissionNotification(game: Game): void {
+  game.lastNotifiedResult = MissionResult.InProgress;
+}
+
+export { countLivingEnemyShips, MissionResult, resetMissionState };

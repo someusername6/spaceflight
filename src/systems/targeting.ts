@@ -89,10 +89,23 @@ export function targetingSystem(world: World, _dt: number): void {
         !entityExists(world, targeting.currentTarget) ||
         !targeting.validTargets.includes(targeting.currentTarget)
       ) {
+        const reason = !entityExists(world, targeting.currentTarget)
+          ? 'entity removed'
+          : 'not in validTargets';
+        console.log(
+          `[TARGET ${performance.now().toFixed(0)}ms] Clearing target ${targeting.currentTarget} (${reason})`,
+        );
         clearTarget(targeting);
         // Auto-select nearest after target lost
         if (targeting.validTargets.length > 0) {
           selectNearestTarget(targeting);
+          console.log(
+            `[TARGET ${performance.now().toFixed(0)}ms] Auto-selected new target ${targeting.currentTarget}`,
+          );
+        } else {
+          console.log(
+            `[TARGET ${performance.now().toFixed(0)}ms] No valid targets remaining`,
+          );
         }
       }
     }

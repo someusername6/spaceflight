@@ -5,6 +5,8 @@
  */
 
 import { Faction, type FactionComponent } from '../components/faction';
+import type { Health } from '../components/health';
+import { isDead } from '../components/health';
 import { countEntities, getComponent, queryEntities } from '../core/ecs';
 import type { World } from '../core/types';
 import { MissionResult } from '../core/types';
@@ -27,24 +29,8 @@ export function missionSystem(world: World, _dt: number): void {
     return;
   }
 
-  // Check for no enemies remaining (victory)
-  // Note: Dying enemies (currently exploding) are intentionally counted until
-  // they are fully removed by cleanup system. This ensures victory only triggers
-  // after all explosion effects complete, providing better visual feedback.
-  let enemyCount = 0;
-  for (const entity of queryEntities(world, ['faction', 'health'])) {
-    // Query guarantees this component exists
-    const faction = getComponent<FactionComponent>(
-      world,
-      entity,
-      'faction',
-    ) as FactionComponent;
-    if (faction.faction === Faction.Enemy) {
-      enemyCount++;
-    }
-  }
-
-  if (enemyCount === 0) {
+  // Check for no living enemy ships remaining (victory)
+  if (countLivingEnemyShips(world) === 0) {
     mission.result = MissionResult.Victory;
   }
 }
@@ -57,4 +43,32 @@ export function getMissionResult(world: World): MissionResult {
 /** Check if mission is still in progress */
 export function isMissionInProgress(world: World): boolean {
   return world.systemState.mission.result === MissionResult.InProgress;
+}
+
+/** Reset mission state to in-progress (for multi-wave missions) */
+export function resetMissionState(world: World): void {
+  world.systemState.mission.result = MissionResult.InProgress;
+}
+
+/** Count living enemy ships (not missiles, not dead/dying) */
+export function countLivingEnemyShips(world: World): number {
+  let count = 0;
+  for (const entity of queryEntities(world, [
+    'faction',
+    'health',
+    'shipIdentity',
+  ])) {
+    // Query guarantees these components exist
+    const health = getComponent<Health>(world, entity, 'health') as Health;
+    const faction = getComponent<FactionComponent>(
+      world,
+      entity,
+      'faction',
+    ) as FactionComponent;
+    if (isDead(health)) continue;
+    if (faction.faction === Faction.Enemy) {
+      count++;
+    }
+  }
+  return count;
 }

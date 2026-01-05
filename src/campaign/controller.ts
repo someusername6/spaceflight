@@ -4,18 +4,23 @@
  */
 
 import { Vector3 } from 'three';
-import type { FactionComponent } from '../components/faction';
 import { getEnemyCallsignPrefix } from '../components/ship-identity';
-import { getComponent, queryEntities } from '../core/ecs';
 import type { World } from '../core/types';
-import { Faction } from '../core/types';
 import type { ProfileName } from '../data/ai-profiles';
 import {
   createEnemyShip,
   createPlayerShip,
   createWingman,
 } from '../factories/ship';
-import { createGame, MissionResult, startGame, stopGame } from '../game';
+import {
+  countLivingEnemyShips,
+  createGame,
+  MissionResult,
+  resetMissionNotification,
+  resetMissionState,
+  startGame,
+  stopGame,
+} from '../game';
 import { initInput } from '../systems/input';
 import { createContractsUI } from '../ui/contracts';
 import { createHangarUI, updateHangarUI } from '../ui/hangar';
@@ -134,18 +139,6 @@ interface WaveState {
   delayRemaining: number;
 }
 
-/** Count enemy ships in the world */
-function countEnemies(world: World): number {
-  let count = 0;
-  for (const entity of queryEntities(world, ['faction', 'health'])) {
-    const faction = getComponent<FactionComponent>(world, entity, 'faction');
-    if (faction && faction.faction === Faction.Enemy) {
-      count++;
-    }
-  }
-  return count;
-}
-
 /** Spawn a wave of enemies */
 function spawnWave(world: World, wave: ContractWave, waveIndex: number): void {
   // Get callsign prefix for this wave (Aries, Taurus, Gemini, etc.)
@@ -237,7 +230,9 @@ function launchMission(
   const firstWave = contract.waves[0];
   if (firstWave) {
     spawnWave(game.world, firstWave, 0);
-    console.log(`Wave 1/${waveState.totalWaves} spawned`);
+    console.log(
+      `[WAVE ${performance.now().toFixed(0)}ms] Wave 1/${waveState.totalWaves} spawned`,
+    );
   }
 
   // Set render callback
@@ -256,7 +251,7 @@ function launchMission(
     // Skip if mission already ended
     if (controller.missionEnded) return;
 
-    const enemyCount = countEnemies(world);
+    const enemyCount = countLivingEnemyShips(world);
 
     // Check if current wave is cleared
     if (enemyCount === 0 && !waveState.waveCleared) {
@@ -269,7 +264,7 @@ function launchMission(
         if (nextWave) {
           waveState.delayRemaining = nextWave.delay ?? 0;
           console.log(
-            `Wave ${waveState.currentWave + 1} cleared! Next wave in ${waveState.delayRemaining}s`,
+            `[WAVE ${performance.now().toFixed(0)}ms] Wave ${waveState.currentWave + 1} cleared! Next wave in ${waveState.delayRemaining}s`,
           );
         }
       }
@@ -288,9 +283,14 @@ function launchMission(
         waveState.waveCleared = false;
         const nextWave = contract.waves[waveState.currentWave];
         if (nextWave) {
+          // Reset mission state so missionSystem can detect Victory for this wave
+          resetMissionState(game.world);
+          // Reset notification tracking so we get notified when this wave clears
+          resetMissionNotification(game);
+
           spawnWave(world, nextWave, waveState.currentWave);
           console.log(
-            `Wave ${waveState.currentWave + 1}/${waveState.totalWaves} spawned`,
+            `[WAVE ${performance.now().toFixed(0)}ms] Wave ${waveState.currentWave + 1}/${waveState.totalWaves} spawned`,
           );
         }
       }
@@ -305,14 +305,32 @@ function launchMission(
     const allWavesComplete = waveState.currentWave >= waveState.totalWaves - 1;
     const isDefeat = result === MissionResult.Defeat;
 
+    console.log(
+      `[MISSION ${performance.now().toFixed(0)}ms] onMissionEnd called: result=${result}, wave=${waveState.currentWave + 1}/${waveState.totalWaves}, allWavesComplete=${allWavesComplete}`,
+    );
+
     // Only end mission if it's a defeat OR all waves are complete
     if (!isDefeat && !allWavesComplete) {
-      return; // More waves to spawn, don't end yet
+      console.log(
+        `[MISSION ${performance.now().toFixed(0)}ms] Wave cleared, awaiting next wave`,
+      );
+      // More waves to spawn - don't end the mission yet
+      // The game.lastNotifiedResult tracking in game.ts prevents this from spamming
+      // We'll reset the mission state when the next wave spawns
+      return;
     }
 
     // Prevent multiple calls
-    if (controller.missionEnded) return;
+    if (controller.missionEnded) {
+      console.log(
+        `[MISSION ${performance.now().toFixed(0)}ms] Ignoring - already ended`,
+      );
+      return;
+    }
     controller.missionEnded = true;
+    console.log(
+      `[MISSION ${performance.now().toFixed(0)}ms] Mission ending: ${isDefeat ? 'DEFEAT' : 'VICTORY'}`,
+    );
 
     // Stop the game loop
     stopGame(game);
@@ -355,6 +373,10 @@ function launchMission(
     (sum, w) => sum + w.enemies.reduce((s, e) => s + e.count, 0),
     0,
   );
-  console.log(`Mission started: ${contract.name}`);
-  console.log(`${totalEnemies} enemies across ${contract.waves.length} waves`);
+  console.log(
+    `[MISSION ${performance.now().toFixed(0)}ms] Mission started: ${contract.name}`,
+  );
+  console.log(
+    `[MISSION ${performance.now().toFixed(0)}ms] ${totalEnemies} enemies across ${contract.waves.length} waves`,
+  );
 }

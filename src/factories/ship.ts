@@ -136,6 +136,10 @@ export function createPlayerShip(
 
   addComponent(world, entity, createCollision(stats.collisionRadius));
 
+  console.log(
+    `[SPAWN ${performance.now().toFixed(0)}ms] Player ship ${entity} spawned: ${archetype} "Alpha 1"`,
+  );
+
   return entity;
 }
 
@@ -231,6 +235,11 @@ export function createAIShip(
   }
 
   addComponent(world, entity, createCollision(stats.collisionRadius * 1.5)); // AI has larger hitbox
+
+  const factionName = faction === Faction.Player ? 'Allied' : 'Enemy';
+  console.log(
+    `[SPAWN ${performance.now().toFixed(0)}ms] ${factionName} ship ${entity} spawned: ${archetype} "${callsign}"`,
+  );
 
   return entity;
 }

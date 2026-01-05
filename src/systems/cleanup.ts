@@ -52,12 +52,18 @@ export function cleanupSystem(world: World, dt: number): void {
       // Ships have a death delay so explosion can engulf them
       if (health.deathDelay === undefined) {
         // First frame of death: spawn explosion and start delay
+        console.log(
+          `[DEATH ${performance.now().toFixed(0)}ms] Ship ${entity} died, spawning explosion, deathDelay=${SHIP_DEATH_DELAY}`,
+        );
         spawnExplosion(world, entity);
         health.deathDelay = SHIP_DEATH_DELAY;
       } else {
         // Decrement delay
         health.deathDelay -= dt;
         if (health.deathDelay <= 0) {
+          console.log(
+            `[DEATH ${performance.now().toFixed(0)}ms] Ship ${entity} removed after death delay`,
+          );
           removeEntity(world, entity);
         }
       }
