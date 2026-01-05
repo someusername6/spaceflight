@@ -15,6 +15,9 @@ const RENDER_DISTANCE = 600;
 const PARTICLE_SIZE = 8;
 const PARTICLE_COLOR = new THREE.Color(0xffffff);
 
+/** Layer for dust particles (excluded from target camera) */
+export const DUST_LAYER = 1;
+
 // Fade distances (ship is ~40-50 units from camera)
 const FADE_NEAR = 50; // Fully faded at ship distance
 const FADE_MID = 150; // Fully visible here
@@ -105,6 +108,7 @@ export function createDustSystem(scene: THREE.Scene): DustSystem {
   });
 
   const points = new THREE.Points(geometry, material);
+  points.layers.set(DUST_LAYER); // Only on dust layer (excluded from target camera)
   scene.add(points);
 
   return { points, positions, geometry, material, maxParticles };

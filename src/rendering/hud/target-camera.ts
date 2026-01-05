@@ -14,8 +14,8 @@ const CAMERA_WIDTH = 160;
 const CAMERA_HEIGHT = 120;
 
 /** Camera offset from target (behind and above) */
-const CAMERA_DISTANCE = 40;
-const CAMERA_HEIGHT_OFFSET = 15;
+const CAMERA_DISTANCE = 20;
+const CAMERA_HEIGHT_OFFSET = 5;
 
 /** Target camera state */
 export interface TargetCamera {
@@ -38,7 +38,7 @@ export function createTargetCamera(): TargetCamera {
     40, // Narrow FOV for less distortion
     CAMERA_WIDTH / CAMERA_HEIGHT,
     1,
-    2000,
+    10000, // Must match main camera for skybox to render
   );
 
   // Create render target
@@ -113,9 +113,10 @@ export function updateTargetCamera(
   targetCamera.camera.position.copy(cameraPos);
   targetCamera.camera.lookAt(targetPos);
 
-  // Render to target
+  // Render to target (must explicitly clear for skybox to render)
   const currentRenderTarget = webglRenderer.getRenderTarget();
   webglRenderer.setRenderTarget(targetCamera.renderTarget);
+  webglRenderer.clear();
   webglRenderer.render(scene, targetCamera.camera);
   webglRenderer.setRenderTarget(currentRenderTarget);
 

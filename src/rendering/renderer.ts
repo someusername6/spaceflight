@@ -13,6 +13,7 @@ import {
   queryEntities,
 } from '../core/ecs';
 import type { Entity, World } from '../core/types';
+import { DUST_LAYER } from './effects/dust';
 import {
   createDecoyMesh,
   createMissileMesh,
@@ -65,6 +66,7 @@ export function createRenderer(container: HTMLElement, seed: number): Renderer {
     0.1,
     10000,
   );
+  camera.layers.enable(DUST_LAYER); // See dust particles (target camera won't)
 
   // WebGL Renderer
   const webglRenderer = new THREE.WebGLRenderer({ antialias: true });
