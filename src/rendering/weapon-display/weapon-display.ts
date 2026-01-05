@@ -10,6 +10,10 @@ import type {
   PrimaryWeapons,
   SecondaryWeapons,
 } from '../../components/weapons';
+import {
+  getCurrentLinkMode,
+  getWeaponIndicesForCurrentMode,
+} from '../../components/weapons';
 import { getComponent } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
 import {
@@ -36,7 +40,7 @@ export interface WeaponDisplay {
   secondaryNoneEl: HTMLElement | null;
   // Link state indicator
   linkIndicator: HTMLElement;
-  lastLinked: boolean | null;
+  lastLinkMode: string | null;
   // Track weapon signatures to detect type changes (not just count)
   lastPrimarySignature: string;
   lastSecondarySignature: string;
@@ -87,7 +91,7 @@ export function createWeaponDisplay(parent: HTMLElement): WeaponDisplay {
     primaryNoneEl: null,
     secondaryNoneEl: null,
     linkIndicator,
-    lastLinked: null,
+    lastLinkMode: null,
     lastPrimarySignature: '',
     lastSecondarySignature: '',
   };
@@ -141,16 +145,17 @@ export function updateWeaponDisplay(
       rebuildPrimaryBanks(display, primary.weapons);
     }
 
-    // Update link state indicator (only if changed)
-    if (display.lastLinked !== primary.linked) {
-      display.lastLinked = primary.linked;
-      if (primary.linked) {
-        display.linkIndicator.textContent = 'LINKED';
-        display.linkIndicator.className = 'link-indicator linked';
-      } else {
-        display.linkIndicator.textContent = 'SINGLE';
-        display.linkIndicator.className = 'link-indicator single';
-      }
+    // Update link mode indicator (only if changed)
+    const currentMode = getCurrentLinkMode(primary);
+    if (display.lastLinkMode !== currentMode) {
+      display.lastLinkMode = currentMode;
+      const modeLabel =
+        currentMode === 'all' ? 'ALL' : currentMode.toUpperCase();
+      display.linkIndicator.textContent = modeLabel;
+      display.linkIndicator.className =
+        currentMode === 'all'
+          ? 'link-indicator linked'
+          : 'link-indicator single';
     }
 
     const heatPct = heat ? Math.round((heat.current / heat.max) * 100) : 0;
@@ -159,14 +164,13 @@ export function updateWeaponDisplay(
     const currentTime = world.systemState.gameTime;
     const timeSinceFire = currentTime - primary.lastFireTime;
 
-    // In linked mode, calculate slowest projectile fire rate (for cooldown display)
-    // Use loop to avoid per-frame filter/map allocations
-    let linkedFireRate = 0;
-    if (primary.linked) {
-      for (const w of primary.weapons) {
-        if (w.category !== 'beam' && w.fireRate > linkedFireRate) {
-          linkedFireRate = w.fireRate;
-        }
+    // Calculate fire rate for weapons in current link mode (for cooldown display)
+    const linkModeIndices = getWeaponIndicesForCurrentMode(primary);
+    let linkModeFireRate = 0;
+    for (const i of linkModeIndices) {
+      const w = primary.weapons[i];
+      if (w && w.category !== 'beam' && w.fireRate > linkModeFireRate) {
+        linkModeFireRate = w.fireRate;
       }
     }
 
@@ -176,15 +180,13 @@ export function updateWeaponDisplay(
       const isSelected = i === primary.currentIndex;
       const ammoText = w.ammo !== undefined ? `${w.ammo}/${w.maxAmmo}` : '∞';
 
-      // Cooldown logic: in linked mode, all weapons show cooldown based on slowest rate
-      // In single mode, only selected weapon shows cooldown based on its own rate
-      let onCooldown: boolean;
-      if (primary.linked) {
-        // All projectile weapons show cooldown together
-        onCooldown = w.category !== 'beam' && timeSinceFire < linkedFireRate;
-      } else {
-        onCooldown = isSelected && timeSinceFire < w.fireRate;
-      }
+      // Cooldown logic: weapons in current link mode show cooldown together
+      // based on slowest fire rate in the group
+      const inCurrentMode = linkModeIndices.includes(i);
+      const onCooldown =
+        w.category !== 'beam' &&
+        inCurrentMode &&
+        timeSinceFire < linkModeFireRate;
 
       // Update cooldown state
       if (bank.lastOnCooldown !== onCooldown) {

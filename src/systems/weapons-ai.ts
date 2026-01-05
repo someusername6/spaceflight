@@ -27,7 +27,12 @@ import type {
   PrimaryWeapons,
   SecondaryWeapons,
 } from '../components/weapons';
-import { findDecoyWeapon, getEffectiveHeat } from '../components/weapons';
+import {
+  findDecoyWeapon,
+  getEffectiveHeat,
+  getWeaponIndicesForCurrentMode,
+  setLinkModeByType,
+} from '../components/weapons';
 import { entityExists, getComponent, queryEntities } from '../core/ecs';
 import { calculateInterceptPoint } from '../core/lead-calculation';
 import type { Entity, World } from '../core/types';
@@ -42,7 +47,6 @@ import {
   spawnMissile,
   spawnProjectileWithAimError,
 } from './weapon-spawning';
-import { fireLinkedPrimaries } from './weapons';
 
 // Reusable vectors for dumbfire lead calculation
 const tempAimDir = new THREE.Vector3();
@@ -92,17 +96,21 @@ export function handleAIPrimaryWeapons(
   // Get aim error if present (makes AI imperfect)
   const aimError = getComponent<AimError>(world, entity, 'aimError');
 
-  // Set linked flag so beam system knows to fire beams alongside projectiles
-  weapons.linked = selection.mode === 'linked';
-
-  // Update currentIndex for single mode (so beam system knows which weapon is active)
-  if (selection.mode === 'single' && selection.index !== undefined) {
-    weapons.currentIndex = selection.index;
+  // Set link mode based on selection
+  if (selection.mode === 'linked') {
+    // All weapons - set to 'all' mode
+    setLinkModeByType(weapons, 'all');
+  } else if (selection.mode === 'single' && selection.index !== undefined) {
+    // Single weapon type - set mode to that weapon's type (fires ALL of that type)
+    const selectedWeapon = weapons.weapons[selection.index];
+    if (selectedWeapon) {
+      setLinkModeByType(weapons, selectedWeapon.name);
+    }
   }
 
-  // Execute weapon selection
-  if (selection.mode === 'linked') {
-    fireLinkedPrimaries(
+  // Execute weapon selection (fire all weapons matching current link mode)
+  if (selection.mode !== 'none') {
+    fireByLinkModeAI(
       world,
       entity,
       transform,
@@ -110,19 +118,6 @@ export function handleAIPrimaryWeapons(
       heat,
       faction,
       gameTime,
-      aimError,
-      ai.target,
-    );
-  } else if (selection.mode === 'single' && selection.index !== undefined) {
-    fireSinglePrimaryAI(
-      world,
-      entity,
-      transform,
-      weapons,
-      heat,
-      faction,
-      gameTime,
-      selection.index,
       aimError,
       ai.target,
     );
@@ -130,8 +125,8 @@ export function handleAIPrimaryWeapons(
   // mode === 'none' - don't fire (conserving heat/ammo)
 }
 
-/** Fire a specific primary weapon for AI */
-function fireSinglePrimaryAI(
+/** Fire all weapons matching current link mode for AI */
+function fireByLinkModeAI(
   world: World,
   entity: Entity,
   transform: Transform,
@@ -139,57 +134,79 @@ function fireSinglePrimaryAI(
   heat: Heat,
   faction: FactionComponent | undefined,
   gameTime: number,
-  weaponIndex: number,
   aimError?: AimError,
   target?: Entity,
 ): void {
-  const weapon = weapons.weapons[weaponIndex] as PrimaryWeapon | undefined;
-  if (!weapon || weapon.category === 'beam') return; // Beams handled by beam system
+  const indices = getWeaponIndicesForCurrentMode(weapons);
+  if (indices.length === 0) return;
 
+  // Check fire rate (use fastest weapon's fire rate)
   const timeSinceFire = gameTime - weapons.lastFireTime;
-  if (timeSinceFire < weapon.fireRate) return;
-
-  // Check ammo
-  if (weapon.ammo !== undefined && weapon.ammo <= 0) return;
-
-  // Check heat (scaled by bank size)
-  if (!addHeat(heat, getEffectiveHeat(weapon))) return;
-
-  weapons.lastFireTime = gameTime;
-  if (weapon.ammo !== undefined) weapon.ammo--;
-
-  // Calculate autoaim params if weapon has autoaim and we have a target
-  let autoaim: AutoaimParams | undefined;
-  if (weapon.autoaimFov && target && entityExists(world, target)) {
-    const targetTransform = getComponent<Transform>(world, target, 'transform');
-    const targetPhysics = getComponent<Physics>(world, target, 'physics');
-    const ownerPhysics = getComponent<Physics>(world, entity, 'physics');
-
-    if (targetTransform) {
-      const interceptPoint = calculateInterceptPoint(
-        transform.position,
-        ownerPhysics?.velocity ?? tempZeroVec,
-        targetTransform.position,
-        targetPhysics?.velocity ?? tempZeroVec,
-        weapon.projectileSpeed,
-      );
-      if (interceptPoint) {
-        autoaim = { interceptPoint, fovDegrees: weapon.autoaimFov };
-      }
+  let fastestFireRate = Infinity;
+  for (const i of indices) {
+    const w = weapons.weapons[i];
+    if (w && w.category !== 'beam') {
+      fastestFireRate = Math.min(fastestFireRate, w.fireRate);
     }
   }
+  if (timeSinceFire < fastestFireRate) return;
 
-  spawnProjectileWithAimError(
-    world,
-    entity,
-    transform,
-    weapon,
-    faction,
-    aimError,
-    weaponIndex,
-    weapons.weapons.length,
-    autoaim,
-  );
+  // Fire each weapon in the link mode
+  let firedAny = false;
+  for (const weaponIndex of indices) {
+    const weapon = weapons.weapons[weaponIndex] as PrimaryWeapon | undefined;
+    if (!weapon || weapon.category === 'beam') continue; // Beams handled by beam system
+
+    // Check ammo
+    if (weapon.ammo !== undefined && weapon.ammo <= 0) continue;
+
+    // Check heat (scaled by bank size)
+    if (!addHeat(heat, getEffectiveHeat(weapon))) continue;
+
+    if (weapon.ammo !== undefined) weapon.ammo--;
+    firedAny = true;
+
+    // Calculate autoaim params if weapon has autoaim and we have a target
+    let autoaim: AutoaimParams | undefined;
+    if (weapon.autoaimFov && target && entityExists(world, target)) {
+      const targetTransform = getComponent<Transform>(
+        world,
+        target,
+        'transform',
+      );
+      const targetPhysics = getComponent<Physics>(world, target, 'physics');
+      const ownerPhysics = getComponent<Physics>(world, entity, 'physics');
+
+      if (targetTransform) {
+        const interceptPoint = calculateInterceptPoint(
+          transform.position,
+          ownerPhysics?.velocity ?? tempZeroVec,
+          targetTransform.position,
+          targetPhysics?.velocity ?? tempZeroVec,
+          weapon.projectileSpeed,
+        );
+        if (interceptPoint) {
+          autoaim = { interceptPoint, fovDegrees: weapon.autoaimFov };
+        }
+      }
+    }
+
+    spawnProjectileWithAimError(
+      world,
+      entity,
+      transform,
+      weapon,
+      faction,
+      aimError,
+      weaponIndex,
+      weapons.weapons.length,
+      autoaim,
+    );
+  }
+
+  if (firedAny) {
+    weapons.lastFireTime = gameTime;
+  }
 }
 
 /** Handle AI secondary weapon firing with smart missile selection */

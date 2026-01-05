@@ -61,12 +61,12 @@ function createStartingPilots(): Pilot[] {
 
 /** Create a new campaign with default starting state */
 export function createNewCampaign(): CampaignState {
-  // Player's ship (interceptor)
-  const playerShip = createShipFromArchetype('interceptor', true);
+  // Player's ship (fighter - simple loadout)
+  const playerShip = createShipFromArchetype('fighter', true);
 
-  // Two wingmen (also interceptors for now)
-  const wingman1 = createShipFromArchetype('interceptor');
-  const wingman2 = createShipFromArchetype('interceptor');
+  // Two wingmen (also fighters for now)
+  const wingman1 = createShipFromArchetype('fighter');
+  const wingman2 = createShipFromArchetype('fighter');
 
   // Assign pilots to wingmen
   const pilots = createStartingPilots();

@@ -11,7 +11,10 @@ import { addHeat } from '../components/heat';
 import type { PlayerControlled } from '../components/player';
 import type { Transform } from '../components/transform';
 import type { PrimaryWeapon, PrimaryWeapons } from '../components/weapons';
-import { getCurrentPrimary, getEffectiveHeat } from '../components/weapons';
+import {
+  getEffectiveHeat,
+  getWeaponIndicesForCurrentMode,
+} from '../components/weapons';
 import { entityExists, getComponent, queryEntities } from '../core/ecs';
 import type { ActiveBeam, Entity, World } from '../core/types';
 import { getForward } from './physics';
@@ -93,13 +96,12 @@ export function beamSystem(world: World, dt: number): void {
         ai.target !== null &&
         entityExists(world, ai.target)
       ) {
-        // Fire beams in linked mode, or when current weapon is a beam
-        if (weapons.linked) {
-          isFiring = true;
-        } else {
-          const currentWeapon = getCurrentPrimary(weapons);
-          if (currentWeapon?.category === 'beam') {
+        // Fire beams if current link mode includes any beam weapons
+        const indices = getWeaponIndicesForCurrentMode(weapons);
+        for (const i of indices) {
+          if (weapons.weapons[i]?.category === 'beam') {
             isFiring = true;
+            break;
           }
         }
 
@@ -113,59 +115,22 @@ export function beamSystem(world: World, dt: number): void {
 
     if (!isFiring || !beamDirection) continue;
 
-    // Determine which beams to fire based on linked mode
-    if (weapons.linked) {
-      // Linked mode: fire all beams simultaneously
-      fireLinkedBeams(
-        world,
-        entity,
-        transform,
-        weapons,
-        heat,
-        dt,
-        activeBeams,
-        beamDirection,
-      );
-    } else {
-      // Single mode: only fire if current weapon is a beam
-      const weapon = getCurrentPrimary(weapons);
-      if (!weapon || weapon.category !== 'beam') continue;
-
-      // Handle ammo-based beams (Nuclear Lance)
-      if (weapon.ammo !== undefined) {
-        if (weapon.ammo <= 0) continue; // No ammo
-        // Check fire rate cooldown
-        const gameTime = world.systemState.gameTime;
-        if (gameTime - weapons.lastFireTime < weapon.fireRate) continue;
-        weapons.lastFireTime = gameTime;
-        weapon.ammo--;
-      }
-
-      // Check heat - apply heat per second (scaled by bank size)
-      // For pulse beams, heat is per pulse (handled in fireBeam)
-      if (!weapon.isPulseBeam) {
-        const heatToAdd = getEffectiveHeat(weapon) * dt;
-        if (!addHeat(heat, heatToAdd)) continue; // Overheated
-      }
-
-      // Fire single beam
-      fireBeam(
-        world,
-        entity,
-        transform,
-        weapon,
-        weapons.currentIndex,
-        weapons.weapons.length,
-        dt,
-        activeBeams,
-        beamDirection,
-      );
-    }
+    // Fire beams matching current link mode
+    fireBeamsByLinkMode(
+      world,
+      entity,
+      transform,
+      weapons,
+      heat,
+      dt,
+      activeBeams,
+      beamDirection,
+    );
   }
 }
 
-/** Fire all beam weapons simultaneously (linked mode) */
-function fireLinkedBeams(
+/** Fire beam weapons matching current link mode */
+function fireBeamsByLinkMode(
   world: World,
   owner: Entity,
   transform: Transform,
@@ -179,8 +144,9 @@ function fireLinkedBeams(
   resetBeamWeaponPool(world);
   beamWeaponsCollector.length = 0;
 
-  // Find all beam weapons
-  for (let i = 0; i < weapons.weapons.length; i++) {
+  // Find beam weapons matching current link mode
+  const indices = getWeaponIndicesForCurrentMode(weapons);
+  for (const i of indices) {
     const weapon = weapons.weapons[i];
     if (weapon && weapon.category === 'beam') {
       beamWeaponsCollector.push(getBeamWeaponInfo(world, weapon, i));
@@ -199,7 +165,7 @@ function fireLinkedBeams(
   // Check if we can add all the heat
   if (!addHeat(heat, heatToAdd)) return; // Overheated
 
-  // Fire all beams
+  // Fire all matching beams
   const totalBanks = weapons.weapons.length;
   for (const { weapon, index } of beamWeaponsCollector) {
     fireBeam(

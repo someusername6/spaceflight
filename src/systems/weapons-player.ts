@@ -13,12 +13,12 @@ import type { PlayerControlled } from '../components/player';
 import type { Transform } from '../components/transform';
 import type { PrimaryWeapons, SecondaryWeapons } from '../components/weapons';
 import {
-  cycleNextPrimary,
-  cyclePrevPrimary,
+  cycleNextLinkMode,
+  cyclePrevLinkMode,
   findDecoyWeapon,
-  getCurrentPrimary,
   getCurrentSecondary,
   getEffectiveHeat,
+  getWeaponIndicesForCurrentMode,
 } from '../components/weapons';
 import { entityExists, getComponent } from '../core/ecs';
 import { calculateInterceptPoint } from '../core/lead-calculation';
@@ -29,7 +29,6 @@ import {
   spawnMissile,
   spawnProjectileWithAimError,
 } from './weapon-spawning';
-import { fireLinkedPrimaries } from './weapons';
 
 const tempZeroVec = new THREE.Vector3(0, 0, 0);
 
@@ -49,50 +48,36 @@ export function handlePlayerPrimaryWeapons(
   const input = player.input;
   const prevInput = state.prevInput;
 
-  // Toggle linked mode (edge-triggered)
+  // Cycle link mode (edge-triggered) - cycles through weapon types + 'all'
   if (input.toggleLink && !prevInput.toggleLink) {
-    weapons.linked = !weapons.linked;
+    cycleNextLinkMode(weapons);
   }
 
-  // Weapon cycling (edge-triggered) - only meaningful in single mode
+  // Weapon cycling also cycles link mode (same behavior, different key)
   if (input.cycleWeaponNext && !prevInput.cycleWeaponNext) {
-    cycleNextPrimary(weapons);
+    cycleNextLinkMode(weapons);
   }
   if (input.cycleWeaponPrev && !prevInput.cycleWeaponPrev) {
-    cyclePrevPrimary(weapons);
+    cyclePrevLinkMode(weapons);
   }
 
-  // Fire primary weapon(s)
+  // Fire weapons in current link mode (all weapons of selected type)
   if (input.firePrimary) {
-    if (weapons.linked) {
-      fireLinkedPrimaries(
-        world,
-        entity,
-        transform,
-        weapons,
-        heat,
-        faction,
-        gameTime,
-        undefined, // No aim error for player
-        target,
-      );
-    } else {
-      fireSinglePrimary(
-        world,
-        entity,
-        transform,
-        weapons,
-        heat,
-        faction,
-        gameTime,
-        target,
-      );
-    }
+    fireByLinkMode(
+      world,
+      entity,
+      transform,
+      weapons,
+      heat,
+      faction,
+      gameTime,
+      target,
+    );
   }
 }
 
-/** Fire only the currently selected primary weapon */
-function fireSinglePrimary(
+/** Fire all weapons matching current link mode */
+function fireByLinkMode(
   world: World,
   entity: Entity,
   transform: Transform,
@@ -102,19 +87,34 @@ function fireSinglePrimary(
   gameTime: number,
   target?: Entity,
 ): void {
-  const weapon = getCurrentPrimary(weapons);
-  if (!weapon || weapon.category === 'beam') return; // Beams handled by beam system
+  const indices = getWeaponIndicesForCurrentMode(weapons);
+  if (indices.length === 0) return;
 
+  // Check fire rate (use fastest weapon's fire rate)
   const timeSinceFire = gameTime - weapons.lastFireTime;
-  if (timeSinceFire >= weapon.fireRate) {
+  let fastestFireRate = Infinity;
+  for (const i of indices) {
+    const w = weapons.weapons[i];
+    if (w && w.category !== 'beam') {
+      fastestFireRate = Math.min(fastestFireRate, w.fireRate);
+    }
+  }
+  if (timeSinceFire < fastestFireRate) return;
+
+  // Fire each weapon in the link mode
+  let firedAny = false;
+  for (const weaponIndex of indices) {
+    const weapon = weapons.weapons[weaponIndex];
+    if (!weapon || weapon.category === 'beam') continue; // Beams handled by beam system
+
     // Check ammo
-    if (weapon.ammo !== undefined && weapon.ammo <= 0) return;
+    if (weapon.ammo !== undefined && weapon.ammo <= 0) continue;
 
     // Check heat (scaled by bank size)
-    if (!addHeat(heat, getEffectiveHeat(weapon))) return;
+    if (!addHeat(heat, getEffectiveHeat(weapon))) continue;
 
-    weapons.lastFireTime = gameTime;
     if (weapon.ammo !== undefined) weapon.ammo--;
+    firedAny = true;
 
     // Calculate autoaim if weapon has autoaimFov and we have a target
     let autoaim: AutoaimParams | undefined;
@@ -148,10 +148,14 @@ function fireSinglePrimary(
       weapon,
       faction,
       undefined, // No aim error for player
-      weapons.currentIndex,
+      weaponIndex,
       weapons.weapons.length,
       autoaim,
     );
+  }
+
+  if (firedAny) {
+    weapons.lastFireTime = gameTime;
   }
 }
 

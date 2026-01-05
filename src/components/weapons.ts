@@ -84,9 +84,12 @@ export function createDecoyWeapon(
 export interface PrimaryWeapons extends ComponentBase {
   readonly type: 'primaryWeapons';
   weapons: PrimaryWeapon[];
-  currentIndex: number;
+  currentIndex: number; // Legacy - kept for beam system compatibility
   lastFireTime: number; // Timestamp of last fire (for fire rate)
-  linked: boolean; // true = fire all weapons together, false = fire selected only
+  /** Link mode index: 0 to N-1 are weapon types, N is "all" */
+  linkMode: number;
+  /** Cached unique weapon type names in order, plus 'all' at the end */
+  readonly linkModes: readonly string[];
   /** Cached: true if any weapon is a beam (computed at creation) */
   readonly hasBeams: boolean;
   /** Cached: true if ALL weapons are beams (computed at creation) */
@@ -146,12 +149,26 @@ export function createPrimaryWeapons(
     if (weapon.category === 'beam') beamCount++;
   }
 
+  // Compute unique weapon types in order of first appearance
+  const seenTypes = new Set<string>();
+  const weaponTypes: string[] = [];
+  for (const weapon of weapons) {
+    if (!seenTypes.has(weapon.name)) {
+      seenTypes.add(weapon.name);
+      weaponTypes.push(weapon.name);
+    }
+  }
+  // Add 'all' mode at the end (only if multiple types)
+  const linkModes =
+    weaponTypes.length > 1 ? [...weaponTypes, 'all'] : weaponTypes;
+
   return {
     type: 'primaryWeapons',
     weapons,
     currentIndex: 0,
     lastFireTime: 0,
-    linked: false, // Default to single-fire mode
+    linkMode: 0, // Default to first weapon type
+    linkModes,
     hasBeams: beamCount > 0,
     hasOnlyBeams: beamCount === weapons.length,
   };
@@ -191,20 +208,70 @@ export function getCurrentSecondary(
   return weapons.weapons[weapons.currentIndex];
 }
 
-/** Cycle to next primary weapon */
-export function cycleNextPrimary(weapons: PrimaryWeapons): void {
-  if (weapons.weapons.length > 0) {
-    weapons.currentIndex = (weapons.currentIndex + 1) % weapons.weapons.length;
+/** Cycle to next link mode (weapon type or 'all') */
+export function cycleNextLinkMode(weapons: PrimaryWeapons): void {
+  if (weapons.linkModes.length > 0) {
+    weapons.linkMode = (weapons.linkMode + 1) % weapons.linkModes.length;
   }
 }
 
-/** Cycle to previous primary weapon */
-export function cyclePrevPrimary(weapons: PrimaryWeapons): void {
-  if (weapons.weapons.length > 0) {
-    weapons.currentIndex =
-      (weapons.currentIndex - 1 + weapons.weapons.length) %
-      weapons.weapons.length;
+/** Cycle to previous link mode */
+export function cyclePrevLinkMode(weapons: PrimaryWeapons): void {
+  if (weapons.linkModes.length > 0) {
+    weapons.linkMode =
+      (weapons.linkMode - 1 + weapons.linkModes.length) %
+      weapons.linkModes.length;
   }
+}
+
+/** Get current link mode name ('plasma', 'greenLaser', 'all', etc.) */
+export function getCurrentLinkMode(weapons: PrimaryWeapons): string {
+  return weapons.linkModes[weapons.linkMode] ?? 'all';
+}
+
+/** Check if current link mode is 'all' */
+export function isAllLinked(weapons: PrimaryWeapons): boolean {
+  return getCurrentLinkMode(weapons) === 'all';
+}
+
+/** Get indices of weapons that should fire in current link mode */
+export function getWeaponIndicesForCurrentMode(
+  weapons: PrimaryWeapons,
+): number[] {
+  const mode = getCurrentLinkMode(weapons);
+  if (mode === 'all') {
+    return weapons.weapons.map((_, i) => i);
+  }
+  // Return indices of all weapons matching this type
+  const indices: number[] = [];
+  for (let i = 0; i < weapons.weapons.length; i++) {
+    if (weapons.weapons[i]?.name === mode) {
+      indices.push(i);
+    }
+  }
+  return indices;
+}
+
+/** Set link mode by weapon type name (for AI) */
+export function setLinkModeByType(
+  weapons: PrimaryWeapons,
+  typeName: string,
+): void {
+  const index = weapons.linkModes.indexOf(typeName);
+  if (index >= 0) {
+    weapons.linkMode = index;
+  }
+}
+
+// Legacy functions for backwards compatibility
+/** @deprecated Use cycleNextLinkMode instead */
+export function cycleNextPrimary(weapons: PrimaryWeapons): void {
+  cycleNextLinkMode(weapons);
+}
+
+/** @deprecated Use cyclePrevLinkMode instead */
+export function cyclePrevPrimary(weapons: PrimaryWeapons): void {
+  cyclePrevLinkMode(weapons);
 }
 
 /** Check if weapon can fire (fire rate cooldown) */

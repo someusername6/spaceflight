@@ -10,15 +10,14 @@ import type {
   SecondaryWeapons,
 } from '../../components/weapons';
 import {
-  getCurrentPrimary,
   getCurrentSecondary,
+  getWeaponIndicesForCurrentMode,
 } from '../../components/weapons';
 import { calculateInterceptPoint } from './lead-calculation';
 import { drawLeadIndicator, drawMissileLeadMarker } from './reticle-drawing';
 
-// Reusable vectors for lead calculation
+// Reusable vector for lead calculation
 const leadVec3 = new THREE.Vector3();
-const leadCalcVec = new THREE.Vector3();
 
 // Pool of reusable value objects for uniqueSpeeds Map (avoid per-frame allocations)
 interface SpeedInfo {
@@ -56,153 +55,24 @@ export function drawLeadIndicators(
   color: string,
   cameraForward: THREE.Vector3,
 ): void {
-  if (weapons.linked) {
-    // Linked mode: show lead indicators for each unique projectile speed
-    drawLinkedLeadIndicators(
-      ctx,
-      camera,
-      screenWidth,
-      screenHeight,
-      playerTransform,
-      playerVelocity,
-      targetPosition,
-      targetVelocity,
-      weapons,
-      color,
-      cameraForward,
-    );
-  } else {
-    // Single mode: show one lead indicator for current weapon
-    const weapon = getCurrentPrimary(weapons);
-    if (!weapon) return;
-
-    if (weapon.projectileSpeed <= 0) {
-      // Beam weapon: indicator at target center (instant hit, no lead needed)
-      drawBeamIndicator(
-        ctx,
-        camera,
-        screenWidth,
-        screenHeight,
-        playerTransform,
-        targetPosition,
-        weapon.range,
-        color,
-        cameraForward,
-      );
-    } else {
-      // Projectile weapon: calculate intercept point
-      drawSingleLeadIndicator(
-        ctx,
-        camera,
-        screenWidth,
-        screenHeight,
-        playerTransform,
-        playerVelocity,
-        targetPosition,
-        targetVelocity,
-        weapon.projectileSpeed,
-        weapon.range,
-        weapon.name,
-        color,
-        cameraForward,
-        false, // Don't show label in single mode
-      );
-    }
-  }
-}
-
-/** Draw beam weapon indicator at target center (beams are instant hit, no lead needed) */
-function drawBeamIndicator(
-  ctx: CanvasRenderingContext2D,
-  camera: THREE.Camera,
-  screenWidth: number,
-  screenHeight: number,
-  playerTransform: Transform,
-  targetPosition: THREE.Vector3,
-  weaponRange: number,
-  color: string,
-  cameraForward: THREE.Vector3,
-): void {
-  // Check if target is within weapon range
-  const distance = playerTransform.position.distanceTo(targetPosition);
-  const outOfRange = distance > weaponRange;
-
-  // Check if target is in front of camera
-  leadCalcVec.copy(targetPosition).sub(camera.position);
-  const targetBehind = leadCalcVec.dot(cameraForward) < 0;
-  if (targetBehind) return;
-
-  // Project target position to screen
-  leadVec3.copy(targetPosition).project(camera);
-  const screenX = (leadVec3.x + 1) * 0.5 * screenWidth;
-  const screenY = (1 - leadVec3.y) * 0.5 * screenHeight;
-
-  // Only draw if on screen
-  if (
-    screenX >= 0 &&
-    screenX <= screenWidth &&
-    screenY >= 0 &&
-    screenY <= screenHeight
-  ) {
-    drawLeadIndicator(ctx, screenX, screenY, color, outOfRange, undefined);
-  }
-}
-
-/** Draw a single lead indicator */
-function drawSingleLeadIndicator(
-  ctx: CanvasRenderingContext2D,
-  camera: THREE.Camera,
-  screenWidth: number,
-  screenHeight: number,
-  playerTransform: Transform,
-  playerVelocity: THREE.Vector3,
-  targetPosition: THREE.Vector3,
-  targetVelocity: THREE.Vector3,
-  projectileSpeed: number,
-  weaponRange: number,
-  weaponName: string,
-  color: string,
-  cameraForward: THREE.Vector3,
-  showLabel: boolean,
-): void {
-  const interceptPoint = calculateInterceptPoint(
-    playerTransform.position,
+  // Show lead indicators for all weapons in current link mode
+  drawLinkModeLeadIndicators(
+    ctx,
+    camera,
+    screenWidth,
+    screenHeight,
+    playerTransform,
     playerVelocity,
     targetPosition,
     targetVelocity,
-    projectileSpeed,
+    weapons,
+    color,
+    cameraForward,
   );
-
-  if (!interceptPoint) return;
-
-  // Check if intercept is within weapon range
-  const interceptDistance = playerTransform.position.distanceTo(interceptPoint);
-  const outOfRange = interceptDistance > weaponRange;
-
-  // Check if intercept point is in front of camera
-  leadCalcVec.copy(interceptPoint).sub(camera.position);
-  const interceptBehind = leadCalcVec.dot(cameraForward) < 0;
-  if (interceptBehind) return;
-
-  // Project intercept point to screen
-  leadVec3.copy(interceptPoint).project(camera);
-  const leadX = (leadVec3.x + 1) * 0.5 * screenWidth;
-  const leadY = (1 - leadVec3.y) * 0.5 * screenHeight;
-
-  // Only draw if on screen
-  if (
-    leadX >= 0 &&
-    leadX <= screenWidth &&
-    leadY >= 0 &&
-    leadY <= screenHeight
-  ) {
-    const label = showLabel ? weaponName : undefined;
-    drawLeadIndicator(ctx, leadX, leadY, color, outOfRange, label);
-  }
 }
 
-/** Draw multiple lead indicators for linked weapons */
-function drawLinkedLeadIndicators(
+/** Draw lead indicators for weapons in current link mode */
+function drawLinkModeLeadIndicators(
   ctx: CanvasRenderingContext2D,
   camera: THREE.Camera,
   screenWidth: number,
@@ -215,63 +85,58 @@ function drawLinkedLeadIndicators(
   color: string,
   cameraForward: THREE.Vector3,
 ): void {
-  // Reset pool index and clear Map (avoid per-frame allocations)
+  const indices = getWeaponIndicesForCurrentMode(weapons);
+  if (indices.length === 0) return;
+
+  // Collect unique projectile speeds from weapons in current mode
   speedInfoPoolIndex = 0;
   uniqueSpeeds.clear();
 
-  // Track beam with longest range for beam indicator
-  let longestBeamRange = 0;
+  for (const i of indices) {
+    const weapon = weapons.weapons[i];
+    if (!weapon || weapon.projectileSpeed <= 0) continue; // Skip beams
 
-  for (const w of weapons.weapons) {
-    if (w.projectileSpeed <= 0) {
-      // Beam weapon: track longest range for single beam indicator
-      if (w.range > longestBeamRange) {
-        longestBeamRange = w.range;
-      }
-    } else {
-      // Projectile weapon: collect unique speeds (use pool to avoid allocation)
-      if (!uniqueSpeeds.has(w.projectileSpeed)) {
-        uniqueSpeeds.set(w.projectileSpeed, getSpeedInfo(w.name, w.range));
-      }
+    const speed = weapon.projectileSpeed;
+    if (!uniqueSpeeds.has(speed)) {
+      uniqueSpeeds.set(speed, getSpeedInfo(weapon.name, weapon.range));
     }
   }
 
-  // Draw beam indicator if any beams equipped (uses longest range)
-  if (longestBeamRange > 0) {
-    drawBeamIndicator(
-      ctx,
-      camera,
-      screenWidth,
-      screenHeight,
-      playerTransform,
-      targetPosition,
-      longestBeamRange,
-      color,
-      cameraForward,
-    );
-  }
-
-  // If only one unique speed, don't show labels
-  const showLabels = uniqueSpeeds.size > 1;
-
-  // Draw a lead indicator for each unique speed
-  for (const [speed, { name, range }] of uniqueSpeeds) {
-    drawSingleLeadIndicator(
-      ctx,
-      camera,
-      screenWidth,
-      screenHeight,
-      playerTransform,
+  // Draw lead indicator for each unique speed
+  for (const [speed, info] of uniqueSpeeds) {
+    const interceptPoint = calculateInterceptPoint(
+      playerTransform.position,
       playerVelocity,
       targetPosition,
       targetVelocity,
       speed,
-      range,
-      name,
-      color,
-      cameraForward,
-      showLabels,
     );
+
+    if (!interceptPoint) continue;
+
+    // Check if target is in range
+    const distance = playerTransform.position.distanceTo(targetPosition);
+    const inRange = distance <= info.range;
+
+    // Check if intercept point is in front of camera
+    leadVec3.copy(interceptPoint).sub(camera.position);
+    if (leadVec3.dot(cameraForward) <= 0) continue;
+
+    // Project intercept point to screen coordinates
+    leadVec3.copy(interceptPoint).project(camera);
+    const screenX = (leadVec3.x + 1) * 0.5 * screenWidth;
+    const screenY = (1 - leadVec3.y) * 0.5 * screenHeight;
+
+    // Only draw if on screen
+    if (
+      screenX >= 0 &&
+      screenX <= screenWidth &&
+      screenY >= 0 &&
+      screenY <= screenHeight
+    ) {
+      const label = uniqueSpeeds.size > 1 ? info.name : undefined;
+      drawLeadIndicator(ctx, screenX, screenY, color, !inRange, label);
+    }
   }
 }
 
@@ -343,8 +208,8 @@ function drawMissileLeadIndicator(
   const outOfRange = interceptDistance > weapon.range;
 
   // Check if intercept point is in front of camera
-  leadCalcVec.copy(interceptPoint).sub(camera.position);
-  const interceptBehind = leadCalcVec.dot(cameraForward) < 0;
+  leadVec3.copy(interceptPoint).sub(camera.position);
+  const interceptBehind = leadVec3.dot(cameraForward) < 0;
   if (interceptBehind) return;
 
   // Project intercept point to screen

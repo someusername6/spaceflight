@@ -68,6 +68,18 @@ function createArchetype(shipClass: string, loadout: WeaponLoadout): ShipStats {
 export const SHIP_ARCHETYPES: Record<string, ShipStats> = {
   // === BASE ARCHETYPES (one per ship class, standard loadout) ===
 
+  // Fighter: Simple budget ship - uniform weapons, easy to fly
+  fighter: createArchetype('interceptor', {
+    primaryWeapons: [
+      { name: 'plasma', size: 1 },
+      { name: 'plasma', size: 1 },
+    ],
+    secondaryWeapons: [
+      { name: 'seeker', count: 6, size: 1 },
+      { name: 'decoy', count: 4, size: 1 },
+    ],
+  }),
+
   // Scout: Fast escape ship - hit-and-run playstyle
   scout: createArchetype('scout', {
     playstyle: 'escape', // Skilled scouts know when to run
