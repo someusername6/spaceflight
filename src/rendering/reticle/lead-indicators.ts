@@ -1,5 +1,8 @@
 /**
  * Lead indicator rendering - shows where to aim for each weapon.
+ *
+ * Uses exponential smoothing to prevent jitter when target velocity changes.
+ * Formula: pos += (target - pos) * (1 - exp(-speed * dt))
  */
 
 import * as THREE from 'three';
@@ -18,6 +21,84 @@ import { drawLeadIndicator, drawMissileLeadMarker } from './reticle-drawing';
 
 // Reusable vector for lead calculation
 const leadVec3 = new THREE.Vector3();
+
+// --- Exponential smoothing for lead indicators ---
+// Smoothing speed: higher = more responsive, lower = smoother
+// 20 means position moves ~86% toward target per second
+const SMOOTHING_SPEED = 20;
+
+/** Smoothed position state */
+interface SmoothedPos {
+  x: number;
+  y: number;
+  initialized: boolean;
+}
+
+// Smoothed positions keyed by projectile speed (for primary weapons)
+const smoothedPrimaryPositions = new Map<number, SmoothedPos>();
+
+// Smoothed position for missile lead indicator
+const smoothedMissilePos: SmoothedPos = { x: 0, y: 0, initialized: false };
+
+// Track time for frame-rate independent smoothing
+let lastFrameTime = 0;
+let cachedDt = 0.016;
+// Threshold for "same frame" detection (1ms in seconds)
+const SAME_FRAME_THRESHOLD = 0.001;
+
+/** Get delta time, cached per frame to handle multiple calls */
+function getDeltaTime(): number {
+  const now = performance.now() / 1000; // Convert to seconds
+  const timeSinceLastCall = now - lastFrameTime;
+
+  // If called again within 1ms, we're in the same frame - return cached dt
+  if (timeSinceLastCall < SAME_FRAME_THRESHOLD) {
+    return cachedDt;
+  }
+
+  // New frame - compute fresh dt
+  cachedDt = lastFrameTime > 0 ? Math.min(timeSinceLastCall, 0.1) : 0.016;
+  lastFrameTime = now;
+  return cachedDt;
+}
+
+/** Apply exponential smoothing to a position */
+function smoothPosition(
+  smoothed: SmoothedPos,
+  targetX: number,
+  targetY: number,
+  dt: number,
+): void {
+  if (!smoothed.initialized) {
+    // First frame: snap to target
+    smoothed.x = targetX;
+    smoothed.y = targetY;
+    smoothed.initialized = true;
+  } else {
+    // Exponential smoothing: pos += (target - pos) * (1 - exp(-speed * dt))
+    const factor = 1 - Math.exp(-SMOOTHING_SPEED * dt);
+    smoothed.x += (targetX - smoothed.x) * factor;
+    smoothed.y += (targetY - smoothed.y) * factor;
+  }
+}
+
+/** Reset smoothing when target changes or becomes invalid */
+export function resetLeadIndicatorSmoothing(): void {
+  for (const pos of smoothedPrimaryPositions.values()) {
+    pos.initialized = false;
+  }
+  smoothedMissilePos.initialized = false;
+}
+
+/** Full reset for game restart - clears all cached state */
+export function resetLeadIndicatorState(): void {
+  smoothedPrimaryPositions.clear();
+  smoothedMissilePos.x = 0;
+  smoothedMissilePos.y = 0;
+  smoothedMissilePos.initialized = false;
+  lastFrameTime = 0;
+  cachedDt = 0.016;
+}
 
 // Pool of reusable value objects for uniqueSpeeds Map (avoid per-frame allocations)
 interface SpeedInfo {
@@ -88,6 +169,9 @@ function drawLinkModeLeadIndicators(
   const indices = getWeaponIndicesForCurrentMode(weapons);
   if (indices.length === 0) return;
 
+  // Get delta time for frame-rate independent smoothing
+  const dt = getDeltaTime();
+
   // Collect unique projectile speeds from weapons in current mode
   speedInfoPoolIndex = 0;
   uniqueSpeeds.clear();
@@ -112,7 +196,12 @@ function drawLinkModeLeadIndicators(
       speed,
     );
 
-    if (!interceptPoint) continue;
+    if (!interceptPoint) {
+      // No valid intercept - mark smoothing as uninitialized for next valid frame
+      const smoothed = smoothedPrimaryPositions.get(speed);
+      if (smoothed) smoothed.initialized = false;
+      continue;
+    }
 
     // Check if target is in range
     const distance = playerTransform.position.distanceTo(targetPosition);
@@ -120,22 +209,36 @@ function drawLinkModeLeadIndicators(
 
     // Check if intercept point is in front of camera
     leadVec3.copy(interceptPoint).sub(camera.position);
-    if (leadVec3.dot(cameraForward) <= 0) continue;
+    if (leadVec3.dot(cameraForward) <= 0) {
+      const smoothed = smoothedPrimaryPositions.get(speed);
+      if (smoothed) smoothed.initialized = false;
+      continue;
+    }
 
     // Project intercept point to screen coordinates
     leadVec3.copy(interceptPoint).project(camera);
-    const screenX = (leadVec3.x + 1) * 0.5 * screenWidth;
-    const screenY = (1 - leadVec3.y) * 0.5 * screenHeight;
+    const rawScreenX = (leadVec3.x + 1) * 0.5 * screenWidth;
+    const rawScreenY = (1 - leadVec3.y) * 0.5 * screenHeight;
 
-    // Only draw if on screen
+    // Get or create smoothed position for this projectile speed
+    let smoothed = smoothedPrimaryPositions.get(speed);
+    if (!smoothed) {
+      smoothed = { x: 0, y: 0, initialized: false };
+      smoothedPrimaryPositions.set(speed, smoothed);
+    }
+
+    // Apply exponential smoothing
+    smoothPosition(smoothed, rawScreenX, rawScreenY, dt);
+
+    // Only draw if smoothed position is on screen
     if (
-      screenX >= 0 &&
-      screenX <= screenWidth &&
-      screenY >= 0 &&
-      screenY <= screenHeight
+      smoothed.x >= 0 &&
+      smoothed.x <= screenWidth &&
+      smoothed.y >= 0 &&
+      smoothed.y <= screenHeight
     ) {
       const label = uniqueSpeeds.size > 1 ? info.name : undefined;
-      drawLeadIndicator(ctx, screenX, screenY, color, !inRange, label);
+      drawLeadIndicator(ctx, smoothed.x, smoothed.y, color, !inRange, label);
     }
   }
 }
@@ -193,6 +296,9 @@ function drawMissileLeadIndicator(
   color: string,
   cameraForward: THREE.Vector3,
 ): void {
+  // Get delta time for smoothing (use same dt as primary indicators)
+  const dt = getDeltaTime();
+
   const interceptPoint = calculateInterceptPoint(
     playerTransform.position,
     playerVelocity,
@@ -201,7 +307,10 @@ function drawMissileLeadIndicator(
     weapon.speed,
   );
 
-  if (!interceptPoint) return;
+  if (!interceptPoint) {
+    smoothedMissilePos.initialized = false;
+    return;
+  }
 
   // Check if intercept is within weapon range
   const interceptDistance = playerTransform.position.distanceTo(interceptPoint);
@@ -210,21 +319,34 @@ function drawMissileLeadIndicator(
   // Check if intercept point is in front of camera
   leadVec3.copy(interceptPoint).sub(camera.position);
   const interceptBehind = leadVec3.dot(cameraForward) < 0;
-  if (interceptBehind) return;
+  if (interceptBehind) {
+    smoothedMissilePos.initialized = false;
+    return;
+  }
 
   // Project intercept point to screen
   leadVec3.copy(interceptPoint).project(camera);
-  const leadX = (leadVec3.x + 1) * 0.5 * screenWidth;
-  const leadY = (1 - leadVec3.y) * 0.5 * screenHeight;
+  const rawLeadX = (leadVec3.x + 1) * 0.5 * screenWidth;
+  const rawLeadY = (1 - leadVec3.y) * 0.5 * screenHeight;
 
-  // Only draw if on screen
+  // Apply exponential smoothing
+  smoothPosition(smoothedMissilePos, rawLeadX, rawLeadY, dt);
+
+  // Only draw if smoothed position is on screen
   if (
-    leadX >= 0 &&
-    leadX <= screenWidth &&
-    leadY >= 0 &&
-    leadY <= screenHeight
+    smoothedMissilePos.x >= 0 &&
+    smoothedMissilePos.x <= screenWidth &&
+    smoothedMissilePos.y >= 0 &&
+    smoothedMissilePos.y <= screenHeight
   ) {
     // Use a distinct style for missile lead - diamond shape with label
-    drawMissileLeadMarker(ctx, leadX, leadY, color, outOfRange, weapon.name);
+    drawMissileLeadMarker(
+      ctx,
+      smoothedMissilePos.x,
+      smoothedMissilePos.y,
+      color,
+      outOfRange,
+      weapon.name,
+    );
   }
 }

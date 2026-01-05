@@ -16,6 +16,8 @@ import type { Entity, World } from '../../core/types';
 import {
   drawDumbfireMissileLeadIndicator,
   drawLeadIndicators,
+  resetLeadIndicatorSmoothing,
+  resetLeadIndicatorState,
 } from './lead-indicators';
 import {
   drawCenterCrosshair,
@@ -44,8 +46,18 @@ const tempVec3 = new THREE.Vector3();
 const toTarget = new THREE.Vector3();
 const cameraForward = new THREE.Vector3();
 
+// Track previous target to detect target changes (for lead indicator smoothing reset)
+let previousTarget: Entity | undefined;
+
 // Reusable targets array (stores references from pool, cleared each frame)
 const targets: TargetInfo[] = [];
+
+/** Reset all reticle state - call on game restart */
+export function resetReticleState(): void {
+  previousTarget = undefined;
+  targets.length = 0;
+  resetLeadIndicatorState();
+}
 
 /** Create the reticle canvas */
 export function createReticleCanvas(parent: HTMLElement): ReticleCanvas {
@@ -107,6 +119,12 @@ export function updateReticles(
 
   const targeting = getComponent<Targeting>(world, player, 'targeting');
   const currentTarget = targeting?.currentTarget;
+
+  // Reset lead indicator smoothing when target changes (snap to new target)
+  if (currentTarget !== previousTarget) {
+    resetLeadIndicatorSmoothing();
+    previousTarget = currentTarget;
+  }
 
   // Get player's weapons for lead calculation
   const playerWeapons = getComponent<PrimaryWeapons>(
