@@ -30,10 +30,10 @@ import {
 
 export const MAX_SIMULATION_TIME = 180; // 3 minutes max per mission
 export const MAX_TICKS = MAX_SIMULATION_TIME * TICK_RATE;
-export const RUNS_PER_SCENARIO = 20;
+export const RUNS_PER_SCENARIO = 40;
 
 // Player behavior modes
-export const PLAYER_MODES = ['idle', 'rookie', 'regular', 'veteran', 'ace'];
+export const PLAYER_MODES = ['idle', 'regular', 'ace'];
 
 // ============================================================================
 // Simulation Functions
@@ -243,7 +243,7 @@ export function runScenario(
   const results = [];
 
   for (let i = 0; i < runs; i++) {
-    const seed = 12345 + i * 7919 + missionKey.length * 1000;
+    const seed = 12345 + i * 7919;
     results.push(runMission(mission, playerMode, seed));
   }
 

@@ -91,6 +91,30 @@ export interface AIProfile {
  * These can be used directly or as templates for custom profiles.
  */
 export const AI_PROFILES: Record<string, AIProfile> = {
+  green: {
+    name: 'Green',
+    aimErrorBase: 0.14,
+    aimErrorDriftSpeed: 0.06,
+    aimErrorAngularFactor: 0.9,
+    beamTrackingSpeed: 0.5,
+    engageRange: 400,
+    breakOffRange: 800,
+    combatRangeMultiplier: 0.6,
+    heatSwitchThreshold: 0.98,
+    minFiringAngle: 60,
+    linkedFireHeatThreshold: 0.9,
+    evadeShieldThreshold: 0.45,
+    regroupShieldThreshold: 0.25,
+    recoverShieldThreshold: 0.8,
+    evadeCooldown: 2.0,
+    regroupMinTime: 1.5,
+    decoyCooldown: 5.0,
+    burstDuration: 4.0,
+    repositionCooldown: 8.0,
+    maxRepositionTime: 8.0,
+    fleeDistanceMultiplier: 0.6,
+  },
+
   /**
    * Rookie - Poor aim, slow reactions, panics under fire.
    * Good for tutorial or easy encounters.

@@ -32,6 +32,24 @@ export interface ShipClassStats {
  * These are the authoritative values used in testing.
  */
 export const SHIP_CLASSES: Record<string, ShipClassStats> = {
+  // Patrol: Durable but sluggish craft - balanced HP for extended fights
+  patrol: {
+    hull: 40,
+    shields: 40,
+    shieldRegen: 5,
+    shieldDelay: 3,
+    maxSpeed: 180,
+    acceleration: 90,
+    turnRate: 80,
+    rollRate: 120,
+    collisionRadius: 5,
+    maxHeat: 90,
+    coolingRate: 18,
+    afterburnerHeatRate: 40,
+    primaryBanks: [1, 1],
+    secondaryBanks: [1],
+  },
+
   // Scout: Fast and fragile - FRAGILE
   scout: {
     hull: 50,

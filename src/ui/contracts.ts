@@ -15,8 +15,8 @@ export interface ContractsUI {
 /**
  * Generate contracts with wave-based enemy spawning.
  * Waves spawn when previous wave is cleared, creating longer engagements.
- * Alternates firefly (red laser) and dragonfly (pulse) scouts for variety.
- * Scouts are fragile (80 EHP) so waves are larger to extend combat duration.
+ * Alternates firefly (red laser) and dragonfly (pulse) patrol craft for variety.
+ * Patrol craft have 160 EHP for extended combat (~3x longer than scouts).
  */
 export function generateContracts(_sector: number): Contract[] {
   return [
@@ -25,12 +25,26 @@ export function generateContracts(_sector: number): Contract[] {
       name: 'Patrol Duty',
       description: 'Clear hostiles from the shipping lanes.',
       difficulty: 'easy',
-      // 2 waves: 2 fireflies then 2 dragonflies = 4 total scouts
       waves: [
-        { enemies: [{ archetype: 'firefly', skill: 'rookie', count: 2 }] },
+        { enemies: [{ archetype: 'dragonfly', skill: 'green', count: 2 }] },
         {
-          enemies: [{ archetype: 'dragonfly', skill: 'rookie', count: 2 }],
-          delay: 3,
+          enemies: [{ archetype: 'dragonfly', skill: 'green', count: 2 }],
+          delay: 10,
+        },
+        {
+          enemies: [{ archetype: 'dragonfly', skill: 'green', count: 1 }],
+          delay: 10,
+        },
+        {
+          enemies: [{ archetype: 'firefly', skill: 'green', count: 1 }],
+          delay: 10,
+        },
+        {
+          enemies: [
+            { archetype: 'dragonfly', skill: 'green', count: 1 },
+            { archetype: 'firefly', skill: 'green', count: 1 },
+          ],
+          delay: 10,
         },
       ],
       reward: 200,
@@ -40,12 +54,29 @@ export function generateContracts(_sector: number): Contract[] {
       name: 'Escort Mission',
       description: 'Defend cargo ships against raider attack.',
       difficulty: 'medium',
-      // 2 waves: 2 fireflies then 3 dragonflies = 5 total scouts
       waves: [
-        { enemies: [{ archetype: 'firefly', skill: 'rookie', count: 2 }] },
+        { enemies: [{ archetype: 'dragonfly', skill: 'green', count: 2 }] },
         {
-          enemies: [{ archetype: 'dragonfly', skill: 'rookie', count: 3 }],
-          delay: 3,
+          enemies: [{ archetype: 'dragonfly', skill: 'green', count: 2 }],
+          delay: 10,
+        },
+        {
+          enemies: [{ archetype: 'dragonfly', skill: 'green', count: 1 }],
+          delay: 10,
+        },
+        {
+          enemies: [
+            { archetype: 'dragonfly', skill: 'green', count: 1 },
+            { archetype: 'firefly', skill: 'green', count: 1 },
+          ],
+          delay: 10,
+        },
+        {
+          enemies: [
+            { archetype: 'dragonfly', skill: 'green', count: 1 },
+            { archetype: 'firefly', skill: 'green', count: 1 },
+          ],
+          delay: 10,
         },
       ],
       reward: 350,
@@ -55,16 +86,29 @@ export function generateContracts(_sector: number): Contract[] {
       name: 'Strike Mission',
       description: 'Eliminate enemy patrol. Expect heavy resistance.',
       difficulty: 'hard',
-      // 3 waves: alternating firefly/dragonfly = 6 total scouts
       waves: [
-        { enemies: [{ archetype: 'firefly', skill: 'rookie', count: 2 }] },
+        { enemies: [{ archetype: 'dragonfly', skill: 'green', count: 2 }] },
         {
-          enemies: [{ archetype: 'dragonfly', skill: 'rookie', count: 2 }],
-          delay: 3,
+          enemies: [{ archetype: 'dragonfly', skill: 'green', count: 2 }],
+          delay: 10,
         },
         {
-          enemies: [{ archetype: 'firefly', skill: 'rookie', count: 2 }],
-          delay: 3,
+          enemies: [{ archetype: 'dragonfly', skill: 'green', count: 2 }],
+          delay: 10,
+        },
+        {
+          enemies: [
+            { archetype: 'dragonfly', skill: 'green', count: 1 },
+            { archetype: 'firefly', skill: 'green', count: 1 },
+          ],
+          delay: 10,
+        },
+        {
+          enemies: [
+            { archetype: 'dragonfly', skill: 'green', count: 1 },
+            { archetype: 'firefly', skill: 'green', count: 1 },
+          ],
+          delay: 10,
         },
       ],
       reward: 600,

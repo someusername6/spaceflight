@@ -56,6 +56,7 @@ function createStartingPilots(): Pilot[] {
   return [
     { id: generateId(), name: 'Viper', skill: 'regular' },
     { id: generateId(), name: 'Ghost', skill: 'regular' },
+    { id: generateId(), name: 'Shadow', skill: 'regular' },
   ];
 }
 
@@ -64,18 +65,20 @@ export function createNewCampaign(): CampaignState {
   // Player's ship (fighter - simple loadout)
   const playerShip = createShipFromArchetype('fighter', true);
 
-  // Two wingmen (also fighters for now)
+  // Three wingmen (also fighters for now)
   const wingman1 = createShipFromArchetype('fighter');
   const wingman2 = createShipFromArchetype('fighter');
+  const wingman3 = createShipFromArchetype('fighter');
 
   // Assign pilots to wingmen
   const pilots = createStartingPilots();
   wingman1.pilot = pilots[0] ?? null;
   wingman2.pilot = pilots[1] ?? null;
+  wingman3.pilot = pilots[2] ?? null;
 
   return {
     credits: 1000,
-    ships: [playerShip, wingman1, wingman2],
+    ships: [playerShip, wingman1, wingman2, wingman3],
     pilots: [], // All pilots assigned
     storedWeapons: [],
     currentSector: 1,
