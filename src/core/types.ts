@@ -75,6 +75,12 @@ export interface SystemState {
       targetNearest: boolean;
     };
   };
+  /** Player flight assist state */
+  flightAssist: {
+    prevInput: {
+      toggleMatchSpeed: boolean;
+    };
+  };
   /** Beam system state - stores active beams for renderer */
   beams: {
     activeBeams: Map<Entity, ActiveBeam[]>;
@@ -181,6 +187,7 @@ export interface InputState {
   cycleTargetPrev: boolean;
   targetNearest: boolean;
   toggleLink: boolean;
+  toggleMatchSpeed: boolean;
 }
 
 /** Creates default input state with all flags false */
@@ -204,5 +211,6 @@ export function createInputState(): InputState {
     cycleTargetPrev: false,
     targetNearest: false,
     toggleLink: false,
+    toggleMatchSpeed: false,
   };
 }

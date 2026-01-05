@@ -44,6 +44,11 @@ export function createWorld(seed: number = 0): World {
           targetNearest: false,
         },
       },
+      flightAssist: {
+        prevInput: {
+          toggleMatchSpeed: false,
+        },
+      },
       beams: {
         activeBeams: new Map(),
       },

@@ -90,7 +90,19 @@ export function targetingSystem(world: World, _dt: number): void {
         !targeting.validTargets.includes(targeting.currentTarget)
       ) {
         clearTarget(targeting);
+        // Auto-select nearest after target lost
+        if (targeting.validTargets.length > 0) {
+          selectNearestTarget(targeting);
+        }
       }
+    }
+
+    // Auto-select nearest target if player has no target but valid targets exist
+    if (
+      targeting.currentTarget === undefined &&
+      targeting.validTargets.length > 0
+    ) {
+      selectNearestTarget(targeting);
     }
 
     const input = player.input;

@@ -6,6 +6,7 @@ import type { Camera } from 'three';
 import type { Health } from '../../components/health';
 import type { Heat } from '../../components/heat';
 import type { Physics } from '../../components/physics';
+import type { PlayerControlled } from '../../components/player';
 import type { Shields } from '../../components/shields';
 import type { Transform } from '../../components/transform';
 import { findEntity, getComponent } from '../../core/ecs';
@@ -71,6 +72,8 @@ export interface HUD {
   targetStats: TargetStatsDisplay;
   // Allied display (top-left)
   alliedDisplay: AlliedDisplay;
+  // Match speed indicator
+  matchSpeedIndicator: HTMLElement;
   // Cleanup function
   dispose: () => void;
 }
@@ -88,6 +91,7 @@ export function createHUD(parent: HTMLElement): HUD {
   const container = document.createElement('div');
   container.id = 'hud';
   container.innerHTML = `
+    <div class="match-speed-indicator" style="display: none;">[MATCH SPEED]</div>
     <div class="status-panel">
       <div class="bar-row speed-row">
         <div class="bar-label">SPD</div>
@@ -195,6 +199,9 @@ export function createHUD(parent: HTMLElement): HUD {
     radarDisplay,
     targetStats,
     alliedDisplay,
+    matchSpeedIndicator: container.querySelector(
+      '.match-speed-indicator',
+    ) as HTMLElement,
     dispose,
   };
 }
@@ -234,6 +241,18 @@ export function updateHUD(
 
 /** Update player status bars */
 function updatePlayerStatus(hud: HUD, world: World, player: Entity): void {
+  // Update match speed indicator
+  const playerComp = getComponent<PlayerControlled>(
+    world,
+    player,
+    'playerControlled',
+  );
+  if (playerComp) {
+    hud.matchSpeedIndicator.style.display = playerComp.matchSpeed
+      ? 'block'
+      : 'none';
+  }
+
   const physics = getComponent<Physics>(world, player, 'physics');
   if (physics) {
     const actualSpeed = physics.velocity.length();

@@ -61,3 +61,11 @@ Balance targets achieved:
 - Easy: 85% regular AI win rate, ~25s avg
 - Medium: 65% regular AI win rate, ~40s avg
 - Hard: 45% regular AI win rate, ~55s avg
+
+### Phase 4.3: Player Quality of Life ✅
+
+- **Auto-targeting** (`src/systems/targeting.ts:85-95`): Player automatically targets nearest enemy at mission start, when enemies spawn, and when current target is destroyed.
+- **Match speed toggle** (`src/systems/physics.ts:207-253`): M key toggles match speed mode. Throttle auto-adjusts to maintain distance to target using closing rate calculation.
+- **Match speed state** (`src/components/player.ts:11-16`): Tracks matchSpeed enabled, prevTargetDistance, and prevMatchSpeedTarget for distance calculation.
+- **Manual override** (`src/systems/physics.ts:176`): Throttle input (Shift/Ctrl/Z) overrides match speed while held.
+- **HUD indicator** (`src/rendering/hud/hud.ts:94`, `src/rendering/hud/hud-styles.ts:36-46`): "[MATCH SPEED]" indicator above status bars when mode is active.

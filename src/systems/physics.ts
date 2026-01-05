@@ -14,8 +14,9 @@ import {
 } from '../components/heat';
 import type { Physics } from '../components/physics';
 import type { PlayerControlled } from '../components/player';
+import type { Targeting } from '../components/targeting';
 import type { Transform } from '../components/transform';
-import { getComponent, queryEntities } from '../core/ecs';
+import { entityExists, getComponent, queryEntities } from '../core/ecs';
 import type { World } from '../core/types';
 
 // Reusable objects to avoid allocations
@@ -78,6 +79,30 @@ export function physicsSystem(world: World, dt: number): void {
       accelerating = player.input.accelerate;
       decelerating = player.input.decelerate;
       afterburner = player.input.afterburner;
+
+      // Handle match speed toggle (edge-triggered)
+      const flightAssist = world.systemState.flightAssist;
+      if (
+        player.input.toggleMatchSpeed &&
+        !flightAssist.prevInput.toggleMatchSpeed
+      ) {
+        player.matchSpeed = !player.matchSpeed;
+        // Reset distance tracking when toggling
+        player.prevTargetDistance = 0;
+      }
+      flightAssist.prevInput.toggleMatchSpeed = player.input.toggleMatchSpeed;
+
+      // Get targeting info for match speed
+      const targeting = getComponent<Targeting>(world, entity, 'targeting');
+      const hasValidTarget =
+        targeting?.currentTarget !== undefined &&
+        entityExists(world, targeting.currentTarget);
+
+      // Disable match speed if no target
+      if (player.matchSpeed && !hasValidTarget) {
+        player.matchSpeed = false;
+        player.prevTargetDistance = 0;
+      }
     } else if (ai) {
       // AI movement handled directly in ai.ts via transform.rotation and physics.currentSpeed
       // AI does not use the input abstraction - it sets rotation/speed directly each frame
@@ -147,6 +172,8 @@ export function physicsSystem(world: World, dt: number): void {
     }
 
     const canAfterburn = afterburner && !physics.afterburnerLocked;
+    // Any throttle input overrides match speed (even locked afterburner)
+    const manualThrottleInput = accelerating || decelerating || afterburner;
 
     // Update current speed based on input
     if (canAfterburn) {
@@ -177,6 +204,53 @@ export function physicsSystem(world: World, dt: number): void {
         0,
       );
       physics.isAfterburning = false;
+    } else if (player?.matchSpeed && !manualThrottleInput) {
+      // Match speed mode: adjust throttle to maintain distance to target
+      physics.isAfterburning = false;
+      const targeting = getComponent<Targeting>(world, entity, 'targeting');
+      if (targeting?.currentTarget !== undefined) {
+        // Detect target change and reset distance tracking
+        if (targeting.currentTarget !== player.prevMatchSpeedTarget) {
+          player.prevTargetDistance = 0;
+          player.prevMatchSpeedTarget = targeting.currentTarget;
+        }
+
+        const targetTransform = getComponent<Transform>(
+          world,
+          targeting.currentTarget,
+          'transform',
+        );
+        if (targetTransform) {
+          const currentDistance = transform.position.distanceTo(
+            targetTransform.position,
+          );
+
+          // Initialize prev distance on first frame to avoid spike
+          if (player.prevTargetDistance === 0) {
+            player.prevTargetDistance = currentDistance;
+          }
+
+          // Calculate closing rate (positive = getting closer)
+          const closingRate =
+            (player.prevTargetDistance - currentDistance) / dt;
+          player.prevTargetDistance = currentDistance;
+
+          // Simple algorithm: adjust speed to cancel closing rate
+          // If closing at 50 m/s, slow down by 50 m/s
+          // If drifting apart at 50 m/s, speed up by 50 m/s
+          const desiredSpeed = Math.max(
+            0,
+            Math.min(physics.maxSpeed, physics.currentSpeed - closingRate),
+          );
+
+          // Smoothly adjust toward desired speed
+          physics.currentSpeed = moveToward(
+            physics.currentSpeed,
+            desiredSpeed,
+            physics.acceleration * dt,
+          );
+        }
+      }
     } else {
       // Coasting - if above max speed, decelerate back to max
       if (physics.currentSpeed > physics.maxSpeed) {

@@ -33,6 +33,17 @@ export function getHUDStyles(): string {
       padding: 10px 12px;
       border: 1px solid #0f0;
     }
+    .match-speed-indicator {
+      position: absolute;
+      bottom: 145px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 14px;
+      color: #0af;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 4px 10px;
+      border: 1px solid #0af;
+    }
     /* Common row styling */
     .bar-row,
     .bar-container {

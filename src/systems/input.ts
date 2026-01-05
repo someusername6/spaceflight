@@ -26,6 +26,7 @@ const KEY_BINDINGS = {
   cycleTargetPrev: 'BracketLeft',
   targetNearest: 'KeyT',
   toggleLink: 'KeyV',
+  toggleMatchSpeed: 'KeyM',
 } as const;
 
 /** Currently pressed keys */
@@ -116,6 +117,7 @@ export function inputSystem(world: World, _dt: number): void {
     input.cycleTargetPrev = pressedKeys.has(KEY_BINDINGS.cycleTargetPrev);
     input.targetNearest = pressedKeys.has(KEY_BINDINGS.targetNearest);
     input.toggleLink = pressedKeys.has(KEY_BINDINGS.toggleLink);
+    input.toggleMatchSpeed = pressedKeys.has(KEY_BINDINGS.toggleMatchSpeed);
   }
 }
 
