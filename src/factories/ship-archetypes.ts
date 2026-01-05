@@ -90,6 +90,27 @@ export const SHIP_ARCHETYPES: Record<string, ShipStats> = {
     secondaryWeapons: [{ name: 'dart', count: 6, size: 1 }],
   }),
 
+  // Firefly: Scout with dual red lasers - close-range beam fighter
+  firefly: createArchetype('scout', {
+    playstyle: 'escape',
+    primaryWeapons: [
+      { name: 'redLaser', size: 1 },
+      { name: 'redLaser', size: 1 },
+    ],
+    secondaryWeapons: [{ name: 'dart', count: 4, size: 1 }],
+    preferredCombatRange: 300, // Close range for red laser effectiveness
+  }),
+
+  // Dragonfly: Scout with dual pulse cannons - rapid-fire skirmisher
+  dragonfly: createArchetype('scout', {
+    playstyle: 'escape',
+    primaryWeapons: [
+      { name: 'pulse', size: 1 },
+      { name: 'pulse', size: 1 },
+    ],
+    secondaryWeapons: [{ name: 'dart', count: 4, size: 1 }],
+  }),
+
   // Interceptor: Balanced fighter - BALANCED focus
   interceptor: createArchetype('interceptor', {
     primaryWeapons: [

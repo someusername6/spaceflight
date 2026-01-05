@@ -15,22 +15,21 @@ export interface ContractsUI {
 /**
  * Generate contracts with wave-based enemy spawning.
  * Waves spawn when previous wave is cleared, creating longer engagements.
- * Each wave is manageable; total enemies add up for pacing.
+ * Alternates firefly (red laser) and dragonfly (pulse) scouts for variety.
+ * Scouts are fragile (80 EHP) so waves are larger to extend combat duration.
  */
 export function generateContracts(_sector: number): Contract[] {
-  // Early game uses "fighter" archetype (same as player) for longer engagements.
-  // Rookie skill keeps difficulty manageable while tankier ships extend fight times.
   return [
     {
       id: 'patrol-1',
       name: 'Patrol Duty',
       description: 'Clear hostiles from the shipping lanes.',
       difficulty: 'easy',
-      // 2 waves = 2 total rookie fighters (tankier than scouts, longer fights)
+      // 2 waves: 2 fireflies then 2 dragonflies = 4 total scouts
       waves: [
-        { enemies: [{ archetype: 'fighter', skill: 'rookie', count: 1 }] },
+        { enemies: [{ archetype: 'firefly', skill: 'rookie', count: 2 }] },
         {
-          enemies: [{ archetype: 'fighter', skill: 'rookie', count: 1 }],
+          enemies: [{ archetype: 'dragonfly', skill: 'rookie', count: 2 }],
           delay: 3,
         },
       ],
@@ -41,14 +40,11 @@ export function generateContracts(_sector: number): Contract[] {
       name: 'Escort Mission',
       description: 'Defend cargo ships against raider attack.',
       difficulty: 'medium',
-      // 2 waves: fighters then fighter + interceptor = 3 total enemies
+      // 2 waves: 2 fireflies then 3 dragonflies = 5 total scouts
       waves: [
-        { enemies: [{ archetype: 'fighter', skill: 'rookie', count: 1 }] },
+        { enemies: [{ archetype: 'firefly', skill: 'rookie', count: 2 }] },
         {
-          enemies: [
-            { archetype: 'fighter', skill: 'rookie', count: 1 },
-            { archetype: 'interceptor', skill: 'rookie', count: 1 },
-          ],
+          enemies: [{ archetype: 'dragonfly', skill: 'rookie', count: 3 }],
           delay: 3,
         },
       ],
@@ -59,15 +55,15 @@ export function generateContracts(_sector: number): Contract[] {
       name: 'Strike Mission',
       description: 'Eliminate enemy patrol. Expect heavy resistance.',
       difficulty: 'hard',
-      // 3 waves - fighters then interceptors = 4 total enemies
+      // 3 waves: alternating firefly/dragonfly = 6 total scouts
       waves: [
-        { enemies: [{ archetype: 'fighter', skill: 'rookie', count: 1 }] },
+        { enemies: [{ archetype: 'firefly', skill: 'rookie', count: 2 }] },
         {
-          enemies: [{ archetype: 'fighter', skill: 'rookie', count: 1 }],
+          enemies: [{ archetype: 'dragonfly', skill: 'rookie', count: 2 }],
           delay: 3,
         },
         {
-          enemies: [{ archetype: 'interceptor', skill: 'rookie', count: 2 }],
+          enemies: [{ archetype: 'firefly', skill: 'rookie', count: 2 }],
           delay: 3,
         },
       ],
