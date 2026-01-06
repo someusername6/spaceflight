@@ -256,12 +256,18 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  justify-content: center;
 }
 
 .btn-assign-pilot {
   padding: 8px 14px;
   font-size: 0.8rem;
   text-transform: capitalize;
+}
+
+.btn-unassign-pilot {
+  display: block;
+  margin: 0 auto;
 }
 
 /* ========================================
@@ -272,6 +278,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  justify-content: center;
 }
 
 .hull-card-btn {
