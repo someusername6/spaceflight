@@ -1,5 +1,5 @@
 /**
- * Ship Card Component - Compact ship cards for the squadron list
+ * Ship Card Component - Compact ship cards for the flight list
  */
 
 import type { OwnedShip } from '../../campaign/types';

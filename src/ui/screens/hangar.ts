@@ -165,10 +165,10 @@ function renderHangar(
       <main class="hangar-screen" aria-label="Hangar - Ship management">
       <div class="hangar-layout">
         <!-- Left Column: Ships List -->
-        <aside class="hangar-ships" aria-label="Squadron ships">
+        <aside class="hangar-ships" aria-label="Flight ships">
           <header class="panel-header">
             <span class="panel-icon" aria-hidden="true">◈</span>
-            <span class="panel-title">Squadron</span>
+            <span class="panel-title">Flight</span>
             <span class="panel-count" aria-label="${state.ships.length} ships">${state.ships.length}</span>
           </header>
           <div class="ship-list" role="list" aria-label="Available ships">

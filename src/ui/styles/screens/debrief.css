@@ -272,46 +272,12 @@
 
 /* ========================================
    COMBAT STATS GRID
+   Extends .stat-grid from base.css
    ======================================== */
 
 .pilot-stats {
-  display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
   margin-bottom: 14px;
-  padding: 14px 12px;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.03);
-}
-
-.stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-
-.stat-value {
-  font-family: var(--font-display);
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--color-primary);
-  margin-bottom: 3px;
-  text-shadow: 0 0 6px var(--color-primary-glow);
-}
-
-.stat-value.destroyed {
-  color: var(--color-danger);
-  text-shadow: 0 0 6px var(--color-danger-glow);
-}
-
-.stat-label {
-  font-family: var(--font-ui);
-  font-size: 0.6rem;
-  font-weight: 500;
-  color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
 }
 
 /* ========================================

@@ -182,12 +182,6 @@
   flex-shrink: 0;
 }
 
-.pilot-header-top {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-
 .pilot-header-info {
   flex: 1;
   display: flex;
@@ -217,35 +211,10 @@
   letter-spacing: 0.05em;
 }
 
+/* Extends .stat-grid from base.css */
 .pilot-viewer-stats {
-  background: rgba(0, 0, 0, 0.2);
-  padding: 12px;
+  grid-template-columns: repeat(3, 1fr);
   margin: 0 12px 12px;
-}
-
-.pilot-viewer-stats .stat-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 6px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  font-size: 0.85rem;
-}
-
-.pilot-viewer-stats .stat-row:last-child {
-  border-bottom: none;
-}
-
-.pilot-viewer-stats .stat-label {
-  color: var(--text-secondary);
-  font-family: var(--font-body);
-  font-size: inherit;
-  text-transform: none;
-}
-
-.pilot-viewer-stats .stat-value {
-  color: var(--text-primary);
-  font-family: var(--font-body);
-  font-size: inherit;
 }
 
 /* ========================================

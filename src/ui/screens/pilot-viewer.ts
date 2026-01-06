@@ -111,30 +111,30 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
         </div>
       </div>
 
-      <div class="pilot-viewer-stats">
-        <div class="stat-row">
-          <span class="stat-label">Missions Flown</span>
+      <div class="stat-grid pilot-viewer-stats">
+        <div class="stat">
           <span class="stat-value">${pilot.missionsFlown}</span>
+          <span class="stat-label">Missions</span>
         </div>
-        <div class="stat-row">
-          <span class="stat-label">Victories</span>
+        <div class="stat">
           <span class="stat-value">${pilot.missionsWon}</span>
+          <span class="stat-label">Victories</span>
         </div>
-        <div class="stat-row">
-          <span class="stat-label">Kills</span>
+        <div class="stat">
           <span class="stat-value">${pilot.kills}</span>
+          <span class="stat-label">Kills</span>
         </div>
-        <div class="stat-row">
-          <span class="stat-label">Assists</span>
+        <div class="stat">
           <span class="stat-value">${pilot.assists}</span>
+          <span class="stat-label">Assists</span>
         </div>
-        <div class="stat-row">
-          <span class="stat-label">Damage Dealt</span>
+        <div class="stat">
           <span class="stat-value">${pilot.damageDealt.toLocaleString()}</span>
+          <span class="stat-label">Dmg Dealt</span>
         </div>
-        <div class="stat-row">
-          <span class="stat-label">Damage Received</span>
+        <div class="stat">
           <span class="stat-value">${pilot.damageReceived.toLocaleString()}</span>
+          <span class="stat-label">Dmg Recv</span>
         </div>
       </div>
 

@@ -240,7 +240,7 @@ function renderPilotCard(pilot: PilotDebriefData): string {
         </div>
       </div>
 
-      <div class="pilot-stats">
+      <div class="stat-grid pilot-stats">
         <div class="stat">
           <span class="stat-value">${pilot.kills}</span>
           <span class="stat-label">Kills</span>
