@@ -75,8 +75,8 @@ export const SHIP_ARCHETYPES: Record<string, ShipStats> = {
       { name: 'plasma', size: 1 },
     ],
     secondaryWeapons: [
-      { name: 'seeker', count: 6, size: 1 },
-      { name: 'decoy', count: 4, size: 1 },
+      { name: 'seeker', count: 8, size: 1 },
+      { name: 'decoy', count: 6, size: 1 },
     ],
   }),
 
