@@ -211,19 +211,20 @@ export function getCurrentSecondary(
   return weapons.weapons[weapons.currentIndex];
 }
 
-/** Cycle to next link mode (weapon type or 'all') */
+/** Cycle to next primary weapon link mode (weapon type or 'all') */
 export function cycleNextLinkMode(weapons: PrimaryWeapons): void {
   if (weapons.linkModes.length > 0) {
     weapons.linkMode = (weapons.linkMode + 1) % weapons.linkModes.length;
   }
 }
 
-/** Cycle to previous link mode */
-export function cyclePrevLinkMode(weapons: PrimaryWeapons): void {
-  if (weapons.linkModes.length > 0) {
-    weapons.linkMode =
-      (weapons.linkMode - 1 + weapons.linkModes.length) %
-      weapons.linkModes.length;
+/** Cycle to next secondary weapon */
+export function cycleNextSecondary(weapons: SecondaryWeapons): void {
+  if (weapons.weapons.length > 1) {
+    weapons.currentIndex = (weapons.currentIndex + 1) % weapons.weapons.length;
+    // Reset lock progress when switching weapons
+    weapons.lockProgress = 0;
+    weapons.lockWeaponIndex = -1;
   }
 }
 
@@ -264,17 +265,6 @@ export function setLinkModeByType(
   if (index >= 0) {
     weapons.linkMode = index;
   }
-}
-
-// Legacy functions for backwards compatibility
-/** @deprecated Use cycleNextLinkMode instead */
-export function cycleNextPrimary(weapons: PrimaryWeapons): void {
-  cycleNextLinkMode(weapons);
-}
-
-/** @deprecated Use cyclePrevLinkMode instead */
-export function cyclePrevPrimary(weapons: PrimaryWeapons): void {
-  cyclePrevLinkMode(weapons);
 }
 
 /** Check if weapon can fire (fire rate cooldown) */

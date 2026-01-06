@@ -17,7 +17,7 @@ import type {
 } from '../../components/weapons';
 import {
   cycleNextLinkMode,
-  cyclePrevLinkMode,
+  cycleNextSecondary,
   findDecoyWeapon,
   getCurrentSecondary,
   getEffectiveHeat,
@@ -51,17 +51,9 @@ export function handlePlayerPrimaryWeapons(
   const input = player.input;
   const prevInput = state.prevInput;
 
-  // Cycle link mode (edge-triggered) - cycles through weapon types + 'all'
-  if (input.toggleLink && !prevInput.toggleLink) {
+  // Cycle primary weapons (edge-triggered) - cycles through weapon types + 'all'
+  if (input.cyclePrimary && !prevInput.cyclePrimary) {
     cycleNextLinkMode(weapons);
-  }
-
-  // Weapon cycling also cycles link mode (same behavior, different key)
-  if (input.cycleWeaponNext && !prevInput.cycleWeaponNext) {
-    cycleNextLinkMode(weapons);
-  }
-  if (input.cycleWeaponPrev && !prevInput.cycleWeaponPrev) {
-    cyclePrevLinkMode(weapons);
   }
 
   // Fire weapons in current link mode (all weapons of selected type)
@@ -175,6 +167,11 @@ export function handlePlayerSecondaryWeapons(
 ): void {
   const input = player.input;
   const prevInput = state.prevInput;
+
+  // Cycle secondary weapons (edge-triggered)
+  if (input.cycleSecondary && !prevInput.cycleSecondary) {
+    cycleNextSecondary(weapons);
+  }
 
   // Launch decoy with dedicated key (edge-triggered)
   if (input.launchDecoy && !prevInput.launchDecoy) {

@@ -59,10 +59,9 @@ export interface SystemState {
   /** Weapon system state */
   weapons: {
     prevInput: {
-      cycleWeaponNext: boolean;
-      cycleWeaponPrev: boolean;
+      cyclePrimary: boolean;
+      cycleSecondary: boolean;
       fireSecondary: boolean;
-      toggleLink: boolean;
       launchDecoy: boolean;
     };
     lastDecoyFireTime: number;
@@ -196,12 +195,11 @@ export interface InputState {
   firePrimary: boolean;
   fireSecondary: boolean;
   launchDecoy: boolean;
-  cycleWeaponNext: boolean;
-  cycleWeaponPrev: boolean;
+  cyclePrimary: boolean;
+  cycleSecondary: boolean;
   cycleTargetNext: boolean;
   cycleTargetPrev: boolean;
   targetNearest: boolean;
-  toggleLink: boolean;
   toggleMatchSpeed: boolean;
 }
 
@@ -220,12 +218,11 @@ export function createInputState(): InputState {
     firePrimary: false,
     fireSecondary: false,
     launchDecoy: false,
-    cycleWeaponNext: false,
-    cycleWeaponPrev: false,
+    cyclePrimary: false,
+    cycleSecondary: false,
     cycleTargetNext: false,
     cycleTargetPrev: false,
     targetNearest: false,
-    toggleLink: false,
     toggleMatchSpeed: false,
   };
 }

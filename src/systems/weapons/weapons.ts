@@ -180,10 +180,9 @@ export function weaponSystem(world: World, dt: number): void {
   // Update previous input state
   const player = getPlayerInput(world);
   if (player) {
-    state.prevInput.cycleWeaponNext = player.input.cycleWeaponNext;
-    state.prevInput.cycleWeaponPrev = player.input.cycleWeaponPrev;
+    state.prevInput.cyclePrimary = player.input.cyclePrimary;
+    state.prevInput.cycleSecondary = player.input.cycleSecondary;
     state.prevInput.fireSecondary = player.input.fireSecondary;
-    state.prevInput.toggleLink = player.input.toggleLink;
     state.prevInput.launchDecoy = player.input.launchDecoy;
   }
 }

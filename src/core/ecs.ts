@@ -29,10 +29,9 @@ export function createWorld(seed: number = 0): World {
       gameTime: 0,
       weapons: {
         prevInput: {
-          cycleWeaponNext: false,
-          cycleWeaponPrev: false,
+          cyclePrimary: false,
+          cycleSecondary: false,
           fireSecondary: false,
-          toggleLink: false,
           launchDecoy: false,
         },
         lastDecoyFireTime: 0,

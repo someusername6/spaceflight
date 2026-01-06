@@ -20,12 +20,11 @@ const KEY_BINDINGS = {
   firePrimary: 'Space',
   fireSecondary: 'KeyF',
   launchDecoy: 'KeyC',
-  cycleWeaponNext: 'Period',
-  cycleWeaponPrev: 'Comma',
+  cyclePrimary: 'KeyV',
+  cycleSecondary: 'KeyX',
   cycleTargetNext: 'BracketRight',
   cycleTargetPrev: 'BracketLeft',
   targetNearest: 'KeyT',
-  toggleLink: 'KeyV',
   toggleMatchSpeed: 'KeyM',
 } as const;
 
@@ -111,12 +110,11 @@ export function inputSystem(world: World, _dt: number): void {
     input.firePrimary = pressedKeys.has(KEY_BINDINGS.firePrimary);
     input.fireSecondary = pressedKeys.has(KEY_BINDINGS.fireSecondary);
     input.launchDecoy = pressedKeys.has(KEY_BINDINGS.launchDecoy);
-    input.cycleWeaponNext = pressedKeys.has(KEY_BINDINGS.cycleWeaponNext);
-    input.cycleWeaponPrev = pressedKeys.has(KEY_BINDINGS.cycleWeaponPrev);
+    input.cyclePrimary = pressedKeys.has(KEY_BINDINGS.cyclePrimary);
+    input.cycleSecondary = pressedKeys.has(KEY_BINDINGS.cycleSecondary);
     input.cycleTargetNext = pressedKeys.has(KEY_BINDINGS.cycleTargetNext);
     input.cycleTargetPrev = pressedKeys.has(KEY_BINDINGS.cycleTargetPrev);
     input.targetNearest = pressedKeys.has(KEY_BINDINGS.targetNearest);
-    input.toggleLink = pressedKeys.has(KEY_BINDINGS.toggleLink);
     input.toggleMatchSpeed = pressedKeys.has(KEY_BINDINGS.toggleMatchSpeed);
   }
 }

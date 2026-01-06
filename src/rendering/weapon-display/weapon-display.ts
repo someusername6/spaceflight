@@ -58,7 +58,7 @@ export function createWeaponDisplay(parent: HTMLElement): WeaponDisplay {
   primaryLabel.textContent = 'PRIMARY ';
   const primaryHint = document.createElement('span');
   primaryHint.className = 'key-hint';
-  primaryHint.textContent = '[</>]';
+  primaryHint.textContent = '[V]';
   primaryLabel.appendChild(primaryHint);
   primarySection.appendChild(primaryLabel);
 
@@ -74,7 +74,7 @@ export function createWeaponDisplay(parent: HTMLElement): WeaponDisplay {
   secondaryLabel.textContent = 'SECONDARY ';
   const secondaryHint = document.createElement('span');
   secondaryHint.className = 'key-hint';
-  secondaryHint.textContent = '[</>]';
+  secondaryHint.textContent = '[X]';
   secondaryLabel.appendChild(secondaryHint);
   secondarySection.appendChild(secondaryLabel);
 
