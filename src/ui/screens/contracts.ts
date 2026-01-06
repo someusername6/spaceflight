@@ -8,7 +8,6 @@ import {
   bindNavBar,
   type NavDestination,
   renderNavBar,
-  renderStatusDisplay,
 } from '../common/nav-bar';
 
 /** Contracts UI state */
@@ -238,18 +237,19 @@ function renderContracts(
   const canLaunch = isCommanderAssigned(state);
 
   return `
-    ${navBar}
-    ${renderStatusDisplay(state.credits, state.currentSector)}
-    <main class="contracts-screen" aria-label="Contract selection">
-      <div class="contracts-layout">
-        <aside class="contracts-list-panel" role="listbox" aria-label="Available contracts">
-          ${contracts.map((c) => renderContractListItem(c, c.id === selectedContractId)).join('')}
-        </aside>
-        <section class="contracts-detail-panel" aria-label="Contract details">
-          ${selectedContract ? renderContractDetail(selectedContract, canLaunch) : '<div class="empty-state-panel" role="status">Select a contract to view details</div>'}
-        </section>
-      </div>
-    </main>
+    <div class="campaign-page">
+      ${navBar}
+      <main class="contracts-screen" aria-label="Contract selection">
+        <div class="contracts-layout">
+          <aside class="contracts-list-panel" role="listbox" aria-label="Available contracts">
+            ${contracts.map((c) => renderContractListItem(c, c.id === selectedContractId)).join('')}
+          </aside>
+          <section class="contracts-detail-panel" aria-label="Contract details">
+            ${selectedContract ? renderContractDetail(selectedContract, canLaunch) : '<div class="empty-state-panel" role="status">Select a contract to view details</div>'}
+          </section>
+        </div>
+      </main>
+    </div>
   `;
 }
 

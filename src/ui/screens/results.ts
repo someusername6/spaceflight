@@ -1,5 +1,10 @@
 /**
- * Results screen - displays mission outcome and combat debrief.
+ * Results screen - displays mission outcome, combat debrief, and rewards.
+ *
+ * Layout:
+ * - Results tab bar (Debrief / Rewards) with status display
+ * - Scrollable content area
+ * - Fixed continue button at bottom
  */
 
 import type { SalvageResult } from '../../campaign/salvage';
@@ -11,17 +16,115 @@ import {
   renderDebrief,
 } from './debrief';
 
+/** Results tab type */
+export type ResultsTab = 'debrief' | 'rewards';
+
 /** Results UI state */
 export interface ResultsUI {
   element: HTMLElement;
   onContinue: () => void;
-  selectedTab: 'debrief' | 'salvage';
+  selectedTab: ResultsTab;
 }
 
-/** Render salvage section */
-function renderSalvage(salvage: SalvageResult | null): string {
+/** Render the results tab bar */
+function renderResultsTabBar(
+  selectedTab: ResultsTab,
+  credits: number,
+  sector: number,
+): string {
+  const tabs: { id: ResultsTab; label: string; icon: string }[] = [
+    { id: 'debrief', label: 'DEBRIEF', icon: '◆' },
+    { id: 'rewards', label: 'REWARDS', icon: '★' },
+  ];
+
+  const tabsHtml = tabs
+    .map(
+      (tab) => `
+      <button
+        class="results-tab ${selectedTab === tab.id ? 'active' : ''}"
+        data-tab="${tab.id}"
+        role="tab"
+        aria-selected="${selectedTab === tab.id}"
+        tabindex="${selectedTab === tab.id ? '0' : '-1'}"
+      >
+        <span class="results-tab-icon" aria-hidden="true">${tab.icon}</span>
+        <span class="results-tab-label">${tab.label}</span>
+      </button>
+    `,
+    )
+    .join('');
+
+  return `
+    <nav class="results-tab-bar" role="navigation" aria-label="Results navigation">
+      <div class="results-tabs-group" role="tablist" aria-label="Results sections">
+        ${tabsHtml}
+      </div>
+      <div class="results-status" role="status" aria-label="Player status">
+        <div class="results-status-item">
+          <span class="results-status-label">SECTOR</span>
+          <span class="results-status-value">${sector}</span>
+        </div>
+        <div class="results-status-item">
+          <span class="results-status-label">CREDITS</span>
+          <span class="results-status-value results-credits">${credits.toLocaleString()}</span>
+        </div>
+      </div>
+    </nav>
+  `;
+}
+
+/** Render the rewards tab content */
+function renderRewards(
+  victory: boolean,
+  contract: Contract | null,
+  salvage: SalvageResult | null,
+): string {
+  const titleClass = victory ? 'victory' : 'defeat';
+  const titleText = victory ? 'VICTORY' : 'DEFEAT';
+
+  // Contract reward section
+  const baseReward = victory && contract ? contract.reward : 0;
+  const contractRewardHtml = contract
+    ? `
+      <div class="rewards-contract">
+        <div class="rewards-section-header">
+          <span class="rewards-section-icon" aria-hidden="true">▶</span>
+          <span class="rewards-section-title">CONTRACT REWARD</span>
+        </div>
+        <div class="rewards-contract-details">
+          <div class="rewards-contract-name">${contract.name}</div>
+          <div class="rewards-contract-amount ${victory ? 'earned' : 'failed'}">
+            ${victory ? `+${baseReward.toLocaleString()} cr` : 'Mission Failed'}
+          </div>
+        </div>
+      </div>
+    `
+    : '';
+
+  // Salvage section
+  const salvageHtml = renderSalvageSection(salvage);
+
+  return `
+    <div class="rewards-content">
+      <div class="rewards-title ${titleClass}">${titleText}</div>
+      ${contractRewardHtml}
+      ${salvageHtml}
+    </div>
+  `;
+}
+
+/** Render salvage section within rewards */
+function renderSalvageSection(salvage: SalvageResult | null): string {
   if (!salvage) {
-    return '<div class="salvage-empty">No salvage collected</div>';
+    return `
+      <div class="rewards-salvage">
+        <div class="rewards-section-header">
+          <span class="rewards-section-icon" aria-hidden="true">◈</span>
+          <span class="rewards-section-title">SALVAGE</span>
+        </div>
+        <div class="salvage-empty">No salvage collected</div>
+      </div>
+    `;
   }
 
   const scrapEntries = Object.entries(salvage.scrap);
@@ -30,7 +133,15 @@ function renderSalvage(salvage: SalvageResult | null): string {
   const hasAmmo = salvage.ammo.length > 0;
 
   if (!hasScrap && !hasWeapons && !hasAmmo) {
-    return '<div class="salvage-empty">No salvage collected</div>';
+    return `
+      <div class="rewards-salvage">
+        <div class="rewards-section-header">
+          <span class="rewards-section-icon" aria-hidden="true">◈</span>
+          <span class="rewards-section-title">SALVAGE</span>
+        </div>
+        <div class="salvage-empty">No salvage collected</div>
+      </div>
+    `;
   }
 
   // Render scrap
@@ -94,10 +205,11 @@ function renderSalvage(salvage: SalvageResult | null): string {
   const totalValueStr = Math.floor(salvage.totalValue).toLocaleString();
 
   return `
-    <div class="salvage-section">
-      <div class="salvage-header">
-        <h2>Salvage Collected</h2>
-        <div class="salvage-value">Est. Value: ~${totalValueStr} cr</div>
+    <div class="rewards-salvage">
+      <div class="rewards-section-header">
+        <span class="rewards-section-icon" aria-hidden="true">◈</span>
+        <span class="rewards-section-title">SALVAGE</span>
+        <span class="rewards-section-value">Est. Value: ~${totalValueStr} cr</span>
       </div>
       <div class="salvage-items">
         ${scrapHtml}
@@ -115,62 +227,37 @@ function renderResults(
   state: CampaignState,
   debriefData: MissionDebriefData | null,
   salvage: SalvageResult | null,
-  selectedTab: 'debrief' | 'salvage',
+  selectedTab: ResultsTab,
 ): string {
-  const title = victory ? 'VICTORY' : 'DEFEAT';
-  const titleClass = victory ? 'victory' : 'defeat';
-  const baseReward = victory && contract ? contract.reward : 0;
-
-  // Build credits breakdown
-  let creditsHtml = '';
-  if (baseReward > 0) {
-    creditsHtml = `<div class="credits-breakdown">
-      <div style="color: #44cc66;">+ ${baseReward} mission reward</div>
-    </div>`;
-  }
+  const tabBar = renderResultsTabBar(
+    selectedTab,
+    state.credits,
+    state.currentSector,
+  );
 
   // Tab content
   const tabContent =
     selectedTab === 'debrief'
       ? debriefData
         ? renderDebrief(debriefData)
-        : ''
-      : renderSalvage(salvage);
+        : '<div class="empty-state-panel">No debrief data available</div>'
+      : renderRewards(victory, contract, salvage);
+
+  const buttonText = victory ? 'Return to Hangar' : 'Continue';
 
   return `
-    <h1 class="result-title ${titleClass}">${title}</h1>
-
-    <div class="screen-panel results-panel">
-      <div class="result-stats">
-        ${contract ? `<div>Mission: ${contract.name}</div>` : ''}
-        ${creditsHtml}
-        <div style="margin-top: 10px;">
-          Total Credits: ${state.credits}
+    <div class="results-screen">
+      ${tabBar}
+      <main class="results-main" aria-label="Mission results">
+        <div class="results-content-scroll">
+          ${tabContent}
         </div>
-        <div>
-          Ships Remaining: ${state.ships.length}
-        </div>
-        <div>
-          Missions Completed: ${state.missionCount}
-        </div>
-      </div>
-
-      <div class="results-tabs">
-        <button class="tab-btn ${selectedTab === 'debrief' ? 'active' : ''}" data-tab="debrief">
-          Debrief
+      </main>
+      <footer class="results-footer">
+        <button class="btn btn-primary btn-continue" id="btn-continue">
+          ${buttonText}
         </button>
-        <button class="tab-btn ${selectedTab === 'salvage' ? 'active' : ''}" data-tab="salvage">
-          Salvage
-        </button>
-      </div>
-
-      <div class="results-tab-content">
-        ${tabContent}
-      </div>
-
-      <button class="btn btn-primary" id="btn-continue" style="margin-top: 20px;">
-        ${victory ? 'Return to Hangar' : 'Continue'}
-      </button>
+      </footer>
     </div>
   `;
 }
@@ -211,11 +298,9 @@ export function createResultsUI(
     }
 
     // Bind tab buttons
-    element.querySelectorAll('.tab-btn').forEach((tabBtn) => {
+    element.querySelectorAll('.results-tab').forEach((tabBtn) => {
       tabBtn.addEventListener('click', () => {
-        const tab = (tabBtn as HTMLElement).dataset.tab as
-          | 'debrief'
-          | 'salvage';
+        const tab = (tabBtn as HTMLElement).dataset.tab as ResultsTab;
         if (tab && tab !== ui.selectedTab) {
           ui.selectedTab = tab;
           renderAndBind();
@@ -231,25 +316,28 @@ export function createResultsUI(
 /** Render game over screen */
 function renderGameOver(state: CampaignState): string {
   return `
-    <h1 class="game-over-title">GAME OVER</h1>
-
-    <div class="screen-panel">
-      <div class="game-over-stats">
-        <div>Your ship was destroyed.</div>
-        <div style="margin-top: 20px;">
-          Final Credits: ${state.credits}
+    <div class="results-screen game-over-screen">
+      <div class="game-over-content">
+        <h1 class="game-over-title">GAME OVER</h1>
+        <div class="game-over-stats">
+          <div class="game-over-message">Your ship was destroyed.</div>
+          <div class="game-over-stat">
+            <span class="stat-label">Final Credits</span>
+            <span class="stat-value">${state.credits.toLocaleString()}</span>
+          </div>
+          <div class="game-over-stat">
+            <span class="stat-label">Missions Completed</span>
+            <span class="stat-value">${state.missionCount}</span>
+          </div>
+          <div class="game-over-stat">
+            <span class="stat-label">Sector Reached</span>
+            <span class="stat-value">${state.currentSector}</span>
+          </div>
         </div>
-        <div>
-          Missions Completed: ${state.missionCount}
-        </div>
-        <div>
-          Sector Reached: ${state.currentSector}
-        </div>
+        <button class="btn btn-primary btn-restart" id="btn-restart">
+          Start New Campaign
+        </button>
       </div>
-
-      <button class="btn btn-primary" id="btn-restart">
-        Start New Campaign
-      </button>
     </div>
   `;
 }

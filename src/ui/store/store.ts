@@ -9,7 +9,6 @@ import {
   bindNavBar,
   type NavDestination,
   renderNavBar,
-  renderStatusDisplay,
 } from '../common/nav-bar';
 import { renderDetailPanel } from './detail';
 import {
@@ -113,31 +112,32 @@ function renderStore(ui: StoreUI): string {
   });
 
   return `
-    ${navBar}
-    ${renderStatusDisplay(ui.state.credits, ui.state.currentSector)}
-    <main class="store-screen" aria-label="Equipment Store">
-      <nav class="store-categories" aria-label="Store categories">
-        <div class="category-tabs" role="tablist" aria-label="Item categories">
-          <button class="btn ${ui.selectedCategory === 'hulls' ? 'btn-primary' : ''}" data-cat="hulls" role="tab" aria-selected="${ui.selectedCategory === 'hulls'}">Hulls</button>
-          <button class="btn ${ui.selectedCategory === 'primaries' ? 'btn-primary' : ''}" data-cat="primaries" role="tab" aria-selected="${ui.selectedCategory === 'primaries'}">Primaries</button>
-          <button class="btn ${ui.selectedCategory === 'secondaries' ? 'btn-primary' : ''}" data-cat="secondaries" role="tab" aria-selected="${ui.selectedCategory === 'secondaries'}">Missiles</button>
-          <button class="btn ${ui.selectedCategory === 'ammo' ? 'btn-primary' : ''}" data-cat="ammo" role="tab" aria-selected="${ui.selectedCategory === 'ammo'}">Ammo</button>
-          <button class="btn ${ui.selectedCategory === 'scrap' ? 'btn-primary' : ''}" data-cat="scrap" role="tab" aria-selected="${ui.selectedCategory === 'scrap'}">Scrap</button>
+    <div class="campaign-page">
+      ${navBar}
+      <main class="store-screen" aria-label="Equipment Store">
+        <nav class="store-categories" aria-label="Store categories">
+          <div class="category-tabs" role="tablist" aria-label="Item categories">
+            <button class="btn ${ui.selectedCategory === 'hulls' ? 'btn-primary' : ''}" data-cat="hulls" role="tab" aria-selected="${ui.selectedCategory === 'hulls'}">Hulls</button>
+            <button class="btn ${ui.selectedCategory === 'primaries' ? 'btn-primary' : ''}" data-cat="primaries" role="tab" aria-selected="${ui.selectedCategory === 'primaries'}">Primaries</button>
+            <button class="btn ${ui.selectedCategory === 'secondaries' ? 'btn-primary' : ''}" data-cat="secondaries" role="tab" aria-selected="${ui.selectedCategory === 'secondaries'}">Missiles</button>
+            <button class="btn ${ui.selectedCategory === 'ammo' ? 'btn-primary' : ''}" data-cat="ammo" role="tab" aria-selected="${ui.selectedCategory === 'ammo'}">Ammo</button>
+            <button class="btn ${ui.selectedCategory === 'scrap' ? 'btn-primary' : ''}" data-cat="scrap" role="tab" aria-selected="${ui.selectedCategory === 'scrap'}">Scrap</button>
+          </div>
+          <div class="category-actions">
+            ${renderResupplyButton(ui.state)}
+          </div>
+        </nav>
+        <div class="store-layout">
+          <aside class="store-list" role="listbox" aria-label="Available items">
+            ${itemList}
+          </aside>
+          <section class="store-details" aria-label="Item details">
+            ${detailPanel || '<div class="empty-state-panel" role="status">Select an item to view details</div>'}
+          </section>
+          ${renderStoreStorage(ui.state, ui.selectedCategory, ui.selectedItem)}
         </div>
-        <div class="category-actions">
-          ${renderResupplyButton(ui.state)}
-        </div>
-      </nav>
-      <div class="store-layout">
-        <aside class="store-list" role="listbox" aria-label="Available items">
-          ${itemList}
-        </aside>
-        <section class="store-details" aria-label="Item details">
-          ${detailPanel || '<div class="empty-state-panel" role="status">Select an item to view details</div>'}
-        </section>
-        ${renderStoreStorage(ui.state, ui.selectedCategory, ui.selectedItem)}
-      </div>
-    </main>
+      </main>
+    </div>
   `;
 }
 

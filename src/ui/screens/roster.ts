@@ -15,7 +15,6 @@ import {
   bindNavBar,
   type NavDestination,
   renderNavBar,
-  renderStatusDisplay,
 } from '../common/nav-bar';
 import { renderPilotViewer } from './pilot-viewer';
 
@@ -111,28 +110,29 @@ function renderRoster(
     : `<div class="empty-state-panel" role="status">Select a pilot to view details</div>`;
 
   return `
-    ${navBar}
-    ${renderStatusDisplay(state.credits, state.currentSector)}
-    <main class="roster-screen" aria-label="Roster - Pilot management">
-      <div class="roster-layout">
-        <!-- Left Column: Pilots List -->
-        <aside class="roster-list" aria-label="Pilots list">
-          <header class="panel-header">
-            <span class="panel-icon" aria-hidden="true">★</span>
-            <span class="panel-title">Pilots</span>
-            <span class="panel-count" aria-label="${state.pilots.length} pilots">${state.pilots.length}</span>
-          </header>
-          <div class="roster-pilots" role="listbox" aria-label="Available pilots">
-            ${pilotCards}
-          </div>
-        </aside>
+    <div class="campaign-page">
+      ${navBar}
+      <main class="roster-screen" aria-label="Roster - Pilot management">
+        <div class="roster-layout">
+          <!-- Left Column: Pilots List -->
+          <aside class="roster-list" aria-label="Pilots list">
+            <header class="panel-header">
+              <span class="panel-icon" aria-hidden="true">★</span>
+              <span class="panel-title">Pilots</span>
+              <span class="panel-count" aria-label="${state.pilots.length} pilots">${state.pilots.length}</span>
+            </header>
+            <div class="roster-pilots" role="listbox" aria-label="Available pilots">
+              ${pilotCards}
+            </div>
+          </aside>
 
-        <!-- Right Column: Pilot Viewer -->
-        <section class="roster-viewer" aria-label="Pilot details">
-          ${rightPanel}
-        </section>
-      </div>
-    </main>
+          <!-- Right Column: Pilot Viewer -->
+          <section class="roster-viewer" aria-label="Pilot details">
+            ${rightPanel}
+          </section>
+        </div>
+      </main>
+    </div>
   `;
 }
 

@@ -17,25 +17,25 @@ export interface NavBarProps {
   onNavigate: (destination: NavDestination) => void;
 }
 
-/** Render the status display (sector + credits) for screen content area */
-export function renderStatusDisplay(credits: number, sector: number): string {
+/** Render the status display (sector + credits) - integrated into nav bar */
+function renderStatusDisplay(credits: number, sector: number): string {
   return `
-    <div class="screen-status" role="status" aria-label="Player status">
-      <div class="status-item" aria-label="Current sector: ${sector}">
-        <span class="status-label">SECTOR</span>
-        <span class="status-value">${sector}</span>
+    <div class="nav-status" role="status" aria-label="Player status">
+      <div class="nav-status-item" aria-label="Current sector: ${sector}">
+        <span class="nav-status-label">SECTOR</span>
+        <span class="nav-status-value">${sector}</span>
       </div>
-      <div class="status-item" aria-label="Credits: ${credits.toLocaleString()}">
-        <span class="status-label">CREDITS</span>
-        <span class="status-value credits-amount">${credits.toLocaleString()}</span>
+      <div class="nav-status-item" aria-label="Credits: ${credits.toLocaleString()}">
+        <span class="nav-status-label">CREDITS</span>
+        <span class="nav-status-value nav-credits">${credits.toLocaleString()}</span>
       </div>
     </div>
   `;
 }
 
-/** Render the navigation bar HTML */
+/** Render the navigation bar HTML with integrated status display */
 export function renderNavBar(props: NavBarProps): string {
-  const { activeTab } = props;
+  const { activeTab, credits, sector } = props;
 
   const tabs: { id: NavDestination; label: string; icon: string }[] = [
     { id: 'hangar', label: 'HANGAR', icon: '◈' },
@@ -62,11 +62,14 @@ export function renderNavBar(props: NavBarProps): string {
     )
     .join('');
 
+  const statusHtml = renderStatusDisplay(credits, sector);
+
   return `
     <nav class="global-nav" role="navigation" aria-label="Main navigation">
       <div class="nav-tabs" role="tablist" aria-label="Screen navigation">
         ${tabsHtml}
       </div>
+      ${statusHtml}
       <div class="nav-scanline" aria-hidden="true"></div>
     </nav>
   `;
@@ -91,14 +94,56 @@ export function bindNavBar(
 export function getNavBarStyles(): string {
   return `
     /* ========================================
+       CAMPAIGN PAGE WRAPPER
+       Constrained width with shared background
+       ======================================== */
+
+    .campaign-page {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      background: linear-gradient(
+        180deg,
+        rgba(5, 8, 15, 0.98) 0%,
+        rgba(8, 12, 20, 0.95) 50%,
+        rgba(5, 8, 15, 0.98) 100%
+      );
+      position: relative;
+      box-sizing: border-box;
+    }
+
+    /* Scanline overlay for entire campaign screens */
+    .campaign-page::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 245, 255, 0.012) 2px,
+        rgba(0, 245, 255, 0.012) 4px
+      );
+      z-index: 1000;
+    }
+
+    /* ========================================
        GLOBAL NAVIGATION BAR
+       Joint header with tabs left, status right
        ======================================== */
 
     .global-nav {
       position: relative;
       display: flex;
       align-items: center;
-      justify-content: center;
+      justify-content: space-between;
       padding: 0 24px;
       height: 56px;
       background: linear-gradient(
@@ -114,6 +159,7 @@ export function getNavBarStyles(): string {
       z-index: 100;
     }
 
+    /* Top accent line */
     .global-nav::before {
       content: '';
       position: absolute;
@@ -148,7 +194,7 @@ export function getNavBarStyles(): string {
     }
 
     /* ========================================
-       NAVIGATION TABS
+       NAVIGATION TABS (Left side)
        ======================================== */
 
     .nav-tabs {
@@ -163,7 +209,7 @@ export function getNavBarStyles(): string {
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 0 20px;
+      padding: 0 24px;
       height: 100%;
       background: transparent;
       border: none;
@@ -208,12 +254,14 @@ export function getNavBarStyles(): string {
     }
 
     .nav-tab-icon {
-      font-size: 0.9rem;
+      font-size: 1rem;
       opacity: 0.7;
+      transition: all 0.2s ease;
     }
 
     .nav-tab.active .nav-tab-icon {
       opacity: 1;
+      text-shadow: 0 0 8px ${colors.primaryGlow};
     }
 
     .nav-tab-label {
@@ -221,33 +269,27 @@ export function getNavBarStyles(): string {
     }
 
     /* ========================================
-       SCREEN STATUS DISPLAY (Sector + Credits)
-       Positioned inline with nav bar on the right
+       STATUS DISPLAY (Right side - integrated)
        ======================================== */
 
-    .screen-status {
-      position: fixed;
-      top: 0;
-      right: 24px;
-      height: 56px;
+    .nav-status {
       display: flex;
-      flex-direction: row;
       align-items: center;
-      gap: 20px;
-      z-index: 101;
+      gap: 24px;
+      z-index: 1;
     }
 
-    .status-item {
+    .nav-status-item {
       display: flex;
-      flex-direction: row;
       align-items: center;
-      gap: 6px;
-      padding: 0;
-      background: transparent;
-      border: none;
+      gap: 8px;
+      padding: 6px 12px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
     }
 
-    .status-label {
+    .nav-status-label {
       font-family: ${fonts.ui};
       font-size: 0.55rem;
       font-weight: 600;
@@ -256,7 +298,7 @@ export function getNavBarStyles(): string {
       text-transform: uppercase;
     }
 
-    .status-value {
+    .nav-status-value {
       font-family: ${fonts.display};
       font-size: 1rem;
       font-weight: 600;
@@ -264,7 +306,7 @@ export function getNavBarStyles(): string {
       letter-spacing: 0.05em;
     }
 
-    .credits-amount {
+    .nav-credits {
       color: ${colors.primary};
       text-shadow: 0 0 8px ${colors.primaryGlow};
     }
@@ -279,7 +321,7 @@ export function getNavBarStyles(): string {
       }
 
       .nav-tab {
-        padding: 0 12px;
+        padding: 0 14px;
       }
 
       .nav-tab-label {
@@ -291,7 +333,12 @@ export function getNavBarStyles(): string {
       }
 
       .nav-status {
-        gap: 16px;
+        gap: 12px;
+      }
+
+      .nav-status-item {
+        padding: 4px 8px;
+        clip-path: none;
       }
     }
   `;

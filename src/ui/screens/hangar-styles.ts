@@ -44,18 +44,6 @@ export function getHangarStyles(): string {
       min-width: 0;
     }
 
-    .hangar-viewer-placeholder {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 1px dashed ${colors.border};
-      color: ${colors.textDim};
-      font-family: ${fonts.ui};
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
     .hangar-ships {
       display: flex;
       flex-direction: column;
@@ -67,10 +55,6 @@ export function getHangarStyles(): string {
     @media (max-width: 1000px) {
       .hangar-layout {
         grid-template-columns: 1fr;
-      }
-
-      .hangar-viewer-placeholder {
-        display: none;
       }
     }
 

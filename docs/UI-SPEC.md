@@ -403,36 +403,72 @@ The contracts screen uses a **two-click selection process** to prevent accidenta
 ## Screen: Results
 
 ### Purpose
-Post-mission debrief showing combat statistics and salvage collected.
+Post-mission debrief showing combat statistics and rewards collected. Styled consistently with Hangar/Roster/Store/Contracts screens.
+
+### Layout Structure
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│  [DEBRIEF]  [REWARDS]                              SECTOR 1   5000cr  │
+├──────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  [Scrollable Content Area]                                           │
+│                                                                      │
+│  Debrief tab:                                                        │
+│    - Mission duration header                                         │
+│    - Pilot cards in 2-column responsive grid                         │
+│                                                                      │
+│  Rewards tab:                                                        │
+│    - VICTORY/DEFEAT title banner                                     │
+│    - Contract reward line item                                       │
+│    - Salvage subsections (scrap, weapons, ammo)                      │
+│                                                                      │
+├──────────────────────────────────────────────────────────────────────┤
+│                     [RETURN TO HANGAR]                               │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+### Layout Requirements
+- **Max-width**: 1200px centered (same as Roster/Store)
+- **Tab Bar**: Results-specific tabs (Debrief/Rewards), not main navigation
+- **Status Display**: Sector/credits in top-right (read-only, no navigation)
+- **Scrollable Content**: Content pane scrolls, NOT the whole screen
+- **Fixed Button**: Continue button anchored at bottom of screen
+- **Height**: Full viewport minus tab bar height
 
 ### Data Displayed
-- **Result Title** - "VICTORY" (green) or "DEFEAT" (red)
-- **Mission Summary**:
-  - Mission name
-  - Credits earned (mission reward)
-  - Total credits
-  - Ships remaining
-  - Missions completed
+- **Tab Bar**: Debrief and Rewards tabs (active tab highlighted)
+- **Status**: Current sector and total credits (top-right)
 - **Tab: Debrief** - Combat statistics per pilot:
-  - Pilot cards showing kills, assists, damage dealt/received
-  - Weapon accuracy breakdown
-  - Time survived (if killed)
-- **Tab: Salvage** - Items collected:
-  - Scrap by ship class
-  - Weapons recovered
-  - Ammo recovered
-  - Estimated total value
+  - Mission duration header
+  - Pilot cards in responsive 2-column grid (max-width per card ~450px)
+  - Each card shows: callsign, archetype, KIA/Survived status
+  - Stats: kills, assists, damage dealt, hull remaining
+  - Weapon breakdown table with accuracy stats
+- **Tab: Rewards** - Mission outcome and items collected:
+  - Victory/Defeat title banner (styled like result-title)
+  - Contract reward section (mission name + credits earned)
+  - Salvage subsection:
+    - Scrap by ship class
+    - Weapons recovered
+    - Ammo recovered
+    - Estimated total value
 
 ### User Interactions
 | Action | Trigger | Result |
 |--------|---------|--------|
-| Switch tab | Click "Debrief" or "Salvage" | Shows selected content |
+| Switch tab | Click "Debrief" or "Rewards" | Shows selected content |
 | Continue | Click "Return to Hangar" / "Continue" | Returns to Hangar |
 
 ### States
 - **Victory** - Shows mission reward, button says "Return to Hangar"
-- **Defeat** - No reward, button says "Continue"
+- **Defeat** - No reward shown, button says "Continue"
 - **No Salvage** - Shows "No salvage collected" message
+
+### Style Notes
+- Tab bar styled similarly to nav-bar (amber/cyan theme)
+- Pilot cards have colored top border (player=amber, wingman=cyan, KIA=red)
+- Content area has panel background with scanline effect
+- Status display matches nav-bar status styling
 
 ---
 

@@ -226,8 +226,10 @@ function renderPilotCard(pilot: PilotDebriefData): string {
       ? `<span class="time-of-death">@ ${formatTime(pilot.timeOfDeath)}</span>`
       : '';
 
+  const kiaClass = pilot.isKIA ? 'kia' : '';
+
   return `
-    <div class="pilot-card ${pilot.isPlayer ? 'player' : 'wingman'}">
+    <div class="pilot-card ${pilot.isPlayer ? 'player' : 'wingman'} ${kiaClass}">
       <div class="pilot-header">
         <div class="pilot-info">
           <span class="callsign">${pilot.callsign}</span>

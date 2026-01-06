@@ -7,48 +7,7 @@ import { colors, fonts } from '../common/theme';
 export function getSalvageStyles(): string {
   return `
     /* ========================================
-       SALVAGE SECTION (Results Screen)
-       ======================================== */
-
-    .salvage-section {
-      padding: 0;
-    }
-
-    .salvage-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 14px 16px;
-      background: rgba(0, 245, 255, 0.05);
-      border: 1px solid ${colors.secondary};
-      margin-bottom: 16px;
-    }
-
-    .salvage-header h2 {
-      font-family: ${fonts.ui};
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: ${colors.secondary};
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      margin: 0;
-    }
-
-    .salvage-value {
-      font-family: ${fonts.display};
-      font-size: 1rem;
-      font-weight: 600;
-      color: ${colors.success};
-    }
-
-    .salvage-value::before {
-      content: '≈ ◈ ';
-      font-size: 0.8em;
-      opacity: 0.8;
-    }
-
-    /* ========================================
-       SALVAGE CATEGORIES
+       SALVAGE CATEGORIES (Results Screen)
        ======================================== */
 
     .salvage-items {

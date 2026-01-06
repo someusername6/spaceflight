@@ -11,7 +11,6 @@ import {
   bindNavBar,
   type NavDestination,
   renderNavBar,
-  renderStatusDisplay,
 } from '../common/nav-bar';
 import {
   bindTooltip,
@@ -161,9 +160,9 @@ function renderHangar(
     : `<div class="hangar-details-placeholder" aria-hidden="true"></div>`;
 
   return `
-    ${navBar}
-    ${renderStatusDisplay(state.credits, state.currentSector)}
-    <main class="hangar-screen" aria-label="Hangar - Ship management">
+    <div class="campaign-page">
+      ${navBar}
+      <main class="hangar-screen" aria-label="Hangar - Ship management">
       <div class="hangar-layout">
         <!-- Left Column: Ships List -->
         <aside class="hangar-ships" aria-label="Squadron ships">
@@ -184,6 +183,7 @@ function renderHangar(
         ${rightColumn}
       </div>
     </main>
+    </div>
   `;
 }
 

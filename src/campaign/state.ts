@@ -111,7 +111,7 @@ export function createNewCampaign(): CampaignState {
     storedHulls: [], // No spare hulls at start
     storedWeapons: [],
     storedAmmo: [], // No spare ammo at start
-    storedScrap: { striker: 500 }, // Testing: 500 striker scrap
+    storedScrap: {}, // No scrap at start
     storeStock: createInitialStoreStock(),
     currentSector: 1,
     completedContracts: [],
