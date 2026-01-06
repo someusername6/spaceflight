@@ -38,25 +38,28 @@ export function generateContracts(_sector: number): Contract[] {
       description: 'Clear hostiles from the shipping lanes.',
       difficulty: 'easy',
       waves: [
-        { enemies: [{ archetype: 'dragonfly', skill: 'green', count: 2 }] },
         {
           enemies: [{ archetype: 'dragonfly', skill: 'green', count: 2 }],
-          delay: 10,
+          delay: [5, 10],
+        },
+        {
+          enemies: [{ archetype: 'dragonfly', skill: 'green', count: 2 }],
+          delay: [8, 12],
         },
         {
           enemies: [{ archetype: 'dragonfly', skill: 'green', count: 1 }],
-          delay: 10,
+          delay: [8, 12],
         },
         {
           enemies: [{ archetype: 'firefly', skill: 'green', count: 1 }],
-          delay: 10,
+          delay: [8, 12],
         },
         {
           enemies: [
             { archetype: 'dragonfly', skill: 'green', count: 1 },
             { archetype: 'firefly', skill: 'green', count: 1 },
           ],
-          delay: 10,
+          delay: [8, 12],
         },
       ],
       reward: 200,
@@ -67,28 +70,31 @@ export function generateContracts(_sector: number): Contract[] {
       description: 'Defend cargo ships against raider attack.',
       difficulty: 'medium',
       waves: [
-        { enemies: [{ archetype: 'dragonfly', skill: 'rookie', count: 2 }] },
         {
           enemies: [{ archetype: 'dragonfly', skill: 'rookie', count: 2 }],
-          delay: 10,
+          delay: [5, 10],
+        },
+        {
+          enemies: [{ archetype: 'dragonfly', skill: 'rookie', count: 2 }],
+          delay: [8, 12],
         },
         {
           enemies: [{ archetype: 'dragonfly', skill: 'rookie', count: 1 }],
-          delay: 10,
+          delay: [8, 12],
         },
         {
           enemies: [
             { archetype: 'dragonfly', skill: 'rookie', count: 1 },
             { archetype: 'firefly', skill: 'rookie', count: 1 },
           ],
-          delay: 10,
+          delay: [8, 12],
         },
         {
           enemies: [
             { archetype: 'dragonfly', skill: 'rookie', count: 1 },
             { archetype: 'firefly', skill: 'rookie', count: 1 },
           ],
-          delay: 10,
+          delay: [8, 12],
         },
       ],
       reward: 350,
@@ -99,28 +105,31 @@ export function generateContracts(_sector: number): Contract[] {
       description: 'Eliminate enemy patrol. Expect heavy resistance.',
       difficulty: 'hard',
       waves: [
-        { enemies: [{ archetype: 'dragonfly', skill: 'rookie', count: 2 }] },
+        {
+          enemies: [{ archetype: 'dragonfly', skill: 'rookie', count: 2 }],
+          delay: [5, 10],
+        },
         {
           enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 2 }],
-          delay: 10,
+          delay: [8, 12],
         },
         {
           enemies: [{ archetype: 'dragonfly', skill: 'rookie', count: 2 }],
-          delay: 10,
+          delay: [8, 12],
         },
         {
           enemies: [
             { archetype: 'dragonfly', skill: 'rookie', count: 1 },
             { archetype: 'firefly', skill: 'regular', count: 1 },
           ],
-          delay: 10,
+          delay: [8, 12],
         },
         {
           enemies: [
             { archetype: 'dragonfly', skill: 'regular', count: 1 },
             { archetype: 'firefly', skill: 'regular', count: 1 },
           ],
-          delay: 10,
+          delay: [8, 12],
         },
       ],
       reward: 600,
