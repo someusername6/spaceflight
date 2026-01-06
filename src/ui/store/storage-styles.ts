@@ -1,0 +1,118 @@
+/**
+ * Store Storage Panel Styles - Styles for the storage panel in the store screen
+ */
+
+import { colors, fonts } from '../common/theme';
+
+export function getStoreStorageStyles(): string {
+  return `
+    /* ========================================
+       STORAGE PANEL (Right Column)
+       ======================================== */
+
+    .store-storage {
+      background: ${colors.bgPanel};
+      border: 1px solid ${colors.border};
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .storage-header {
+      font-family: ${fonts.ui};
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: ${colors.primary};
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 12px 14px;
+      background: rgba(255, 159, 28, 0.08);
+      border-bottom: 1px solid ${colors.border};
+      flex-shrink: 0;
+    }
+
+    .storage-content {
+      flex: 1;
+      overflow-y: auto;
+      min-height: 0;
+    }
+
+    .storage-content::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .storage-content::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .storage-content::-webkit-scrollbar-thumb {
+      background: ${colors.borderLight};
+      border-radius: 3px;
+    }
+
+    .storage-section {
+      padding: 12px 14px;
+      border-bottom: 1px solid ${colors.border};
+    }
+
+    .storage-section:last-child {
+      border-bottom: none;
+    }
+
+    .storage-label {
+      font-family: ${fonts.ui};
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: ${colors.secondary};
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+
+    .storage-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      background: rgba(0, 0, 0, 0.2);
+      margin-bottom: 4px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      border: 1px solid ${colors.border};
+      border-color: transparent;
+      transition: background 0.15s ease, border-color 0.15s ease;
+      box-sizing: border-box;
+    }
+
+    .storage-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .storage-item:hover {
+      background: rgba(0, 245, 255, 0.08);
+      border-color: ${colors.border};
+    }
+
+    .storage-item.selected {
+      background: rgba(255, 159, 28, 0.12);
+      border-color: ${colors.primary};
+    }
+
+    .storage-item .item-name {
+      color: ${colors.textPrimary};
+      text-transform: capitalize;
+    }
+
+    .storage-item .item-count,
+    .storage-item .item-detail {
+      color: ${colors.textSecondary};
+      font-size: 0.75rem;
+    }
+
+    .storage-empty {
+      min-height: 150px;
+      margin: 14px;
+    }
+  `;
+}

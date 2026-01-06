@@ -13,7 +13,7 @@ import {
   stopGame,
 } from '../game';
 import { finalizeMatchStats } from '../systems/stats';
-import { endMission, updateCampaignState } from '../ui/screens';
+import { endMission, updateCampaignState } from '../ui/common/screens';
 import type { CampaignController } from './controller-types';
 import type { MissionEndState, WaveState } from './mission-waves';
 import { MISSION_END_DELAY, spawnWave } from './mission-waves';

@@ -5,10 +5,6 @@
  */
 
 import type { World } from '../core/types';
-import type { NavDestination } from '../ui/hangar';
-import { createHangarUI } from '../ui/hangar';
-import { createGameOverUI, createResultsUI } from '../ui/results';
-import { createRosterUI } from '../ui/roster';
 import {
   getScreenElement,
   goToContracts,
@@ -18,8 +14,12 @@ import {
   goToStore,
   Screen,
   updateCampaignState,
-} from '../ui/screens';
-import { createStoreUI } from '../ui/store';
+} from '../ui/common/screens';
+import type { NavDestination } from '../ui/screens/hangar';
+import { createHangarUI } from '../ui/screens/hangar';
+import { createGameOverUI, createResultsUI } from '../ui/screens/results';
+import { createRosterUI } from '../ui/screens/roster';
+import { createStoreUI } from '../ui/store/store';
 import type { CampaignController } from './controller';
 import type { SalvageResult } from './salvage';
 import { createNewCampaign } from './state';

@@ -7,7 +7,6 @@ import { Vector3 } from 'three';
 import { createGame, startGame } from '../game';
 import { initInput } from '../systems/input';
 import { initMatchStats } from '../systems/stats';
-import { createContractsUI } from '../ui/contracts';
 import {
   createScreenManager,
   getScreenElement,
@@ -17,8 +16,9 @@ import {
   Screen,
   setMissionContainer,
   startMission,
-} from '../ui/screens';
-import { injectCampaignStyles } from '../ui/styles';
+} from '../ui/common/screens';
+import { injectCampaignStyles } from '../ui/common/styles';
+import { createContractsUI } from '../ui/screens/contracts';
 import type { CampaignController } from './controller-types';
 import {
   createMissionEndCallback,

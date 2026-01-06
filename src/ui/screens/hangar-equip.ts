@@ -1,0 +1,365 @@
+/**
+ * Hangar Equip/Unequip UI - Weapon picker dropdown for hardpoint slots
+ */
+
+import {
+  equipPrimary,
+  equipSecondary,
+  swapPilotToHull,
+  unassignPilot,
+  unequipPrimary,
+  unequipSecondary,
+} from '../../campaign/loadout';
+import { getMaxMissileCapacity } from '../../campaign/store-ammo';
+import type { CampaignState } from '../../campaign/types';
+import { SHIP_CLASSES } from '../../data/ships';
+import { hideTooltip } from '../common/tooltip';
+import { getMissileAbbrev, getWeaponAbbrev } from '../ship/viewer';
+
+/** Active picker state */
+let activePicker: HTMLElement | null = null;
+
+/** Grouped weapon for display */
+interface GroupedWeapon {
+  weaponType: string;
+  category: 'primary' | 'secondary';
+  totalCount: number;
+  firstIndex: number; // Index of first matching weapon in storage
+}
+
+/** Close any open weapon picker */
+export function closeWeaponPicker(): void {
+  if (activePicker) {
+    activePicker.remove();
+    activePicker = null;
+  }
+}
+
+/** Handle unequipping a weapon from a slot */
+export function handleUnequip(
+  state: CampaignState,
+  shipId: string,
+  slotType: 'primary' | 'secondary',
+  slotIndex: number,
+  onStateUpdate: (newState: CampaignState) => void,
+): void {
+  const newState =
+    slotType === 'primary'
+      ? unequipPrimary(state, shipId, slotIndex)
+      : unequipSecondary(state, shipId, slotIndex);
+
+  if (newState !== state) {
+    onStateUpdate(newState);
+  }
+}
+
+/** Get the bank size for a slot on a ship */
+function getBankSize(
+  state: CampaignState,
+  shipId: string,
+  slotType: 'primary' | 'secondary',
+  slotIndex: number,
+): number {
+  const ship = state.ships.find((s) => s.id === shipId);
+  if (!ship) return 1;
+
+  const stats = SHIP_CLASSES[ship.shipClass];
+  if (!stats) return 1;
+
+  const banks =
+    slotType === 'primary' ? stats.primaryBanks : stats.secondaryBanks;
+  return banks[slotIndex] ?? 1;
+}
+
+/** Get available weapons grouped by type */
+function getGroupedWeapons(
+  state: CampaignState,
+  slotType: 'primary' | 'secondary',
+): GroupedWeapon[] {
+  const groups = new Map<string, GroupedWeapon>();
+
+  state.storedWeapons.forEach((weapon, index) => {
+    if (weapon.category !== slotType) return;
+
+    const existing = groups.get(weapon.weaponType);
+    if (existing) {
+      existing.totalCount += weapon.count;
+    } else {
+      groups.set(weapon.weaponType, {
+        weaponType: weapon.weaponType,
+        category: slotType,
+        totalCount: weapon.count,
+        firstIndex: index,
+      });
+    }
+  });
+
+  return Array.from(groups.values());
+}
+
+/** Render primary weapon picker content (simple click to equip) */
+function renderPrimaryPickerContent(weapons: GroupedWeapon[]): string {
+  if (weapons.length === 0) {
+    return '<div class="picker-empty">No primary weapons in storage</div>';
+  }
+
+  return weapons
+    .map((w) => {
+      const abbrev = getWeaponAbbrev(w.weaponType);
+      return `
+        <button class="picker-item" data-weapon-type="${w.weaponType}">
+          <span class="picker-abbrev">${abbrev}</span>
+          <span class="picker-name">${w.weaponType}</span>
+          <span class="picker-stock">×${w.totalCount}</span>
+        </button>
+      `;
+    })
+    .join('');
+}
+
+/** Render secondary weapon picker content (with quantity selector) */
+function renderSecondaryPickerContent(
+  weapons: GroupedWeapon[],
+  bankSize: number,
+): string {
+  if (weapons.length === 0) {
+    return '<div class="picker-empty">No missiles in storage</div>';
+  }
+
+  return weapons
+    .map((w) => {
+      const abbrev = getMissileAbbrev(w.weaponType);
+      const maxCapacity = getMaxMissileCapacity(w.weaponType, bankSize);
+      const maxLoadable = Math.min(w.totalCount, maxCapacity);
+      return `
+        <div class="picker-missile-row" data-weapon-type="${w.weaponType}">
+          <div class="picker-missile-info">
+            <span class="picker-abbrev">${abbrev}</span>
+            <span class="picker-name">${w.weaponType}</span>
+            <span class="picker-storage">×${w.totalCount}</span>
+          </div>
+          <div class="picker-quantity">
+            <button class="picker-qty-btn" data-action="dec">−</button>
+            <span class="picker-qty-value" data-max="${maxLoadable}">${maxLoadable}</span>
+            <button class="picker-qty-btn" data-action="inc">+</button>
+            <button class="picker-equip-btn">Equip</button>
+          </div>
+        </div>
+      `;
+    })
+    .join('');
+}
+
+/** Find first storage index for a weapon type */
+function findWeaponIndex(state: CampaignState, weaponType: string): number {
+  return state.storedWeapons.findIndex((w) => w.weaponType === weaponType);
+}
+
+/** Show weapon picker dropdown for an empty slot */
+export function showWeaponPicker(
+  slotElement: HTMLElement,
+  state: CampaignState,
+  shipId: string,
+  slotType: 'primary' | 'secondary',
+  slotIndex: number,
+  onStateUpdate: (newState: CampaignState) => void,
+  onRerender: () => void,
+): void {
+  // Close any existing picker
+  closeWeaponPicker();
+  hideTooltip();
+
+  const grouped = getGroupedWeapons(state, slotType);
+  const bankSize = getBankSize(state, shipId, slotType, slotIndex);
+
+  // Create picker element
+  const picker = document.createElement('div');
+  picker.className = `weapon-picker ${slotType === 'secondary' ? 'missile-picker' : ''}`;
+
+  const content =
+    slotType === 'primary'
+      ? renderPrimaryPickerContent(grouped)
+      : renderSecondaryPickerContent(grouped, bankSize);
+
+  picker.innerHTML = `
+    <div class="picker-header">
+      Select ${slotType === 'primary' ? 'Weapon' : 'Missile'}
+      <button class="picker-close">✕</button>
+    </div>
+    <div class="picker-content">
+      ${content}
+    </div>
+  `;
+
+  // Position relative to slot
+  const rect = slotElement.getBoundingClientRect();
+  picker.style.position = 'fixed';
+  picker.style.left = `${rect.left}px`;
+  picker.style.top = `${rect.bottom + 4}px`;
+  picker.style.zIndex = '1000';
+
+  document.body.appendChild(picker);
+  activePicker = picker;
+
+  // Bind close button
+  picker.querySelector('.picker-close')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeWeaponPicker();
+  });
+
+  if (slotType === 'primary') {
+    // Primary: simple click to equip
+    bindPrimaryPickerEvents(
+      picker,
+      state,
+      shipId,
+      bankSize,
+      onStateUpdate,
+      onRerender,
+    );
+  } else {
+    // Secondary: quantity selector
+    bindSecondaryPickerEvents(
+      picker,
+      state,
+      shipId,
+      bankSize,
+      onStateUpdate,
+      onRerender,
+    );
+  }
+
+  // Close on click outside
+  const closeOnOutsideClick = (e: MouseEvent) => {
+    if (!picker.contains(e.target as Node)) {
+      closeWeaponPicker();
+      document.removeEventListener('click', closeOnOutsideClick);
+    }
+  };
+  setTimeout(() => {
+    document.addEventListener('click', closeOnOutsideClick);
+  }, 0);
+}
+
+/** Bind events for primary weapon picker */
+function bindPrimaryPickerEvents(
+  picker: HTMLElement,
+  state: CampaignState,
+  shipId: string,
+  bankSize: number,
+  onStateUpdate: (newState: CampaignState) => void,
+  onRerender: () => void,
+): void {
+  picker.querySelectorAll('.picker-item').forEach((item) => {
+    item.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const target = e.currentTarget as HTMLElement;
+      const weaponType = target.dataset.weaponType;
+      if (!weaponType) return;
+
+      const storageIndex = findWeaponIndex(state, weaponType);
+      if (storageIndex < 0) return;
+
+      const newState = equipPrimary(state, shipId, storageIndex, bankSize);
+      if (newState !== state) {
+        onStateUpdate(newState);
+      }
+      closeWeaponPicker();
+      onRerender();
+    });
+  });
+}
+
+/** Bind events for secondary weapon picker (with quantity) */
+function bindSecondaryPickerEvents(
+  picker: HTMLElement,
+  state: CampaignState,
+  shipId: string,
+  bankSize: number,
+  onStateUpdate: (newState: CampaignState) => void,
+  onRerender: () => void,
+): void {
+  // Quantity +/- buttons
+  picker.querySelectorAll('.picker-qty-btn').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const target = e.currentTarget as HTMLElement;
+      const action = target.dataset.action;
+      const row = target.closest('.picker-missile-row');
+      const valueEl = row?.querySelector('.picker-qty-value') as HTMLElement;
+      if (!valueEl) return;
+
+      const max = Number.parseInt(valueEl.dataset.max ?? '1', 10);
+      let current = Number.parseInt(valueEl.textContent ?? '1', 10);
+
+      if (action === 'inc' && current < max) {
+        current++;
+      } else if (action === 'dec' && current > 1) {
+        current--;
+      }
+      valueEl.textContent = String(current);
+    });
+  });
+
+  // Equip buttons
+  picker.querySelectorAll('.picker-equip-btn').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const row = (e.currentTarget as HTMLElement).closest(
+        '.picker-missile-row',
+      );
+      if (!row) return;
+
+      const weaponType = (row as HTMLElement).dataset.weaponType;
+      const valueEl = row.querySelector('.picker-qty-value');
+      const count = Number.parseInt(valueEl?.textContent ?? '1', 10);
+
+      if (!weaponType) return;
+
+      const storageIndex = findWeaponIndex(state, weaponType);
+      if (storageIndex < 0) return;
+
+      const newState = equipSecondary(
+        state,
+        shipId,
+        storageIndex,
+        bankSize,
+        count,
+      );
+      if (newState !== state) {
+        onStateUpdate(newState);
+      }
+      closeWeaponPicker();
+      onRerender();
+    });
+  });
+}
+
+/** Handle swapping pilot to a different hull */
+export function handleSwapHull(
+  state: CampaignState,
+  shipId: string,
+  hullIndex: number,
+  onStateUpdate: (newState: CampaignState) => void,
+): boolean {
+  const newState = swapPilotToHull(state, shipId, hullIndex);
+  if (newState !== state) {
+    onStateUpdate(newState);
+    return true;
+  }
+  return false;
+}
+
+/** Handle unassigning a pilot from a wingman ship */
+export function handleUnassignPilot(
+  state: CampaignState,
+  shipId: string,
+  onStateUpdate: (newState: CampaignState) => void,
+): boolean {
+  const newState = unassignPilot(state, shipId);
+  if (newState !== state) {
+    onStateUpdate(newState);
+    return true;
+  }
+  return false;
+}
