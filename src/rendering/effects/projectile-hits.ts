@@ -13,6 +13,12 @@ import type { World } from '../../core/types';
 /** Effect duration in seconds */
 const HIT_DURATION = 0.25;
 
+/**
+ * Interval for beam hit effects - ensures ~2.5 concurrent effects for
+ * continuous visual feedback during sustained beam fire.
+ */
+export const BEAM_HIT_INTERVAL = HIT_DURATION * 0.4;
+
 /** Particles per hit effect */
 const PARTICLES_PER_HIT = 12;
 
@@ -83,8 +89,15 @@ function createHitEffect(
   position: THREE.Vector3,
   category: ProjectileCategory,
   gameTime: number,
+  customColor?: { r: number; g: number; b: number },
 ): HitEffect {
-  const colors = EFFECT_COLORS[category];
+  // Use custom color if provided (for beam weapons), otherwise use category default
+  const colors = customColor
+    ? {
+        flash: new THREE.Color(customColor.r, customColor.g, customColor.b),
+        particles: new THREE.Color(customColor.r, customColor.g, customColor.b),
+      }
+    : EFFECT_COLORS[category];
 
   // Flash sphere
   const flashMaterial = new THREE.MeshBasicMaterial({
@@ -159,6 +172,7 @@ export function updateProjectileHitRenderer(
       hitPosition,
       hit.category,
       gameTime,
+      hit.color,
     );
     renderer.effects.push(effect);
   }

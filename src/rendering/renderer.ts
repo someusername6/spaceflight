@@ -8,6 +8,12 @@ import type { Missile } from '../components/missile';
 import type { Transform } from '../components/transform';
 import { getComponent, hasComponent, isShip, queryEntities } from '../core/ecs';
 import type { Entity, World } from '../core/types';
+import {
+  type BeamLineEntry,
+  disposeBeamLine,
+  setBeamResolution,
+  updateAllBeamLines,
+} from './beam-lines';
 import { DUST_LAYER } from './effects/dust';
 import {
   createDecoyMesh,
@@ -19,16 +25,6 @@ import {
   generateSkyboxTexture,
   getSunDirectionFromSeed,
 } from './skybox/skybox';
-
-/** Beam fade-out duration in seconds */
-const BEAM_FADE_DURATION = 0.15;
-
-/** Beam line entry with cached entity ID to avoid parsing */
-interface BeamLineEntry {
-  line: THREE.Line;
-  entityId: Entity;
-  positions: Float32Array; // Reusable position buffer
-}
 
 /** Renderer state */
 export interface Renderer {
@@ -46,7 +42,6 @@ const cameraOffset = new THREE.Vector3();
 const cameraTiltAxis = new THREE.Vector3(1, 0, 0);
 const cameraTiltQuat = new THREE.Quaternion();
 const seenEntities = new Set<Entity>();
-const seenBeams = new Set<string>();
 
 /** Creates the renderer and attaches to container */
 export function createRenderer(container: HTMLElement, seed: number): Renderer {
@@ -84,11 +79,15 @@ export function createRenderer(container: HTMLElement, seed: number): Renderer {
   // Generate procedural skybox
   scene.background = generateSkyboxTexture(webglRenderer, { seed: skyboxSeed });
 
+  // Set initial beam resolution
+  setBeamResolution(container.clientWidth, container.clientHeight);
+
   // Handle resize (stored for cleanup)
   const resizeHandler = () => {
     camera.aspect = container.clientWidth / container.clientHeight;
     camera.updateProjectionMatrix();
     webglRenderer.setSize(container.clientWidth, container.clientHeight);
+    setBeamResolution(container.clientWidth, container.clientHeight);
   };
   window.addEventListener('resize', resizeHandler);
 
@@ -159,94 +158,7 @@ export function syncScene(renderer: Renderer, world: World): void {
   }
 
   // Update beam lines
-  updateBeamLines(world, scene, beamLines, world.systemState.gameTime);
-}
-
-/** Updates beam line visuals */
-function updateBeamLines(
-  world: World,
-  scene: THREE.Scene,
-  beamLines: Map<string, BeamLineEntry>,
-  gameTime: number,
-): void {
-  const activeBeams = world.systemState.beams.activeBeams;
-  // Clear reusable Set (avoid per-frame allocations)
-  seenBeams.clear();
-
-  // Process all beams (active and fading) - beam system manages positions
-  for (const [entity, beams] of activeBeams) {
-    for (const beam of beams) {
-      // Skip beams with no hitPoint (not yet fired)
-      if (!beam.hitPoint) continue;
-
-      // Skip fully faded beams
-      if (beam.fadeStartTime !== null) {
-        const fadeAge = gameTime - beam.fadeStartTime;
-        if (fadeAge >= BEAM_FADE_DURATION) continue;
-      }
-
-      const key = `${entity}-${beam.weaponIndex}`;
-      seenBeams.add(key);
-
-      let entry = beamLines.get(key);
-      if (!entry) {
-        // Create new beam line with reusable position buffer
-        const positions = new Float32Array(6); // 2 points * 3 components
-        const geometry = new THREE.BufferGeometry();
-        geometry.setAttribute(
-          'position',
-          new THREE.BufferAttribute(positions, 3),
-        );
-        const material = new THREE.LineBasicMaterial({
-          color: beam.color,
-          linewidth: 2 * (beam.beamWidth ?? 1),
-          transparent: true,
-          opacity: 0.8,
-        });
-        const line = new THREE.Line(geometry, material);
-        scene.add(line);
-        entry = { line, entityId: entity, positions };
-        beamLines.set(key, entry);
-      }
-
-      // Update position buffer from beam state (beam system manages positions)
-      const positions = entry.positions;
-      positions[0] = beam.origin.x;
-      positions[1] = beam.origin.y;
-      positions[2] = beam.origin.z;
-      positions[3] = beam.hitPoint.x;
-      positions[4] = beam.hitPoint.y;
-      positions[5] = beam.hitPoint.z;
-
-      // Mark buffer as needing update
-      const posAttr = entry.line.geometry.getAttribute('position');
-      if (posAttr) {
-        posAttr.needsUpdate = true;
-      }
-
-      // Calculate opacity based on fade state (read from beam)
-      let opacity = 0.8;
-      if (beam.fadeStartTime !== null) {
-        const fadeAge = gameTime - beam.fadeStartTime;
-        const fadeProgress = fadeAge / BEAM_FADE_DURATION;
-        opacity = 0.8 * (1 - fadeProgress);
-      }
-
-      entry.line.visible = true;
-      (entry.line.material as THREE.LineBasicMaterial).opacity = opacity;
-      (entry.line.material as THREE.LineBasicMaterial).color.copy(beam.color);
-    }
-  }
-
-  // Clean up beam lines for destroyed entities or fully faded beams
-  for (const [key, entry] of beamLines) {
-    if (!seenBeams.has(key)) {
-      scene.remove(entry.line);
-      entry.line.geometry.dispose();
-      (entry.line.material as THREE.Material).dispose();
-      beamLines.delete(key);
-    }
-  }
+  updateAllBeamLines(world, scene, beamLines, world.systemState.gameTime);
 }
 
 /** Renders the scene */
@@ -288,6 +200,12 @@ export function getScene(renderer: Renderer): THREE.Scene {
 export function disposeRenderer(renderer: Renderer): void {
   // Remove resize event listener
   window.removeEventListener('resize', renderer.resizeHandler);
+
+  // Dispose beam lines
+  for (const entry of renderer.beamLines.values()) {
+    disposeBeamLine(renderer.scene, entry);
+  }
+  renderer.beamLines.clear();
 
   renderer.webglRenderer.dispose();
   renderer.entityMeshes.clear();

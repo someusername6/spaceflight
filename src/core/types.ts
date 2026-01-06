@@ -53,6 +53,8 @@ export interface ActiveBeam {
   beamWidth?: number;
   /** When fadeout started (null = not fading, beam system manages this) */
   fadeStartTime: number | null;
+  /** Last time a hit effect was queued (for throttling continuous beams) */
+  lastHitEffectTime?: number;
 }
 
 /** System-specific state stored in World (not module-level) */
@@ -102,6 +104,8 @@ export interface SystemState {
       y: number;
       z: number;
       category: 'energy' | 'ballistic';
+      /** Optional RGB color override (for beam weapons) */
+      color?: { r: number; g: number; b: number };
     }>;
   };
   /** Object pool indices - reset each frame */

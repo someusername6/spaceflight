@@ -16,11 +16,21 @@ import {
   queryEntities,
 } from '../../core/ecs';
 import type { ActiveBeam, Entity, World } from '../../core/types';
+import { BEAM_HIT_INTERVAL } from '../../rendering/effects/projectile-hits';
 import { getForward } from '../physics';
 import { calculateBankOffset } from './weapon-spawning';
 
 /** Beam spawn offset from ship center (forward) */
 export const BEAM_SPAWN_OFFSET = 3;
+
+/** Check if a continuous beam should queue a hit effect (throttled) */
+export function shouldQueueBeamHit(
+  beam: ActiveBeam,
+  gameTime: number,
+): boolean {
+  const lastTime = beam.lastHitEffectTime ?? 0;
+  return gameTime - lastTime >= BEAM_HIT_INTERVAL;
+}
 
 /** Beam weapon info for pooling (avoid per-frame allocations) */
 export interface BeamWeaponInfo {
@@ -105,12 +115,12 @@ export function rayIntersectsSphere(
 
 // Cached beam colors (avoid per-frame allocation)
 const BEAM_COLORS: Record<string, THREE.Color> = {
-  'Red Laser': new THREE.Color(1, 0.2, 0.1),
-  'Green Laser': new THREE.Color(0.2, 1, 0.2),
-  'Blue Laser': new THREE.Color(0.2, 0.4, 1),
-  'Heavy Red Laser': new THREE.Color(1, 0.2, 0.1),
-  'Heavy Green Laser': new THREE.Color(0.2, 1, 0.2),
-  'Heavy Blue Laser': new THREE.Color(0.2, 0.4, 1),
+  'Red Laser': new THREE.Color(1, 0, 0),
+  'Green Laser': new THREE.Color(0, 1, 0),
+  'Blue Laser': new THREE.Color(0, 0, 1),
+  'Heavy Red Laser': new THREE.Color(1, 0, 0),
+  'Heavy Green Laser': new THREE.Color(0, 1, 0),
+  'Heavy Blue Laser': new THREE.Color(0, 0, 1),
   Lightning: new THREE.Color(0.6, 0.8, 1.0), // Electric blue-white
   'Nuclear Lance': new THREE.Color(1.0, 0.95, 0.8), // Bright white-gold
 };

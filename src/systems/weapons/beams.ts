@@ -38,6 +38,7 @@ import {
   getBeamColor,
   getBeamWeaponInfo,
   resetBeamWeaponPool,
+  shouldQueueBeamHit,
   updateFadingBeams,
 } from './beam-helpers';
 import { calculateBankOffset } from './weapon-spawning';
@@ -342,6 +343,21 @@ function fireBeam(
         damage = falloffDamage * dt;
       }
       dealDamage(world, hitResult.entity, damage, beam.hitPoint);
+
+      // Queue hit visual effect with beam color
+      // Throttle continuous beams to avoid spamming (pulse beams fire once per pulse)
+      const shouldQueueHit =
+        weapon.isPulseBeam || shouldQueueBeamHit(beam, gameTime);
+      if (shouldQueueHit) {
+        world.systemState.projectileHits.pending.push({
+          x: beam.hitPoint.x,
+          y: beam.hitPoint.y,
+          z: beam.hitPoint.z,
+          category: 'energy',
+          color: { r: beam.color.r, g: beam.color.g, b: beam.color.b },
+        });
+        beam.lastHitEffectTime = gameTime;
+      }
 
       // Track per-ship stats
       recordDamage(

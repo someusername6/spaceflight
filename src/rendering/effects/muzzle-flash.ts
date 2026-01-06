@@ -21,12 +21,12 @@ const FLASH_COLORS = {
   [Faction.Neutral]: new THREE.Color(1.0, 1.0, 0.3), // Yellow
 };
 
-/** Beam glow colors (match beam colors from beams.ts) */
+/** Beam glow colors (match beam colors from beam-helpers.ts) */
 const BEAM_GLOW_COLORS: Record<string, THREE.Color> = {
-  Red: new THREE.Color(1.0, 0.3, 0.2),
-  Green: new THREE.Color(0.3, 1.0, 0.3),
-  Blue: new THREE.Color(0.4, 0.5, 1.0),
-  Lightning: new THREE.Color(0.7, 0.85, 1.0), // Electric blue-white
+  Red: new THREE.Color(1, 0, 0),
+  Green: new THREE.Color(0, 1, 0),
+  Blue: new THREE.Color(0, 0, 1),
+  Lightning: new THREE.Color(0.6, 0.8, 1.0), // Electric blue-white
   Nuclear: new THREE.Color(1.0, 0.95, 0.8), // Bright white-gold
 };
 const DEFAULT_BEAM_GLOW = new THREE.Color(1.0, 1.0, 1.0);
