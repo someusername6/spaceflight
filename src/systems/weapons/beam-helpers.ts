@@ -8,9 +8,19 @@ import type { Collision } from '../../components/collision';
 import type { Health } from '../../components/health';
 import { isDead } from '../../components/health';
 import type { Transform } from '../../components/transform';
-import type { PrimaryWeapon } from '../../components/weapons';
-import { getComponent, hasComponent, queryEntities } from '../../core/ecs';
-import type { Entity, World } from '../../core/types';
+import type { PrimaryWeapon, PrimaryWeapons } from '../../components/weapons';
+import {
+  entityExists,
+  getComponent,
+  hasComponent,
+  queryEntities,
+} from '../../core/ecs';
+import type { ActiveBeam, Entity, World } from '../../core/types';
+import { getForward } from '../physics';
+import { calculateBankOffset } from './weapon-spawning';
+
+/** Beam spawn offset from ship center (forward) */
+export const BEAM_SPAWN_OFFSET = 3;
 
 /** Beam weapon info for pooling (avoid per-frame allocations) */
 export interface BeamWeaponInfo {
@@ -98,6 +108,9 @@ const BEAM_COLORS: Record<string, THREE.Color> = {
   'Red Laser': new THREE.Color(1, 0.2, 0.1),
   'Green Laser': new THREE.Color(0.2, 1, 0.2),
   'Blue Laser': new THREE.Color(0.2, 0.4, 1),
+  'Heavy Red Laser': new THREE.Color(1, 0.2, 0.1),
+  'Heavy Green Laser': new THREE.Color(0.2, 1, 0.2),
+  'Heavy Blue Laser': new THREE.Color(0.2, 0.4, 1),
   Lightning: new THREE.Color(0.6, 0.8, 1.0), // Electric blue-white
   'Nuclear Lance': new THREE.Color(1.0, 0.95, 0.8), // Bright white-gold
 };
@@ -188,4 +201,59 @@ export function findBeamHit(
     entity: closestHitResult.entity,
     distance: closestHitResult.distance,
   };
+}
+
+/** Update beam positions during fadeout so they follow ship orientation */
+export function updateFadingBeams(
+  world: World,
+  activeBeams: Map<Entity, ActiveBeam[]>,
+): void {
+  const gameTime = world.systemState.gameTime;
+
+  for (const [entity, beams] of activeBeams) {
+    // Get entity's current transform (if it still exists)
+    if (!entityExists(world, entity)) continue;
+    const transform = getComponent<Transform>(world, entity, 'transform');
+    if (!transform) continue;
+
+    const weapons = getComponent<PrimaryWeapons>(
+      world,
+      entity,
+      'primaryWeapons',
+    );
+    const totalBanks = weapons?.weapons.length ?? 1;
+
+    for (const beam of beams) {
+      if (beam.active) continue; // Active beams are already updated
+
+      // Start fadeout if just became inactive
+      if (beam.fadeStartTime === null) {
+        beam.fadeStartTime = gameTime;
+      }
+
+      // Calculate beam length BEFORE updating origin (need old positions)
+      let beamLength = 200; // Fallback length
+      if (beam.hitPoint) {
+        const len = beam.origin.distanceTo(beam.hitPoint);
+        if (len > 0) beamLength = len;
+      }
+
+      // Update beam position to follow ship orientation during fadeout
+      const origin = calculateBankOffset(
+        transform,
+        beam.weaponIndex,
+        totalBanks,
+        BEAM_SPAWN_OFFSET,
+      );
+      const forward = getForward(transform);
+
+      beam.origin.copy(origin);
+      beam.direction.copy(forward);
+
+      // Update hitPoint to extend forward using preserved beam length
+      if (beam.hitPoint) {
+        beam.hitPoint.copy(origin).addScaledVector(forward, beamLength);
+      }
+    }
+  }
 }

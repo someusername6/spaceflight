@@ -50,6 +50,9 @@ export interface ActiveBeam {
   isLance?: boolean;
   lanceFireTime?: number;
   weaponName?: string;
+  beamWidth?: number;
+  /** When fadeout started (null = not fading, beam system manages this) */
+  fadeStartTime: number | null;
 }
 
 /** System-specific state stored in World (not module-level) */

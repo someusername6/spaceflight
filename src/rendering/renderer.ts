@@ -6,13 +6,7 @@ import * as THREE from 'three';
 import { Faction, type FactionComponent } from '../components/faction';
 import type { Missile } from '../components/missile';
 import type { Transform } from '../components/transform';
-import {
-  entityExists,
-  getComponent,
-  hasComponent,
-  isShip,
-  queryEntities,
-} from '../core/ecs';
+import { getComponent, hasComponent, isShip, queryEntities } from '../core/ecs';
 import type { Entity, World } from '../core/types';
 import { DUST_LAYER } from './effects/dust';
 import {
@@ -34,7 +28,6 @@ interface BeamLineEntry {
   line: THREE.Line;
   entityId: Entity;
   positions: Float32Array; // Reusable position buffer
-  fadeStartTime: number | null; // When fade-out started (null = active)
 }
 
 /** Renderer state */
@@ -180,9 +173,17 @@ function updateBeamLines(
   // Clear reusable Set (avoid per-frame allocations)
   seenBeams.clear();
 
+  // Process all beams (active and fading) - beam system manages positions
   for (const [entity, beams] of activeBeams) {
     for (const beam of beams) {
-      if (!beam.active || !beam.hitPoint) continue;
+      // Skip beams with no hitPoint (not yet fired)
+      if (!beam.hitPoint) continue;
+
+      // Skip fully faded beams
+      if (beam.fadeStartTime !== null) {
+        const fadeAge = gameTime - beam.fadeStartTime;
+        if (fadeAge >= BEAM_FADE_DURATION) continue;
+      }
 
       const key = `${entity}-${beam.weaponIndex}`;
       seenBeams.add(key);
@@ -198,20 +199,17 @@ function updateBeamLines(
         );
         const material = new THREE.LineBasicMaterial({
           color: beam.color,
-          linewidth: 2,
+          linewidth: 2 * (beam.beamWidth ?? 1),
           transparent: true,
           opacity: 0.8,
         });
         const line = new THREE.Line(geometry, material);
         scene.add(line);
-        entry = { line, entityId: entity, positions, fadeStartTime: null };
+        entry = { line, entityId: entity, positions };
         beamLines.set(key, entry);
       }
 
-      // Beam is active - reset fade state
-      entry.fadeStartTime = null;
-
-      // Update position buffer in-place (no allocation)
+      // Update position buffer from beam state (beam system manages positions)
       const positions = entry.positions;
       positions[0] = beam.origin.x;
       positions[1] = beam.origin.y;
@@ -225,44 +223,28 @@ function updateBeamLines(
       if (posAttr) {
         posAttr.needsUpdate = true;
       }
-      entry.line.visible = true;
-      (entry.line.material as THREE.LineBasicMaterial).opacity = 0.8;
 
-      // Update color if changed
+      // Calculate opacity based on fade state (read from beam)
+      let opacity = 0.8;
+      if (beam.fadeStartTime !== null) {
+        const fadeAge = gameTime - beam.fadeStartTime;
+        const fadeProgress = fadeAge / BEAM_FADE_DURATION;
+        opacity = 0.8 * (1 - fadeProgress);
+      }
+
+      entry.line.visible = true;
+      (entry.line.material as THREE.LineBasicMaterial).opacity = opacity;
       (entry.line.material as THREE.LineBasicMaterial).color.copy(beam.color);
     }
   }
 
-  // Handle inactive beams (fade out) and clean up destroyed entities
+  // Clean up beam lines for destroyed entities or fully faded beams
   for (const [key, entry] of beamLines) {
     if (!seenBeams.has(key)) {
-      // Use cached entityId instead of parsing key
-      if (!entityExists(world, entry.entityId)) {
-        // Entity destroyed - remove beam line entirely
-        scene.remove(entry.line);
-        entry.line.geometry.dispose();
-        (entry.line.material as THREE.Material).dispose();
-        beamLines.delete(key);
-      } else {
-        // Entity exists but beam inactive - fade out
-        if (entry.fadeStartTime === null) {
-          // Start fading
-          entry.fadeStartTime = gameTime;
-        }
-
-        const fadeAge = gameTime - entry.fadeStartTime;
-        const fadeProgress = fadeAge / BEAM_FADE_DURATION;
-
-        if (fadeProgress >= 1) {
-          // Fade complete - hide
-          entry.line.visible = false;
-        } else {
-          // Still fading - update opacity
-          entry.line.visible = true;
-          (entry.line.material as THREE.LineBasicMaterial).opacity =
-            0.8 * (1 - fadeProgress);
-        }
-      }
+      scene.remove(entry.line);
+      entry.line.geometry.dispose();
+      (entry.line.material as THREE.Material).dispose();
+      beamLines.delete(key);
     }
   }
 }

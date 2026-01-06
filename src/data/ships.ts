@@ -110,9 +110,9 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     maxHeat: 90,
     coolingRate: 16,
     afterburnerHeatRate: 32,
-    primaryBanks: [1, 1, 2],
+    primaryBanks: [2, 2],
     secondaryBanks: [1, 2, 1],
-    primaryPositions: [20, 50, 80],
+    primaryPositions: [35, 65],
     secondaryPositions: [25, 50, 75],
   },
 

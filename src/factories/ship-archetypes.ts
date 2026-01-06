@@ -91,8 +91,7 @@ export const SHIP_ARCHETYPES: Record<string, ShipStats> = {
   // Interceptor: Balanced fighter - BALANCED focus
   interceptor: createArchetype('interceptor', {
     primaryWeapons: [
-      { name: 'plasma', size: 1 },
-      { name: 'plasma', size: 1 },
+      { name: 'greenLaser', size: 2 },
       { name: 'greenLaser', size: 2 },
     ],
     secondaryWeapons: [

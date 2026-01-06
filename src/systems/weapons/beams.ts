@@ -31,12 +31,14 @@ import {
   recordShotHit,
 } from '../stats';
 import {
+  BEAM_SPAWN_OFFSET,
   type BeamWeaponInfo,
   calculateFalloffDamage,
   findBeamHit,
   getBeamColor,
   getBeamWeaponInfo,
   resetBeamWeaponPool,
+  updateFadingBeams,
 } from './beam-helpers';
 import { calculateBankOffset } from './weapon-spawning';
 
@@ -134,6 +136,9 @@ export function beamSystem(world: World, dt: number): void {
       beamDirection,
     );
   }
+
+  // Update fading beams (positions follow ship during fadeout)
+  updateFadingBeams(world, activeBeams);
 }
 
 /** Fire beam weapons matching current link mode */
@@ -189,8 +194,8 @@ function fireBeamsByLinkMode(
   }
 }
 
-/** Beam spawn offset from ship center (forward) */
-const BEAM_SPAWN_OFFSET = 3;
+// Re-export BEAM_SPAWN_OFFSET for backward compatibility
+export { BEAM_SPAWN_OFFSET } from './beam-helpers';
 
 /** Fire a beam and process hits */
 function fireBeam(
@@ -241,7 +246,11 @@ function fireBeam(
       active: false,
       weaponIndex,
       weaponName: weapon.name,
+      fadeStartTime: null,
     };
+    if (weapon.beamWidth !== undefined) {
+      newBeam.beamWidth = weapon.beamWidth;
+    }
     if (isPulse) {
       newBeam.isPulseBeam = true;
       newBeam.lastPulseTime = 0;
@@ -257,6 +266,7 @@ function fireBeam(
   beam.origin.copy(rayOrigin);
   beam.direction.copy(rayDirection);
   beam.active = true;
+  beam.fadeStartTime = null; // Reset fade when beam becomes active
   beam.hitPoint = null;
   beam.color.copy(getBeamColor(weapon.name)); // Update color in case weapon changed
   beam.weaponName = weapon.name;

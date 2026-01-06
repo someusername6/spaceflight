@@ -34,6 +34,8 @@ export interface PrimaryWeapon {
   noFalloff?: boolean;
   /** Autoaim FOV in degrees - projectiles correct toward target within cone */
   autoaimFov?: number;
+  /** Beam width multiplier (default 1.0) */
+  beamWidth?: number;
 }
 
 /** Secondary weapon definition */

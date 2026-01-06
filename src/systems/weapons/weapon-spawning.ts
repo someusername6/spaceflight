@@ -49,7 +49,6 @@ const MISSILE_RADIUS = 1.0;
 // Reusable vectors (avoid per-spawn allocations)
 const spawnPos = new THREE.Vector3();
 const rightAxis = new THREE.Vector3();
-const tempForward = new THREE.Vector3();
 const downAxis = new THREE.Vector3();
 const toIntercept = new THREE.Vector3();
 
@@ -78,9 +77,8 @@ export function calculateBankOffset(
   // For single bank, no lateral offset
   if (totalBanks <= 1) return spawnPos;
 
-  // Calculate right axis (perpendicular to forward, in local XZ plane)
-  tempForward.copy(forward);
-  rightAxis.set(0, 1, 0).cross(tempForward).normalize();
+  // Calculate right axis from ship's local right (accounts for roll/pitch)
+  rightAxis.set(1, 0, 0).applyQuaternion(transform.rotation);
 
   // Distribute banks: 0=left, 1=right, 2=far-left, 3=far-right, etc.
   const pairIndex = Math.floor(bankIndex / 2);

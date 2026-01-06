@@ -45,26 +45,27 @@ const TICK_SEC = 1 / TICK_RATE;
  * 3. ai - AI decisions based on current state
  * 4. aimError - Update AI aim drift (before weapons fire)
  * 5. weapons - Handle firing, spawn projectiles/missiles
- * 6. beams - Handle continuous beam damage (after weapons, same frame)
- * 7. physics - Apply movement from input/AI
+ * 6. physics - Apply movement from input/AI (rotation must be applied before beams)
+ * 7. beams - Handle continuous beam damage (uses current frame's transform)
  * 8. projectiles - Move projectiles (separate from ship physics)
  * 9. missiles - Move missiles with tracking (after projectiles)
- * 10. collision - Detect collisions after movement
- * 11. damage - Apply damage from collisions/projectiles/missiles
- * 12. shields - Regenerate shields after damage delay
- * 13. heat - Cool down weapon heat
- * 14. cleanup - Remove dead entities, spawn explosions
- * 15. explosions - Update explosion effects
- * 16. mission - Check win/lose after cleanup
+ * 10. decoys - Move decoys, destroy missiles on contact
+ * 11. collision - Detect collisions after movement
+ * 12. damage - Apply damage from collisions/projectiles/missiles
+ * 13. shields - Regenerate shields after damage delay
+ * 14. heat - Cool down weapon heat
+ * 15. cleanup - Remove dead entities, spawn explosions
+ * 16. explosions - Update explosion effects
+ * 17. mission - Check win/lose after cleanup
  */
 const SYSTEM_ORDER: SystemFn[] = [
   inputSystem, // 1. Read player input
   targetingSystem, // 2. Process target selection
   aiSystem, // 3. AI decision making
   aimErrorSystem, // 4. Update aim drift
-  weaponSystem, // 5. Handle firing
-  beamSystem, // 6. Handle beam damage
-  physicsSystem, // 7. Apply movement
+  weaponSystem, // 5. Handle firing (projectiles)
+  physicsSystem, // 6. Apply movement (rotation must be applied before beams)
+  beamSystem, // 7. Handle beam damage (uses current frame's transform)
   projectileSystem, // 8. Move projectiles
   missileSystem, // 9. Move missiles with tracking (decoy seduction here)
   decoySystem, // 10. Move decoys, destroy missiles on contact
