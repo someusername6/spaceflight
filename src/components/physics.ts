@@ -33,6 +33,7 @@ export function createPhysics(params: {
   afterburnerMultiplier?: number;
   afterburnerHeatRate?: number;
   angularAcceleration?: number;
+  initialSpeed?: number;
 }): Physics {
   return {
     type: 'physics',
@@ -42,7 +43,7 @@ export function createPhysics(params: {
     drag: params.drag ?? 0.5,
     turnRate: params.turnRate ?? 100,
     rollRate: params.rollRate ?? 150,
-    currentSpeed: 0,
+    currentSpeed: params.initialSpeed ?? 0,
     afterburnerMultiplier: params.afterburnerMultiplier ?? 1.5,
     afterburnerHeatRate: params.afterburnerHeatRate ?? 50,
     isAfterburning: false,
@@ -50,4 +51,19 @@ export function createPhysics(params: {
     angularVelocity: new Vector3(),
     angularAcceleration: params.angularAcceleration ?? 800, // Reaches full turn in ~0.125s
   };
+}
+
+/** Initial spawn speed for all ships (m/s) */
+export const INITIAL_SPAWN_SPEED = 5;
+
+/** Set initial velocity based on transform rotation and speed */
+export function setInitialVelocity(
+  physics: Physics,
+  rotation: import('three').Quaternion,
+  speed: number,
+): void {
+  // Forward direction is -Z in local space
+  const forward = new Vector3(0, 0, -1).applyQuaternion(rotation);
+  physics.velocity.copy(forward).multiplyScalar(speed);
+  physics.currentSpeed = speed;
 }

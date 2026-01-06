@@ -4,19 +4,19 @@
 
 import { aiSystem } from '../../../src/systems/ai/ai.ts';
 import { aimErrorSystem } from '../../../src/systems/aim-error.ts';
-import { beamSystem } from '../../../src/systems/beams.ts';
 import { cleanupSystem } from '../../../src/systems/cleanup.ts';
 import { collisionSystem } from '../../../src/systems/collision.ts';
 import { damageSystem } from '../../../src/systems/damage.ts';
 import { decoySystem } from '../../../src/systems/decoys.ts';
 import { explosionSystem } from '../../../src/systems/explosions.ts';
 import { heatSystem } from '../../../src/systems/heat.ts';
-import { missileSystem } from '../../../src/systems/missiles.ts';
 import { physicsSystem } from '../../../src/systems/physics.ts';
-import { projectileSystem } from '../../../src/systems/projectiles.ts';
 import { shieldSystem } from '../../../src/systems/shields.ts';
 import { targetingSystem } from '../../../src/systems/targeting.ts';
-import { weaponSystem } from '../../../src/systems/weapons.ts';
+import { beamSystem } from '../../../src/systems/weapons/beams.ts';
+import { missileSystem } from '../../../src/systems/weapons/missiles.ts';
+import { projectileSystem } from '../../../src/systems/weapons/projectiles.ts';
+import { weaponSystem } from '../../../src/systems/weapons/weapons.ts';
 
 // ============================================================================
 // Constants

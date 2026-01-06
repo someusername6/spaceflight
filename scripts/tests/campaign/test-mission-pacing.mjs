@@ -12,7 +12,7 @@
  * - Player survival rate
  */
 
-import { generateContracts } from '../../../src/ui/contracts.ts';
+import { generateContracts } from '../../../src/ui/screens/contracts.ts';
 import { PLAYER_MODES, runScenario } from './mission-sim.mjs';
 
 // ============================================================================

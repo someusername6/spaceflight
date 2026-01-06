@@ -34,12 +34,12 @@ export interface ShipClassStats {
 export const SHIP_CLASSES: Record<string, ShipClassStats> = {
   // Patrol: Intro enemy craft
   patrol: {
-    hull: 40,
-    shields: 40,
+    hull: 44,
+    shields: 44,
     shieldRegen: 5,
     shieldDelay: 3,
-    maxSpeed: 180,
-    acceleration: 90,
+    maxSpeed: 90,
+    acceleration: 45,
     turnRate: 80,
     rollRate: 120,
     collisionRadius: 5,
@@ -52,12 +52,12 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
 
   // Scout: Fast and fragile - FRAGILE
   scout: {
-    hull: 50,
-    shields: 30,
+    hull: 55,
+    shields: 33,
     shieldRegen: 8,
     shieldDelay: 2,
-    maxSpeed: 300,
-    acceleration: 150,
+    maxSpeed: 150,
+    acceleration: 75,
     turnRate: 120,
     rollRate: 180,
     collisionRadius: 4,
@@ -70,12 +70,12 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
 
   // Interceptor: Quick dogfighter - BALANCED
   interceptor: {
-    hull: 80,
-    shields: 60,
+    hull: 88,
+    shields: 66,
     shieldRegen: 10,
     shieldDelay: 3,
-    maxSpeed: 250,
-    acceleration: 100,
+    maxSpeed: 125,
+    acceleration: 50,
     turnRate: 100,
     rollRate: 150,
     collisionRadius: 5,
@@ -88,12 +88,12 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
 
   // Striker: Heavy assault fighter - DURABLE
   striker: {
-    hull: 120,
-    shields: 80,
+    hull: 132,
+    shields: 88,
     shieldRegen: 12,
     shieldDelay: 3,
-    maxSpeed: 200,
-    acceleration: 80,
+    maxSpeed: 100,
+    acceleration: 40,
     turnRate: 80,
     rollRate: 120,
     collisionRadius: 6,
@@ -106,12 +106,12 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
 
   // Bomber: Slow, missile-focused - FRAGILE (relies on range)
   bomber: {
-    hull: 100,
-    shields: 70,
+    hull: 110,
+    shields: 77,
     shieldRegen: 10,
     shieldDelay: 3,
-    maxSpeed: 180,
-    acceleration: 70,
+    maxSpeed: 90,
+    acceleration: 35,
     turnRate: 75,
     rollRate: 110,
     collisionRadius: 7,
@@ -124,12 +124,12 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
 
   // Defender: Tanky shield boat - DURABLE
   defender: {
-    hull: 150,
-    shields: 120,
+    hull: 165,
+    shields: 132,
     shieldRegen: 18,
     shieldDelay: 2.5,
-    maxSpeed: 180,
-    acceleration: 70,
+    maxSpeed: 90,
+    acceleration: 35,
     turnRate: 70,
     rollRate: 100,
     collisionRadius: 7,
@@ -142,12 +142,12 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
 
   // Raider: Glass cannon - FRAGILE
   raider: {
-    hull: 60,
-    shields: 40,
+    hull: 66,
+    shields: 44,
     shieldRegen: 6,
     shieldDelay: 4,
-    maxSpeed: 280,
-    acceleration: 120,
+    maxSpeed: 140,
+    acceleration: 60,
     turnRate: 110,
     rollRate: 160,
     collisionRadius: 5,
@@ -160,12 +160,12 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
 
   // Sentinel: Long-range support - BALANCED (beam-optimized)
   sentinel: {
-    hull: 100,
-    shields: 100,
+    hull: 110,
+    shields: 110,
     shieldRegen: 15,
     shieldDelay: 3,
-    maxSpeed: 200,
-    acceleration: 90,
+    maxSpeed: 100,
+    acceleration: 45,
     turnRate: 90,
     rollRate: 130,
     collisionRadius: 6,

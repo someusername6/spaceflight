@@ -2,7 +2,7 @@
  * Ship entity factory - creates ship entities with all required components.
  */
 
-import type { Quaternion, Vector3 } from 'three';
+import { Quaternion, type Vector3 } from 'three';
 import { createAIControlled } from '../components/ai';
 import { createAimError } from '../components/aim-error';
 import { createCollision } from '../components/collision';
@@ -11,7 +11,12 @@ import { createFaction } from '../components/faction';
 import { createHealth } from '../components/health';
 import { createHeat } from '../components/heat';
 import { createSecondaryWeaponFromDef } from '../components/missile';
-import { createPhysics } from '../components/physics';
+import {
+  createPhysics,
+  INITIAL_SPAWN_SPEED,
+  type Physics,
+  setInitialVelocity,
+} from '../components/physics';
 import { createPlayerControlled } from '../components/player';
 import { createShieldHit } from '../components/shield-hit';
 import { createShields } from '../components/shields';
@@ -25,7 +30,7 @@ import {
   createPrimaryWeapons,
   createSecondaryWeapons,
 } from '../components/weapons';
-import { addComponent, createEntity } from '../core/ecs';
+import { addComponent, createEntity, getComponent } from '../core/ecs';
 import type { Entity, World } from '../core/types';
 import { Faction } from '../core/types';
 import { getProfileForPlaystyle, type ProfileName } from '../data/ai-profiles';
@@ -90,6 +95,7 @@ export function createPlayerShip(
   validateArchetypeLoadout(archetype);
 
   const entity = createEntity(world);
+  const shipRotation = rotation ?? new Quaternion();
 
   addComponent(
     world,
@@ -98,7 +104,7 @@ export function createPlayerShip(
       position?.x ?? 0,
       position?.y ?? 0,
       position?.z ?? 0,
-      rotation,
+      shipRotation,
     ),
   );
 
@@ -111,8 +117,15 @@ export function createPlayerShip(
       turnRate: stats.turnRate,
       rollRate: stats.rollRate,
       afterburnerHeatRate: stats.afterburnerHeatRate,
+      initialSpeed: INITIAL_SPAWN_SPEED,
     }),
   );
+
+  // Set initial velocity in forward direction
+  const physics = getComponent<Physics>(world, entity, 'physics');
+  if (physics) {
+    setInitialVelocity(physics, shipRotation, INITIAL_SPAWN_SPEED);
+  }
 
   addComponent(world, entity, createHealth(stats.hull));
   addComponent(
@@ -164,6 +177,7 @@ export function createAIShip(
   validateArchetypeLoadout(archetype);
 
   const entity = createEntity(world);
+  const shipRotation = rotation ?? new Quaternion();
 
   addComponent(
     world,
@@ -172,7 +186,7 @@ export function createAIShip(
       position?.x ?? 0,
       position?.y ?? 0,
       position?.z ?? 0,
-      rotation,
+      shipRotation,
     ),
   );
 
@@ -185,8 +199,15 @@ export function createAIShip(
       turnRate: stats.turnRate,
       rollRate: stats.rollRate,
       afterburnerHeatRate: stats.afterburnerHeatRate,
+      initialSpeed: INITIAL_SPAWN_SPEED,
     }),
   );
+
+  // Set initial velocity in forward direction
+  const physics = getComponent<Physics>(world, entity, 'physics');
+  if (physics) {
+    setInitialVelocity(physics, shipRotation, INITIAL_SPAWN_SPEED);
+  }
 
   addComponent(world, entity, createHealth(stats.hull));
   addComponent(
