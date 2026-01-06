@@ -18,6 +18,7 @@ import {
   startMission,
 } from '../ui/common/screens';
 import { createContractsUI } from '../ui/screens/contracts';
+import { showSquadSelection } from '../ui/screens/squad-selection';
 import type { CampaignController } from './controller-types';
 import {
   createMissionEndCallback,
@@ -117,10 +118,21 @@ function setupContractsScreen(controller: CampaignController): void {
           break;
       }
     },
-    (contract: Contract) => {
-      // Accept contract and start mission
+    async (contract: Contract) => {
+      // Show squad selection modal
+      const result = await showSquadSelection(
+        screenManager.campaignState,
+        contract,
+      );
+
+      if (!result.confirmed) {
+        // User cancelled, stay on contracts screen
+        return;
+      }
+
+      // Start mission with selected ships
       startMission(screenManager, contract);
-      launchMission(controller, contract);
+      launchMission(controller, contract, result.deployedShipIds);
     },
   );
 }
@@ -129,6 +141,7 @@ function setupContractsScreen(controller: CampaignController): void {
 function launchMission(
   controller: CampaignController,
   contract: Contract,
+  deployedShipIds: string[],
 ): void {
   const { container, screenManager } = controller;
 
@@ -157,15 +170,20 @@ function launchMission(
   const renderers = createMissionRenderers(controller.missionContainer, seed);
 
   // Spawn player and wingmen from campaign state (uses campaign loadout/ammo)
+  // Only spawn ships that were selected for deployment
   const { campaignState } = screenManager;
   const playerShip = getCommanderShip(campaignState);
-  const wingmen = getWingmanShips(campaignState);
+  const allWingmen = getWingmanShips(campaignState);
+  const deployedIdSet = new Set(deployedShipIds);
+
+  // Filter wingmen to only deployed ships
+  const wingmen = allWingmen.filter((w) => deployedIdSet.has(w.id));
 
   if (playerShip) {
     spawnPlayerFromCampaign(game.world, playerShip, new Vector3(0, 0, 0));
   }
 
-  // Spawn wingmen in tight symmetric formation near player
+  // Spawn deployed wingmen in tight symmetric formation near player
   wingmen.forEach((wingman, index) => {
     const side = index % 2 === 0 ? 1 : -1;
     const xOffset = 20 * side; // 20m left/right

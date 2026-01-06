@@ -115,6 +115,10 @@ export interface DestroyedShipRecord {
   callsign: string;
   wasPlayer: boolean;
   isWingman: boolean;
+  /** Campaign ship ID for linking back to campaign state (player/wingman only) */
+  campaignShipId?: string;
+  /** Pilot ID for removing from roster on death (player/wingman only) */
+  pilotId?: string;
   stats: {
     kills: number;
     assists: number;

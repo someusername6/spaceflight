@@ -249,6 +249,10 @@ export function handleShipDeath(world: World, entity: Entity): void {
       hullMax: health.maxHull,
       timeOfDeath: gameTime - matchStats.missionStartTime,
     };
+    // Only set campaignShipId if defined (for player/wingman ships)
+    if (identity.campaignShipId) {
+      record.campaignShipId = identity.campaignShipId;
+    }
     matchStats.destroyedShips.push(record);
   }
 

@@ -53,8 +53,25 @@ export function createMissionEndExecutor(
     // Stop the game loop
     stopGame(game);
 
-    // Apply results to campaign (simplified - no damage tracking yet)
+    // Get match stats for death/salvage processing
+    const matchStats = game.world.systemState.matchStats;
+
+    // Extract destroyed player/wingman ships from match stats
     const shipsLost: string[] = [];
+    if (matchStats) {
+      for (const record of matchStats.destroyedShips) {
+        // Only include player faction ships with campaign IDs
+        if ((record.wasPlayer || record.isWingman) && record.campaignShipId) {
+          shipsLost.push(record.campaignShipId);
+          console.log(
+            `[MISSION] KIA: ${record.callsign} (${record.wasPlayer ? 'player' : 'wingman'})`,
+          );
+        }
+      }
+    }
+    if (shipsLost.length > 0) {
+      console.log(`[MISSION] Ships lost: ${shipsLost.length}`);
+    }
     const hullDamage = new Map<string, number>();
 
     // Base reward (victory only) - salvage is now items, not credits
@@ -72,7 +89,6 @@ export function createMissionEndExecutor(
     newState = applyAmmoUsage(newState, ammoData);
 
     // Calculate and apply item-based salvage from all destroyed ships
-    const matchStats = game.world.systemState.matchStats;
     let salvageResult: ReturnType<typeof calculateSalvage> | null = null;
     if (matchStats && matchStats.salvageableShips.length > 0) {
       // Use seeded PRNG for deterministic salvage

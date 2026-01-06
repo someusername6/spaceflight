@@ -1,0 +1,553 @@
+/**
+ * Squad Selection Modal - Pre-mission deployment interface
+ * Styled to be coherent with existing UI patterns (roster, hangar, store)
+ */
+
+/* ========================================
+   MODAL OVERLAY
+   ======================================== */
+
+.squad-selection-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeSlideIn 0.2s ease;
+}
+
+/* Same scanline pattern as .game-screen::before */
+.squad-selection-overlay::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    var(--color-scanline) 2px,
+    var(--color-scanline) 4px
+  );
+  pointer-events: none;
+}
+
+/* ========================================
+   MODAL CONTAINER
+   Uses .screen-panel pattern with corner brackets
+   ======================================== */
+
+.squad-selection-modal {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  max-height: 80vh;
+  margin: 20px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Corner brackets - same as .screen-panel (amber) */
+.squad-selection-modal::before,
+.squad-selection-modal::after {
+  content: "";
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-color: var(--color-primary);
+  border-style: solid;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.squad-selection-modal::before {
+  top: -1px;
+  left: -1px;
+  border-width: 2px 0 0 2px;
+}
+
+.squad-selection-modal::after {
+  bottom: -1px;
+  right: -1px;
+  border-width: 0 2px 2px 0;
+}
+
+/* ========================================
+   MODAL HEADER
+   Uses .panel-header pattern (amber)
+   ======================================== */
+
+.squad-header {
+  padding: 12px 16px;
+  background: rgba(255, 159, 28, 0.08);
+  border-bottom: 1px solid var(--border-color);
+  position: relative;
+}
+
+.squad-title {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 0 0 4px;
+}
+
+.squad-subtitle {
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  letter-spacing: 0.05em;
+}
+
+.squad-ready-indicator {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ready-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--color-success);
+  border-radius: 50%;
+  box-shadow: 0 0 6px var(--color-success);
+}
+
+.ready-text {
+  font-family: var(--font-ui);
+  font-size: 0.65rem;
+  color: var(--color-success);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ========================================
+   SHIP LIST
+   Same pattern as .roster-pilots
+   ======================================== */
+
+.squad-ship-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-height: 180px;
+  border: 1px solid var(--border-color);
+  border-top: none;
+  margin: 0 12px;
+}
+
+/* ========================================
+   SHIP CARDS
+   Based on .roster-pilot-card pattern
+   ======================================== */
+
+.squad-ship-card {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.squad-ship-card:last-child {
+  border-bottom: none;
+}
+
+.squad-ship-card:hover {
+  background: rgba(0, 245, 255, 0.05);
+}
+
+/* Selected state - cyan accent like roster cards */
+.squad-ship-card.selected {
+  background: rgba(0, 245, 255, 0.1);
+  border-left: 2px solid var(--color-secondary);
+}
+
+/* Commander - amber accent */
+.squad-ship-card.commander {
+  border-left: 2px solid var(--color-primary);
+}
+
+.squad-ship-card.commander.selected {
+  background: rgba(255, 159, 28, 0.1);
+  border-left: 2px solid var(--color-primary);
+}
+
+/* Unselected dimming */
+.squad-ship-card.unselected {
+  opacity: 0.5;
+}
+
+.squad-ship-card.unselected:hover {
+  opacity: 0.7;
+}
+
+/* ========================================
+   TOGGLE CHECKBOX
+   Simple checkbox matching UI style
+   ======================================== */
+
+.squad-toggle {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border-light);
+  transition: all 0.15s ease;
+}
+
+.squad-ship-card.selected .squad-toggle {
+  border-color: var(--color-secondary);
+  background: var(--color-secondary);
+}
+
+/* Checkmark using CSS content */
+.squad-ship-card.selected .squad-toggle::before {
+  content: "\2713";
+  font-size: 12px;
+  font-weight: bold;
+  color: var(--bg-deep);
+}
+
+.squad-ship-card.commander .squad-toggle {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  cursor: not-allowed;
+}
+
+.squad-ship-card.commander .squad-toggle::before {
+  content: "\2713";
+  font-size: 12px;
+  font-weight: bold;
+  color: var(--bg-deep);
+}
+
+/* ========================================
+   SHIP INFO
+   ======================================== */
+
+.squad-ship-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.squad-ship-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.squad-ship-pilot {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.squad-ship-card.commander .squad-ship-pilot {
+  color: var(--color-primary);
+}
+
+.squad-badge {
+  padding: 2px 6px;
+  font-family: var(--font-ui);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.squad-badge.you {
+  background: rgba(255, 159, 28, 0.15);
+  color: var(--color-primary);
+  border: 1px solid rgba(255, 159, 28, 0.3);
+}
+
+.squad-badge.damaged {
+  background: rgba(255, 68, 68, 0.15);
+  color: var(--color-danger);
+  border: 1px solid rgba(255, 68, 68, 0.3);
+}
+
+.squad-ship-details {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.squad-ship-class {
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.squad-ship-hull {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.squad-hull-label {
+  font-family: var(--font-ui);
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+.squad-hull-bar {
+  width: 50px;
+  height: 4px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border-color);
+}
+
+.squad-hull-fill {
+  height: 100%;
+  background: var(--color-success);
+  transition: width 0.3s ease;
+}
+
+.squad-hull-fill.damaged {
+  background: var(--color-warning);
+}
+
+.squad-hull-fill.critical {
+  background: var(--color-danger);
+}
+
+.squad-hull-percent {
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  min-width: 28px;
+}
+
+.squad-hull-percent.damaged {
+  color: var(--color-warning);
+}
+
+.squad-hull-percent.critical {
+  color: var(--color-danger);
+}
+
+.squad-ship-loadout {
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  color: var(--text-dim);
+}
+
+/* ========================================
+   SKILL BADGE
+   Same pattern as roster recruit skills
+   ======================================== */
+
+.squad-skill-badge {
+  padding: 3px 8px;
+  font-family: var(--font-ui);
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid currentColor;
+}
+
+.squad-skill-badge.rookie {
+  color: var(--text-secondary);
+}
+
+.squad-skill-badge.regular {
+  color: var(--color-secondary-dim);
+}
+
+.squad-skill-badge.veteran {
+  color: var(--color-success);
+}
+
+.squad-skill-badge.ace {
+  color: var(--color-warning);
+}
+
+.squad-skill-badge.elite {
+  color: var(--color-danger);
+}
+
+/* ========================================
+   MODAL FOOTER
+   ======================================== */
+
+.squad-footer {
+  padding: 12px 16px 16px;
+  border-top: 1px solid var(--border-color);
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.squad-footer-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.squad-deploy-count {
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  letter-spacing: 0.05em;
+}
+
+.squad-deploy-count strong {
+  color: var(--color-secondary);
+  font-weight: 600;
+}
+
+.squad-warning {
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  color: var(--color-warning);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.squad-warning::before {
+  content: "\26A0";
+}
+
+.squad-footer-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* ========================================
+   FOOTER BUTTONS
+   Using .btn pattern from buttons.css
+   ======================================== */
+
+.btn-squad-cancel {
+  flex: 0 0 auto;
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 10px 20px;
+  background: transparent;
+  border: 1px solid var(--border-light);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 6px) 0,
+    100% 6px,
+    100% 100%,
+    6px 100%,
+    0 calc(100% - 6px)
+  );
+}
+
+.btn-squad-cancel:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--bg-panel-hover);
+}
+
+.btn-squad-launch {
+  flex: 1;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 10px 24px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 159, 28, 0.2) 0%,
+    rgba(255, 159, 28, 0.1) 100%
+  );
+  border: 1px solid var(--color-primary);
+  color: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
+}
+
+.btn-squad-launch:hover:not(:disabled) {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 159, 28, 0.3) 0%,
+    rgba(255, 159, 28, 0.15) 100%
+  );
+  box-shadow: 0 0 20px var(--color-primary-glow);
+}
+
+.btn-squad-launch:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn-squad-launch .launch-icon {
+  margin-right: 8px;
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+
+@media (max-width: 500px) {
+  .squad-selection-modal {
+    margin: 10px;
+    max-height: 90vh;
+  }
+
+  .squad-ship-card {
+    grid-template-columns: 24px 1fr;
+    gap: 10px;
+    padding: 10px 12px;
+  }
+
+  .squad-skill-badge {
+    display: none;
+  }
+
+  .squad-footer-actions {
+    flex-direction: column;
+  }
+}

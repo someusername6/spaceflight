@@ -176,7 +176,7 @@ Balance targets achieved:
 - Destroyed ship → hull lost from inventory
 - Equipped weapons on destroyed ship → also lost
 - Spent ammo → already tracked and persisted
-- Pilot fate: TBD (killed or ejected to pilot pool)
+- Pilot fate: KIA (permanently removed from roster)
 
 #### Phase E - Item-Based Salvage ✅
 - **Salvage calculation** (`src/campaign/salvage.ts`): `calculateSalvage()` processes destroyed ships with 0-10% random multiplier per ship yielding:
@@ -210,3 +210,35 @@ Balance targets achieved:
   - All styles now in `src/ui/styles/` directory with CSS custom properties
   - Theme variables in `theme.css`, imported by `src/main.ts`
   - ~58 KB compiled CSS (9 KB gzipped), slightly reduced JS bundle
+
+#### Phase F - Wingman Death Persistence ✅
+- **Death record linking** (`src/components/combat-stats.ts:118-121`): Added `campaignShipId` and `pilotId` fields to `DestroyedShipRecord` for linking deaths back to campaign state.
+- **Death tracking** (`src/systems/stats.ts:252-255`): `handleShipDeath()` now captures `campaignShipId` from `ShipIdentity` component.
+- **Death application** (`src/campaign/state.ts:192-199`): `applyMissionResults()` finds pilots of destroyed ships and removes them from roster.
+- **Mission end integration** (`src/campaign/mission-callbacks.ts:59-74`): Extracts destroyed ship IDs from `matchStats.destroyedShips` and passes to `applyMissionResults()`.
+- **Game over condition** (`src/campaign/state.ts:235-237`): `isGameOver()` returns true when commander is no longer assigned to any ship (commander death = campaign over).
+- **Tests** (`scripts/tests/campaign/test-wingman-death.mjs`): 14 tests covering ship/pilot removal, game over detection, and surviving pilot stat updates.
+
+#### Phase G - Pilot Hiring ✅
+- **HireablePilot type** (`src/campaign/types.ts:134-140`): Recruit data with id, name, skill level, and hire price.
+- **availableRecruits field** (`src/campaign/types.ts:106`): Added to CampaignState for tracking the recruit pool.
+- **Recruit generation** (`src/campaign/recruits.ts:99-132`): `generateRecruits()` creates pilots with weighted skill distribution (35% rookie/regular, 20% veteran, 8% ace, 2% elite). Uses unique name pool to avoid duplicates.
+- **Initial recruits** (`src/campaign/state.ts:107-108`): `createNewCampaign()` now generates 4 initial recruits via `generateInitialRecruits()`.
+- **Recruit pool refresh** (`src/campaign/recruits.ts:143-155`): `refreshRecruits()` generates 3-5 new recruits (to be called after each mission).
+- **Hire pilot** (`src/campaign/recruits.ts:158-193`): `hirePilot()` deducts credits, creates new Pilot from recruit, adds to roster, removes from pool.
+- **Skill pricing** (`src/campaign/recruits.ts:47-53`): Prices scale with skill (rookie 75, regular 200, veteran 400, ace 700, elite 1200 credits).
+- **Roster UI integration** (`src/ui/screens/roster.ts:117-124,240-278`): Left panel shows RECRUITS section below YOUR PILOTS with divider. Recruit cards use ghost/outlined style.
+- **Recruit viewer** (`src/ui/screens/recruit-viewer.ts`): Right panel shows recruit details, skill description, price, and "Hire Pilot" button.
+- **Recruit card selection** (`src/ui/screens/roster.ts:240-252`): Click recruit to select, deselects any selected pilot. Click hire button to purchase.
+- **Recruit CSS** (`src/ui/styles/screens/roster.css:367-428,640-780`): Dashed border cards, skill color coding, hire button with green gradient.
+
+#### Phase H - Squad Selection ✅
+- **Squad selection modal** (`src/ui/screens/squad-selection.ts`): Pre-mission deployment interface. Shows all ships with pilots, allows toggling ships on/off.
+- **showSquadSelection()** (`src/ui/screens/squad-selection.ts:106-180`): Async function returns `SquadSelectionResult` with `confirmed` boolean and `deployedShipIds` array.
+- **Commander always deployed** (`src/ui/screens/squad-selection.ts:132-135`): Commander ship cannot be deselected (checkbox styled as always-on).
+- **Max deployment limit** (`src/ui/screens/squad-selection.ts:10`): MAX_DEPLOYMENT = 4 ships maximum per mission.
+- **Ship card details** (`src/ui/screens/squad-selection.ts:51-83`): Shows pilot name, ship class, hull percentage, skill badge, loadout summary.
+- **Hull status indicators** (`src/ui/screens/squad-selection.ts:27-32`): Hull bars colored by status (green normal, yellow damaged <50%, red critical <25%).
+- **Controller integration** (`src/campaign/controller.ts:121-135`): Contract acceptance now shows squad selection modal before mission launch.
+- **Filtered spawning** (`src/campaign/controller.ts:176-180`): Only ships in `deployedShipIds` are spawned; non-deployed ships stay safe in hangar.
+- **Squad selection CSS** (`src/ui/styles/screens/squad-selection.css`): Tactical briefing aesthetic with power-switch toggles, corner accents, pulsing ready indicator.

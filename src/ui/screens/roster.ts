@@ -10,6 +10,7 @@ import {
   assignPilotToShip,
   unassignPilot,
 } from '../../campaign/loadout';
+import { hirePilot } from '../../campaign/recruits';
 import type { CampaignState, OwnedShip, Pilot } from '../../campaign/types';
 import {
   bindNavBar,
@@ -17,12 +18,14 @@ import {
   renderNavBar,
 } from '../common/nav-bar';
 import { renderPilotViewer } from './pilot-viewer';
+import { renderRecruitCard, renderRecruitViewer } from './recruit-viewer';
 
 /** Roster UI state */
 export interface RosterUI {
   element: HTMLElement;
   state: CampaignState;
   selectedPilotId: string | null;
+  selectedRecruitId: string | null;
   onNavigate: (destination: NavDestination) => void;
   onStateUpdate?: (newState: CampaignState) => void;
 }
@@ -64,6 +67,7 @@ function renderPilotCard(
 function renderRoster(
   state: CampaignState,
   selectedPilotId: string | null,
+  selectedRecruitId: string | null,
   onNavigate: (destination: NavDestination) => void,
 ): string {
   const assignedPilotIds = new Map<string, OwnedShip>();
@@ -75,6 +79,10 @@ function renderRoster(
 
   const selectedPilot = selectedPilotId
     ? state.pilots.find((p) => p.id === selectedPilotId)
+    : null;
+
+  const selectedRecruit = selectedRecruitId
+    ? state.availableRecruits.find((r) => r.id === selectedRecruitId)
     : null;
 
   const navBar = renderNavBar({
@@ -101,10 +109,24 @@ function renderRoster(
     })
     .join('');
 
-  // Right panel: pilot viewer or empty state
-  const rightPanel = selectedPilot
-    ? renderPilotViewer(selectedPilot, state)
-    : `<div class="empty-state-panel" role="status">Select a pilot to view details</div>`;
+  // Recruit cards
+  const recruitCards = state.availableRecruits
+    .map((recruit) => {
+      const isSelected = recruit.id === selectedRecruitId;
+      const canAfford = state.credits >= recruit.price;
+      return renderRecruitCard(recruit, isSelected, canAfford);
+    })
+    .join('');
+
+  // Right panel: pilot viewer, recruit viewer, or empty state
+  let rightPanel: string;
+  if (selectedPilot) {
+    rightPanel = renderPilotViewer(selectedPilot, state);
+  } else if (selectedRecruit) {
+    rightPanel = renderRecruitViewer(selectedRecruit, state);
+  } else {
+    rightPanel = `<div class="empty-state-panel" role="status">Select a pilot or recruit to view details</div>`;
+  }
 
   return `
     <div class="campaign-page">
@@ -115,15 +137,26 @@ function renderRoster(
           <aside class="roster-list" aria-label="Pilots list">
             <header class="panel-header">
               <span class="panel-icon" aria-hidden="true">★</span>
-              <span class="panel-title">Pilots</span>
+              <span class="panel-title">Your Pilots</span>
               <span class="panel-count" aria-label="${state.pilots.length} pilots">${state.pilots.length}</span>
             </header>
-            <div class="roster-pilots" role="listbox" aria-label="Available pilots">
+            <div class="roster-pilots" role="listbox" aria-label="Your pilots">
               ${pilotCards}
+            </div>
+
+            <!-- Recruits Section -->
+            <div class="roster-section-divider" aria-hidden="true"></div>
+            <header class="panel-header recruits-header">
+              <span class="panel-icon" aria-hidden="true">+</span>
+              <span class="panel-title">Recruits</span>
+              <span class="panel-count" aria-label="${state.availableRecruits.length} available">${state.availableRecruits.length}</span>
+            </header>
+            <div class="roster-recruits" role="listbox" aria-label="Available recruits">
+              ${recruitCards || '<div class="no-recruits">No recruits available</div>'}
             </div>
           </aside>
 
-          <!-- Right Column: Pilot Viewer -->
+          <!-- Right Column: Pilot/Recruit Viewer -->
           <section class="roster-viewer" aria-label="Pilot details">
             ${rightPanel}
           </section>
@@ -144,6 +177,7 @@ export function createRosterUI(
     element,
     state,
     selectedPilotId: null,
+    selectedRecruitId: null,
     onNavigate,
   };
 
@@ -158,17 +192,27 @@ function renderAndBindRoster(ui: RosterUI): void {
   ui.element.innerHTML = renderRoster(
     ui.state,
     ui.selectedPilotId,
+    ui.selectedRecruitId,
     ui.onNavigate,
   );
 
   // Bind navigation bar
   bindNavBar(ui.element, ui.onNavigate);
 
-  // Bind close viewer button
-  const closeBtn = ui.element.querySelector('#btn-close-pilot-viewer');
-  if (closeBtn) {
-    closeBtn.addEventListener('click', () => {
+  // Bind close viewer button (for pilots)
+  const closePilotBtn = ui.element.querySelector('#btn-close-pilot-viewer');
+  if (closePilotBtn) {
+    closePilotBtn.addEventListener('click', () => {
       ui.selectedPilotId = null;
+      renderAndBindRoster(ui);
+    });
+  }
+
+  // Bind close viewer button (for recruits)
+  const closeRecruitBtn = ui.element.querySelector('#btn-close-recruit-viewer');
+  if (closeRecruitBtn) {
+    closeRecruitBtn.addEventListener('click', () => {
+      ui.selectedRecruitId = null;
       renderAndBindRoster(ui);
     });
   }
@@ -182,10 +226,54 @@ function renderAndBindRoster(ui: RosterUI): void {
       if (pilotId) {
         const isSelected = ui.selectedPilotId === pilotId;
         ui.selectedPilotId = isSelected ? null : pilotId;
+        ui.selectedRecruitId = null; // Deselect recruit when selecting pilot
         renderAndBindRoster(ui);
       }
     });
   });
+
+  // Bind recruit card selection
+  ui.element.querySelectorAll('.recruit-card').forEach((item) => {
+    const el = item as HTMLElement;
+    const recruitId = el.dataset.recruitId;
+
+    el.addEventListener('click', () => {
+      if (recruitId) {
+        const isSelected = ui.selectedRecruitId === recruitId;
+        ui.selectedRecruitId = isSelected ? null : recruitId;
+        ui.selectedPilotId = null; // Deselect pilot when selecting recruit
+        renderAndBindRoster(ui);
+      }
+    });
+  });
+
+  // Bind hire recruit button
+  const hireBtn = ui.element.querySelector('#btn-hire-recruit');
+  if (hireBtn) {
+    hireBtn.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      const recruitId = target.dataset.recruitId;
+      if (!recruitId) return;
+
+      // Find the recruit name before updating state
+      const recruit = ui.state.availableRecruits.find(
+        (r) => r.id === recruitId,
+      );
+      if (!recruit) return;
+      const recruitName = recruit.name;
+
+      const newState = hirePilot(ui.state, recruitId);
+      if (newState !== ui.state) {
+        ui.state = newState;
+        if (ui.onStateUpdate) ui.onStateUpdate(newState);
+        // Select the newly hired pilot by name
+        const hiredPilot = newState.pilots.find((p) => p.name === recruitName);
+        ui.selectedRecruitId = null;
+        ui.selectedPilotId = hiredPilot?.id ?? null;
+        renderAndBindRoster(ui);
+      }
+    });
+  }
 
   // Bind unassign pilot buttons
   ui.element.querySelectorAll('.btn-unassign-pilot').forEach((btn) => {

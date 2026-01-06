@@ -2,8 +2,10 @@
  * Campaign state management - create, save, load campaign state.
  */
 
+import { createPRNG, random } from '../core/prng';
 import { getAmmoPrice, getSecondaryPrice } from '../data/prices';
 import { SHIP_ARCHETYPES } from '../factories/ship-archetypes';
+import { generateInitialRecruits } from './recruits';
 import { createInitialStoreStock } from './store';
 import { getMaxAmmoCapacity, getMaxMissileCapacity } from './store-ammo';
 import type {
@@ -103,6 +105,13 @@ export function createNewCampaign(): CampaignState {
   const wingman2 = createShipFromArchetype('fighter', wingmanPilots[1]);
   const wingman3 = createShipFromArchetype('fighter', wingmanPilots[2]);
 
+  // Generate initial recruits (4 pilots available for hire)
+  // Use fixed seed for deterministic recruit generation
+  const recruitRng = createPRNG(42);
+  const availableRecruits = generateInitialRecruits(allPilots, () =>
+    random(recruitRng),
+  );
+
   return {
     credits: 1000,
     commanderId: commander.id,
@@ -113,6 +122,7 @@ export function createNewCampaign(): CampaignState {
     storedAmmo: [], // No spare ammo at start
     storedScrap: {}, // No scrap at start
     storeStock: createInitialStoreStock(),
+    availableRecruits, // Pilots available for hire
     currentSector: 1,
     completedContracts: [],
     missionCount: 0,
@@ -189,7 +199,16 @@ export function applyMissionResults(
     state.ships.filter((s) => s.pilot).map((s) => s.pilot?.id),
   );
 
-  // Remove destroyed ships (pilots become unassigned automatically)
+  // Find pilots who died (their ships were destroyed)
+  const killedPilotIds = new Set<string>();
+  for (const shipId of shipsLost) {
+    const lostShip = state.ships.find((s) => s.id === shipId);
+    if (lostShip?.pilot) {
+      killedPilotIds.add(lostShip.pilot.id);
+    }
+  }
+
+  // Remove destroyed ships
   const survivingShips = state.ships.filter((s) => !shipsLost.includes(s.id));
 
   // Apply hull damage to surviving ships
@@ -200,17 +219,19 @@ export function applyMissionResults(
     }
   }
 
-  // Update pilot career stats for those who flew
-  const updatedPilots = state.pilots.map((pilot) => {
-    if (!pilotIdsInMission.has(pilot.id)) {
-      return pilot;
-    }
-    return {
-      ...pilot,
-      missionsFlown: pilot.missionsFlown + 1,
-      missionsWon: pilot.missionsWon + (victory ? 1 : 0),
-    };
-  });
+  // Update pilot career stats for survivors, remove KIA pilots
+  const updatedPilots = state.pilots
+    .filter((pilot) => !killedPilotIds.has(pilot.id)) // Remove KIA
+    .map((pilot) => {
+      if (!pilotIdsInMission.has(pilot.id)) {
+        return pilot;
+      }
+      return {
+        ...pilot,
+        missionsFlown: pilot.missionsFlown + 1,
+        missionsWon: pilot.missionsWon + (victory ? 1 : 0),
+      };
+    });
 
   return {
     ...state,

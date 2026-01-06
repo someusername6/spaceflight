@@ -69,3 +69,6 @@
 @import "./screens/rewards.css";
 @import "./screens/salvage.css";
 @import "./screens/game-over.css";
+
+/* Squad selection modal */
+@import "./screens/squad-selection.css";

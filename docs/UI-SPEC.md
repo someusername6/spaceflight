@@ -157,32 +157,39 @@ When a ship is selected, the right panel shows ship stats:
 ## Screen: Roster
 
 ### Purpose
-Pilot management hub. Player views pilot statistics, assigns pilots to ships, and deploys new ships from stored hulls.
+Pilot management hub. Player views pilot statistics, assigns pilots to ships, deploys new ships from stored hulls, and **hires new pilots**.
 
 ### Layout
 Two-column grid:
-- **Left (280px)**: Pilots list
-- **Right (flex)**: Pilot viewer or placeholder
+- **Left (280px)**: Pilots list (YOUR PILOTS + RECRUITS sections)
+- **Right (flex)**: Pilot viewer or recruit viewer or placeholder
 
 ### Data Displayed
 - **Credits** (top corner via nav bar) - current balance
 - **Current Sector** (via nav bar) - campaign progress indicator
-- **Pilots List** - all pilots showing:
+- **YOUR PILOTS section** - owned pilots showing:
   - Pilot name
   - Pilot skill (for wingmen)
   - Assignment status (Assigned/Available)
   - Assigned ship class (if assigned)
+- **RECRUITS section** - hireable pilots showing:
+  - Pilot name
+  - Skill level
+  - Hire price
 
 ### User Interactions
 | Action | Trigger | Result |
 |--------|---------|--------|
-| Select pilot | Click pilot in list | Opens pilot viewer in right panel |
-| Deselect | Click selected pilot again | Closes viewer |
+| Select pilot | Click pilot in YOUR PILOTS | Opens pilot viewer in right panel |
+| Select recruit | Click recruit in RECRUITS | Opens recruit viewer with hire option |
+| Deselect | Click selected item again | Closes viewer |
 | Assign to ship | Click ship button in viewer | Assigns pilot to selected ship |
 | Deploy with hull | Click hull button in viewer | Creates new ship from stored hull with pilot |
 | Unassign pilot | Click "Unassign" button | Returns pilot to available pool |
+| Hire recruit | Click "Hire" button | Deducts credits, adds recruit to YOUR PILOTS |
 
 *Navigation via global nav bar (see Global Navigation Bar section)*
+*See "Feature: Pilot Hiring" section for detailed hiring mechanics*
 
 ### Pilot Viewer (Right Panel)
 When a pilot is selected, shows:
@@ -891,3 +898,186 @@ Styles are in separate CSS files under `src/ui/styles/`:
 - `store/*.css` - Store screen styles
 
 See `docs/ARCHITECTURE.md` for full CSS file structure.
+
+---
+
+## Feature: Pilot Hiring (Roster Screen)
+
+### Purpose
+Allow players to hire new pilots from the Roster screen. Pilots are a consumable resource - they can die in combat and need to be replaced. All pilot management is unified in the Roster.
+
+### Integration Point
+Extend the existing Roster screen's pilots list to include a "Recruits" section showing pilots available for hire.
+
+### Roster Layout with Hiring
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ [HANGAR]  [ROSTER]  [STORE]  [CONTRACTS]                    SECTOR 1   1250cr  │
+├────────────────────┬────────────────────────────────────────────────────────────┤
+│ YOUR PILOTS (3)    │                                                            │
+│  ★ Commander       │    [Pilot Viewer]                                          │
+│  • Alpha 2         │    - Stats, assignment options (existing)                  │
+│  • Alpha 3         │    - OR recruit details + hire button                      │
+│                    │                                                            │
+│ ─────────────────  │                                                            │
+│ RECRUITS (4)       │                                                            │
+│  ○ Vex      100 cr │                                                            │
+│  ○ Nova     650 cr │                                                            │
+│  ○ Rex       75 cr │                                                            │
+│  ○ Kai      350 cr │                                                            │
+└────────────────────┴────────────────────────────────────────────────────────────┘
+```
+
+### Pilot List Sections
+The left panel is divided into two sections:
+1. **YOUR PILOTS** - Existing roster (current behavior)
+2. **RECRUITS** - Available pilots for hire (new)
+
+### Recruit Generation
+- Campaign generates 3-5 hireable recruits
+- Recruit pool refreshes after each mission (simulating pilots coming and going)
+- Distribution weighted toward lower skills (more rookies available than aces)
+
+### Pilot Pricing
+| Skill Level | Price | Availability |
+|-------------|-------|--------------|
+| Rookie      | 75 cr | Common       |
+| Regular     | 200 cr| Common       |
+| Veteran     | 400 cr| Uncommon     |
+| Ace         | 700 cr| Rare         |
+| Elite       | 1200 cr| Very Rare   |
+
+### Recruit Viewer (Right Panel)
+When a recruit is selected, the right panel shows:
+- Recruit name (large)
+- Skill level badge with color
+- Price to hire
+- Skill description (what bonuses this skill level provides)
+- Fresh stats (0 kills, 0 missions - they're new)
+- **[Hire Pilot]** button (disabled if can't afford)
+
+### User Interactions
+| Action | Trigger | Result |
+|--------|---------|--------|
+| Select recruit | Click recruit in list | Shows recruit details in right panel |
+| Hire recruit | Click "Hire" button | Deducts credits, adds to YOUR PILOTS (unassigned) |
+| Select your pilot | Click pilot in YOUR PILOTS | Shows existing pilot viewer (stats + assignment) |
+
+### States
+- **Can't Afford** - Hire button disabled, price shown in red/dimmed
+- **Max Pilots** - Optional cap on roster size (e.g., 8 pilots max) - hire button disabled
+
+### Data Model Changes
+```typescript
+// Add to CampaignState
+interface CampaignState {
+  // ... existing fields ...
+  availableRecruits: HireablePilot[];
+}
+
+interface HireablePilot {
+  id: string;
+  name: string;
+  skill: SkillLevel;
+  price: number;
+}
+```
+
+### Why Roster, Not Store?
+- **Coherent mental model**: "Roster = all pilot stuff" vs "Store = equipment stuff"
+- **No duplication**: Store doesn't need a "Your Pilots" storage panel
+- **Natural flow**: Lost a pilot? Go to Roster to hire replacement and assign to ship
+
+---
+
+## Feature: Squad Selection (Pre-Mission)
+
+### Purpose
+Before launching a mission, player selects which ships from their fleet to deploy. This allows tactical decisions about preserving damaged ships or fielding specific loadouts.
+
+### Trigger
+Appears as a modal/overlay after clicking "Accept Mission" on the Contracts screen, before the mission actually starts.
+
+### Layout - Squad Selection Modal
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                         DEPLOY SQUADRON                                       │
+│                         ────────────────                                      │
+│  Select ships to deploy (max 4)                                              │
+│                                                                              │
+│  ┌─────────────────────────────────────────────────────────────────────────┐ │
+│  │ [✓] COMMANDER • Fighter • Hull: 100%                              [You] │ │
+│  │     Loadout: Plasma ×2, Seeker ×8                                       │ │
+│  └─────────────────────────────────────────────────────────────────────────┘ │
+│                                                                              │
+│  ┌─────────────────────────────────────────────────────────────────────────┐ │
+│  │ [✓] ALPHA 2 • Fighter • Hull: 85%                              Regular │ │
+│  │     Loadout: Plasma ×2, Dart ×6                                         │ │
+│  └─────────────────────────────────────────────────────────────────────────┘ │
+│                                                                              │
+│  ┌─────────────────────────────────────────────────────────────────────────┐ │
+│  │ [ ] ALPHA 3 • Interceptor • Hull: 45%                          Veteran │ │
+│  │     Loadout: Autocannon ×2, Seeker ×8                          DAMAGED │ │
+│  └─────────────────────────────────────────────────────────────────────────┘ │
+│                                                                              │
+│  ┌─────────────────────────────────────────────────────────────────────────┐ │
+│  │ [✓] ALPHA 4 • Striker • Hull: 100%                              Rookie │ │
+│  │     Loadout: Plasma ×3, Torpedo ×4                                      │ │
+│  └─────────────────────────────────────────────────────────────────────────┘ │
+│                                                                              │
+│  ────────────────────────────────────────────────────────────────────────── │
+│  Deploying: 3/4 ships                                                        │
+│                                                                              │
+│  [Cancel]                                              [LAUNCH MISSION]      │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Requirements
+- **Commander always deployed**: The player's ship cannot be deselected (checkbox disabled but checked)
+- **Max deployment**: 4 ships maximum (configurable)
+- **Ship cards show**:
+  - Pilot name
+  - Ship class
+  - Hull percentage (highlighted if damaged <50%)
+  - Pilot skill level
+  - Brief loadout summary (primary weapons, secondary count)
+- **Deployment counter**: Shows "Deploying: X/4 ships"
+- **Launch button**: Only enabled if at least 1 ship selected
+
+### Ship Card States
+| State | Visual |
+|-------|--------|
+| Selected | Checkbox checked, card has cyan border |
+| Unselected | Checkbox unchecked, card dimmed |
+| Commander | Checkbox disabled (always checked), amber border, "[You]" badge |
+| Damaged | Hull text in warning color, "DAMAGED" badge if <50% |
+
+### User Interactions
+| Action | Trigger | Result |
+|--------|---------|--------|
+| Toggle ship | Click card or checkbox | Selects/deselects ship for deployment |
+| Cancel | Click "Cancel" | Returns to Contracts screen |
+| Launch | Click "Launch Mission" | Starts mission with selected ships |
+
+### Integration Flow
+1. Player clicks "Accept Mission" on contract
+2. Squad Selection modal appears
+3. Player toggles ships on/off
+4. Player clicks "Launch Mission"
+5. Only selected ships spawn in mission
+6. Non-deployed ships stay safe in hangar
+
+### Data Flow
+```typescript
+// Pass selected ship IDs to mission launcher
+interface MissionConfig {
+  contract: Contract;
+  deployedShipIds: string[]; // Only these ships spawn
+}
+```
+
+### Implementation Notes
+- Ships not deployed are preserved (no risk of loss)
+- Non-deployed ships still consume no ammo
+- Allows strategic preservation of damaged/valuable ships
+- Commander ship is always in deployedShipIds

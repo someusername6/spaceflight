@@ -103,6 +103,7 @@ export interface CampaignState {
   storedAmmo: StoredAmmo[]; // ammo in storage (for ballistic primaries)
   storedScrap: Record<string, number>; // shipClass -> scrap count
   storeStock: StoreStock; // store inventory (finite stock)
+  availableRecruits: HireablePilot[]; // pilots available for hire
   currentSector: number;
   completedContracts: string[];
   missionCount: number;
@@ -128,4 +129,12 @@ export interface MissionOutcome {
   shipsLost: string[]; // IDs of ships that were destroyed
   hullDamage: Map<string, number>; // shipId -> damage taken
   ammoUsed: Map<string, Map<string, number>>; // shipId -> weaponType -> count
+}
+
+/** Hireable pilot available in the recruit pool */
+export interface HireablePilot {
+  id: string;
+  name: string;
+  skill: SkillLevel;
+  price: number;
 }
