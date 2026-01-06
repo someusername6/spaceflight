@@ -30,6 +30,7 @@ import {
   updateMissionRenderers,
 } from './mission-renderer';
 import {
+  calculateWaveDelay,
   createMissionEndState,
   createWaveState,
   spawnWave,
@@ -189,13 +190,25 @@ function launchMission(
   // Mission end state for delayed transition
   const missionEndState = createMissionEndState();
 
-  // Spawn first wave
+  // Handle first wave - spawn immediately or after delay
   const firstWave = contract.waves[0];
   if (firstWave) {
-    spawnWave(game.world, firstWave, 0);
-    console.log(
-      `[WAVE ${performance.now().toFixed(0)}ms] Wave 1/${waveState.totalWaves} spawned`,
-    );
+    const firstWaveDelay = calculateWaveDelay(firstWave.delay, game.world.prng);
+    if (firstWaveDelay > 0) {
+      // Set currentWave = -1 so tick callback increments to 0 when spawning
+      waveState.currentWave = -1;
+      waveState.waveCleared = true;
+      waveState.delayRemaining = firstWaveDelay;
+      console.log(
+        `[WAVE ${performance.now().toFixed(0)}ms] First wave in ${firstWaveDelay.toFixed(1)}s`,
+      );
+    } else {
+      // Spawn immediately (no delay)
+      spawnWave(game.world, firstWave, 0);
+      console.log(
+        `[WAVE ${performance.now().toFixed(0)}ms] Wave 1/${waveState.totalWaves} spawned`,
+      );
+    }
   }
 
   // Set render callback

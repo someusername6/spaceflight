@@ -7,7 +7,8 @@ import type { FactionComponent } from '../components/faction';
 import { getEnemyCallsignPrefix } from '../components/ship-identity';
 import type { Transform } from '../components/transform';
 import { getComponent, isShip, queryEntities } from '../core/ecs';
-import { randomUnitVector } from '../core/prng';
+import type { PRNGState } from '../core/prng';
+import { randomRange, randomUnitVector } from '../core/prng';
 import { Faction, type World } from '../core/types';
 import type { ProfileName } from '../data/ai-profiles';
 import { createEnemyShip } from '../factories/ship';
@@ -48,6 +49,20 @@ export function createMissionEndState(): MissionEndState {
     delayRemaining: 0,
     victory: false,
   };
+}
+
+/**
+ * Calculate wave delay from a number or [min, max] range.
+ * If a range is provided, returns a random value in that range using PRNG.
+ */
+export function calculateWaveDelay(
+  delay: number | [number, number] | undefined,
+  prng: PRNGState,
+): number {
+  if (delay === undefined) return 0;
+  if (typeof delay === 'number') return delay;
+  // Range: [min, max]
+  return randomRange(prng, delay[0], delay[1]);
 }
 
 /** Minimum spawn distance from allied ships */

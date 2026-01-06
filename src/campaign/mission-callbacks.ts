@@ -16,7 +16,11 @@ import { finalizeMatchStats } from '../systems/stats';
 import { endMission, updateCampaignState } from '../ui/common/screens';
 import type { CampaignController } from './controller-types';
 import type { MissionEndState, WaveState } from './mission-waves';
-import { MISSION_END_DELAY, spawnWave } from './mission-waves';
+import {
+  calculateWaveDelay,
+  MISSION_END_DELAY,
+  spawnWave,
+} from './mission-waves';
 import { applySalvage, calculateSalvage } from './salvage';
 import { showGameOver, showResults } from './screen-handlers';
 import { extractAmmoFromWorld } from './ship-spawning';
@@ -144,9 +148,12 @@ export function createTickCallback(
         // Set delay for next wave
         const nextWave = contract.waves[nextWaveIndex];
         if (nextWave) {
-          waveState.delayRemaining = nextWave.delay ?? 0;
+          waveState.delayRemaining = calculateWaveDelay(
+            nextWave.delay,
+            world.prng,
+          );
           console.log(
-            `[WAVE ${performance.now().toFixed(0)}ms] Wave ${waveState.currentWave + 1} cleared! Next wave in ${waveState.delayRemaining}s`,
+            `[WAVE ${performance.now().toFixed(0)}ms] Wave ${waveState.currentWave + 1} cleared! Next wave in ${waveState.delayRemaining.toFixed(1)}s`,
           );
         }
       }

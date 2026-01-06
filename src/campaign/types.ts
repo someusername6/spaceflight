@@ -68,8 +68,11 @@ export interface Contract {
 export interface ContractWave {
   /** Enemies in this wave */
   enemies: ContractEnemy[];
-  /** Optional delay before spawning (seconds) - gives player breathing room */
-  delay?: number;
+  /**
+   * Optional delay before spawning (seconds) - gives player breathing room.
+   * Can be a single number or [min, max] range for random delay via PRNG.
+   */
+  delay?: number | [number, number];
 }
 
 /** Enemy specification for a contract */
