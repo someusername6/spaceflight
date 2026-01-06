@@ -38,31 +38,43 @@
   pointer-events: none;
 }
 
-.item-preview-icon {
-  font-size: 3rem;
-  color: var(--preview-color, var(--text-primary));
-  text-shadow: 0 0 20px var(--preview-color, var(--color-primary));
-  margin-bottom: 8px;
-  line-height: 1;
+.item-preview-ship-icon {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  filter: var(--filter-cyan) drop-shadow(0 0 8px var(--color-secondary))
+    drop-shadow(0 0 16px var(--color-secondary-glow));
 }
 
-.item-preview-abbrev {
-  font-family: var(--font-display);
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  letter-spacing: 0.1em;
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+.item-preview-weapon-icon {
+  width: 150px;
+  height: 50px;
+  object-fit: contain;
+  filter: var(--filter-amber) drop-shadow(0 0 8px var(--color-primary))
+    drop-shadow(0 0 16px var(--color-primary-glow));
 }
 
-.item-preview-type {
-  font-family: var(--font-ui);
-  font-size: 0.65rem;
-  font-weight: 600;
-  color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.15em;
-  margin-top: 4px;
+.item-preview-missile-icon {
+  width: 150px;
+  height: 50px;
+  object-fit: contain;
+  filter: var(--filter-red) drop-shadow(0 0 8px var(--color-danger))
+    drop-shadow(0 0 16px var(--color-danger-glow));
+}
+
+.item-preview-ammo-icon {
+  width: 150px;
+  height: 50px;
+  object-fit: contain;
+  filter: var(--filter-green) drop-shadow(0 0 8px var(--color-success))
+    drop-shadow(0 0 16px var(--color-success-glow));
+}
+
+.item-preview-scrap-icon {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  filter: var(--filter-dim) drop-shadow(0 0 6px rgba(255, 255, 255, 0.15));
 }
 
 /* ========================================

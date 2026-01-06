@@ -12,7 +12,6 @@ import type {
   EquippedSecondary,
   OwnedShip,
 } from '../../campaign/types';
-import { MISSILES } from '../../data/missiles';
 import { weaponUsesAmmo } from '../../data/prices';
 import { SHIP_CLASSES } from '../../data/ships';
 import { PRIMARY_WEAPONS } from '../../data/weapons';
@@ -93,52 +92,43 @@ function getWeaponColor(weaponType: string): string {
 }
 
 /** Get missile color */
-function getMissileColor(missileType: string): string {
-  const stats = MISSILES[missileType.toLowerCase()];
-  if (!stats) return 'var(--color-secondary)';
-
-  if (stats.isDecoy) return 'var(--color-success)';
-  if (stats.isNuke) return 'var(--color-danger)';
-  if (stats.requiresLock) return 'var(--color-secondary)';
-  return 'var(--color-warning)';
+function getMissileColor(_missileType: string): string {
+  // All secondary weapons use red for consistent color scheme
+  return 'var(--color-danger)';
 }
 
-/** Render ship icon placeholder */
-function renderShipIcon(shipClass: string): string {
-  const abbrev = getShipAbbrev(shipClass);
-  const stats = SHIP_CLASSES[shipClass.toLowerCase()];
+/** Fallback icon path for missing SVGs */
+export const FALLBACK_ICON_PATH = '/icons/fallback.svg';
 
-  // Create a visual representation based on ship type
-  const role = stats ? getShipSilhouette(stats) : 'fighter';
+/** Get path to ship icon SVG */
+export function getShipIconPath(shipClass: string): string {
+  return `/icons/ships/${shipClass.toLowerCase()}.svg`;
+}
+
+/** Get path to weapon icon SVG */
+export function getWeaponIconPath(weaponType: string): string {
+  return `/icons/weapons/${weaponType.toLowerCase()}.svg`;
+}
+
+/** Get path to missile icon SVG */
+export function getMissileIconPath(missileType: string): string {
+  return `/icons/missiles/${missileType.toLowerCase()}.svg`;
+}
+
+/** Generate onerror handler for fallback icon */
+function iconErrorHandler(): string {
+  return `onerror="this.onerror=null; this.src='${FALLBACK_ICON_PATH}'"`;
+}
+
+/** Render ship icon using SVG */
+function renderShipIcon(shipClass: string): string {
+  const iconPath = getShipIconPath(shipClass);
 
   return `
-    <div class="ship-icon-large" data-role="${role}">
-      <div class="ship-icon-frame">
-        <div class="ship-icon-content">
-          <span class="ship-abbrev">${abbrev}</span>
-          <div class="ship-silhouette ${role}"></div>
-        </div>
-        <div class="ship-icon-scanline"></div>
-      </div>
-      <div class="ship-icon-glow"></div>
+    <div class="ship-icon-large">
+      <img src="${iconPath}" alt="${shipClass}" class="ship-icon-svg" ${iconErrorHandler()} />
     </div>
   `;
-}
-
-/** Determine ship silhouette type */
-function getShipSilhouette(stats: {
-  primaryBanks: number[];
-  secondaryBanks: number[];
-  maxSpeed: number;
-  hull: number;
-}): string {
-  const totalSecondary = stats.secondaryBanks.reduce((a, b) => a + b, 0);
-  const totalPrimary = stats.primaryBanks.reduce((a, b) => a + b, 0);
-
-  if (totalSecondary > totalPrimary * 2) return 'bomber';
-  if (stats.hull >= 120) return 'heavy';
-  if (stats.maxSpeed >= 280) return 'interceptor';
-  return 'fighter';
 }
 
 /** Get hardpoint positions for a ship class from ship stats */
@@ -246,15 +236,15 @@ function renderSchematicSlot(
 ): string {
   const isEmpty = !weapon;
   const isPrimary = slotType === 'primary';
-  const abbrev = weapon
+  const weaponType = weapon
     ? isPrimary
-      ? getWeaponAbbrev((weapon as EquippedPrimary).weaponType)
-      : getMissileAbbrev((weapon as EquippedSecondary).weaponType)
+      ? (weapon as EquippedPrimary).weaponType
+      : (weapon as EquippedSecondary).weaponType
     : '';
   const color = weapon
     ? isPrimary
-      ? getWeaponColor((weapon as EquippedPrimary).weaponType)
-      : getMissileColor((weapon as EquippedSecondary).weaponType)
+      ? getWeaponColor(weaponType)
+      : getMissileColor(weaponType)
     : '';
 
   // Capacity/ammo info
@@ -273,20 +263,28 @@ function renderSchematicSlot(
     }
   }
 
+  // Render weapon display: SVG icon for both primaries and secondaries
+  let weaponDisplay = '';
+  if (isEmpty) {
+    weaponDisplay = `<span class="slot-empty-icon">+</span>`;
+  } else if (isPrimary) {
+    const iconPath = getWeaponIconPath(weaponType);
+    weaponDisplay = `<img src="${iconPath}" alt="${weaponType}" class="slot-weapon-icon" ${iconErrorHandler()} />`;
+  } else {
+    const iconPath = getMissileIconPath(weaponType);
+    weaponDisplay = `<img src="${iconPath}" alt="${weaponType}" class="slot-missile-icon" ${iconErrorHandler()} />`;
+  }
+
   return `
     <div class="schematic-slot ${slotType} ${isEmpty ? 'empty' : 'filled'}"
          data-ship="${shipId}"
          data-type="${slotType}"
          data-index="${bankIndex}"
-         data-weapon="${weapon ? (isPrimary ? (weapon as EquippedPrimary).weaponType : (weapon as EquippedSecondary).weaponType) : ''}"
+         data-weapon="${weaponType}"
          style="--slot-x: ${xPosition}%; ${weapon ? `--slot-color: ${color}` : ''}">
       <div class="slot-connector"></div>
       <div class="slot-content">
-        ${
-          isEmpty
-            ? `<span class="slot-empty-icon">+</span>`
-            : `<span class="slot-abbrev">${abbrev}</span>`
-        }
+        ${weaponDisplay}
         <span class="slot-size">×${bankSize}</span>
         ${capacityInfo}
       </div>

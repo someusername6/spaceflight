@@ -4,7 +4,7 @@
 
 import type { CampaignState, OwnedShip, Pilot } from '../../campaign/types';
 import { getMaxHull } from '../ship/card';
-import { getShipAbbrev } from '../ship/viewer';
+import { FALLBACK_ICON_PATH, getShipIconPath } from '../ship/viewer';
 
 /** Get available ships for pilot assignment (ships without pilots) */
 function getAvailableShipsForPilot(state: CampaignState): OwnedShip[] {
@@ -74,14 +74,14 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
                 const maxHull = getMaxHull(hull.shipClass);
                 const currentHull = maxHull - hull.hullDamage;
                 const hullPercent = Math.round((currentHull / maxHull) * 100);
-                const abbrev = getShipAbbrev(hull.shipClass);
+                const iconPath = getShipIconPath(hull.shipClass);
                 const isDamaged = hull.hullDamage > 0;
                 return `
               <button class="hull-card-btn"
                       data-pilot="${pilot.id}"
                       data-hull-index="${index}">
                 <div class="hull-card-icon">
-                  <span class="hull-abbrev">${abbrev}</span>
+                  <img src="${iconPath}" alt="${hull.shipClass}" class="hull-icon-svg" onerror="this.onerror=null; this.src='${FALLBACK_ICON_PATH}'" />
                 </div>
                 <div class="hull-card-name">${hull.shipClass}</div>
                 <div class="hull-card-health ${isDamaged ? 'damaged' : ''}">

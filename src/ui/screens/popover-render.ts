@@ -11,7 +11,6 @@ import type {
 import { MISSILES } from '../../data/missiles';
 import { weaponUsesAmmo } from '../../data/prices';
 import { PRIMARY_WEAPONS } from '../../data/weapons';
-import { getMissileAbbrev, getWeaponAbbrev } from '../ship/viewer';
 
 /** Get stored ammo count for a weapon type */
 function getStoredAmmoCount(state: CampaignState, weaponType: string): number {
@@ -53,7 +52,6 @@ export function renderPrimaryPopover(
   state: CampaignState,
 ): string {
   const stats = PRIMARY_WEAPONS[weapon.weaponType.toLowerCase()];
-  const abbrev = getWeaponAbbrev(weapon.weaponType);
 
   if (!stats) {
     return `<div class="popover-header"><div class="popover-title"><span class="manager-name">${weapon.weaponType}</span></div></div>`;
@@ -91,7 +89,6 @@ export function renderPrimaryPopover(
   return `
     <div class="popover-header">
       <div class="popover-title">
-        <span class="manager-abbrev">${abbrev}</span>
         <span class="manager-name">${stats.name}</span>
         <span class="manager-size">×${weapon.bankSize}</span>
       </div>
@@ -124,7 +121,6 @@ export function renderSecondaryPopover(
   state: CampaignState,
 ): string {
   const stats = MISSILES[weapon.weaponType.toLowerCase()];
-  const abbrev = getMissileAbbrev(weapon.weaponType);
   const stored = getStoredMissileCount(state, weapon.weaponType);
   const canLoad = stored > 0 && weapon.count < weapon.maxCount;
   const canUnload = weapon.count > 0;
@@ -146,7 +142,6 @@ export function renderSecondaryPopover(
   return `
     <div class="popover-header">
       <div class="popover-title">
-        <span class="manager-abbrev">${abbrev}</span>
         <span class="manager-name">${stats.name}</span>
         <span class="manager-size">×${weapon.bankSize}</span>
       </div>

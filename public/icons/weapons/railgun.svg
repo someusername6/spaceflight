@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Railgun: Long barrel with magnetic acceleration rings -->
+  <path d="M8 16 L88 16"/>
+  <rect x="20" y="10" width="8" height="12"/>
+  <rect x="36" y="10" width="8" height="12"/>
+  <rect x="52" y="10" width="8" height="12"/>
+  <rect x="68" y="10" width="8" height="12"/>
+</svg>

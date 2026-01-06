@@ -88,12 +88,41 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   gap: 0;
   padding: 16px;
   flex: 1;
   min-height: 0;
   position: relative;
+  overflow: hidden;
+}
+
+/* Scanline effect across entire schematic diagram */
+.schematic-diagram.vertical::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-secondary),
+    transparent
+  );
+  opacity: 0.4;
+  animation: schematic-scanline 4s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes schematic-scanline {
+  0% {
+    top: 0;
+  }
+  100% {
+    top: 100%;
+  }
 }
 
 /* ========================================
@@ -106,6 +135,7 @@
   align-items: center;
   width: 100%;
   position: relative;
+  z-index: 1;
 }
 
 .hardpoint-row.primary-row {
@@ -152,6 +182,12 @@
   box-sizing: border-box;
   transform: translateX(-50%);
   left: var(--slot-x);
+}
+
+/* Primary and secondary slots wider to fit 3:1 weapon icons */
+.schematic-slot.primary,
+.schematic-slot.secondary {
+  min-width: 90px;
 }
 
 .schematic-slot:hover {
@@ -228,6 +264,30 @@
   letter-spacing: 0.05em;
 }
 
+.slot-weapon-icon {
+  width: 72px;
+  height: 24px;
+  object-fit: contain;
+  filter: var(--filter-cyan) drop-shadow(0 0 3px var(--color-secondary));
+}
+
+/* Color weapon icons based on category */
+.schematic-slot.primary.filled .slot-weapon-icon {
+  filter: var(--filter-amber) drop-shadow(0 0 3px var(--slot-color));
+}
+
+.slot-missile-icon {
+  width: 72px;
+  height: 24px;
+  object-fit: contain;
+  filter: var(--filter-cyan) drop-shadow(0 0 3px var(--color-secondary));
+}
+
+/* Color missile icons based on type */
+.schematic-slot.secondary.filled .slot-missile-icon {
+  filter: var(--filter-red) drop-shadow(0 0 3px var(--slot-color));
+}
+
 .slot-size {
   font-family: var(--font-body);
   font-size: 0.55rem;
@@ -248,121 +308,31 @@
    ======================================== */
 
 .schematic-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  padding: 12px 0;
-  flex: 1;
-  min-height: 100px;
-}
-
-.ship-icon-large {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  max-width: 200px;
-  max-height: 200px;
-  aspect-ratio: 1;
-}
-
-.ship-icon-frame {
-  width: 100%;
-  height: 100%;
-  border: 2px solid var(--border-light);
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
-  container-type: size;
-  clip-path: polygon(
-    0 8px,
-    8px 0,
-    calc(100% - 8px) 0,
-    100% 8px,
-    100% calc(100% - 8px),
-    calc(100% - 8px) 100%,
-    8px 100%,
-    0 calc(100% - 8px)
-  );
-}
-
-.ship-icon-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  z-index: 1;
-}
-
-.ship-abbrev {
-  font-family: var(--font-display);
-  font-size: clamp(1.5rem, 15cqw, 2.5rem);
-  font-weight: 700;
-  color: var(--color-secondary);
-  letter-spacing: 0.15em;
-  text-shadow: 0 0 20px var(--color-secondary-glow);
-}
-
-.ship-silhouette {
-  width: clamp(50px, 40cqw, 100px);
-  aspect-ratio: 2 / 1;
-  background: var(--color-secondary);
-  opacity: 0.3;
-  clip-path: polygon(50% 0%, 100% 50%, 80% 100%, 20% 100%, 0% 50%);
-}
-
-.ship-silhouette.bomber {
-  clip-path: polygon(50% 0%, 100% 30%, 90% 100%, 10% 100%, 0% 30%);
-}
-
-.ship-silhouette.heavy {
-  clip-path: polygon(50% 0%, 95% 40%, 85% 100%, 15% 100%, 5% 40%);
-}
-
-.ship-silhouette.interceptor {
-  clip-path: polygon(50% 0%, 100% 70%, 70% 100%, 30% 100%, 0% 70%);
-}
-
-.ship-icon-scanline {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 3px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--color-secondary),
-    transparent
-  );
-  opacity: 0.5;
-  animation: scanline 3s linear infinite;
-}
-
-@keyframes scanline {
-  0% {
-    top: 0;
-  }
-  100% {
-    top: 100%;
-  }
-}
-
-.ship-icon-glow {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 130%;
-  height: 130%;
-  transform: translate(-50%, -50%);
-  background: radial-gradient(
-    ellipse at center,
-    var(--color-secondary-glow) 0%,
-    transparent 60%
-  );
-  opacity: 0.3;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
+  z-index: 0;
   pointer-events: none;
+}
+
+.ship-icon-large {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ship-icon-svg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: var(--filter-cyan) drop-shadow(0 0 8px var(--color-secondary))
+    drop-shadow(0 0 16px var(--color-secondary-glow));
 }

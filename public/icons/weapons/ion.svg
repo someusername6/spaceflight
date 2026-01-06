@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Ion: Electrical discharge pattern -->
+  <path d="M12 16 L24 10 L32 20 L44 8 L52 24 L64 12 L72 18 L84 16"/>
+  <circle cx="12" cy="16" r="4"/>
+  <circle cx="84" cy="16" r="4"/>
+</svg>

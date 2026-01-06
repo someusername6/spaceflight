@@ -81,12 +81,12 @@
   );
 }
 
-.card-abbrev {
-  font-family: var(--font-display);
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--color-secondary);
-  letter-spacing: 0.1em;
+.card-icon-svg {
+  width: 70%;
+  height: 70%;
+  object-fit: contain;
+  filter: var(--filter-cyan) drop-shadow(0 0 4px var(--color-secondary))
+    drop-shadow(0 0 8px var(--color-secondary-glow));
 }
 
 .ship-card-info {

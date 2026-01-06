@@ -167,6 +167,20 @@
   flex-wrap: wrap;
 }
 
+.squad-ship-class-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.squad-ship-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  filter: var(--filter-cyan) drop-shadow(0 0 3px var(--color-secondary))
+    drop-shadow(0 0 6px var(--color-secondary-glow));
+}
+
 .squad-ship-class {
   font-family: var(--font-ui);
   font-size: 0.7rem;

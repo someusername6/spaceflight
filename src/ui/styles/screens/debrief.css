@@ -210,11 +210,22 @@
 }
 
 .archetype {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-family: var(--font-ui);
   font-size: 0.75rem;
   color: var(--text-dim);
   text-transform: capitalize;
   letter-spacing: 0.03em;
+}
+
+.debrief-ship-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  filter: var(--filter-cyan) drop-shadow(0 0 3px var(--color-secondary))
+    drop-shadow(0 0 6px var(--color-secondary-glow));
 }
 
 .pilot-status {

@@ -4,7 +4,7 @@
 
 import type { OwnedShip } from '../../campaign/types';
 import { SHIP_CLASSES } from '../../data/ships';
-import { getShipAbbrev } from './viewer';
+import { FALLBACK_ICON_PATH, getShipAbbrev, getShipIconPath } from './viewer';
 
 /** Get hull stats for a ship class */
 export function getMaxHull(shipClass: string): number {
@@ -46,12 +46,14 @@ export function renderShipCard(
   const selectedClass = isSelected ? 'selected' : '';
   const commanderClass = isCommander ? 'commander-ship' : '';
 
+  const iconPath = getShipIconPath(ship.shipClass);
+
   return `
     <div class="ship-card ${selectedClass} ${commanderClass}"
          data-ship-id="${ship.id}"
          data-ship-class="${ship.shipClass}">
       <div class="ship-card-icon">
-        <span class="card-abbrev">${abbrev}</span>
+        <img src="${iconPath}" alt="${abbrev}" class="card-icon-svg" onerror="this.onerror=null; this.src='${FALLBACK_ICON_PATH}'" />
       </div>
       <div class="ship-card-info">
         <div class="card-pilot">${pilotName}</div>

@@ -297,8 +297,9 @@
 
 .manager-name {
   font-family: var(--font-ui);
-  font-size: 1rem;
-  color: var(--text-primary);
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--color-primary);
   text-transform: capitalize;
   flex: 1;
 }

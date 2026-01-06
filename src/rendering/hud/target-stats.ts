@@ -17,12 +17,14 @@ import type { Targeting } from '../../components/targeting';
 import type { Transform } from '../../components/transform';
 import { getComponent, hasComponent } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
+import { FALLBACK_ICON_PATH } from '../../ui/ship/viewer';
 
 /** Target stats display state */
 export interface TargetStatsDisplay {
   container: HTMLElement;
   cameraContainer: HTMLElement;
   callsignEl: HTMLElement;
+  typeIconEl: HTMLImageElement;
   typeEl: HTMLElement;
   distanceEl: HTMLElement;
   hullLabel: HTMLElement;
@@ -46,7 +48,10 @@ export function createTargetStats(parent: HTMLElement): TargetStatsDisplay {
   container.innerHTML = `
     <div class="target-camera-container"></div>
     <div class="target-callsign">---</div>
-    <div class="target-type">NO TARGET</div>
+    <div class="target-type-row">
+      <img class="target-type-icon" src="" alt="" />
+      <span class="target-type">NO TARGET</span>
+    </div>
     <div class="target-row">
       <span class="target-label">DIST</span>
       <span class="target-distance">---</span>
@@ -72,6 +77,9 @@ export function createTargetStats(parent: HTMLElement): TargetStatsDisplay {
       '.target-camera-container',
     ) as HTMLElement,
     callsignEl: container.querySelector('.target-callsign') as HTMLElement,
+    typeIconEl: container.querySelector(
+      '.target-type-icon',
+    ) as HTMLImageElement,
     typeEl: container.querySelector('.target-type') as HTMLElement,
     distanceEl: container.querySelector('.target-distance') as HTMLElement,
     hullLabel: container.querySelector('.hull-label') as HTMLElement,
@@ -104,6 +112,7 @@ export function updateTargetStats(
   if (target === undefined) {
     // No target selected
     display.callsignEl.textContent = '---';
+    display.typeIconEl.style.display = 'none';
     display.typeEl.textContent = 'NO TARGET';
     display.distanceEl.textContent = '---';
     display.hullLabel.textContent = 'HULL';
@@ -136,12 +145,20 @@ export function updateTargetStats(
   // Callsign and type
   if (isDecoy) {
     display.callsignEl.textContent = 'DECOY';
+    display.typeIconEl.style.display = 'none';
     display.typeEl.textContent = 'COUNTERMEASURE';
   } else if (identity) {
     display.callsignEl.textContent = identity.callsign;
+    display.typeIconEl.src = `/icons/ships/${identity.archetype.toLowerCase()}.svg`;
+    display.typeIconEl.onerror = () => {
+      display.typeIconEl.onerror = null;
+      display.typeIconEl.src = FALLBACK_ICON_PATH;
+    };
+    display.typeIconEl.style.display = '';
     display.typeEl.textContent = identity.archetype.toUpperCase();
   } else {
     display.callsignEl.textContent = '???';
+    display.typeIconEl.style.display = 'none';
     display.typeEl.textContent = 'UNKNOWN';
   }
 
@@ -291,10 +308,20 @@ export function getTargetStatsStyles(): string {
       color: #f00;
       margin-bottom: 2px;
     }
+    .target-type-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .target-type-icon {
+      width: 16px;
+      height: 16px;
+      filter: var(--filter-cyan) drop-shadow(0 0 4px var(--color-secondary));
+    }
     .target-type {
       font-size: 11px;
       color: #f88;
-      margin-bottom: 8px;
     }
     .target-row {
       display: flex;

@@ -7,6 +7,7 @@
 
 import type { CampaignState, Contract, OwnedShip } from '../../campaign/types';
 import { SHIP_CLASSES } from '../../data/ships';
+import { FALLBACK_ICON_PATH, getShipIconPath } from '../ship/viewer';
 
 /** Maximum ships that can be deployed */
 const MAX_DEPLOYMENT = 4;
@@ -66,6 +67,7 @@ function renderShipCard(
   const hullClass = getHullClass(hullPercent);
   const isDamaged = hullPercent < 50;
   const skillClass = pilot.skill.toLowerCase();
+  const iconPath = getShipIconPath(ship.shipClass);
 
   const cardClasses = [
     'squad-ship-card',
@@ -93,7 +95,10 @@ function renderShipCard(
           ${isDamaged ? '<span class="squad-badge damaged">Damaged</span>' : ''}
         </div>
         <div class="squad-ship-details">
-          <span class="squad-ship-class">${ship.shipClass}</span>
+          <div class="squad-ship-class-row">
+            <img src="${iconPath}" alt="${ship.shipClass}" class="squad-ship-icon" onerror="this.onerror=null; this.src='${FALLBACK_ICON_PATH}'" />
+            <span class="squad-ship-class">${ship.shipClass}</span>
+          </div>
           <div class="squad-ship-hull">
             <span class="squad-hull-label">Hull</span>
             <div class="squad-hull-bar">

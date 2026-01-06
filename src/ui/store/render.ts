@@ -20,6 +20,15 @@ import {
 } from '../../data/prices';
 import { SHIP_CLASSES } from '../../data/ships';
 import { PRIMARY_WEAPONS } from '../../data/weapons';
+import {
+  FALLBACK_ICON_PATH,
+  getMissileIconPath,
+  getShipIconPath,
+  getWeaponIconPath,
+} from '../ship/viewer';
+
+/** Generate onerror handler for fallback icon */
+const iconError = `onerror="this.onerror=null; this.src='${FALLBACK_ICON_PATH}'"`;
 
 export type StoreCategory =
   | 'hulls'
@@ -30,39 +39,60 @@ export type StoreCategory =
 
 /** Render item preview - stylized visual representation */
 function renderItemPreview(category: StoreCategory, id: string): string {
-  const categoryIcons: Record<StoreCategory, string> = {
-    hulls: '◇',
-    primaries: '⟡',
-    secondaries: '◈',
-    ammo: '▣',
-    scrap: '⬢',
-  };
-
   const categoryColors: Record<StoreCategory, string> = {
     hulls: 'var(--color-secondary)',
     primaries: 'var(--color-primary)',
-    secondaries: 'var(--color-warning)',
+    secondaries: 'var(--color-danger)',
     ammo: 'var(--color-success)',
     scrap: 'var(--color-text-dim)',
   };
 
-  // Get abbreviation based on category
-  let abbrev = id.substring(0, 3).toUpperCase();
-  if (category === 'primaries') {
-    const weapon = PRIMARY_WEAPONS[id];
-    abbrev = weapon?.name?.substring(0, 3).toUpperCase() ?? abbrev;
-  } else if (category === 'secondaries') {
-    const missile = MISSILES[id];
-    abbrev = missile?.name?.substring(0, 3).toUpperCase() ?? abbrev;
-  } else if (category === 'hulls' || category === 'scrap') {
-    abbrev = id.substring(0, 3).toUpperCase();
+  // Use ship SVG icon for hulls
+  if (category === 'hulls') {
+    const iconPath = getShipIconPath(id);
+    return `
+      <div class="item-preview" style="--preview-color: ${categoryColors[category]}">
+        <img src="${iconPath}" alt="${id}" class="item-preview-ship-icon" ${iconError} />
+      </div>
+    `;
   }
 
+  // Use ship SVG icon for scrap (dim coloring)
+  if (category === 'scrap') {
+    const iconPath = getShipIconPath(id);
+    return `
+      <div class="item-preview" style="--preview-color: ${categoryColors[category]}">
+        <img src="${iconPath}" alt="${id}" class="item-preview-scrap-icon" ${iconError} />
+      </div>
+    `;
+  }
+
+  // Use weapon SVG icon for primaries
+  if (category === 'primaries') {
+    const iconPath = getWeaponIconPath(id);
+    return `
+      <div class="item-preview" style="--preview-color: ${categoryColors[category]}">
+        <img src="${iconPath}" alt="${id}" class="item-preview-weapon-icon" ${iconError} />
+      </div>
+    `;
+  }
+
+  // Use missile SVG icon for secondaries
+  if (category === 'secondaries') {
+    const iconPath = getMissileIconPath(id);
+    return `
+      <div class="item-preview" style="--preview-color: ${categoryColors[category]}">
+        <img src="${iconPath}" alt="${id}" class="item-preview-missile-icon" ${iconError} />
+      </div>
+    `;
+  }
+
+  // Use weapon SVG icon for ammo (green coloring)
+  // category === 'ammo' is the only remaining case
+  const iconPath = getWeaponIconPath(id);
   return `
     <div class="item-preview" style="--preview-color: ${categoryColors[category]}">
-      <div class="item-preview-icon">${categoryIcons[category]}</div>
-      <div class="item-preview-abbrev">${abbrev}</div>
-      <div class="item-preview-type">${category.toUpperCase()}</div>
+      <img src="${iconPath}" alt="${id}" class="item-preview-ammo-icon" ${iconError} />
     </div>
   `;
 }

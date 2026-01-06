@@ -17,6 +17,7 @@ import {
   type NavDestination,
   renderNavBar,
 } from '../common/nav-bar';
+import { FALLBACK_ICON_PATH, getShipIconPath } from '../ship/viewer';
 import { renderPilotViewer } from './pilot-viewer';
 import { renderRecruitCard, renderRecruitViewer } from './recruit-viewer';
 
@@ -42,8 +43,10 @@ function renderPilotCard(
   const assignedClass = isAssigned ? 'assigned' : 'unassigned';
   const commanderClass = isCommander ? 'commander-pilot' : '';
 
-  // Show ship assignment
-  const shipText = assignedShip ? assignedShip.shipClass : 'Available';
+  // Show ship assignment with icon
+  const shipDisplay = assignedShip
+    ? `<img src="${getShipIconPath(assignedShip.shipClass)}" alt="${assignedShip.shipClass}" class="roster-ship-icon" onerror="this.onerror=null; this.src='${FALLBACK_ICON_PATH}'" />`
+    : '<span class="roster-available">Available</span>';
 
   return `
     <article
@@ -52,13 +55,13 @@ function renderPilotCard(
       role="option"
       aria-selected="${isSelected}"
       tabindex="0"
-      aria-label="${pilot.name}, ${isAssigned ? `assigned to ${shipText}` : 'available'}"
+      aria-label="${pilot.name}, ${isAssigned ? `assigned to ${assignedShip?.shipClass}` : 'available'}"
     >
       <div class="roster-pilot-info">
         <div class="roster-pilot-name">${pilot.name}</div>
         <div class="roster-pilot-status">${isAssigned ? 'Assigned' : 'Available'}</div>
       </div>
-      <div class="roster-pilot-ship" aria-hidden="true">${shipText}</div>
+      <div class="roster-pilot-ship" aria-hidden="true">${shipDisplay}</div>
     </article>
   `;
 }

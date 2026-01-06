@@ -126,12 +126,25 @@
 }
 
 .roster-pilot-ship {
-  font-family: var(--font-display);
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  text-transform: capitalize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
 }
 
-.roster-pilot-card.assigned .roster-pilot-ship {
-  color: var(--color-secondary);
+.roster-ship-icon {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: var(--filter-cyan) drop-shadow(0 0 4px var(--color-secondary))
+    drop-shadow(0 0 8px var(--color-secondary-glow));
+}
+
+.roster-available {
+  font-family: var(--font-ui);
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
