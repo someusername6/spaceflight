@@ -144,9 +144,83 @@ src/
 ├── factories/      # Entity creation helpers (ships, etc.)
 ├── data/           # Game data definitions (single source of truth)
 ├── rendering/      # Three.js, HUD, effects (non-deterministic)
+├── campaign/       # Campaign state, contracts, mission management
+├── ui/             # Campaign UI screens and components
+│   ├── common/     # Shared UI components (nav-bar, screens)
+│   ├── screens/    # Screen-specific TypeScript (hangar, contracts, etc.)
+│   ├── ship/       # Ship viewer components
+│   ├── store/      # Store UI components
+│   └── styles/     # CSS files (see CSS Architecture below)
 ├── game.ts         # Main loop, system order
-└── main.ts         # Entry point
+└── main.ts         # Entry point (imports CSS)
 ```
+
+## CSS Architecture
+
+Campaign UI styles use separate CSS files with CSS custom properties for theming.
+
+### File Structure
+
+```
+src/ui/styles/
+├── index.css          # Main entry - imports all CSS modules
+├── theme.css          # CSS custom properties (colors, fonts)
+├── base.css           # Foundation styles (.game-screen, panels)
+├── buttons.css        # Button system (.btn variants)
+├── list.css           # Ship/contract list styles
+├── nav-bar.css        # Navigation bar and campaign-page wrapper
+├── tooltip.css        # Tooltip system
+├── picker.css         # Weapon/missile picker dropdowns
+├── screens/           # Screen-specific styles
+│   ├── hangar.css
+│   ├── roster.css
+│   ├── loadout.css
+│   ├── results.css
+│   ├── debrief.css
+│   ├── rewards.css
+│   ├── salvage.css
+│   └── game-over.css
+├── ship/              # Ship component styles
+│   ├── card.css
+│   ├── viewer.css
+│   └── viewer-actions.css
+└── store/             # Store screen styles
+    ├── main.css
+    ├── detail.css
+    └── storage.css
+```
+
+### Usage
+
+CSS is imported once in `src/main.ts`:
+```typescript
+import './ui/styles/index.css';
+```
+
+Vite handles CSS bundling, minification, and tree-shaking.
+
+### Theme Variables
+
+All colors, fonts, and common values are CSS custom properties in `theme.css`:
+```css
+:root {
+  --color-primary: #ffaa44;      /* Amber - player/accent */
+  --color-secondary: #44aaff;    /* Cyan - wingmen/info */
+  --color-success: #44ff66;      /* Green - positive */
+  --color-danger: #ff4444;       /* Red - negative/KIA */
+  --font-display: 'Orbitron', monospace;
+  --font-body: 'Share Tech Mono', monospace;
+  /* ... etc */
+}
+```
+
+### HUD vs Campaign UI
+
+The game has two separate styling systems:
+- **Campaign UI** (amber/cyan): `src/ui/styles/` - used for menus, hangar, store
+- **HUD** (green-on-black): `src/rendering/hud/` - dynamically injected during missions
+
+These intentionally use different color palettes for visual distinction.
 
 ## Data Layer Architecture
 

@@ -1,0 +1,52 @@
+/**
+ * Navigation Bar Styles - Campaign page wrapper
+ *
+ * Tab bar, tab buttons, and status display styles are in tabs.css.
+ * This file only contains the campaign page wrapper and nav-specific scanline.
+ */
+
+/* ========================================
+   CAMPAIGN PAGE WRAPPER
+   Constrained width with shared background
+   ======================================== */
+
+.campaign-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  background: linear-gradient(
+    180deg,
+    rgba(5, 8, 15, 0.98) 0%,
+    rgba(8, 12, 20, 0.95) 50%,
+    rgba(5, 8, 15, 0.98) 100%
+  );
+  position: relative;
+  box-sizing: border-box;
+}
+
+/* Scanline overlay for entire campaign screens */
+.campaign-page::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 245, 255, 0.012) 2px,
+    rgba(0, 245, 255, 0.012) 4px
+  );
+  z-index: var(--z-overlay);
+}
+
+/* Nav-specific scanline element (results-tab-bar uses ::after instead) */
+.nav-scanline {
+  content: "";
+}

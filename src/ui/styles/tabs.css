@@ -1,0 +1,258 @@
+/**
+ * Shared Tab & Status Styles
+ *
+ * Defines styles for tab bars used in navigation and results screens.
+ * Uses selector grouping to apply same styles to multiple class names.
+ */
+
+/* ========================================
+   TAB BAR CONTAINER
+   Used by: .global-nav, .results-tab-bar
+   ======================================== */
+
+.global-nav,
+.results-tab-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  height: var(--nav-height);
+  background: linear-gradient(
+    180deg,
+    rgba(10, 15, 25, 0.98) 0%,
+    rgba(5, 10, 18, 0.95) 100%
+  );
+  border-bottom: 1px solid var(--border-color);
+  box-shadow:
+    0 2px 20px rgba(0, 0, 0, 0.5),
+    inset 0 -1px 0 rgba(255, 159, 28, 0.1);
+  flex-shrink: 0;
+  z-index: var(--z-nav);
+}
+
+/* Top accent line */
+.global-nav::before,
+.results-tab-bar::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--color-primary) 20%,
+    var(--color-primary) 80%,
+    transparent 100%
+  );
+  opacity: 0.6;
+}
+
+/* Scanline effect */
+.nav-scanline,
+.results-tab-bar::after {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 245, 255, 0.015) 2px,
+    rgba(0, 245, 255, 0.015) 4px
+  );
+}
+
+.results-tab-bar::after {
+  content: "";
+}
+
+/* ========================================
+   TAB GROUP CONTAINER
+   Used by: .nav-tabs, .results-tabs-group
+   ======================================== */
+
+.nav-tabs,
+.results-tabs-group {
+  display: flex;
+  gap: 4px;
+  height: 100%;
+  flex-shrink: 0;
+}
+
+/* ========================================
+   INDIVIDUAL TAB BUTTON
+   Used by: .nav-tab, .results-tab
+   ======================================== */
+
+.nav-tab,
+.results-tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 24px;
+  height: 100%;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--text-dim);
+  transition: all 0.2s ease;
+}
+
+/* Underline indicator */
+.nav-tab::after,
+.results-tab::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 2px;
+  background: var(--color-primary);
+  transition: width 0.25s ease;
+}
+
+.nav-tab:hover,
+.results-tab:hover {
+  color: var(--text-secondary);
+  background: rgba(255, 159, 28, 0.05);
+}
+
+.nav-tab:hover::after,
+.results-tab:hover::after {
+  width: 60%;
+}
+
+.nav-tab.active,
+.results-tab.active {
+  color: var(--color-primary);
+  background: rgba(255, 159, 28, 0.08);
+}
+
+.nav-tab.active::after,
+.results-tab.active::after {
+  width: 100%;
+  box-shadow: 0 0 10px var(--color-primary-glow);
+}
+
+.nav-tab-icon,
+.results-tab-icon {
+  font-size: 1rem;
+  opacity: 0.7;
+  transition: all 0.2s ease;
+}
+
+.nav-tab.active .nav-tab-icon,
+.results-tab.active .results-tab-icon {
+  opacity: 1;
+  text-shadow: 0 0 8px var(--color-primary-glow);
+}
+
+.nav-tab-label,
+.results-tab-label {
+  text-transform: uppercase;
+}
+
+/* ========================================
+   STATUS DISPLAY (Sector + Credits)
+   Used by: .nav-status, .results-status
+   ======================================== */
+
+.nav-status,
+.results-status {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  z-index: 1;
+}
+
+.nav-status-item,
+.results-status-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  clip-path: polygon(
+    8px 0,
+    100% 0,
+    100% calc(100% - 8px),
+    calc(100% - 8px) 100%,
+    0 100%,
+    0 8px
+  );
+}
+
+.nav-status-label,
+.results-status-label {
+  font-family: var(--font-ui);
+  font-size: 0.55rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+.nav-status-value,
+.results-status-value {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0.05em;
+}
+
+.nav-credits,
+.results-credits {
+  color: var(--color-primary);
+  text-shadow: 0 0 8px var(--color-primary-glow);
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+
+@media (max-width: 700px) {
+  .global-nav,
+  .results-tab-bar {
+    padding: 0 12px;
+  }
+
+  .nav-tab,
+  .results-tab {
+    padding: 0 14px;
+  }
+
+  .nav-tab-label,
+  .results-tab-label {
+    display: none;
+  }
+
+  .nav-tab-icon,
+  .results-tab-icon {
+    font-size: 1.2rem;
+  }
+
+  .nav-status,
+  .results-status {
+    gap: 12px;
+  }
+
+  .nav-status-item,
+  .results-status-item {
+    padding: 4px 8px;
+    clip-path: none;
+  }
+}

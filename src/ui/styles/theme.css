@@ -1,0 +1,84 @@
+/**
+ * Design System Theme - "Tactical Command Interface"
+ *
+ * A military spacecraft CIC aesthetic with amber warning displays,
+ * scan lines, angular panels, and holographic elements.
+ */
+
+/* Google Fonts */
+@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=JetBrains+Mono:wght@300;400;500&family=Rajdhani:wght@400;500;600;700&display=swap");
+
+:root {
+  /* ========================================
+     PRIMARY - Amber (cockpit instrument style)
+     ======================================== */
+  --color-primary: #ff9f1c;
+  --color-primary-dim: #cc7a00;
+  --color-primary-glow: rgba(255, 159, 28, 0.4);
+
+  /* ========================================
+     SECONDARY - Cyan (holographic accents)
+     ======================================== */
+  --color-secondary: #00f5ff;
+  --color-secondary-dim: #00b4b4;
+  --color-secondary-glow: rgba(0, 245, 255, 0.3);
+
+  /* ========================================
+     STATUS COLORS
+     ======================================== */
+  --color-success: #00ff88;
+  --color-success-glow: rgba(0, 255, 136, 0.3);
+
+  --color-warning: #ffd93d;
+
+  --color-danger: #ff3366;
+  --color-danger-dim: #cc2952;
+  --color-danger-glow: rgba(255, 51, 102, 0.4);
+
+  /* ========================================
+     BACKGROUNDS
+     ======================================== */
+  --bg-deep: #050508;
+  --bg-panel: rgba(10, 15, 25, 0.95);
+  --bg-panel-hover: rgba(20, 30, 50, 0.95);
+
+  /* ========================================
+     BORDERS
+     ======================================== */
+  --border-color: #1a2a3a;
+  --border-light: #2a4a6a;
+
+  /* ========================================
+     TEXT
+     ======================================== */
+  --text-primary: #e8e8e8;
+  --text-secondary: #8899aa;
+  --text-dim: #556677;
+
+  /* ========================================
+     SPECIAL EFFECTS
+     ======================================== */
+  --color-scanline: rgba(0, 245, 255, 0.03);
+
+  /* ========================================
+     TYPOGRAPHY
+     ======================================== */
+  --font-display: "Orbitron", "Rajdhani", "Exo 2", sans-serif;
+  --font-body: "JetBrains Mono", "Fira Code", "Source Code Pro", monospace;
+  --font-ui: "Rajdhani", "Exo 2", "Titillium Web", sans-serif;
+
+  /* ========================================
+     LAYOUT
+     ======================================== */
+  --nav-height: 56px;
+  --content-max-width: 1200px;
+
+  /* ========================================
+     Z-INDEX SCALE
+     ======================================== */
+  --z-base: 1;
+  --z-dropdown: 100;
+  --z-nav: 100;
+  --z-overlay: 1000;
+  --z-tooltip: 10000;
+}

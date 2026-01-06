@@ -881,4 +881,13 @@ Each screen has navigation callbacks:
 ### Type Imports
 All screen props and actions should reference types from:
 - `src/campaign/types.ts` - Campaign state and data types
-- `src/ui/types/` - Screen-specific prop and action interfaces
+
+### CSS Architecture
+Styles are in separate CSS files under `src/ui/styles/`:
+- `index.css` - Main entry point, imports all CSS
+- `theme.css` - CSS custom properties (colors, fonts)
+- `screens/*.css` - Screen-specific styles
+- `ship/*.css` - Ship component styles
+- `store/*.css` - Store screen styles
+
+See `docs/ARCHITECTURE.md` for full CSS file structure.

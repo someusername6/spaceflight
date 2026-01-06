@@ -1,0 +1,71 @@
+/**
+ * Campaign UI Styles - Main entry point
+ *
+ * This file imports all CSS modules for the tactical interface.
+ * Import this single file in the main entry point.
+ */
+
+/* ========================================
+   FOUNDATION
+   ======================================== */
+
+/* Theme variables - must be first */
+@import "./theme.css";
+
+/* Base styles and typography */
+@import "./base.css";
+
+/* Button system */
+@import "./buttons.css";
+
+/* ========================================
+   COMMON COMPONENTS
+   ======================================== */
+
+/* Shared tab bar and status display */
+@import "./tabs.css";
+
+/* Lists (ship list, contract list) */
+@import "./list.css";
+
+/* Navigation bar and campaign page wrapper */
+@import "./nav-bar.css";
+
+/* Tooltips */
+@import "./tooltip.css";
+
+/* Picker dropdowns (weapons, missiles) */
+@import "./picker.css";
+
+/* ========================================
+   SHIP COMPONENTS
+   ======================================== */
+
+@import "./ship/card.css";
+@import "./ship/viewer.css";
+@import "./ship/viewer-actions.css";
+
+/* ========================================
+   SCREEN-SPECIFIC STYLES
+   ======================================== */
+
+/* Hangar - ship management */
+@import "./screens/hangar.css";
+
+/* Roster - pilot management */
+@import "./screens/roster.css";
+
+/* Loadout - weapon configuration */
+@import "./screens/loadout.css";
+
+/* Store - equipment purchase */
+@import "./store/main.css";
+@import "./store/detail.css";
+@import "./store/storage.css";
+
+/* Results - post-mission screens */
+@import "./screens/results.css";
+@import "./screens/debrief.css";
+@import "./screens/rewards.css";
+@import "./screens/salvage.css";
+@import "./screens/game-over.css";

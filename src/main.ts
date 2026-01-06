@@ -2,6 +2,9 @@
  * Main entry point - initializes game and starts the campaign loop.
  */
 
+// Import campaign UI styles (must be before component imports)
+import './ui/styles/index.css';
+
 import { startCampaign } from './campaign/controller';
 
 /** Initialize and start the campaign */
@@ -14,14 +17,6 @@ function main(): void {
 
   // Start the campaign
   startCampaign(container);
-
-  console.log('Spaceflight - Campaign Mode');
-  console.log(
-    'Flight: WASD = Pitch/Yaw, QE = Roll, Shift = Accelerate, Ctrl = Decelerate, Z = Afterburner',
-  );
-  console.log(
-    'Combat: Space = Fire, T = Target nearest, [ ] = Cycle targets, < > = Cycle weapons',
-  );
 }
 
 // Start when DOM is ready

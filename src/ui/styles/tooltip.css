@@ -1,0 +1,95 @@
+/**
+ * Tooltip Styles - Scan-line effect HUD tooltips
+ */
+
+/* ========================================
+   TOOLTIP SYSTEM
+   ======================================== */
+
+.stat-tooltip {
+  position: fixed;
+  z-index: var(--z-tooltip);
+  background: var(--bg-panel);
+  border: 1px solid var(--border-light);
+  padding: 0;
+  min-width: 200px;
+  max-width: 280px;
+  pointer-events: none;
+  box-shadow:
+    0 0 20px rgba(0, 0, 0, 0.5),
+    0 0 40px var(--color-secondary-glow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.stat-tooltip::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-secondary),
+    transparent
+  );
+}
+
+.tooltip-header {
+  padding: 10px 14px;
+  background: rgba(0, 245, 255, 0.08);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.tooltip-title {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-secondary);
+  letter-spacing: 0.1em;
+}
+
+.tooltip-subtitle {
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+}
+
+.tooltip-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 0;
+}
+
+.tooltip-stat {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 14px;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+}
+
+.tooltip-stat:nth-child(odd) {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.tooltip-label {
+  color: var(--text-secondary);
+}
+
+.tooltip-value {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.tooltip-note {
+  padding: 8px 14px;
+  font-size: 0.75rem;
+  color: var(--color-success);
+  font-style: italic;
+  background: rgba(0, 255, 136, 0.05);
+}

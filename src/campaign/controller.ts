@@ -17,7 +17,6 @@ import {
   setMissionContainer,
   startMission,
 } from '../ui/common/screens';
-import { injectCampaignStyles } from '../ui/common/styles';
 import { createContractsUI } from '../ui/screens/contracts';
 import type { CampaignController } from './controller-types';
 import {
@@ -54,9 +53,6 @@ export type { CampaignController } from './controller-types';
 export function startCampaign(container: HTMLElement): CampaignController {
   // Initialize input system
   initInput();
-
-  // Inject campaign styles
-  injectCampaignStyles();
 
   // Create initial campaign state
   const campaignState = createNewCampaign();

@@ -41,7 +41,7 @@ Weapon components and systems (projectiles, missiles, beams, decoys), shield sys
 - **Campaign data types** (`src/campaign/types.ts`): OwnedShip, Contract, Pilot, CampaignState
 - **Campaign state management** (`src/campaign/state.ts`): createNewCampaign, applyMissionResults, isGameOver
 - **Screen state machine** (`src/ui/screens.ts`): Screen enum (HANGAR, CONTRACTS, MISSION, RESULTS, GAME_OVER), transitions
-- **UI styles** (`src/ui/styles.ts`): Dark space theme CSS for campaign screens
+- **UI styles** (`src/ui/styles/`): CSS files with tactical military theme (amber/cyan)
 - **Hangar UI** (`src/ui/hangar.ts`): Ship list with hull status, "Select Contract" navigation
 - **Contract UI** (`src/ui/contracts.ts`): 3 hardcoded contracts (easy/medium/hard), enemy details
 - **Results UI** (`src/ui/results.ts`): Victory/defeat screen, credits earned, game over screen
@@ -102,7 +102,7 @@ Balance targets achieved:
 #### Phase B - Equipment Inventory ✅
 - **Data model refactor** (`src/campaign/types.ts`): `OwnedShip.archetype` → `OwnedShip.shipClass`. Added `StoredHull` type for ship hulls in storage.
 - **Ship spawning update** (`src/campaign/ship-spawning.ts`): Uses `SHIP_CLASSES` for hull stats instead of `SHIP_ARCHETYPES`.
-- **Inventory display** (`src/ui/hangar.ts:71-137`): Shows stored hulls and weapons in hangar. CSS styles in `src/ui/styles.ts:288-333`.
+- **Inventory display** (`src/ui/hangar.ts:71-137`): Shows stored hulls and weapons in hangar. CSS in `src/ui/styles/screens/hangar.css`.
 - **CampaignState** now has `storedHulls: StoredHull[]` array.
 
 #### Phase D - Loadout Customization ✅
@@ -128,7 +128,7 @@ Balance targets achieved:
 - **Hangar ship selection** (`src/ui/hangar.ts`): Click ships to select, shows loadout panel in sidebar
 - **Pilot deployment** (`src/ui/hangar.ts`): "Deploy New Wingman" section combines unassigned pilots with stored hulls
 - **Storage display** (`src/ui/hangar.ts`): Shows unassigned pilots, stored hulls, stored weapons, stored ammo
-- **Loadout styles** (`src/ui/loadout-styles.ts`): CSS for loadout panel, weapon rows, equip buttons, inventory display
+- **Loadout styles** (`src/ui/styles/screens/loadout.css`): CSS for loadout panel, weapon rows, equip buttons, inventory display
 
 #### Phase C - Equipment Store ✅
 - **Price data** (`src/data/prices.ts`): Buy/sell prices for hulls, primaries, secondaries, and ammo
@@ -157,7 +157,7 @@ Balance targets achieved:
   - Shows detailed stats when item selected (hull/shields/speed, damage/range/fire rate, etc.)
   - Bulk buy/sell buttons for missiles (×10) and ammo (×100)
   - Uses catalog functions for consistent item listings
-- **Store styles** (`src/ui/store-styles.ts`): CSS for store layout, item list, detail panel
+- **Store styles** (`src/ui/styles/store/`): CSS for store layout, item list, detail panel (main.css, detail.css, storage.css)
 - **Screen integration** (`src/ui/screens.ts`, `src/campaign/screen-handlers.ts`):
   - Added STORE to Screen enum
   - `goToStore` transition function
@@ -195,20 +195,18 @@ Balance targets achieved:
 - **Scrap prices** (`src/data/prices.ts:111-122`): `getScrapPrice()`, `SCRAP_PER_HULL`, `SCRAP_CONVERSION_FEE` constants
 
 #### UI Polish & Code Cleanup ✅
-- **Ship viewer improvements** (`src/ui/ship-viewer.ts`, `src/ui/viewer-styles.ts`):
+- **Ship viewer improvements** (`src/ui/ship/viewer.ts`, `src/ui/styles/ship/viewer.css`):
   - Removed redundant compact stats from ship viewer (stats now only in Ship Stats panel)
   - Ship icon scales automatically to fill available space (max 200×200px)
   - Text and silhouette scale with container using CSS container queries
-- **Consistent stats styling** (`src/ui/roster-styles.ts`, `src/ui/hangar-styles.ts`, `src/ui/viewer-styles.ts`):
+- **Consistent stats styling** (CSS in `src/ui/styles/screens/roster.css`, `hangar.css`, `ship/viewer.css`):
   - Unified font styling across Store, Roster, and Hangar stat displays
   - Fixed specificity issues with global `.stat-label`/`.stat-value` styles
-- **Store UX improvements** (`src/ui/store.ts`, `src/ui/store-detail-styles.ts`):
+- **Store UX improvements** (`src/ui/store/`, `src/ui/styles/store/detail.css`):
   - Simplified scrap conversion UI with single green "Convert to Hull" button
   - Consistent button heights (min-height 56px for 2-line text)
   - Ammo naming: weapon name only in side pane, "Weapon ammo" in main pane
-- **Dead code removal** (~17 KB bundle size reduction):
-  - Removed unused `src/ui/types/` directory (6 files)
-  - Removed unused `src/ui/hardpoint-styles.ts`
-  - Cleaned `src/ui/debrief-styles.ts` (305→122 lines): removed unused `.mission-summary`, `.weapon-accuracy`, `.stat-box` styles
-  - Cleaned `src/ui/salvage-styles.ts` (331→135 lines): removed unused `.scrap-*`, `.conversion-progress` styles
-  - Cleaned `src/ui/loadout-styles.ts` (296→81 lines): removed unused `.weapon-slot`, `.ammo-controls`, `.storage-preview` styles
+- **CSS architecture migration** - Migrated from CSS-in-JS to separate CSS files:
+  - All styles now in `src/ui/styles/` directory with CSS custom properties
+  - Theme variables in `theme.css`, imported by `src/main.ts`
+  - ~58 KB compiled CSS (9 KB gzipped), slightly reduced JS bundle

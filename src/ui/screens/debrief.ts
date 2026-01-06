@@ -294,6 +294,3 @@ export function renderDebrief(data: MissionDebriefData): string {
     </div>
   `;
 }
-
-// Re-export styles from separate file
-export { getDebriefStyles } from './debrief-styles';
