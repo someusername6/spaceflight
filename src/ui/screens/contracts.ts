@@ -174,8 +174,8 @@ function hasUnarmedShips(state: CampaignState): boolean {
   return state.ships.some(
     (ship) =>
       ship.pilot !== null &&
-      ship.primaryWeapons.length === 0 &&
-      ship.secondaryWeapons.length === 0,
+      ship.primaryWeapons.every((w) => w === null) &&
+      ship.secondaryWeapons.every((w) => w === null),
   );
 }
 

@@ -40,8 +40,10 @@ export interface EquippedSecondary {
 export interface OwnedShip {
   id: string;
   shipClass: string; // 'interceptor', 'striker', etc. (from SHIP_CLASSES)
-  primaryWeapons: EquippedPrimary[];
-  secondaryWeapons: EquippedSecondary[];
+  /** Fixed-length array matching ship's primaryBanks. null = empty slot. */
+  primaryWeapons: (EquippedPrimary | null)[];
+  /** Fixed-length array matching ship's secondaryBanks. null = empty slot. */
+  secondaryWeapons: (EquippedSecondary | null)[];
   pilot: Pilot | null; // null = unassigned (ship in reserve)
   hullDamage: number; // 0 = full health, positive = damage taken
 }

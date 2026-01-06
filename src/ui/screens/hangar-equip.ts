@@ -191,15 +191,37 @@ export function showWeaponPicker(
     </div>
   `;
 
-  // Position relative to slot
-  const rect = slotElement.getBoundingClientRect();
+  // Position relative to slot (initial placement)
+  const slotRect = slotElement.getBoundingClientRect();
   picker.style.position = 'fixed';
-  picker.style.left = `${rect.left}px`;
-  picker.style.top = `${rect.bottom + 4}px`;
+  picker.style.left = `${slotRect.left}px`;
+  picker.style.top = `${slotRect.bottom + 4}px`;
   picker.style.zIndex = '1000';
 
   document.body.appendChild(picker);
   activePicker = picker;
+
+  // Post-render adjustment: ensure picker stays within viewport
+  const pickerRect = picker.getBoundingClientRect();
+  const padding = 8;
+
+  // Adjust if overflowing bottom
+  if (pickerRect.bottom > window.innerHeight - padding) {
+    // Position above the slot instead
+    const newTop = slotRect.top - pickerRect.height - 4;
+    // Only move above if it fits; otherwise clamp to bottom
+    if (newTop >= padding) {
+      picker.style.top = `${newTop}px`;
+    } else {
+      picker.style.top = `${padding}px`;
+    }
+  }
+
+  // Adjust if overflowing right
+  if (pickerRect.right > window.innerWidth - padding) {
+    const newLeft = window.innerWidth - pickerRect.width - padding;
+    picker.style.left = `${Math.max(padding, newLeft)}px`;
+  }
 
   // Bind close button
   picker.querySelector('.picker-close')?.addEventListener('click', (e) => {
@@ -213,6 +235,7 @@ export function showWeaponPicker(
       picker,
       state,
       shipId,
+      slotIndex,
       bankSize,
       onStateUpdate,
       onRerender,
@@ -223,6 +246,7 @@ export function showWeaponPicker(
       picker,
       state,
       shipId,
+      slotIndex,
       bankSize,
       onStateUpdate,
       onRerender,
@@ -246,6 +270,7 @@ function bindPrimaryPickerEvents(
   picker: HTMLElement,
   state: CampaignState,
   shipId: string,
+  slotIndex: number,
   bankSize: number,
   onStateUpdate: (newState: CampaignState) => void,
   onRerender: () => void,
@@ -260,7 +285,13 @@ function bindPrimaryPickerEvents(
       const storageIndex = findWeaponIndex(state, weaponType);
       if (storageIndex < 0) return;
 
-      const newState = equipPrimary(state, shipId, storageIndex, bankSize);
+      const newState = equipPrimary(
+        state,
+        shipId,
+        storageIndex,
+        slotIndex,
+        bankSize,
+      );
       if (newState !== state) {
         onStateUpdate(newState);
       }
@@ -275,6 +306,7 @@ function bindSecondaryPickerEvents(
   picker: HTMLElement,
   state: CampaignState,
   shipId: string,
+  slotIndex: number,
   bankSize: number,
   onStateUpdate: (newState: CampaignState) => void,
   onRerender: () => void,
@@ -323,6 +355,7 @@ function bindSecondaryPickerEvents(
         state,
         shipId,
         storageIndex,
+        slotIndex,
         bankSize,
         count,
       );

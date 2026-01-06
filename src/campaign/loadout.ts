@@ -4,6 +4,7 @@
 
 import { weaponUsesAmmo } from '../data/prices';
 import {
+  createEmptyWeaponSlots,
   mergeAmmoIntoStorage,
   mergeSecondaryIntoStorage,
   transferShipWeaponsToStorage,
@@ -18,19 +19,19 @@ import type {
   StoredWeapon,
 } from './types';
 
-/** Unequip a primary weapon from a ship, move to storage (and ammo if any) */
+/** Unequip a primary weapon from a slot, move to storage (and ammo if any) */
 export function unequipPrimary(
   state: CampaignState,
   shipId: string,
-  weaponIndex: number,
+  slotIndex: number,
 ): CampaignState {
   const ship = state.ships.find((s) => s.id === shipId);
-  if (!ship || weaponIndex < 0 || weaponIndex >= ship.primaryWeapons.length) {
+  if (!ship || slotIndex < 0 || slotIndex >= ship.primaryWeapons.length) {
     return state;
   }
 
-  const weapon = ship.primaryWeapons[weaponIndex];
-  if (!weapon) return state;
+  const weapon = ship.primaryWeapons[slotIndex];
+  if (!weapon) return state; // Slot already empty
 
   // Add weapon to storage
   const stored: StoredWeapon = {
@@ -39,9 +40,9 @@ export function unequipPrimary(
     count: 1,
   };
 
-  // Remove from ship
-  const updatedWeapons = ship.primaryWeapons.filter(
-    (_, i) => i !== weaponIndex,
+  // Set slot to null (preserves array length and slot positions)
+  const updatedWeapons = ship.primaryWeapons.map((w, i) =>
+    i === slotIndex ? null : w,
   );
 
   // Transfer ammo to storage if weapon had any
@@ -61,23 +62,23 @@ export function unequipPrimary(
   };
 }
 
-/** Unequip a secondary weapon from a ship, move to storage */
+/** Unequip a secondary weapon from a slot, move to storage */
 export function unequipSecondary(
   state: CampaignState,
   shipId: string,
-  weaponIndex: number,
+  slotIndex: number,
 ): CampaignState {
   const ship = state.ships.find((s) => s.id === shipId);
-  if (!ship || weaponIndex < 0 || weaponIndex >= ship.secondaryWeapons.length) {
+  if (!ship || slotIndex < 0 || slotIndex >= ship.secondaryWeapons.length) {
     return state;
   }
 
-  const weapon = ship.secondaryWeapons[weaponIndex];
-  if (!weapon) return state;
+  const weapon = ship.secondaryWeapons[slotIndex];
+  if (!weapon) return state; // Slot already empty
 
-  // Remove from ship
-  const updatedWeapons = ship.secondaryWeapons.filter(
-    (_, i) => i !== weaponIndex,
+  // Set slot to null (preserves array length and slot positions)
+  const updatedWeapons = ship.secondaryWeapons.map((w, i) =>
+    i === slotIndex ? null : w,
   );
 
   // Merge into existing storage stack or create new entry
@@ -96,11 +97,12 @@ export function unequipSecondary(
   };
 }
 
-/** Equip a primary weapon from storage to a ship */
+/** Equip a primary weapon from storage to a specific slot */
 export function equipPrimary(
   state: CampaignState,
   shipId: string,
   storageIndex: number,
+  slotIndex: number,
   bankSize: number,
 ): CampaignState {
   const ship = state.ships.find((s) => s.id === shipId);
@@ -109,10 +111,23 @@ export function equipPrimary(
     return state;
   }
 
+  // Validate slot index and ensure slot is empty
+  if (slotIndex < 0 || slotIndex >= ship.primaryWeapons.length) {
+    return state;
+  }
+  if (ship.primaryWeapons[slotIndex] !== null) {
+    return state; // Slot already occupied
+  }
+
   // Create equipped weapon - ballistic weapons start with 0 ammo
   const equipped: EquippedPrimary = weaponUsesAmmo(stored.weaponType)
     ? { weaponType: stored.weaponType, bankSize, currentAmmo: 0 }
     : { weaponType: stored.weaponType, bankSize };
+
+  // Assign to specific slot
+  const updatedWeapons = ship.primaryWeapons.map((w, i) =>
+    i === slotIndex ? equipped : w,
+  );
 
   // Remove from storage
   const updatedStorage = state.storedWeapons.filter(
@@ -122,19 +137,18 @@ export function equipPrimary(
   return {
     ...state,
     ships: state.ships.map((s) =>
-      s.id === shipId
-        ? { ...s, primaryWeapons: [...s.primaryWeapons, equipped] }
-        : s,
+      s.id === shipId ? { ...s, primaryWeapons: updatedWeapons } : s,
     ),
     storedWeapons: updatedStorage,
   };
 }
 
-/** Equip a secondary weapon from storage to a ship */
+/** Equip a secondary weapon from storage to a specific slot */
 export function equipSecondary(
   state: CampaignState,
   shipId: string,
   storageIndex: number,
+  slotIndex: number,
   bankSize: number,
   requestedCount?: number,
 ): CampaignState {
@@ -142,6 +156,14 @@ export function equipSecondary(
   const stored = state.storedWeapons[storageIndex];
   if (!ship || !stored || stored.category !== 'secondary') {
     return state;
+  }
+
+  // Validate slot index and ensure slot is empty
+  if (slotIndex < 0 || slotIndex >= ship.secondaryWeapons.length) {
+    return state;
+  }
+  if (ship.secondaryWeapons[slotIndex] !== null) {
+    return state; // Slot already occupied
   }
 
   // Calculate max capacity based on missile type and bank size
@@ -162,6 +184,11 @@ export function equipSecondary(
     maxCount: maxCapacity,
   };
 
+  // Assign to specific slot
+  const updatedWeapons = ship.secondaryWeapons.map((w, i) =>
+    i === slotIndex ? equipped : w,
+  );
+
   // Update storage - remove if empty, reduce count if remainder
   let updatedStorage: StoredWeapon[];
   if (remainder <= 0) {
@@ -177,9 +204,7 @@ export function equipSecondary(
   return {
     ...state,
     ships: state.ships.map((s) =>
-      s.id === shipId
-        ? { ...s, secondaryWeapons: [...s.secondaryWeapons, equipped] }
-        : s,
+      s.id === shipId ? { ...s, secondaryWeapons: updatedWeapons } : s,
     ),
     storedWeapons: updatedStorage,
   };
@@ -197,12 +222,17 @@ export function swapPilotToHull(
     return state; // Ship must have a pilot assigned
   }
 
+  // Get bank counts for new ship class
+  const { primaryWeapons, secondaryWeapons } = createEmptyWeaponSlots(
+    hull.shipClass,
+  );
+
   // Create new active ship from hull with the same pilot
   const newShip: OwnedShip = {
     id: hull.id,
     shipClass: hull.shipClass,
-    primaryWeapons: [], // Starts empty - needs weapons equipped
-    secondaryWeapons: [],
+    primaryWeapons, // Null-filled array matching bank count
+    secondaryWeapons, // Null-filled array matching bank count
     pilot: ship.pilot,
     hullDamage: hull.hullDamage,
   };
@@ -251,12 +281,17 @@ export function assignPilotToHull(
     return state; // Pilot already assigned
   }
 
+  // Get bank counts for new ship class
+  const { primaryWeapons, secondaryWeapons } = createEmptyWeaponSlots(
+    hull.shipClass,
+  );
+
   // Create new active ship from hull + pilot
   const newShip: OwnedShip = {
     id: hull.id,
     shipClass: hull.shipClass,
-    primaryWeapons: [], // Empty - needs weapons equipped
-    secondaryWeapons: [],
+    primaryWeapons, // Null-filled array matching bank count
+    secondaryWeapons, // Null-filled array matching bank count
     pilot,
     hullDamage: hull.hullDamage,
   };

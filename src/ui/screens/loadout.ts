@@ -68,6 +68,7 @@ function renderMissileControls(
 function renderShipWeapons(ship: OwnedShip, state: CampaignState): string {
   const primaryList = ship.primaryWeapons
     .map((w, i) => {
+      if (w === null) return ''; // Skip empty slots
       const hasStoredAmmo = state.storedAmmo.some(
         (a) => a.weaponType === w.weaponType && a.count > 0,
       );
@@ -81,10 +82,12 @@ function renderShipWeapons(ship: OwnedShip, state: CampaignState): string {
       </div>
     `;
     })
+    .filter(Boolean)
     .join('');
 
   const secondaryList = ship.secondaryWeapons
     .map((w, i) => {
+      if (w === null) return ''; // Skip empty slots
       const hasStoredMissiles = state.storedWeapons.some(
         (s) =>
           s.category === 'secondary' &&
@@ -101,16 +104,23 @@ function renderShipWeapons(ship: OwnedShip, state: CampaignState): string {
       </div>
     `;
     })
+    .filter(Boolean)
     .join('');
+
+  // Count equipped (non-null) weapons
+  const equippedPrimary = ship.primaryWeapons.filter((w) => w !== null).length;
+  const equippedSecondary = ship.secondaryWeapons.filter(
+    (w) => w !== null,
+  ).length;
 
   return `
     <div class="ship-weapons">
       <div class="weapon-section">
-        <div class="weapon-label">Primary (${ship.primaryWeapons.length})</div>
+        <div class="weapon-label">Primary (${equippedPrimary}/${ship.primaryWeapons.length})</div>
         ${primaryList || '<div class="weapon-empty">None equipped</div>'}
       </div>
       <div class="weapon-section">
-        <div class="weapon-label">Secondary (${ship.secondaryWeapons.length})</div>
+        <div class="weapon-label">Secondary (${equippedSecondary}/${ship.secondaryWeapons.length})</div>
         ${secondaryList || '<div class="weapon-empty">None equipped</div>'}
       </div>
     </div>
@@ -175,15 +185,19 @@ function renderEquipOptions(ship: OwnedShip, storage: StoredWeapon[]): string {
     .map((w, i) => ({ ...w, storageIndex: i }))
     .filter((w) => w.category === 'secondary');
 
-  // Current slot usage
-  const usedPrimarySlots = ship.primaryWeapons.length;
-  const usedSecondarySlots = ship.secondaryWeapons.length;
-  const canAddPrimary = usedPrimarySlots < primaryBanks.length;
-  const canAddSecondary = usedSecondarySlots < secondaryBanks.length;
+  // Find first empty slot (null) in each weapon array
+  const firstEmptyPrimary = ship.primaryWeapons.indexOf(null);
+  const firstEmptySecondary = ship.secondaryWeapons.indexOf(null);
+  const canAddPrimary = firstEmptyPrimary !== -1;
+  const canAddSecondary = firstEmptySecondary !== -1;
 
-  // Next available bank size
-  const nextPrimaryBank = primaryBanks[usedPrimarySlots] ?? 1;
-  const nextSecondaryBank = secondaryBanks[usedSecondarySlots] ?? 1;
+  // Bank size for the first empty slot
+  const nextPrimaryBank = canAddPrimary
+    ? (primaryBanks[firstEmptyPrimary] ?? 1)
+    : 1;
+  const nextSecondaryBank = canAddSecondary
+    ? (secondaryBanks[firstEmptySecondary] ?? 1)
+    : 1;
 
   const primaryOptions = canAddPrimary
     ? primaryWeapons
@@ -191,7 +205,7 @@ function renderEquipOptions(ship: OwnedShip, storage: StoredWeapon[]): string {
           (w) => `
         <div class="equip-row">
           <span class="weapon-name">${w.weaponType}</span>
-          <button class="btn-small btn-equip" data-ship="${ship.id}" data-type="primary" data-storage="${w.storageIndex}" data-bank="${nextPrimaryBank}">
+          <button class="btn-small btn-equip" data-ship="${ship.id}" data-type="primary" data-storage="${w.storageIndex}" data-slot="${firstEmptyPrimary}" data-bank="${nextPrimaryBank}">
             Equip (×${nextPrimaryBank})
           </button>
         </div>
@@ -206,7 +220,7 @@ function renderEquipOptions(ship: OwnedShip, storage: StoredWeapon[]): string {
           (w) => `
         <div class="equip-row">
           <span class="weapon-name">${w.weaponType} [${w.count}]</span>
-          <button class="btn-small btn-equip" data-ship="${ship.id}" data-type="secondary" data-storage="${w.storageIndex}" data-bank="${nextSecondaryBank}">
+          <button class="btn-small btn-equip" data-ship="${ship.id}" data-type="secondary" data-storage="${w.storageIndex}" data-slot="${firstEmptySecondary}" data-bank="${nextSecondaryBank}">
             Equip (×${nextSecondaryBank})
           </button>
         </div>

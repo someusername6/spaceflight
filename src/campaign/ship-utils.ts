@@ -2,6 +2,7 @@
  * Ship utility functions - helpers for immutable ship updates.
  */
 
+import { SHIP_CLASSES } from '../data/ships';
 import type {
   EquippedPrimary,
   EquippedSecondary,
@@ -9,6 +10,21 @@ import type {
   StoredAmmo,
   StoredWeapon,
 } from './types';
+
+/** Create empty weapon slot arrays for a ship class (null-filled) */
+export function createEmptyWeaponSlots(shipClass: string): {
+  primaryWeapons: (EquippedPrimary | null)[];
+  secondaryWeapons: (EquippedSecondary | null)[];
+} {
+  const stats = SHIP_CLASSES[shipClass.toLowerCase()];
+  const primaryCount = stats?.primaryBanks.length ?? 0;
+  const secondaryCount = stats?.secondaryBanks.length ?? 0;
+
+  return {
+    primaryWeapons: Array(primaryCount).fill(null),
+    secondaryWeapons: Array(secondaryCount).fill(null),
+  };
+}
 
 /** Result of transferring a ship's weapons to storage */
 export interface WeaponTransferResult {
@@ -116,15 +132,20 @@ export function transferShipWeaponsToStorage(
   currentStoredAmmo: StoredAmmo[],
 ): WeaponTransferResult {
   // Move primary weapons to storage (discrete items, don't stack)
-  const primaryWeapons: StoredWeapon[] = ship.primaryWeapons.map((w) => ({
-    weaponType: w.weaponType,
-    category: 'primary' as const,
-    count: 1,
-  }));
+  // Filter out null slots
+  const primaryWeapons: StoredWeapon[] = ship.primaryWeapons
+    .filter((w): w is EquippedPrimary => w !== null)
+    .map((w) => ({
+      weaponType: w.weaponType,
+      category: 'primary' as const,
+      count: 1,
+    }));
 
   // Merge secondary weapons into storage (stack with existing)
+  // Filter out null slots
   let storedWeapons = [...currentStoredWeapons, ...primaryWeapons];
   for (const secondary of ship.secondaryWeapons) {
+    if (secondary === null) continue;
     storedWeapons = mergeSecondaryIntoStorage(
       storedWeapons,
       secondary.weaponType,
@@ -133,8 +154,10 @@ export function transferShipWeaponsToStorage(
   }
 
   // Transfer ammo from ballistic weapons to storage
+  // Filter out null slots
   let storedAmmo = currentStoredAmmo;
   for (const primary of ship.primaryWeapons) {
+    if (primary === null) continue;
     storedAmmo = mergeAmmoIntoStorage(
       storedAmmo,
       primary.weaponType,

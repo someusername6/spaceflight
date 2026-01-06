@@ -29,9 +29,11 @@ export function renderShipCard(
   const totalPrimary = stats?.primaryBanks.length ?? 0;
   const totalSecondary = stats?.secondaryBanks.length ?? 0;
 
-  // Equipped weapon counts
-  const equippedPrimary = ship.primaryWeapons.length;
-  const equippedSecondary = ship.secondaryWeapons.length;
+  // Equipped weapon counts (count non-null slots)
+  const equippedPrimary = ship.primaryWeapons.filter((w) => w !== null).length;
+  const equippedSecondary = ship.secondaryWeapons.filter(
+    (w) => w !== null,
+  ).length;
 
   // Warning states for unarmed slots
   const primaryUnarmed = equippedPrimary === 0 && totalPrimary > 0;

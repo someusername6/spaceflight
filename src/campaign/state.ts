@@ -243,8 +243,9 @@ export function applyAmmoUsage(
     const extracted = ammoByShipId.get(ship.id);
     if (!extracted) return ship;
 
-    // Update primary weapon ammo
+    // Update primary weapon ammo (skip null slots)
     const updatedPrimaries = ship.primaryWeapons.map((primary, index) => {
+      if (primary === null) return null;
       const remaining = extracted.primaryAmmo.get(index);
       if (remaining !== undefined) {
         return { ...primary, currentAmmo: remaining };
@@ -252,8 +253,9 @@ export function applyAmmoUsage(
       return primary;
     });
 
-    // Update secondary weapon ammo
+    // Update secondary weapon ammo (skip null slots)
     const updatedSecondaries = ship.secondaryWeapons.map((secondary, index) => {
+      if (secondary === null) return null;
       const remaining = extracted.secondaryAmmo.get(index);
       if (remaining !== undefined) {
         return { ...secondary, count: remaining };
@@ -278,8 +280,9 @@ export function applyAmmoUsage(
 export function calculateResupplyCost(ship: OwnedShip): number {
   let cost = 0;
 
-  // Primary weapons with finite ammo
+  // Primary weapons with finite ammo (skip null slots)
   for (const primary of ship.primaryWeapons) {
+    if (primary === null) continue;
     if (primary.currentAmmo !== undefined) {
       const maxAmmo = getMaxPrimaryAmmo(primary);
       const needed = maxAmmo - primary.currentAmmo;
@@ -289,8 +292,9 @@ export function calculateResupplyCost(ship: OwnedShip): number {
     }
   }
 
-  // Secondary weapons - use actual missile prices
+  // Secondary weapons - use actual missile prices (skip null slots)
   for (const secondary of ship.secondaryWeapons) {
+    if (secondary === null) continue;
     const needed = secondary.maxCount - secondary.count;
     const pricePerUnit = getSecondaryPrice(secondary.weaponType, 'buy');
     cost += needed * pricePerUnit;
@@ -304,16 +308,17 @@ export function resupplyShip(ship: OwnedShip): OwnedShip {
   return {
     ...ship,
     primaryWeapons: ship.primaryWeapons.map((primary) => {
+      if (primary === null) return null;
       if (primary.currentAmmo !== undefined) {
         const maxAmmo = getMaxPrimaryAmmo(primary);
         return { ...primary, currentAmmo: maxAmmo };
       }
       return primary;
     }),
-    secondaryWeapons: ship.secondaryWeapons.map((secondary) => ({
-      ...secondary,
-      count: secondary.maxCount,
-    })),
+    secondaryWeapons: ship.secondaryWeapons.map((secondary) => {
+      if (secondary === null) return null;
+      return { ...secondary, count: secondary.maxCount };
+    }),
   };
 }
 

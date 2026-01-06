@@ -61,15 +61,28 @@ export function bindLoadoutEvents(
       const shipId = target.dataset.ship;
       const type = target.dataset.type;
       const storageIndex = Number.parseInt(target.dataset.storage ?? '0', 10);
+      const slotIndex = Number.parseInt(target.dataset.slot ?? '0', 10);
       const bankSize = Number.parseInt(target.dataset.bank ?? '1', 10);
 
       if (!shipId) return;
 
       let newState: CampaignState;
       if (type === 'primary') {
-        newState = equipPrimary(state, shipId, storageIndex, bankSize);
+        newState = equipPrimary(
+          state,
+          shipId,
+          storageIndex,
+          slotIndex,
+          bankSize,
+        );
       } else {
-        newState = equipSecondary(state, shipId, storageIndex, bankSize);
+        newState = equipSecondary(
+          state,
+          shipId,
+          storageIndex,
+          slotIndex,
+          bankSize,
+        );
       }
       onUpdate(newState);
     });

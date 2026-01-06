@@ -40,6 +40,11 @@ import {
 } from './campaign-weapons';
 import type { OwnedShip } from './types';
 
+/** Filter null slots from weapon arrays for ECS conversion */
+function filterNullWeapons<T>(weapons: (T | null)[]): T[] {
+  return weapons.filter((w): w is T => w !== null);
+}
+
 /** Spawn player ship from campaign state */
 export function spawnPlayerFromCampaign(
   world: World,
@@ -104,18 +109,17 @@ export function spawnPlayerFromCampaign(
   addComponent(world, entity, createTargeting());
   addComponent(world, entity, createHeat(stats.maxHeat, stats.coolingRate));
 
-  // Use campaign loadout instead of archetype defaults
-  addComponent(
-    world,
-    entity,
-    createPrimaryWeaponsFromCampaign(ship.primaryWeapons),
-  );
+  // Use campaign loadout instead of archetype defaults (filter out empty slots)
+  const primaries = filterNullWeapons(ship.primaryWeapons);
+  const secondaries = filterNullWeapons(ship.secondaryWeapons);
 
-  if (ship.secondaryWeapons.length > 0) {
+  addComponent(world, entity, createPrimaryWeaponsFromCampaign(primaries));
+
+  if (secondaries.length > 0) {
     addComponent(
       world,
       entity,
-      createSecondaryWeaponsFromCampaign(ship.secondaryWeapons),
+      createSecondaryWeaponsFromCampaign(secondaries),
     );
   }
 
@@ -207,18 +211,17 @@ export function spawnWingmanFromCampaign(
 
   addComponent(world, entity, createHeat(stats.maxHeat, stats.coolingRate));
 
-  // Use campaign loadout
-  addComponent(
-    world,
-    entity,
-    createPrimaryWeaponsFromCampaign(ship.primaryWeapons),
-  );
+  // Use campaign loadout (filter out empty slots)
+  const primaries = filterNullWeapons(ship.primaryWeapons);
+  const secondaries = filterNullWeapons(ship.secondaryWeapons);
 
-  if (ship.secondaryWeapons.length > 0) {
+  addComponent(world, entity, createPrimaryWeaponsFromCampaign(primaries));
+
+  if (secondaries.length > 0) {
     addComponent(
       world,
       entity,
-      createSecondaryWeaponsFromCampaign(ship.secondaryWeapons),
+      createSecondaryWeaponsFromCampaign(secondaries),
     );
   }
 
