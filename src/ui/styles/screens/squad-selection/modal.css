@@ -1,0 +1,136 @@
+/**
+ * Squad Selection Modal - Overlay, container, and header styles
+ */
+
+/* ========================================
+   MODAL OVERLAY
+   ======================================== */
+
+.squad-selection-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeSlideIn 0.2s ease;
+}
+
+/* Same scanline pattern as .game-screen::before */
+.squad-selection-overlay::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    var(--color-scanline) 2px,
+    var(--color-scanline) 4px
+  );
+  pointer-events: none;
+}
+
+/* ========================================
+   MODAL CONTAINER
+   Uses .screen-panel pattern with corner brackets
+   ======================================== */
+
+.squad-selection-modal {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  max-height: 80vh;
+  margin: 20px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Corner brackets - same as .screen-panel (amber) */
+.squad-selection-modal::before,
+.squad-selection-modal::after {
+  content: "";
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-color: var(--color-primary);
+  border-style: solid;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.squad-selection-modal::before {
+  top: -1px;
+  left: -1px;
+  border-width: 2px 0 0 2px;
+}
+
+.squad-selection-modal::after {
+  bottom: -1px;
+  right: -1px;
+  border-width: 0 2px 2px 0;
+}
+
+/* ========================================
+   MODAL HEADER
+   Uses .panel-header pattern (amber)
+   ======================================== */
+
+.squad-header {
+  padding: 12px 16px;
+  background: rgba(255, 159, 28, 0.08);
+  border-bottom: 1px solid var(--border-color);
+  position: relative;
+}
+
+.squad-title {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 0 0 4px;
+}
+
+.squad-subtitle {
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  letter-spacing: 0.05em;
+}
+
+.squad-ready-indicator {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ready-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--color-success);
+  border-radius: 50%;
+  box-shadow: 0 0 6px var(--color-success);
+}
+
+.ready-text {
+  font-family: var(--font-ui);
+  font-size: 0.65rem;
+  color: var(--color-success);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}

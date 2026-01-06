@@ -1,0 +1,137 @@
+/**
+ * Roster Layout - Screen structure and pilot cards
+ */
+
+/* ========================================
+   ROSTER SCREEN - VIEWPORT LAYOUT
+   ======================================== */
+
+.roster-screen {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - var(--nav-height));
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: 16px 24px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* ========================================
+   ROSTER LAYOUT - TWO COLUMNS
+   ======================================== */
+
+.roster-layout {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 20px;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.roster-list {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.roster-pilots {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow-y: auto;
+  min-height: 0;
+  border: 1px solid var(--border-color);
+  border-top: none;
+}
+
+.roster-viewer {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+@media (max-width: 800px) {
+  .roster-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ========================================
+   ROSTER PILOT CARDS
+   ======================================== */
+
+.roster-pilot-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.roster-pilot-card:last-child {
+  border-bottom: none;
+}
+
+.roster-pilot-card:hover {
+  background: rgba(0, 245, 255, 0.05);
+}
+
+.roster-pilot-card.selected {
+  background: rgba(0, 245, 255, 0.1);
+  border-left: 2px solid var(--color-secondary);
+}
+
+.roster-pilot-card.commander-pilot {
+  border-left: 2px solid var(--color-primary);
+}
+
+.roster-pilot-card.commander-pilot.selected {
+  border-left: 2px solid var(--color-primary);
+  background: rgba(255, 159, 28, 0.1);
+}
+
+.roster-pilot-card.unassigned {
+  opacity: 0.7;
+}
+
+.roster-pilot-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.roster-pilot-name {
+  font-size: 0.85rem;
+  color: var(--text-primary);
+}
+
+.roster-pilot-status {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.roster-pilot-card.assigned .roster-pilot-status {
+  color: var(--color-success);
+}
+
+.roster-pilot-ship {
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  text-transform: capitalize;
+}
+
+.roster-pilot-card.assigned .roster-pilot-ship {
+  color: var(--color-secondary);
+}

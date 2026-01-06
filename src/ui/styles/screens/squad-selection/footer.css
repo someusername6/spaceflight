@@ -1,0 +1,155 @@
+/**
+ * Squad Selection Modal - Footer, buttons, and responsive styles
+ */
+
+/* ========================================
+   MODAL FOOTER
+   ======================================== */
+
+.squad-footer {
+  padding: 12px 16px 16px;
+  border-top: 1px solid var(--border-color);
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.squad-footer-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.squad-deploy-count {
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  letter-spacing: 0.05em;
+}
+
+.squad-deploy-count strong {
+  color: var(--color-secondary);
+  font-weight: 600;
+}
+
+.squad-warning {
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  color: var(--color-warning);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.squad-warning::before {
+  content: "\26A0";
+}
+
+.squad-footer-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* ========================================
+   FOOTER BUTTONS
+   Using .btn pattern from buttons.css
+   ======================================== */
+
+.btn-squad-cancel {
+  flex: 0 0 auto;
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 10px 20px;
+  background: transparent;
+  border: 1px solid var(--border-light);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 6px) 0,
+    100% 6px,
+    100% 100%,
+    6px 100%,
+    0 calc(100% - 6px)
+  );
+}
+
+.btn-squad-cancel:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--bg-panel-hover);
+}
+
+.btn-squad-launch {
+  flex: 1;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 10px 24px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 159, 28, 0.2) 0%,
+    rgba(255, 159, 28, 0.1) 100%
+  );
+  border: 1px solid var(--color-primary);
+  color: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
+}
+
+.btn-squad-launch:hover:not(:disabled) {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 159, 28, 0.3) 0%,
+    rgba(255, 159, 28, 0.15) 100%
+  );
+  box-shadow: 0 0 20px var(--color-primary-glow);
+}
+
+.btn-squad-launch:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn-squad-launch .launch-icon {
+  margin-right: 8px;
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+
+@media (max-width: 500px) {
+  .squad-selection-modal {
+    margin: 10px;
+    max-height: 90vh;
+  }
+
+  .squad-ship-card {
+    grid-template-columns: 24px 1fr;
+    gap: 10px;
+    padding: 10px 12px;
+  }
+
+  .squad-skill-badge {
+    display: none;
+  }
+
+  .squad-footer-actions {
+    flex-direction: column;
+  }
+}

@@ -53,7 +53,7 @@
 @import "./screens/hangar.css";
 
 /* Roster - pilot management */
-@import "./screens/roster.css";
+@import "./screens/roster/index.css";
 
 /* Loadout - weapon configuration */
 @import "./screens/loadout.css";
@@ -71,4 +71,4 @@
 @import "./screens/game-over.css";
 
 /* Squad selection modal */
-@import "./screens/squad-selection.css";
+@import "./screens/squad-selection/index.css";

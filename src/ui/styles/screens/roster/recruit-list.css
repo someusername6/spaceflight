@@ -1,0 +1,204 @@
+/**
+ * Recruit List - Section divider and recruit cards
+ */
+
+/* ========================================
+   RECRUITS SECTION - Available for Hire
+   ======================================== */
+
+.roster-section-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 12px 10px;
+  border-top: 1px solid var(--border-color);
+  background: linear-gradient(
+    180deg,
+    rgba(0, 245, 255, 0.04) 0%,
+    transparent 100%
+  );
+}
+
+.roster-section-divider::before {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--border-color), transparent);
+}
+
+.roster-section-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-color));
+}
+
+.roster-section-title {
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--color-secondary);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.recruits-header {
+  border-top: none;
+  padding-top: 4px;
+}
+
+.recruits-header .panel-icon {
+  color: var(--color-secondary);
+}
+
+.roster-recruits {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-bottom: 12px;
+  min-height: 60px;
+}
+
+.no-recruits {
+  padding: 16px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+/* ========================================
+   RECRUIT CARDS - Ghost/Outlined Style
+   ======================================== */
+
+.recruit-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: transparent;
+  border: 1px dashed var(--border-light);
+  border-radius: 0;
+  margin: 0 8px 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.recruit-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(0, 245, 255, 0.02) 0%,
+    transparent 50%,
+    rgba(0, 245, 255, 0.02) 100%
+  );
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.recruit-card:hover {
+  border-color: var(--color-secondary);
+  border-style: solid;
+  background: rgba(0, 245, 255, 0.03);
+}
+
+.recruit-card:hover::before {
+  opacity: 1;
+}
+
+.recruit-card.selected {
+  border-color: var(--color-secondary);
+  border-style: solid;
+  background: rgba(0, 245, 255, 0.08);
+  box-shadow:
+    0 0 12px rgba(0, 245, 255, 0.15),
+    inset 0 0 20px rgba(0, 245, 255, 0.03);
+}
+
+.recruit-card.unaffordable {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.recruit-card.unaffordable:hover {
+  border-style: dashed;
+  border-color: var(--border-light);
+  background: transparent;
+}
+
+.recruit-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.recruit-name {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.recruit-skill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid currentColor;
+}
+
+.recruit-skill.rookie {
+  color: var(--text-secondary);
+}
+
+.recruit-skill.regular {
+  color: var(--color-secondary-dim);
+}
+
+.recruit-skill.veteran {
+  color: var(--color-success);
+}
+
+.recruit-skill.ace {
+  color: var(--color-warning);
+}
+
+.recruit-skill.elite {
+  color: var(--color-danger);
+}
+
+.recruit-price {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  color: var(--color-primary);
+  letter-spacing: 0.05em;
+}
+
+.recruit-price::before {
+  content: "◈";
+  font-size: 0.7em;
+  opacity: 0.7;
+}
+
+.recruit-card.unaffordable .recruit-price {
+  color: var(--text-dim);
+}
