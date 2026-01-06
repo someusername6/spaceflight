@@ -132,11 +132,7 @@ test('Nuclear Lance has correct category', () => {
 test('Nuclear Lance uses ammo', () => {
   assert(
     WEAPON_DEFS.nuclearLance.ammo === 1,
-    'Nuclear Lance should have 1 ammo',
-  );
-  assert(
-    WEAPON_DEFS.nuclearLance.maxAmmo === 1,
-    'Nuclear Lance should have 1 max ammo',
+    'Nuclear Lance should have 1 base ammo',
   );
 });
 

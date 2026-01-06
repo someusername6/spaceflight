@@ -10,6 +10,7 @@ import {
   sellAmmo,
   unloadAmmoFromWeapon,
 } from '../../../src/campaign/store-ammo.ts';
+import { getAmmoPrice } from '../../../src/data/prices.ts';
 import { PRIMARY_WEAPONS } from '../../../src/data/weapons.ts';
 
 /** Create a test campaign state with a ship that has a ballistic weapon */
@@ -35,6 +36,12 @@ function createTestState(
     storedHulls: [],
     storedWeapons: [],
     storedAmmo: [],
+    storeStock: {
+      hulls: {},
+      primaries: {},
+      secondaries: {},
+      ammo: { autocannon: 10000, railgun: 10000, flak: 10000 },
+    },
     currentSector: 1,
     completedContracts: [],
     missionCount: 0,
@@ -88,12 +95,15 @@ console.log('Testing getMaxAmmoCapacity...');
 console.log('\nTesting buyAmmo...');
 {
   let state = createTestState();
-  state = buyAmmo(state, 'autocannon', 50);
+  const amountToBuy = 50;
+  state = buyAmmo(state, 'autocannon', amountToBuy);
 
+  const pricePerRound = getAmmoPrice('autocannon', 'buy');
+  const expectedCost = amountToBuy * pricePerRound;
   assert.strictEqual(
     state.credits,
-    1000 - 50,
-    'Credits deducted (1 credit/round)',
+    1000 - expectedCost,
+    `Credits deducted (${pricePerRound} credit/round)`,
   );
   assert.strictEqual(state.storedAmmo.length, 1, 'Ammo added to storage');
   assert.strictEqual(
@@ -118,9 +128,15 @@ console.log('\nTesting buyAmmo insufficient credits...');
   let state = createTestState();
   state.credits = 10;
   const before = state;
-  state = buyAmmo(state, 'railgun', 10); // 10 * 5 = 50 credits needed
+  const railgunPrice = getAmmoPrice('railgun', 'buy');
+  // Try to buy 10 slugs - should fail if cost exceeds 10 credits
+  state = buyAmmo(state, 'railgun', 10);
 
-  assert.strictEqual(state, before, "State unchanged when can't afford");
+  assert.strictEqual(
+    state,
+    before,
+    `State unchanged when can't afford (10 * ${railgunPrice} = ${10 * railgunPrice} credits needed)`,
+  );
 
   console.log('  - Insufficient credits check: PASS');
 }
@@ -232,12 +248,15 @@ console.log('\nTesting sellAmmo...');
   state.storedAmmo = [{ weaponType: 'railgun', count: 10 }];
   state.credits = 0;
 
-  state = sellAmmo(state, 'railgun', 5);
+  const amountToSell = 5;
+  state = sellAmmo(state, 'railgun', amountToSell);
 
+  const sellPrice = getAmmoPrice('railgun', 'sell');
+  const expectedGain = amountToSell * sellPrice;
   assert.strictEqual(
     state.credits,
-    10,
-    'Credits gained (2 credits/round sell price)',
+    expectedGain,
+    `Credits gained (${sellPrice} credits/round sell price)`,
   );
   assert.strictEqual(state.storedAmmo[0].count, 5, 'Ammo reduced');
 
