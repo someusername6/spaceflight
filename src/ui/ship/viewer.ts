@@ -148,6 +148,7 @@ const HARDPOINT_POSITIONS: Record<
 > = {
   patrol: { primary: [35, 65], secondary: [50] },
   scout: { primary: [35, 65], secondary: [50] },
+  fighter: { primary: [35, 65], secondary: [35, 65] },
   interceptor: { primary: [20, 50, 80], secondary: [25, 50, 75] },
   striker: { primary: [10, 28, 50, 72, 90], secondary: [50] },
   bomber: { primary: [50], secondary: [8, 22, 36, 50, 64, 78, 92] },
