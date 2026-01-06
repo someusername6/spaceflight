@@ -192,14 +192,14 @@ test('Scout has low afterburner heat rate (mobility focused)', () => {
   assert(scout.coolingRate === 15, 'Scout cooling should be 15');
 });
 
-test('Interceptor has balanced heat stats', () => {
+test('Interceptor has heat stats between scout and fighter', () => {
   const interceptor = SHIP_ARCHETYPES.interceptor;
   assert(
-    interceptor.afterburnerHeatRate === 40,
-    'Interceptor AB heat should be 40',
+    interceptor.afterburnerHeatRate === 32,
+    'Interceptor AB heat should be 32',
   );
-  assert(interceptor.maxHeat === 100, 'Interceptor max heat should be 100');
-  assert(interceptor.coolingRate === 18, 'Interceptor cooling should be 18');
+  assert(interceptor.maxHeat === 90, 'Interceptor max heat should be 90');
+  assert(interceptor.coolingRate === 16, 'Interceptor cooling should be 16');
 });
 
 test('Striker has high capacity but expensive afterburner', () => {
