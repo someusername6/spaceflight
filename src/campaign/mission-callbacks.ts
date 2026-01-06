@@ -21,6 +21,7 @@ import {
   MISSION_END_DELAY,
   spawnWave,
 } from './mission-waves';
+import { refreshRecruits } from './recruits';
 import { applySalvage, calculateSalvage } from './salvage';
 import { showGameOver, showResults } from './screen-handlers';
 import { extractAmmoFromWorld } from './ship-spawning';
@@ -107,6 +108,10 @@ export function createMissionEndExecutor(
         `[MISSION] Salvage: ${scrapTotal} scrap, ${weaponCount} weapons, ${ammoCount} ammo (value: ~${Math.floor(salvageResult.totalValue)} cr)`,
       );
     }
+
+    // Refresh available recruits after each mission
+    const recruitRng = () => random(game.world.prng);
+    newState = refreshRecruits(newState, recruitRng);
 
     // Update campaign state
     updateCampaignState(screenManager, newState);
