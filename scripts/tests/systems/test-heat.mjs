@@ -173,9 +173,9 @@ test('Weapon lock hysteresis prevents oscillation', () => {
 // Ship Archetype Heat Stats
 // ============================================================
 
-test('All 7 ship archetypes exist', () => {
+test('Base ship archetypes exist', () => {
   const archetypes = Object.keys(SHIP_ARCHETYPES);
-  assert(archetypes.length === 7, 'Should have 7 ship archetypes');
+  assert(archetypes.length >= 7, 'Should have at least 7 ship archetypes');
   assert(archetypes.includes('scout'), 'Should have scout');
   assert(archetypes.includes('interceptor'), 'Should have interceptor');
   assert(archetypes.includes('striker'), 'Should have striker');

@@ -17,7 +17,7 @@ import {
   collisionSystem,
   createCollision,
 } from '../../../src/systems/collision.ts';
-import { missileSystem } from '../../../src/systems/missiles.ts';
+import { missileSystem } from '../../../src/systems/weapons/missiles.ts';
 
 // Test state
 let passed = 0;

@@ -14,7 +14,7 @@ import {
   createWorld,
 } from '../../../src/core/ecs.ts';
 import { MISSILES } from '../../../src/data/missiles.ts';
-import { weaponSystem } from '../../../src/systems/weapons.ts';
+import { weaponSystem } from '../../../src/systems/weapons/weapons.ts';
 
 let passed = 0;
 let failed = 0;

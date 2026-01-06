@@ -2,7 +2,7 @@
  * AI Missile Selection Tests
  */
 
-import { selectOptimalMissile } from '../../../src/systems/ai-missile-selection.ts';
+import { selectOptimalMissile } from '../../../src/systems/ai/ai-missile-selection.ts';
 
 let passed = 0;
 let failed = 0;
@@ -124,8 +124,8 @@ test('Prefer lock-requiring missile when locked', () => {
   );
 
   assert(selection.shouldFire === true, 'Should be able to fire');
-  // First pass finds dumbfire, so Rocket (index 0) is selected
-  assert(selection.index === 0, 'Should select first available missile');
+  // When locked, prefer homing missile (Seeker at index 1)
+  assert(selection.index === 1, 'Should select homing Seeker when locked');
 });
 
 test('Cannot fire lock-requiring missile when not locked', () => {

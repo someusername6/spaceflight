@@ -14,7 +14,9 @@
     "sim": "node scripts/simulation/run-all.mjs",
     "sim:dust": "node scripts/simulation/dust.mjs",
     "sim:ai": "npx tsx scripts/simulation/ai-tests.mjs",
-    "test": "npx tsx scripts/test-game.mjs"
+    "test": "npx tsx scripts/tests/run-tests.mjs",
+    "test:all": "npx tsx scripts/tests/run-tests.mjs --all",
+    "test:balance": "npx tsx scripts/tests/run-tests.mjs --balance"
   },
   "dependencies": {
     "canvas": "^3.2.0",
