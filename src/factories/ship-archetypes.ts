@@ -66,8 +66,6 @@ function createArchetype(shipClass: string, loadout: WeaponLoadout): ShipStats {
  * Each archetype uses createArchetype() to derive stats from SHIP_CLASSES.
  */
 export const SHIP_ARCHETYPES: Record<string, ShipStats> = {
-  // === BASE ARCHETYPES (one per ship class, standard loadout) ===
-
   // Fighter: Standard player craft - uniform weapons, easy to fly
   fighter: createArchetype('fighter', {
     primaryWeapons: [
@@ -88,27 +86,6 @@ export const SHIP_ARCHETYPES: Record<string, ShipStats> = {
       { name: 'redLaser', size: 1 }, // Close-range beam for fast brawler
     ],
     secondaryWeapons: [{ name: 'dart', count: 6, size: 1 }],
-  }),
-
-  // Firefly: Patrol craft with dual red lasers - close-range beam fighter
-  firefly: createArchetype('patrol', {
-    playstyle: 'escape',
-    primaryWeapons: [
-      { name: 'redLaser', size: 1 },
-      { name: 'redLaser', size: 1 },
-    ],
-    secondaryWeapons: [{ name: 'dart', count: 4, size: 1 }],
-    preferredCombatRange: 300, // Close range for red laser effectiveness
-  }),
-
-  // Dragonfly: Patrol craft with dual pulse cannons - rapid-fire skirmisher
-  dragonfly: createArchetype('patrol', {
-    playstyle: 'escape',
-    primaryWeapons: [
-      { name: 'pulse', size: 1 },
-      { name: 'pulse', size: 1 },
-    ],
-    secondaryWeapons: [{ name: 'dart', count: 4, size: 1 }],
   }),
 
   // Interceptor: Balanced fighter - BALANCED focus

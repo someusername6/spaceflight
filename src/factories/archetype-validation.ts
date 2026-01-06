@@ -10,6 +10,7 @@
 import { MISSILES } from '../data/missiles';
 import { SHIP_CLASSES } from '../data/ships';
 import { PRIMARY_WEAPONS } from '../data/weapons';
+import { ENEMY_ARCHETYPES } from './enemy-archetypes';
 import { SHIP_ARCHETYPES } from './ship-archetypes';
 
 /**
@@ -18,7 +19,8 @@ import { SHIP_ARCHETYPES } from './ship-archetypes';
  * Throws an error if validation fails.
  */
 export function validateArchetypeLoadout(archetypeName: string): void {
-  const stats = SHIP_ARCHETYPES[archetypeName];
+  const stats =
+    SHIP_ARCHETYPES[archetypeName] ?? ENEMY_ARCHETYPES[archetypeName];
   if (!stats) {
     return; // Unknown archetype, skip validation
   }
@@ -94,11 +96,14 @@ export function validateArchetypeLoadout(archetypeName: string): void {
 }
 
 /**
- * Validates all ship archetypes.
+ * Validates all ship archetypes (player and enemy).
  * This catches invalid weapon/missile references immediately.
  */
 export function validateAllArchetypes(): void {
   for (const name of Object.keys(SHIP_ARCHETYPES)) {
+    validateArchetypeLoadout(name);
+  }
+  for (const name of Object.keys(ENEMY_ARCHETYPES)) {
     validateArchetypeLoadout(name);
   }
 }

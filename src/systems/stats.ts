@@ -19,7 +19,7 @@ import type { ShipIdentity } from '../components/ship-identity';
 import type { PrimaryWeapons, SecondaryWeapons } from '../components/weapons';
 import { getComponent, hasComponent } from '../core/ecs';
 import type { Entity, World } from '../core/types';
-import { SHIP_ARCHETYPES } from '../factories/ship-archetypes';
+import { getArchetype } from '../factories/ship';
 
 // Re-export weapon recording functions
 export {
@@ -258,7 +258,7 @@ export function handleShipDeath(world: World, entity: Entity): void {
 
   // Record ALL ships for salvage (enemies and allies)
   // Use shipClassName from archetype (not archetype name) for correct price lookup
-  const archetypeStats = SHIP_ARCHETYPES[identity.archetype];
+  const archetypeStats = getArchetype(identity.archetype);
   const shipClass = archetypeStats?.shipClassName ?? identity.archetype;
   const salvageRecord: SalvageableShip = {
     shipClass,

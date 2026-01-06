@@ -191,3 +191,198 @@
 .picker-equip-btn:hover {
   background: rgba(255, 159, 28, 0.25);
 }
+
+/* ========================================
+   WEAPON POPOVER (unified hover/pin popover)
+   ======================================== */
+
+.weapon-popover {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-light);
+  min-width: 260px;
+  max-width: 300px;
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.5),
+    0 0 30px var(--color-secondary-glow);
+  pointer-events: auto;
+}
+
+/* Pinned state - visual indicator */
+.weapon-popover.pinned {
+  border-color: var(--color-secondary);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.5),
+    0 0 40px var(--color-secondary-glow);
+}
+
+.weapon-popover.pinned::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-secondary),
+    transparent
+  );
+}
+
+.popover-content {
+  padding: 14px 16px;
+}
+
+/* Popover header */
+.popover-header {
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 10px;
+}
+
+.popover-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.popover-subtitle {
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 4px;
+}
+
+/* Popover stats grid - matches ship details panel */
+.popover-stats {
+  display: flex;
+  flex-direction: column;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+
+.popover-stat {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 0.85rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.popover-stat:last-child {
+  border-bottom: none;
+}
+
+.popover-stat-label {
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+}
+
+.popover-stat-value {
+  color: var(--text-primary);
+  font-family: var(--font-body);
+}
+
+.manager-abbrev {
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  letter-spacing: 0.1em;
+}
+
+.manager-name {
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  color: var(--text-primary);
+  text-transform: capitalize;
+  flex: 1;
+}
+
+.manager-size {
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+/* Popover ammo/loading section */
+.popover-ammo {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+
+.popover-ammo .popover-stat {
+  padding: 6px 0;
+}
+
+.popover-ammo .popover-stat:first-child {
+  padding-top: 0;
+}
+
+.popover-ammo .popover-stat:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+/* Popover controls (load/unload buttons) */
+.popover-controls {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  padding: 10px 0;
+}
+
+.manager-btn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border-color);
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.manager-btn:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: rgba(255, 159, 28, 0.15);
+}
+
+.manager-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Unequip button */
+.manager-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.manager-unequip {
+  padding: 8px 16px;
+  border: 1px solid var(--color-danger);
+  background: rgba(255, 77, 77, 0.1);
+  color: var(--color-danger);
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.manager-unequip:hover {
+  background: rgba(255, 77, 77, 0.25);
+}

@@ -37,9 +37,15 @@ import { getProfileForPlaystyle, type ProfileName } from '../data/ai-profiles';
 import { getWeaponStats } from '../data/weapons';
 import { initWeaponAmmoCounts } from '../systems/stats';
 import { validateArchetypeLoadout } from './archetype-validation';
+import { ENEMY_ARCHETYPES } from './enemy-archetypes';
 import { SHIP_ARCHETYPES, type ShipStats } from './ship-archetypes';
 
 export type { SecondaryBankSpec, ShipStats } from './ship-archetypes';
+
+/** Get archetype stats from either player or enemy archetypes */
+export function getArchetype(name: string): ShipStats | undefined {
+  return SHIP_ARCHETYPES[name] ?? ENEMY_ARCHETYPES[name];
+}
 
 /**
  * Calculate preferred combat range from weapon loadout.
@@ -86,7 +92,7 @@ export function createPlayerShip(
   position?: Vector3,
   rotation?: Quaternion,
 ): Entity {
-  const stats = SHIP_ARCHETYPES[archetype];
+  const stats = getArchetype(archetype);
   if (!stats) {
     throw new Error(`Unknown ship archetype: ${archetype}`);
   }
@@ -168,7 +174,7 @@ export function createAIShip(
   profileName: ProfileName = 'regular',
   callsignPrefix?: string,
 ): Entity {
-  const stats = SHIP_ARCHETYPES[archetype];
+  const stats = getArchetype(archetype);
   if (!stats) {
     throw new Error(`Unknown ship archetype: ${archetype}`);
   }

@@ -12,18 +12,14 @@ import {
   type NavDestination,
   renderNavBar,
 } from '../common/nav-bar';
-import {
-  bindTooltip,
-  hideTooltip,
-  missileTooltipContent,
-  weaponTooltipContent,
-} from '../common/tooltip';
 import { renderShipCard } from '../ship/card';
 import { renderShipViewer } from '../ship/viewer';
 import {
   closeWeaponPicker,
-  handleUnequip,
+  hideWeaponPopoverIfNotPinned,
+  pinWeaponPopover,
   showWeaponPicker,
+  showWeaponPopover,
 } from './hangar-equip';
 
 /** Hangar UI state */
@@ -239,7 +235,7 @@ function renderAndBindHangar(ui: HangarUI): void {
       if (shipId) {
         const isSelected = ui.selectedShipId === shipId;
         ui.selectedShipId = isSelected ? null : shipId;
-        hideTooltip();
+        closeWeaponPicker();
         renderAndBindHangar(ui);
       }
     });
@@ -249,42 +245,59 @@ function renderAndBindHangar(ui: HangarUI): void {
   bindHardpointEvents(ui);
 }
 
-/** Bind hardpoint slot click and tooltip events */
+/** Bind hardpoint slot hover, click, and leave events */
 function bindHardpointEvents(ui: HangarUI): void {
   ui.element.querySelectorAll('.schematic-slot').forEach((slot) => {
     const el = slot as HTMLElement;
-    const weaponType = el.dataset.weapon;
     const slotType = el.dataset.type as 'primary' | 'secondary';
     const shipId = el.dataset.ship;
     const slotIndex = Number.parseInt(el.dataset.index ?? '0', 10);
+    const isFilled = el.classList.contains('filled');
 
-    // Tooltip for equipped weapons
-    if (weaponType) {
-      const contentFn =
+    if (!shipId || !slotType) return;
+
+    const ship = ui.state.ships.find((s) => s.id === shipId);
+    if (!ship) return;
+
+    if (isFilled) {
+      // Filled slot: unified popover (hover to preview, click to pin)
+      const weapon =
         slotType === 'primary'
-          ? () => weaponTooltipContent(weaponType)
-          : () => missileTooltipContent(weaponType);
-      bindTooltip(el, contentFn);
-    }
+          ? ship.primaryWeapons[slotIndex]
+          : ship.secondaryWeapons[slotIndex];
+      if (!weapon) return;
 
-    // Click to unequip (filled) or show equip picker (empty)
-    el.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (!shipId || !slotType) return;
+      // Hover: show popover preview
+      el.addEventListener('mouseenter', () => {
+        showWeaponPopover(
+          el,
+          ui.state,
+          shipId,
+          slotType,
+          slotIndex,
+          weapon,
+          (newState) => {
+            ui.state = newState;
+            if (ui.onStateUpdate) ui.onStateUpdate(newState);
+          },
+          () => renderAndBindHangar(ui),
+        );
+      });
 
-      const isFilled = el.classList.contains('filled');
+      // Click: pin the popover
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        pinWeaponPopover();
+      });
 
-      if (isFilled) {
-        // Unequip weapon immediately
-        hideTooltip(); // Hide before re-render (mouseleave won't fire)
-        handleUnequip(ui.state, shipId, slotType, slotIndex, (newState) => {
-          ui.state = newState;
-          if (ui.onStateUpdate) ui.onStateUpdate(newState);
-          closeWeaponPicker();
-          renderAndBindHangar(ui);
-        });
-      } else {
-        // Show weapon picker for this slot
+      // Leave: hide only if not pinned
+      el.addEventListener('mouseleave', () => {
+        hideWeaponPopoverIfNotPinned();
+      });
+    } else {
+      // Empty slot: click to show picker
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
         showWeaponPicker(
           el,
           ui.state,
@@ -297,8 +310,8 @@ function bindHardpointEvents(ui: HangarUI): void {
           },
           () => renderAndBindHangar(ui),
         );
-      }
-    });
+      });
+    }
   });
 }
 

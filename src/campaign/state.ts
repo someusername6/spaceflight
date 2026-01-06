@@ -4,7 +4,7 @@
 
 import { createPRNG, random } from '../core/prng';
 import { getAmmoPrice, getSecondaryPrice } from '../data/prices';
-import { SHIP_ARCHETYPES } from '../factories/ship-archetypes';
+import { getArchetype } from '../factories/ship';
 import { generateInitialRecruits } from './recruits';
 import { createInitialStoreStock } from './store';
 import { getMaxAmmoCapacity, getMaxMissileCapacity } from './store-ammo';
@@ -34,7 +34,7 @@ export function createShipFromArchetype(
   archetype: string,
   pilot: Pilot | null = null,
 ): OwnedShip {
-  const stats = SHIP_ARCHETYPES[archetype];
+  const stats = getArchetype(archetype);
   if (!stats) {
     throw new Error(`Unknown archetype: ${archetype}`);
   }
