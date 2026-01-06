@@ -39,9 +39,6 @@ function renderPilotCard(
   const assignedClass = isAssigned ? 'assigned' : 'unassigned';
   const commanderClass = isCommander ? 'commander-pilot' : '';
 
-  // Show skill for non-commanders
-  const skillText = isCommander ? '' : ` • ${pilot.skill}`;
-
   // Show ship assignment
   const shipText = assignedShip ? assignedShip.shipClass : 'Available';
 
@@ -52,10 +49,10 @@ function renderPilotCard(
       role="option"
       aria-selected="${isSelected}"
       tabindex="0"
-      aria-label="${pilot.name}${skillText}, ${isAssigned ? `assigned to ${shipText}` : 'available'}"
+      aria-label="${pilot.name}, ${isAssigned ? `assigned to ${shipText}` : 'available'}"
     >
       <div class="roster-pilot-info">
-        <div class="roster-pilot-name">${pilot.name}${skillText}</div>
+        <div class="roster-pilot-name">${pilot.name}</div>
         <div class="roster-pilot-status">${isAssigned ? 'Assigned' : 'Available'}</div>
       </div>
       <div class="roster-pilot-ship" aria-hidden="true">${shipText}</div>

@@ -43,9 +43,6 @@ export function renderShipCard(
   const isCommander = ship.pilot?.id === commanderId;
   const pilotName = ship.pilot?.name ?? 'Unassigned';
 
-  // Don't show skill for commander
-  const pilotSkill = isCommander || !ship.pilot ? '' : ` • ${ship.pilot.skill}`;
-
   const selectedClass = isSelected ? 'selected' : '';
   const commanderClass = isCommander ? 'commander-ship' : '';
 
@@ -57,7 +54,7 @@ export function renderShipCard(
         <span class="card-abbrev">${abbrev}</span>
       </div>
       <div class="ship-card-info">
-        <div class="card-pilot">${pilotName}${pilotSkill}</div>
+        <div class="card-pilot">${pilotName}</div>
         <div class="card-class">${ship.shipClass}</div>
         <div class="card-hull ${isDamaged ? 'damaged' : ''}">
           <div class="hull-bar">
