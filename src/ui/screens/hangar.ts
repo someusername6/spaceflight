@@ -145,36 +145,37 @@ function renderHangar(
   // Center panel: ship viewer or empty state
   const centerPanel = selectedShip
     ? `
-      <div class="hangar-viewer">
+      <section class="hangar-viewer" aria-label="Ship loadout viewer">
         ${renderShipViewerWithClose(selectedShip, state)}
-      </div>
+      </section>
     `
     : `
-      <div class="empty-state-panel">
+      <div class="empty-state-panel" role="status" aria-label="No ship selected">
         Select a ship to view loadout
       </div>
     `;
 
   // Right column: Ship details when ship selected
   const rightColumn = selectedShip
-    ? `<div class="hangar-details">${renderShipDetails(selectedShip)}</div>`
-    : `<div class="hangar-details-placeholder"></div>`;
+    ? `<aside class="hangar-details" aria-label="Ship statistics">${renderShipDetails(selectedShip)}</aside>`
+    : `<div class="hangar-details-placeholder" aria-hidden="true"></div>`;
 
   return `
     ${navBar}
     ${renderStatusDisplay(state.credits, state.currentSector)}
-    <div class="hangar-screen">
+    <main class="hangar-screen" aria-label="Hangar - Ship management">
       <div class="hangar-layout">
         <!-- Left Column: Ships List -->
-        <div class="hangar-ships">
-          <div class="panel-header">
-            <span class="panel-icon">◈</span> Squadron
-            <span class="panel-count">${state.ships.length}</span>
-          </div>
-          <div class="ship-list">
+        <aside class="hangar-ships" aria-label="Squadron ships">
+          <header class="panel-header">
+            <span class="panel-icon" aria-hidden="true">◈</span>
+            <span class="panel-title">Squadron</span>
+            <span class="panel-count" aria-label="${state.ships.length} ships">${state.ships.length}</span>
+          </header>
+          <div class="ship-list" role="list" aria-label="Available ships">
             ${sortedShips.map((s) => renderShipCard(s, s.id === selectedShipId, state.commanderId)).join('')}
           </div>
-        </div>
+        </aside>
 
         <!-- Center Column: Ship Viewer or Placeholder -->
         ${centerPanel}
@@ -182,7 +183,7 @@ function renderHangar(
         <!-- Right Column: Ship Details -->
         ${rightColumn}
       </div>
-    </div>
+    </main>
   `;
 }
 

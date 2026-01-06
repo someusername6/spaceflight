@@ -17,8 +17,7 @@ import {
   renderNavBar,
   renderStatusDisplay,
 } from '../common/nav-bar';
-import { getMaxHull } from '../ship/card';
-import { getShipAbbrev } from '../ship/viewer';
+import { renderPilotViewer } from './pilot-viewer';
 
 /** Roster UI state */
 export interface RosterUI {
@@ -48,153 +47,20 @@ function renderPilotCard(
   const shipText = assignedShip ? assignedShip.shipClass : 'Available';
 
   return `
-    <div class="roster-pilot-card ${selectedClass} ${assignedClass} ${commanderClass}"
-         data-pilot-id="${pilot.id}">
+    <article
+      class="roster-pilot-card ${selectedClass} ${assignedClass} ${commanderClass}"
+      data-pilot-id="${pilot.id}"
+      role="option"
+      aria-selected="${isSelected}"
+      tabindex="0"
+      aria-label="${pilot.name}${skillText}, ${isAssigned ? `assigned to ${shipText}` : 'available'}"
+    >
       <div class="roster-pilot-info">
         <div class="roster-pilot-name">${pilot.name}${skillText}</div>
         <div class="roster-pilot-status">${isAssigned ? 'Assigned' : 'Available'}</div>
       </div>
-      <div class="roster-pilot-ship">${shipText}</div>
-    </div>
-  `;
-}
-
-/** Get available ships for pilot assignment (ships without pilots) */
-function getAvailableShipsForPilot(state: CampaignState): OwnedShip[] {
-  return state.ships.filter((s) => s.pilot === null);
-}
-
-/** Render pilot viewer with career stats and assignment options */
-function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
-  const isCommander = pilot.id === state.commanderId;
-  const isAssigned = state.ships.some((s) => s.pilot?.id === pilot.id);
-  const currentShip = state.ships.find((s) => s.pilot?.id === pilot.id);
-  const availableShips = getAvailableShipsForPilot(state);
-
-  // Rank: "PLAYER" for commander, skill level for others
-  const rankText = isCommander ? 'PLAYER' : pilot.skill.toUpperCase();
-
-  // Unassign option when pilot is assigned
-  const unassignOption =
-    isAssigned && currentShip
-      ? `
-        <div class="pilot-assignment">
-          <div class="assignment-row">
-            <span class="assignment-label">Currently assigned:</span>
-            <span class="assignment-ship">${currentShip.shipClass}</span>
-          </div>
-          <button class="btn btn-danger btn-unassign-pilot"
-                  data-ship="${currentShip.id}"
-                  data-pilot="${pilot.id}">
-            Unassign
-          </button>
-        </div>
-      `
-      : '';
-
-  // Available ships list for assignment
-  const shipOptions =
-    !isAssigned && availableShips.length > 0
-      ? `
-        <div class="pilot-assignment">
-          <div class="assignment-label">Assign to ship:</div>
-          <div class="assignment-options">
-            ${availableShips
-              .map(
-                (ship) => `
-              <button class="btn btn-assign-pilot"
-                      data-pilot="${pilot.id}"
-                      data-ship="${ship.id}">
-                ${ship.shipClass}
-              </button>
-            `,
-              )
-              .join('')}
-          </div>
-        </div>
-      `
-      : '';
-
-  // Stored hulls for creating new ships
-  const hullOptions =
-    !isAssigned && state.storedHulls.length > 0
-      ? `
-        <div class="pilot-assignment">
-          <div class="assignment-label">Deploy with hull:</div>
-          <div class="hull-options">
-            ${state.storedHulls
-              .map((hull, index) => {
-                const maxHull = getMaxHull(hull.shipClass);
-                const currentHull = maxHull - hull.hullDamage;
-                const hullPercent = Math.round((currentHull / maxHull) * 100);
-                const abbrev = getShipAbbrev(hull.shipClass);
-                const isDamaged = hull.hullDamage > 0;
-                return `
-              <button class="hull-card-btn"
-                      data-pilot="${pilot.id}"
-                      data-hull-index="${index}">
-                <div class="hull-card-icon">
-                  <span class="hull-abbrev">${abbrev}</span>
-                </div>
-                <div class="hull-card-name">${hull.shipClass}</div>
-                <div class="hull-card-health ${isDamaged ? 'damaged' : ''}">
-                  <div class="hull-bar">
-                    <div class="hull-fill" style="width: ${hullPercent}%"></div>
-                  </div>
-                  <span class="hull-text">${hullPercent}%</span>
-                </div>
-              </button>
-            `;
-              })
-              .join('')}
-          </div>
-        </div>
-      `
-      : '';
-
-  return `
-    <div class="pilot-viewer">
-      <div class="pilot-viewer-header">
-        <div class="pilot-header-info">
-          <div class="pilot-viewer-name">${pilot.name}</div>
-          <div class="pilot-rank">${rankText}</div>
-        </div>
-        <div class="pilot-header-right">
-          <button class="btn-close-viewer" id="btn-close-pilot-viewer">✕</button>
-        </div>
-      </div>
-
-      <div class="pilot-viewer-stats">
-        <div class="stat-row">
-          <span class="stat-label">Missions Flown</span>
-          <span class="stat-value">${pilot.missionsFlown}</span>
-        </div>
-        <div class="stat-row">
-          <span class="stat-label">Victories</span>
-          <span class="stat-value">${pilot.missionsWon}</span>
-        </div>
-        <div class="stat-row">
-          <span class="stat-label">Kills</span>
-          <span class="stat-value">${pilot.kills}</span>
-        </div>
-        <div class="stat-row">
-          <span class="stat-label">Assists</span>
-          <span class="stat-value">${pilot.assists}</span>
-        </div>
-        <div class="stat-row">
-          <span class="stat-label">Damage Dealt</span>
-          <span class="stat-value">${pilot.damageDealt.toLocaleString()}</span>
-        </div>
-        <div class="stat-row">
-          <span class="stat-label">Damage Received</span>
-          <span class="stat-value">${pilot.damageReceived.toLocaleString()}</span>
-        </div>
-      </div>
-
-      ${unassignOption}
-      ${shipOptions}
-      ${hullOptions}
-    </div>
+      <div class="roster-pilot-ship" aria-hidden="true">${shipText}</div>
+    </article>
   `;
 }
 
@@ -242,30 +108,31 @@ function renderRoster(
   // Right panel: pilot viewer or empty state
   const rightPanel = selectedPilot
     ? renderPilotViewer(selectedPilot, state)
-    : `<div class="empty-state-panel">Select a pilot to view details</div>`;
+    : `<div class="empty-state-panel" role="status">Select a pilot to view details</div>`;
 
   return `
     ${navBar}
     ${renderStatusDisplay(state.credits, state.currentSector)}
-    <div class="roster-screen">
+    <main class="roster-screen" aria-label="Roster - Pilot management">
       <div class="roster-layout">
         <!-- Left Column: Pilots List -->
-        <div class="roster-list">
-          <div class="panel-header">
-            <span class="panel-icon">★</span> Pilots
-            <span class="panel-count">${state.pilots.length}</span>
-          </div>
-          <div class="roster-pilots">
+        <aside class="roster-list" aria-label="Pilots list">
+          <header class="panel-header">
+            <span class="panel-icon" aria-hidden="true">★</span>
+            <span class="panel-title">Pilots</span>
+            <span class="panel-count" aria-label="${state.pilots.length} pilots">${state.pilots.length}</span>
+          </header>
+          <div class="roster-pilots" role="listbox" aria-label="Available pilots">
             ${pilotCards}
           </div>
-        </div>
+        </aside>
 
         <!-- Right Column: Pilot Viewer -->
-        <div class="roster-viewer">
+        <section class="roster-viewer" aria-label="Pilot details">
           ${rightPanel}
-        </div>
+        </section>
       </div>
-    </div>
+    </main>
   `;
 }
 

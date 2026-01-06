@@ -20,12 +20,12 @@ export interface NavBarProps {
 /** Render the status display (sector + credits) for screen content area */
 export function renderStatusDisplay(credits: number, sector: number): string {
   return `
-    <div class="screen-status">
-      <div class="status-item">
+    <div class="screen-status" role="status" aria-label="Player status">
+      <div class="status-item" aria-label="Current sector: ${sector}">
         <span class="status-label">SECTOR</span>
         <span class="status-value">${sector}</span>
       </div>
-      <div class="status-item">
+      <div class="status-item" aria-label="Credits: ${credits.toLocaleString()}">
         <span class="status-label">CREDITS</span>
         <span class="status-value credits-amount">${credits.toLocaleString()}</span>
       </div>
@@ -47,8 +47,15 @@ export function renderNavBar(props: NavBarProps): string {
   const tabsHtml = tabs
     .map(
       (tab) => `
-      <button class="nav-tab ${activeTab === tab.id ? 'active' : ''}" data-nav="${tab.id}">
-        <span class="nav-tab-icon">${tab.icon}</span>
+      <button
+        class="nav-tab ${activeTab === tab.id ? 'active' : ''}"
+        data-nav="${tab.id}"
+        role="tab"
+        aria-selected="${activeTab === tab.id}"
+        aria-label="${tab.label}"
+        tabindex="${activeTab === tab.id ? '0' : '-1'}"
+      >
+        <span class="nav-tab-icon" aria-hidden="true">${tab.icon}</span>
         <span class="nav-tab-label">${tab.label}</span>
       </button>
     `,
@@ -56,11 +63,11 @@ export function renderNavBar(props: NavBarProps): string {
     .join('');
 
   return `
-    <nav class="global-nav">
-      <div class="nav-tabs">
+    <nav class="global-nav" role="navigation" aria-label="Main navigation">
+      <div class="nav-tabs" role="tablist" aria-label="Screen navigation">
         ${tabsHtml}
       </div>
-      <div class="nav-scanline"></div>
+      <div class="nav-scanline" aria-hidden="true"></div>
     </nav>
   `;
 }

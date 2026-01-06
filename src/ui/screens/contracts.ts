@@ -142,15 +142,22 @@ function renderContractListItem(
   isSelected: boolean,
 ): string {
   return `
-    <div class="contract-list-item ${isSelected ? 'selected' : ''}" data-contract-id="${contract.id}">
+    <article
+      class="contract-list-item ${isSelected ? 'selected' : ''}"
+      data-contract-id="${contract.id}"
+      role="option"
+      aria-selected="${isSelected}"
+      tabindex="0"
+      aria-label="${contract.name}, ${contract.difficulty} difficulty, ${contract.reward} credits"
+    >
       <div class="contract-list-info">
         <div class="contract-list-name">${contract.name}</div>
-        <span class="contract-difficulty ${contract.difficulty}">
+        <span class="contract-difficulty ${contract.difficulty}" aria-label="Difficulty: ${contract.difficulty}">
           ${contract.difficulty.toUpperCase()}
         </span>
       </div>
-      <div class="contract-list-reward">${contract.reward}&nbsp;cr</div>
-    </div>
+      <div class="contract-list-reward" aria-hidden="true">${contract.reward}&nbsp;cr</div>
+    </article>
   `;
 }
 
@@ -224,16 +231,16 @@ function renderContracts(
   return `
     ${navBar}
     ${renderStatusDisplay(state.credits, state.currentSector)}
-    <div class="contracts-screen">
+    <main class="contracts-screen" aria-label="Contract selection">
       <div class="contracts-layout">
-        <div class="contracts-list-panel">
+        <aside class="contracts-list-panel" role="listbox" aria-label="Available contracts">
           ${contracts.map((c) => renderContractListItem(c, c.id === selectedContractId)).join('')}
-        </div>
-        <div class="contracts-detail-panel">
-          ${selectedContract ? renderContractDetail(selectedContract, canLaunch) : '<div class="empty-state-panel">Select a contract to view details</div>'}
-        </div>
+        </aside>
+        <section class="contracts-detail-panel" aria-label="Contract details">
+          ${selectedContract ? renderContractDetail(selectedContract, canLaunch) : '<div class="empty-state-panel" role="status">Select a contract to view details</div>'}
+        </section>
       </div>
-    </div>
+    </main>
   `;
 }
 

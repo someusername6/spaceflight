@@ -78,20 +78,20 @@ function renderStore(ui: StoreUI): string {
       if (isScrap) {
         const sellPrice = getItemPrice(ui.selectedCategory, item.id, 'sell');
         return `
-          <div class="store-item ${isSelected ? 'selected' : ''}" data-item="${item.id}">
+          <div class="store-item ${isSelected ? 'selected' : ''}" data-item="${item.id}" role="option" aria-selected="${isSelected}" tabindex="0">
             <span class="item-name">${item.name}</span>
-            <span class="item-stock">[${item.stock}]</span>
-            <span class="item-price sell-price">${sellPrice} cr</span>
+            <span class="item-stock" aria-label="${item.stock} in stock">[${item.stock}]</span>
+            <span class="item-price sell-price" aria-label="Sell price: ${sellPrice} credits">${sellPrice} cr</span>
           </div>
         `;
       }
       const buyPrice = getItemPrice(ui.selectedCategory, item.id, 'buy');
       const canAfford = ui.state.credits >= buyPrice;
       return `
-        <div class="store-item ${isSelected ? 'selected' : ''}" data-item="${item.id}">
+        <div class="store-item ${isSelected ? 'selected' : ''}" data-item="${item.id}" role="option" aria-selected="${isSelected}" tabindex="0">
           <span class="item-name">${item.name}</span>
-          <span class="item-stock">[${item.stock}]</span>
-          <span class="item-price ${canAfford ? '' : 'expensive'}">${buyPrice}&nbsp;cr</span>
+          <span class="item-stock" aria-label="${item.stock} in stock">[${item.stock}]</span>
+          <span class="item-price ${canAfford ? '' : 'expensive'}" aria-label="Price: ${buyPrice} credits${canAfford ? '' : ', cannot afford'}">${buyPrice}&nbsp;cr</span>
         </div>
       `;
     })
@@ -115,29 +115,29 @@ function renderStore(ui: StoreUI): string {
   return `
     ${navBar}
     ${renderStatusDisplay(ui.state.credits, ui.state.currentSector)}
-    <div class="store-screen">
-      <div class="store-categories">
-        <div class="category-tabs">
-          <button class="btn ${ui.selectedCategory === 'hulls' ? 'btn-primary' : ''}" data-cat="hulls">Hulls</button>
-          <button class="btn ${ui.selectedCategory === 'primaries' ? 'btn-primary' : ''}" data-cat="primaries">Primaries</button>
-          <button class="btn ${ui.selectedCategory === 'secondaries' ? 'btn-primary' : ''}" data-cat="secondaries">Missiles</button>
-          <button class="btn ${ui.selectedCategory === 'ammo' ? 'btn-primary' : ''}" data-cat="ammo">Ammo</button>
-          <button class="btn ${ui.selectedCategory === 'scrap' ? 'btn-primary' : ''}" data-cat="scrap">Scrap</button>
+    <main class="store-screen" aria-label="Equipment Store">
+      <nav class="store-categories" aria-label="Store categories">
+        <div class="category-tabs" role="tablist" aria-label="Item categories">
+          <button class="btn ${ui.selectedCategory === 'hulls' ? 'btn-primary' : ''}" data-cat="hulls" role="tab" aria-selected="${ui.selectedCategory === 'hulls'}">Hulls</button>
+          <button class="btn ${ui.selectedCategory === 'primaries' ? 'btn-primary' : ''}" data-cat="primaries" role="tab" aria-selected="${ui.selectedCategory === 'primaries'}">Primaries</button>
+          <button class="btn ${ui.selectedCategory === 'secondaries' ? 'btn-primary' : ''}" data-cat="secondaries" role="tab" aria-selected="${ui.selectedCategory === 'secondaries'}">Missiles</button>
+          <button class="btn ${ui.selectedCategory === 'ammo' ? 'btn-primary' : ''}" data-cat="ammo" role="tab" aria-selected="${ui.selectedCategory === 'ammo'}">Ammo</button>
+          <button class="btn ${ui.selectedCategory === 'scrap' ? 'btn-primary' : ''}" data-cat="scrap" role="tab" aria-selected="${ui.selectedCategory === 'scrap'}">Scrap</button>
         </div>
         <div class="category-actions">
           ${renderResupplyButton(ui.state)}
         </div>
-      </div>
+      </nav>
       <div class="store-layout">
-        <div class="store-list">
+        <aside class="store-list" role="listbox" aria-label="Available items">
           ${itemList}
-        </div>
-        <div class="store-details">
-          ${detailPanel || '<div class="empty-state-panel">Select an item to view details</div>'}
-        </div>
+        </aside>
+        <section class="store-details" aria-label="Item details">
+          ${detailPanel || '<div class="empty-state-panel" role="status">Select an item to view details</div>'}
+        </section>
         ${renderStoreStorage(ui.state, ui.selectedCategory, ui.selectedItem)}
       </div>
-    </div>
+    </main>
   `;
 }
 
