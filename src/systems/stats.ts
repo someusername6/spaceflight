@@ -11,6 +11,7 @@ import {
   getOrCreateWeaponStats,
   type SalvageableShip,
   snapshotStats,
+  type WeaponStats,
 } from '../components/combat-stats';
 import { Faction, type FactionComponent } from '../components/faction';
 import type { Health } from '../components/health';

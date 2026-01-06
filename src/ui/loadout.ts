@@ -232,8 +232,8 @@ function renderHullSwapOptions(
   ship: OwnedShip,
   storedHulls: StoredHull[],
 ): string {
-  // Wingman ships require a pilot to swap
-  if (!ship.isPlayerShip && !ship.pilot) {
+  // Ships require a pilot to swap hulls
+  if (!ship.pilot) {
     return '';
   }
 
@@ -269,17 +269,17 @@ function renderHullSwapOptions(
   `;
 }
 
-/** Render unassign pilot option for wingman ships */
+/** Render unassign pilot option for ships with pilots */
 function renderUnassignPilot(ship: OwnedShip): string {
-  // Only show for wingman ships with pilots
-  if (ship.isPlayerShip || !ship.pilot) {
+  // Only show for ships with pilots
+  if (!ship.pilot) {
     return '';
   }
 
   return `
     <div class="unassign-section">
       <button class="btn-small btn-danger btn-unassign" data-ship="${ship.id}">
-        Bench ${ship.pilot.name}
+        Unassign ${ship.pilot.name}
       </button>
       <div class="unassign-note">Returns pilot to pool, ship to storage</div>
     </div>
@@ -292,9 +292,7 @@ export function renderLoadoutPanel(
   state: CampaignState,
 ): string {
   const stats = SHIP_CLASSES[ship.shipClass];
-  const pilotName = ship.isPlayerShip
-    ? 'You'
-    : (ship.pilot?.name ?? 'No Pilot');
+  const pilotName = ship.pilot?.name ?? 'No Pilot';
 
   return `
     <div class="loadout-panel">

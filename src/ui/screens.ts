@@ -3,6 +3,8 @@
  *
  * Screens:
  * - HANGAR: Ship/loadout management
+ * - ROSTER: Pilot management
+ * - STORE: Equipment shop
  * - CONTRACTS: Mission selection
  * - MISSION: 3D combat (game running)
  * - RESULTS: Post-mission outcome
@@ -14,6 +16,7 @@ import type { CampaignState, Contract } from '../campaign/types';
 /** Game screen states */
 export enum Screen {
   HANGAR = 'hangar',
+  ROSTER = 'roster',
   STORE = 'store',
   CONTRACTS = 'contracts',
   MISSION = 'mission',
@@ -31,6 +34,7 @@ export interface ScreenManager {
 
   // Screen elements (created lazily)
   hangarElement: HTMLElement | null;
+  rosterElement: HTMLElement | null;
   storeElement: HTMLElement | null;
   contractsElement: HTMLElement | null;
   resultsElement: HTMLElement | null;
@@ -54,6 +58,7 @@ export function createScreenManager(
     selectedContract: null,
     lastMissionVictory: false,
     hangarElement: null,
+    rosterElement: null,
     storeElement: null,
     contractsElement: null,
     resultsElement: null,
@@ -114,6 +119,11 @@ function showScreen(manager: ScreenManager, screen: Screen): void {
 /** Transition to hangar screen */
 export function goToHangar(manager: ScreenManager): void {
   showScreen(manager, Screen.HANGAR);
+}
+
+/** Transition to roster screen */
+export function goToRoster(manager: ScreenManager): void {
+  showScreen(manager, Screen.ROSTER);
 }
 
 /** Transition to store screen */

@@ -193,3 +193,22 @@ Balance targets achieved:
 - **Salvage recording** (`src/systems/stats.ts:380-416`): `handleShipDeath()` records ALL destroyed ships for salvage with proper `shipClass` lookup via `SHIP_ARCHETYPES`
 - **Seeded PRNG** (`src/campaign/controller.ts:248`): Salvage uses `random(game.world.prng)` for deterministic results
 - **Scrap prices** (`src/data/prices.ts:111-122`): `getScrapPrice()`, `SCRAP_PER_HULL`, `SCRAP_CONVERSION_FEE` constants
+
+#### UI Polish & Code Cleanup ✅
+- **Ship viewer improvements** (`src/ui/ship-viewer.ts`, `src/ui/viewer-styles.ts`):
+  - Removed redundant compact stats from ship viewer (stats now only in Ship Stats panel)
+  - Ship icon scales automatically to fill available space (max 200×200px)
+  - Text and silhouette scale with container using CSS container queries
+- **Consistent stats styling** (`src/ui/roster-styles.ts`, `src/ui/hangar-styles.ts`, `src/ui/viewer-styles.ts`):
+  - Unified font styling across Store, Roster, and Hangar stat displays
+  - Fixed specificity issues with global `.stat-label`/`.stat-value` styles
+- **Store UX improvements** (`src/ui/store.ts`, `src/ui/store-detail-styles.ts`):
+  - Simplified scrap conversion UI with single green "Convert to Hull" button
+  - Consistent button heights (min-height 56px for 2-line text)
+  - Ammo naming: weapon name only in side pane, "Weapon ammo" in main pane
+- **Dead code removal** (~17 KB bundle size reduction):
+  - Removed unused `src/ui/types/` directory (6 files)
+  - Removed unused `src/ui/hardpoint-styles.ts`
+  - Cleaned `src/ui/debrief-styles.ts` (305→122 lines): removed unused `.mission-summary`, `.weapon-accuracy`, `.stat-box` styles
+  - Cleaned `src/ui/salvage-styles.ts` (331→135 lines): removed unused `.scrap-*`, `.conversion-progress` styles
+  - Cleaned `src/ui/loadout-styles.ts` (296→81 lines): removed unused `.weapon-slot`, `.ammo-controls`, `.storage-preview` styles

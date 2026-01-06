@@ -44,7 +44,7 @@ export const PRIMARY_PRICES: Record<string, { buy: number; sell: number }> = {
 
 /** Ammo prices for ballistic primaries (per round) */
 export const AMMO_PRICES: Record<string, { buy: number; sell: number }> = {
-  autocannon: { buy: 1, sell: 0 }, // 1 credit per round
+  autocannon: { buy: 0.1, sell: 0 }, // 0.1 credit per round (1 cr per 10)
   railgun: { buy: 5, sell: 2 }, // 5 credits per slug
   flak: { buy: 2, sell: 1 }, // 2 credits per shell
   nuclearLance: { buy: 50, sell: 25 }, // 50 credits per charge

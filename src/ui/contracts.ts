@@ -2,15 +2,27 @@
  * Contracts screen - displays available missions to choose from.
  */
 
+import { isCommanderAssigned } from '../campaign/state';
 import type { CampaignState, Contract } from '../campaign/types';
+import {
+  bindNavBar,
+  type NavDestination,
+  renderNavBar,
+  renderStatusDisplay,
+} from './nav-bar';
 
 /** Contracts UI state */
 export interface ContractsUI {
   element: HTMLElement;
+  state: CampaignState;
   contracts: Contract[];
-  onBack: () => void;
+  selectedContractId: string | null;
+  onNavigate: (destination: NavDestination) => void;
   onAccept: (contract: Contract) => void;
 }
+
+// Re-export types for external use
+export type { NavDestination } from './nav-bar';
 
 /**
  * Generate contracts with wave-based enemy spawning.
@@ -124,8 +136,26 @@ function countTotalEnemies(contract: Contract): number {
   );
 }
 
-/** Render a contract item */
-function renderContractItem(contract: Contract): string {
+/** Render a contract list item (compact) */
+function renderContractListItem(
+  contract: Contract,
+  isSelected: boolean,
+): string {
+  return `
+    <div class="contract-list-item ${isSelected ? 'selected' : ''}" data-contract-id="${contract.id}">
+      <div class="contract-list-info">
+        <div class="contract-list-name">${contract.name}</div>
+        <span class="contract-difficulty ${contract.difficulty}">
+          ${contract.difficulty.toUpperCase()}
+        </span>
+      </div>
+      <div class="contract-list-reward">${contract.reward}&nbsp;cr</div>
+    </div>
+  `;
+}
+
+/** Render contract detail panel */
+function renderContractDetail(contract: Contract, canLaunch: boolean): string {
   // Summarize enemies across all waves
   const enemyCounts = new Map<string, number>();
   for (const wave of contract.waves) {
@@ -134,40 +164,74 @@ function renderContractItem(contract: Contract): string {
       enemyCounts.set(key, (enemyCounts.get(key) ?? 0) + enemy.count);
     }
   }
-  const enemyDesc = Array.from(enemyCounts.entries())
-    .map(([type, count]) => `${count}x ${type}`)
-    .join(', ');
+  const enemyList = Array.from(enemyCounts.entries())
+    .map(([type, count]) => `<div class="enemy-entry">${count}× ${type}</div>`)
+    .join('');
 
   const totalEnemies = countTotalEnemies(contract);
   const waveCount = contract.waves.length;
 
+  const acceptButton = canLaunch
+    ? `<button class="btn btn-accept-mission" id="btn-accept-mission">ACCEPT MISSION</button>`
+    : `<div class="no-commander-warning">Assign commander to a ship in Hangar</div>
+       <button class="btn btn-accept-mission disabled" disabled>ACCEPT MISSION</button>`;
+
   return `
-    <div class="contract-item" data-contract-id="${contract.id}">
-      <div class="contract-name">${contract.name}</div>
-      <span class="contract-difficulty ${contract.difficulty}">
-        ${contract.difficulty.toUpperCase()}
-      </span>
-      <div class="contract-description">${contract.description}</div>
-      <div style="font-size: 0.85em; color: #7a9aba; margin-bottom: 8px;">
-        ${totalEnemies} hostiles in ${waveCount} waves (${enemyDesc})
+    <div class="contract-detail">
+      <div class="contract-detail-header">
+        <span class="contract-detail-name">${contract.name}</span>
+        <span class="contract-difficulty ${contract.difficulty}">
+          ${contract.difficulty.toUpperCase()}
+        </span>
       </div>
-      <div class="contract-reward">Reward: ${contract.reward} credits</div>
+      <div class="contract-detail-desc">${contract.description}</div>
+      <div class="contract-detail-section">
+        <div class="detail-section-label">HOSTILES</div>
+        <div class="contract-enemies">
+          ${enemyList}
+        </div>
+        <div class="contract-waves">${totalEnemies} total in ${waveCount} waves</div>
+      </div>
+      <div class="contract-detail-section">
+        <div class="detail-section-label">REWARD</div>
+        <div class="contract-detail-reward">${contract.reward} credits</div>
+      </div>
+      ${acceptButton}
     </div>
   `;
 }
 
 /** Render contracts screen */
-function renderContracts(state: CampaignState, contracts: Contract[]): string {
+function renderContracts(
+  state: CampaignState,
+  contracts: Contract[],
+  selectedContractId: string | null,
+  onNavigate: (destination: NavDestination) => void,
+): string {
+  const navBar = renderNavBar({
+    activeTab: 'contracts',
+    credits: state.credits,
+    sector: state.currentSector,
+    onNavigate,
+  });
+
+  const selectedContract = selectedContractId
+    ? contracts.find((c) => c.id === selectedContractId)
+    : null;
+
+  const canLaunch = isCommanderAssigned(state);
+
   return `
-    <button class="btn btn-back" id="btn-back">← Back</button>
-    <div class="credits-display">${state.credits}</div>
-
-    <h1>Available Contracts</h1>
-    <h2>Sector ${state.currentSector}</h2>
-
-    <div class="screen-panel">
-      <div class="contract-list">
-        ${contracts.map(renderContractItem).join('')}
+    ${navBar}
+    ${renderStatusDisplay(state.credits, state.currentSector)}
+    <div class="contracts-screen">
+      <div class="contracts-layout">
+        <div class="contracts-list-panel">
+          ${contracts.map((c) => renderContractListItem(c, c.id === selectedContractId)).join('')}
+        </div>
+        <div class="contracts-detail-panel">
+          ${selectedContract ? renderContractDetail(selectedContract, canLaunch) : '<div class="empty-state-panel">Select a contract to view details</div>'}
+        </div>
       </div>
     </div>
   `;
@@ -177,58 +241,62 @@ function renderContracts(state: CampaignState, contracts: Contract[]): string {
 export function createContractsUI(
   element: HTMLElement,
   state: CampaignState,
-  onBack: () => void,
+  onNavigate: (destination: NavDestination) => void,
   onAccept: (contract: Contract) => void,
 ): ContractsUI {
-  const contracts = generateContracts(state.currentSector);
-  element.innerHTML = renderContracts(state, contracts);
+  const ui: ContractsUI = {
+    element,
+    state,
+    contracts: generateContracts(state.currentSector),
+    selectedContractId: null,
+    onNavigate,
+    onAccept,
+  };
 
-  // Bind back button
-  const backBtn = element.querySelector('#btn-back');
-  if (backBtn) {
-    backBtn.addEventListener('click', onBack);
-  }
+  renderAndBindContracts(ui);
+  return ui;
+}
 
-  // Bind contract clicks
-  const contractItems = element.querySelectorAll('.contract-item');
-  contractItems.forEach((item) => {
+/** Internal: render and bind events */
+function renderAndBindContracts(ui: ContractsUI): void {
+  ui.element.innerHTML = renderContracts(
+    ui.state,
+    ui.contracts,
+    ui.selectedContractId,
+    ui.onNavigate,
+  );
+
+  // Bind navigation bar
+  bindNavBar(ui.element, ui.onNavigate);
+
+  // Bind contract list item clicks (selection only)
+  ui.element.querySelectorAll('.contract-list-item').forEach((item) => {
     item.addEventListener('click', () => {
       const contractId = item.getAttribute('data-contract-id');
-      const contract = contracts.find((c) => c.id === contractId);
-      if (contract) {
-        onAccept(contract);
+      if (contractId) {
+        // Toggle selection
+        ui.selectedContractId =
+          contractId === ui.selectedContractId ? null : contractId;
+        renderAndBindContracts(ui);
       }
     });
   });
 
-  return {
-    element,
-    contracts,
-    onBack,
-    onAccept,
-  };
+  // Bind accept mission button (launches mission)
+  const acceptBtn = ui.element.querySelector('#btn-accept-mission');
+  if (acceptBtn && ui.selectedContractId) {
+    const contract = ui.contracts.find((c) => c.id === ui.selectedContractId);
+    if (contract) {
+      acceptBtn.addEventListener('click', () => {
+        ui.onAccept(contract);
+      });
+    }
+  }
 }
 
 /** Update contracts UI */
 export function updateContractsUI(ui: ContractsUI, state: CampaignState): void {
+  ui.state = state;
   ui.contracts = generateContracts(state.currentSector);
-  ui.element.innerHTML = renderContracts(state, ui.contracts);
-
-  // Re-bind back button
-  const backBtn = ui.element.querySelector('#btn-back');
-  if (backBtn) {
-    backBtn.addEventListener('click', ui.onBack);
-  }
-
-  // Re-bind contract clicks
-  const contractItems = ui.element.querySelectorAll('.contract-item');
-  contractItems.forEach((item) => {
-    item.addEventListener('click', () => {
-      const contractId = item.getAttribute('data-contract-id');
-      const contract = ui.contracts.find((c) => c.id === contractId);
-      if (contract) {
-        ui.onAccept(contract);
-      }
-    });
-  });
+  renderAndBindContracts(ui);
 }

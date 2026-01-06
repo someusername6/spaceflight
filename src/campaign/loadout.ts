@@ -136,6 +136,7 @@ export function equipSecondary(
   shipId: string,
   storageIndex: number,
   bankSize: number,
+  requestedCount?: number,
 ): CampaignState {
   const ship = state.ships.find((s) => s.id === shipId);
   const stored = state.storedWeapons[storageIndex];
@@ -145,8 +146,12 @@ export function equipSecondary(
 
   // Calculate max capacity based on missile type and bank size
   const maxCapacity = getMaxMissileCapacity(stored.weaponType, bankSize);
-  // Load only up to capacity, leaving remainder in storage
-  const toLoad = Math.min(stored.count, maxCapacity);
+  // Use requested count if provided, otherwise load up to capacity
+  const maxLoadable = Math.min(stored.count, maxCapacity);
+  const toLoad =
+    requestedCount !== undefined
+      ? Math.min(Math.max(1, requestedCount), maxLoadable)
+      : maxLoadable;
   const remainder = stored.count - toLoad;
 
   // Create equipped weapon with proper capacity
@@ -180,7 +185,7 @@ export function equipSecondary(
   };
 }
 
-/** Move pilot/player from active ship to stored hull, current ship goes to storage */
+/** Move pilot from active ship to stored hull, current ship goes to storage */
 export function swapPilotToHull(
   state: CampaignState,
   shipId: string,
@@ -188,24 +193,18 @@ export function swapPilotToHull(
 ): CampaignState {
   const ship = state.ships.find((s) => s.id === shipId);
   const hull = state.storedHulls[hullIndex];
-  if (!ship || !hull) {
-    return state;
+  if (!ship || !hull || !ship.pilot) {
+    return state; // Ship must have a pilot assigned
   }
 
-  // Wingman ships require a pilot
-  if (!ship.isPlayerShip && !ship.pilot) {
-    return state;
-  }
-
-  // Create new active ship from hull (preserve player/pilot status)
+  // Create new active ship from hull with the same pilot
   const newShip: OwnedShip = {
     id: hull.id,
     shipClass: hull.shipClass,
     primaryWeapons: [], // Starts empty - needs weapons equipped
     secondaryWeapons: [],
-    pilot: ship.pilot, // null for player, Pilot for wingman
+    pilot: ship.pilot,
     hullDamage: hull.hullDamage,
-    isPlayerShip: ship.isPlayerShip,
   };
 
   // Old ship becomes a stored hull (weapons go to storage)
@@ -234,16 +233,22 @@ export function swapPilotToHull(
   };
 }
 
-/** Assign an unassigned pilot to a stored hull, creating a new active ship */
+/** Assign a pilot to a stored hull, creating a new active ship */
 export function assignPilotToHull(
   state: CampaignState,
-  pilotIndex: number,
+  pilotId: string,
   hullIndex: number,
 ): CampaignState {
-  const pilot = state.pilots[pilotIndex];
+  const pilot = state.pilots.find((p) => p.id === pilotId);
   const hull = state.storedHulls[hullIndex];
   if (!pilot || !hull) {
     return state;
+  }
+
+  // Check if pilot is already assigned to a ship
+  const existingShip = state.ships.find((s) => s.pilot?.id === pilotId);
+  if (existingShip) {
+    return state; // Pilot already assigned
   }
 
   // Create new active ship from hull + pilot
@@ -254,30 +259,56 @@ export function assignPilotToHull(
     secondaryWeapons: [],
     pilot,
     hullDamage: hull.hullDamage,
-    isPlayerShip: false,
   };
 
   return {
     ...state,
     ships: [...state.ships, newShip],
-    pilots: state.pilots.filter((_, i) => i !== pilotIndex),
     storedHulls: state.storedHulls.filter((_, i) => i !== hullIndex),
   };
 }
 
-/** Unassign a pilot from a wingman ship, returning pilot to pool and ship to storage */
+/** Assign a pilot to an existing ship (reassignment) */
+export function assignPilotToShip(
+  state: CampaignState,
+  pilotId: string,
+  shipId: string,
+): CampaignState {
+  const pilot = state.pilots.find((p) => p.id === pilotId);
+  const ship = state.ships.find((s) => s.id === shipId);
+  if (!pilot || !ship) {
+    return state;
+  }
+
+  // Check if pilot is already assigned to another ship
+  const existingShip = state.ships.find((s) => s.pilot?.id === pilotId);
+  if (existingShip) {
+    return state; // Pilot already assigned elsewhere
+  }
+
+  // Check if ship already has a pilot
+  if (ship.pilot) {
+    return state; // Ship already has a pilot
+  }
+
+  // Assign pilot to ship
+  return {
+    ...state,
+    ships: state.ships.map((s) => (s.id === shipId ? { ...s, pilot } : s)),
+  };
+}
+
+/** Unassign a pilot from a ship, ship goes to storage */
 export function unassignPilot(
   state: CampaignState,
   shipId: string,
 ): CampaignState {
   const ship = state.ships.find((s) => s.id === shipId);
-  if (!ship || ship.isPlayerShip || !ship.pilot) {
+  if (!ship || !ship.pilot) {
     return state;
   }
 
-  const pilot = ship.pilot;
-
-  // Ship becomes a stored hull
+  // Ship becomes a stored hull (pilot is unassigned but stays in state.pilots)
   const newHull: StoredHull = {
     id: ship.id,
     shipClass: ship.shipClass,
@@ -294,7 +325,6 @@ export function unassignPilot(
   return {
     ...state,
     ships: state.ships.filter((s) => s.id !== shipId),
-    pilots: [...state.pilots, pilot],
     storedHulls: [...state.storedHulls, newHull],
     storedWeapons,
     storedAmmo,

@@ -1,181 +1,186 @@
 /**
- * Hangar screen - displays player's squadron and allows loadout management.
+ * Hangar screen - ship management and loadout configuration.
+ *
+ * Two-column layout:
+ * [Ships List] | [Ship Viewer + Details]
  */
 
-import { assignPilotToHull } from '../campaign/loadout';
-import { calculateResupplyCost } from '../campaign/state';
 import type { CampaignState, OwnedShip } from '../campaign/types';
 import { SHIP_CLASSES } from '../data/ships';
-import { renderInventory } from './hangar-inventory';
 import {
-  bindScrapConversionEvents,
-  renderScrapConversion,
-} from './hangar-scrap';
-import { bindLoadoutEvents, renderLoadoutPanel } from './loadout';
+  closeWeaponPicker,
+  handleUnequip,
+  showWeaponPicker,
+} from './hangar-equip';
+import {
+  bindNavBar,
+  type NavDestination,
+  renderNavBar,
+  renderStatusDisplay,
+} from './nav-bar';
+import { renderShipCard } from './ship-card';
+import { renderShipViewer } from './ship-viewer';
+import {
+  bindTooltip,
+  hideTooltip,
+  missileTooltipContent,
+  weaponTooltipContent,
+} from './tooltip';
 
 /** Hangar UI state */
 export interface HangarUI {
   element: HTMLElement;
   state: CampaignState;
   selectedShipId: string | null;
-  onSelectContracts: () => void;
-  onStore?: () => void;
-  onResupply?: () => void;
+  onNavigate: (destination: NavDestination) => void;
   onStateUpdate?: (newState: CampaignState) => void;
 }
 
-/** Get hull stats for a ship class */
-function getMaxHull(shipClass: string): number {
-  const stats = SHIP_CLASSES[shipClass];
-  return stats?.hull ?? 100;
+/** Sort ships with commander's ship first */
+function sortShipsCommanderFirst(
+  ships: OwnedShip[],
+  commanderId: string,
+): OwnedShip[] {
+  return [...ships].sort((a, b) => {
+    const aIsCommander = a.pilot?.id === commanderId;
+    const bIsCommander = b.pilot?.id === commanderId;
+    if (aIsCommander && !bIsCommander) return -1;
+    if (!aIsCommander && bIsCommander) return 1;
+    return 0;
+  });
 }
 
-/** Calculate total resupply cost for all ships */
-function getTotalResupplyCost(state: CampaignState): number {
-  let total = 0;
-  for (const ship of state.ships) {
-    total += calculateResupplyCost(ship);
-  }
-  return total;
-}
+/** Render ship details panel */
+function renderShipDetails(ship: OwnedShip): string {
+  const stats = SHIP_CLASSES[ship.shipClass.toLowerCase()];
+  if (!stats) return '<div class="ship-details">Unknown ship class</div>';
 
-/** Render a single ship item */
-function renderShipItem(ship: OwnedShip, isSelected: boolean): string {
-  const maxHull = getMaxHull(ship.shipClass);
+  const maxHull = stats.hull;
   const currentHull = maxHull - ship.hullDamage;
   const hullPercent = Math.round((currentHull / maxHull) * 100);
-  const isDamaged = ship.hullDamage > 0;
 
-  const pilotName = ship.isPlayerShip
-    ? 'You'
-    : (ship.pilot?.name ?? 'No Pilot');
-
-  const pilotSkill = ship.isPlayerShip
-    ? ''
-    : ship.pilot
-      ? ` (${ship.pilot.skill})`
-      : '';
-
-  const selectedClass = isSelected ? 'selected' : '';
+  const primaryBankStr = stats.primaryBanks.join(', ');
+  const secondaryBankStr = stats.secondaryBanks.join(', ');
 
   return `
-    <div class="ship-item ${selectedClass}" data-ship-id="${ship.id}">
-      <div class="ship-icon">${ship.shipClass.substring(0, 3).toUpperCase()}</div>
-      <div class="ship-info">
-        <div class="ship-name">${pilotName}${pilotSkill}</div>
-        <div class="ship-class">${ship.shipClass}</div>
-        <div class="ship-status ${isDamaged ? 'damaged' : 'ok'}">
-          Hull: ${hullPercent}%
-          ${isDamaged ? `(${ship.hullDamage} damage)` : ''}
+    <div class="ship-details">
+      <div class="ship-details-header">
+        <span class="panel-icon">▦</span> Ship Stats
+      </div>
+      <div class="ship-details-stats">
+        <div class="detail-row">
+          <span class="detail-label">Hull</span>
+          <span class="detail-value ${hullPercent < 100 ? 'damaged' : ''}">${currentHull}/${maxHull}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Shields</span>
+          <span class="detail-value">${stats.shields} (+${stats.shieldRegen}/s)</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Speed</span>
+          <span class="detail-value">${stats.maxSpeed} m/s</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Turn Rate</span>
+          <span class="detail-value">${stats.turnRate}°/s</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Acceleration</span>
+          <span class="detail-value">${stats.acceleration} m/s²</span>
+        </div>
+        <div class="detail-divider"></div>
+        <div class="detail-row">
+          <span class="detail-label">Primary Banks</span>
+          <span class="detail-value">${stats.primaryBanks.length} (${primaryBankStr})</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Secondary Banks</span>
+          <span class="detail-value">${stats.secondaryBanks.length} (${secondaryBankStr})</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Heat Capacity</span>
+          <span class="detail-value">${stats.maxHeat}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Cooling Rate</span>
+          <span class="detail-value">${stats.coolingRate}/s</span>
         </div>
       </div>
     </div>
   `;
 }
 
-/** Render deploy pilot section (when pilots and hulls available) */
-function renderDeployPilot(state: CampaignState): string {
-  if (state.pilots.length === 0 || state.storedHulls.length === 0) {
-    return '';
-  }
-
-  // Create a grid of pilot × hull options
-  const deployOptions: string[] = [];
-  state.pilots.forEach((pilot, pilotIndex) => {
-    state.storedHulls.forEach((hull, hullIndex) => {
-      const stats = SHIP_CLASSES[hull.shipClass];
-      const maxHull = stats?.hull ?? 100;
-      const hullPercent = Math.round(
-        ((maxHull - hull.hullDamage) / maxHull) * 100,
-      );
-      const damageNote = hull.hullDamage > 0 ? ` (${hullPercent}%)` : '';
-
-      deployOptions.push(`
-        <div class="deploy-row">
-          <span class="deploy-info">${pilot.name} → ${hull.shipClass}${damageNote}</span>
-          <button class="btn-small btn-deploy" data-pilot="${pilotIndex}" data-hull="${hullIndex}">
-            Deploy
-          </button>
-        </div>
-      `);
-    });
-  });
-
-  return `
-    <div class="screen-panel deploy-panel">
-      <div class="screen-panel-header">Deploy New Wingman</div>
-      <div class="deploy-note">Combine pilot + hull (ship starts with empty loadout)</div>
-      ${deployOptions.join('')}
-    </div>
-  `;
-}
-
-/** Render the resupply button */
-function renderResupplyButton(state: CampaignState): string {
-  const cost = getTotalResupplyCost(state);
-  const canAfford = state.credits >= cost && cost > 0;
-  const disabled = !canAfford ? 'disabled' : '';
-
-  if (cost === 0) {
-    return `
-      <button class="btn" disabled style="opacity: 0.5;">
-        Fully Supplied
-      </button>
-    `;
-  }
-
-  return `
-    <button class="btn ${canAfford ? '' : 'btn-disabled'}" id="btn-resupply" ${disabled}>
-      Resupply (${cost} cr)
-    </button>
-  `;
+/** Render ship viewer with close button integrated in header */
+function renderShipViewerWithClose(
+  ship: Parameters<typeof renderShipViewer>[0],
+  state: Parameters<typeof renderShipViewer>[1],
+): string {
+  const viewerHtml = renderShipViewer(ship, state);
+  return viewerHtml.replace(
+    '<div class="schematic-header-right"></div>',
+    '<div class="schematic-header-right"><button class="btn-close-viewer" id="btn-close-viewer">✕</button></div>',
+  );
 }
 
 /** Render the hangar screen content */
 function renderHangar(
   state: CampaignState,
   selectedShipId: string | null,
+  onNavigate: (destination: NavDestination) => void,
 ): string {
-  const playerShip = state.ships.find((s) => s.isPlayerShip);
-  const wingmen = state.ships.filter((s) => !s.isPlayerShip);
+  // Sort ships with commander first
+  const sortedShips = sortShipsCommanderFirst(state.ships, state.commanderId);
+
+  const selectedShip = selectedShipId
+    ? state.ships.find((s) => s.id === selectedShipId)
+    : null;
+
+  const navBar = renderNavBar({
+    activeTab: 'hangar',
+    credits: state.credits,
+    sector: state.currentSector,
+    onNavigate,
+  });
+
+  // Center panel: ship viewer or empty state
+  const centerPanel = selectedShip
+    ? `
+      <div class="hangar-viewer">
+        ${renderShipViewerWithClose(selectedShip, state)}
+      </div>
+    `
+    : `
+      <div class="empty-state-panel">
+        Select a ship to view loadout
+      </div>
+    `;
+
+  // Right column: Ship details when ship selected
+  const rightColumn = selectedShip
+    ? `<div class="hangar-details">${renderShipDetails(selectedShip)}</div>`
+    : `<div class="hangar-details-placeholder"></div>`;
 
   return `
-    <div class="credits-display">${state.credits}</div>
-
-    <h1>Hangar</h1>
-    <h2>Your Squadron</h2>
-
-    <div class="hangar-layout">
-      <div class="hangar-main">
-        <div class="screen-panel">
-          <div class="screen-panel-header">
-            <span>Ships (${state.ships.length}) - Click to edit loadout</span>
-            <span>Sector ${state.currentSector}</span>
+    ${navBar}
+    ${renderStatusDisplay(state.credits, state.currentSector)}
+    <div class="hangar-screen">
+      <div class="hangar-layout">
+        <!-- Left Column: Ships List -->
+        <div class="hangar-ships">
+          <div class="panel-header">
+            <span class="panel-icon">◈</span> Squadron
+            <span class="panel-count">${state.ships.length}</span>
           </div>
-
           <div class="ship-list">
-            ${playerShip ? renderShipItem(playerShip, playerShip.id === selectedShipId) : ''}
-            ${wingmen.map((s) => renderShipItem(s, s.id === selectedShipId)).join('')}
+            ${sortedShips.map((s) => renderShipCard(s, s.id === selectedShipId, state.commanderId)).join('')}
           </div>
         </div>
 
-        ${renderInventory(state)}
-        ${renderDeployPilot(state)}
-        ${renderScrapConversion(state)}
+        <!-- Center Column: Ship Viewer or Placeholder -->
+        ${centerPanel}
 
-        <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
-          ${renderResupplyButton(state)}
-          <button class="btn" id="btn-store">
-            Equipment Store
-          </button>
-          <button class="btn btn-primary" id="btn-contracts">
-            Select Contract →
-          </button>
-        </div>
-      </div>
-
-      <div class="hangar-sidebar" id="loadout-panel-container">
-        <!-- Loadout panel renders here when ship selected -->
+        <!-- Right Column: Ship Details -->
+        ${rightColumn}
       </div>
     </div>
   `;
@@ -185,110 +190,114 @@ function renderHangar(
 export function createHangarUI(
   element: HTMLElement,
   state: CampaignState,
-  onSelectContracts: () => void,
-  onStore?: () => void,
-  onResupply?: () => void,
+  onNavigate: (destination: NavDestination) => void,
   onStateUpdate?: (newState: CampaignState) => void,
 ): HangarUI {
   const ui: HangarUI = {
     element,
     state,
     selectedShipId: null,
-    onSelectContracts,
+    onNavigate,
   };
 
-  if (onStore) ui.onStore = onStore;
-  if (onResupply) ui.onResupply = onResupply;
   if (onStateUpdate) ui.onStateUpdate = onStateUpdate;
 
   renderAndBindHangar(ui);
   return ui;
 }
 
+// Re-export NavDestination for external use
+export type { NavDestination } from './nav-bar';
+
 /** Internal: render hangar and bind all events */
 function renderAndBindHangar(ui: HangarUI): void {
-  ui.element.innerHTML = renderHangar(ui.state, ui.selectedShipId);
+  ui.element.innerHTML = renderHangar(
+    ui.state,
+    ui.selectedShipId,
+    ui.onNavigate,
+  );
 
-  // Bind contracts button
-  const contractsBtn = ui.element.querySelector('#btn-contracts');
-  if (contractsBtn) {
-    contractsBtn.addEventListener('click', ui.onSelectContracts);
-  }
+  // Bind navigation bar
+  bindNavBar(ui.element, ui.onNavigate);
 
-  // Bind store button
-  const storeBtn = ui.element.querySelector('#btn-store');
-  if (storeBtn && ui.onStore) {
-    storeBtn.addEventListener('click', ui.onStore);
-  }
-
-  // Bind resupply button
-  const resupplyBtn = ui.element.querySelector('#btn-resupply');
-  if (resupplyBtn && ui.onResupply) {
-    resupplyBtn.addEventListener('click', ui.onResupply);
+  // Bind close viewer button
+  const closeBtn = ui.element.querySelector('#btn-close-viewer');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      ui.selectedShipId = null;
+      renderAndBindHangar(ui);
+    });
   }
 
   // Bind ship selection
-  ui.element.querySelectorAll('.ship-item').forEach((item) => {
-    item.addEventListener('click', () => {
-      const shipId = (item as HTMLElement).dataset.shipId;
+  ui.element.querySelectorAll('.ship-card').forEach((item) => {
+    const el = item as HTMLElement;
+    const shipId = el.dataset.shipId;
+
+    el.addEventListener('click', () => {
       if (shipId) {
-        ui.selectedShipId = shipId === ui.selectedShipId ? null : shipId;
+        const isSelected = ui.selectedShipId === shipId;
+        ui.selectedShipId = isSelected ? null : shipId;
+        hideTooltip();
         renderAndBindHangar(ui);
       }
     });
   });
 
-  // Bind deploy pilot buttons
-  ui.element.querySelectorAll('.btn-deploy').forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      const target = e.target as HTMLElement;
-      const pilotIndex = Number.parseInt(target.dataset.pilot ?? '0', 10);
-      const hullIndex = Number.parseInt(target.dataset.hull ?? '0', 10);
+  // Bind hardpoint slot interactions
+  bindHardpointEvents(ui);
+}
 
-      const newState = assignPilotToHull(ui.state, pilotIndex, hullIndex);
-      if (newState !== ui.state) {
-        ui.state = newState;
-        if (ui.onStateUpdate) ui.onStateUpdate(newState);
-        renderAndBindHangar(ui);
-      }
-    });
-  });
+/** Bind hardpoint slot click and tooltip events */
+function bindHardpointEvents(ui: HangarUI): void {
+  ui.element.querySelectorAll('.schematic-slot').forEach((slot) => {
+    const el = slot as HTMLElement;
+    const weaponType = el.dataset.weapon;
+    const slotType = el.dataset.type as 'primary' | 'secondary';
+    const shipId = el.dataset.ship;
+    const slotIndex = Number.parseInt(el.dataset.index ?? '0', 10);
 
-  // Bind scrap conversion buttons
-  bindScrapConversionEvents(
-    ui.element,
-    ui.state,
-    (newState) => {
-      ui.state = newState;
-      if (ui.onStateUpdate) ui.onStateUpdate(newState);
-    },
-    () => renderAndBindHangar(ui),
-  );
-
-  // Render loadout panel if ship selected
-  const panelContainer = ui.element.querySelector('#loadout-panel-container');
-  if (panelContainer && ui.selectedShipId) {
-    const ship = ui.state.ships.find((s) => s.id === ui.selectedShipId);
-    if (ship) {
-      const handleStateUpdate = (newState: CampaignState) => {
-        ui.state = newState;
-        if (ui.onStateUpdate) ui.onStateUpdate(newState);
-        renderAndBindHangar(ui);
-      };
-      const handleClose = () => {
-        ui.selectedShipId = null;
-        renderAndBindHangar(ui);
-      };
-
-      panelContainer.innerHTML = renderLoadoutPanel(ship, ui.state);
-      bindLoadoutEvents(
-        panelContainer as HTMLElement,
-        ui.state,
-        handleStateUpdate,
-        handleClose,
-      );
+    // Tooltip for equipped weapons
+    if (weaponType) {
+      const contentFn =
+        slotType === 'primary'
+          ? () => weaponTooltipContent(weaponType)
+          : () => missileTooltipContent(weaponType);
+      bindTooltip(el, contentFn);
     }
-  }
+
+    // Click to unequip (filled) or show equip picker (empty)
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!shipId || !slotType) return;
+
+      const isFilled = el.classList.contains('filled');
+
+      if (isFilled) {
+        // Unequip weapon immediately
+        handleUnequip(ui.state, shipId, slotType, slotIndex, (newState) => {
+          ui.state = newState;
+          if (ui.onStateUpdate) ui.onStateUpdate(newState);
+          closeWeaponPicker();
+          renderAndBindHangar(ui);
+        });
+      } else {
+        // Show weapon picker for this slot
+        showWeaponPicker(
+          el,
+          ui.state,
+          shipId,
+          slotType,
+          slotIndex,
+          (newState) => {
+            ui.state = newState;
+            if (ui.onStateUpdate) ui.onStateUpdate(newState);
+          },
+          () => renderAndBindHangar(ui),
+        );
+      }
+    });
+  });
 }
 
 /** Update hangar UI with new state */

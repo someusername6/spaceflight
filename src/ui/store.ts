@@ -2,34 +2,68 @@
  * Store UI - equipment shop for buying/selling ships, weapons, and ammo.
  */
 
-import {
-  buyAmmo,
-  buyHull,
-  buyPrimaryWeapon,
-  buySecondaryWeapon,
-  sellAmmo,
-  sellHull,
-  sellPrimaryWeapon,
-  sellScrap,
-  sellSecondaryWeapon,
-} from '../campaign/store';
+import { calculateResupplyCost, resupplyAllShips } from '../campaign/state';
+import { convertScrapToHull } from '../campaign/store';
 import type { CampaignState } from '../campaign/types';
+import {
+  bindNavBar,
+  type NavDestination,
+  renderNavBar,
+  renderStatusDisplay,
+} from './nav-bar';
+import { renderDetailPanel } from './store-detail';
+import {
+  handleBulkBuy,
+  handleBulkSell,
+  handleBulkSell100,
+  handleBuy,
+  handleSell,
+} from './store-events';
 import {
   getCategoryItems,
   getItemPrice,
-  getStorageCount,
-  getStorageIndex,
-  renderAmmoStats,
-  renderHullStats,
-  renderPrimaryStats,
-  renderScrapStats,
-  renderSecondaryStats,
   type StoreCategory,
-  type StoreUI,
 } from './store-render';
+import { renderStoreStorage } from './store-storage';
 
+/** Store UI state */
+export interface StoreUI {
+  element: HTMLElement;
+  state: CampaignState;
+  selectedCategory: StoreCategory;
+  selectedItem: string | null;
+  onNavigate: (destination: NavDestination) => void;
+  onStateUpdate: (newState: CampaignState) => void;
+}
+
+export type { NavDestination } from './nav-bar';
 // Re-export types for external use
-export type { StoreCategory, StoreUI } from './store-render';
+export type { StoreCategory } from './store-render';
+
+/** Calculate total resupply cost for all ships */
+function getTotalResupplyCost(state: CampaignState): number {
+  let total = 0;
+  for (const ship of state.ships) {
+    total += calculateResupplyCost(ship);
+  }
+  return total;
+}
+
+/** Render the resupply button (for categories bar) */
+function renderResupplyButton(state: CampaignState): string {
+  const cost = getTotalResupplyCost(state);
+  const canAfford = state.credits >= cost && cost > 0;
+
+  if (cost === 0) {
+    return `<span class="resupply-status">✓ Supplied</span>`;
+  }
+
+  return `
+    <button class="btn btn-resupply-small" id="btn-resupply" ${canAfford ? '' : 'disabled'}>
+      Resupply (${cost} cr)
+    </button>
+  `;
+}
 
 /** Render the store content */
 function renderStore(ui: StoreUI): string {
@@ -61,135 +95,51 @@ function renderStore(ui: StoreUI): string {
         <div class="store-item ${isSelected ? 'selected' : ''}" data-item="${item.id}">
           <span class="item-name">${item.name}</span>
           <span class="item-stock">[${item.stock}]</span>
-          <span class="item-price ${canAfford ? '' : 'expensive'}">${buyPrice} cr</span>
+          <span class="item-price ${canAfford ? '' : 'expensive'}">${buyPrice}&nbsp;cr</span>
         </div>
       `;
     })
     .join('');
 
   // Detail panel for selected item
-  let detailPanel = '';
-  if (selected) {
-    const buyPrice = getItemPrice(ui.selectedCategory, selected, 'buy');
-    const sellPrice = getItemPrice(ui.selectedCategory, selected, 'sell');
-    const selectedItem = items.find((i) => i.id === selected);
-    const storeStockCount = selectedItem?.stock ?? 0;
-    const canAfford = ui.state.credits >= buyPrice && storeStockCount > 0;
-    const storageCount = getStorageCount(ui, ui.selectedCategory, selected);
-    const canSell = storageCount > 0;
+  const detailPanel = renderDetailPanel(
+    ui.state,
+    ui.selectedCategory,
+    selected,
+    items,
+  );
 
-    let statsHtml = '';
-    switch (ui.selectedCategory) {
-      case 'hulls':
-        statsHtml = renderHullStats(selected);
-        break;
-      case 'primaries':
-        statsHtml = renderPrimaryStats(selected);
-        break;
-      case 'secondaries':
-        statsHtml = renderSecondaryStats(selected);
-        break;
-      case 'ammo':
-        statsHtml = renderAmmoStats(selected);
-        break;
-      case 'scrap':
-        statsHtml = renderScrapStats(selected);
-        break;
-    }
-
-    const storageText = storageCount > 0 ? `In Storage: ${storageCount}` : '';
-
-    // Scrap is sell-only with bulk options
-    if (isScrap) {
-      const canSellBulk10 = storageCount >= 10;
-      const canSellBulk100 = storageCount >= 100;
-      detailPanel = `
-        <div class="store-detail">
-          <div class="detail-header">${selected}</div>
-          ${statsHtml}
-          <div class="detail-prices">
-            <div class="price-row">Sell: ${sellPrice} cr each</div>
-            ${storageText ? `<div class="price-row storage-count">${storageText}</div>` : ''}
-          </div>
-          <div class="detail-actions">
-            <button class="btn btn-sell" id="btn-sell" ${canSell ? '' : 'disabled'}>
-              Sell ×1
-            </button>
-            <button class="btn btn-sell" id="btn-sell-bulk" ${canSellBulk10 ? '' : 'disabled'}>
-              Sell ×10
-            </button>
-            <button class="btn btn-sell" id="btn-sell-bulk-100" ${canSellBulk100 ? '' : 'disabled'}>
-              Sell ×100
-            </button>
-          </div>
-        </div>
-      `;
-    } else {
-      // Show bulk buttons for missiles (×10) and ammo (×100)
-      const isMissile = ui.selectedCategory === 'secondaries';
-      const isAmmo = ui.selectedCategory === 'ammo';
-      const bulkAmount = isAmmo ? 100 : 10;
-      const bulkPrice = buyPrice * bulkAmount;
-      const canAffordBulk =
-        ui.state.credits >= bulkPrice && storeStockCount >= bulkAmount;
-      const canSellBulk = storageCount >= bulkAmount;
-      const showBulk = isMissile || isAmmo;
-
-      detailPanel = `
-        <div class="store-detail">
-          <div class="detail-header">${selected}</div>
-          ${statsHtml}
-          <div class="detail-prices">
-            <div class="price-row">Buy: ${buyPrice} cr${showBulk ? ` (×${bulkAmount}: ${bulkPrice} cr)` : ''}</div>
-            <div class="price-row">Sell: ${sellPrice} cr</div>
-            <div class="price-row stock-count">Store Stock: ${storeStockCount}</div>
-            ${storageText ? `<div class="price-row storage-count">${storageText}</div>` : ''}
-          </div>
-          <div class="detail-actions">
-            <button class="btn btn-equip" id="btn-buy" ${canAfford ? '' : 'disabled'}>
-              Buy${isMissile ? '' : isAmmo ? ' ×10' : ''}
-            </button>
-            ${showBulk ? `<button class="btn btn-equip" id="btn-buy-bulk" ${canAffordBulk ? '' : 'disabled'}>Buy ×${bulkAmount}</button>` : ''}
-            <button class="btn btn-sell" id="btn-sell" ${canSell ? '' : 'disabled'}>
-              Sell${isMissile ? '' : isAmmo ? ' ×10' : ''}
-            </button>
-            ${showBulk ? `<button class="btn btn-sell" id="btn-sell-bulk" ${canSellBulk ? '' : 'disabled'}>Sell ×${bulkAmount}</button>` : ''}
-          </div>
-        </div>
-      `;
-    }
-  }
+  const navBar = renderNavBar({
+    activeTab: 'store',
+    credits: ui.state.credits,
+    sector: ui.state.currentSector,
+    onNavigate: ui.onNavigate,
+  });
 
   return `
-    <div class="credits-display">${ui.state.credits}</div>
-    <button class="btn btn-back" id="btn-back">← Back</button>
-
-    <h1>Equipment Store</h1>
-
-    <div class="store-categories">
-      <button class="btn ${ui.selectedCategory === 'hulls' ? 'btn-primary' : ''}" data-cat="hulls">
-        Hulls
-      </button>
-      <button class="btn ${ui.selectedCategory === 'primaries' ? 'btn-primary' : ''}" data-cat="primaries">
-        Primaries
-      </button>
-      <button class="btn ${ui.selectedCategory === 'secondaries' ? 'btn-primary' : ''}" data-cat="secondaries">
-        Missiles
-      </button>
-      <button class="btn ${ui.selectedCategory === 'ammo' ? 'btn-primary' : ''}" data-cat="ammo">
-        Ammo
-      </button>
-      <button class="btn ${ui.selectedCategory === 'scrap' ? 'btn-primary' : ''}" data-cat="scrap">
-        Scrap
-      </button>
-    </div>
-
-    <div class="store-layout">
-      <div class="store-list">
-        ${itemList}
+    ${navBar}
+    ${renderStatusDisplay(ui.state.credits, ui.state.currentSector)}
+    <div class="store-screen">
+      <div class="store-categories">
+        <div class="category-tabs">
+          <button class="btn ${ui.selectedCategory === 'hulls' ? 'btn-primary' : ''}" data-cat="hulls">Hulls</button>
+          <button class="btn ${ui.selectedCategory === 'primaries' ? 'btn-primary' : ''}" data-cat="primaries">Primaries</button>
+          <button class="btn ${ui.selectedCategory === 'secondaries' ? 'btn-primary' : ''}" data-cat="secondaries">Missiles</button>
+          <button class="btn ${ui.selectedCategory === 'ammo' ? 'btn-primary' : ''}" data-cat="ammo">Ammo</button>
+          <button class="btn ${ui.selectedCategory === 'scrap' ? 'btn-primary' : ''}" data-cat="scrap">Scrap</button>
+        </div>
+        <div class="category-actions">
+          ${renderResupplyButton(ui.state)}
+        </div>
       </div>
-      <div class="store-details">
-        ${detailPanel || '<div class="no-selection">Select an item to view details</div>'}
+      <div class="store-layout">
+        <div class="store-list">
+          ${itemList}
+        </div>
+        <div class="store-details">
+          ${detailPanel || '<div class="empty-state-panel">Select an item to view details</div>'}
+        </div>
+        ${renderStoreStorage(ui.state, ui.selectedCategory, ui.selectedItem)}
       </div>
     </div>
   `;
@@ -197,10 +147,20 @@ function renderStore(ui: StoreUI): string {
 
 /** Bind store event handlers */
 function bindStoreEvents(ui: StoreUI): void {
-  // Back button
-  const backBtn = ui.element.querySelector('#btn-back');
-  if (backBtn) {
-    backBtn.addEventListener('click', ui.onBack);
+  // Bind navigation bar
+  bindNavBar(ui.element, ui.onNavigate);
+
+  // Bind resupply button
+  const resupplyBtn = ui.element.querySelector('#btn-resupply');
+  if (resupplyBtn) {
+    resupplyBtn.addEventListener('click', () => {
+      const newState = resupplyAllShips(ui.state);
+      if (newState !== ui.state) {
+        ui.state = newState;
+        ui.onStateUpdate(newState);
+        renderAndBindStore(ui);
+      }
+    });
   }
 
   // Category buttons
@@ -213,7 +173,7 @@ function bindStoreEvents(ui: StoreUI): void {
     });
   });
 
-  // Item selection
+  // Item selection (store list)
   ui.element.querySelectorAll('.store-item').forEach((item) => {
     item.addEventListener('click', () => {
       const itemId = (item as HTMLElement).dataset.item;
@@ -224,31 +184,28 @@ function bindStoreEvents(ui: StoreUI): void {
     });
   });
 
+  // Storage item selection (synchronized with store)
+  ui.element.querySelectorAll('.storage-item').forEach((item) => {
+    item.addEventListener('click', () => {
+      const el = item as HTMLElement;
+      const category = el.dataset.category as StoreCategory;
+      const itemId = el.dataset.item;
+      if (category && itemId) {
+        // Switch to the correct category and select the item
+        ui.selectedCategory = category;
+        ui.selectedItem = itemId;
+        renderAndBindStore(ui);
+      }
+    });
+  });
+
   // Buy button
   const buyBtn = ui.element.querySelector('#btn-buy');
   if (buyBtn && ui.selectedItem) {
     const itemId = ui.selectedItem;
+    const category = ui.selectedCategory;
     buyBtn.addEventListener('click', () => {
-      let newState = ui.state;
-
-      switch (ui.selectedCategory) {
-        case 'hulls':
-          newState = buyHull(ui.state, itemId);
-          break;
-        case 'primaries':
-          newState = buyPrimaryWeapon(ui.state, itemId);
-          break;
-        case 'secondaries':
-          // Buy 1 missile at a time
-          newState = buySecondaryWeapon(ui.state, itemId, 1);
-          break;
-        case 'ammo':
-          // Buy 10 rounds at a time
-          newState = buyAmmo(ui.state, itemId, 10);
-          break;
-      }
-
-      // If state changed, update and re-render
+      const newState = handleBuy(ui.state, category, itemId);
       if (newState !== ui.state) {
         ui.state = newState;
         ui.onStateUpdate(newState);
@@ -263,33 +220,7 @@ function bindStoreEvents(ui: StoreUI): void {
     const itemId = ui.selectedItem;
     const category = ui.selectedCategory;
     sellBtn.addEventListener('click', () => {
-      const storageIndex = getStorageIndex(ui, category, itemId);
-      if (storageIndex < 0) return;
-
-      let newState = ui.state;
-
-      switch (category) {
-        case 'hulls':
-          newState = sellHull(ui.state, storageIndex);
-          break;
-        case 'primaries':
-          newState = sellPrimaryWeapon(ui.state, storageIndex);
-          break;
-        case 'secondaries':
-          // Sell 1 missile at a time
-          newState = sellSecondaryWeapon(ui.state, storageIndex, 1);
-          break;
-        case 'ammo':
-          // Sell 10 rounds at a time
-          newState = sellAmmo(ui.state, itemId, 10);
-          break;
-        case 'scrap':
-          // Sell 1 scrap at a time
-          newState = sellScrap(ui.state, itemId, 1);
-          break;
-      }
-
-      // If state changed, update and re-render
+      const newState = handleSell(ui.state, category, itemId);
       if (newState !== ui.state) {
         ui.state = newState;
         ui.onStateUpdate(newState);
@@ -303,14 +234,8 @@ function bindStoreEvents(ui: StoreUI): void {
   if (bulkBuyBtn && ui.selectedItem) {
     const itemId = ui.selectedItem;
     const category = ui.selectedCategory;
-    const bulkAmount = category === 'ammo' ? 100 : 10;
     bulkBuyBtn.addEventListener('click', () => {
-      let newState = ui.state;
-      if (category === 'secondaries') {
-        newState = buySecondaryWeapon(ui.state, itemId, bulkAmount);
-      } else if (category === 'ammo') {
-        newState = buyAmmo(ui.state, itemId, bulkAmount);
-      }
+      const newState = handleBulkBuy(ui.state, category, itemId);
       if (newState !== ui.state) {
         ui.state = newState;
         ui.onStateUpdate(newState);
@@ -324,19 +249,8 @@ function bindStoreEvents(ui: StoreUI): void {
   if (bulkSellBtn && ui.selectedItem) {
     const itemId = ui.selectedItem;
     const category = ui.selectedCategory;
-    const bulkAmount = category === 'ammo' ? 100 : 10;
     bulkSellBtn.addEventListener('click', () => {
-      const storageIndex = getStorageIndex(ui, category, itemId);
-      if (storageIndex < 0) return;
-
-      let newState = ui.state;
-      if (category === 'secondaries') {
-        newState = sellSecondaryWeapon(ui.state, storageIndex, bulkAmount);
-      } else if (category === 'ammo') {
-        newState = sellAmmo(ui.state, itemId, bulkAmount);
-      } else if (category === 'scrap') {
-        newState = sellScrap(ui.state, itemId, 10);
-      }
+      const newState = handleBulkSell(ui.state, category, itemId);
       if (newState !== ui.state) {
         ui.state = newState;
         ui.onStateUpdate(newState);
@@ -351,9 +265,21 @@ function bindStoreEvents(ui: StoreUI): void {
     const itemId = ui.selectedItem;
     const category = ui.selectedCategory;
     bulkSell100Btn.addEventListener('click', () => {
-      if (category !== 'scrap') return;
+      const newState = handleBulkSell100(ui.state, category, itemId);
+      if (newState !== ui.state) {
+        ui.state = newState;
+        ui.onStateUpdate(newState);
+        renderAndBindStore(ui);
+      }
+    });
+  }
 
-      const newState = sellScrap(ui.state, itemId, 100);
+  // Convert scrap to hull button
+  const convertBtn = ui.element.querySelector('#btn-convert');
+  if (convertBtn && ui.selectedItem && ui.selectedCategory === 'scrap') {
+    const shipClass = ui.selectedItem;
+    convertBtn.addEventListener('click', () => {
+      const newState = convertScrapToHull(ui.state, shipClass);
       if (newState !== ui.state) {
         ui.state = newState;
         ui.onStateUpdate(newState);
@@ -373,7 +299,7 @@ function renderAndBindStore(ui: StoreUI): void {
 export function createStoreUI(
   element: HTMLElement,
   state: CampaignState,
-  onBack: () => void,
+  onNavigate: (destination: NavDestination) => void,
   onStateUpdate: (newState: CampaignState) => void,
 ): StoreUI {
   const ui: StoreUI = {
@@ -381,7 +307,7 @@ export function createStoreUI(
     state,
     selectedCategory: 'hulls',
     selectedItem: null,
-    onBack,
+    onNavigate,
     onStateUpdate,
   };
 

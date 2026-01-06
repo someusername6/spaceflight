@@ -1,166 +1,121 @@
 /**
- * Debrief UI styles - CSS styles for the combat debrief screen.
+ * Debrief Styles - Tactical interface design
  */
 
-/** Get debrief CSS styles */
+import { colors, fonts } from './theme';
+
 export function getDebriefStyles(): string {
   return `
-    .debrief-section {
-      margin-top: 20px;
-      width: 100%;
-    }
+    /* ========================================
+       DEBRIEF HEADER
+       ======================================== */
 
     .debrief-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 15px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid #3a5a8a;
+      margin-bottom: 8px;
     }
 
-    .debrief-header h2 {
-      margin: 0;
-      color: #8ab4f8;
-      font-size: 1.3em;
-    }
-
-    .mission-time {
-      color: #7a9aba;
-      font-size: 0.95em;
-    }
-
-    .pilot-cards {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-    }
+    /* ========================================
+       PILOT CARDS
+       ======================================== */
 
     .pilot-card {
-      background: rgba(25, 40, 60, 0.9);
-      border: 1px solid #2a4a6a;
-      border-radius: 4px;
-      padding: 12px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid ${colors.border};
+      padding: 16px;
+      position: relative;
+      overflow: hidden;
     }
 
-    .pilot-card.player {
-      border-color: #4da6ff;
-      background: rgba(30, 50, 80, 0.9);
+    .pilot-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: ${colors.borderLight};
     }
 
-    .pilot-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
+    .pilot-card.player::before {
+      background: ${colors.primary};
     }
 
-    .pilot-info {
-      display: flex;
-      align-items: baseline;
-      gap: 10px;
+    .pilot-card.wingman::before {
+      background: ${colors.secondary};
     }
 
-    .callsign {
-      font-weight: bold;
-      font-size: 1.1em;
-      color: #aad4ff;
-    }
-
-    .archetype {
-      color: #7a9aba;
-      font-size: 0.9em;
-      text-transform: capitalize;
+    .pilot-card.kia::before {
+      background: ${colors.danger};
     }
 
     .pilot-status {
-      font-size: 0.9em;
+      font-family: ${fonts.ui};
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
       padding: 3px 10px;
-      border-radius: 3px;
     }
 
     .pilot-status.survived {
-      background: rgba(68, 204, 102, 0.2);
-      color: #44cc66;
+      background: rgba(0, 255, 136, 0.15);
+      color: ${colors.success};
     }
 
     .pilot-status.kia {
-      background: rgba(204, 68, 68, 0.2);
-      color: #cc4444;
+      background: rgba(255, 51, 102, 0.15);
+      color: ${colors.danger};
     }
 
-    .time-of-death {
-      color: #999;
-      margin-left: 5px;
-    }
+    /* ========================================
+       COMBAT STATS
+       ======================================== */
 
     .pilot-stats {
-      display: flex;
-      gap: 20px;
-      margin-bottom: 12px;
-      padding: 8px 0;
-      border-bottom: 1px solid #2a4a6a;
-    }
-
-    .stat {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-width: 60px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 14px;
     }
 
     .stat-value {
-      font-size: 1.4em;
-      font-weight: bold;
-      color: #e0e0e0;
-    }
-
-    .stat-value.destroyed {
-      color: #cc4444;
+      font-family: ${fonts.display};
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: ${colors.primary};
+      margin-bottom: 2px;
     }
 
     .stat-label {
-      font-size: 0.75em;
-      color: #7a9aba;
+      font-family: ${fonts.ui};
+      font-size: 0.65rem;
+      font-weight: 500;
+      color: ${colors.textDim};
       text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
+
+    /* ========================================
+       WEAPON BREAKDOWN
+       ======================================== */
 
     .weapon-breakdown {
-      overflow-x: auto;
+      margin-top: 12px;
     }
 
-    .weapon-breakdown table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.85em;
+    .weapon-row {
+      display: flex;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      font-size: 0.8rem;
     }
 
-    .weapon-breakdown th {
-      text-align: left;
-      color: #6a8aaa;
-      font-weight: normal;
-      padding: 5px 8px;
-      border-bottom: 1px solid #2a4a6a;
-    }
-
-    .weapon-breakdown td {
-      padding: 6px 8px;
-      color: #b0c0d0;
-    }
-
-    .weapon-breakdown td.damage {
-      color: #ff9966;
-      text-align: right;
-    }
-
-    .weapon-breakdown td.no-weapons {
-      color: #5a6a7a;
-      font-style: italic;
-      text-align: center;
-    }
-
-    .weapon-breakdown tr:nth-child(even) {
-      background: rgba(255, 255, 255, 0.03);
+    .weapon-row:last-child {
+      border-bottom: none;
     }
   `;
 }

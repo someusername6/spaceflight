@@ -4,31 +4,27 @@
  */
 
 import { Vector3 } from 'three';
-import { random } from '../core/prng';
-import {
-  countLivingEnemyShips,
-  createGame,
-  MissionResult,
-  resetMissionNotification,
-  resetMissionState,
-  startGame,
-  stopGame,
-} from '../game';
+import { createGame, startGame } from '../game';
 import { initInput } from '../systems/input';
-import { finalizeMatchStats, initMatchStats } from '../systems/stats';
+import { initMatchStats } from '../systems/stats';
 import { createContractsUI } from '../ui/contracts';
 import {
   createScreenManager,
-  endMission,
   getScreenElement,
   goToHangar,
+  goToRoster,
+  goToStore,
   Screen,
   setMissionContainer,
   startMission,
-  updateCampaignState,
 } from '../ui/screens';
 import { injectCampaignStyles } from '../ui/styles';
 import type { CampaignController } from './controller-types';
+import {
+  createMissionEndCallback,
+  createMissionEndExecutor,
+  createTickCallback,
+} from './mission-callbacks';
 import {
   createMissionRenderers,
   updateMissionRenderers,
@@ -36,28 +32,20 @@ import {
 import {
   createMissionEndState,
   createWaveState,
-  MISSION_END_DELAY,
   spawnWave,
 } from './mission-waves';
-import { applySalvage, calculateSalvage } from './salvage';
 import {
   setupHangarScreen,
-  showGameOver,
-  showResults,
+  setupRosterScreen,
+  setupStoreScreen,
 } from './screen-handlers';
 import {
-  extractAmmoFromWorld,
   spawnPlayerFromCampaign,
   spawnWingmanFromCampaign,
 } from './ship-spawning';
-import {
-  applyAmmoUsage,
-  applyMissionResults,
-  createNewCampaign,
-  isGameOver,
-} from './state';
+import { createNewCampaign, getCommanderShip, getWingmanShips } from './state';
 import type { Contract } from './types';
-import { createMissionResultOverlay, getGameSeed } from './utils';
+import { getGameSeed } from './utils';
 
 export type { CampaignController } from './controller-types';
 
@@ -106,11 +94,31 @@ function setupContractsScreen(controller: CampaignController): void {
   createContractsUI(
     contractsElement,
     screenManager.campaignState,
-    () => {
-      // Back to hangar - re-setup with resupply support
-      goToHangar(screenManager);
-      const hangarElement = getScreenElement(screenManager, Screen.HANGAR);
-      setupHangarScreen(controller, hangarElement, setupContractsScreen);
+    (destination) => {
+      // Navigation handler for contracts screen
+      switch (destination) {
+        case 'hangar': {
+          goToHangar(screenManager);
+          const hangarElement = getScreenElement(screenManager, Screen.HANGAR);
+          setupHangarScreen(controller, hangarElement, setupContractsScreen);
+          break;
+        }
+        case 'roster': {
+          goToRoster(screenManager);
+          const rosterElement = getScreenElement(screenManager, Screen.ROSTER);
+          setupRosterScreen(controller, rosterElement, setupContractsScreen);
+          break;
+        }
+        case 'store': {
+          goToStore(screenManager);
+          const storeElement = getScreenElement(screenManager, Screen.STORE);
+          setupStoreScreen(controller, storeElement, setupContractsScreen);
+          break;
+        }
+        case 'contracts':
+          // Already on contracts, no-op
+          break;
+      }
     },
     (contract: Contract) => {
       // Accept contract and start mission
@@ -153,8 +161,8 @@ function launchMission(
 
   // Spawn player and wingmen from campaign state (uses campaign loadout/ammo)
   const { campaignState } = screenManager;
-  const playerShip = campaignState.ships.find((s) => s.isPlayerShip);
-  const wingmen = campaignState.ships.filter((s) => !s.isPlayerShip);
+  const playerShip = getCommanderShip(campaignState);
+  const wingmen = getWingmanShips(campaignState);
 
   if (playerShip) {
     spawnPlayerFromCampaign(game.world, playerShip, new Vector3(0, 0, 0));
@@ -200,186 +208,29 @@ function launchMission(
     );
   };
 
-  // Helper to execute the actual mission end transition
-  const executeMissionEnd = () => {
-    controller.missionEnded = true;
-    console.log(
-      `[MISSION ${performance.now().toFixed(0)}ms] Transitioning to results`,
-    );
+  // Create callbacks for mission management
+  const executeMissionEnd = createMissionEndExecutor(
+    controller,
+    game,
+    contract,
+    missionEndState,
+    setupContractsScreen,
+  );
 
-    // Finalize match stats before stopping
-    finalizeMatchStats(game.world);
+  game.onTick = createTickCallback(
+    controller,
+    game,
+    contract,
+    waveState,
+    missionEndState,
+    executeMissionEnd,
+  );
 
-    // Extract remaining ammo from all player ships before stopping
-    const ammoData = extractAmmoFromWorld(game.world);
-
-    // Stop the game loop
-    stopGame(game);
-
-    // Apply results to campaign (simplified - no damage tracking yet)
-    const shipsLost: string[] = [];
-    const hullDamage = new Map<string, number>();
-
-    // Base reward (victory only) - salvage is now items, not credits
-    const baseReward = missionEndState.victory ? contract.reward : 0;
-
-    let newState = applyMissionResults(
-      screenManager.campaignState,
-      missionEndState.victory,
-      baseReward,
-      shipsLost,
-      hullDamage,
-    );
-
-    // Apply ammo usage to campaign state (persist remaining ammo)
-    newState = applyAmmoUsage(newState, ammoData);
-
-    // Calculate and apply item-based salvage from all destroyed ships
-    const matchStats = game.world.systemState.matchStats;
-    let salvageResult: ReturnType<typeof calculateSalvage> | null = null;
-    if (matchStats && matchStats.salvageableShips.length > 0) {
-      // Use seeded PRNG for deterministic salvage
-      const rng = () => random(game.world.prng);
-      salvageResult = calculateSalvage(matchStats.salvageableShips, rng);
-      newState = applySalvage(newState, salvageResult);
-
-      // Log salvage results
-      const scrapTotal = Object.values(salvageResult.scrap).reduce(
-        (a, b) => a + b,
-        0,
-      );
-      const weaponCount = salvageResult.weapons.length;
-      const ammoCount = salvageResult.ammo.reduce((a, b) => a + b.count, 0);
-      console.log(
-        `[MISSION] Salvage: ${scrapTotal} scrap, ${weaponCount} weapons, ${ammoCount} ammo (value: ~${Math.floor(salvageResult.totalValue)} cr)`,
-      );
-    }
-
-    // Update campaign state
-    updateCampaignState(screenManager, newState);
-
-    // Transition to results or game over
-    if (isGameOver(newState)) {
-      endMission(screenManager, missionEndState.victory);
-      showGameOver(controller, setupContractsScreen);
-    } else {
-      endMission(screenManager, missionEndState.victory);
-      showResults(
-        controller,
-        missionEndState.victory,
-        contract,
-        setupContractsScreen,
-        game.world,
-        salvageResult,
-      );
-    }
-  };
-
-  // Set tick callback for wave management and mission end delay
-  const TICK_SEC = 1 / 60;
-  game.onTick = (world) => {
-    // Skip if mission already ended
-    if (controller.missionEnded) return;
-
-    // Handle mission end delay countdown
-    if (missionEndState.pending) {
-      missionEndState.delayRemaining -= TICK_SEC;
-      if (missionEndState.delayRemaining <= 0) {
-        executeMissionEnd();
-      }
-      return; // Don't process waves while ending
-    }
-
-    const enemyCount = countLivingEnemyShips(world);
-
-    // Check if current wave is cleared
-    if (enemyCount === 0 && !waveState.waveCleared) {
-      waveState.waveCleared = true;
-      const nextWaveIndex = waveState.currentWave + 1;
-
-      if (nextWaveIndex < waveState.totalWaves) {
-        // Set delay for next wave
-        const nextWave = contract.waves[nextWaveIndex];
-        if (nextWave) {
-          waveState.delayRemaining = nextWave.delay ?? 0;
-          console.log(
-            `[WAVE ${performance.now().toFixed(0)}ms] Wave ${waveState.currentWave + 1} cleared! Next wave in ${waveState.delayRemaining}s`,
-          );
-        }
-      }
-    }
-
-    // Handle wave delay and spawning
-    if (
-      waveState.waveCleared &&
-      waveState.currentWave + 1 < waveState.totalWaves
-    ) {
-      if (waveState.delayRemaining > 0) {
-        waveState.delayRemaining -= TICK_SEC;
-      } else {
-        // Spawn next wave
-        waveState.currentWave++;
-        waveState.waveCleared = false;
-        const nextWave = contract.waves[waveState.currentWave];
-        if (nextWave) {
-          // Reset mission state so missionSystem can detect Victory for this wave
-          resetMissionState(game.world);
-          // Reset notification tracking so we get notified when this wave clears
-          resetMissionNotification(game);
-
-          spawnWave(world, nextWave, waveState.currentWave);
-          console.log(
-            `[WAVE ${performance.now().toFixed(0)}ms] Wave ${waveState.currentWave + 1}/${waveState.totalWaves} spawned`,
-          );
-        }
-      }
-    }
-  };
-
-  // Set mission end callback
-  game.onMissionEnd = (result: MissionResult) => {
-    // For wave-based missions, only end when all waves are complete
-    // The mission system triggers Victory when enemyCount === 0
-    // But we need to check if there are more waves first
-    const allWavesComplete = waveState.currentWave >= waveState.totalWaves - 1;
-    const isDefeat = result === MissionResult.Defeat;
-
-    console.log(
-      `[MISSION ${performance.now().toFixed(0)}ms] onMissionEnd called: result=${result}, wave=${waveState.currentWave + 1}/${waveState.totalWaves}, allWavesComplete=${allWavesComplete}`,
-    );
-
-    // Only end mission if it's a defeat OR all waves are complete
-    if (!isDefeat && !allWavesComplete) {
-      console.log(
-        `[MISSION ${performance.now().toFixed(0)}ms] Wave cleared, awaiting next wave`,
-      );
-      // More waves to spawn - don't end the mission yet
-      // The game.lastNotifiedResult tracking in game.ts prevents this from spamming
-      // We'll reset the mission state when the next wave spawns
-      return;
-    }
-
-    // Prevent multiple calls (check both flags)
-    if (controller.missionEnded || missionEndState.pending) {
-      console.log(
-        `[MISSION ${performance.now().toFixed(0)}ms] Ignoring - already ending`,
-      );
-      return;
-    }
-
-    // Start the mission end delay (game keeps running so explosions play out)
-    missionEndState.pending = true;
-    missionEndState.delayRemaining = MISSION_END_DELAY;
-    missionEndState.victory = result === MissionResult.Victory;
-
-    // Show victory/defeat overlay immediately
-    const overlay = createMissionResultOverlay(isDefeat);
-    controller.missionContainer?.appendChild(overlay);
-
-    console.log(
-      `[MISSION ${performance.now().toFixed(0)}ms] ${isDefeat ? 'DEFEAT' : 'VICTORY'} - transitioning in ${MISSION_END_DELAY}s`,
-    );
-  };
+  game.onMissionEnd = createMissionEndCallback(
+    controller,
+    waveState,
+    missionEndState,
+  );
 
   // Start the game
   startGame(game);

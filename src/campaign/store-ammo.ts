@@ -37,7 +37,8 @@ export function buyAmmo(
   if (pricePerUnit === 0 || toBuy <= 0) {
     return state;
   }
-  const totalPrice = pricePerUnit * toBuy;
+  // Round to avoid fractional credits (e.g., 0.1 cr/unit * 10 = 1 cr)
+  const totalPrice = Math.round(pricePerUnit * toBuy);
   if (state.credits < totalPrice) {
     return state;
   }
@@ -75,7 +76,8 @@ export function sellAmmo(
   }
 
   const pricePerUnit = getAmmoPrice(weaponType, 'sell');
-  const totalPrice = pricePerUnit * toSell;
+  // Round to avoid fractional credits
+  const totalPrice = Math.round(pricePerUnit * toSell);
   const remaining = existing.count - toSell;
   const currentStock = state.storeStock.ammo[weaponType] ?? 0;
 

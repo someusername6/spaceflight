@@ -7,7 +7,6 @@ import {
   getAvailableHulls,
   getAvailablePrimaries,
   getAvailableSecondaries,
-  getScrapConversionFee,
   getScrapTypes,
 } from '../campaign/store';
 import type { CampaignState, StoreStock } from '../campaign/types';
@@ -29,13 +28,43 @@ export type StoreCategory =
   | 'ammo'
   | 'scrap';
 
-export interface StoreUI {
-  element: HTMLElement;
-  state: CampaignState;
-  selectedCategory: StoreCategory;
-  selectedItem: string | null;
-  onBack: () => void;
-  onStateUpdate: (newState: CampaignState) => void;
+/** Render item preview - stylized visual representation */
+function renderItemPreview(category: StoreCategory, id: string): string {
+  const categoryIcons: Record<StoreCategory, string> = {
+    hulls: '◇',
+    primaries: '⟡',
+    secondaries: '◈',
+    ammo: '▣',
+    scrap: '⬢',
+  };
+
+  const categoryColors: Record<StoreCategory, string> = {
+    hulls: 'var(--color-secondary)',
+    primaries: 'var(--color-primary)',
+    secondaries: 'var(--color-warning)',
+    ammo: 'var(--color-success)',
+    scrap: 'var(--color-text-dim)',
+  };
+
+  // Get abbreviation based on category
+  let abbrev = id.substring(0, 3).toUpperCase();
+  if (category === 'primaries') {
+    const weapon = PRIMARY_WEAPONS[id];
+    abbrev = weapon?.name?.substring(0, 3).toUpperCase() ?? abbrev;
+  } else if (category === 'secondaries') {
+    const missile = MISSILES[id];
+    abbrev = missile?.name?.substring(0, 3).toUpperCase() ?? abbrev;
+  } else if (category === 'hulls' || category === 'scrap') {
+    abbrev = id.substring(0, 3).toUpperCase();
+  }
+
+  return `
+    <div class="item-preview" style="--preview-color: ${categoryColors[category]}">
+      <div class="item-preview-icon">${categoryIcons[category]}</div>
+      <div class="item-preview-abbrev">${abbrev}</div>
+      <div class="item-preview-type">${category.toUpperCase()}</div>
+    </div>
+  `;
 }
 
 /** Render ship hull stats */
@@ -49,6 +78,7 @@ export function renderHullStats(shipClass: string): string {
   const secondaryBanks = stats.secondaryBanks.join(', ');
 
   return `
+    ${renderItemPreview('hulls', shipClass)}
     <div class="item-stats">
       <div class="stat-row"><span>Hull:</span><span>${stats.hull}</span></div>
       <div class="stat-row"><span>Shields:</span><span>${stats.shields}</span></div>
@@ -71,6 +101,7 @@ export function renderPrimaryStats(weaponType: string): string {
     stats.category.charAt(0).toUpperCase() + stats.category.slice(1);
 
   return `
+    ${renderItemPreview('primaries', weaponType)}
     <div class="item-stats">
       <div class="stat-row"><span>Category:</span><span>${categoryText}</span></div>
       <div class="stat-row"><span>Damage:</span><span>${stats.damage}</span></div>
@@ -93,6 +124,7 @@ export function renderSecondaryStats(weaponType: string): string {
     : 'N/A';
 
   return `
+    ${renderItemPreview('secondaries', weaponType)}
     <div class="item-stats">
       <div class="stat-row"><span>Damage:</span><span>${stats.damage}</span></div>
       <div class="stat-row"><span>Speed:</span><span>${stats.speed} m/s</span></div>
@@ -110,6 +142,7 @@ export function renderAmmoStats(weaponType: string): string {
   if (!weapon || weapon.ammo === undefined) return '';
 
   return `
+    ${renderItemPreview('ammo', weaponType)}
     <div class="item-stats">
       <div class="stat-row"><span>For Weapon:</span><span>${weapon.name}</span></div>
       <div class="stat-row"><span>Base Capacity:</span><span>${weapon.ammo} rounds</span></div>
@@ -124,12 +157,11 @@ export function renderScrapStats(shipClass: string): string {
   if (!ship) return '';
 
   const displayName = shipClass.charAt(0).toUpperCase() + shipClass.slice(1);
-  const conversionFee = getScrapConversionFee(shipClass);
   return `
+    ${renderItemPreview('scrap', shipClass)}
     <div class="item-stats">
       <div class="stat-row"><span>Ship Type:</span><span>${displayName}</span></div>
-      <div class="stat-note">Scrap can be sold for credits or converted to hulls.</div>
-      <div class="stat-note">100 scrap + ${conversionFee} cr fee → 1 hull (in Hangar)</div>
+      <div class="stat-note">Scrap of destroyed ships. Sell for credits, or convert to a hull.</div>
     </div>
   `;
 }
@@ -177,7 +209,7 @@ export function getCategoryItems(
         .filter(({ weaponType }) => (storeStock.ammo[weaponType] ?? 0) > 0)
         .map(({ weaponType }) => ({
           id: weaponType,
-          name: `${PRIMARY_WEAPONS[weaponType]?.name ?? weaponType} Ammo`,
+          name: `${PRIMARY_WEAPONS[weaponType]?.name ?? weaponType} ammo`,
           stock: storeStock.ammo[weaponType] ?? 0,
         }));
     case 'scrap':
@@ -216,30 +248,30 @@ export function getItemPrice(
 
 /** Get count of item in player's storage */
 export function getStorageCount(
-  ui: StoreUI,
+  state: CampaignState,
   category: StoreCategory,
   id: string,
 ): number {
   switch (category) {
     case 'hulls':
-      return ui.state.storedHulls.filter((h) => h.shipClass === id).length;
+      return state.storedHulls.filter((h) => h.shipClass === id).length;
     case 'primaries':
-      return ui.state.storedWeapons.filter(
+      return state.storedWeapons.filter(
         (w) => w.category === 'primary' && w.weaponType === id,
       ).length;
     case 'secondaries':
       // Sum all matching entries (in case of fragmented storage)
-      return ui.state.storedWeapons
+      return state.storedWeapons
         .filter((w) => w.category === 'secondary' && w.weaponType === id)
         .reduce((sum, w) => sum + w.count, 0);
     case 'ammo':
       // Sum all matching entries (in case of fragmented storage)
-      return ui.state.storedAmmo
+      return state.storedAmmo
         .filter((a) => a.weaponType === id)
         .reduce((sum, a) => sum + a.count, 0);
     case 'scrap':
       // Scrap is stored directly as shipClass -> count
-      return ui.state.storedScrap[id] ?? 0;
+      return state.storedScrap[id] ?? 0;
   }
 }
 
@@ -248,25 +280,25 @@ export function getStorageCount(
  * For scrap, returns 0 if the player has any (sellScrap uses shipClass directly).
  */
 export function getStorageIndex(
-  ui: StoreUI,
+  state: CampaignState,
   category: StoreCategory,
   id: string,
 ): number {
   switch (category) {
     case 'hulls':
-      return ui.state.storedHulls.findIndex((h) => h.shipClass === id);
+      return state.storedHulls.findIndex((h) => h.shipClass === id);
     case 'primaries':
-      return ui.state.storedWeapons.findIndex(
+      return state.storedWeapons.findIndex(
         (w) => w.category === 'primary' && w.weaponType === id,
       );
     case 'secondaries':
-      return ui.state.storedWeapons.findIndex(
+      return state.storedWeapons.findIndex(
         (w) => w.category === 'secondary' && w.weaponType === id,
       );
     case 'ammo':
-      return ui.state.storedAmmo.findIndex((a) => a.weaponType === id);
+      return state.storedAmmo.findIndex((a) => a.weaponType === id);
     case 'scrap':
       // Scrap uses shipClass directly, not index. Return 0 if any exists.
-      return (ui.state.storedScrap[id] ?? 0) > 0 ? 0 : -1;
+      return (state.storedScrap[id] ?? 0) > 0 ? 0 : -1;
   }
 }

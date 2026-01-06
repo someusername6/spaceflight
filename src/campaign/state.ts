@@ -2,9 +2,10 @@
  * Campaign state management - create, save, load campaign state.
  */
 
+import { getAmmoPrice, getSecondaryPrice } from '../data/prices';
 import { SHIP_ARCHETYPES } from '../factories/ship-archetypes';
 import { createInitialStoreStock } from './store';
-import { getMaxAmmoCapacity } from './store-ammo';
+import { getMaxAmmoCapacity, getMaxMissileCapacity } from './store-ammo';
 import type {
   CampaignState,
   EquippedPrimary,
@@ -29,7 +30,7 @@ function getMaxPrimaryAmmo(primary: EquippedPrimary): number {
 /** Create a ship from an archetype with default loadout */
 export function createShipFromArchetype(
   archetype: string,
-  isPlayerShip = false,
+  pilot: Pilot | null = null,
 ): OwnedShip {
   const stats = SHIP_ARCHETYPES[archetype];
   if (!stats) {
@@ -47,7 +48,7 @@ export function createShipFromArchetype(
     weaponType: w.name,
     bankSize: w.size,
     count: w.count * w.size, // Scaled by bank size
-    maxCount: w.count * w.size,
+    maxCount: getMaxMissileCapacity(w.name, w.size),
   }));
 
   return {
@@ -55,45 +56,62 @@ export function createShipFromArchetype(
     shipClass: stats.shipClassName, // Use the underlying ship class
     primaryWeapons,
     secondaryWeapons,
-    pilot: null,
+    pilot,
     hullDamage: 0,
-    isPlayerShip,
   };
+}
+
+/** Create a pilot with default stats */
+function createPilot(name: string, skill: Pilot['skill']): Pilot {
+  return {
+    id: generateId(),
+    name,
+    skill,
+    kills: 0,
+    assists: 0,
+    missionsFlown: 0,
+    missionsWon: 0,
+    damageDealt: 0,
+    damageReceived: 0,
+  };
+}
+
+/** Create commander pilot (the player) */
+function createCommander(): Pilot {
+  return createPilot('Commander', 'ace');
 }
 
 /** Create default starting pilots */
 function createStartingPilots(): Pilot[] {
   return [
-    { id: generateId(), name: 'Viper', skill: 'regular' },
-    { id: generateId(), name: 'Ghost', skill: 'regular' },
-    { id: generateId(), name: 'Shadow', skill: 'regular' },
+    createPilot('Viper', 'regular'),
+    createPilot('Ghost', 'regular'),
+    createPilot('Shadow', 'regular'),
   ];
 }
 
 /** Create a new campaign with default starting state */
 export function createNewCampaign(): CampaignState {
-  // Player's ship (fighter - simple loadout)
-  const playerShip = createShipFromArchetype('fighter', true);
+  // Create all pilots (commander + wingmen)
+  const commander = createCommander();
+  const wingmanPilots = createStartingPilots();
+  const allPilots = [commander, ...wingmanPilots];
 
-  // Three wingmen (also fighters for now)
-  const wingman1 = createShipFromArchetype('fighter');
-  const wingman2 = createShipFromArchetype('fighter');
-  const wingman3 = createShipFromArchetype('fighter');
-
-  // Assign pilots to wingmen
-  const pilots = createStartingPilots();
-  wingman1.pilot = pilots[0] ?? null;
-  wingman2.pilot = pilots[1] ?? null;
-  wingman3.pilot = pilots[2] ?? null;
+  // Create ships with assigned pilots
+  const commanderShip = createShipFromArchetype('fighter', commander);
+  const wingman1 = createShipFromArchetype('fighter', wingmanPilots[0]);
+  const wingman2 = createShipFromArchetype('fighter', wingmanPilots[1]);
+  const wingman3 = createShipFromArchetype('fighter', wingmanPilots[2]);
 
   return {
     credits: 1000,
-    ships: [playerShip, wingman1, wingman2, wingman3],
-    pilots: [], // All pilots assigned
+    commanderId: commander.id,
+    ships: [commanderShip, wingman1, wingman2, wingman3],
+    pilots: allPilots, // All pilots stored here
     storedHulls: [], // No spare hulls at start
     storedWeapons: [],
     storedAmmo: [], // No spare ammo at start
-    storedScrap: {}, // No scrap at start
+    storedScrap: { striker: 500 }, // Testing: 500 striker scrap
     storeStock: createInitialStoreStock(),
     currentSector: 1,
     completedContracts: [],
@@ -101,14 +119,50 @@ export function createNewCampaign(): CampaignState {
   };
 }
 
-/** Get the player's ship from campaign state */
-export function getPlayerShip(state: CampaignState): OwnedShip | undefined {
-  return state.ships.find((s) => s.isPlayerShip);
+/** Check if a ship is the commander's ship */
+export function isCommanderShip(
+  state: CampaignState,
+  ship: OwnedShip,
+): boolean {
+  return ship.pilot?.id === state.commanderId;
 }
 
-/** Get all wingman ships (AI-controlled friendly ships) */
+/** Get the commander's ship from campaign state */
+export function getCommanderShip(state: CampaignState): OwnedShip | undefined {
+  return state.ships.find((s) => s.pilot?.id === state.commanderId);
+}
+
+/** Get the player's ship from campaign state (alias for getCommanderShip) */
+export function getPlayerShip(state: CampaignState): OwnedShip | undefined {
+  return getCommanderShip(state);
+}
+
+/** Get all wingman ships (AI-controlled friendly ships with pilots) */
 export function getWingmanShips(state: CampaignState): OwnedShip[] {
-  return state.ships.filter((s) => !s.isPlayerShip && s.pilot !== null);
+  return state.ships.filter(
+    (s) => s.pilot !== null && s.pilot.id !== state.commanderId,
+  );
+}
+
+/** Get unassigned pilots (not currently in any ship) */
+export function getUnassignedPilots(state: CampaignState): Pilot[] {
+  const assignedPilotIds = new Set(
+    state.ships.filter((s) => s.pilot).map((s) => s.pilot?.id),
+  );
+  return state.pilots.filter((p) => !assignedPilotIds.has(p.id));
+}
+
+/** Get a pilot by ID */
+export function getPilotById(
+  state: CampaignState,
+  pilotId: string,
+): Pilot | undefined {
+  return state.pilots.find((p) => p.id === pilotId);
+}
+
+/** Check if commander is assigned to a ship */
+export function isCommanderAssigned(state: CampaignState): boolean {
+  return state.ships.some((s) => s.pilot?.id === state.commanderId);
 }
 
 /** Get ships that need repairs (hull damage > 0) */
@@ -130,7 +184,12 @@ export function applyMissionResults(
   shipsLost: string[],
   hullDamage: Map<string, number>,
 ): CampaignState {
-  // Remove destroyed ships
+  // Get pilot IDs from ships that flew the mission
+  const pilotIdsInMission = new Set(
+    state.ships.filter((s) => s.pilot).map((s) => s.pilot?.id),
+  );
+
+  // Remove destroyed ships (pilots become unassigned automatically)
   const survivingShips = state.ships.filter((s) => !shipsLost.includes(s.id));
 
   // Apply hull damage to surviving ships
@@ -141,24 +200,30 @@ export function applyMissionResults(
     }
   }
 
+  // Update pilot career stats for those who flew
+  const updatedPilots = state.pilots.map((pilot) => {
+    if (!pilotIdsInMission.has(pilot.id)) {
+      return pilot;
+    }
+    return {
+      ...pilot,
+      missionsFlown: pilot.missionsFlown + 1,
+      missionsWon: pilot.missionsWon + (victory ? 1 : 0),
+    };
+  });
+
   return {
     ...state,
     credits: state.credits + (victory ? creditsEarned : 0),
     ships: survivingShips,
+    pilots: updatedPilots,
     missionCount: state.missionCount + 1,
-    // Return pilots from destroyed ships to the pool
-    pilots: [
-      ...state.pilots,
-      ...state.ships
-        .filter((s) => shipsLost.includes(s.id) && s.pilot)
-        .map((s) => s.pilot as Pilot),
-    ],
   };
 }
 
-/** Check if game is over (player ship destroyed) */
+/** Check if game is over (commander's ship destroyed) */
 export function isGameOver(state: CampaignState): boolean {
-  return !state.ships.some((s) => s.isPlayerShip);
+  return !isCommanderAssigned(state);
 }
 
 /** Apply extracted ammo from mission back to campaign state */
@@ -218,16 +283,17 @@ export function calculateResupplyCost(ship: OwnedShip): number {
     if (primary.currentAmmo !== undefined) {
       const maxAmmo = getMaxPrimaryAmmo(primary);
       const needed = maxAmmo - primary.currentAmmo;
-      // 1 credit per ammo round
-      cost += Math.max(0, needed);
+      const pricePerUnit = getAmmoPrice(primary.weaponType, 'buy');
+      // Round to avoid fractional credits
+      cost += Math.round(Math.max(0, needed) * pricePerUnit);
     }
   }
 
-  // Secondary weapons
+  // Secondary weapons - use actual missile prices
   for (const secondary of ship.secondaryWeapons) {
     const needed = secondary.maxCount - secondary.count;
-    // Missiles cost more: 10 credits per missile
-    cost += needed * 10;
+    const pricePerUnit = getSecondaryPrice(secondary.weaponType, 'buy');
+    cost += needed * pricePerUnit;
   }
 
   return cost;

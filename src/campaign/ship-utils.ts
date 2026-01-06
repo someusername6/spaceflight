@@ -31,7 +31,6 @@ export function cloneShipWithPrimary(
     secondaryWeapons: ship.secondaryWeapons,
     pilot: ship.pilot,
     hullDamage: ship.hullDamage,
-    isPlayerShip: ship.isPlayerShip,
   };
 }
 
@@ -50,7 +49,6 @@ export function cloneShipWithSecondary(
     secondaryWeapons: newSecondaries,
     pilot: ship.pilot,
     hullDamage: ship.hullDamage,
-    isPlayerShip: ship.isPlayerShip,
   };
 }
 

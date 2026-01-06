@@ -5,13 +5,16 @@
  */
 
 import type { World } from '../core/types';
+import type { NavDestination } from '../ui/hangar';
 import { createHangarUI } from '../ui/hangar';
 import { createGameOverUI, createResultsUI } from '../ui/results';
+import { createRosterUI } from '../ui/roster';
 import {
   getScreenElement,
   goToContracts,
   goToGameOver,
   goToHangar,
+  goToRoster,
   goToStore,
   Screen,
   updateCampaignState,
@@ -19,10 +22,10 @@ import {
 import { createStoreUI } from '../ui/store';
 import type { CampaignController } from './controller';
 import type { SalvageResult } from './salvage';
-import { createNewCampaign, resupplyAllShips } from './state';
+import { createNewCampaign } from './state';
 import type { Contract } from './types';
 
-/** Setup hangar screen with resupply callback */
+/** Setup hangar screen */
 export function setupHangarScreen(
   controller: CampaignController,
   hangarElement: HTMLElement,
@@ -30,25 +33,29 @@ export function setupHangarScreen(
 ): void {
   const { screenManager } = controller;
 
-  // Create handlers that reference current state
-  const onSelectContracts = () => {
-    goToContracts(screenManager);
-    setupContractsScreen(controller);
-  };
-
-  // Store handler - go to equipment store
-  const onStore = () => {
-    goToStore(screenManager);
-    const storeElement = getScreenElement(screenManager, Screen.STORE);
-    setupStoreScreen(controller, storeElement, setupContractsScreen);
-  };
-
-  // Resupply handler - updates state and re-renders
-  const onResupply = () => {
-    const newState = resupplyAllShips(screenManager.campaignState);
-    updateCampaignState(screenManager, newState);
-    // Re-setup hangar with updated state
-    setupHangarScreen(controller, hangarElement, setupContractsScreen);
+  // Navigation handler for all screens
+  const onNavigate = (destination: NavDestination) => {
+    switch (destination) {
+      case 'hangar':
+        // Already on hangar, no-op
+        break;
+      case 'roster': {
+        goToRoster(screenManager);
+        const rosterElement = getScreenElement(screenManager, Screen.ROSTER);
+        setupRosterScreen(controller, rosterElement, setupContractsScreen);
+        break;
+      }
+      case 'store': {
+        goToStore(screenManager);
+        const storeElement = getScreenElement(screenManager, Screen.STORE);
+        setupStoreScreen(controller, storeElement, setupContractsScreen);
+        break;
+      }
+      case 'contracts':
+        goToContracts(screenManager);
+        setupContractsScreen(controller);
+        break;
+    }
   };
 
   // Loadout change handler - updates campaign state
@@ -59,9 +66,7 @@ export function setupHangarScreen(
   createHangarUI(
     hangarElement,
     screenManager.campaignState,
-    onSelectContracts,
-    onStore,
-    onResupply,
+    onNavigate,
     onStateUpdate,
   );
 }
@@ -74,11 +79,29 @@ export function setupStoreScreen(
 ): void {
   const { screenManager } = controller;
 
-  // Back to hangar handler
-  const onBack = () => {
-    goToHangar(screenManager);
-    const hangarElement = getScreenElement(screenManager, Screen.HANGAR);
-    setupHangarScreen(controller, hangarElement, setupContractsScreen);
+  // Navigation handler for all screens
+  const onNavigate = (destination: NavDestination) => {
+    switch (destination) {
+      case 'hangar': {
+        goToHangar(screenManager);
+        const hangarElement = getScreenElement(screenManager, Screen.HANGAR);
+        setupHangarScreen(controller, hangarElement, setupContractsScreen);
+        break;
+      }
+      case 'roster': {
+        goToRoster(screenManager);
+        const rosterElement = getScreenElement(screenManager, Screen.ROSTER);
+        setupRosterScreen(controller, rosterElement, setupContractsScreen);
+        break;
+      }
+      case 'store':
+        // Already on store, no-op
+        break;
+      case 'contracts':
+        goToContracts(screenManager);
+        setupContractsScreen(controller);
+        break;
+    }
   };
 
   // State update handler
@@ -89,7 +112,53 @@ export function setupStoreScreen(
   createStoreUI(
     storeElement,
     screenManager.campaignState,
-    onBack,
+    onNavigate,
+    onStateUpdate,
+  );
+}
+
+/** Setup roster screen */
+export function setupRosterScreen(
+  controller: CampaignController,
+  rosterElement: HTMLElement,
+  setupContractsScreen: (controller: CampaignController) => void,
+): void {
+  const { screenManager } = controller;
+
+  // Navigation handler for all screens
+  const onNavigate = (destination: NavDestination) => {
+    switch (destination) {
+      case 'hangar': {
+        goToHangar(screenManager);
+        const hangarElement = getScreenElement(screenManager, Screen.HANGAR);
+        setupHangarScreen(controller, hangarElement, setupContractsScreen);
+        break;
+      }
+      case 'roster':
+        // Already on roster, no-op
+        break;
+      case 'store': {
+        goToStore(screenManager);
+        const storeElement = getScreenElement(screenManager, Screen.STORE);
+        setupStoreScreen(controller, storeElement, setupContractsScreen);
+        break;
+      }
+      case 'contracts':
+        goToContracts(screenManager);
+        setupContractsScreen(controller);
+        break;
+    }
+  };
+
+  // State update handler
+  const onStateUpdate = (newState: typeof screenManager.campaignState) => {
+    updateCampaignState(screenManager, newState);
+  };
+
+  createRosterUI(
+    rosterElement,
+    screenManager.campaignState,
+    onNavigate,
     onStateUpdate,
   );
 }

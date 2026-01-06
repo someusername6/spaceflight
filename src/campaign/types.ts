@@ -12,6 +12,13 @@ export interface Pilot {
   id: string;
   name: string;
   skill: SkillLevel;
+  // Career statistics
+  kills: number;
+  assists: number;
+  missionsFlown: number;
+  missionsWon: number;
+  damageDealt: number;
+  damageReceived: number;
 }
 
 /** A weapon equipped in a primary bank */
@@ -35,9 +42,8 @@ export interface OwnedShip {
   shipClass: string; // 'interceptor', 'striker', etc. (from SHIP_CLASSES)
   primaryWeapons: EquippedPrimary[];
   secondaryWeapons: EquippedSecondary[];
-  pilot: Pilot | null; // null = player-controlled or unassigned
+  pilot: Pilot | null; // null = unassigned (ship in reserve)
   hullDamage: number; // 0 = full health, positive = damage taken
-  isPlayerShip: boolean; // true for the ship player flies
 }
 
 /** A ship hull in storage (no pilot, no weapons equipped) */
@@ -84,8 +90,9 @@ export interface StoreStock {
 /** Full campaign state */
 export interface CampaignState {
   credits: number;
+  commanderId: string; // ID of the commander pilot (player)
   ships: OwnedShip[];
-  pilots: Pilot[]; // unassigned pilots
+  pilots: Pilot[]; // all pilots (assigned and unassigned)
   storedHulls: StoredHull[]; // ship hulls in storage (no pilot/weapons)
   storedWeapons: StoredWeapon[]; // weapons in storage
   storedAmmo: StoredAmmo[]; // ammo in storage (for ballistic primaries)
