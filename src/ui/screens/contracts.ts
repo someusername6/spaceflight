@@ -169,8 +169,22 @@ function renderContractListItem(
   `;
 }
 
+/** Check if any deployed ship is completely unarmed */
+function hasUnarmedShips(state: CampaignState): boolean {
+  return state.ships.some(
+    (ship) =>
+      ship.pilot !== null &&
+      ship.primaryWeapons.length === 0 &&
+      ship.secondaryWeapons.length === 0,
+  );
+}
+
 /** Render contract detail panel */
-function renderContractDetail(contract: Contract, canLaunch: boolean): string {
+function renderContractDetail(
+  contract: Contract,
+  canLaunch: boolean,
+  hasUnarmed: boolean,
+): string {
   // Summarize enemies across all waves
   const enemyCounts = new Map<string, number>();
   for (const wave of contract.waves) {
@@ -186,10 +200,15 @@ function renderContractDetail(contract: Contract, canLaunch: boolean): string {
   const totalEnemies = countTotalEnemies(contract);
   const waveCount = contract.waves.length;
 
+  // Warning for unarmed ships (soft warning, doesn't block)
+  const unarmedWarning = hasUnarmed
+    ? `<button class="btn btn-warning-action btn-goto-hangar">⚠ UNARMED SHIPS — EQUIP IN HANGAR</button>`
+    : '';
+
+  // Accept button or commander warning (hard block)
   const acceptButton = canLaunch
     ? `<button class="btn btn-accept-mission" id="btn-accept-mission">ACCEPT MISSION</button>`
-    : `<div class="no-commander-warning">Assign commander to a ship in Hangar</div>
-       <button class="btn btn-accept-mission disabled" disabled>ACCEPT MISSION</button>`;
+    : `<button class="btn btn-warning-action btn-goto-hangar">⚠ ASSIGN COMMANDER IN HANGAR</button>`;
 
   return `
     <div class="contract-detail">
@@ -211,7 +230,10 @@ function renderContractDetail(contract: Contract, canLaunch: boolean): string {
         <div class="detail-section-label">REWARD</div>
         <div class="contract-detail-reward">${contract.reward} credits</div>
       </div>
-      ${acceptButton}
+      <div class="contract-actions">
+        ${unarmedWarning}
+        ${acceptButton}
+      </div>
     </div>
   `;
 }
@@ -235,6 +257,7 @@ function renderContracts(
     : null;
 
   const canLaunch = isCommanderAssigned(state);
+  const hasUnarmed = hasUnarmedShips(state);
 
   return `
     <div class="campaign-page">
@@ -245,7 +268,7 @@ function renderContracts(
             ${contracts.map((c) => renderContractListItem(c, c.id === selectedContractId)).join('')}
           </aside>
           <section class="contracts-detail-panel" aria-label="Contract details">
-            ${selectedContract ? renderContractDetail(selectedContract, canLaunch) : '<div class="empty-state-panel" role="status">Select a contract to view details</div>'}
+            ${selectedContract ? renderContractDetail(selectedContract, canLaunch, hasUnarmed) : '<div class="empty-state-panel" role="status">Select a contract to view details</div>'}
           </section>
         </div>
       </main>
@@ -308,6 +331,13 @@ function renderAndBindContracts(ui: ContractsUI): void {
       });
     }
   }
+
+  // Bind warning action buttons (navigate to hangar to fix issues)
+  ui.element.querySelectorAll('.btn-goto-hangar').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      ui.onNavigate('hangar');
+    });
+  });
 }
 
 /** Update contracts UI */

@@ -111,20 +111,6 @@
 }
 
 /* ========================================
-   NO COMMANDER WARNING
-   ======================================== */
-
-.no-commander-warning {
-  font-size: 0.8rem;
-  color: var(--color-warning);
-  text-align: center;
-  padding: 8px;
-  margin-bottom: 8px;
-  background: rgba(255, 159, 28, 0.1);
-  border: 1px solid rgba(255, 159, 28, 0.3);
-}
-
-/* ========================================
    SHIP DETAILS PANEL (Right Column)
    ======================================== */
 

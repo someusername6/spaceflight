@@ -29,6 +29,14 @@ export function renderShipCard(
   const totalPrimary = stats?.primaryBanks.length ?? 0;
   const totalSecondary = stats?.secondaryBanks.length ?? 0;
 
+  // Equipped weapon counts
+  const equippedPrimary = ship.primaryWeapons.length;
+  const equippedSecondary = ship.secondaryWeapons.length;
+
+  // Warning states for unarmed slots
+  const primaryUnarmed = equippedPrimary === 0 && totalPrimary > 0;
+  const secondaryUnarmed = equippedSecondary === 0 && totalSecondary > 0;
+
   // Check if this is the commander's ship
   const isCommander = ship.pilot?.id === commanderId;
   const pilotName = ship.pilot?.name ?? 'Unassigned';
@@ -57,8 +65,8 @@ export function renderShipCard(
         </div>
       </div>
       <div class="ship-card-weapons">
-        <span class="weapon-count primary">${totalPrimary}</span>
-        <span class="weapon-count secondary">${totalSecondary}</span>
+        <span class="weapon-count primary ${primaryUnarmed ? 'unarmed' : ''}">${equippedPrimary}/${totalPrimary}</span>
+        <span class="weapon-count secondary ${secondaryUnarmed ? 'unarmed' : ''}">${equippedSecondary}/${totalSecondary}</span>
       </div>
     </div>
   `;
