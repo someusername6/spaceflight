@@ -24,6 +24,10 @@ export interface ShipClassStats {
   primaryBanks: number[];
   /** Secondary weapon bank sizes (e.g., [2, 1, 1] = 3 banks of sizes 2, 1, 1) */
   secondaryBanks: number[];
+  /** Primary hardpoint X positions (percentage from left, one per bank) */
+  primaryPositions: number[];
+  /** Secondary hardpoint X positions (percentage from left, one per bank) */
+  secondaryPositions: number[];
 }
 
 /**
@@ -48,6 +52,8 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     afterburnerHeatRate: 40,
     primaryBanks: [1, 1],
     secondaryBanks: [1],
+    primaryPositions: [35, 65],
+    secondaryPositions: [50],
   },
 
   // Scout: Fast and fragile - FRAGILE
@@ -66,6 +72,8 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     afterburnerHeatRate: 25,
     primaryBanks: [1, 1],
     secondaryBanks: [1],
+    primaryPositions: [35, 65],
+    secondaryPositions: [50],
   },
 
   // Fighter: Standard player craft - BALANCED (simplified interceptor)
@@ -84,6 +92,8 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     afterburnerHeatRate: 40,
     primaryBanks: [1, 1],
     secondaryBanks: [1, 1],
+    primaryPositions: [35, 65],
+    secondaryPositions: [35, 65],
   },
 
   // Interceptor: Quick dogfighter - BALANCED
@@ -102,6 +112,8 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     afterburnerHeatRate: 40,
     primaryBanks: [1, 1, 2],
     secondaryBanks: [1, 2, 1],
+    primaryPositions: [20, 50, 80],
+    secondaryPositions: [25, 50, 75],
   },
 
   // Striker: Heavy assault fighter - DURABLE
@@ -120,6 +132,8 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     afterburnerHeatRate: 60,
     primaryBanks: [2, 2, 2, 1, 1],
     secondaryBanks: [1],
+    primaryPositions: [10, 28, 50, 72, 90],
+    secondaryPositions: [50],
   },
 
   // Bomber: Slow, missile-focused - FRAGILE (relies on range)
@@ -138,6 +152,8 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     afterburnerHeatRate: 55,
     primaryBanks: [2],
     secondaryBanks: [2, 2, 2, 1, 1, 1, 1],
+    primaryPositions: [50],
+    secondaryPositions: [8, 22, 36, 50, 64, 78, 92],
   },
 
   // Defender: Tanky shield boat - DURABLE
@@ -156,6 +172,8 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     afterburnerHeatRate: 50,
     primaryBanks: [2, 2],
     secondaryBanks: [2, 2, 1, 1, 1],
+    primaryPositions: [35, 65],
+    secondaryPositions: [15, 32, 50, 68, 85],
   },
 
   // Raider: Glass cannon - FRAGILE
@@ -174,6 +192,8 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     afterburnerHeatRate: 35,
     primaryBanks: [3, 3, 1, 1],
     secondaryBanks: [1, 1, 1],
+    primaryPositions: [15, 38, 62, 85],
+    secondaryPositions: [25, 50, 75],
   },
 
   // Sentinel: Long-range support - BALANCED (beam-optimized)
@@ -192,6 +212,8 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     afterburnerHeatRate: 45,
     primaryBanks: [3, 2, 2],
     secondaryBanks: [2, 2, 1],
+    primaryPositions: [20, 50, 80],
+    secondaryPositions: [25, 50, 75],
   },
 };
 

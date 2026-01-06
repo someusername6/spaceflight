@@ -141,33 +141,19 @@ function getShipSilhouette(stats: {
   return 'fighter';
 }
 
-/** Hardpoint X-positions for each ship class (percentage from left) */
-const HARDPOINT_POSITIONS: Record<
-  string,
-  { primary: number[]; secondary: number[] }
-> = {
-  patrol: { primary: [35, 65], secondary: [50] },
-  scout: { primary: [35, 65], secondary: [50] },
-  fighter: { primary: [35, 65], secondary: [35, 65] },
-  interceptor: { primary: [20, 50, 80], secondary: [25, 50, 75] },
-  striker: { primary: [10, 28, 50, 72, 90], secondary: [50] },
-  bomber: { primary: [50], secondary: [8, 22, 36, 50, 64, 78, 92] },
-  defender: { primary: [35, 65], secondary: [15, 32, 50, 68, 85] },
-  raider: { primary: [15, 38, 62, 85], secondary: [25, 50, 75] },
-  sentinel: { primary: [20, 50, 80], secondary: [25, 50, 75] },
-};
-
-/** Get hardpoint positions for a ship class */
+/** Get hardpoint positions for a ship class from ship stats */
 function getHardpointPositions(shipClass: string): {
   primary: number[];
   secondary: number[];
 } {
-  return (
-    HARDPOINT_POSITIONS[shipClass.toLowerCase()] ?? {
-      primary: [50],
-      secondary: [50],
-    }
-  );
+  const stats = SHIP_CLASSES[shipClass.toLowerCase()];
+  if (stats) {
+    return {
+      primary: stats.primaryPositions,
+      secondary: stats.secondaryPositions,
+    };
+  }
+  return { primary: [50], secondary: [50] };
 }
 
 /** Render the complete ship viewer - TOP/BOTTOM SCHEMATIC LAYOUT */
