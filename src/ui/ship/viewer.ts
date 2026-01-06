@@ -23,6 +23,7 @@ export function getShipAbbrev(shipClass: string): string {
   const abbrevs: Record<string, string> = {
     patrol: 'PTR',
     scout: 'SCT',
+    fighter: 'FTR',
     interceptor: 'INT',
     striker: 'STR',
     bomber: 'BMR',

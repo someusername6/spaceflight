@@ -68,6 +68,24 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     secondaryBanks: [1],
   },
 
+  // Fighter: Standard player craft - BALANCED (simplified interceptor)
+  fighter: {
+    hull: 90,
+    shields: 65,
+    shieldRegen: 10,
+    shieldDelay: 3,
+    maxSpeed: 125,
+    acceleration: 50,
+    turnRate: 100,
+    rollRate: 150,
+    collisionRadius: 5,
+    maxHeat: 100,
+    coolingRate: 18,
+    afterburnerHeatRate: 40,
+    primaryBanks: [1, 1],
+    secondaryBanks: [1, 1],
+  },
+
   // Interceptor: Quick dogfighter - BALANCED
   interceptor: {
     hull: 90,

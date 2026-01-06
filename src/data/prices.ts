@@ -14,6 +14,7 @@
 export const HULL_PRICES: Record<string, { buy: number; sell: number }> = {
   patrol: { buy: 200, sell: 100 },
   scout: { buy: 300, sell: 150 },
+  fighter: { buy: 400, sell: 200 },
   interceptor: { buy: 500, sell: 250 },
   striker: { buy: 800, sell: 400 },
   bomber: { buy: 700, sell: 350 },
