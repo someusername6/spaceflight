@@ -39,8 +39,6 @@ export interface Renderer {
 
 // Reusable objects (avoid per-frame allocations)
 const cameraOffset = new THREE.Vector3();
-const cameraTiltAxis = new THREE.Vector3(1, 0, 0);
-const cameraTiltQuat = new THREE.Quaternion();
 const seenEntities = new Set<Entity>();
 
 /** Creates the renderer and attaches to container */
@@ -182,13 +180,10 @@ export function followEntity(
   cameraOffset.applyQuaternion(transform.rotation);
   camera.position.copy(transform.position).add(cameraOffset);
 
-  // Make camera inherit ship's orientation exactly, then look forward
-  // This keeps the ship centered during rolls
+  // Make camera inherit ship's orientation exactly
+  // This keeps the ship centered during rolls and ensures crosshair
+  // accurately represents where shots will land
   camera.quaternion.copy(transform.rotation);
-
-  // Apply a slight downward tilt to see the ship better
-  cameraTiltQuat.setFromAxisAngle(cameraTiltAxis, -0.1);
-  camera.quaternion.multiply(cameraTiltQuat);
 }
 
 /** Gets the Three.js scene */
