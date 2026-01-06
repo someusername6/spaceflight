@@ -276,6 +276,7 @@ function bindHardpointEvents(ui: HangarUI): void {
 
       if (isFilled) {
         // Unequip weapon immediately
+        hideTooltip(); // Hide before re-render (mouseleave won't fire)
         handleUnequip(ui.state, shipId, slotType, slotIndex, (newState) => {
           ui.state = newState;
           if (ui.onStateUpdate) ui.onStateUpdate(newState);
