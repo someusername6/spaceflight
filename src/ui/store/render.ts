@@ -130,14 +130,22 @@ export function renderPrimaryStats(weaponType: string): string {
   const categoryText =
     stats.category.charAt(0).toUpperCase() + stats.category.slice(1);
 
+  // Continuous weapons (beams) have fireRate 0
+  const isContinuous = stats.fireRate === 0;
+  const fireRateText = isContinuous
+    ? 'Continuous'
+    : `${(1 / stats.fireRate).toFixed(1)}/s`;
+  const damageLabel = isContinuous ? 'Damage per second:' : 'Damage:';
+  const heatLabel = isContinuous ? 'Heat per second:' : 'Heat per shot:';
+
   return `
     ${renderItemPreview('primaries', weaponType)}
     <div class="item-stats">
       <div class="stat-row"><span>Category:</span><span>${categoryText}</span></div>
-      <div class="stat-row"><span>Damage:</span><span>${stats.damage}</span></div>
+      <div class="stat-row"><span>${damageLabel}</span><span>${stats.damage}</span></div>
       <div class="stat-row"><span>Range:</span><span>${stats.range} m</span></div>
-      <div class="stat-row"><span>Fire Rate:</span><span>${(1 / stats.fireRate).toFixed(1)}/s</span></div>
-      <div class="stat-row"><span>Heat/Shot:</span><span>${stats.heatPerShot}</span></div>
+      <div class="stat-row"><span>Fire Rate:</span><span>${fireRateText}</span></div>
+      <div class="stat-row"><span>${heatLabel}</span><span>${stats.heatPerShot}</span></div>
       <div class="stat-row"><span>Ammo:</span><span>${ammoText}</span></div>
     </div>
   `;
