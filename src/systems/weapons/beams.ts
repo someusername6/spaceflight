@@ -34,6 +34,7 @@ import {
   BEAM_SPAWN_OFFSET,
   type BeamWeaponInfo,
   calculateFalloffDamage,
+  createActiveBeam,
   findBeamHit,
   getBeamColor,
   getBeamWeaponInfo,
@@ -238,29 +239,16 @@ function fireBeam(
   }
   const isPulse = weapon.isPulseBeam === true;
   const isLance = weapon.name === 'Nuclear Lance';
+  const isTorch = weapon.name === 'Torch';
   if (!beam) {
-    const newBeam: ActiveBeam = {
-      origin: new THREE.Vector3(),
-      direction: new THREE.Vector3(),
-      hitPoint: null,
-      color: getBeamColor(weapon.name).clone(), // Clone to avoid modifying cache
-      active: false,
+    beam = createActiveBeam(
+      weapon.name,
       weaponIndex,
-      weaponName: weapon.name,
-      fadeStartTime: null,
-    };
-    if (weapon.beamWidth !== undefined) {
-      newBeam.beamWidth = weapon.beamWidth;
-    }
-    if (isPulse) {
-      newBeam.isPulseBeam = true;
-      newBeam.lastPulseTime = 0;
-      newBeam.pulseActive = false;
-    }
-    if (isLance) {
-      newBeam.isLance = true;
-    }
-    beam = newBeam;
+      weapon.beamWidth,
+      isPulse,
+      isLance,
+      isTorch,
+    );
     beams.push(beam);
   }
 
@@ -342,7 +330,14 @@ function fireBeam(
         );
         damage = falloffDamage * dt;
       }
-      dealDamage(world, hitResult.entity, damage, beam.hitPoint);
+      dealDamage(
+        world,
+        hitResult.entity,
+        damage,
+        beam.hitPoint,
+        weapon.shieldDamageMultiplier ?? 1,
+        weapon.hullDamageMultiplier ?? 1,
+      );
 
       // Queue hit visual effect with beam color
       // Throttle continuous beams to avoid spamming (pulse beams fire once per pulse)

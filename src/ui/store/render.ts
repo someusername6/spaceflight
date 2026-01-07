@@ -140,8 +140,15 @@ export function renderPrimaryStats(weaponType: string): string {
   // Shield damage multiplier (for Ion and similar weapons)
   const shieldDamageMultiplier = stats.shieldDamageMultiplier ?? 1;
   const shieldDamageText =
-    shieldDamageMultiplier > 1
-      ? `${stats.damage * shieldDamageMultiplier} (${shieldDamageMultiplier}×)`
+    shieldDamageMultiplier !== 1
+      ? `${Math.round(stats.damage * shieldDamageMultiplier)} (${shieldDamageMultiplier}×)`
+      : '';
+
+  // Hull damage multiplier (for Torch and similar weapons)
+  const hullDamageMultiplier = stats.hullDamageMultiplier ?? 1;
+  const hullDamageText =
+    hullDamageMultiplier !== 1
+      ? `${Math.round(stats.damage * hullDamageMultiplier)} (${hullDamageMultiplier}×)`
       : '';
 
   return `
@@ -150,6 +157,7 @@ export function renderPrimaryStats(weaponType: string): string {
       <div class="stat-row"><span>Category</span><span>${categoryText}</span></div>
       <div class="stat-row"><span>${damageLabel}</span><span>${stats.damage}</span></div>
       ${shieldDamageText ? `<div class="stat-row"><span>Shield damage</span><span>${shieldDamageText}</span></div>` : ''}
+      ${hullDamageText ? `<div class="stat-row"><span>Hull damage</span><span>${hullDamageText}</span></div>` : ''}
       <div class="stat-row"><span>Range</span><span>${stats.range} m</span></div>
       <div class="stat-row"><span>Fire rate</span><span>${fireRateText}</span></div>
       <div class="stat-row"><span>${heatLabel}</span><span>${stats.heatPerShot}</span></div>

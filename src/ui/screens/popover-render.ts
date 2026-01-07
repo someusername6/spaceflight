@@ -96,7 +96,8 @@ export function renderPrimaryPopover(
     </div>
     <div class="popover-stats">
       ${statRow('Damage', stats.damage)}
-      ${stats.shieldDamageMultiplier && stats.shieldDamageMultiplier > 1 ? statRow('Shield Dmg', `${stats.damage * stats.shieldDamageMultiplier} (${stats.shieldDamageMultiplier}×)`) : ''}
+      ${stats.shieldDamageMultiplier && stats.shieldDamageMultiplier !== 1 ? statRow('Shield Dmg', `${Math.round(stats.damage * stats.shieldDamageMultiplier)} (${stats.shieldDamageMultiplier}×)`) : ''}
+      ${stats.hullDamageMultiplier && stats.hullDamageMultiplier !== 1 ? statRow('Hull Dmg', `${Math.round(stats.damage * stats.hullDamageMultiplier)} (${stats.hullDamageMultiplier}×)`) : ''}
       ${statRow('DPS', `~${dps}`)}
       ${category !== 'beam' ? statRow('Fire Rate', `${Math.round(1 / stats.fireRate)}/s`) : ''}
       ${statRow('Range', stats.range, 'm')}

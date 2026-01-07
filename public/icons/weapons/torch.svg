@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Torch: Tapered plasma cone / cutting torch -->
+  <!-- Emitter base -->
+  <rect x="8" y="10" width="12" height="12" rx="2"/>
+  <!-- Plasma cone (tapered) -->
+  <path d="M20 12 L60 15 L60 17 L20 20 Z"/>
+  <!-- Inner plasma core -->
+  <path d="M24 14 L52 15.5 L52 16.5 L24 18 Z"/>
+  <!-- Cutting tip sparks -->
+  <path d="M60 16 L72 12 M60 16 L72 16 M60 16 L72 20"/>
+</svg>

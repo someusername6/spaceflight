@@ -44,6 +44,8 @@ export interface WeaponStats {
   beamWidth?: number;
   /** Shield damage multiplier (default 1.0). Ion weapons deal bonus shield damage. */
   shieldDamageMultiplier?: number;
+  /** Hull damage multiplier (default 1.0). Torch deals bonus hull damage. */
+  hullDamageMultiplier?: number;
 }
 
 /**
@@ -196,6 +198,19 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
     isPulseBeam: true,
     pulseInterval: 0.1, // 100ms between bolts
     noFalloff: true,
+  },
+  torch: {
+    name: 'Torch',
+    listName: 'Torch',
+    category: 'beam',
+    heatPerShot: 25, // High heat limits sustained use
+    projectileSpeed: 0,
+    fireRate: 0, // Continuous beam
+    range: 200, // Very short range - plasma cutter
+    damage: 40, // 40 to shields, but 80 to hull (2×)
+    shieldDamageMultiplier: 0.5, // Half damage to shields
+    hullDamageMultiplier: 2, // Double damage to hull - plasma cuts through armor
+    noFalloff: true, // Constant damage at short range
   },
   nuclearLance: {
     name: 'Nuclear Lance',

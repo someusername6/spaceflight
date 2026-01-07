@@ -15,6 +15,10 @@ import {
   createNuclearLanceRenderer,
   updateNuclearLanceRenderer,
 } from '../rendering/beam-effects/nuclear-lance';
+import {
+  createTorchRenderer,
+  updateTorchRenderer,
+} from '../rendering/beam-effects/torch';
 import { createDustSystem, updateDustSystem } from '../rendering/effects/dust';
 import {
   createExplosionRenderer,
@@ -61,6 +65,7 @@ export interface MissionRenderers {
   muzzleFlashRenderer: ReturnType<typeof createMuzzleFlashRenderer>;
   lightningRenderer: ReturnType<typeof createLightningRenderer>;
   nuclearLanceRenderer: ReturnType<typeof createNuclearLanceRenderer>;
+  torchRenderer: ReturnType<typeof createTorchRenderer>;
   projectileHitRenderer: ReturnType<typeof createProjectileHitRenderer>;
   hud: ReturnType<typeof createHUD>;
 }
@@ -83,6 +88,7 @@ export function createMissionRenderers(
     muzzleFlashRenderer: createMuzzleFlashRenderer(),
     lightningRenderer: createLightningRenderer(scene),
     nuclearLanceRenderer: createNuclearLanceRenderer(scene),
+    torchRenderer: createTorchRenderer(),
     projectileHitRenderer: createProjectileHitRenderer(),
     hud: createHUD(container),
   };
@@ -111,6 +117,7 @@ export function updateMissionRenderers(
   updateMuzzleFlashRenderer(renderers.muzzleFlashRenderer, scene, world);
   updateLightningRenderer(renderers.lightningRenderer, scene, world);
   updateNuclearLanceRenderer(renderers.nuclearLanceRenderer, scene, world);
+  updateTorchRenderer(renderers.torchRenderer, scene, world);
   updateProjectileHitRenderer(renderers.projectileHitRenderer, scene, world);
 
   const player = findEntity(world, ['playerControlled', 'transform']);

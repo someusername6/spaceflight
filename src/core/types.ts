@@ -49,6 +49,7 @@ export interface ActiveBeam {
   lastPulseTime?: number;
   isLance?: boolean;
   lanceFireTime?: number;
+  isTorch?: boolean;
   weaponName?: string;
   beamWidth?: number;
   /** When fadeout started (null = not fading, beam system manages this) */

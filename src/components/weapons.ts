@@ -36,6 +36,10 @@ export interface PrimaryWeapon {
   autoaimFov?: number;
   /** Beam width multiplier (default 1.0) */
   beamWidth?: number;
+  /** Shield damage multiplier (default 1.0). Ion = 3× shield damage. */
+  shieldDamageMultiplier?: number;
+  /** Hull damage multiplier (default 1.0). Torch = 2× hull damage. */
+  hullDamageMultiplier?: number;
 }
 
 /** Secondary weapon definition */

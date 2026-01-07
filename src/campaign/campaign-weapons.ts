@@ -43,6 +43,11 @@ function createPrimaryFromEquipped(equipped: EquippedPrimary): PrimaryWeapon {
   if (stats.pulseInterval) weapon.pulseInterval = stats.pulseInterval;
   if (stats.noFalloff) weapon.noFalloff = stats.noFalloff;
   if (stats.autoaimFov) weapon.autoaimFov = stats.autoaimFov;
+  if (stats.beamWidth) weapon.beamWidth = stats.beamWidth;
+  if (stats.shieldDamageMultiplier)
+    weapon.shieldDamageMultiplier = stats.shieldDamageMultiplier;
+  if (stats.hullDamageMultiplier)
+    weapon.hullDamageMultiplier = stats.hullDamageMultiplier;
 
   return weapon;
 }

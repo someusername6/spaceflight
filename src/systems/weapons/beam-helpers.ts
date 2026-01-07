@@ -122,6 +122,7 @@ const BEAM_COLORS: Record<string, THREE.Color> = {
   'Heavy Green Laser': new THREE.Color(0, 1, 0),
   'Heavy Blue Laser': new THREE.Color(0, 0, 1),
   Lightning: new THREE.Color(0.6, 0.8, 1.0), // Electric blue-white
+  Torch: new THREE.Color(1.0, 0.6, 0.2), // Orange-white plasma cutter
   'Nuclear Lance': new THREE.Color(1.0, 0.95, 0.8), // Bright white-gold
 };
 const DEFAULT_BEAM_COLOR = new THREE.Color(1, 1, 1);
@@ -133,6 +134,36 @@ const DEFAULT_BEAM_COLOR = new THREE.Color(1, 1, 1);
  */
 export function getBeamColor(name: string): THREE.Color {
   return BEAM_COLORS[name] ?? DEFAULT_BEAM_COLOR;
+}
+
+/** Create a new ActiveBeam state object */
+export function createActiveBeam(
+  weaponName: string,
+  weaponIndex: number,
+  beamWidth: number | undefined,
+  isPulse: boolean,
+  isLance: boolean,
+  isTorch: boolean,
+): ActiveBeam {
+  const beam: ActiveBeam = {
+    origin: new THREE.Vector3(),
+    direction: new THREE.Vector3(),
+    hitPoint: null,
+    color: getBeamColor(weaponName).clone(),
+    active: false,
+    weaponIndex,
+    weaponName,
+    fadeStartTime: null,
+  };
+  if (beamWidth !== undefined) beam.beamWidth = beamWidth;
+  if (isPulse) {
+    beam.isPulseBeam = true;
+    beam.lastPulseTime = 0;
+    beam.pulseActive = false;
+  }
+  if (isLance) beam.isLance = true;
+  if (isTorch) beam.isTorch = true;
+  return beam;
 }
 
 // Reusable object for beam hit detection (avoid per-frame allocations)

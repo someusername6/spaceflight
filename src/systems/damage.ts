@@ -76,6 +76,7 @@ function applyDamageWithShields(
   amount: number,
   hitPosition?: THREE.Vector3,
   shieldDamageMultiplier = 1,
+  hullDamageMultiplier = 1,
 ): DamageResult {
   const shields = getComponent<Shields>(world, entity, 'shields');
   const health = getComponent<Health>(world, entity, 'health');
@@ -117,10 +118,11 @@ function applyDamageWithShields(
     }
   }
 
-  // Remaining damage goes to hull
+  // Remaining damage goes to hull (with optional multiplier for Torch-type weapons)
   let hullDamage = 0;
   if (remaining > 0 && health) {
-    hullDamage = applyDamage(health, remaining);
+    const hullDamageAmount = remaining * hullDamageMultiplier;
+    hullDamage = applyDamage(health, hullDamageAmount);
   }
 
   return { shieldDamage, hullDamage };
@@ -133,6 +135,7 @@ export function dealDamage(
   amount: number,
   hitPosition?: THREE.Vector3,
   shieldDamageMultiplier = 1,
+  hullDamageMultiplier = 1,
 ): DamageResult {
   return applyDamageWithShields(
     world,
@@ -140,5 +143,6 @@ export function dealDamage(
     amount,
     hitPosition,
     shieldDamageMultiplier,
+    hullDamageMultiplier,
   );
 }
