@@ -19,8 +19,24 @@ import {
   getSecondaryPrice,
 } from '../../data/prices';
 import { SHIP_CLASSES } from '../../data/ships';
-import { PRIMARY_WEAPONS } from '../../data/weapons';
+import { PRIMARY_WEAPONS, type WeaponStats } from '../../data/weapons';
 import { renderShipStatsRows } from '../ship/stats';
+
+/** Effective range for beam weapons (full damage at this distance or closer) */
+const BEAM_EFFECTIVE_RANGE = 100;
+
+/** Format beam damage display with falloff info */
+function formatBeamDamage(stats: WeaponStats): string {
+  if (stats.noFalloff) {
+    return `${stats.damage}`;
+  }
+  // Calculate damage at max range using 1/d falloff
+  const damageAtMax = Math.round(
+    stats.damage / (stats.range / BEAM_EFFECTIVE_RANGE),
+  );
+  return `${stats.damage} at ${BEAM_EFFECTIVE_RANGE}m, ${damageAtMax} at ${stats.range}m`;
+}
+
 import {
   FALLBACK_ICON_PATH,
   getMissileIconPath,
@@ -121,13 +137,32 @@ export function renderPrimaryStats(weaponType: string): string {
   const categoryText =
     stats.category.charAt(0).toUpperCase() + stats.category.slice(1);
 
-  // Continuous weapons (beams) have fireRate 0
-  const isContinuous = stats.fireRate === 0;
-  const fireRateText = isContinuous
-    ? 'Continuous'
-    : `${(1 / stats.fireRate).toFixed(1)}/s`;
-  const damageLabel = isContinuous ? 'Damage per second' : 'Damage';
-  const heatLabel = isContinuous ? 'Heat per second' : 'Heat per shot';
+  // Beam weapon classification
+  const isBeam = stats.category === 'beam';
+  const isPulseBeam = stats.isPulseBeam === true;
+  const isContinuousBeam = isBeam && !isPulseBeam;
+
+  // Fire rate display
+  const fireRateText = isPulseBeam
+    ? `${Math.round(1 / (stats.pulseInterval ?? 0.1))} pulses/s`
+    : isContinuousBeam
+      ? 'Continuous'
+      : `${(1 / stats.fireRate).toFixed(1)}/s`;
+
+  // Damage label and text
+  const damageLabel = isPulseBeam
+    ? 'Damage per pulse'
+    : isContinuousBeam
+      ? 'Damage per second'
+      : 'Damage';
+  const damageText = isBeam ? formatBeamDamage(stats) : `${stats.damage}`;
+
+  // Heat label
+  const heatLabel = isPulseBeam
+    ? 'Heat per pulse'
+    : isContinuousBeam
+      ? 'Heat per second'
+      : 'Heat per shot';
 
   // Flak-specific stats
   const flakStats = stats.flakRadius
@@ -155,7 +190,7 @@ export function renderPrimaryStats(weaponType: string): string {
     ${renderItemPreview('primaries', weaponType)}
     <div class="item-stats">
       <div class="stat-row"><span>Category</span><span>${categoryText}</span></div>
-      <div class="stat-row"><span>${damageLabel}</span><span>${stats.damage}</span></div>
+      <div class="stat-row"><span>${damageLabel}</span><span>${damageText}</span></div>
       ${shieldDamageText ? `<div class="stat-row"><span>Shield damage</span><span>${shieldDamageText}</span></div>` : ''}
       ${hullDamageText ? `<div class="stat-row"><span>Hull damage</span><span>${hullDamageText}</span></div>` : ''}
       <div class="stat-row"><span>Range</span><span>${stats.range} m</span></div>

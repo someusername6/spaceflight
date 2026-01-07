@@ -10,7 +10,22 @@ import type {
 } from '../../campaign/types';
 import { MISSILES } from '../../data/missiles';
 import { weaponUsesAmmo } from '../../data/prices';
-import { PRIMARY_WEAPONS } from '../../data/weapons';
+import { PRIMARY_WEAPONS, type WeaponStats } from '../../data/weapons';
+
+/** Effective range for beam weapons (full damage at this distance or closer) */
+const BEAM_EFFECTIVE_RANGE = 100;
+
+/** Format beam damage display with falloff info */
+function formatBeamDamage(stats: WeaponStats): string {
+  if (stats.noFalloff) {
+    return `${stats.damage}`;
+  }
+  // Calculate damage at max range using 1/d falloff
+  const damageAtMax = Math.round(
+    stats.damage / (stats.range / BEAM_EFFECTIVE_RANGE),
+  );
+  return `${stats.damage} at ${BEAM_EFFECTIVE_RANGE}m, ${damageAtMax} at ${stats.range}m`;
+}
 
 /** Get stored ammo count for a weapon type */
 function getStoredAmmoCount(state: CampaignState, weaponType: string): number {
@@ -58,10 +73,17 @@ export function renderPrimaryPopover(
   }
 
   const category = stats.category ?? 'unknown';
-  const dps =
-    category === 'beam'
+  const isBeam = category === 'beam';
+  const isPulseBeam = stats.isPulseBeam === true;
+  // For pulse beams, DPS = damage * pulses per second
+  // For continuous beams, damage IS the DPS
+  // For projectile weapons, DPS = damage / fireRate
+  const dps = isPulseBeam
+    ? Math.round(stats.damage / (stats.pulseInterval ?? 0.1))
+    : isBeam
       ? stats.damage
       : Math.round(stats.damage / stats.fireRate);
+  const damageText = isBeam ? formatBeamDamage(stats) : `${stats.damage}`;
 
   // Ammo section (only for ballistic weapons)
   let ammoStats = '';
@@ -95,13 +117,14 @@ export function renderPrimaryPopover(
       <div class="popover-subtitle">${categoryName(category)}</div>
     </div>
     <div class="popover-stats">
-      ${statRow('Damage', stats.damage)}
+      ${statRow('Damage', damageText)}
       ${stats.shieldDamageMultiplier && stats.shieldDamageMultiplier !== 1 ? statRow('Shield Dmg', `${Math.round(stats.damage * stats.shieldDamageMultiplier)} (${stats.shieldDamageMultiplier}×)`) : ''}
       ${stats.hullDamageMultiplier && stats.hullDamageMultiplier !== 1 ? statRow('Hull Dmg', `${Math.round(stats.damage * stats.hullDamageMultiplier)} (${stats.hullDamageMultiplier}×)`) : ''}
       ${statRow('DPS', `~${dps}`)}
+      ${isPulseBeam ? statRow('Pulse Rate', `${Math.round(1 / (stats.pulseInterval ?? 0.1))}/s`) : ''}
       ${category !== 'beam' ? statRow('Fire Rate', `${Math.round(1 / stats.fireRate)}/s`) : ''}
       ${statRow('Range', stats.range, 'm')}
-      ${statRow('Heat', stats.heatPerShot, '/shot')}
+      ${statRow('Heat', stats.heatPerShot, isPulseBeam ? '/pulse' : isBeam ? '/s' : '/shot')}
       ${category !== 'beam' ? statRow('Velocity', stats.projectileSpeed, ' m/s') : ''}
       ${stats.flakRadius ? statRow('Blast Radius', stats.flakRadius, 'm') : ''}
       ${stats.autoaimFov ? statRow('Auto-Aim', stats.autoaimFov, '°') : ''}
