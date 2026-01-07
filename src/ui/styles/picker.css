@@ -313,6 +313,14 @@
   color: var(--text-dim);
 }
 
+.manager-size-primary {
+  color: var(--color-primary);
+}
+
+.manager-size-secondary {
+  color: var(--color-danger);
+}
+
 /* Popover ammo/loading section */
 .popover-ammo {
   background: rgba(0, 0, 0, 0.2);
