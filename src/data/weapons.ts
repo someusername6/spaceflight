@@ -22,6 +22,8 @@ export interface WeaponStats {
   ammo?: number;
   /** Ammo display name for store (e.g., "Autocannon Rounds") */
   ammoName?: string;
+  /** Short name for store list display (defaults to name if not set) */
+  listName?: string;
   /** Flak explosion radius */
   flakRadius?: number;
   /** Number of shrapnel pieces */
@@ -147,6 +149,7 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
   // === HEAVY BEAM WEAPONS (2x damage, 2x heat, 2x beam width) ===
   heavyRedLaser: {
     name: 'Heavy Red Laser',
+    listName: 'Heavy Red',
     category: 'beam',
     heatPerShot: 30,
     projectileSpeed: 0,
@@ -157,6 +160,7 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
   },
   heavyGreenLaser: {
     name: 'Heavy Green Laser',
+    listName: 'Heavy Green',
     category: 'beam',
     heatPerShot: 24,
     projectileSpeed: 0,
@@ -167,6 +171,7 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
   },
   heavyBlueLaser: {
     name: 'Heavy Blue Laser',
+    listName: 'Heavy Blue',
     category: 'beam',
     heatPerShot: 20,
     projectileSpeed: 0,
@@ -191,6 +196,7 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
   },
   nuclearLance: {
     name: 'Nuclear Lance',
+    listName: 'Nuke Lance',
     category: 'beam',
     heatPerShot: 0, // No heat
     projectileSpeed: 0,

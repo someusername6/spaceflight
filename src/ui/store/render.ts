@@ -217,11 +217,14 @@ export function getCategoryItems(
     case 'primaries':
       return getAvailablePrimaries()
         .filter(({ weaponType }) => (storeStock.primaries[weaponType] ?? 0) > 0)
-        .map(({ weaponType }) => ({
-          id: weaponType,
-          name: PRIMARY_WEAPONS[weaponType]?.name ?? weaponType,
-          stock: storeStock.primaries[weaponType] ?? 0,
-        }));
+        .map(({ weaponType }) => {
+          const weapon = PRIMARY_WEAPONS[weaponType];
+          return {
+            id: weaponType,
+            name: weapon?.listName ?? weapon?.name ?? weaponType,
+            stock: storeStock.primaries[weaponType] ?? 0,
+          };
+        });
     case 'secondaries':
       return getAvailableSecondaries()
         .filter(({ weaponType }) => !MISSILES[weaponType]?.isDecoy)
@@ -236,11 +239,14 @@ export function getCategoryItems(
     case 'ammo':
       return getAvailableAmmo()
         .filter(({ weaponType }) => (storeStock.ammo[weaponType] ?? 0) > 0)
-        .map(({ weaponType }) => ({
-          id: weaponType,
-          name: PRIMARY_WEAPONS[weaponType]?.name ?? weaponType,
-          stock: storeStock.ammo[weaponType] ?? 0,
-        }));
+        .map(({ weaponType }) => {
+          const weapon = PRIMARY_WEAPONS[weaponType];
+          return {
+            id: weaponType,
+            name: weapon?.listName ?? weapon?.name ?? weaponType,
+            stock: storeStock.ammo[weaponType] ?? 0,
+          };
+        });
     case 'scrap':
       // Scrap items come from player storage, not store stock
       // Show all types that the player has

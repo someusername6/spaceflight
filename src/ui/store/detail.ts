@@ -111,10 +111,14 @@ function renderStandardDetail(
     state.credits >= bulkPrice && storeStockCount >= bulkAmount;
   const canSellBulk = storageCount >= bulkAmount;
 
-  // For ammo, use the ammoName field as the header title
-  const headerTitle = isAmmo
-    ? (PRIMARY_WEAPONS[itemId]?.ammoName ?? itemId)
-    : itemId;
+  // For ammo, use the ammoName field; for primaries, use the full name
+  const isPrimary = category === 'primaries';
+  let headerTitle = itemId;
+  if (isAmmo) {
+    headerTitle = PRIMARY_WEAPONS[itemId]?.ammoName ?? itemId;
+  } else if (isPrimary) {
+    headerTitle = PRIMARY_WEAPONS[itemId]?.name ?? itemId;
+  }
 
   return `
     <div class="store-detail">

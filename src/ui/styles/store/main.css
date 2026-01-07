@@ -180,6 +180,7 @@
   font-weight: 500;
   color: var(--text-primary);
   text-transform: capitalize;
+  white-space: nowrap;
 }
 
 .store-item .item-stock {
