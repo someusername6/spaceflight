@@ -156,6 +156,7 @@ export function projectileSystem(world: World, dt: number): void {
           other,
           projectile.damage,
           transform.position,
+          projectile.shieldDamageMultiplier ?? 1,
         );
 
         // Track per-ship damage stats

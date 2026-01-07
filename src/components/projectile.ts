@@ -32,6 +32,8 @@ export interface Projectile extends ComponentBase {
   flakRadius?: number;
   /** Number of shrapnel projectiles to spawn on flak explosion */
   shrapnelCount?: number;
+  /** Shield damage multiplier (e.g., 3 for Ion = 3× damage to shields) */
+  shieldDamageMultiplier?: number;
 }
 
 /** Creates a Projectile component */
@@ -45,6 +47,7 @@ export function createProjectile(
   weaponName: WeaponName = 'Plasma',
   flakRadius?: number,
   shrapnelCount?: number,
+  shieldDamageMultiplier?: number,
 ): Projectile {
   const projectile: Projectile = {
     type: 'projectile',
@@ -59,6 +62,8 @@ export function createProjectile(
   };
   if (flakRadius !== undefined) projectile.flakRadius = flakRadius;
   if (shrapnelCount !== undefined) projectile.shrapnelCount = shrapnelCount;
+  if (shieldDamageMultiplier !== undefined)
+    projectile.shieldDamageMultiplier = shieldDamageMultiplier;
   return projectile;
 }
 

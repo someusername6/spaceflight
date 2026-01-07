@@ -75,6 +75,7 @@ function applyDamageWithShields(
   entity: Entity,
   amount: number,
   hitPosition?: THREE.Vector3,
+  shieldDamageMultiplier = 1,
 ): DamageResult {
   const shields = getComponent<Shields>(world, entity, 'shields');
   const health = getComponent<Health>(world, entity, 'health');
@@ -82,11 +83,24 @@ function applyDamageWithShields(
   let remaining = amount;
   let shieldDamage = 0;
 
-  // Shields absorb first
+  // Shields absorb first (with optional damage multiplier for Ion weapons)
   if (shields && shields.current > 0) {
     const shieldsBefore = shields.current;
-    remaining = damageShields(shields, remaining, world.systemState.gameTime);
+    // Apply multiplied damage to shields
+    const shieldDamageAmount = amount * shieldDamageMultiplier;
+    remaining = damageShields(
+      shields,
+      shieldDamageAmount,
+      world.systemState.gameTime,
+    );
     shieldDamage = shieldsBefore - shields.current;
+    // Remaining damage to hull uses base amount, not multiplied
+    // If shields absorbed less than the multiplied damage, scale remaining back
+    if (remaining > 0) {
+      // Calculate how much of the original damage would pass through
+      // remaining is in "multiplied" units, convert back to base
+      remaining = remaining / shieldDamageMultiplier;
+    }
 
     // Record shield hit for visual effects
     if (shieldDamage > 0 && hitPosition) {
@@ -118,6 +132,13 @@ export function dealDamage(
   entity: Entity,
   amount: number,
   hitPosition?: THREE.Vector3,
+  shieldDamageMultiplier = 1,
 ): DamageResult {
-  return applyDamageWithShields(world, entity, amount, hitPosition);
+  return applyDamageWithShields(
+    world,
+    entity,
+    amount,
+    hitPosition,
+    shieldDamageMultiplier,
+  );
 }

@@ -137,11 +137,19 @@ export function renderPrimaryStats(weaponType: string): string {
     `
     : '';
 
+  // Shield damage multiplier (for Ion and similar weapons)
+  const shieldDamageMultiplier = stats.shieldDamageMultiplier ?? 1;
+  const shieldDamageText =
+    shieldDamageMultiplier > 1
+      ? `${stats.damage * shieldDamageMultiplier} (${shieldDamageMultiplier}×)`
+      : '';
+
   return `
     ${renderItemPreview('primaries', weaponType)}
     <div class="item-stats">
       <div class="stat-row"><span>Category</span><span>${categoryText}</span></div>
       <div class="stat-row"><span>${damageLabel}</span><span>${stats.damage}</span></div>
+      ${shieldDamageText ? `<div class="stat-row"><span>Shield damage</span><span>${shieldDamageText}</span></div>` : ''}
       <div class="stat-row"><span>Range</span><span>${stats.range} m</span></div>
       <div class="stat-row"><span>Fire rate</span><span>${fireRateText}</span></div>
       <div class="stat-row"><span>${heatLabel}</span><span>${stats.heatPerShot}</span></div>

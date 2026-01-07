@@ -42,6 +42,8 @@ export interface WeaponStats {
   autoaimFov?: number;
   /** Beam width multiplier (default 1.0) */
   beamWidth?: number;
+  /** Shield damage multiplier (default 1.0). Ion weapons deal bonus shield damage. */
+  shieldDamageMultiplier?: number;
 }
 
 /**
@@ -76,7 +78,8 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
     projectileSpeed: 400,
     fireRate: 0.18, // 180ms
     range: 700,
-    damage: 15,
+    damage: 10, // Low hull damage, but 3x to shields (30 effective)
+    shieldDamageMultiplier: 3, // 3x damage to shields - dedicated shield stripper
   },
 
   // === BALLISTIC WEAPONS (finite ammo) ===

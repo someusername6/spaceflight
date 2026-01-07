@@ -107,6 +107,7 @@ export function spawnProjectile(
     category?: string; // WeaponCategory includes 'beam' but we filter that out
     flakRadius?: number;
     shrapnelCount?: number;
+    shieldDamageMultiplier?: number;
   },
   ownerFaction: FactionComponent | undefined,
   bankIndex = 0,
@@ -138,6 +139,7 @@ export function spawnProjectile(
       weapon.name as WeaponName,
       weapon.flakRadius,
       weapon.shrapnelCount,
+      weapon.shieldDamageMultiplier,
     ),
   );
   addComponent(world, projectile, createCollision(PROJECTILE_RADIUS));
@@ -171,6 +173,7 @@ export function spawnProjectileWithAimError(
     flakRadius?: number;
     shrapnelCount?: number;
     autoaimFov?: number;
+    shieldDamageMultiplier?: number;
   },
   ownerFaction: FactionComponent | undefined,
   aimError: AimError | undefined,
@@ -223,6 +226,7 @@ export function spawnProjectileWithAimError(
       weapon.name as WeaponName,
       weapon.flakRadius,
       weapon.shrapnelCount,
+      weapon.shieldDamageMultiplier,
     ),
   );
   addComponent(world, projectile, createCollision(PROJECTILE_RADIUS));
