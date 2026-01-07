@@ -127,8 +127,8 @@ export function renderPrimaryPopover(
       ${stats.shieldDamageMultiplier && stats.shieldDamageMultiplier !== 1 ? statRow('Shield Dmg', `${Math.round(stats.damage * stats.shieldDamageMultiplier)} (${stats.shieldDamageMultiplier}×)`) : ''}
       ${stats.hullDamageMultiplier && stats.hullDamageMultiplier !== 1 ? statRow('Hull Dmg', `${Math.round(stats.damage * stats.hullDamageMultiplier)} (${stats.hullDamageMultiplier}×)`) : ''}
       ${!isContinuousBeam ? statRow('DPS', `~${dps}`) : ''}
-      ${isPulseBeam ? statRow('Pulse Rate', `${Math.round(1 / (stats.pulseInterval ?? 0.1))}/s`) : ''}
-      ${category !== 'beam' ? statRow('Fire Rate', `${Math.round(1 / stats.fireRate)}/s`) : ''}
+      ${isPulseBeam ? statRow('Pulse rate', `${Math.round(1 / (stats.pulseInterval ?? 0.1))}/s`) : ''}
+      ${category !== 'beam' ? statRow('Fire rate', `${Math.round(1 / stats.fireRate)}/s`) : ''}
       ${statRow('Range', stats.range, 'm')}
       ${statRow('Heat', stats.heatPerShot, isPulseBeam ? '/pulse' : isBeam ? '/s' : '/shot')}
       ${category !== 'beam' ? statRow('Velocity', stats.projectileSpeed, ' m/s') : ''}
