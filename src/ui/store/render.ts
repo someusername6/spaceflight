@@ -20,6 +20,7 @@ import {
 } from '../../data/prices';
 import { SHIP_CLASSES } from '../../data/ships';
 import { PRIMARY_WEAPONS } from '../../data/weapons';
+import { renderShipStatsRows } from '../ship/stats';
 import {
   FALLBACK_ICON_PATH,
   getMissileIconPath,
@@ -99,23 +100,13 @@ function renderItemPreview(category: StoreCategory, id: string): string {
 
 /** Render ship hull stats */
 export function renderHullStats(shipClass: string): string {
-  const stats = SHIP_CLASSES[shipClass];
-  if (!stats) return '';
-
-  const primarySlots = stats.primaryBanks.length;
-  const secondarySlots = stats.secondaryBanks.length;
-  const primaryBanks = stats.primaryBanks.join(', ');
-  const secondaryBanks = stats.secondaryBanks.join(', ');
+  const statsRows = renderShipStatsRows(shipClass, { classPrefix: 'stat' });
+  if (!statsRows) return '';
 
   return `
     ${renderItemPreview('hulls', shipClass)}
     <div class="item-stats">
-      <div class="stat-row"><span>Hull:</span><span>${stats.hull}</span></div>
-      <div class="stat-row"><span>Shields:</span><span>${stats.shields}</span></div>
-      <div class="stat-row"><span>Max Speed:</span><span>${stats.maxSpeed} m/s</span></div>
-      <div class="stat-row"><span>Turn Rate:</span><span>${stats.turnRate}°/s</span></div>
-      <div class="stat-row"><span>Primary Slots:</span><span>${primarySlots} (${primaryBanks})</span></div>
-      <div class="stat-row"><span>Secondary Slots:</span><span>${secondarySlots} (${secondaryBanks})</span></div>
+      ${statsRows}
     </div>
   `;
 }

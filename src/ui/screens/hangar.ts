@@ -6,7 +6,6 @@
  */
 
 import type { CampaignState, OwnedShip } from '../../campaign/types';
-import { SHIP_CLASSES } from '../../data/ships';
 import {
   bindNavBar,
   type NavDestination,
@@ -14,6 +13,7 @@ import {
 } from '../common/nav-bar';
 import { renderShipCard } from '../ship/card';
 import { destroyShipConnectors, initShipConnectors } from '../ship/connectors';
+import { renderShipStatsRows } from '../ship/stats';
 import { renderShipViewer } from '../ship/viewer';
 import {
   closeWeaponPicker,
@@ -48,15 +48,12 @@ function sortShipsCommanderFirst(
 
 /** Render ship details panel */
 function renderShipDetails(ship: OwnedShip): string {
-  const stats = SHIP_CLASSES[ship.shipClass.toLowerCase()];
-  if (!stats) return '<div class="ship-details">Unknown ship class</div>';
+  const statsRows = renderShipStatsRows(ship.shipClass, {
+    hullDamage: ship.hullDamage,
+    classPrefix: 'detail',
+  });
 
-  const maxHull = stats.hull;
-  const currentHull = maxHull - ship.hullDamage;
-  const hullPercent = Math.round((currentHull / maxHull) * 100);
-
-  const primaryBankStr = stats.primaryBanks.join(', ');
-  const secondaryBankStr = stats.secondaryBanks.join(', ');
+  if (!statsRows) return '<div class="ship-details">Unknown ship class</div>';
 
   return `
     <div class="ship-details">
@@ -64,43 +61,7 @@ function renderShipDetails(ship: OwnedShip): string {
         <span class="panel-icon">▦</span> Ship Stats
       </div>
       <div class="ship-details-stats">
-        <div class="detail-row">
-          <span class="detail-label">Hull</span>
-          <span class="detail-value ${hullPercent < 100 ? 'damaged' : ''}">${currentHull}/${maxHull}</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Shields</span>
-          <span class="detail-value">${stats.shields} (+${stats.shieldRegen}/s)</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Speed</span>
-          <span class="detail-value">${stats.maxSpeed} m/s</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Turn Rate</span>
-          <span class="detail-value">${stats.turnRate}°/s</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Acceleration</span>
-          <span class="detail-value">${stats.acceleration} m/s²</span>
-        </div>
-        <div class="detail-divider"></div>
-        <div class="detail-row">
-          <span class="detail-label">Primary Banks</span>
-          <span class="detail-value">${stats.primaryBanks.length} (${primaryBankStr})</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Secondary Banks</span>
-          <span class="detail-value">${stats.secondaryBanks.length} (${secondaryBankStr})</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Heat Capacity</span>
-          <span class="detail-value">${stats.maxHeat}</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Cooling Rate</span>
-          <span class="detail-value">${stats.coolingRate}/s</span>
-        </div>
+        ${statsRows}
       </div>
     </div>
   `;

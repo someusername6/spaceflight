@@ -117,6 +117,12 @@
   margin-top: 8px;
 }
 
+.stat-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 8px 0;
+}
+
 /* ========================================
    SCRAP CONVERT BUTTON
    ======================================== */
