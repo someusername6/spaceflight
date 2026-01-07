@@ -11,14 +11,15 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 24px;
-  margin-bottom: 20px;
+  padding: var(--space-6);
+  margin-bottom: var(--space-5);
   background: linear-gradient(
     180deg,
-    rgba(0, 0, 0, 0.4) 0%,
-    rgba(0, 0, 0, 0.2) 100%
+    var(--bg-base) 0%,
+    rgba(0, 0, 0, 0.3) 100%
   );
   border: 1px solid var(--preview-color, var(--border-color));
+  box-shadow: var(--shadow-sm), var(--shadow-inset);
   position: relative;
 }
 
@@ -49,7 +50,7 @@
 /* Schematic preview containers (hull and scrap) - uses schematic diagram */
 .item-preview.hull-preview-container,
 .item-preview.scrap-preview-container {
-  padding: 16px;
+  padding: var(--space-4);
   min-height: 200px;
 }
 
@@ -89,17 +90,19 @@
    ======================================== */
 
 .item-stats {
-  background: rgba(0, 0, 0, 0.2);
-  padding: 12px;
-  margin-bottom: 16px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-inset-sm);
+  padding: var(--space-3);
+  margin-bottom: var(--space-4);
 }
 
 .stat-row {
   display: flex;
   justify-content: space-between;
-  padding: 6px 0;
+  padding: var(--space-1-5) 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
 }
 
 .stat-row:last-child {
@@ -125,17 +128,17 @@
 }
 
 .stat-note {
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   color: var(--text-dim);
-  padding: 8px 0 4px;
+  padding: var(--space-2) 0 var(--space-1);
   border-top: 1px solid rgba(255, 255, 255, 0.05);
-  margin-top: 8px;
+  margin-top: var(--space-2);
 }
 
 .stat-divider {
   height: 1px;
   background: var(--border-color);
-  margin: 8px 0;
+  margin: var(--space-2) 0;
 }
 
 /* ========================================
@@ -144,23 +147,29 @@
 
 .detail-actions .btn-convert {
   flex: 0 0 100%;
-  padding: 12px 24px;
-  margin-bottom: 12px;
+  padding: var(--space-3) var(--space-6);
+  margin-bottom: var(--space-3);
   font-family: var(--font-ui);
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: var(--tracking-widest);
   border-color: var(--color-success);
   color: var(--color-success);
 }
 
 .btn-convert:hover:not(:disabled) {
-  background: rgba(0, 255, 136, 0.1);
-  box-shadow: 0 0 15px var(--color-success-glow);
+  background: rgba(0, 255, 136, 0.12);
+  box-shadow:
+    var(--shadow-md),
+    var(--shadow-glow-success),
+    inset 0 1px 0 var(--highlight-medium);
 }
 
 .btn-convert:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+  background: var(--bg-base);
+  box-shadow: var(--shadow-inset-sm);
+  border-color: var(--border-subtle);
 }

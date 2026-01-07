@@ -9,13 +9,13 @@
 .ship-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .ship-item {
   display: flex;
   align-items: center;
-  padding: 12px 16px;
+  padding: var(--space-3) var(--space-4);
   background: linear-gradient(
     90deg,
     rgba(20, 30, 45, 0.8) 0%,
@@ -23,8 +23,15 @@
   );
   border: 1px solid var(--border-color);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition:
+    background var(--duration-base) var(--ease-out),
+    border-color var(--duration-base) var(--ease-out);
   position: relative;
+}
+
+.ship-item:focus-visible {
+  outline: 2px solid var(--color-secondary);
+  outline-offset: -2px;
 }
 
 .ship-item::before {
@@ -35,7 +42,10 @@
   bottom: 0;
   width: 3px;
   background: var(--border-light);
-  transition: all 0.2s ease;
+  transition:
+    background var(--duration-base) var(--ease-out),
+    box-shadow var(--duration-base) var(--ease-out),
+    width var(--duration-base) var(--ease-out);
 }
 
 .ship-item:hover {
@@ -59,6 +69,9 @@
     rgba(255, 159, 28, 0.05) 100%
   );
   border-color: var(--color-primary);
+  box-shadow:
+    inset 0 0 16px rgba(255, 159, 28, 0.08),
+    0 0 12px var(--color-primary-glow);
 }
 
 .ship-item.selected::before {
@@ -72,15 +85,15 @@
   height: 35px;
   background: rgba(0, 0, 0, 0.4);
   border: 1px solid var(--border-color);
-  margin-right: 16px;
+  margin-right: var(--space-4);
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: var(--font-display);
-  font-size: 0.7rem;
-  font-weight: 600;
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
   color: var(--text-dim);
-  letter-spacing: 0.05em;
+  letter-spacing: var(--tracking-wider);
 }
 
 .ship-info {
@@ -90,21 +103,21 @@
 
 .ship-name {
   font-family: var(--font-ui);
-  font-weight: 600;
-  font-size: 0.95rem;
+  font-weight: var(--font-semibold);
+  font-size: var(--text-base);
   color: var(--text-primary);
-  margin-bottom: 2px;
+  margin-bottom: var(--space-0-5);
 }
 
 .ship-class {
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   color: var(--text-secondary);
   text-transform: capitalize;
 }
 
 .ship-status {
-  font-size: 0.75rem;
-  margin-top: 4px;
+  font-size: var(--text-xs);
+  margin-top: var(--space-1);
   font-family: var(--font-body);
 }
 
