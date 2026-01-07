@@ -89,7 +89,14 @@ export function renderPrimaryPopover(
     : isContinuousBeam
       ? 'DPS'
       : 'Damage';
-  const damageText = isBeam ? formatBeamDamage(stats) : `${stats.damage}`;
+  // For beams with falloff, force line break so damage values appear on own line
+  const beamDamage = formatBeamDamage(stats);
+  const needsLineBreak = isBeam && !stats.noFalloff;
+  const damageText = needsLineBreak
+    ? `<br>${beamDamage}`
+    : isBeam
+      ? beamDamage
+      : `${stats.damage}`;
 
   // Ammo section (only for ballistic weapons)
   let ammoStats = '';
