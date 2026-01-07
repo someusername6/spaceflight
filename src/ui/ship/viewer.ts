@@ -5,16 +5,15 @@
  * equipping/unequipping weapons.
  */
 
-import { getMaxAmmoCapacity } from '../../campaign/store-ammo';
 import type {
   CampaignState,
   EquippedPrimary,
   EquippedSecondary,
   OwnedShip,
 } from '../../campaign/types';
-import { weaponUsesAmmo } from '../../data/prices';
 import { type Hardpoint, SHIP_CLASSES } from '../../data/ships';
 import { renderShipActions } from './actions';
+import { getWeaponAmmoInfo, shouldUseSegmentedBar } from './slot-utils';
 import {
   getMissileColor,
   getMissileIconPath,
@@ -234,19 +233,23 @@ function renderSchematicSlot(
       : getMissileColor(weaponType)
     : '';
 
-  // Capacity/ammo info
-  let capacityInfo = '';
+  // Ammo fill bar (for weapons with finite ammo)
+  let ammoBar = '';
   if (weapon) {
-    if (isPrimary) {
-      const primary = weapon as EquippedPrimary;
-      if (weaponUsesAmmo(primary.weaponType)) {
-        const current = primary.currentAmmo ?? 0;
-        const max = getMaxAmmoCapacity(primary.weaponType, primary.bankSize);
-        capacityInfo = `<span class="slot-capacity">${current}/${max}</span>`;
+    const { current, max } = getWeaponAmmoInfo(weapon, slotType);
+    if (max > 0) {
+      if (shouldUseSegmentedBar(max, bankSize)) {
+        // Segmented bar: individual segments for each ammo unit
+        const segments = Array.from({ length: max }, (_, i) => {
+          const filled = i < current;
+          return `<div class="slot-ammo-segment ${filled ? 'filled' : ''}"></div>`;
+        }).join('');
+        ammoBar = `<div class="slot-ammo-bar segmented">${segments}</div>`;
+      } else {
+        // Continuous bar: percentage fill
+        const fillPercent = Math.round((current / max) * 100);
+        ammoBar = `<div class="slot-ammo-bar"><div class="slot-ammo-fill" style="width: ${fillPercent}%"></div></div>`;
       }
-    } else {
-      const secondary = weapon as EquippedSecondary;
-      capacityInfo = `<span class="slot-capacity">${secondary.count}/${secondary.maxCount}</span>`;
     }
   }
 
@@ -277,8 +280,8 @@ function renderSchematicSlot(
       <div class="slot-connector"></div>
       <div class="slot-content">
         <div class="slot-icons">${weaponDisplay}</div>
-        ${capacityInfo}
       </div>
+      ${ammoBar}
     </div>
   `;
 }

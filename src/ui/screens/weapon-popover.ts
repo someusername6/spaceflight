@@ -16,7 +16,39 @@ import type {
   EquippedPrimary,
   EquippedSecondary,
 } from '../../campaign/types';
+import { getWeaponAmmoInfo } from '../ship/slot-utils';
 import { renderPrimaryPopover, renderSecondaryPopover } from './popover-render';
+
+/** Update a slot's ammo fill bar directly (without re-rendering the viewer) */
+function updateSlotAmmoBar(
+  slotType: 'primary' | 'secondary',
+  weapon: EquippedPrimary | EquippedSecondary,
+): void {
+  // Use activeSlotElement if available (more reliable than querying)
+  const slot = activeSlotElement;
+  if (!slot) return;
+
+  const ammoBar = slot.querySelector('.slot-ammo-bar') as HTMLElement;
+  if (!ammoBar) return;
+
+  const { current, max } = getWeaponAmmoInfo(weapon, slotType);
+
+  // Check if segmented or continuous bar
+  if (ammoBar.classList.contains('segmented')) {
+    // Segmented bar: toggle filled class on each segment
+    const segments = ammoBar.querySelectorAll('.slot-ammo-segment');
+    segments.forEach((seg, i) => {
+      seg.classList.toggle('filled', i < current);
+    });
+  } else {
+    // Continuous bar: update fill width
+    const fillBar = ammoBar.querySelector('.slot-ammo-fill') as HTMLElement;
+    if (fillBar) {
+      const fillPercent = max > 0 ? Math.round((current / max) * 100) : 0;
+      fillBar.style.width = `${fillPercent}%`;
+    }
+  }
+}
 
 /** Popover state - shared with hangar-equip for coordination */
 export let activePicker: HTMLElement | null = null;
@@ -152,6 +184,9 @@ function bindPopoverEvents(
                 onRerender,
               );
             }
+
+            // Update the slot's ammo fill bar directly
+            updateSlotAmmoBar(slotType, weapon);
           }
         }
       }
