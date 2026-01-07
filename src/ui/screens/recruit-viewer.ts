@@ -32,17 +32,13 @@ export function renderRecruitViewer(
   state: CampaignState,
 ): string {
   const canAfford = state.credits >= recruit.price;
-  const skillClass = recruit.skill.toLowerCase();
 
   return `
     <div class="recruit-viewer">
       <div class="recruit-viewer-header">
         <div class="recruit-header-info">
-          <div class="recruit-viewer-name">${recruit.name.toUpperCase()}</div>
-          <div class="recruit-viewer-skill">
-            <span class="skill-label">Skill:</span>
-            <span class="skill-value ${skillClass}">${recruit.skill.toUpperCase()}</span>
-          </div>
+          <div class="recruit-viewer-name">${recruit.name}</div>
+          <div class="recruit-rank">${recruit.skill.toUpperCase()}</div>
         </div>
         <div class="recruit-header-right">
           <button class="btn-close-viewer" id="btn-close-recruit-viewer">✕</button>
@@ -52,11 +48,6 @@ export function renderRecruitViewer(
       <div class="recruit-description">
         <div class="recruit-description-title">Profile</div>
         <div class="recruit-description-text">${getSkillDescription(recruit.skill)}</div>
-      </div>
-
-      <div class="recruit-stats-fresh">
-        <div class="recruit-stats-label">Career Statistics</div>
-        <div class="recruit-stats-note">New recruit — no combat history</div>
       </div>
 
       <div class="recruit-hire-section">
@@ -77,7 +68,7 @@ export function renderRecruitViewer(
   `;
 }
 
-/** Render a recruit card for the list */
+/** Render a recruit card for the list (matches pilot card structure) */
 export function renderRecruitCard(
   recruit: HireablePilot,
   isSelected: boolean,
@@ -89,16 +80,16 @@ export function renderRecruitCard(
 
   return `
     <article
-      class="recruit-card ${selectedClass} ${affordClass}"
+      class="roster-pilot-card recruit-card ${selectedClass} ${affordClass}"
       data-recruit-id="${recruit.id}"
       role="option"
       aria-selected="${isSelected}"
       tabindex="0"
       aria-label="${recruit.name}, ${recruit.skill} pilot, ${recruit.price} credits${canAfford ? '' : ', cannot afford'}"
     >
-      <div class="recruit-info">
-        <div class="recruit-name">${recruit.name}</div>
-        <span class="recruit-skill ${skillClass}">${recruit.skill}</span>
+      <div class="roster-pilot-info">
+        <div class="roster-pilot-name">${recruit.name}</div>
+        <div class="roster-pilot-status ${skillClass}">${recruit.skill}</div>
       </div>
       <div class="recruit-price">${recruit.price} cr</div>
     </article>

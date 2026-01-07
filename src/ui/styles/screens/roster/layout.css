@@ -99,8 +99,8 @@
   background: rgba(255, 159, 28, 0.1);
 }
 
-.roster-pilot-card.unassigned {
-  opacity: 0.7;
+.roster-pilot-card.unassigned .roster-pilot-status {
+  color: var(--text-secondary);
 }
 
 .roster-pilot-info {
@@ -141,10 +141,8 @@
     drop-shadow(0 0 8px var(--color-secondary-glow));
 }
 
-.roster-available {
-  font-family: var(--font-ui);
-  font-size: 0.65rem;
-  color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+.roster-ship-icon-empty {
+  filter: invert(1) brightness(0.7)
+    drop-shadow(0 0 4px rgba(255, 255, 255, 0.5))
+    drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
 }

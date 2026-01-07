@@ -122,9 +122,10 @@ function renderStandardDetail(
   }
 
   // Show quantity on buttons for consumables (ammo/missiles) with line break before price
+  // For non-consumables, just add a space before the price
   const showQty = showBulk;
-  const buyQtyText = showQty ? `&nbsp;×${singleBuyAmount}<br>` : '';
-  const sellQtyText = showQty ? `&nbsp;×${singleSellAmount}<br>` : '';
+  const buyQtyText = showQty ? `&nbsp;×${singleBuyAmount}<br>` : ' ';
+  const sellQtyText = showQty ? `&nbsp;×${singleSellAmount}<br>` : ' ';
 
   return `
     <div class="store-detail">

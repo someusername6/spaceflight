@@ -120,7 +120,7 @@ export function createNewCampaign(): CampaignState {
     storedHulls: [], // No spare hulls at start
     storedWeapons: [],
     storedAmmo: [], // No spare ammo at start
-    storedScrap: { striker: 500 }, // Test scrap
+    storedScrap: {},
     storeStock: createInitialStoreStock(),
     availableRecruits, // Pilots available for hire
     currentSector: 1,

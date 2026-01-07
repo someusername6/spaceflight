@@ -131,9 +131,93 @@
   text-transform: capitalize;
 }
 
-.btn-unassign-pilot {
-  display: block;
-  margin: 0 auto;
+/* ========================================
+   SHIP PREVIEW SECTION (assigned pilot)
+   ======================================== */
+
+.pilot-ship-section {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  border-top: 1px solid var(--border-color);
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.pilot-ship-section .assignment-row {
+  padding: 10px 12px;
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.ship-preview-container {
+  flex: 1;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Ship preview fills container */
+.ship-preview {
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  border: none;
+  background: transparent;
+}
+
+.ship-preview::before {
+  display: none;
+}
+
+.ship-preview .schematic-diagram {
+  height: 100%;
+  padding: 8px 12px;
+}
+
+/* Remove interactivity from preview slots */
+.ship-preview .schematic-slot {
+  cursor: default;
+}
+
+.ship-preview .schematic-slot:hover {
+  background: rgba(0, 0, 0, 0.3);
+  border-color: var(--border-color);
+}
+
+.ship-preview .schematic-slot.filled:hover {
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.3) 0%,
+    rgba(255, 159, 28, 0.08) 100%
+  );
+  border-color: var(--slot-color, var(--border-light));
+}
+
+.assignment-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  padding: 12px;
+  border-top: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+/* Large buttons (matching store buy/sell size) */
+.btn-lg {
+  padding: 12px 24px;
+  font-size: 0.85rem;
+}
+
+.btn-view-ship {
+  border-color: var(--color-secondary);
+  color: var(--color-secondary);
+}
+
+.btn-view-ship:hover {
+  background: rgba(0, 245, 255, 0.1);
 }
 
 /* ========================================
@@ -143,7 +227,7 @@
 .hull-options {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 16px;
   justify-content: center;
 }
 
@@ -151,13 +235,13 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 12px 16px;
+  gap: 10px;
+  padding: 20px 28px;
   background: var(--bg-panel);
   border: 1px solid var(--border-color);
   cursor: pointer;
   transition: all 0.15s ease;
-  min-width: 90px;
+  min-width: 140px;
 }
 
 .hull-card-btn:hover {
@@ -166,13 +250,11 @@
 }
 
 .hull-card-icon {
-  width: 40px;
-  height: 40px;
+  width: 80px;
+  height: 80px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid var(--border-color);
 }
 
 .hull-icon-svg {
@@ -185,8 +267,38 @@
 
 .hull-card-name {
   font-family: var(--font-ui);
-  font-size: 0.75rem;
+  font-size: 0.95rem;
   color: var(--text-primary);
   text-transform: capitalize;
   text-align: center;
+}
+
+/* ========================================
+   NO HULLS MESSAGE
+   ======================================== */
+
+.no-hulls-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 24px 16px;
+  margin-top: auto;
+}
+
+.no-hulls-message {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+.btn-go-to-store {
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
+.btn-go-to-store:hover {
+  background: rgba(0, 255, 136, 0.1);
+  box-shadow: 0 0 15px var(--color-success-glow);
 }

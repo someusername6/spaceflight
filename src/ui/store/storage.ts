@@ -130,7 +130,7 @@ export function renderStoreStorage(
   const hullsSection = hasHulls
     ? `
       <div class="storage-section">
-        <div class="storage-label">Ship Hulls (${state.storedHulls.length})</div>
+        <div class="storage-label">Ship Hulls</div>
         ${state.storedHulls
           .map((hull) =>
             renderStoredHullItem(hull, isSelected('hulls', hull.shipClass)),

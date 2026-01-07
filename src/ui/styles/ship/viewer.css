@@ -78,6 +78,13 @@
   font-weight: 500;
   color: var(--text-secondary);
   letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-view-pilot {
+  margin-left: 8px;
 }
 
 /* ========================================
@@ -95,34 +102,6 @@
   min-height: 0;
   position: relative;
   overflow: hidden;
-}
-
-/* Scanline effect across entire schematic diagram */
-.schematic-diagram.vertical::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--color-secondary),
-    transparent
-  );
-  opacity: 0.4;
-  animation: schematic-scanline 4s linear infinite;
-  pointer-events: none;
-  z-index: 0;
-}
-
-@keyframes schematic-scanline {
-  0% {
-    top: 0;
-  }
-  100% {
-    top: 100%;
-  }
 }
 
 /* ========================================
@@ -283,7 +262,7 @@
 
 .slot-capacity {
   font-family: var(--font-body);
-  font-size: 0.55rem;
+  font-size: 0.8rem;
   color: var(--text-secondary);
 }
 

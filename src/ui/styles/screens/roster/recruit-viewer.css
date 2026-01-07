@@ -38,10 +38,10 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 16px;
+  padding: 12px;
   background: linear-gradient(
     180deg,
-    rgba(0, 245, 255, 0.06) 0%,
+    rgba(0, 245, 255, 0.08) 0%,
     transparent 100%
   );
   border-bottom: 1px solid var(--border-color);
@@ -52,54 +52,29 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
+}
+
+.recruit-header-right {
+  display: flex;
+  align-items: flex-start;
 }
 
 .recruit-viewer-name {
   font-family: var(--font-display);
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: var(--color-secondary);
-  letter-spacing: 0.12em;
+  letter-spacing: 0.15em;
   text-shadow: 0 0 15px var(--color-secondary-glow);
 }
 
-.recruit-viewer-skill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-family: var(--font-display);
-  font-size: 0.8rem;
+.recruit-rank {
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
   font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.recruit-viewer-skill .skill-label {
-  color: var(--text-dim);
-}
-
-.recruit-viewer-skill .skill-value {
-  padding: 3px 8px;
-  border-radius: 2px;
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid currentColor;
-}
-
-.recruit-viewer-skill .skill-value.rookie {
   color: var(--text-secondary);
-}
-.recruit-viewer-skill .skill-value.regular {
-  color: var(--color-secondary-dim);
-}
-.recruit-viewer-skill .skill-value.veteran {
-  color: var(--color-success);
-}
-.recruit-viewer-skill .skill-value.ace {
-  color: var(--color-warning);
-}
-.recruit-viewer-skill .skill-value.elite {
-  color: var(--color-danger);
+  letter-spacing: 0.05em;
 }
 
 .recruit-description {
@@ -122,29 +97,6 @@
   font-size: 0.8rem;
   color: var(--text-secondary);
   line-height: 1.5;
-}
-
-.recruit-stats-fresh {
-  padding: 16px;
-  border-bottom: 1px solid var(--border-color);
-  background: rgba(0, 0, 0, 0.1);
-}
-
-.recruit-stats-label {
-  font-family: var(--font-display);
-  font-size: 0.7rem;
-  font-weight: 500;
-  color: var(--text-dim);
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  margin-bottom: 8px;
-}
-
-.recruit-stats-note {
-  font-family: var(--font-body);
-  font-size: 0.75rem;
-  color: var(--text-dim);
-  font-style: italic;
 }
 
 .recruit-hire-section {

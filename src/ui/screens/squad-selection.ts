@@ -96,12 +96,6 @@ function renderModal(
 ): string {
   // Get ships with pilots (can deploy)
   const deployableShips = state.ships.filter((s) => s.pilot !== null);
-
-  // Count damaged ships
-  const damagedCount = deployableShips.filter(
-    (s) => getHullPercent(s) < 50,
-  ).length;
-
   const selectedCount = selectedIds.size;
 
   // Render ship cards
@@ -112,12 +106,6 @@ function renderModal(
       return renderShipCard(ship, isCommander, isSelected);
     })
     .join('');
-
-  // Warning message for damaged ships
-  const warningHtml =
-    damagedCount > 0
-      ? `<div class="squad-warning">${damagedCount} damaged ship${damagedCount > 1 ? 's' : ''}</div>`
-      : '';
 
   return `
     <div class="squad-selection-overlay" role="dialog" aria-modal="true" aria-labelledby="squad-title">
@@ -140,7 +128,6 @@ function renderModal(
             <div class="squad-deploy-count">
               Deploying: <strong>${selectedCount}</strong> / ${MAX_DEPLOYMENT} ships
             </div>
-            ${warningHtml}
           </div>
           <div class="squad-footer-actions">
             <button class="btn-squad-cancel" id="btn-squad-cancel">Cancel</button>

@@ -31,6 +31,16 @@ export function setupHangarScreen(
   hangarElement: HTMLElement,
   setupContractsScreen: (controller: CampaignController) => void,
 ): void {
+  setupHangarScreenWithShip(controller, hangarElement, setupContractsScreen);
+}
+
+/** Setup hangar screen with optional initial ship selection */
+export function setupHangarScreenWithShip(
+  controller: CampaignController,
+  hangarElement: HTMLElement,
+  setupContractsScreen: (controller: CampaignController) => void,
+  initialShipId?: string,
+): void {
   const { screenManager } = controller;
 
   // Navigation handler for all screens
@@ -63,11 +73,25 @@ export function setupHangarScreen(
     updateCampaignState(screenManager, newState);
   };
 
+  // View pilot handler - navigate to roster with pilot selected
+  const onViewPilot = (pilotId: string) => {
+    goToRoster(screenManager);
+    const rosterElement = getScreenElement(screenManager, Screen.ROSTER);
+    setupRosterScreenWithPilot(
+      controller,
+      rosterElement,
+      setupContractsScreen,
+      pilotId,
+    );
+  };
+
   createHangarUI(
     hangarElement,
     screenManager.campaignState,
     onNavigate,
     onStateUpdate,
+    initialShipId,
+    onViewPilot,
   );
 }
 
@@ -123,6 +147,16 @@ export function setupRosterScreen(
   rosterElement: HTMLElement,
   setupContractsScreen: (controller: CampaignController) => void,
 ): void {
+  setupRosterScreenWithPilot(controller, rosterElement, setupContractsScreen);
+}
+
+/** Setup roster screen with optional initial pilot selection */
+export function setupRosterScreenWithPilot(
+  controller: CampaignController,
+  rosterElement: HTMLElement,
+  setupContractsScreen: (controller: CampaignController) => void,
+  initialPilotId?: string,
+): void {
   const { screenManager } = controller;
 
   // Navigation handler for all screens
@@ -155,11 +189,25 @@ export function setupRosterScreen(
     updateCampaignState(screenManager, newState);
   };
 
+  // View ship handler - navigate to hangar with ship selected
+  const onViewShip = (shipId: string) => {
+    goToHangar(screenManager);
+    const hangarElement = getScreenElement(screenManager, Screen.HANGAR);
+    setupHangarScreenWithShip(
+      controller,
+      hangarElement,
+      setupContractsScreen,
+      shipId,
+    );
+  };
+
   createRosterUI(
     rosterElement,
     screenManager.campaignState,
     onNavigate,
     onStateUpdate,
+    onViewShip,
+    initialPilotId,
   );
 }
 

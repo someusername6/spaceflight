@@ -30,6 +30,7 @@ export interface HangarUI {
   selectedShipId: string | null;
   onNavigate: (destination: NavDestination) => void;
   onStateUpdate?: (newState: CampaignState) => void;
+  onViewPilot?: (pilotId: string) => void;
 }
 
 /** Sort ships with commander's ship first */
@@ -150,15 +151,18 @@ export function createHangarUI(
   state: CampaignState,
   onNavigate: (destination: NavDestination) => void,
   onStateUpdate?: (newState: CampaignState) => void,
+  initialShipId?: string,
+  onViewPilot?: (pilotId: string) => void,
 ): HangarUI {
   const ui: HangarUI = {
     element,
     state,
-    selectedShipId: null,
+    selectedShipId: initialShipId ?? null,
     onNavigate,
   };
 
   if (onStateUpdate) ui.onStateUpdate = onStateUpdate;
+  if (onViewPilot) ui.onViewPilot = onViewPilot;
 
   renderAndBindHangar(ui);
   return ui;
@@ -196,6 +200,18 @@ function renderAndBindHangar(ui: HangarUI): void {
     closeBtn.addEventListener('click', () => {
       ui.selectedShipId = null;
       renderAndBindHangar(ui);
+    });
+  }
+
+  // Bind view pilot button
+  const viewPilotBtn = ui.element.querySelector('.btn-view-pilot');
+  if (viewPilotBtn && ui.onViewPilot) {
+    viewPilotBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const pilotId = (e.target as HTMLElement).dataset.pilot;
+      if (pilotId) {
+        ui.onViewPilot?.(pilotId);
+      }
     });
   }
 

@@ -17,6 +17,7 @@ import {
   type NavDestination,
   renderNavBar,
 } from '../common/nav-bar';
+import { destroyShipConnectors, initShipConnectors } from '../ship/connectors';
 import { FALLBACK_ICON_PATH, getShipIconPath } from '../ship/viewer';
 import { renderPilotViewer } from './pilot-viewer';
 import { renderRecruitCard, renderRecruitViewer } from './recruit-viewer';
@@ -29,6 +30,7 @@ export interface RosterUI {
   selectedRecruitId: string | null;
   onNavigate: (destination: NavDestination) => void;
   onStateUpdate?: (newState: CampaignState) => void;
+  onViewShip?: (shipId: string) => void;
 }
 
 /** Render a pilot card in the pilots list */
@@ -43,10 +45,10 @@ function renderPilotCard(
   const assignedClass = isAssigned ? 'assigned' : 'unassigned';
   const commanderClass = isCommander ? 'commander-pilot' : '';
 
-  // Show ship assignment with icon
+  // Show ship assignment with icon (or gray X for unassigned)
   const shipDisplay = assignedShip
     ? `<img src="${getShipIconPath(assignedShip.shipClass)}" alt="${assignedShip.shipClass}" class="roster-ship-icon" onerror="this.onerror=null; this.src='${FALLBACK_ICON_PATH}'" />`
-    : '<span class="roster-available">Available</span>';
+    : `<img src="${FALLBACK_ICON_PATH}" alt="Unassigned" class="roster-ship-icon roster-ship-icon-empty" />`;
 
   return `
     <article
@@ -148,7 +150,6 @@ function renderRoster(
             </div>
 
             <!-- Recruits Section -->
-            <div class="roster-section-divider" aria-hidden="true"></div>
             <header class="panel-header recruits-header">
               <span class="panel-icon" aria-hidden="true">+</span>
               <span class="panel-title">Recruits</span>
@@ -175,16 +176,19 @@ export function createRosterUI(
   state: CampaignState,
   onNavigate: (destination: NavDestination) => void,
   onStateUpdate?: (newState: CampaignState) => void,
+  onViewShip?: (shipId: string) => void,
+  initialPilotId?: string,
 ): RosterUI {
   const ui: RosterUI = {
     element,
     state,
-    selectedPilotId: null,
+    selectedPilotId: initialPilotId ?? null,
     selectedRecruitId: null,
     onNavigate,
   };
 
   if (onStateUpdate) ui.onStateUpdate = onStateUpdate;
+  if (onViewShip) ui.onViewShip = onViewShip;
 
   renderAndBindRoster(ui);
   return ui;
@@ -192,12 +196,24 @@ export function createRosterUI(
 
 /** Internal: render roster and bind all events */
 function renderAndBindRoster(ui: RosterUI): void {
+  // Clean up existing ship preview connectors before re-render
+  const existingPreview = ui.element.querySelector('.ship-preview');
+  if (existingPreview) {
+    destroyShipConnectors(existingPreview);
+  }
+
   ui.element.innerHTML = renderRoster(
     ui.state,
     ui.selectedPilotId,
     ui.selectedRecruitId,
     ui.onNavigate,
   );
+
+  // Initialize ship preview connectors
+  const shipPreview = ui.element.querySelector('.ship-preview');
+  if (shipPreview) {
+    initShipConnectors(shipPreview);
+  }
 
   // Bind navigation bar
   bindNavBar(ui.element, ui.onNavigate);
@@ -300,6 +316,18 @@ function renderAndBindRoster(ui: RosterUI): void {
     });
   });
 
+  // Bind view ship buttons
+  ui.element.querySelectorAll('.btn-view-ship').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const target = e.target as HTMLElement;
+      const shipId = target.dataset.ship;
+      if (shipId && ui.onViewShip) {
+        ui.onViewShip(shipId);
+      }
+    });
+  });
+
   // Bind assign pilot to ship buttons
   ui.element.querySelectorAll('.btn-assign-pilot').forEach((btn) => {
     btn.addEventListener('click', (e) => {
@@ -342,6 +370,14 @@ function renderAndBindRoster(ui: RosterUI): void {
       }
     });
   });
+
+  // Bind go to store button
+  const goToStoreBtn = ui.element.querySelector('.btn-go-to-store');
+  if (goToStoreBtn) {
+    goToStoreBtn.addEventListener('click', () => {
+      ui.onNavigate('store');
+    });
+  }
 }
 
 /** Update roster UI with new state */

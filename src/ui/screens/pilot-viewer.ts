@@ -3,7 +3,11 @@
  */
 
 import type { CampaignState, OwnedShip, Pilot } from '../../campaign/types';
-import { FALLBACK_ICON_PATH, getShipIconPath } from '../ship/viewer';
+import {
+  FALLBACK_ICON_PATH,
+  getShipIconPath,
+  renderShipPreview,
+} from '../ship/viewer';
 
 /** Get available ships for pilot assignment (ships without pilots) */
 function getAvailableShipsForPilot(state: CampaignState): OwnedShip[] {
@@ -20,20 +24,29 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
   // Rank: "PLAYER" for commander, skill level for others
   const rankText = isCommander ? 'PLAYER' : pilot.skill.toUpperCase();
 
-  // Unassign option when pilot is assigned
-  const unassignOption =
+  // Ship preview with actions when pilot is assigned
+  const shipPreviewSection =
     isAssigned && currentShip
       ? `
-        <div class="pilot-assignment">
+        <div class="pilot-ship-section">
           <div class="assignment-row">
             <span class="assignment-label">Currently assigned:</span>
             <span class="assignment-ship">${currentShip.shipClass}</span>
           </div>
-          <button class="btn btn-danger btn-unassign-pilot"
-                  data-ship="${currentShip.id}"
-                  data-pilot="${pilot.id}">
-            Unassign
-          </button>
+          <div class="ship-preview-container">
+            ${renderShipPreview(currentShip)}
+          </div>
+          <div class="assignment-actions">
+            <button class="btn btn-lg btn-view-ship"
+                    data-ship="${currentShip.id}">
+              Edit in Hangar
+            </button>
+            <button class="btn btn-lg btn-danger btn-unassign-pilot"
+                    data-ship="${currentShip.id}"
+                    data-pilot="${pilot.id}">
+              Unassign
+            </button>
+          </div>
         </div>
       `
       : '';
@@ -88,6 +101,17 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
       `
       : '';
 
+  // Message when no ships or hulls available
+  const noHullsMessage =
+    !isAssigned && availableShips.length === 0 && state.storedHulls.length === 0
+      ? `
+        <div class="no-hulls-section">
+          <div class="no-hulls-message">No available ships or hulls for this pilot</div>
+          <button class="btn btn-go-to-store" data-section="hulls">Buy Hull in Store</button>
+        </div>
+      `
+      : '';
+
   return `
     <div class="pilot-viewer">
       <div class="pilot-viewer-header">
@@ -127,9 +151,10 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
         </div>
       </div>
 
-      ${unassignOption}
+      ${shipPreviewSection}
       ${shipOptions}
       ${hullOptions}
+      ${noHullsMessage}
     </div>
   `;
 }

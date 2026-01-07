@@ -180,6 +180,44 @@ function renderHardpointRows(
     .join('');
 }
 
+/** Render the schematic diagram (shared between viewer and preview) */
+function renderSchematicDiagram(ship: OwnedShip): string {
+  const stats = SHIP_CLASSES[ship.shipClass.toLowerCase()];
+  if (!stats) return '';
+
+  const primaryRows = renderHardpointRows(
+    stats.primaryHardpoints,
+    stats.primaryBanks,
+    ship.primaryWeapons,
+    ship.id,
+    'primary',
+  );
+
+  const secondaryRows = renderHardpointRows(
+    stats.secondaryHardpoints,
+    stats.secondaryBanks,
+    ship.secondaryWeapons,
+    ship.id,
+    'secondary',
+  );
+
+  return `
+    <div class="schematic-diagram vertical">
+      <div class="hardpoint-row primary-row">
+        ${primaryRows}
+      </div>
+
+      <div class="schematic-center">
+        ${renderShipIcon(ship.shipClass)}
+      </div>
+
+      <div class="hardpoint-row secondary-row">
+        ${secondaryRows}
+      </div>
+    </div>
+  `;
+}
+
 /** Render the complete ship viewer - TOP/BOTTOM SCHEMATIC LAYOUT */
 export function renderShipViewer(
   ship: OwnedShip,
@@ -190,56 +228,40 @@ export function renderShipViewer(
 
   // Check if this is the commander's ship
   const isCommander = ship.pilot?.id === state.commanderId;
-
   const pilotName = ship.pilot?.name.toUpperCase() ?? 'NO PILOT';
-
-  // Don't show skill for commander
   const pilotSkill =
     isCommander || !ship.pilot ? '' : ` • ${ship.pilot.skill.toUpperCase()}`;
 
-  // Render primary slots grouped by row
-  const primaryRows = renderHardpointRows(
-    stats.primaryHardpoints,
-    stats.primaryBanks,
-    ship.primaryWeapons,
-    ship.id,
-    'primary',
-  );
-
-  // Render secondary slots grouped by row
-  const secondaryRows = renderHardpointRows(
-    stats.secondaryHardpoints,
-    stats.secondaryBanks,
-    ship.secondaryWeapons,
-    ship.id,
-    'secondary',
-  );
+  // View in Roster button (only if pilot assigned)
+  const viewPilotBtn = ship.pilot
+    ? `<button class="btn btn-small btn-view-pilot" data-pilot="${ship.pilot.id}">View</button>`
+    : '';
 
   return `
     <div class="ship-viewer schematic">
       <div class="schematic-header">
         <div class="schematic-header-left">
           <span class="schematic-class">${ship.shipClass.toUpperCase()}</span>
-          <span class="schematic-pilot">${pilotName}${pilotSkill}</span>
+          <span class="schematic-pilot">${pilotName}${pilotSkill}${viewPilotBtn}</span>
         </div>
         <div class="schematic-header-right"></div>
       </div>
 
-      <div class="schematic-diagram vertical">
-        <div class="hardpoint-row primary-row">
-          ${primaryRows}
-        </div>
-
-        <div class="schematic-center">
-          ${renderShipIcon(ship.shipClass)}
-        </div>
-
-        <div class="hardpoint-row secondary-row">
-          ${secondaryRows}
-        </div>
-      </div>
+      ${renderSchematicDiagram(ship)}
 
       ${renderShipActions(ship, state)}
+    </div>
+  `;
+}
+
+/** Render a read-only ship preview (for roster screen) */
+export function renderShipPreview(ship: OwnedShip): string {
+  const stats = SHIP_CLASSES[ship.shipClass.toLowerCase()];
+  if (!stats) return '<div class="ship-preview-error">Unknown ship class</div>';
+
+  return `
+    <div class="ship-viewer schematic ship-preview readonly">
+      ${renderSchematicDiagram(ship)}
     </div>
   `;
 }
