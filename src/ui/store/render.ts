@@ -138,14 +138,23 @@ export function renderPrimaryStats(weaponType: string): string {
   const damageLabel = isContinuous ? 'Damage per second:' : 'Damage:';
   const heatLabel = isContinuous ? 'Heat per second:' : 'Heat per shot:';
 
+  // Flak-specific stats
+  const flakStats = stats.flakRadius
+    ? `
+      <div class="stat-row"><span>Burst radius:</span><span>${stats.flakRadius} m</span></div>
+      <div class="stat-row"><span>Shrapnel count:</span><span>${stats.shrapnelCount}</span></div>
+    `
+    : '';
+
   return `
     ${renderItemPreview('primaries', weaponType)}
     <div class="item-stats">
       <div class="stat-row"><span>Category:</span><span>${categoryText}</span></div>
       <div class="stat-row"><span>${damageLabel}</span><span>${stats.damage}</span></div>
       <div class="stat-row"><span>Range:</span><span>${stats.range} m</span></div>
-      <div class="stat-row"><span>Fire Rate:</span><span>${fireRateText}</span></div>
+      <div class="stat-row"><span>Fire rate:</span><span>${fireRateText}</span></div>
       <div class="stat-row"><span>${heatLabel}</span><span>${stats.heatPerShot}</span></div>
+      ${flakStats}
       <div class="stat-row"><span>Ammo:</span><span>${ammoText}</span></div>
     </div>
   `;
