@@ -12,17 +12,18 @@
 .debrief-section {
   max-width: 1000px;
   margin: 0 auto;
-  animation: fadeSlideIn 0.4s ease-out;
+  animation: fadeSlideIn var(--duration-slower) var(--ease-out);
 }
 
 .debrief-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  padding: 14px 18px;
-  background: rgba(0, 0, 0, 0.4);
+  margin-bottom: var(--space-5);
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-base);
   border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm), var(--shadow-inset-sm);
   position: relative;
 }
 
@@ -53,9 +54,9 @@
 
 .debrief-header h2 {
   font-family: var(--font-ui);
-  font-size: 0.85rem;
-  font-weight: 600;
-  letter-spacing: 0.12em;
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  letter-spacing: var(--tracking-widest);
   color: var(--text-secondary);
   text-transform: uppercase;
   margin: 0;
@@ -63,9 +64,9 @@
 
 .mission-time {
   font-family: var(--font-display);
-  font-size: 0.9rem;
+  font-size: var(--text-sm);
   color: var(--color-primary);
-  text-shadow: 0 0 6px var(--color-primary-glow);
+  text-shadow: 0 0 var(--glow-sm) var(--color-primary-glow);
 }
 
 /* ========================================
@@ -75,7 +76,7 @@
 .pilot-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
-  gap: 16px;
+  gap: var(--space-4);
 }
 
 @media (max-width: 500px) {
@@ -85,34 +86,40 @@
 }
 
 .pilot-card {
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--bg-raised);
   border: 1px solid var(--border-color);
-  padding: 16px;
+  box-shadow: var(--shadow-md), var(--shadow-inset-sm);
+  padding: var(--space-4);
   position: relative;
   overflow: hidden;
   max-width: 500px;
-  animation: cardReveal 0.4s ease-out;
+  animation: cardReveal var(--duration-slower) var(--ease-out);
   animation-fill-mode: both;
 }
 
 /* Staggered animation for cards */
 .pilot-card:nth-child(1) {
-  animation-delay: 0.1s;
+  animation-delay: calc(var(--stagger-delay) * 2);
 }
 .pilot-card:nth-child(2) {
-  animation-delay: 0.15s;
+  animation-delay: calc(var(--stagger-delay) * 3);
 }
 .pilot-card:nth-child(3) {
-  animation-delay: 0.2s;
+  animation-delay: calc(var(--stagger-delay) * 4);
 }
 .pilot-card:nth-child(4) {
-  animation-delay: 0.25s;
+  animation-delay: calc(var(--stagger-delay) * 5);
 }
 .pilot-card:nth-child(5) {
-  animation-delay: 0.3s;
+  animation-delay: calc(var(--stagger-delay) * 6);
 }
 .pilot-card:nth-child(6) {
-  animation-delay: 0.35s;
+  animation-delay: calc(var(--stagger-delay) * 7);
+}
+
+.pilot-card:focus-visible {
+  outline: 2px solid var(--color-secondary);
+  outline-offset: 2px;
 }
 
 @keyframes cardReveal {
@@ -175,7 +182,7 @@
   background: linear-gradient(
     135deg,
     transparent 50%,
-    rgba(255, 255, 255, 0.03) 50%
+    var(--highlight-subtle) 50%
   );
 }
 
@@ -187,37 +194,37 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 12px;
+  margin-bottom: var(--space-3);
 }
 
 .pilot-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-0-5);
 }
 
 .callsign {
   font-family: var(--font-display);
-  font-size: 1.05rem;
-  font-weight: 600;
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
   color: var(--text-primary);
-  letter-spacing: 0.08em;
+  letter-spacing: var(--tracking-wider);
 }
 
 .pilot-card.player .callsign {
   color: var(--color-primary);
-  text-shadow: 0 0 10px var(--color-primary-glow);
+  text-shadow: 0 0 var(--glow-md) var(--color-primary-glow);
 }
 
 .archetype {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-1-5);
   font-family: var(--font-ui);
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   color: var(--text-dim);
   text-transform: capitalize;
-  letter-spacing: 0.03em;
+  letter-spacing: var(--tracking-wide);
 }
 
 .debrief-ship-icon {
@@ -230,11 +237,11 @@
 
 .pilot-status {
   font-family: var(--font-ui);
-  font-size: 0.7rem;
-  font-weight: 600;
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  padding: 5px 12px;
+  letter-spacing: var(--tracking-widest);
+  padding: var(--space-1) var(--space-3);
   clip-path: polygon(
     6px 0,
     100% 0,
@@ -246,15 +253,15 @@
 }
 
 .pilot-status.survived {
-  background: rgba(0, 255, 136, 0.15);
+  background: color-mix(in srgb, var(--color-success) 15%, transparent);
   color: var(--color-success);
-  border: 1px solid rgba(0, 255, 136, 0.35);
+  border: 1px solid color-mix(in srgb, var(--color-success) 35%, transparent);
 }
 
 .pilot-status.kia {
-  background: rgba(255, 51, 102, 0.15);
+  background: color-mix(in srgb, var(--color-danger) 15%, transparent);
   color: var(--color-danger);
-  border: 1px solid rgba(255, 51, 102, 0.35);
+  border: 1px solid color-mix(in srgb, var(--color-danger) 35%, transparent);
   animation: kiaFlicker 3s ease-in-out infinite;
 }
 
@@ -276,9 +283,9 @@
 }
 
 .time-of-death {
-  font-size: 0.65rem;
+  font-size: var(--text-2xs);
   opacity: 0.8;
-  margin-left: 6px;
+  margin-left: var(--space-1-5);
 }
 
 /* ========================================
@@ -288,7 +295,7 @@
 
 .pilot-stats {
   grid-template-columns: repeat(4, 1fr);
-  margin-bottom: 14px;
+  margin-bottom: var(--space-3);
 }
 
 /* ========================================
@@ -296,26 +303,26 @@
    ======================================== */
 
 .weapon-breakdown {
-  margin-top: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-  padding-top: 12px;
+  margin-top: var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--space-3);
 }
 
 .weapon-breakdown table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
 }
 
 .weapon-breakdown th {
   font-family: var(--font-ui);
-  font-size: 0.6rem;
-  font-weight: 600;
+  font-size: var(--text-2xs);
+  font-weight: var(--font-semibold);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: var(--tracking-wider);
   color: var(--text-dim);
   text-align: left;
-  padding: 8px 6px;
+  padding: var(--space-2) var(--space-1-5);
   border-bottom: 1px solid var(--border-color);
 }
 
@@ -326,8 +333,8 @@
 .weapon-breakdown td {
   font-family: var(--font-body);
   color: var(--text-secondary);
-  padding: 8px 6px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+  padding: var(--space-2) var(--space-1-5);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .weapon-breakdown tr:last-child td {
@@ -335,20 +342,20 @@
 }
 
 .weapon-breakdown tr:hover td {
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--highlight-subtle);
 }
 
 .weapon-breakdown td.damage {
   text-align: right;
   font-family: var(--font-display);
   color: var(--color-primary);
-  text-shadow: 0 0 4px var(--color-primary-glow);
+  text-shadow: 0 0 var(--glow-sm) var(--color-primary-glow);
 }
 
 .weapon-breakdown .no-weapons {
   text-align: center;
   color: var(--text-dim);
-  padding: 16px;
+  padding: var(--space-4);
 }
 
 /* ========================================
@@ -358,9 +365,9 @@
 .weapon-row {
   display: flex;
   align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-  font-size: 0.8rem;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: var(--text-sm);
 }
 
 .weapon-row:last-child {

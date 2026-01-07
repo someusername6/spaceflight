@@ -95,6 +95,11 @@
   --highlight-strong: rgba(255, 255, 255, 0.12);
   --pressed-overlay: rgba(0, 0, 0, 0.3);
 
+  /* Text glow sizes (for text-shadow) */
+  --glow-sm: 4px;
+  --glow-md: 8px;
+  --glow-lg: 12px;
+
   /* ========================================
      BORDERS - Layered depth
      ======================================== */
@@ -217,6 +222,9 @@
   --transition-shadow: box-shadow var(--duration-base) var(--ease-out);
   --transition-opacity: opacity var(--duration-base) var(--ease-out);
   --transition-all: all var(--duration-base) var(--ease-out);
+
+  /* Staggered animation delay (multiply by index) */
+  --stagger-delay: 50ms;
 }
 
 /* ========================================
