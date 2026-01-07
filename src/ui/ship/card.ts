@@ -19,10 +19,6 @@ export function renderShipCard(
   commanderId: string,
 ): string {
   const stats = SHIP_CLASSES[ship.shipClass];
-  const maxHull = stats?.hull ?? 100;
-  const currentHull = maxHull - ship.hullDamage;
-  const hullPercent = Math.round((currentHull / maxHull) * 100);
-  const isDamaged = ship.hullDamage > 0;
   const abbrev = getShipAbbrev(ship.shipClass);
 
   // Total bank counts from ship class stats
@@ -58,12 +54,6 @@ export function renderShipCard(
       <div class="ship-card-info">
         <div class="card-pilot">${pilotName}</div>
         <div class="card-class">${ship.shipClass}</div>
-        <div class="card-hull ${isDamaged ? 'damaged' : ''}">
-          <div class="hull-bar">
-            <div class="hull-fill" style="width: ${hullPercent}%"></div>
-          </div>
-          <span class="hull-text">${hullPercent}%</span>
-        </div>
       </div>
       <div class="ship-card-weapons">
         <span class="weapon-count primary ${primaryUnarmed ? 'unarmed' : ''}">${equippedPrimary}/${totalPrimary}</span>

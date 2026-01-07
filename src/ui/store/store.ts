@@ -79,7 +79,7 @@ function renderStore(ui: StoreUI): string {
         return `
           <div class="store-item ${isSelected ? 'selected' : ''}" data-item="${item.id}" role="option" aria-selected="${isSelected}" tabindex="0">
             <span class="item-name">${item.name}</span>
-            <span class="item-stock" aria-label="${item.stock} in stock">[${item.stock}]</span>
+            <span class="item-stock" aria-label="${item.stock} in stock">×${item.stock}</span>
             <span class="item-price sell-price" aria-label="Sell price: ${sellPrice} credits">${sellPrice} cr</span>
           </div>
         `;
@@ -89,7 +89,7 @@ function renderStore(ui: StoreUI): string {
       return `
         <div class="store-item ${isSelected ? 'selected' : ''}" data-item="${item.id}" role="option" aria-selected="${isSelected}" tabindex="0">
           <span class="item-name">${item.name}</span>
-          <span class="item-stock" aria-label="${item.stock} in stock">[${item.stock}]</span>
+          <span class="item-stock" aria-label="${item.stock} in stock">×${item.stock}</span>
           <span class="item-price ${canAfford ? '' : 'expensive'}" aria-label="Price: ${buyPrice} credits${canAfford ? '' : ', cannot afford'}">${buyPrice}&nbsp;cr</span>
         </div>
       `;

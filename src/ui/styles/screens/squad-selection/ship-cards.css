@@ -189,55 +189,6 @@
   letter-spacing: 0.05em;
 }
 
-.squad-ship-hull {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.squad-hull-label {
-  font-family: var(--font-ui);
-  font-size: 0.65rem;
-  color: var(--text-dim);
-  text-transform: uppercase;
-}
-
-.squad-hull-bar {
-  width: 50px;
-  height: 4px;
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid var(--border-color);
-}
-
-.squad-hull-fill {
-  height: 100%;
-  background: var(--color-success);
-  transition: width 0.3s ease;
-}
-
-.squad-hull-fill.damaged {
-  background: var(--color-warning);
-}
-
-.squad-hull-fill.critical {
-  background: var(--color-danger);
-}
-
-.squad-hull-percent {
-  font-family: var(--font-display);
-  font-size: 0.7rem;
-  color: var(--text-secondary);
-  min-width: 28px;
-}
-
-.squad-hull-percent.damaged {
-  color: var(--color-warning);
-}
-
-.squad-hull-percent.critical {
-  color: var(--color-danger);
-}
-
 .squad-ship-loadout {
   font-family: var(--font-ui);
   font-size: 0.7rem;

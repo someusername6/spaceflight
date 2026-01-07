@@ -49,7 +49,6 @@ function sortShipsCommanderFirst(
 /** Render ship details panel */
 function renderShipDetails(ship: OwnedShip): string {
   const statsRows = renderShipStatsRows(ship.shipClass, {
-    hullDamage: ship.hullDamage,
     classPrefix: 'detail',
   });
 

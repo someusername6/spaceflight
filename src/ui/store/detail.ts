@@ -49,7 +49,7 @@ function renderScrapDetail(
   const canSellBulk100 = storageCount >= 100;
   const conversionFee = getScrapConversionFee(itemId);
   const canConvert = canConvertScrapToHull(state, itemId);
-  const storageText = storageCount > 0 ? `In Storage: ${storageCount}` : '';
+  const storageText = storageCount > 0 ? `In storage: ${storageCount}` : '';
 
   return `
     <div class="store-detail">
@@ -61,13 +61,13 @@ function renderScrapDetail(
           Convert to Hull (${SCRAP_PER_HULL} scrap, ${conversionFee}&nbsp;cr)
         </button>
         <button class="btn btn-sell" id="btn-sell" ${canSell ? '' : 'disabled'}>
-          Sell (${sellPrice}&nbsp;cr)
+          Sell&nbsp;×1<br>(${sellPrice}&nbsp;cr)
         </button>
         <button class="btn btn-sell" id="btn-sell-bulk" ${canSellBulk10 ? '' : 'disabled'}>
-          Sell&nbsp;×10 (${sellPrice * 10}&nbsp;cr)
+          Sell&nbsp;×10<br>(${sellPrice * 10}&nbsp;cr)
         </button>
         <button class="btn btn-sell" id="btn-sell-bulk-100" ${canSellBulk100 ? '' : 'disabled'}>
-          Sell&nbsp;×100 (${sellPrice * 100}&nbsp;cr)
+          Sell&nbsp;×100<br>(${sellPrice * 100}&nbsp;cr)
         </button>
       </div>
     </div>
@@ -87,7 +87,7 @@ function renderStandardDetail(
 ): string {
   const canAfford = state.credits >= buyPrice && storeStockCount > 0;
   const canSell = storageCount > 0;
-  const storageText = storageCount > 0 ? `In Storage: ${storageCount}` : '';
+  const storageText = storageCount > 0 ? `In storage: ${storageCount}` : '';
 
   // Batch sizes depend on item type
   const isMissile = category === 'secondaries';
@@ -120,10 +120,10 @@ function renderStandardDetail(
     headerTitle = PRIMARY_WEAPONS[itemId]?.name ?? itemId;
   }
 
-  // Show quantity on buttons for consumables (ammo/missiles)
+  // Show quantity on buttons for consumables (ammo/missiles) with line break before price
   const showQty = showBulk;
-  const buyQtyText = showQty ? `&nbsp;×${singleBuyAmount}` : '';
-  const sellQtyText = showQty ? `&nbsp;×${singleSellAmount}` : '';
+  const buyQtyText = showQty ? `&nbsp;×${singleBuyAmount}<br>` : '';
+  const sellQtyText = showQty ? `&nbsp;×${singleSellAmount}<br>` : '';
 
   return `
     <div class="store-detail">
@@ -132,13 +132,13 @@ function renderStandardDetail(
       ${storageText ? `<div class="detail-storage">${storageText}</div>` : ''}
       <div class="detail-actions">
         <button class="btn btn-buy" id="btn-buy" ${canAfford ? '' : 'disabled'}>
-          Buy${buyQtyText} (${singleBuyPrice}&nbsp;cr)
+          Buy${buyQtyText}(${singleBuyPrice}&nbsp;cr)
         </button>
-        ${showBulk ? `<button class="btn btn-buy" id="btn-buy-bulk" ${canAffordBulk ? '' : 'disabled'}>Buy&nbsp;×${bulkAmount} (${bulkPrice}&nbsp;cr)</button>` : ''}
+        ${showBulk ? `<button class="btn btn-buy" id="btn-buy-bulk" ${canAffordBulk ? '' : 'disabled'}>Buy&nbsp;×${bulkAmount}<br>(${bulkPrice}&nbsp;cr)</button>` : ''}
         <button class="btn btn-sell" id="btn-sell" ${canSell ? '' : 'disabled'}>
-          Sell${sellQtyText} (${singleSellPrice}&nbsp;cr)
+          Sell${sellQtyText}(${singleSellPrice}&nbsp;cr)
         </button>
-        ${showBulk ? `<button class="btn btn-sell" id="btn-sell-bulk" ${canSellBulk ? '' : 'disabled'}>Sell&nbsp;×${bulkAmount} (${bulkSellPrice}&nbsp;cr)</button>` : ''}
+        ${showBulk ? `<button class="btn btn-sell" id="btn-sell-bulk" ${canSellBulk ? '' : 'disabled'}>Sell&nbsp;×${bulkAmount}<br>(${bulkSellPrice}&nbsp;cr)</button>` : ''}
       </div>
     </div>
   `;

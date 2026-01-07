@@ -6,7 +6,6 @@
  */
 
 import type { CampaignState, Contract, OwnedShip } from '../../campaign/types';
-import { SHIP_CLASSES } from '../../data/ships';
 import { FALLBACK_ICON_PATH, getShipIconPath } from '../ship/viewer';
 
 /** Maximum ships that can be deployed */
@@ -16,21 +15,6 @@ const MAX_DEPLOYMENT = 4;
 export interface SquadSelectionResult {
   confirmed: boolean;
   deployedShipIds: string[];
-}
-
-/** Get hull percentage for a ship */
-function getHullPercent(ship: OwnedShip): number {
-  const shipClass = SHIP_CLASSES[ship.shipClass];
-  if (!shipClass) return 100;
-  const maxHull = shipClass.hull;
-  return Math.round(((maxHull - ship.hullDamage) / maxHull) * 100);
-}
-
-/** Get hull status class */
-function getHullClass(percent: number): string {
-  if (percent <= 25) return 'critical';
-  if (percent <= 50) return 'damaged';
-  return '';
 }
 
 /** Render loadout summary for a ship */
@@ -63,9 +47,6 @@ function renderShipCard(
   const pilot = ship.pilot;
   if (!pilot) return '';
 
-  const hullPercent = getHullPercent(ship);
-  const hullClass = getHullClass(hullPercent);
-  const isDamaged = hullPercent < 50;
   const skillClass = pilot.skill.toLowerCase();
   const iconPath = getShipIconPath(ship.shipClass);
 
@@ -83,7 +64,7 @@ function renderShipCard(
       data-ship-id="${ship.id}"
       role="checkbox"
       aria-checked="${isSelected}"
-      aria-label="${pilot.name}, ${ship.shipClass}, ${hullPercent}% hull${isCommander ? ', your ship' : ''}"
+      aria-label="${pilot.name}, ${ship.shipClass}${isCommander ? ', your ship' : ''}"
       tabindex="0"
     >
       <div class="squad-toggle" aria-hidden="true"></div>
@@ -92,22 +73,11 @@ function renderShipCard(
         <div class="squad-ship-name-row">
           <span class="squad-ship-pilot">${pilot.name}</span>
           ${isCommander ? '<span class="squad-badge you">You</span>' : ''}
-          ${isDamaged ? '<span class="squad-badge damaged">Damaged</span>' : ''}
         </div>
         <div class="squad-ship-details">
           <div class="squad-ship-class-row">
             <img src="${iconPath}" alt="${ship.shipClass}" class="squad-ship-icon" onerror="this.onerror=null; this.src='${FALLBACK_ICON_PATH}'" />
             <span class="squad-ship-class">${ship.shipClass}</span>
-          </div>
-          <div class="squad-ship-hull">
-            <span class="squad-hull-label">Hull</span>
-            <div class="squad-hull-bar">
-              <div
-                class="squad-hull-fill ${hullClass}"
-                style="width: ${hullPercent}%"
-              ></div>
-            </div>
-            <span class="squad-hull-percent ${hullClass}">${hullPercent}%</span>
           </div>
         </div>
         <div class="squad-ship-loadout">${renderLoadoutSummary(ship)}</div>

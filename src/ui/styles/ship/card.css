@@ -108,38 +108,6 @@
   font-size: 0.75rem;
   color: var(--text-secondary);
   text-transform: capitalize;
-  margin-bottom: 4px;
-}
-
-.card-hull {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.hull-bar {
-  flex: 1;
-  height: 4px;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid var(--border-color);
-  overflow: hidden;
-}
-
-.hull-fill {
-  height: 100%;
-  background: var(--color-success);
-  transition: width 0.3s ease;
-}
-
-.card-hull.damaged .hull-fill {
-  background: var(--color-warning);
-}
-
-.hull-text {
-  font-family: var(--font-body);
-  font-size: 0.7rem;
-  color: var(--text-dim);
-  min-width: 30px;
 }
 
 .ship-card-weapons {
