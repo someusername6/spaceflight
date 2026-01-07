@@ -78,11 +78,17 @@ export function renderPrimaryPopover(
   // For pulse beams, DPS = damage * pulses per second
   // For continuous beams, damage IS the DPS
   // For projectile weapons, DPS = damage / fireRate
+  const isContinuousBeam = isBeam && !isPulseBeam;
   const dps = isPulseBeam
     ? Math.round(stats.damage / (stats.pulseInterval ?? 0.1))
     : isBeam
       ? stats.damage
       : Math.round(stats.damage / stats.fireRate);
+  const damageLabel = isPulseBeam
+    ? 'Dmg/pulse'
+    : isContinuousBeam
+      ? 'Dmg/sec'
+      : 'Damage';
   const damageText = isBeam ? formatBeamDamage(stats) : `${stats.damage}`;
 
   // Ammo section (only for ballistic weapons)
@@ -117,7 +123,7 @@ export function renderPrimaryPopover(
       <div class="popover-subtitle">${categoryName(category)}</div>
     </div>
     <div class="popover-stats">
-      ${statRow('Damage', damageText)}
+      ${statRow(damageLabel, damageText)}
       ${stats.shieldDamageMultiplier && stats.shieldDamageMultiplier !== 1 ? statRow('Shield Dmg', `${Math.round(stats.damage * stats.shieldDamageMultiplier)} (${stats.shieldDamageMultiplier}×)`) : ''}
       ${stats.hullDamageMultiplier && stats.hullDamageMultiplier !== 1 ? statRow('Hull Dmg', `${Math.round(stats.damage * stats.hullDamageMultiplier)} (${stats.hullDamageMultiplier}×)`) : ''}
       ${statRow('DPS', `~${dps}`)}
