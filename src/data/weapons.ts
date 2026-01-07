@@ -230,7 +230,7 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
 /** Weapon names for type safety */
 export type WeaponName = keyof typeof PRIMARY_WEAPONS;
 
-/** Get weapon stats by name (case-insensitive) */
+/** Get weapon stats by name */
 export function getWeaponStats(name: string): WeaponStats | undefined {
-  return PRIMARY_WEAPONS[name.toLowerCase()];
+  return PRIMARY_WEAPONS[name];
 }

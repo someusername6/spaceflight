@@ -8,6 +8,7 @@ import type {
   StoredHull,
   StoredWeapon,
 } from '../../campaign/types';
+import { MISSILES } from '../../data/missiles';
 import { PRIMARY_WEAPONS } from '../../data/weapons';
 import type { StoreCategory } from './render';
 
@@ -60,10 +61,14 @@ function renderWeaponGroupItem(
 ): string {
   const storeCategory: StoreCategory =
     data.category === 'primary' ? 'primaries' : 'secondaries';
+  const displayName =
+    data.category === 'primary'
+      ? (PRIMARY_WEAPONS[weaponType]?.name ?? weaponType)
+      : (MISSILES[weaponType]?.name ?? weaponType);
   return `
     <div class="storage-item ${isSelected ? 'selected' : ''}"
          data-category="${storeCategory}" data-item="${weaponType}">
-      <span class="item-name">${weaponType}</span>
+      <span class="item-name">${displayName}</span>
       <span class="item-count">×${data.count}</span>
     </div>
   `;

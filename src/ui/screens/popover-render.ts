@@ -66,7 +66,7 @@ export function renderPrimaryPopover(
   slotIndex: number,
   state: CampaignState,
 ): string {
-  const stats = PRIMARY_WEAPONS[weapon.weaponType.toLowerCase()];
+  const stats = PRIMARY_WEAPONS[weapon.weaponType];
 
   if (!stats) {
     return `<div class="popover-header"><div class="popover-title"><span class="manager-name">${weapon.weaponType}</span></div></div>`;
@@ -145,7 +145,7 @@ export function renderSecondaryPopover(
   slotIndex: number,
   state: CampaignState,
 ): string {
-  const stats = MISSILES[weapon.weaponType.toLowerCase()];
+  const stats = MISSILES[weapon.weaponType];
   const stored = getStoredMissileCount(state, weapon.weaponType);
   const canLoad = stored > 0 && weapon.count < weapon.maxCount;
   const canUnload = weapon.count > 0;
