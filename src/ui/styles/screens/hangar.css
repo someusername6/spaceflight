@@ -9,7 +9,8 @@
 .hangar-screen {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - var(--nav-height));
+  flex: 1;
+  min-height: 0;
   width: 100%;
   max-width: var(--content-max-width);
   margin: 0 auto;

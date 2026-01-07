@@ -13,7 +13,8 @@
 .campaign-page {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  flex: 1;
+  min-height: 0;
   width: 100%;
   max-width: var(--content-max-width);
   margin: 0 auto;

@@ -9,11 +9,12 @@
 .contracts-screen {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
   width: 100%;
   max-width: var(--content-max-width);
   margin: 0 auto;
   padding: 16px 24px;
-  height: calc(100vh - var(--nav-height));
   box-sizing: border-box;
   overflow: hidden;
 }
