@@ -24,7 +24,7 @@ function formatBeamDamage(stats: WeaponStats): string {
   const damageAtMax = Math.round(
     stats.damage / (stats.range / BEAM_EFFECTIVE_RANGE),
   );
-  return `${stats.damage}&nbsp;at&nbsp;${BEAM_EFFECTIVE_RANGE}&nbsp;m, ${damageAtMax}&nbsp;at&nbsp;${stats.range}&nbsp;m`;
+  return `${stats.damage}&nbsp;at&nbsp;${BEAM_EFFECTIVE_RANGE}&nbsp;m,<br>${damageAtMax}&nbsp;at&nbsp;${stats.range}&nbsp;m`;
 }
 
 /** Get stored ammo count for a weapon type */
@@ -89,14 +89,7 @@ export function renderPrimaryPopover(
     : isContinuousBeam
       ? 'DPS'
       : 'Damage';
-  // For beams with falloff, force line break so damage values appear on own line
-  const beamDamage = formatBeamDamage(stats);
-  const needsLineBreak = isBeam && !stats.noFalloff;
-  const damageText = needsLineBreak
-    ? `<br>${beamDamage}`
-    : isBeam
-      ? beamDamage
-      : `${stats.damage}`;
+  const damageText = isBeam ? formatBeamDamage(stats) : `${stats.damage}`;
 
   // Ammo section (only for ballistic weapons)
   let ammoStats = '';
