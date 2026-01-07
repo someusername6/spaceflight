@@ -59,7 +59,7 @@ function renderScrapDetail(
       ${storageText ? `<div class="detail-storage">${storageText}</div>` : ''}
       <div class="detail-actions detail-actions-bottom">
         <button class="btn btn-convert" id="btn-convert" ${canConvert ? '' : 'disabled'}>
-          Convert to Hull (${SCRAP_PER_HULL} scrap, ${conversionFee}&nbsp;cr)
+          Convert&nbsp;to&nbsp;Hull (${SCRAP_PER_HULL}&nbsp;scrap,&nbsp;${conversionFee}&nbsp;cr)
         </button>
         <button class="btn btn-sell" id="btn-sell" ${canSell ? '' : 'disabled'}>
           Sell&nbsp;×1<br>(${sellPrice}&nbsp;cr)
