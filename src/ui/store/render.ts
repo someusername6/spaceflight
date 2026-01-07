@@ -175,8 +175,7 @@ export function renderAmmoStats(weaponType: string): string {
     ${renderItemPreview('ammo', weaponType)}
     <div class="item-stats">
       <div class="stat-row"><span>For Weapon:</span><span>${weapon.name}</span></div>
-      <div class="stat-row"><span>Base Capacity:</span><span>${weapon.ammo} rounds</span></div>
-      <div class="stat-note">Capacity scales with bank size</div>
+      <div class="stat-row"><span>Capacity per bank size:</span><span>${weapon.ammo} rounds</span></div>
     </div>
   `;
 }
