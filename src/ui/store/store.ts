@@ -42,6 +42,18 @@ export type { NavDestination } from '../common/nav-bar';
 // Re-export types for external use
 export type { StoreCategory } from './render';
 
+/** Render a category tab if visible */
+function renderCategoryTab(
+  state: CampaignState,
+  selected: StoreCategory,
+  category: StoreCategory,
+  label: string,
+): string {
+  if (!isCategoryVisible(state, category)) return '';
+  const isSelected = selected === category;
+  return `<button class="btn ${isSelected ? 'btn-primary' : ''}" data-cat="${category}" role="tab" aria-selected="${isSelected}">${label}</button>`;
+}
+
 /** Render the resupply button (for categories bar) */
 function renderResupplyButton(state: CampaignState): string {
   const resupply = getResupplyStatus(state);
@@ -120,11 +132,11 @@ function renderStore(ui: StoreUI): string {
       <main class="store-screen" aria-label="Equipment Store">
         <nav class="store-categories" aria-label="Store categories">
           <div class="category-tabs" role="tablist" aria-label="Item categories">
-            ${isCategoryVisible(ui.state, 'hulls') ? `<button class="btn ${ui.selectedCategory === 'hulls' ? 'btn-primary' : ''}" data-cat="hulls" role="tab" aria-selected="${ui.selectedCategory === 'hulls'}">Hulls</button>` : ''}
-            ${isCategoryVisible(ui.state, 'primaries') ? `<button class="btn ${ui.selectedCategory === 'primaries' ? 'btn-primary' : ''}" data-cat="primaries" role="tab" aria-selected="${ui.selectedCategory === 'primaries'}">Primaries</button>` : ''}
-            ${isCategoryVisible(ui.state, 'secondaries') ? `<button class="btn ${ui.selectedCategory === 'secondaries' ? 'btn-primary' : ''}" data-cat="secondaries" role="tab" aria-selected="${ui.selectedCategory === 'secondaries'}">Missiles</button>` : ''}
-            ${isCategoryVisible(ui.state, 'ammo') ? `<button class="btn ${ui.selectedCategory === 'ammo' ? 'btn-primary' : ''}" data-cat="ammo" role="tab" aria-selected="${ui.selectedCategory === 'ammo'}">Ammo</button>` : ''}
-            ${isCategoryVisible(ui.state, 'scrap') ? `<button class="btn ${ui.selectedCategory === 'scrap' ? 'btn-primary' : ''}" data-cat="scrap" role="tab" aria-selected="${ui.selectedCategory === 'scrap'}">Scrap</button>` : ''}
+            ${renderCategoryTab(ui.state, ui.selectedCategory, 'hulls', 'Hulls')}
+            ${renderCategoryTab(ui.state, ui.selectedCategory, 'primaries', 'Primaries')}
+            ${renderCategoryTab(ui.state, ui.selectedCategory, 'secondaries', 'Missiles')}
+            ${renderCategoryTab(ui.state, ui.selectedCategory, 'ammo', 'Ammo')}
+            ${renderCategoryTab(ui.state, ui.selectedCategory, 'scrap', 'Scrap')}
           </div>
           <div class="category-actions">
             ${renderResupplyButton(ui.state)}
