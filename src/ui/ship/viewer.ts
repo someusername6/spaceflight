@@ -14,7 +14,6 @@ import type {
 } from '../../campaign/types';
 import { weaponUsesAmmo } from '../../data/prices';
 import { type Hardpoint, SHIP_CLASSES } from '../../data/ships';
-import { PRIMARY_WEAPONS } from '../../data/weapons';
 import { renderShipActions } from './actions';
 
 /** Get 3-letter abbreviation for ship class */
@@ -49,6 +48,7 @@ export function getWeaponAbbrev(weaponType: string): string {
     bluelaser: 'BLU',
     lightning: 'LTN',
     nuclearlance: 'NUK',
+    torch: 'TCH',
   };
   return (
     abbrevs[weaponType.toLowerCase()] ??
@@ -74,21 +74,9 @@ export function getMissileAbbrev(missileType: string): string {
   );
 }
 
-/** Get weapon category color */
-function getWeaponColor(weaponType: string): string {
-  const stats = PRIMARY_WEAPONS[weaponType.toLowerCase()];
-  if (!stats) return 'var(--color-secondary)';
-
-  switch (stats.category) {
-    case 'energy':
-      return 'var(--color-primary)';
-    case 'ballistic':
-      return 'var(--color-warning)';
-    case 'beam':
-      return 'var(--color-danger)';
-    default:
-      return 'var(--color-secondary)';
-  }
+/** Get weapon category color - all primaries use same yellow */
+function getWeaponColor(_weaponType: string): string {
+  return 'var(--color-warning)';
 }
 
 /** Get missile color */
