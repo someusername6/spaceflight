@@ -5,11 +5,7 @@
  * [Pilots List] | [Pilot Viewer]
  */
 
-import {
-  assignPilotToHull,
-  assignPilotToShip,
-  unassignPilot,
-} from '../../campaign/loadout';
+import { assignPilotToHull, assignPilotToShip } from '../../campaign/loadout';
 import { hirePilot } from '../../campaign/recruits';
 import type { CampaignState, OwnedShip, Pilot } from '../../campaign/types';
 import {
@@ -21,6 +17,7 @@ import { destroyShipConnectors, initShipConnectors } from '../ship/connectors';
 import { FALLBACK_ICON_PATH, getShipIconPath } from '../ship/viewer';
 import { renderPilotViewer } from './pilot-viewer';
 import { renderRecruitCard, renderRecruitViewer } from './recruit-viewer';
+import { closeShipPicker, showShipPicker } from './ship-picker';
 
 /** Roster UI state */
 export interface RosterUI {
@@ -196,6 +193,9 @@ export function createRosterUI(
 
 /** Internal: render roster and bind all events */
 function renderAndBindRoster(ui: RosterUI): void {
+  // Close any open ship picker before re-render
+  closeShipPicker();
+
   // Clean up existing ship preview connectors before re-render
   const existingPreview = ui.element.querySelector('.ship-preview');
   if (existingPreview) {
@@ -217,24 +217,6 @@ function renderAndBindRoster(ui: RosterUI): void {
 
   // Bind navigation bar
   bindNavBar(ui.element, ui.onNavigate);
-
-  // Bind close viewer button (for pilots)
-  const closePilotBtn = ui.element.querySelector('#btn-close-pilot-viewer');
-  if (closePilotBtn) {
-    closePilotBtn.addEventListener('click', () => {
-      ui.selectedPilotId = null;
-      renderAndBindRoster(ui);
-    });
-  }
-
-  // Bind close viewer button (for recruits)
-  const closeRecruitBtn = ui.element.querySelector('#btn-close-recruit-viewer');
-  if (closeRecruitBtn) {
-    closeRecruitBtn.addEventListener('click', () => {
-      ui.selectedRecruitId = null;
-      renderAndBindRoster(ui);
-    });
-  }
 
   // Bind pilot card selection
   ui.element.querySelectorAll('.roster-pilot-card').forEach((item) => {
@@ -294,25 +276,30 @@ function renderAndBindRoster(ui: RosterUI): void {
     });
   }
 
-  // Bind unassign pilot buttons
-  ui.element.querySelectorAll('.btn-unassign-pilot').forEach((btn) => {
+  // Bind change ship buttons to show ship picker
+  ui.element.querySelectorAll('.btn-change-ship').forEach((btn) => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      const target = e.target as HTMLElement;
-      const shipId = target.dataset.ship;
+      const target = e.currentTarget as HTMLElement;
       const pilotId = target.dataset.pilot;
-      if (!shipId) return;
+      const shipId = target.dataset.ship;
+      if (!pilotId || !shipId) return;
 
-      const newState = unassignPilot(ui.state, shipId);
-      if (newState !== ui.state) {
-        ui.state = newState;
-        if (ui.onStateUpdate) ui.onStateUpdate(newState);
-        // Keep pilot selected
-        if (pilotId) {
+      showShipPicker(
+        target,
+        pilotId,
+        shipId,
+        ui.state,
+        (newState) => {
+          ui.state = newState;
+          if (ui.onStateUpdate) ui.onStateUpdate(newState);
+        },
+        () => {
+          // Keep pilot selected after swap
           ui.selectedPilotId = pilotId;
-        }
-        renderAndBindRoster(ui);
-      }
+          renderAndBindRoster(ui);
+        },
+      );
     });
   });
 

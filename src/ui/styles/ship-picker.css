@@ -1,0 +1,145 @@
+/**
+ * Ship Picker - Quick ship swap popover
+ *
+ * Uses same visual style as hull-card-btn in pilot-viewer.css
+ */
+
+/* ========================================
+   SHIP PICKER CONTAINER
+   ======================================== */
+
+.ship-picker {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-light);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.6),
+    0 0 30px var(--color-secondary-glow);
+  max-width: 480px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Scrollable content area */
+.ship-picker-content {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* Sticky footer */
+.ship-picker-footer {
+  flex-shrink: 0;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.15);
+  border-top: 1px solid var(--border-color);
+}
+
+/* ========================================
+   SECTIONS
+   ======================================== */
+
+.ship-picker-section {
+  padding: 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.ship-picker-section:last-child {
+  border-bottom: none;
+}
+
+.ship-picker-section-label {
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  position: sticky;
+  top: 0;
+  background: var(--bg-panel);
+  margin: -16px -16px 12px;
+  padding: 16px 16px 8px;
+  z-index: 1;
+}
+
+/* ========================================
+   SHIP CARD GRID
+   ======================================== */
+
+.ship-picker-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+}
+
+/* ========================================
+   SHIP CARD BUTTONS (matches hull-card-btn)
+   ======================================== */
+
+.ship-picker-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 20px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-width: 110px;
+}
+
+.ship-picker-card:hover {
+  border-color: var(--color-secondary);
+  background: rgba(0, 245, 255, 0.08);
+}
+
+.ship-picker-icon {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ship-picker-svg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: var(--filter-cyan) drop-shadow(0 0 4px var(--color-secondary))
+    drop-shadow(0 0 8px var(--color-secondary-glow));
+}
+
+.ship-picker-name {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  text-transform: capitalize;
+  text-align: center;
+}
+
+.ship-picker-count {
+  color: var(--text-secondary);
+  margin-left: 4px;
+}
+
+/* ========================================
+   UNASSIGN BUTTON
+   ======================================== */
+
+.ship-picker-unassign {
+  width: 100%;
+}
+
+/* ========================================
+   EMPTY STATE
+   ======================================== */
+
+.ship-picker-empty {
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--text-dim);
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+}

@@ -151,17 +151,12 @@ export function renderShipViewer(
   const pilotSkill =
     isCommander || !ship.pilot ? '' : ` • ${ship.pilot.skill.toUpperCase()}`;
 
-  // View in Roster button (only if pilot assigned)
-  const viewPilotBtn = ship.pilot
-    ? `<button class="btn btn-small btn-view-pilot" data-pilot="${ship.pilot.id}">View</button>`
-    : '';
-
   return `
     <div class="ship-viewer schematic">
       <div class="schematic-header">
         <div class="schematic-header-left">
           <span class="schematic-class">${ship.shipClass.toUpperCase()}</span>
-          <span class="schematic-pilot">${pilotName}${pilotSkill}${viewPilotBtn}</span>
+          <span class="schematic-pilot">${pilotName}${pilotSkill}</span>
         </div>
         <div class="schematic-header-right"></div>
       </div>

@@ -22,6 +22,7 @@ import {
   showWeaponPicker,
   showWeaponPopover,
 } from './hangar-equip';
+import { closeShipPicker, showShipPicker } from './ship-picker';
 
 /** Hangar UI state */
 export interface HangarUI {
@@ -67,16 +68,27 @@ function renderShipDetails(ship: OwnedShip): string {
   `;
 }
 
-/** Render ship viewer with close button integrated in header */
+/** Render ship viewer with close button and action buttons */
 function renderShipViewerWithClose(
   ship: Parameters<typeof renderShipViewer>[0],
   state: Parameters<typeof renderShipViewer>[1],
 ): string {
-  const viewerHtml = renderShipViewer(ship, state);
-  return viewerHtml.replace(
+  let viewerHtml = renderShipViewer(ship, state);
+
+  // Build header right content with buttons
+  const headerButtons = ship.pilot
+    ? `<div class="schematic-header-right">
+        <button class="btn btn-small btn-change-ship" data-pilot="${ship.pilot.id}" data-ship="${ship.id}">Change Ship</button>
+        <button class="btn btn-small btn-view-pilot" data-pilot="${ship.pilot.id}">View Pilot</button>
+       </div>`
+    : '';
+
+  viewerHtml = viewerHtml.replace(
     '<div class="schematic-header-right"></div>',
-    '<div class="schematic-header-right"><button class="btn-close-viewer" id="btn-close-viewer">✕</button></div>',
+    headerButtons,
   );
+
+  return viewerHtml;
 }
 
 /** Render the hangar screen content */
@@ -173,6 +185,9 @@ export type { NavDestination } from '../common/nav-bar';
 
 /** Internal: render hangar and bind all events */
 function renderAndBindHangar(ui: HangarUI): void {
+  // Close any open pickers before re-render
+  closeShipPicker();
+
   // Clean up existing connectors before re-render
   const existingViewer = ui.element.querySelector('.ship-viewer');
   if (existingViewer) {
@@ -194,15 +209,6 @@ function renderAndBindHangar(ui: HangarUI): void {
   // Bind navigation bar
   bindNavBar(ui.element, ui.onNavigate);
 
-  // Bind close viewer button
-  const closeBtn = ui.element.querySelector('#btn-close-viewer');
-  if (closeBtn) {
-    closeBtn.addEventListener('click', () => {
-      ui.selectedShipId = null;
-      renderAndBindHangar(ui);
-    });
-  }
-
   // Bind view pilot button
   const viewPilotBtn = ui.element.querySelector('.btn-view-pilot');
   if (viewPilotBtn && ui.onViewPilot) {
@@ -212,6 +218,33 @@ function renderAndBindHangar(ui: HangarUI): void {
       if (pilotId) {
         ui.onViewPilot?.(pilotId);
       }
+    });
+  }
+
+  // Bind change ship button
+  const changeShipBtn = ui.element.querySelector('.btn-change-ship');
+  if (changeShipBtn) {
+    changeShipBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const target = e.currentTarget as HTMLElement;
+      const pilotId = target.dataset.pilot;
+      const shipId = target.dataset.ship;
+      if (!pilotId || !shipId) return;
+
+      showShipPicker(
+        target,
+        pilotId,
+        shipId,
+        ui.state,
+        (newState) => {
+          ui.state = newState;
+          if (ui.onStateUpdate) ui.onStateUpdate(newState);
+          // Select the new ship that the pilot is now assigned to
+          const newShip = newState.ships.find((s) => s.pilot?.id === pilotId);
+          ui.selectedShipId = newShip?.id ?? null;
+        },
+        () => renderAndBindHangar(ui),
+      );
     });
   }
 

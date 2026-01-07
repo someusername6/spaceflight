@@ -40,9 +40,6 @@ export function renderRecruitViewer(
           <div class="recruit-viewer-name">${recruit.name}</div>
           <div class="recruit-rank">${recruit.skill.toUpperCase()}</div>
         </div>
-        <div class="recruit-header-right">
-          <button class="btn-close-viewer" id="btn-close-recruit-viewer">✕</button>
-        </div>
       </div>
 
       <div class="recruit-description">

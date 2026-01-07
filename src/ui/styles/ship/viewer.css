@@ -85,6 +85,12 @@
 
 .btn-view-pilot {
   margin-left: 8px;
+  border-color: var(--color-secondary);
+  color: var(--color-secondary);
+}
+
+.btn-view-pilot:hover {
+  background: rgba(0, 245, 255, 0.1);
 }
 
 /* ========================================

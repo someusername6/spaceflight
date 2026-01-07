@@ -14,6 +14,27 @@ function getAvailableShipsForPilot(state: CampaignState): OwnedShip[] {
   return state.ships.filter((s) => s.pilot === null);
 }
 
+/** Group stored hulls by ship class, returning first index of each group */
+function groupHullsByClass(
+  hulls: { shipClass: string }[],
+): { shipClass: string; firstIndex: number; count: number }[] {
+  const groups = new Map<string, { firstIndex: number; count: number }>();
+  for (let i = 0; i < hulls.length; i++) {
+    const hull = hulls[i];
+    if (!hull) continue;
+    const existing = groups.get(hull.shipClass);
+    if (existing) {
+      existing.count++;
+    } else {
+      groups.set(hull.shipClass, { firstIndex: i, count: 1 });
+    }
+  }
+  return [...groups.entries()].map(([shipClass, data]) => ({
+    shipClass,
+    ...data,
+  }));
+}
+
 /** Render pilot viewer with career stats and assignment options */
 export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
   const isCommander = pilot.id === state.commanderId;
@@ -30,21 +51,21 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
       ? `
         <div class="pilot-ship-section">
           <div class="assignment-row">
-            <span class="assignment-label">Currently assigned:</span>
+            <span class="assignment-label">Currently assigned</span>
             <span class="assignment-ship">${currentShip.shipClass}</span>
           </div>
           <div class="ship-preview-container">
             ${renderShipPreview(currentShip)}
           </div>
           <div class="assignment-actions">
+            <button class="btn btn-lg btn-change-ship"
+                    data-ship="${currentShip.id}"
+                    data-pilot="${pilot.id}">
+              Change Ship
+            </button>
             <button class="btn btn-lg btn-view-ship"
                     data-ship="${currentShip.id}">
               Edit in Hangar
-            </button>
-            <button class="btn btn-lg btn-danger btn-unassign-pilot"
-                    data-ship="${currentShip.id}"
-                    data-pilot="${pilot.id}">
-              Unassign
             </button>
           </div>
         </div>
@@ -56,7 +77,7 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
     !isAssigned && availableShips.length > 0
       ? `
         <div class="pilot-assignment">
-          <div class="assignment-label">Assign to ship:</div>
+          <div class="assignment-label">Assign to ship</div>
           <div class="assignment-options">
             ${availableShips
               .map(
@@ -74,24 +95,29 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
       `
       : '';
 
-  // Stored hulls for creating new ships
+  // Stored hulls for creating new ships (grouped by ship class)
+  const groupedHulls = groupHullsByClass(state.storedHulls);
   const hullOptions =
     !isAssigned && state.storedHulls.length > 0
       ? `
         <div class="pilot-assignment">
-          <div class="assignment-label">Deploy with hull:</div>
+          <div class="assignment-label">Deploy with hull</div>
           <div class="hull-options">
-            ${state.storedHulls
-              .map((hull, index) => {
-                const iconPath = getShipIconPath(hull.shipClass);
+            ${groupedHulls
+              .map((group) => {
+                const iconPath = getShipIconPath(group.shipClass);
+                const countBadge =
+                  group.count > 1
+                    ? `<span class="hull-card-count">×${group.count}</span>`
+                    : '';
                 return `
               <button class="hull-card-btn"
                       data-pilot="${pilot.id}"
-                      data-hull-index="${index}">
+                      data-hull-index="${group.firstIndex}">
                 <div class="hull-card-icon">
-                  <img src="${iconPath}" alt="${hull.shipClass}" class="hull-icon-svg" onerror="this.onerror=null; this.src='${FALLBACK_ICON_PATH}'" />
+                  <img src="${iconPath}" alt="${group.shipClass}" class="hull-icon-svg" onerror="this.onerror=null; this.src='${FALLBACK_ICON_PATH}'" />
                 </div>
-                <div class="hull-card-name">${hull.shipClass}</div>
+                <div class="hull-card-name">${group.shipClass}${countBadge}</div>
               </button>
             `;
               })
@@ -118,9 +144,6 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
         <div class="pilot-header-info">
           <div class="pilot-viewer-name">${pilot.name}</div>
           <div class="pilot-rank">${rankText}</div>
-        </div>
-        <div class="pilot-header-right">
-          <button class="btn-close-viewer" id="btn-close-pilot-viewer">✕</button>
         </div>
       </div>
 

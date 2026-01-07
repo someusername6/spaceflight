@@ -130,31 +130,6 @@
 }
 
 /* ========================================
-   CLOSE VIEWER BUTTON (in header)
-   ======================================== */
-
-.btn-close-viewer {
-  width: 24px;
-  height: 24px;
-  border: 1px solid var(--border-color);
-  background: transparent;
-  color: var(--text-dim);
-  font-size: 0.8rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-}
-
-.btn-close-viewer:hover {
-  border-color: var(--color-danger);
-  color: var(--color-danger);
-  background: rgba(255, 51, 102, 0.1);
-}
-
-/* ========================================
    SHIP DETAILS PANEL (Right Column)
    ======================================== */
 
