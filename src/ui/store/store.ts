@@ -73,13 +73,12 @@ function renderStore(ui: StoreUI): string {
   const itemList = items
     .map((item) => {
       const isSelected = item.id === selected;
-      // For scrap, show sell price; for others, show buy price
+      // For scrap, show sell price only (no stock - scrap comes from player storage)
       if (isScrap) {
         const sellPrice = getItemPrice(ui.selectedCategory, item.id, 'sell');
         return `
           <div class="store-item ${isSelected ? 'selected' : ''}" data-item="${item.id}" role="option" aria-selected="${isSelected}" tabindex="0">
             <span class="item-name">${item.name}</span>
-            <span class="item-stock" aria-label="${item.stock} in stock">×${item.stock}</span>
             <span class="item-price sell-price" aria-label="Sell price: ${sellPrice} credits">${sellPrice} cr</span>
           </div>
         `;

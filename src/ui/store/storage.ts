@@ -8,7 +8,6 @@ import type {
   StoredHull,
   StoredWeapon,
 } from '../../campaign/types';
-import { SHIP_CLASSES } from '../../data/ships';
 import { PRIMARY_WEAPONS } from '../../data/weapons';
 import type { StoreCategory } from './render';
 
@@ -18,21 +17,14 @@ export interface StorageItem {
   itemId: string;
   displayName: string;
   count: number;
-  detail?: string;
 }
 
 /** Render a stored hull item (clickable) */
 function renderStoredHullItem(hull: StoredHull, isSelected: boolean): string {
-  const stats = SHIP_CLASSES[hull.shipClass];
-  const maxHull = stats?.hull ?? 100;
-  const currentHull = maxHull - hull.hullDamage;
-  const hullPercent = Math.round((currentHull / maxHull) * 100);
-
   return `
     <div class="storage-item ${isSelected ? 'selected' : ''}"
          data-category="hulls" data-item="${hull.shipClass}">
       <span class="item-name">${hull.shipClass}</span>
-      <span class="item-detail">Hull: ${hullPercent}%</span>
     </div>
   `;
 }

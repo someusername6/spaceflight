@@ -50,10 +50,11 @@ function renderScrapDetail(
   const conversionFee = getScrapConversionFee(itemId);
   const canConvert = canConvertScrapToHull(state, itemId);
   const storageText = storageCount > 0 ? `In storage: ${storageCount}` : '';
+  const displayName = itemId.charAt(0).toUpperCase() + itemId.slice(1);
 
   return `
     <div class="store-detail">
-      <div class="detail-header">${itemId}</div>
+      <div class="detail-header">${displayName} Scrap</div>
       ${statsHtml}
       ${storageText ? `<div class="detail-storage">${storageText}</div>` : ''}
       <div class="detail-actions detail-actions-bottom">

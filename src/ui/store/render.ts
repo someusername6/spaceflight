@@ -198,7 +198,7 @@ export function renderScrapStats(shipClass: string): string {
   return `
     ${renderItemPreview('scrap', shipClass)}
     <div class="item-stats">
-      <div class="stat-row"><span>Ship type</span><span>${displayName}</span></div>
+      <div class="stat-row"><span>Hull</span><span>${displayName}</span></div>
       <div class="stat-note">Scrap of destroyed ships. Sell for credits, or convert to a hull.</div>
     </div>
   `;

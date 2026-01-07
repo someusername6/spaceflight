@@ -69,18 +69,13 @@
 .storage-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 8px 10px;
+  padding: 12px 14px;
   background: rgba(0, 0, 0, 0.2);
-  margin-bottom: 4px;
-  font-size: 0.8rem;
+  border: 1px solid transparent;
+  margin-bottom: 6px;
   cursor: pointer;
-  border: 1px solid var(--border-color);
-  border-color: transparent;
-  transition:
-    background 0.15s ease,
-    border-color 0.15s ease;
-  box-sizing: border-box;
+  transition: all 0.15s ease;
+  position: relative;
 }
 
 .storage-item:last-child {
@@ -88,7 +83,7 @@
 }
 
 .storage-item:hover {
-  background: rgba(0, 245, 255, 0.08);
+  background: rgba(255, 159, 28, 0.08);
   border-color: var(--border-color);
 }
 
@@ -97,15 +92,32 @@
   border-color: var(--color-primary);
 }
 
+.storage-item.selected::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--color-primary);
+}
+
 .storage-item .item-name {
+  flex: 1;
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  font-weight: 500;
   color: var(--text-primary);
   text-transform: capitalize;
+  white-space: nowrap;
 }
 
 .storage-item .item-count,
 .storage-item .item-detail {
-  color: var(--text-secondary);
+  font-family: var(--font-body);
   font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-left: auto;
 }
 
 .storage-empty {
