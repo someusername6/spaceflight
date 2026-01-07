@@ -10,6 +10,29 @@ export interface ShipStatsOptions {
   classPrefix?: 'detail' | 'stat';
 }
 
+/**
+ * Format bank sizes as colored dots with counts.
+ * Example: [2, 2, 1, 1, 1] → "●● ×2, ● ×3" (with color class)
+ */
+function formatBankSizes(banks: number[], colorClass: string): string {
+  // Count occurrences of each bank size
+  const counts = new Map<number, number>();
+  for (const size of banks) {
+    counts.set(size, (counts.get(size) ?? 0) + 1);
+  }
+
+  // Sort by bank size descending (larger banks first)
+  const sorted = [...counts.entries()].sort((a, b) => b[0] - a[0]);
+
+  // Format each group with colored dots (always show count)
+  return sorted
+    .map(([size, count]) => {
+      const dots = `<span class="${colorClass}">${'●'.repeat(size)}</span>`;
+      return `${dots} ×${count}`;
+    })
+    .join(', ');
+}
+
 /** Render ship stats rows */
 export function renderShipStatsRows(
   shipClass: string,
@@ -20,8 +43,14 @@ export function renderShipStatsRows(
 
   const { classPrefix = 'stat' } = options;
 
-  const primaryBankStr = stats.primaryBanks.join(', ');
-  const secondaryBankStr = stats.secondaryBanks.join(', ');
+  const primaryBankStr = formatBankSizes(
+    stats.primaryBanks,
+    'bank-dots-primary',
+  );
+  const secondaryBankStr = formatBankSizes(
+    stats.secondaryBanks,
+    'bank-dots-secondary',
+  );
 
   // Use appropriate class names based on prefix
   const rowClass = `${classPrefix}-row`;
@@ -48,8 +77,8 @@ export function renderShipStatsRows(
     ${row('Turn rate', `${stats.turnRate}°/s`)}
     ${row('Acceleration', `${stats.acceleration} m/s²`)}
     <div class="${dividerClass}"></div>
-    ${row('Primary banks', `${stats.primaryBanks.length} (${primaryBankStr})`)}
-    ${row('Secondary banks', `${stats.secondaryBanks.length} (${secondaryBankStr})`)}
+    ${row('Primary banks', primaryBankStr)}
+    ${row('Secondary banks', secondaryBankStr)}
     ${row('Heat capacity', `${stats.maxHeat}`)}
     ${row('Cooling rate', `${stats.coolingRate}/s`)}
   `;

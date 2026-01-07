@@ -348,7 +348,6 @@
 .weapon-breakdown .no-weapons {
   text-align: center;
   color: var(--text-dim);
-  font-style: italic;
   padding: 16px;
 }
 

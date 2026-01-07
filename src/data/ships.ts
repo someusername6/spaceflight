@@ -164,9 +164,9 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     primaryBanks: [2, 2, 2, 1, 1],
     secondaryBanks: [1],
     primaryHardpoints: [
-      { row: 0, x: 0.15, svgX: 8, svgY: 32 },
+      { row: 2, x: 0.15, svgX: 8, svgY: 32 },
       { row: 0, x: 0.5, svgX: 32, svgY: 16 },
-      { row: 0, x: 0.85, svgX: 56, svgY: 32 },
+      { row: 2, x: 0.85, svgX: 56, svgY: 32 },
       { row: 1, x: 0.35, svgX: 22, svgY: 24 },
       { row: 1, x: 0.65, svgX: 42, svgY: 24 },
     ],
@@ -223,7 +223,7 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     ],
     secondaryHardpoints: [
       { row: 0, x: 0.2, svgX: 10, svgY: 32 },
-      { row: 0, x: 0.5, svgX: 32, svgY: 48 },
+      { row: 2, x: 0.5, svgX: 32, svgY: 48 },
       { row: 0, x: 0.8, svgX: 54, svgY: 32 },
       { row: 1, x: 0.35, svgX: 16, svgY: 50 },
       { row: 1, x: 0.65, svgX: 48, svgY: 50 },
@@ -247,15 +247,15 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     primaryBanks: [3, 3, 1, 1],
     secondaryBanks: [1, 1, 1],
     primaryHardpoints: [
-      { row: 0, x: 0.2, svgX: 10, svgY: 16 },
-      { row: 0, x: 0.8, svgX: 54, svgY: 16 },
-      { row: 1, x: 0.35, svgX: 20, svgY: 40 },
-      { row: 1, x: 0.65, svgX: 44, svgY: 40 },
+      { row: 0, x: 0.275, svgX: 24, svgY: 12 },
+      { row: 0, x: 0.725, svgX: 40, svgY: 12 },
+      { row: 1, x: 0.1, svgX: 10, svgY: 16 },
+      { row: 1, x: 0.9, svgX: 54, svgY: 16 },
     ],
     secondaryHardpoints: [
-      { row: 0, x: 0.3, svgX: 16, svgY: 28 },
-      { row: 0, x: 0.5, svgX: 32, svgY: 44 },
-      { row: 0, x: 0.7, svgX: 48, svgY: 28 },
+      { row: 0, x: 0.25, svgX: 16, svgY: 28 },
+      { row: 1, x: 0.5, svgX: 32, svgY: 44 },
+      { row: 0, x: 0.75, svgX: 48, svgY: 28 },
     ],
   },
 

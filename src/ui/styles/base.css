@@ -212,9 +212,32 @@
   color: var(--text-dim);
   font-family: var(--font-ui);
   font-size: 0.85rem;
-  font-style: italic;
   text-align: center;
   padding: 24px;
+}
+
+/* ========================================
+   BANK SIZE DOTS
+   Colored dots for weapon bank sizes
+   ======================================== */
+
+.bank-dots-primary {
+  color: var(--color-primary);
+}
+
+.bank-dots-secondary {
+  color: var(--color-danger);
+}
+
+/* Higher specificity for bank dots inside stat rows */
+.stat-row .bank-dots-primary,
+.detail-row .bank-dots-primary {
+  color: var(--color-primary);
+}
+
+.stat-row .bank-dots-secondary,
+.detail-row .bank-dots-secondary {
+  color: var(--color-danger);
 }
 
 /* ========================================

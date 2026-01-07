@@ -46,8 +46,9 @@
     drop-shadow(0 0 16px var(--color-secondary-glow));
 }
 
-/* Hull preview container - uses schematic diagram */
-.item-preview.hull-preview-container {
+/* Schematic preview containers (hull and scrap) - uses schematic diagram */
+.item-preview.hull-preview-container,
+.item-preview.scrap-preview-container {
   padding: 16px;
   min-height: 200px;
 }
@@ -114,10 +115,18 @@
   font-family: var(--font-body);
 }
 
+/* Bank dots inside stat values need their own colors */
+.stat-row span:last-child .bank-dots-primary {
+  color: var(--color-primary);
+}
+
+.stat-row span:last-child .bank-dots-secondary {
+  color: var(--color-danger);
+}
+
 .stat-note {
   font-size: 0.75rem;
   color: var(--text-dim);
-  font-style: italic;
   padding: 8px 0 4px;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
   margin-top: 8px;

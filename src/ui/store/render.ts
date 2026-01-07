@@ -40,7 +40,6 @@ function formatBeamDamage(stats: WeaponStats): string {
 import {
   FALLBACK_ICON_PATH,
   getMissileIconPath,
-  getShipIconPath,
   getWeaponIconPath,
   renderHullSchematic,
 } from '../ship/viewer';
@@ -74,12 +73,11 @@ function renderItemPreview(category: StoreCategory, id: string): string {
     `;
   }
 
-  // Use ship SVG icon for scrap (dim coloring)
+  // Use hull schematic for scrap (gray, no glow)
   if (category === 'scrap') {
-    const iconPath = getShipIconPath(id);
     return `
-      <div class="item-preview" style="--preview-color: ${categoryColors[category]}">
-        <img src="${iconPath}" alt="${id}" class="item-preview-scrap-icon" ${iconError} />
+      <div class="item-preview scrap-preview-container" style="--preview-color: ${categoryColors[category]}">
+        ${renderHullSchematic(id)}
       </div>
     `;
   }

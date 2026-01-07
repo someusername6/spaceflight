@@ -81,7 +81,6 @@
   text-align: center;
   padding: 40px 20px;
   color: var(--text-dim);
-  font-style: italic;
   background: rgba(0, 0, 0, 0.2);
   border: 1px dashed var(--border-color);
 }

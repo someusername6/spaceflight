@@ -70,3 +70,28 @@
 .hull-schematic-preview .connector-line.connector-secondary {
   stroke: var(--color-danger);
 }
+
+/* ========================================
+   SCRAP PREVIEW MODE (STORE)
+   ======================================== */
+
+/* Scrap schematic - light gray, no glow */
+.scrap-preview-container .ship-icon-svg {
+  filter: brightness(0) invert(0.7);
+}
+
+/* Override connector colors to light gray */
+.scrap-preview-container .connector-line,
+.scrap-preview-container .connector-line.connector-primary,
+.scrap-preview-container .connector-line.connector-secondary {
+  stroke: #b0b0b0;
+}
+
+/* Override slot border colors to light gray (high specificity to beat inline --slot-color) */
+.scrap-preview-container .hull-schematic-preview
+  .schematic-slot.hull-preview.primary,
+.scrap-preview-container
+  .hull-schematic-preview
+  .schematic-slot.hull-preview.secondary {
+  border-color: #b0b0b0;
+}
