@@ -28,6 +28,7 @@ const BEAM_GLOW_COLORS: Record<string, THREE.Color> = {
   Blue: new THREE.Color(0, 0, 1),
   Lightning: new THREE.Color(0.6, 0.8, 1.0), // Electric blue-white
   Nuclear: new THREE.Color(1.0, 0.95, 0.8), // Bright white-gold
+  Torch: new THREE.Color(1.0, 0.6, 0.2), // Orange plasma
 };
 const DEFAULT_BEAM_GLOW = new THREE.Color(1.0, 1.0, 1.0);
 
@@ -212,6 +213,8 @@ function updateBeamGlows(
           glowColor = BEAM_GLOW_COLORS.Lightning as THREE.Color;
         } else if (beam.weaponName === 'Nuclear Lance') {
           glowColor = BEAM_GLOW_COLORS.Nuclear as THREE.Color;
+        } else if (beam.weaponName === 'Torch') {
+          glowColor = BEAM_GLOW_COLORS.Torch as THREE.Color;
         } else {
           for (const [colorName, color] of Object.entries(BEAM_GLOW_COLORS)) {
             if (beam.color.r > 0.5 && colorName === 'Red') glowColor = color;
