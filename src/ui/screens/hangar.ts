@@ -13,6 +13,7 @@ import {
   renderNavBar,
 } from '../common/nav-bar';
 import { renderShipCard } from '../ship/card';
+import { destroyShipConnectors, initShipConnectors } from '../ship/connectors';
 import { renderShipViewer } from '../ship/viewer';
 import {
   closeWeaponPicker,
@@ -208,11 +209,23 @@ export type { NavDestination } from '../common/nav-bar';
 
 /** Internal: render hangar and bind all events */
 function renderAndBindHangar(ui: HangarUI): void {
+  // Clean up existing connectors before re-render
+  const existingViewer = ui.element.querySelector('.ship-viewer');
+  if (existingViewer) {
+    destroyShipConnectors(existingViewer);
+  }
+
   ui.element.innerHTML = renderHangar(
     ui.state,
     ui.selectedShipId,
     ui.onNavigate,
   );
+
+  // Initialize connector lines for ship viewer
+  const viewer = ui.element.querySelector('.ship-viewer');
+  if (viewer) {
+    initShipConnectors(viewer);
+  }
 
   // Bind navigation bar
   bindNavBar(ui.element, ui.onNavigate);

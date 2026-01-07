@@ -6,6 +6,18 @@
  * with a weapon loadout to create playable configurations.
  */
 
+/** Hardpoint definition for weapon slot positioning */
+export interface Hardpoint {
+  /** Which row the slot appears in (0 = top row, 1 = second row, etc.) */
+  row: number;
+  /** Horizontal position for slot (0-1 normalized, 0.5 = center) */
+  x: number;
+  /** SVG X coordinate for connector line origin (0-64 viewBox) */
+  svgX: number;
+  /** SVG Y coordinate for connector line origin (0-64 viewBox) */
+  svgY: number;
+}
+
 /** Ship class stats (the chassis) */
 export interface ShipClassStats {
   hull: number;
@@ -24,10 +36,10 @@ export interface ShipClassStats {
   primaryBanks: number[];
   /** Secondary weapon bank sizes (e.g., [2, 1, 1] = 3 banks of sizes 2, 1, 1) */
   secondaryBanks: number[];
-  /** Primary hardpoint X positions (percentage from left, one per bank) */
-  primaryPositions: number[];
-  /** Secondary hardpoint X positions (percentage from left, one per bank) */
-  secondaryPositions: number[];
+  /** Primary hardpoint positions and SVG coordinates */
+  primaryHardpoints: Hardpoint[];
+  /** Secondary hardpoint positions and SVG coordinates */
+  secondaryHardpoints: Hardpoint[];
 }
 
 /**
@@ -36,7 +48,7 @@ export interface ShipClassStats {
  * These are the authoritative values used in testing.
  */
 export const SHIP_CLASSES: Record<string, ShipClassStats> = {
-  // Patrol: Intro enemy craft
+  // Patrol: Intro enemy craft - diamond with stubby wings
   patrol: {
     hull: 45,
     shields: 45,
@@ -52,11 +64,14 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     afterburnerHeatRate: 40,
     primaryBanks: [1, 1],
     secondaryBanks: [1],
-    primaryPositions: [35, 65],
-    secondaryPositions: [50],
+    primaryHardpoints: [
+      { row: 0, x: 0.3, svgX: 12, svgY: 32 },
+      { row: 0, x: 0.7, svgX: 52, svgY: 32 },
+    ],
+    secondaryHardpoints: [{ row: 0, x: 0.5, svgX: 32, svgY: 46 }],
   },
 
-  // Scout: Fast and fragile - FRAGILE
+  // Scout: Fast and fragile - narrow arrow shape
   scout: {
     hull: 55,
     shields: 35,
@@ -72,11 +87,14 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     afterburnerHeatRate: 25,
     primaryBanks: [1, 1],
     secondaryBanks: [1],
-    primaryPositions: [35, 65],
-    secondaryPositions: [50],
+    primaryHardpoints: [
+      { row: 0, x: 0.35, svgX: 20, svgY: 28 },
+      { row: 0, x: 0.65, svgX: 44, svgY: 28 },
+    ],
+    secondaryHardpoints: [{ row: 0, x: 0.5, svgX: 32, svgY: 48 }],
   },
 
-  // Fighter: Standard player craft - BALANCED (simplified interceptor)
+  // Fighter: Standard player craft - swept wings
   fighter: {
     hull: 90,
     shields: 65,
@@ -92,11 +110,17 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     afterburnerHeatRate: 40,
     primaryBanks: [1, 1],
     secondaryBanks: [1, 1],
-    primaryPositions: [35, 65],
-    secondaryPositions: [35, 65],
+    primaryHardpoints: [
+      { row: 0, x: 0.25, svgX: 8, svgY: 36 },
+      { row: 0, x: 0.75, svgX: 56, svgY: 36 },
+    ],
+    secondaryHardpoints: [
+      { row: 0, x: 0.35, svgX: 16, svgY: 38 },
+      { row: 0, x: 0.65, svgX: 48, svgY: 38 },
+    ],
   },
 
-  // Interceptor: Quick dogfighter - between scout and fighter
+  // Interceptor: Quick dogfighter - sharp delta wings
   interceptor: {
     hull: 75,
     shields: 50,
@@ -112,11 +136,18 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     afterburnerHeatRate: 32,
     primaryBanks: [2, 2],
     secondaryBanks: [1, 2, 1],
-    primaryPositions: [35, 65],
-    secondaryPositions: [25, 50, 75],
+    primaryHardpoints: [
+      { row: 0, x: 0.2, svgX: 6, svgY: 44 },
+      { row: 0, x: 0.8, svgX: 58, svgY: 44 },
+    ],
+    secondaryHardpoints: [
+      { row: 0, x: 0.25, svgX: 18, svgY: 44 },
+      { row: 0, x: 0.5, svgX: 32, svgY: 50 },
+      { row: 0, x: 0.75, svgX: 46, svgY: 44 },
+    ],
   },
 
-  // Striker: Heavy assault fighter - DURABLE
+  // Striker: Heavy assault fighter - thick body with angular wings
   striker: {
     hull: 130,
     shields: 90,
@@ -132,11 +163,17 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     afterburnerHeatRate: 60,
     primaryBanks: [2, 2, 2, 1, 1],
     secondaryBanks: [1],
-    primaryPositions: [10, 28, 50, 72, 90],
-    secondaryPositions: [50],
+    primaryHardpoints: [
+      { row: 0, x: 0.15, svgX: 8, svgY: 32 },
+      { row: 0, x: 0.5, svgX: 32, svgY: 16 },
+      { row: 0, x: 0.85, svgX: 56, svgY: 32 },
+      { row: 1, x: 0.35, svgX: 22, svgY: 24 },
+      { row: 1, x: 0.65, svgX: 42, svgY: 24 },
+    ],
+    secondaryHardpoints: [{ row: 0, x: 0.5, svgX: 32, svgY: 48 }],
   },
 
-  // Bomber: Slow, missile-focused - FRAGILE (relies on range)
+  // Bomber: Slow, missile-focused - wide wingspan
   bomber: {
     hull: 110,
     shields: 80,
@@ -152,11 +189,19 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     afterburnerHeatRate: 55,
     primaryBanks: [2],
     secondaryBanks: [2, 2, 2, 1, 1, 1, 1],
-    primaryPositions: [50],
-    secondaryPositions: [8, 22, 36, 50, 64, 78, 92],
+    primaryHardpoints: [{ row: 0, x: 0.5, svgX: 32, svgY: 20 }],
+    secondaryHardpoints: [
+      { row: 0, x: 0.1, svgX: 6, svgY: 24 },
+      { row: 0, x: 0.3, svgX: 20, svgY: 22 },
+      { row: 0, x: 0.5, svgX: 32, svgY: 32 },
+      { row: 0, x: 0.7, svgX: 44, svgY: 22 },
+      { row: 0, x: 0.9, svgX: 58, svgY: 24 },
+      { row: 1, x: 0.35, svgX: 26, svgY: 44 },
+      { row: 1, x: 0.65, svgX: 38, svgY: 44 },
+    ],
   },
 
-  // Defender: Tanky shield boat - DURABLE
+  // Defender: Tanky shield boat - bulky hexagonal shape
   defender: {
     hull: 165,
     shields: 130,
@@ -172,11 +217,20 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     afterburnerHeatRate: 50,
     primaryBanks: [2, 2],
     secondaryBanks: [2, 2, 1, 1, 1],
-    primaryPositions: [35, 65],
-    secondaryPositions: [15, 32, 50, 68, 85],
+    primaryHardpoints: [
+      { row: 0, x: 0.3, svgX: 16, svgY: 14 },
+      { row: 0, x: 0.7, svgX: 48, svgY: 14 },
+    ],
+    secondaryHardpoints: [
+      { row: 0, x: 0.2, svgX: 10, svgY: 32 },
+      { row: 0, x: 0.5, svgX: 32, svgY: 48 },
+      { row: 0, x: 0.8, svgX: 54, svgY: 32 },
+      { row: 1, x: 0.35, svgX: 16, svgY: 50 },
+      { row: 1, x: 0.65, svgX: 48, svgY: 50 },
+    ],
   },
 
-  // Raider: Glass cannon - FRAGILE
+  // Raider: Glass cannon - sharp angular attack shape
   raider: {
     hull: 65,
     shields: 45,
@@ -192,11 +246,20 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     afterburnerHeatRate: 35,
     primaryBanks: [3, 3, 1, 1],
     secondaryBanks: [1, 1, 1],
-    primaryPositions: [15, 38, 62, 85],
-    secondaryPositions: [25, 50, 75],
+    primaryHardpoints: [
+      { row: 0, x: 0.2, svgX: 10, svgY: 16 },
+      { row: 0, x: 0.8, svgX: 54, svgY: 16 },
+      { row: 1, x: 0.35, svgX: 20, svgY: 40 },
+      { row: 1, x: 0.65, svgX: 44, svgY: 40 },
+    ],
+    secondaryHardpoints: [
+      { row: 0, x: 0.3, svgX: 16, svgY: 28 },
+      { row: 0, x: 0.5, svgX: 32, svgY: 44 },
+      { row: 0, x: 0.7, svgX: 48, svgY: 28 },
+    ],
   },
 
-  // Sentinel: Long-range support - BALANCED (beam-optimized)
+  // Sentinel: Long-range support - elongated with sensor arrays
   sentinel: {
     hull: 110,
     shields: 110,
@@ -212,8 +275,16 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     afterburnerHeatRate: 45,
     primaryBanks: [3, 2, 2],
     secondaryBanks: [2, 2, 1],
-    primaryPositions: [20, 50, 80],
-    secondaryPositions: [25, 50, 75],
+    primaryHardpoints: [
+      { row: 0, x: 0.25, svgX: 16, svgY: 32 },
+      { row: 0, x: 0.5, svgX: 32, svgY: 12 },
+      { row: 0, x: 0.75, svgX: 48, svgY: 32 },
+    ],
+    secondaryHardpoints: [
+      { row: 0, x: 0.3, svgX: 16, svgY: 36 },
+      { row: 0, x: 0.5, svgX: 32, svgY: 52 },
+      { row: 0, x: 0.7, svgX: 48, svgY: 36 },
+    ],
   },
 };
 

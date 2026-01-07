@@ -13,7 +13,7 @@ import type {
   OwnedShip,
 } from '../../campaign/types';
 import { weaponUsesAmmo } from '../../data/prices';
-import { SHIP_CLASSES } from '../../data/ships';
+import { type Hardpoint, SHIP_CLASSES } from '../../data/ships';
 import { PRIMARY_WEAPONS } from '../../data/weapons';
 import { renderShipActions } from './actions';
 
@@ -131,19 +131,53 @@ function renderShipIcon(shipClass: string): string {
   `;
 }
 
-/** Get hardpoint positions for a ship class from ship stats */
-function getHardpointPositions(shipClass: string): {
-  primary: number[];
-  secondary: number[];
-} {
-  const stats = SHIP_CLASSES[shipClass.toLowerCase()];
-  if (stats) {
-    return {
-      primary: stats.primaryPositions,
-      secondary: stats.secondaryPositions,
-    };
+/** Group hardpoints by row for multi-row rendering */
+function groupHardpointsByRow(
+  hardpoints: Hardpoint[],
+): Map<number, Hardpoint[]> {
+  const rows = new Map<number, Hardpoint[]>();
+  for (const hp of hardpoints) {
+    const rowList = rows.get(hp.row) ?? [];
+    rowList.push(hp);
+    rows.set(hp.row, rowList);
   }
-  return { primary: [50], secondary: [50] };
+  return rows;
+}
+
+/** Render rows of hardpoint slots */
+function renderHardpointRows(
+  hardpoints: Hardpoint[],
+  banks: number[],
+  weapons: (EquippedPrimary | EquippedSecondary | null)[],
+  shipId: string,
+  slotType: 'primary' | 'secondary',
+): string {
+  const rows = groupHardpointsByRow(hardpoints);
+  const sortedRowNums = [...rows.keys()].sort((a, b) => a - b);
+
+  return sortedRowNums
+    .map((rowNum) => {
+      const rowHardpoints = rows.get(rowNum) ?? [];
+      const slots = rowHardpoints
+        .map((hp) => {
+          // Find global bank index for this hardpoint
+          const globalIdx = hardpoints.indexOf(hp);
+          const bankSize = banks[globalIdx] ?? 1;
+          const weapon = weapons[globalIdx] ?? null;
+          return renderSchematicSlot(
+            weapon,
+            globalIdx,
+            bankSize,
+            shipId,
+            slotType,
+            hp,
+          );
+        })
+        .join('');
+
+      return `<div class="row-slots" data-row="${rowNum}">${slots}</div>`;
+    })
+    .join('');
 }
 
 /** Render the complete ship viewer - TOP/BOTTOM SCHEMATIC LAYOUT */
@@ -163,32 +197,23 @@ export function renderShipViewer(
   const pilotSkill =
     isCommander || !ship.pilot ? '' : ` • ${ship.pilot.skill.toUpperCase()}`;
 
-  const positions = getHardpointPositions(ship.shipClass);
+  // Render primary slots grouped by row
+  const primaryRows = renderHardpointRows(
+    stats.primaryHardpoints,
+    stats.primaryBanks,
+    ship.primaryWeapons,
+    ship.id,
+    'primary',
+  );
 
-  // Render primary weapon slots (TOP - front of ship)
-  const primarySlots = stats.primaryBanks
-    .map((bankSize, i) => {
-      const weapon = ship.primaryWeapons[i] ?? null;
-      const xPos = positions.primary[i] ?? 50;
-      return renderSchematicSlot(weapon, i, bankSize, ship.id, 'primary', xPos);
-    })
-    .join('');
-
-  // Render secondary weapon slots (BOTTOM - back of ship)
-  const secondarySlots = stats.secondaryBanks
-    .map((bankSize, i) => {
-      const weapon = ship.secondaryWeapons[i] ?? null;
-      const xPos = positions.secondary[i] ?? 50;
-      return renderSchematicSlot(
-        weapon,
-        i,
-        bankSize,
-        ship.id,
-        'secondary',
-        xPos,
-      );
-    })
-    .join('');
+  // Render secondary slots grouped by row
+  const secondaryRows = renderHardpointRows(
+    stats.secondaryHardpoints,
+    stats.secondaryBanks,
+    ship.secondaryWeapons,
+    ship.id,
+    'secondary',
+  );
 
   return `
     <div class="ship-viewer schematic">
@@ -203,9 +228,7 @@ export function renderShipViewer(
       <div class="schematic-diagram vertical">
         <div class="hardpoint-row primary-row">
           <div class="row-label">PRIMARY</div>
-          <div class="row-slots">
-            ${primarySlots}
-          </div>
+          ${primaryRows}
         </div>
 
         <div class="schematic-center">
@@ -213,9 +236,7 @@ export function renderShipViewer(
         </div>
 
         <div class="hardpoint-row secondary-row">
-          <div class="row-slots">
-            ${secondarySlots}
-          </div>
+          ${secondaryRows}
           <div class="row-label">SECONDARY</div>
         </div>
       </div>
@@ -232,7 +253,7 @@ function renderSchematicSlot(
   bankSize: number,
   shipId: string,
   slotType: 'primary' | 'secondary',
-  xPosition: number,
+  hardpoint: Hardpoint,
 ): string {
   const isEmpty = !weapon;
   const isPrimary = slotType === 'primary';
@@ -263,29 +284,43 @@ function renderSchematicSlot(
     }
   }
 
-  // Render weapon display: SVG icon for both primaries and secondaries
+  // Render weapon display: SVG icons repeated based on bank size
   let weaponDisplay = '';
   if (isEmpty) {
-    weaponDisplay = `<span class="slot-empty-icon">+</span>`;
+    // Show + for each empty slot in the bank
+    weaponDisplay = Array(bankSize)
+      .fill('<span class="slot-empty-icon">+</span>')
+      .join('');
   } else if (isPrimary) {
     const iconPath = getWeaponIconPath(weaponType);
-    weaponDisplay = `<img src="${iconPath}" alt="${weaponType}" class="slot-weapon-icon" ${iconErrorHandler()} />`;
+    const icon = `<img src="${iconPath}" alt="${weaponType}" class="slot-weapon-icon" ${iconErrorHandler()} />`;
+    weaponDisplay = Array(bankSize).fill(icon).join('');
   } else {
     const iconPath = getMissileIconPath(weaponType);
-    weaponDisplay = `<img src="${iconPath}" alt="${weaponType}" class="slot-missile-icon" ${iconErrorHandler()} />`;
+    const icon = `<img src="${iconPath}" alt="${weaponType}" class="slot-missile-icon" ${iconErrorHandler()} />`;
+    weaponDisplay = Array(bankSize).fill(icon).join('');
   }
 
+  // Bank size class for CSS width scaling
+  const sizeClass = `bank-${bankSize}`;
+
+  // Convert normalized x (0-1) to percentage
+  const xPercent = hardpoint.x * 100;
+
+  // SVG coordinates as percentages (64x64 viewBox)
+  const svgXPercent = (hardpoint.svgX / 64) * 100;
+  const svgYPercent = (hardpoint.svgY / 64) * 100;
+
   return `
-    <div class="schematic-slot ${slotType} ${isEmpty ? 'empty' : 'filled'}"
+    <div class="schematic-slot ${slotType} ${isEmpty ? 'empty' : 'filled'} ${sizeClass}"
          data-ship="${shipId}"
          data-type="${slotType}"
          data-index="${bankIndex}"
          data-weapon="${weaponType}"
-         style="--slot-x: ${xPosition}%; ${weapon ? `--slot-color: ${color}` : ''}">
+         style="--slot-x: ${xPercent}%; --svg-x: ${svgXPercent}%; --svg-y: ${svgYPercent}%; --bank-size: ${bankSize}; ${weapon ? `--slot-color: ${color}` : ''}">
       <div class="slot-connector"></div>
       <div class="slot-content">
-        ${weaponDisplay}
-        <span class="slot-size">×${bankSize}</span>
+        <div class="slot-icons">${weaponDisplay}</div>
         ${capacityInfo}
       </div>
     </div>
