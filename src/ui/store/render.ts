@@ -238,7 +238,7 @@ export function getCategoryItems(
         .filter(({ weaponType }) => (storeStock.ammo[weaponType] ?? 0) > 0)
         .map(({ weaponType }) => ({
           id: weaponType,
-          name: `${PRIMARY_WEAPONS[weaponType]?.name ?? weaponType} ammo`,
+          name: PRIMARY_WEAPONS[weaponType]?.name ?? weaponType,
           stock: storeStock.ammo[weaponType] ?? 0,
         }));
     case 'scrap':

@@ -20,6 +20,8 @@ export interface WeaponStats {
   damage: number;
   /** Base ammo (undefined = infinite) */
   ammo?: number;
+  /** Ammo display name for store (e.g., "Autocannon Rounds") */
+  ammoName?: string;
   /** Flak explosion radius */
   flakRadius?: number;
   /** Number of shrapnel pieces */
@@ -85,6 +87,7 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
     range: 400,
     damage: 9, // Was 8, +12.5% for close-range advantage (not +25%, was too strong)
     ammo: 200,
+    ammoName: 'Autocannon Rounds',
   },
   railgun: {
     name: 'Railgun',
@@ -95,6 +98,7 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
     range: 2000,
     damage: 80,
     ammo: 20,
+    ammoName: 'Railgun Slugs',
     autoaimFov: 2, // Smart round corrects within 2° cone
   },
   flak: {
@@ -106,6 +110,7 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
     range: 600,
     damage: 30, // Was 15, +100% for viable primary weapon
     ammo: 50,
+    ammoName: 'Flak Shells',
     flakRadius: 100, // Was 80, larger AoE for area denial
     shrapnelCount: 8,
   },
@@ -193,6 +198,7 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
     range: 3000,
     damage: 500, // Single massive hit
     ammo: 1, // Limited ammo
+    ammoName: 'Lance Charges',
     noFalloff: true,
   },
 };

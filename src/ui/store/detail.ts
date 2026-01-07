@@ -8,6 +8,7 @@ import {
 } from '../../campaign/store';
 import type { CampaignState } from '../../campaign/types';
 import { SCRAP_PER_HULL } from '../../data/prices';
+import { PRIMARY_WEAPONS } from '../../data/weapons';
 import {
   getItemPrice,
   getStorageCount,
@@ -110,9 +111,14 @@ function renderStandardDetail(
     state.credits >= bulkPrice && storeStockCount >= bulkAmount;
   const canSellBulk = storageCount >= bulkAmount;
 
+  // For ammo, use the ammoName field as the header title
+  const headerTitle = isAmmo
+    ? (PRIMARY_WEAPONS[itemId]?.ammoName ?? itemId)
+    : itemId;
+
   return `
     <div class="store-detail">
-      <div class="detail-header">${itemId}</div>
+      <div class="detail-header">${headerTitle}</div>
       ${statsHtml}
       ${storageText ? `<div class="detail-storage">${storageText}</div>` : ''}
       <div class="detail-actions">
