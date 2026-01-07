@@ -208,6 +208,11 @@
   height: 100%;
 }
 
+/* When slot has ammo bar, offset content to center above it */
+.schematic-slot:has(.slot-ammo-bar) .slot-content {
+  padding-bottom: 7px; /* 3px bar offset + 4px bar height */
+}
+
 .slot-icons {
   display: flex;
   align-items: center;
@@ -365,7 +370,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 60px;
+  padding: 20px;
   z-index: 0;
   pointer-events: none;
 }
