@@ -126,27 +126,27 @@ export function renderPrimaryStats(weaponType: string): string {
   const fireRateText = isContinuous
     ? 'Continuous'
     : `${(1 / stats.fireRate).toFixed(1)}/s`;
-  const damageLabel = isContinuous ? 'Damage per second:' : 'Damage:';
-  const heatLabel = isContinuous ? 'Heat per second:' : 'Heat per shot:';
+  const damageLabel = isContinuous ? 'Damage per second' : 'Damage';
+  const heatLabel = isContinuous ? 'Heat per second' : 'Heat per shot';
 
   // Flak-specific stats
   const flakStats = stats.flakRadius
     ? `
-      <div class="stat-row"><span>Burst radius:</span><span>${stats.flakRadius} m</span></div>
-      <div class="stat-row"><span>Shrapnel count:</span><span>${stats.shrapnelCount}</span></div>
+      <div class="stat-row"><span>Burst radius</span><span>${stats.flakRadius} m</span></div>
+      <div class="stat-row"><span>Shrapnel count</span><span>${stats.shrapnelCount}</span></div>
     `
     : '';
 
   return `
     ${renderItemPreview('primaries', weaponType)}
     <div class="item-stats">
-      <div class="stat-row"><span>Category:</span><span>${categoryText}</span></div>
+      <div class="stat-row"><span>Category</span><span>${categoryText}</span></div>
       <div class="stat-row"><span>${damageLabel}</span><span>${stats.damage}</span></div>
-      <div class="stat-row"><span>Range:</span><span>${stats.range} m</span></div>
-      <div class="stat-row"><span>Fire rate:</span><span>${fireRateText}</span></div>
+      <div class="stat-row"><span>Range</span><span>${stats.range} m</span></div>
+      <div class="stat-row"><span>Fire rate</span><span>${fireRateText}</span></div>
       <div class="stat-row"><span>${heatLabel}</span><span>${stats.heatPerShot}</span></div>
       ${flakStats}
-      <div class="stat-row"><span>Ammo:</span><span>${ammoText}</span></div>
+      <div class="stat-row"><span>Ammo</span><span>${ammoText}</span></div>
     </div>
   `;
 }
@@ -164,12 +164,12 @@ export function renderSecondaryStats(weaponType: string): string {
   return `
     ${renderItemPreview('secondaries', weaponType)}
     <div class="item-stats">
-      <div class="stat-row"><span>Damage:</span><span>${stats.damage}</span></div>
-      <div class="stat-row"><span>Speed:</span><span>${stats.speed} m/s</span></div>
-      <div class="stat-row"><span>Range:</span><span>${stats.range} m</span></div>
-      <div class="stat-row"><span>Tracking:</span><span>${trackingText}</span></div>
-      <div class="stat-row"><span>Lock Time:</span><span>${lockText}</span></div>
-      ${stats.aoeRadius ? `<div class="stat-row"><span>AoE Radius:</span><span>${stats.aoeRadius} m</span></div>` : ''}
+      <div class="stat-row"><span>Damage</span><span>${stats.damage}</span></div>
+      <div class="stat-row"><span>Speed</span><span>${stats.speed} m/s</span></div>
+      <div class="stat-row"><span>Range</span><span>${stats.range} m</span></div>
+      <div class="stat-row"><span>Tracking</span><span>${trackingText}</span></div>
+      <div class="stat-row"><span>Lock time</span><span>${lockText}</span></div>
+      ${stats.aoeRadius ? `<div class="stat-row"><span>AoE radius</span><span>${stats.aoeRadius} m</span></div>` : ''}
     </div>
   `;
 }
@@ -179,11 +179,12 @@ export function renderAmmoStats(weaponType: string): string {
   const weapon = PRIMARY_WEAPONS[weaponType];
   if (!weapon || weapon.ammo === undefined) return '';
 
+  const roundsText = weapon.ammo === 1 ? 'round' : 'rounds';
   return `
     ${renderItemPreview('ammo', weaponType)}
     <div class="item-stats">
-      <div class="stat-row"><span>For Weapon:</span><span>${weapon.name}</span></div>
-      <div class="stat-row"><span>Capacity per bank size:</span><span>${weapon.ammo} rounds</span></div>
+      <div class="stat-row"><span>Weapon</span><span>${weapon.name}</span></div>
+      <div class="stat-row"><span>Capacity per bank size</span><span>${weapon.ammo} ${roundsText}</span></div>
     </div>
   `;
 }
@@ -197,7 +198,7 @@ export function renderScrapStats(shipClass: string): string {
   return `
     ${renderItemPreview('scrap', shipClass)}
     <div class="item-stats">
-      <div class="stat-row"><span>Ship Type:</span><span>${displayName}</span></div>
+      <div class="stat-row"><span>Ship type</span><span>${displayName}</span></div>
       <div class="stat-note">Scrap of destroyed ships. Sell for credits, or convert to a hull.</div>
     </div>
   `;
