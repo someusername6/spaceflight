@@ -20,14 +20,36 @@ export interface StorageItem {
   count: number;
 }
 
-/** Render a stored hull item (clickable) */
-function renderStoredHullItem(hull: StoredHull, isSelected: boolean): string {
+/** Capitalize first letter of a string */
+function capitalize(str: string): string {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+/** Render a generic storage item (clickable) */
+function renderStorageItem(
+  category: StoreCategory,
+  itemId: string,
+  displayName: string,
+  count: number,
+  isSelected: boolean,
+): string {
   return `
     <div class="storage-item ${isSelected ? 'selected' : ''}"
-         data-category="hulls" data-item="${hull.shipClass}">
-      <span class="item-name">${hull.shipClass}</span>
+         data-category="${category}" data-item="${itemId}">
+      <span class="item-name">${displayName}</span>
+      <span class="item-count">×${count}</span>
     </div>
   `;
+}
+
+/** Group hulls by ship class and count */
+function groupHullsByClass(hulls: StoredHull[]): Map<string, number> {
+  const groups = new Map<string, number>();
+  for (const hull of hulls) {
+    const existing = groups.get(hull.shipClass) ?? 0;
+    groups.set(hull.shipClass, existing + 1);
+  }
+  return groups;
 }
 
 /** Group weapons by type and count */
@@ -51,58 +73,6 @@ function groupWeaponsByType(
     }
   }
   return groups;
-}
-
-/** Render a weapon group item (clickable) */
-function renderWeaponGroupItem(
-  weaponType: string,
-  data: { category: 'primary' | 'secondary'; count: number },
-  isSelected: boolean,
-): string {
-  const storeCategory: StoreCategory =
-    data.category === 'primary' ? 'primaries' : 'secondaries';
-  const displayName =
-    data.category === 'primary'
-      ? (PRIMARY_WEAPONS[weaponType]?.name ?? weaponType)
-      : (MISSILES[weaponType]?.name ?? weaponType);
-  return `
-    <div class="storage-item ${isSelected ? 'selected' : ''}"
-         data-category="${storeCategory}" data-item="${weaponType}">
-      <span class="item-name">${displayName}</span>
-      <span class="item-count">×${data.count}</span>
-    </div>
-  `;
-}
-
-/** Render a stored ammo item (clickable) */
-function renderStoredAmmoItem(
-  ammo: { weaponType: string; count: number },
-  isSelected: boolean,
-): string {
-  const weaponName = PRIMARY_WEAPONS[ammo.weaponType]?.name ?? ammo.weaponType;
-  return `
-    <div class="storage-item ${isSelected ? 'selected' : ''}"
-         data-category="ammo" data-item="${ammo.weaponType}">
-      <span class="item-name">${weaponName}</span>
-      <span class="item-count">×${ammo.count}</span>
-    </div>
-  `;
-}
-
-/** Render a scrap item (clickable) */
-function renderScrapItem(
-  shipClass: string,
-  count: number,
-  isSelected: boolean,
-): string {
-  const displayName = shipClass.charAt(0).toUpperCase() + shipClass.slice(1);
-  return `
-    <div class="storage-item ${isSelected ? 'selected' : ''}"
-         data-category="scrap" data-item="${shipClass}">
-      <span class="item-name">${displayName} Scrap</span>
-      <span class="item-count">×${count}</span>
-    </div>
-  `;
 }
 
 /** Render the storage panel for the store screen */
@@ -131,14 +101,21 @@ export function renderStoreStorage(
   const isSelected = (cat: StoreCategory, id: string): boolean =>
     selectedCategory === cat && selectedItem === id;
 
-  // Render hulls section
+  // Render hulls section (grouped by ship class)
+  const hullGroups = groupHullsByClass(state.storedHulls);
   const hullsSection = hasHulls
     ? `
       <div class="storage-section">
         <div class="storage-label">Ship Hulls</div>
-        ${state.storedHulls
-          .map((hull) =>
-            renderStoredHullItem(hull, isSelected('hulls', hull.shipClass)),
+        ${Array.from(hullGroups.entries())
+          .map(([shipClass, count]) =>
+            renderStorageItem(
+              'hulls',
+              shipClass,
+              capitalize(shipClass),
+              count,
+              isSelected('hulls', shipClass),
+            ),
           )
           .join('')}
       </div>
@@ -155,7 +132,17 @@ export function renderStoreStorage(
           .map(([type, data]) => {
             const cat: StoreCategory =
               data.category === 'primary' ? 'primaries' : 'secondaries';
-            return renderWeaponGroupItem(type, data, isSelected(cat, type));
+            const name =
+              data.category === 'primary'
+                ? (PRIMARY_WEAPONS[type]?.name ?? type)
+                : (MISSILES[type]?.name ?? type);
+            return renderStorageItem(
+              cat,
+              type,
+              name,
+              data.count,
+              isSelected(cat, type),
+            );
           })
           .join('')}
       </div>
@@ -168,9 +155,17 @@ export function renderStoreStorage(
       <div class="storage-section">
         <div class="storage-label">Ammo</div>
         ${state.storedAmmo
-          .map((ammo) =>
-            renderStoredAmmoItem(ammo, isSelected('ammo', ammo.weaponType)),
-          )
+          .map((ammo) => {
+            const name =
+              PRIMARY_WEAPONS[ammo.weaponType]?.name ?? ammo.weaponType;
+            return renderStorageItem(
+              'ammo',
+              ammo.weaponType,
+              name,
+              ammo.count,
+              isSelected('ammo', ammo.weaponType),
+            );
+          })
           .join('')}
       </div>
     `
@@ -186,7 +181,13 @@ export function renderStoreStorage(
         <div class="storage-label">Scrap</div>
         ${scrapEntries
           .map(([shipClass, count]) =>
-            renderScrapItem(shipClass, count, isSelected('scrap', shipClass)),
+            renderStorageItem(
+              'scrap',
+              shipClass,
+              `${capitalize(shipClass)} Scrap`,
+              count,
+              isSelected('scrap', shipClass),
+            ),
           )
           .join('')}
       </div>
