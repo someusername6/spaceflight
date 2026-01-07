@@ -48,9 +48,53 @@
   min-height: 0;
 }
 
-@media (max-width: 1000px) {
+.hangar-details {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.hangar-details-placeholder {
+  /* Empty placeholder to maintain grid layout */
+}
+
+/* Intermediate breakpoint: 2-column (hide stats panel) */
+/* 1150px threshold ensures viewer has ~550px width for ships with tight slot spacing */
+/* (Raider/Bomber with 0.2-spaced secondary slots need ~512px viewer width) */
+@media (max-width: 1150px) {
+  .hangar-layout {
+    grid-template-columns: 280px minmax(0, 1fr);
+  }
+
+  .hangar-details,
+  .hangar-details-placeholder {
+    display: none;
+  }
+}
+
+/* Narrow breakpoint: single column with min-height for viewer */
+/* 850px threshold ensures viewer has enough width for ships with tight slot spacing */
+/* (e.g., Raider/Bomber with 0.2-spaced secondary slots need ~512px viewer width) */
+@media (max-width: 850px) {
   .hangar-layout {
     grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+
+  .hangar-ships {
+    max-height: 180px;
+    flex-shrink: 0;
+  }
+
+  .hangar-viewer {
+    min-height: 320px;
+    flex-shrink: 0;
+  }
+
+  .hangar-details,
+  .hangar-details-placeholder {
+    display: none;
   }
 }
 
@@ -113,17 +157,6 @@
 /* ========================================
    SHIP DETAILS PANEL (Right Column)
    ======================================== */
-
-.hangar-details {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  overflow-y: auto;
-}
-
-.hangar-details-placeholder {
-  /* Empty placeholder to maintain grid layout */
-}
 
 .ship-details {
   background: var(--bg-panel);

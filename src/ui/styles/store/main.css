@@ -36,6 +36,29 @@
   font-size: 0.8rem;
 }
 
+/* Wrap category tabs on narrow screens */
+@media (max-width: 550px) {
+  .store-categories {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .category-tabs {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .category-tabs .btn {
+    padding: 8px 14px;
+    font-size: 0.75rem;
+  }
+
+  .category-actions {
+    align-self: flex-end;
+  }
+}
+
 .category-actions {
   display: flex;
   align-items: center;

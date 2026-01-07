@@ -1,0 +1,57 @@
+/**
+ * Ship Viewer Responsive Styles - Narrow viewport adaptations
+ */
+
+/* ========================================
+   RESPONSIVE - NARROW VIEWPORTS
+   ======================================== */
+
+/* 850px matches hangar 1-column breakpoint for consistent slot sizing */
+@media (max-width: 850px) {
+  .schematic-diagram.vertical {
+    min-height: 280px;
+  }
+
+  .schematic-center {
+    padding: 40px;
+  }
+
+  .hardpoint-row {
+    gap: 2px;
+  }
+
+  .row-slots {
+    height: 40px;
+  }
+
+  .schematic-slot {
+    width: 80px;
+    height: 40px;
+  }
+
+  .schematic-slot.bank-2 {
+    width: 120px;
+  }
+
+  .schematic-slot.bank-3 {
+    width: 160px;
+  }
+
+  .slot-weapon-icon,
+  .slot-missile-icon {
+    width: 64px;
+    height: 21px;
+  }
+
+  .schematic-slot.bank-2 .slot-weapon-icon,
+  .schematic-slot.bank-2 .slot-missile-icon {
+    width: 50px;
+    height: 17px;
+  }
+
+  .schematic-slot.bank-3 .slot-weapon-icon,
+  .schematic-slot.bank-3 .slot-missile-icon {
+    width: 42px;
+    height: 14px;
+  }
+}
