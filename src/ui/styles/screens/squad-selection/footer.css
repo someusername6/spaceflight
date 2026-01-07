@@ -21,7 +21,7 @@
 
 .squad-deploy-count {
   font-family: var(--font-ui);
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   color: var(--text-secondary);
   letter-spacing: 0.05em;
 }

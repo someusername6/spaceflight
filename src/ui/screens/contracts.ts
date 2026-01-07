@@ -227,7 +227,7 @@ function renderContractDetail(
         <div class="contract-waves">${totalEnemies} total in ${waveCount} waves</div>
       </div>
       <div class="contract-actions">
-        <div class="contract-reward-price">${contract.reward} cr</div>
+        <div class="contract-reward-price">${contract.reward.toLocaleString()}<span class="currency">cr</span></div>
         ${unarmedWarning}
         ${acceptButton}
       </div>

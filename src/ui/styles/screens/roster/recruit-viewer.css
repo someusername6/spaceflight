@@ -134,51 +134,35 @@
 }
 
 .btn-hire-pilot {
-  padding: 12px 32px;
-  font-family: var(--font-display);
-  font-size: 0.9rem;
-  font-weight: 600;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--bg-deep);
-  background: linear-gradient(180deg, var(--color-success) 0%, #00cc6a 100%);
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.btn-hire-pilot::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -100%;
   width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.2),
-    transparent
+  padding: 14px 24px;
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-success);
+  background: rgba(0, 255, 136, 0.05);
+  border: 1px solid var(--color-success);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% 100%,
+    8px 100%,
+    0 calc(100% - 8px)
   );
-  transition: left 0.4s ease;
-}
-
-.btn-hire-pilot:hover:not(:disabled)::before {
-  left: 100%;
 }
 
 .btn-hire-pilot:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow:
-    0 4px 20px var(--color-success-glow),
-    0 0 30px rgba(0, 255, 136, 0.2);
+  background: rgba(0, 255, 136, 0.15);
+  box-shadow: 0 0 20px var(--color-success-glow);
 }
 
 .btn-hire-pilot:disabled {
-  background: var(--border-color);
-  color: var(--text-dim);
+  opacity: 0.4;
   cursor: not-allowed;
   box-shadow: none;
 }

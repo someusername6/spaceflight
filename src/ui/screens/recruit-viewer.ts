@@ -62,7 +62,7 @@ export function renderRecruitViewer(
         >
           Hire Pilot
         </button>
-        ${canAfford ? '<div class="recruit-hire-note">Pilot will join your roster unassigned</div>' : '<div class="recruit-hire-note error">Insufficient credits</div>'}
+        ${canAfford ? '' : '<div class="recruit-hire-note error">Insufficient credits</div>'}
       </div>
     </div>
   `;
