@@ -122,6 +122,68 @@ export function getItemPrice(
   }
 }
 
+/** Check if a category has any items in store stock */
+function hasStoreStock(state: CampaignState, category: StoreCategory): boolean {
+  switch (category) {
+    case 'hulls':
+      return Object.values(state.storeStock.hulls).some((count) => count > 0);
+    case 'primaries':
+      return Object.values(state.storeStock.primaries).some(
+        (count) => count > 0,
+      );
+    case 'secondaries':
+      return Object.values(state.storeStock.secondaries).some(
+        (count) => count > 0,
+      );
+    case 'ammo':
+      return Object.values(state.storeStock.ammo).some((count) => count > 0);
+    case 'scrap':
+      // Scrap has no store stock, only player storage
+      return false;
+  }
+}
+
+/** Check if a category has any items in player storage */
+function hasStorageItems(
+  state: CampaignState,
+  category: StoreCategory,
+): boolean {
+  switch (category) {
+    case 'hulls':
+      return state.storedHulls.length > 0;
+    case 'primaries':
+      return state.storedWeapons.some((w) => w.category === 'primary');
+    case 'secondaries':
+      return state.storedWeapons.some((w) => w.category === 'secondary');
+    case 'ammo':
+      return state.storedAmmo.length > 0;
+    case 'scrap':
+      return Object.values(state.storedScrap).some((count) => count > 0);
+  }
+}
+
+/** Check if a category should be visible (has store stock OR player storage) */
+export function isCategoryVisible(
+  state: CampaignState,
+  category: StoreCategory,
+): boolean {
+  return hasStoreStock(state, category) || hasStorageItems(state, category);
+}
+
+/** Get first visible category */
+export function getFirstVisibleCategory(
+  state: CampaignState,
+): StoreCategory | null {
+  const categories: StoreCategory[] = [
+    'hulls',
+    'primaries',
+    'secondaries',
+    'ammo',
+    'scrap',
+  ];
+  return categories.find((cat) => isCategoryVisible(state, cat)) ?? null;
+}
+
 /** Get count of item in player's storage */
 export function getStorageCount(
   state: CampaignState,

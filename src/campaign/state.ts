@@ -3,11 +3,21 @@
  */
 
 import { createPRNG, random } from '../core/prng';
-import { getAmmoPrice, getSecondaryPrice } from '../data/prices';
 import { getArchetype } from '../factories/ship';
 import { generateInitialRecruits } from './recruits';
 import { createInitialStoreStock } from './store';
-import { getMaxAmmoCapacity, getMaxMissileCapacity } from './store-ammo';
+import { getMaxMissileCapacity } from './store-ammo';
+
+// Re-export resupply functions from dedicated module
+export {
+  calculateResupplyCost,
+  getResupplyStatus,
+  type ResupplyStatus,
+  resupplyAllShips,
+  resupplyShip,
+  storeResupplyAllShips,
+} from './resupply';
+
 import type {
   CampaignState,
   EquippedPrimary,
@@ -22,11 +32,6 @@ let idCounter = 0;
 /** Generate a unique ID (deterministic, counter-based) */
 function generateId(): string {
   return `ship_${++idCounter}`;
-}
-
-/** Get max ammo capacity for a primary weapon (convenience wrapper) */
-function getMaxPrimaryAmmo(primary: EquippedPrimary): number {
-  return getMaxAmmoCapacity(primary.weaponType, primary.bankSize);
 }
 
 /** Create a ship from an archetype with default loadout */
@@ -120,18 +125,7 @@ export function createNewCampaign(): CampaignState {
     storedHulls: [], // No spare hulls at start
     storedWeapons: [],
     storedAmmo: [], // No spare ammo at start
-    // Testing: 500 scrap of each ship type
-    storedScrap: {
-      patrol: 500,
-      scout: 500,
-      fighter: 500,
-      interceptor: 500,
-      striker: 500,
-      bomber: 500,
-      defender: 500,
-      raider: 500,
-      sentinel: 500,
-    },
+    storedScrap: {}, // No scrap at start
     storeStock: createInitialStoreStock(),
     availableRecruits, // Pilots available for hire
     currentSector: 1,
@@ -305,71 +299,6 @@ export function applyAmmoUsage(
   return {
     ...state,
     ships: updatedShips,
-  };
-}
-
-/** Calculate resupply cost for a single ship */
-export function calculateResupplyCost(ship: OwnedShip): number {
-  let cost = 0;
-
-  // Primary weapons with finite ammo (skip null slots)
-  for (const primary of ship.primaryWeapons) {
-    if (primary === null) continue;
-    if (primary.currentAmmo !== undefined) {
-      const maxAmmo = getMaxPrimaryAmmo(primary);
-      const needed = maxAmmo - primary.currentAmmo;
-      const pricePerUnit = getAmmoPrice(primary.weaponType, 'buy');
-      // Round to avoid fractional credits
-      cost += Math.round(Math.max(0, needed) * pricePerUnit);
-    }
-  }
-
-  // Secondary weapons - use actual missile prices (skip null slots)
-  for (const secondary of ship.secondaryWeapons) {
-    if (secondary === null) continue;
-    const needed = secondary.maxCount - secondary.count;
-    const pricePerUnit = getSecondaryPrice(secondary.weaponType, 'buy');
-    cost += needed * pricePerUnit;
-  }
-
-  return cost;
-}
-
-/** Resupply a ship (refill all ammo) */
-export function resupplyShip(ship: OwnedShip): OwnedShip {
-  return {
-    ...ship,
-    primaryWeapons: ship.primaryWeapons.map((primary) => {
-      if (primary === null) return null;
-      if (primary.currentAmmo !== undefined) {
-        const maxAmmo = getMaxPrimaryAmmo(primary);
-        return { ...primary, currentAmmo: maxAmmo };
-      }
-      return primary;
-    }),
-    secondaryWeapons: ship.secondaryWeapons.map((secondary) => {
-      if (secondary === null) return null;
-      return { ...secondary, count: secondary.maxCount };
-    }),
-  };
-}
-
-/** Resupply all ships in campaign (deduct cost from credits) */
-export function resupplyAllShips(state: CampaignState): CampaignState {
-  let totalCost = 0;
-  for (const ship of state.ships) {
-    totalCost += calculateResupplyCost(ship);
-  }
-
-  if (totalCost > state.credits) {
-    // Can't afford - return unchanged
-    return state;
-  }
-
-  return {
-    ...state,
-    credits: state.credits - totalCost,
-    ships: state.ships.map(resupplyShip),
   };
 }
 

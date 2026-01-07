@@ -82,6 +82,19 @@
   color: var(--color-success);
 }
 
+.resupply-status.resupply-warning {
+  color: var(--color-warning);
+}
+
+.btn-resupply-small.has-shortage {
+  border-color: var(--color-warning);
+  color: var(--color-warning);
+}
+
+.btn-resupply-small.has-shortage:hover:not(:disabled) {
+  background: rgba(255, 217, 61, 0.1);
+}
+
 .store-layout {
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr) 280px;
@@ -119,110 +132,7 @@
   }
 }
 
-/* ========================================
-   ITEM LIST
-   ======================================== */
-
-.store-list {
-  background: var(--bg-panel);
-  border: 1px solid var(--border-color);
-  padding: 12px;
-  overflow-y: auto;
-  min-height: 0;
-  min-width: 0;
-  max-width: 280px;
-}
-
-/* Custom scrollbar */
-.store-list::-webkit-scrollbar {
-  width: 6px;
-}
-
-.store-list::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
-}
-
-.store-list::-webkit-scrollbar-thumb {
-  background: var(--border-light);
-  border-radius: 3px;
-}
-
-.store-list::-webkit-scrollbar-thumb:hover {
-  background: var(--color-primary);
-}
-
-.store-item {
-  display: flex;
-  align-items: center;
-  padding: 12px 14px;
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid transparent;
-  margin-bottom: 6px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  position: relative;
-}
-
-.store-item:last-child {
-  margin-bottom: 0;
-}
-
-.store-item:hover {
-  background: rgba(255, 159, 28, 0.08);
-  border-color: var(--border-color);
-}
-
-.store-item.selected {
-  background: rgba(255, 159, 28, 0.12);
-  border-color: var(--color-primary);
-}
-
-.store-item.selected::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: var(--color-primary);
-}
-
-.store-item .item-name {
-  flex: 1;
-  font-family: var(--font-ui);
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: var(--text-primary);
-  text-transform: capitalize;
-  white-space: nowrap;
-}
-
-.store-item .item-stock {
-  font-family: var(--font-body);
-  font-size: 0.75rem;
-  color: var(--text-dim);
-  margin-left: auto;
-  margin-right: 12px;
-  min-width: 40px;
-  text-align: right;
-}
-
-.store-item .item-price {
-  font-family: var(--font-display);
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--color-success);
-  min-width: 80px;
-  text-align: right;
-}
-
-.store-item .item-price.expensive {
-  color: var(--color-danger);
-}
-
-.store-item .item-price.sell-price {
-  color: var(--color-warning);
-}
+/* Item list styles in separate file: list.css */
 
 /* ========================================
    DETAIL PANEL

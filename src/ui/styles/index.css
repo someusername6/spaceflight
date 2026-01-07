@@ -72,6 +72,7 @@
 
 /* Store - equipment purchase */
 @import "./store/main.css";
+@import "./store/list.css";
 @import "./store/detail.css";
 @import "./store/storage.css";
 

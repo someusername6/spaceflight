@@ -2,7 +2,7 @@
  * Store UI - equipment shop for buying/selling ships, weapons, and ammo.
  */
 
-import { calculateResupplyCost, resupplyAllShips } from '../../campaign/state';
+import { getResupplyStatus, storeResupplyAllShips } from '../../campaign/state';
 import { convertScrapToHull } from '../../campaign/store';
 import type { CampaignState } from '../../campaign/types';
 import {
@@ -19,7 +19,13 @@ import {
   handleBuy,
   handleSell,
 } from './events';
-import { getCategoryItems, getItemPrice, type StoreCategory } from './render';
+import {
+  getCategoryItems,
+  getFirstVisibleCategory,
+  getItemPrice,
+  isCategoryVisible,
+  type StoreCategory,
+} from './render';
 import { renderStoreStorage } from './storage';
 
 /** Store UI state */
@@ -36,27 +42,24 @@ export type { NavDestination } from '../common/nav-bar';
 // Re-export types for external use
 export type { StoreCategory } from './render';
 
-/** Calculate total resupply cost for all ships */
-function getTotalResupplyCost(state: CampaignState): number {
-  let total = 0;
-  for (const ship of state.ships) {
-    total += calculateResupplyCost(ship);
-  }
-  return total;
-}
-
 /** Render the resupply button (for categories bar) */
 function renderResupplyButton(state: CampaignState): string {
-  const cost = getTotalResupplyCost(state);
-  const canAfford = state.credits >= cost && cost > 0;
+  const resupply = getResupplyStatus(state);
 
-  if (cost === 0) {
+  if (resupply.status === 'supplied') {
     return `<span class="resupply-status">✓ Supplied</span>`;
   }
 
+  if (resupply.status === 'insufficient') {
+    return `<span class="resupply-status resupply-warning">⚠ Insufficient Supply</span>`;
+  }
+
+  const canAfford = state.credits >= resupply.cost;
+  const warningClass = resupply.hasShortages ? ' has-shortage' : '';
+
   return `
-    <button class="btn btn-resupply-small" id="btn-resupply" ${canAfford ? '' : 'disabled'}>
-      Resupply (${cost} cr)
+    <button class="btn btn-resupply-small${warningClass}" id="btn-resupply" ${canAfford ? '' : 'disabled'}>
+      Resupply (${resupply.cost} cr)${resupply.hasShortages ? ' ⚠' : ''}
     </button>
   `;
 }
@@ -117,11 +120,11 @@ function renderStore(ui: StoreUI): string {
       <main class="store-screen" aria-label="Equipment Store">
         <nav class="store-categories" aria-label="Store categories">
           <div class="category-tabs" role="tablist" aria-label="Item categories">
-            <button class="btn ${ui.selectedCategory === 'hulls' ? 'btn-primary' : ''}" data-cat="hulls" role="tab" aria-selected="${ui.selectedCategory === 'hulls'}">Hulls</button>
-            <button class="btn ${ui.selectedCategory === 'primaries' ? 'btn-primary' : ''}" data-cat="primaries" role="tab" aria-selected="${ui.selectedCategory === 'primaries'}">Primaries</button>
-            <button class="btn ${ui.selectedCategory === 'secondaries' ? 'btn-primary' : ''}" data-cat="secondaries" role="tab" aria-selected="${ui.selectedCategory === 'secondaries'}">Missiles</button>
-            <button class="btn ${ui.selectedCategory === 'ammo' ? 'btn-primary' : ''}" data-cat="ammo" role="tab" aria-selected="${ui.selectedCategory === 'ammo'}">Ammo</button>
-            <button class="btn ${ui.selectedCategory === 'scrap' ? 'btn-primary' : ''}" data-cat="scrap" role="tab" aria-selected="${ui.selectedCategory === 'scrap'}">Scrap</button>
+            ${isCategoryVisible(ui.state, 'hulls') ? `<button class="btn ${ui.selectedCategory === 'hulls' ? 'btn-primary' : ''}" data-cat="hulls" role="tab" aria-selected="${ui.selectedCategory === 'hulls'}">Hulls</button>` : ''}
+            ${isCategoryVisible(ui.state, 'primaries') ? `<button class="btn ${ui.selectedCategory === 'primaries' ? 'btn-primary' : ''}" data-cat="primaries" role="tab" aria-selected="${ui.selectedCategory === 'primaries'}">Primaries</button>` : ''}
+            ${isCategoryVisible(ui.state, 'secondaries') ? `<button class="btn ${ui.selectedCategory === 'secondaries' ? 'btn-primary' : ''}" data-cat="secondaries" role="tab" aria-selected="${ui.selectedCategory === 'secondaries'}">Missiles</button>` : ''}
+            ${isCategoryVisible(ui.state, 'ammo') ? `<button class="btn ${ui.selectedCategory === 'ammo' ? 'btn-primary' : ''}" data-cat="ammo" role="tab" aria-selected="${ui.selectedCategory === 'ammo'}">Ammo</button>` : ''}
+            ${isCategoryVisible(ui.state, 'scrap') ? `<button class="btn ${ui.selectedCategory === 'scrap' ? 'btn-primary' : ''}" data-cat="scrap" role="tab" aria-selected="${ui.selectedCategory === 'scrap'}">Scrap</button>` : ''}
           </div>
           <div class="category-actions">
             ${renderResupplyButton(ui.state)}
@@ -150,7 +153,7 @@ function bindStoreEvents(ui: StoreUI): void {
   const resupplyBtn = ui.element.querySelector('#btn-resupply');
   if (resupplyBtn) {
     resupplyBtn.addEventListener('click', () => {
-      const newState = resupplyAllShips(ui.state);
+      const newState = storeResupplyAllShips(ui.state);
       if (newState !== ui.state) {
         ui.state = newState;
         ui.onStateUpdate(newState);
@@ -287,6 +290,15 @@ function bindStoreEvents(ui: StoreUI): void {
 
 /** Internal: render and bind */
 function renderAndBindStore(ui: StoreUI): void {
+  // If current category is no longer visible, switch to first visible one
+  if (!isCategoryVisible(ui.state, ui.selectedCategory)) {
+    const firstVisible = getFirstVisibleCategory(ui.state);
+    if (firstVisible) {
+      ui.selectedCategory = firstVisible;
+      ui.selectedItem = null;
+    }
+  }
+
   ui.element.innerHTML = renderStore(ui);
   bindStoreEvents(ui);
 
@@ -310,10 +322,13 @@ export function createStoreUI(
   onNavigate: (destination: NavDestination) => void,
   onStateUpdate: (newState: CampaignState) => void,
 ): StoreUI {
+  // Start with first visible category (or hulls as fallback if somehow none visible)
+  const initialCategory = getFirstVisibleCategory(state) ?? 'hulls';
+
   const ui: StoreUI = {
     element,
     state,
-    selectedCategory: 'hulls',
+    selectedCategory: initialCategory,
     selectedItem: null,
     onNavigate,
     onStateUpdate,
