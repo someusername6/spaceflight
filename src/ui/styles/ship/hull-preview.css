@@ -1,0 +1,72 @@
+/**
+ * Hull Preview Styles - Store preview for ship hulls
+ *
+ * Styles for the compact hull schematic displayed in the store.
+ */
+
+/* ========================================
+   HULL PREVIEW MODE (STORE)
+   ======================================== */
+
+/* Hull schematic preview container - constrained width, explicit height */
+.hull-schematic-preview {
+  --slot-height: 8px;
+  --slot-base-width: 16px;
+  width: 280px;
+  height: 180px;
+  margin: 0 auto;
+  position: relative;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+/* Override flex for hull preview - needs explicit dimensions for absolute children */
+.hull-schematic-preview .schematic-center {
+  padding: 20px;
+}
+
+/* Smaller row height for hull preview */
+.hull-schematic-preview .row-slots {
+  height: 10px;
+}
+
+.hull-schematic-preview .row-slots + .row-slots {
+  margin-top: 2px;
+}
+
+/* Hull preview slots - much smaller (8px tall) */
+.schematic-slot.hull-preview {
+  background: transparent;
+  border-color: var(--slot-color, var(--border-color));
+  cursor: default;
+  height: var(--slot-height);
+  width: var(--slot-base-width);
+  padding: 0;
+}
+
+.schematic-slot.hull-preview.bank-2 {
+  width: calc(var(--slot-base-width) + var(--slot-height));
+}
+
+.schematic-slot.hull-preview.bank-3 {
+  width: calc(var(--slot-base-width) + 2 * var(--slot-height));
+}
+
+.schematic-slot.hull-preview:hover {
+  background: transparent;
+  border-color: var(--slot-color, var(--border-color));
+}
+
+/* Hull preview connector lines - more visible */
+.hull-schematic-preview .connector-line {
+  opacity: 0.8;
+  stroke-width: 1.5;
+}
+
+.hull-schematic-preview .connector-line.connector-primary {
+  stroke: var(--color-warning);
+}
+
+.hull-schematic-preview .connector-line.connector-secondary {
+  stroke: var(--color-danger);
+}

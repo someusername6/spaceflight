@@ -42,6 +42,7 @@ import {
   getMissileIconPath,
   getShipIconPath,
   getWeaponIconPath,
+  renderHullSchematic,
 } from '../ship/viewer';
 
 /** Generate onerror handler for fallback icon */
@@ -64,12 +65,11 @@ function renderItemPreview(category: StoreCategory, id: string): string {
     scrap: 'var(--color-text-dim)',
   };
 
-  // Use ship SVG icon for hulls
+  // Use hull schematic for hulls (shows ship + hardpoint slots)
   if (category === 'hulls') {
-    const iconPath = getShipIconPath(id);
     return `
-      <div class="item-preview" style="--preview-color: ${categoryColors[category]}">
-        <img src="${iconPath}" alt="${id}" class="item-preview-ship-icon" ${iconError} />
+      <div class="item-preview hull-preview-container" style="--preview-color: ${categoryColors[category]}">
+        ${renderHullSchematic(id)}
       </div>
     `;
   }

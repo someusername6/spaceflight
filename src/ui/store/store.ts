@@ -10,6 +10,7 @@ import {
   type NavDestination,
   renderNavBar,
 } from '../common/nav-bar';
+import { initShipConnectors } from '../ship/connectors';
 import { renderDetailPanel } from './detail';
 import {
   handleBulkBuy,
@@ -288,6 +289,17 @@ function bindStoreEvents(ui: StoreUI): void {
 function renderAndBindStore(ui: StoreUI): void {
   ui.element.innerHTML = renderStore(ui);
   bindStoreEvents(ui);
+
+  // Hull previews display schematic connector lines from slots to ship hardpoints.
+  // These require manual initialization after render since the SVG overlay needs
+  // to measure element positions. Uses the same initShipConnectors as the main
+  // ship viewer - the hull-preview mode slots include the same data attributes.
+  if (ui.selectedCategory === 'hulls') {
+    const hullPreview = ui.element.querySelector('.hull-preview-container');
+    if (hullPreview) {
+      initShipConnectors(hullPreview);
+    }
+  }
 }
 
 /** Create store UI */

@@ -46,6 +46,12 @@
     drop-shadow(0 0 16px var(--color-secondary-glow));
 }
 
+/* Hull preview container - uses schematic diagram */
+.item-preview.hull-preview-container {
+  padding: 16px;
+  min-height: 200px;
+}
+
 .item-preview-weapon-icon {
   width: 200px;
   height: 100px;

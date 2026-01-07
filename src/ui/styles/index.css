@@ -46,6 +46,7 @@
 
 @import "./ship/card.css";
 @import "./ship/viewer.css";
+@import "./ship/hull-preview.css";
 @import "./ship/viewer-responsive.css";
 @import "./ship/viewer-actions.css";
 

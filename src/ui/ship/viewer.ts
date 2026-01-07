@@ -15,98 +15,28 @@ import type {
 import { weaponUsesAmmo } from '../../data/prices';
 import { type Hardpoint, SHIP_CLASSES } from '../../data/ships';
 import { renderShipActions } from './actions';
+import {
+  getMissileColor,
+  getMissileIconPath,
+  getShipIconPath,
+  getWeaponColor,
+  getWeaponIconPath,
+  iconErrorHandler,
+} from './viewer-icons';
 
-/** Get 3-letter abbreviation for ship class */
-export function getShipAbbrev(shipClass: string): string {
-  const abbrevs: Record<string, string> = {
-    patrol: 'PTR',
-    scout: 'SCT',
-    fighter: 'FTR',
-    interceptor: 'INT',
-    striker: 'STR',
-    bomber: 'BMR',
-    defender: 'DEF',
-    raider: 'RAI',
-    sentinel: 'SNT',
-  };
-  return (
-    abbrevs[shipClass.toLowerCase()] ?? shipClass.substring(0, 3).toUpperCase()
-  );
-}
+// Re-export for external use
+export {
+  FALLBACK_ICON_PATH,
+  getMissileAbbrev,
+  getMissileIconPath,
+  getShipAbbrev,
+  getShipIconPath,
+  getWeaponAbbrev,
+  getWeaponIconPath,
+} from './viewer-icons';
 
-/** Get weapon abbreviation for slot display */
-export function getWeaponAbbrev(weaponType: string): string {
-  const abbrevs: Record<string, string> = {
-    plasma: 'PLS',
-    pulse: 'PUL',
-    ion: 'ION',
-    autocannon: 'AUT',
-    railgun: 'RAI',
-    flak: 'FLK',
-    redlaser: 'RED',
-    greenlaser: 'GRN',
-    bluelaser: 'BLU',
-    lightning: 'LTN',
-    nuclearlance: 'NUK',
-    torch: 'TCH',
-  };
-  return (
-    abbrevs[weaponType.toLowerCase()] ??
-    weaponType.substring(0, 3).toUpperCase()
-  );
-}
-
-/** Get missile abbreviation */
-export function getMissileAbbrev(missileType: string): string {
-  const abbrevs: Record<string, string> = {
-    rocket: 'RKT',
-    cluster: 'CLU',
-    seeker: 'SKR',
-    dart: 'DRT',
-    swarm: 'SWM',
-    torpedo: 'TRP',
-    nuke: 'NUK',
-    decoy: 'DCY',
-  };
-  return (
-    abbrevs[missileType.toLowerCase()] ??
-    missileType.substring(0, 3).toUpperCase()
-  );
-}
-
-/** Get weapon category color - all primaries use same yellow */
-function getWeaponColor(_weaponType: string): string {
-  return 'var(--color-warning)';
-}
-
-/** Get missile color */
-function getMissileColor(_missileType: string): string {
-  // All secondary weapons use red for consistent color scheme
-  return 'var(--color-danger)';
-}
-
-/** Fallback icon path for missing SVGs */
-export const FALLBACK_ICON_PATH = '/icons/fallback.svg';
-
-/** Get path to ship icon SVG */
-export function getShipIconPath(shipClass: string): string {
-  return `/icons/ships/${shipClass.toLowerCase()}.svg`;
-}
-
-/** Get path to weapon icon SVG */
-export function getWeaponIconPath(weaponType: string): string {
-  return `/icons/weapons/${weaponType.toLowerCase()}.svg`;
-}
-
-/** Get path to missile icon SVG */
-export function getMissileIconPath(missileType: string): string {
-  return `/icons/missiles/${missileType.toLowerCase()}.svg`;
-}
-
-/** Generate onerror handler for fallback icon */
-function iconErrorHandler(): string {
-  return `onerror="this.onerror=null; this.src='${FALLBACK_ICON_PATH}'"`;
-}
+/** Rendering mode for schematic slots */
+export type SchematicRenderMode = 'interactive' | 'hull-preview';
 
 /** Render ship icon using SVG */
 function renderShipIcon(shipClass: string): string {
@@ -139,6 +69,7 @@ function renderHardpointRows(
   weapons: (EquippedPrimary | EquippedSecondary | null)[],
   shipId: string,
   slotType: 'primary' | 'secondary',
+  mode: SchematicRenderMode = 'interactive',
 ): string {
   const rows = groupHardpointsByRow(hardpoints);
   const sortedRowNums = [...rows.keys()].sort((a, b) => a - b);
@@ -159,6 +90,7 @@ function renderHardpointRows(
             shipId,
             slotType,
             hp,
+            mode,
           );
         })
         .join('');
@@ -262,9 +194,35 @@ function renderSchematicSlot(
   shipId: string,
   slotType: 'primary' | 'secondary',
   hardpoint: Hardpoint,
+  mode: SchematicRenderMode = 'interactive',
 ): string {
-  const isEmpty = !weapon;
   const isPrimary = slotType === 'primary';
+
+  // Bank size class for CSS width scaling
+  const sizeClass = `bank-${bankSize}`;
+
+  // Convert normalized x (0-1) to percentage
+  const xPercent = hardpoint.x * 100;
+
+  // SVG coordinates as percentages (64x64 viewBox)
+  const svgXPercent = (hardpoint.svgX / 64) * 100;
+  const svgYPercent = (hardpoint.svgY / 64) * 100;
+
+  // Hull preview mode: empty slots with colored borders/lines (no inner content)
+  if (mode === 'hull-preview') {
+    const slotColor = isPrimary
+      ? 'var(--color-warning)'
+      : 'var(--color-danger)';
+    return `
+      <div class="schematic-slot ${slotType} hull-preview ${sizeClass}"
+           data-type="${slotType}"
+           style="--slot-x: ${xPercent}%; --svg-x: ${svgXPercent}%; --svg-y: ${svgYPercent}%; --bank-size: ${bankSize}; --slot-color: ${slotColor}">
+      </div>
+    `;
+  }
+
+  // Interactive mode: full slot rendering with weapons
+  const isEmpty = !weapon;
   const weaponType = weapon
     ? isPrimary
       ? (weapon as EquippedPrimary).weaponType
@@ -309,16 +267,6 @@ function renderSchematicSlot(
     weaponDisplay = Array(bankSize).fill(icon).join('');
   }
 
-  // Bank size class for CSS width scaling
-  const sizeClass = `bank-${bankSize}`;
-
-  // Convert normalized x (0-1) to percentage
-  const xPercent = hardpoint.x * 100;
-
-  // SVG coordinates as percentages (64x64 viewBox)
-  const svgXPercent = (hardpoint.svgX / 64) * 100;
-  const svgYPercent = (hardpoint.svgY / 64) * 100;
-
   return `
     <div class="schematic-slot ${slotType} ${isEmpty ? 'empty' : 'filled'} ${sizeClass}"
          data-ship="${shipId}"
@@ -330,6 +278,50 @@ function renderSchematicSlot(
       <div class="slot-content">
         <div class="slot-icons">${weaponDisplay}</div>
         ${capacityInfo}
+      </div>
+    </div>
+  `;
+}
+
+/** Render a hull schematic for store preview (empty slots with colored borders) */
+export function renderHullSchematic(shipClass: string): string {
+  const stats = SHIP_CLASSES[shipClass.toLowerCase()];
+  if (!stats) return '';
+
+  // Create empty weapon arrays for preview
+  const emptyPrimaries = stats.primaryBanks.map(() => null);
+  const emptySecondaries = stats.secondaryBanks.map(() => null);
+
+  const primaryRows = renderHardpointRows(
+    stats.primaryHardpoints,
+    stats.primaryBanks,
+    emptyPrimaries,
+    '',
+    'primary',
+    'hull-preview',
+  );
+
+  const secondaryRows = renderHardpointRows(
+    stats.secondaryHardpoints,
+    stats.secondaryBanks,
+    emptySecondaries,
+    '',
+    'secondary',
+    'hull-preview',
+  );
+
+  return `
+    <div class="schematic-diagram vertical hull-schematic-preview">
+      <div class="hardpoint-row primary-row">
+        ${primaryRows}
+      </div>
+
+      <div class="schematic-center">
+        ${renderShipIcon(shipClass)}
+      </div>
+
+      <div class="hardpoint-row secondary-row">
+        ${secondaryRows}
       </div>
     </div>
   `;
