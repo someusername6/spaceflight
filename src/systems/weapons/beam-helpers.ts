@@ -7,6 +7,10 @@ import * as THREE from 'three';
 import type { Collision } from '../../components/collision';
 import type { Health } from '../../components/health';
 import { isDead } from '../../components/health';
+import type { Heat } from '../../components/heat';
+import { injectExternalHeat } from '../../components/heat';
+import type { Shields } from '../../components/shields';
+import { ionizeShields } from '../../components/shields';
 import type { Transform } from '../../components/transform';
 import type { PrimaryWeapon, PrimaryWeapons } from '../../components/weapons';
 import {
@@ -17,7 +21,9 @@ import {
 } from '../../core/ecs';
 import type { ActiveBeam, Entity, World } from '../../core/types';
 import { BEAM_HIT_INTERVAL } from '../../rendering/effects/projectile-hits';
+import { dealDamage } from '../damage';
 import { getForward } from '../physics';
+import { recordBeamHit, recordDamage, recordShotHit } from '../stats';
 import { calculateBankOffset } from './weapon-spawning';
 
 /** Beam spawn offset from ship center (forward) */
@@ -296,5 +302,93 @@ export function updateFadingBeams(
         beam.hitPoint.copy(origin).addScaledVector(forward, beamLength);
       }
     }
+  }
+}
+
+/** Parameters for applying beam damage and effects */
+export interface BeamDamageParams {
+  world: World;
+  owner: Entity;
+  target: Entity;
+  weapon: PrimaryWeapon;
+  damage: number;
+  hitPoint: THREE.Vector3;
+  beam: ActiveBeam;
+  gameTime: number;
+}
+
+/**
+ * Apply beam damage and special effects to a target.
+ * Handles damage dealing, ionization, heat injection, hit effects, and stats.
+ */
+export function applyBeamDamageAndEffects(params: BeamDamageParams): void {
+  const { world, owner, target, weapon, damage, hitPoint, beam, gameTime } =
+    params;
+
+  // Deal damage
+  dealDamage(
+    world,
+    target,
+    damage,
+    hitPoint,
+    weapon.shieldDamageMultiplier ?? 1,
+    weapon.hullDamageMultiplier ?? 1,
+  );
+
+  // Apply ionization effect (for future ion beams)
+  if (weapon.ionize) {
+    const targetShields = getComponent<Shields>(world, target, 'shields');
+    if (targetShields) {
+      ionizeShields(targetShields, gameTime);
+    }
+  }
+
+  // Apply heat injection (Torch weapon)
+  if (weapon.heatInjection) {
+    const targetHeat = getComponent<Heat>(world, target, 'heat');
+    if (targetHeat) {
+      // heatInjection is per-second rate, damage is already scaled by dt
+      // Scale heat injection proportionally
+      const dt = damage / weapon.damage; // Recover dt from damage ratio
+      injectExternalHeat(targetHeat, weapon.heatInjection * dt);
+    }
+  }
+
+  // Queue hit visual effect with beam color
+  // Throttle continuous beams to avoid spamming (pulse beams fire once per pulse)
+  const shouldQueueHit =
+    weapon.isPulseBeam || shouldQueueBeamHit(beam, gameTime);
+  if (shouldQueueHit) {
+    world.systemState.projectileHits.pending.push({
+      x: hitPoint.x,
+      y: hitPoint.y,
+      z: hitPoint.z,
+      category: 'energy',
+      color: { r: beam.color.r, g: beam.color.g, b: beam.color.b },
+    });
+    beam.lastHitEffectTime = gameTime;
+  }
+
+  // Track per-ship stats
+  recordDamage(
+    world,
+    owner,
+    target,
+    weapon.name,
+    'beam',
+    damage,
+    weapon.isPulseBeam,
+  );
+  if (weapon.isPulseBeam) {
+    recordShotHit(world, owner, weapon.name, 'beam', true);
+  } else {
+    recordBeamHit(world, owner, weapon.name, damage / weapon.damage); // Recover dt
+  }
+
+  // Track aggregate beam damage stats (for balance analysis)
+  if (world.systemState.combatStats) {
+    const stats = world.systemState.combatStats;
+    stats.beamDamage[weapon.name] =
+      (stats.beamDamage[weapon.name] || 0) + damage;
   }
 }

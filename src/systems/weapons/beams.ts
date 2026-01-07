@@ -22,15 +22,9 @@ import { getForward } from '../physics';
 // Re-export ActiveBeam for backward compatibility
 export type { ActiveBeam } from '../../core/types';
 
-import { dealDamage } from '../damage';
+import { recordBeamFired, recordShotFired } from '../stats';
 import {
-  recordBeamFired,
-  recordBeamHit,
-  recordDamage,
-  recordShotFired,
-  recordShotHit,
-} from '../stats';
-import {
+  applyBeamDamageAndEffects,
   BEAM_SPAWN_OFFSET,
   type BeamWeaponInfo,
   calculateFalloffDamage,
@@ -39,7 +33,6 @@ import {
   getBeamColor,
   getBeamWeaponInfo,
   resetBeamWeaponPool,
-  shouldQueueBeamHit,
   updateFadingBeams,
 } from './beam-helpers';
 import { calculateBankOffset } from './weapon-spawning';
@@ -330,54 +323,16 @@ function fireBeam(
         );
         damage = falloffDamage * dt;
       }
-      dealDamage(
-        world,
-        hitResult.entity,
-        damage,
-        beam.hitPoint,
-        weapon.shieldDamageMultiplier ?? 1,
-        weapon.hullDamageMultiplier ?? 1,
-      );
-
-      // Queue hit visual effect with beam color
-      // Throttle continuous beams to avoid spamming (pulse beams fire once per pulse)
-      const shouldQueueHit =
-        weapon.isPulseBeam || shouldQueueBeamHit(beam, gameTime);
-      if (shouldQueueHit) {
-        world.systemState.projectileHits.pending.push({
-          x: beam.hitPoint.x,
-          y: beam.hitPoint.y,
-          z: beam.hitPoint.z,
-          category: 'energy',
-          color: { r: beam.color.r, g: beam.color.g, b: beam.color.b },
-        });
-        beam.lastHitEffectTime = gameTime;
-      }
-
-      // Track per-ship stats
-      recordDamage(
+      applyBeamDamageAndEffects({
         world,
         owner,
-        hitResult.entity,
-        weapon.name,
-        'beam',
+        target: hitResult.entity,
+        weapon,
         damage,
-        weapon.isPulseBeam,
-      );
-      if (weapon.isPulseBeam) {
-        // Pulse beams track shots on target
-        recordShotHit(world, owner, weapon.name, 'beam', true);
-      } else {
-        // Continuous beams track time on target
-        recordBeamHit(world, owner, weapon.name, dt);
-      }
-
-      // Track aggregate beam damage stats (for balance analysis)
-      if (world.systemState.combatStats) {
-        const stats = world.systemState.combatStats;
-        stats.beamDamage[weapon.name] =
-          (stats.beamDamage[weapon.name] || 0) + damage;
-      }
+        hitPoint: beam.hitPoint,
+        beam,
+        gameTime,
+      });
     }
   } else {
     // No hit - beam extends to max range (or shorter for off-target pulse beams)

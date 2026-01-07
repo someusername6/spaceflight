@@ -108,6 +108,7 @@ export function spawnProjectile(
     flakRadius?: number;
     shrapnelCount?: number;
     shieldDamageMultiplier?: number;
+    ionize?: boolean;
   },
   ownerFaction: FactionComponent | undefined,
   bankIndex = 0,
@@ -140,6 +141,7 @@ export function spawnProjectile(
       weapon.flakRadius,
       weapon.shrapnelCount,
       weapon.shieldDamageMultiplier,
+      weapon.ionize,
     ),
   );
   addComponent(world, projectile, createCollision(PROJECTILE_RADIUS));
@@ -174,6 +176,7 @@ export function spawnProjectileWithAimError(
     shrapnelCount?: number;
     autoaimFov?: number;
     shieldDamageMultiplier?: number;
+    ionize?: boolean;
   },
   ownerFaction: FactionComponent | undefined,
   aimError: AimError | undefined,
@@ -227,6 +230,7 @@ export function spawnProjectileWithAimError(
       weapon.flakRadius,
       weapon.shrapnelCount,
       weapon.shieldDamageMultiplier,
+      weapon.ionize,
     ),
   );
   addComponent(world, projectile, createCollision(PROJECTILE_RADIUS));

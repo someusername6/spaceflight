@@ -36,10 +36,14 @@ export interface PrimaryWeapon {
   autoaimFov?: number;
   /** Beam width multiplier (default 1.0) */
   beamWidth?: number;
-  /** Shield damage multiplier (default 1.0). Ion = 3× shield damage. */
+  /** Shield damage multiplier (default 1.0). */
   shieldDamageMultiplier?: number;
-  /** Hull damage multiplier (default 1.0). Torch = 2× hull damage. */
+  /** Hull damage multiplier (default 1.0). */
   hullDamageMultiplier?: number;
+  /** Ion effect - ionizes target shields, doubling regen delay for 8 seconds */
+  ionize?: boolean;
+  /** Heat injection rate (heat per second added to target ship by Torch) */
+  heatInjection?: number;
 }
 
 /** Secondary weapon definition */

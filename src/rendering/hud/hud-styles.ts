@@ -131,6 +131,13 @@ export function getHUDStyles(): string {
     .bar-container.warning .shield-bar .segment.filled { background: #066; }
     .bar-container.warning .bar-label,
     .bar-container.warning .bar-value { color: #066; }
+    /* Ionized state - purple/magenta glow indicates suppressed regen */
+    .bar-container.ionized .shield-bar .segment.filled { background: #c0f; }
+    .bar-container.ionized .bar-label,
+    .bar-container.ionized .bar-value { color: #c0f; }
+    .bar-container.ionized {
+      animation: pulse 0.8s ease-in-out infinite alternate;
+    }
     /* Hull bar colors */
     .hull-bar .segment.filled { background: #0f0; }
     .bar-container.critical .hull-bar .segment.filled { background: #f00; }

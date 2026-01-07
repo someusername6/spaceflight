@@ -5,9 +5,11 @@
 import type { Camera } from 'three';
 import type { Health } from '../../components/health';
 import type { Heat } from '../../components/heat';
+import { getHeatPercentCapped } from '../../components/heat';
 import type { Physics } from '../../components/physics';
 import type { PlayerControlled } from '../../components/player';
 import type { Shields } from '../../components/shields';
+import { isIonized } from '../../components/shields';
 import type { Transform } from '../../components/transform';
 import { findEntity, getComponent } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
@@ -321,12 +323,17 @@ function updatePlayerStatus(hud: HUD, world: World, player: Entity): void {
 
     // Warning state: shields at 0
     hud.shieldContainer.classList.toggle('warning', shields.current <= 0);
+    // Ionized state: shield regen suppressed (purple color)
+    const ionized = isIonized(shields, world.systemState.gameTime);
+    hud.shieldContainer.classList.toggle('ionized', ionized);
   }
 
   const heat = getComponent<Heat>(world, player, 'heat');
   if (heat) {
-    const pct = (heat.current / heat.max) * 100;
+    // Cap display at 100% (actual heat can exceed max from Torch weapon)
+    const pct = getHeatPercentCapped(heat) * 100;
     updateSegmentedBar(hud.heatSegments, pct);
+    // Show actual heat value (can exceed max)
     hud.heatValue.textContent = Math.round(heat.current).toString();
 
     // Danger state: heat > 80%

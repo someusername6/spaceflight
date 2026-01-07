@@ -5,6 +5,9 @@
  * - 90%: Warning state (AI considers regrouping)
  * - 95%: Afterburner locks (unlocks at 50%)
  * - 100%: Weapons lock (unlocks at 95%)
+ *
+ * Torch weapons can inject external heat into targets, pushing heat above
+ * 100% max capacity. Ships must cool all the way down from overheat.
  */
 
 import type { ComponentBase } from '../core/types';
@@ -35,9 +38,14 @@ export function createHeat(max: number, coolingRate: number): Heat {
   };
 }
 
-/** Get heat as percentage (0-1) */
+/** Get heat as percentage (0-1+, can exceed 1.0 from external heat injection) */
 export function getHeatPercent(heat: Heat): number {
   return heat.current / heat.max;
+}
+
+/** Get heat percentage capped at 1.0 for display purposes */
+export function getHeatPercentCapped(heat: Heat): number {
+  return Math.min(1, heat.current / heat.max);
 }
 
 /** Check if heat is at warning level (90%+) */
@@ -61,6 +69,19 @@ export function addHeat(heat: Heat, amount: number): boolean {
     heat.weaponsLocked = true;
   }
   return true;
+}
+
+/**
+ * Inject external heat (from Torch weapons hitting this ship).
+ * Unlike addHeat, this can push heat above max capacity and always applies.
+ * Ships must cool all the way down from overheat state.
+ */
+export function injectExternalHeat(heat: Heat, amount: number): void {
+  heat.current += amount; // No cap - can exceed max!
+  // Lock weapons if at or above max
+  if (heat.current >= heat.max) {
+    heat.weaponsLocked = true;
+  }
 }
 
 /** Cool down over time, handles weapon unlock hysteresis */

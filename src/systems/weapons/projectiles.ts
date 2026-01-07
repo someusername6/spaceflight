@@ -12,6 +12,8 @@ import type {
   ProjectileCategory,
 } from '../../components/projectile';
 import { isExpired } from '../../components/projectile';
+import type { Shields } from '../../components/shields';
+import { ionizeShields } from '../../components/shields';
 import type { Transform } from '../../components/transform';
 import {
   getComponent,
@@ -158,6 +160,14 @@ export function projectileSystem(world: World, dt: number): void {
           transform.position,
           projectile.shieldDamageMultiplier ?? 1,
         );
+
+        // Apply ionization effect if projectile has ionize flag
+        if (projectile.ionize) {
+          const targetShields = getComponent<Shields>(world, other, 'shields');
+          if (targetShields) {
+            ionizeShields(targetShields, world.systemState.gameTime);
+          }
+        }
 
         // Track per-ship damage stats
         const totalDamage = result.shieldDamage + result.hullDamage;

@@ -42,10 +42,20 @@ export interface WeaponStats {
   autoaimFov?: number;
   /** Beam width multiplier (default 1.0) */
   beamWidth?: number;
-  /** Shield damage multiplier (default 1.0). Ion weapons deal bonus shield damage. */
+  /** Shield damage multiplier (default 1.0). */
   shieldDamageMultiplier?: number;
-  /** Hull damage multiplier (default 1.0). Torch deals bonus hull damage. */
+  /** Hull damage multiplier (default 1.0). */
   hullDamageMultiplier?: number;
+  /**
+   * Ion effect: suppresses target shield regeneration for 8 seconds after hit.
+   * Stacks with normal damage-based regen suppression by doubling the delay.
+   */
+  ionize?: boolean;
+  /**
+   * Heat injection rate (heat per second added to target ship).
+   * Can push target heat above 100%, causing prolonged overheat.
+   */
+  heatInjection?: number;
 }
 
 /**
@@ -80,8 +90,8 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
     projectileSpeed: 400,
     fireRate: 0.18, // 180ms
     range: 700,
-    damage: 10, // Low hull damage, but 3x to shields (30 effective)
-    shieldDamageMultiplier: 3, // 3x damage to shields - dedicated shield stripper
+    damage: 10,
+    ionize: true, // Suppresses shield regen for 8s after hit, doubling normal delay
   },
 
   // === BALLISTIC WEAPONS (finite ammo) ===
@@ -203,13 +213,12 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
     name: 'Torch',
     listName: 'Torch',
     category: 'beam',
-    heatPerShot: 25, // High heat limits sustained use
+    heatPerShot: 25, // High heat limits sustained use on attacker
     projectileSpeed: 0,
     fireRate: 0, // Continuous beam
     range: 200, // Very short range - plasma cutter
-    damage: 40, // 40 to shields, but 80 to hull (2×)
-    shieldDamageMultiplier: 0.5, // Half damage to shields
-    hullDamageMultiplier: 2, // Double damage to hull - plasma cuts through armor
+    damage: 30, // Moderate damage, but injects heat into target
+    heatInjection: 35, // Heat/sec injected into target, can cause overheat
     noFalloff: true, // Constant damage at short range
   },
   nuclearLance: {

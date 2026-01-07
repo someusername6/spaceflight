@@ -32,8 +32,10 @@ export interface Projectile extends ComponentBase {
   flakRadius?: number;
   /** Number of shrapnel projectiles to spawn on flak explosion */
   shrapnelCount?: number;
-  /** Shield damage multiplier (e.g., 3 for Ion = 3× damage to shields) */
+  /** Shield damage multiplier (default 1.0) */
   shieldDamageMultiplier?: number;
+  /** Ion effect - ionizes target shields, doubling regen delay for 8 seconds */
+  ionize?: boolean;
 }
 
 /** Creates a Projectile component */
@@ -48,6 +50,7 @@ export function createProjectile(
   flakRadius?: number,
   shrapnelCount?: number,
   shieldDamageMultiplier?: number,
+  ionize?: boolean,
 ): Projectile {
   const projectile: Projectile = {
     type: 'projectile',
@@ -64,6 +67,7 @@ export function createProjectile(
   if (shrapnelCount !== undefined) projectile.shrapnelCount = shrapnelCount;
   if (shieldDamageMultiplier !== undefined)
     projectile.shieldDamageMultiplier = shieldDamageMultiplier;
+  if (ionize !== undefined) projectile.ionize = ionize;
   return projectile;
 }
 
