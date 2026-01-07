@@ -8,11 +8,12 @@
    HULL PREVIEW MODE (STORE)
    ======================================== */
 
-/* Hull schematic preview container - constrained width, explicit height */
+/* Hull schematic preview container - responsive width, explicit height */
 .hull-schematic-preview {
   --slot-height: 8px;
   --slot-base-width: 16px;
-  width: 280px;
+  width: 100%;
+  max-width: 280px;
   height: 180px;
   margin: 0 auto;
   position: relative;
