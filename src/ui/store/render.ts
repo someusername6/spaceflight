@@ -34,7 +34,7 @@ function formatBeamDamage(stats: WeaponStats): string {
   const damageAtMax = Math.round(
     stats.damage / (stats.range / BEAM_EFFECTIVE_RANGE),
   );
-  return `${stats.damage} at ${BEAM_EFFECTIVE_RANGE} m, ${damageAtMax} at ${stats.range} m`;
+  return `${stats.damage}&nbsp;at&nbsp;${BEAM_EFFECTIVE_RANGE}&nbsp;m, ${damageAtMax}&nbsp;at&nbsp;${stats.range}&nbsp;m`;
 }
 
 import {
