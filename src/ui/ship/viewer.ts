@@ -227,7 +227,6 @@ export function renderShipViewer(
 
       <div class="schematic-diagram vertical">
         <div class="hardpoint-row primary-row">
-          <div class="row-label">PRIMARY</div>
           ${primaryRows}
         </div>
 
@@ -237,7 +236,6 @@ export function renderShipViewer(
 
         <div class="hardpoint-row secondary-row">
           ${secondaryRows}
-          <div class="row-label">SECONDARY</div>
         </div>
       </div>
 

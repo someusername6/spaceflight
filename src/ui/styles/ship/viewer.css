@@ -147,15 +147,6 @@
   margin-top: 16px;
 }
 
-.row-label {
-  font-family: var(--font-ui);
-  font-size: 0.55rem;
-  font-weight: 600;
-  color: var(--text-dim);
-  letter-spacing: 0.15em;
-  margin: 4px 0;
-}
-
 .row-slots {
   position: relative;
   width: 100%;
