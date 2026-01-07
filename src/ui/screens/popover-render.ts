@@ -118,7 +118,7 @@ export function renderPrimaryPopover(
     <div class="popover-header">
       <div class="popover-title">
         <span class="manager-name">${stats.name}</span>
-        <span class="manager-size">×${weapon.bankSize}</span>
+        <span class="manager-size">bank size ${weapon.bankSize}</span>
       </div>
       <div class="popover-subtitle">${categoryName(category)}</div>
     </div>
@@ -174,7 +174,7 @@ export function renderSecondaryPopover(
     <div class="popover-header">
       <div class="popover-title">
         <span class="manager-name">${stats.name}</span>
-        <span class="manager-size">×${weapon.bankSize}</span>
+        <span class="manager-size">bank size ${weapon.bankSize}</span>
       </div>
       <div class="popover-subtitle">${typeLabel}</div>
     </div>
