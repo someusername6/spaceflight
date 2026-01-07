@@ -111,8 +111,8 @@ function renderModal(
     <div class="squad-selection-overlay" role="dialog" aria-modal="true" aria-labelledby="squad-title">
       <div class="squad-selection-modal">
         <header class="squad-header">
-          <h2 class="squad-title" id="squad-title">Deploy Squadron</h2>
-          <div class="squad-subtitle">Select ships for ${contract.name}</div>
+          <h2 class="squad-title" id="squad-title">${contract.name}</h2>
+          <div class="squad-subtitle">Select ships to deploy</div>
           <div class="squad-ready-indicator">
             <div class="ready-dot"></div>
             <span class="ready-text">Ready</span>

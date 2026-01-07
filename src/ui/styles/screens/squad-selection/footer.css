@@ -57,23 +57,23 @@
 .btn-squad-cancel {
   flex: 0 0 auto;
   font-family: var(--font-ui);
-  font-size: 0.8rem;
+  font-size: 1rem;
   font-weight: 600;
-  padding: 10px 20px;
+  padding: 14px 24px;
   background: transparent;
   border: 1px solid var(--border-light);
   color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   cursor: pointer;
   transition: all 0.15s ease;
   clip-path: polygon(
     0 0,
-    calc(100% - 6px) 0,
-    100% 6px,
+    calc(100% - 8px) 0,
+    100% 8px,
     100% 100%,
-    6px 100%,
-    0 calc(100% - 6px)
+    8px 100%,
+    0 calc(100% - 8px)
   );
 }
 
@@ -86,16 +86,12 @@
 .btn-squad-launch {
   flex: 1;
   font-family: var(--font-ui);
-  font-size: 0.85rem;
+  font-size: 1rem;
   font-weight: 600;
-  padding: 10px 24px;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 159, 28, 0.2) 0%,
-    rgba(255, 159, 28, 0.1) 100%
-  );
-  border: 1px solid var(--color-primary);
-  color: var(--color-primary);
+  padding: 14px 24px;
+  background: rgba(0, 255, 136, 0.05);
+  border: 1px solid var(--color-success);
+  color: var(--color-success);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   cursor: pointer;
@@ -111,12 +107,8 @@
 }
 
 .btn-squad-launch:hover:not(:disabled) {
-  background: linear-gradient(
-    180deg,
-    rgba(255, 159, 28, 0.3) 0%,
-    rgba(255, 159, 28, 0.15) 100%
-  );
-  box-shadow: 0 0 20px var(--color-primary-glow);
+  background: rgba(0, 255, 136, 0.15);
+  box-shadow: 0 0 20px var(--color-success-glow);
 }
 
 .btn-squad-launch:disabled {

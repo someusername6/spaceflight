@@ -95,19 +95,17 @@
 
 .squad-title {
   font-family: var(--font-ui);
-  font-size: 0.85rem;
+  font-size: 1.3rem;
   font-weight: 600;
   color: var(--color-primary);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
   margin: 0 0 4px;
 }
 
 .squad-subtitle {
-  font-family: var(--font-ui);
-  font-size: 0.75rem;
-  color: var(--text-dim);
-  letter-spacing: 0.05em;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
 }
 
 .squad-ready-indicator {
@@ -128,8 +126,8 @@
 }
 
 .ready-text {
-  font-family: var(--font-ui);
-  font-size: 0.65rem;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
   color: var(--color-success);
   letter-spacing: 0.08em;
   text-transform: uppercase;

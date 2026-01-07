@@ -226,11 +226,8 @@ function renderContractDetail(
         </div>
         <div class="contract-waves">${totalEnemies} total in ${waveCount} waves</div>
       </div>
-      <div class="contract-detail-section">
-        <div class="detail-section-label">REWARD</div>
-        <div class="contract-detail-reward">${contract.reward} credits</div>
-      </div>
       <div class="contract-actions">
+        <div class="contract-reward-price">${contract.reward} cr</div>
         ${unarmedWarning}
         ${acceptButton}
       </div>
