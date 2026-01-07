@@ -163,8 +163,8 @@
 }
 
 .weapon-count.secondary {
-  color: var(--color-secondary);
-  border-color: rgba(0, 245, 255, 0.3);
+  color: var(--color-danger);
+  border-color: rgba(255, 51, 102, 0.3);
 }
 
 .weapon-count.unarmed {
