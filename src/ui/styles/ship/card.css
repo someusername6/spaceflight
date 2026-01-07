@@ -96,7 +96,7 @@
 
 .card-pilot {
   font-family: var(--font-ui);
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: var(--text-primary);
   white-space: nowrap;
@@ -106,8 +106,9 @@
 
 .card-class {
   font-size: 0.75rem;
-  color: var(--text-secondary);
-  text-transform: capitalize;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .ship-card-weapons {
