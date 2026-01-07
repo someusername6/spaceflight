@@ -10,7 +10,9 @@ import {
 } from '../../campaign/loadout';
 import { getMaxMissileCapacity } from '../../campaign/store-ammo';
 import type { CampaignState } from '../../campaign/types';
+import { MISSILES } from '../../data/missiles';
 import { SHIP_CLASSES } from '../../data/ships';
+import { PRIMARY_WEAPONS } from '../../data/weapons';
 import { hideTooltip } from '../common/tooltip';
 import { getMissileAbbrev, getWeaponAbbrev } from '../ship/viewer';
 import { activePicker, closePopover, setActivePicker } from './weapon-popover';
@@ -89,10 +91,11 @@ function renderPrimaryPickerContent(weapons: GroupedWeapon[]): string {
   return weapons
     .map((w) => {
       const abbrev = getWeaponAbbrev(w.weaponType);
+      const displayName = PRIMARY_WEAPONS[w.weaponType]?.name ?? w.weaponType;
       return `
         <button class="picker-item" data-weapon-type="${w.weaponType}">
           <span class="picker-abbrev">${abbrev}</span>
-          <span class="picker-name">${w.weaponType}</span>
+          <span class="picker-name">${displayName}</span>
           <span class="picker-stock">×${w.totalCount}</span>
         </button>
       `;
@@ -112,13 +115,14 @@ function renderSecondaryPickerContent(
   return weapons
     .map((w) => {
       const abbrev = getMissileAbbrev(w.weaponType);
+      const displayName = MISSILES[w.weaponType]?.name ?? w.weaponType;
       const maxCapacity = getMaxMissileCapacity(w.weaponType, bankSize);
       const maxLoadable = Math.min(w.totalCount, maxCapacity);
       return `
         <div class="picker-missile-row" data-weapon-type="${w.weaponType}">
           <div class="picker-missile-info">
             <span class="picker-abbrev">${abbrev}</span>
-            <span class="picker-name">${w.weaponType}</span>
+            <span class="picker-name">${displayName}</span>
             <span class="picker-storage">×${w.totalCount}</span>
           </div>
           <div class="picker-quantity">
