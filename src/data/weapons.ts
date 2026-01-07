@@ -204,7 +204,7 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
     range: 3000,
     damage: 500, // Single massive hit
     ammo: 1, // Limited ammo
-    ammoName: 'Lance Charges',
+    ammoName: 'Nuclear Lance Charges',
     noFalloff: true,
   },
 };
