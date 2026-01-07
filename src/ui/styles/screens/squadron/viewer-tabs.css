@@ -1,0 +1,111 @@
+/**
+ * Squadron Viewer Tabs - Tab bar for switching between loadout and pilot views
+ */
+
+/* ========================================
+   TAB BAR CONTAINER
+   ======================================== */
+
+.viewer-tabs {
+  display: flex;
+  gap: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(10, 15, 25, 0.98) 0%,
+    rgba(5, 10, 18, 0.95) 100%
+  );
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+/* ========================================
+   INDIVIDUAL TAB
+   ======================================== */
+
+.viewer-tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  flex: 1;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  transition: all 0.2s ease;
+}
+
+/* Underline indicator */
+.viewer-tab::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 2px;
+  background: var(--color-secondary);
+  transition: width 0.25s ease;
+}
+
+.viewer-tab:hover {
+  color: var(--text-secondary);
+  background: rgba(0, 245, 255, 0.05);
+}
+
+.viewer-tab:hover::after {
+  width: 60%;
+}
+
+.viewer-tab.active {
+  color: var(--color-secondary);
+  background: rgba(0, 245, 255, 0.08);
+}
+
+.viewer-tab.active::after {
+  width: 100%;
+  box-shadow: 0 0 10px var(--color-secondary-glow);
+}
+
+/* ========================================
+   TAB COMPONENTS
+   ======================================== */
+
+.viewer-tab-icon {
+  font-size: 0.9rem;
+  opacity: 0.7;
+  transition: all 0.2s ease;
+}
+
+.viewer-tab.active .viewer-tab-icon {
+  opacity: 1;
+  text-shadow: 0 0 8px var(--color-secondary-glow);
+}
+
+.viewer-tab-label {
+  text-transform: uppercase;
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+
+@media (max-width: 600px) {
+  .viewer-tab {
+    padding: 10px 16px;
+  }
+
+  .viewer-tab-label {
+    display: none;
+  }
+
+  .viewer-tab-icon {
+    font-size: 1.1rem;
+  }
+}

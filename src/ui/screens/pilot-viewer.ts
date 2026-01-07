@@ -3,11 +3,7 @@
  */
 
 import type { CampaignState, OwnedShip, Pilot } from '../../campaign/types';
-import {
-  FALLBACK_ICON_PATH,
-  getShipIconPath,
-  renderShipPreview,
-} from '../ship/viewer';
+import { FALLBACK_ICON_PATH, getShipIconPath } from '../ship/viewer';
 
 /** Get available ships for pilot assignment (ships without pilots) */
 function getAvailableShipsForPilot(state: CampaignState): OwnedShip[] {
@@ -45,29 +41,16 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
   // Rank: "PLAYER" for commander, skill level for others
   const rankText = isCommander ? 'PLAYER' : pilot.skill.toUpperCase();
 
-  // Ship preview with actions when pilot is assigned
-  const shipPreviewSection =
-    isAssigned && currentShip
+  // Unassign button for assigned non-commander pilots
+  const unassignSection =
+    isAssigned && currentShip && !isCommander
       ? `
-        <div class="pilot-ship-section">
-          <div class="assignment-row">
-            <span class="assignment-label">Currently assigned</span>
-            <span class="assignment-ship">${currentShip.shipClass}</span>
-          </div>
-          <div class="ship-preview-container">
-            ${renderShipPreview(currentShip)}
-          </div>
-          <div class="assignment-actions">
-            <button class="btn btn-lg btn-change-ship"
-                    data-ship="${currentShip.id}"
-                    data-pilot="${pilot.id}">
-              Change Ship
-            </button>
-            <button class="btn btn-lg btn-view-ship"
-                    data-ship="${currentShip.id}">
-              Edit in Hangar
-            </button>
-          </div>
+        <div class="pilot-unassign-section">
+          <button class="btn btn-lg btn-danger btn-unassign-pilot"
+                  data-pilot="${pilot.id}"
+                  data-ship="${currentShip.id}">
+            Unassign Pilot
+          </button>
         </div>
       `
       : '';
@@ -174,7 +157,7 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
         </div>
       </div>
 
-      ${shipPreviewSection}
+      ${unassignSection}
       ${shipOptions}
       ${hullOptions}
       ${noHullsMessage}

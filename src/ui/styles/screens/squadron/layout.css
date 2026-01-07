@@ -1,0 +1,131 @@
+/**
+ * Squadron Layout - Screen structure and grid
+ */
+
+/* ========================================
+   SQUADRON SCREEN - VIEWPORT LAYOUT
+   ======================================== */
+
+.squadron-screen {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: 16px 24px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* ========================================
+   SQUADRON LAYOUT - THREE COLUMNS
+   ======================================== */
+
+.squadron-layout {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr) 280px;
+  gap: 20px;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.squadron-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.squadron-viewer {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+.squadron-viewer.tabbed {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+}
+
+.squadron-details {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.squadron-details-placeholder {
+  /* Empty placeholder to maintain grid layout */
+}
+
+/* ========================================
+   RESPONSIVE BREAKPOINTS
+   ======================================== */
+
+/* Intermediate breakpoint: 2-column (hide stats panel) */
+@media (max-width: 1150px) {
+  .squadron-layout {
+    grid-template-columns: 280px minmax(0, 1fr);
+  }
+
+  .squadron-details,
+  .squadron-details-placeholder {
+    display: none;
+  }
+}
+
+/* Narrow breakpoint: single column with min-height for viewer */
+@media (max-width: 850px) {
+  .squadron-layout {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+
+  .squadron-list {
+    max-height: 200px;
+    flex-shrink: 0;
+  }
+
+  .squadron-viewer {
+    min-height: 320px;
+    flex-shrink: 0;
+  }
+
+  .squadron-details,
+  .squadron-details-placeholder {
+    display: none;
+  }
+}
+
+/* ========================================
+   VIEWER CONTENT CONTAINER
+   ======================================== */
+
+.viewer-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ship viewer fills tabbed container */
+.squadron-viewer.tabbed .ship-viewer {
+  border: none;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Pilot viewer inside tabbed container */
+.squadron-viewer.tabbed .pilot-viewer {
+  border: none;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}

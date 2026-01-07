@@ -168,18 +168,6 @@ export function renderShipViewer(
   `;
 }
 
-/** Render a read-only ship preview (for roster screen) */
-export function renderShipPreview(ship: OwnedShip): string {
-  const stats = SHIP_CLASSES[ship.shipClass.toLowerCase()];
-  if (!stats) return '<div class="ship-preview-error">Unknown ship class</div>';
-
-  return `
-    <div class="ship-viewer schematic ship-preview readonly">
-      ${renderSchematicDiagram(ship)}
-    </div>
-  `;
-}
-
 /** Render a schematic slot with connecting line */
 function renderSchematicSlot(
   weapon: EquippedPrimary | EquippedSecondary | null,
