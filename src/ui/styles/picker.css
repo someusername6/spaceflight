@@ -281,11 +281,14 @@
 .popover-stat-label {
   color: var(--text-secondary);
   font-family: var(--font-body);
+  flex-shrink: 0;
+  margin-right: 8px;
 }
 
 .popover-stat-value {
   color: var(--text-primary);
   font-family: var(--font-body);
+  text-align: right;
 }
 
 .manager-abbrev {
