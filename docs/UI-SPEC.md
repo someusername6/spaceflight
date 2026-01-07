@@ -4,12 +4,11 @@ This document describes the campaign UI screens for the spaceflight game. Use th
 
 ## Overview
 
-The game has 7 screens managed by a state machine:
+The game has 6 screens managed by a state machine:
 
 | Screen | Purpose |
 |--------|---------|
-| **Hangar** | Ship management hub - view ships, manage loadouts, view ship stats |
-| **Roster** | Pilot management - assign pilots to ships, view pilot stats |
+| **Squadron** | Unified pilot and ship management - view deployed pilots, manage loadouts, hire recruits |
 | **Store** | Equipment shop - buy/sell hulls, weapons, ammo, and scrap |
 | **Contracts** | Mission selection - choose from available contracts |
 | **Mission** | 3D combat gameplay (not covered here - uses WebGL renderer) |
@@ -19,27 +18,27 @@ The game has 7 screens managed by a state machine:
 ## Navigation Flow
 
 ```
-Hangar ←→ Roster ←→ Store ←→ Contracts
-                                ↓
-                         Mission (3D gameplay)
-                                ↓
-                         Results → Hangar (victory) or Game Over (player ship destroyed)
+Squadron ←→ Store ←→ Contracts
+                        ↓
+                 Mission (3D gameplay)
+                        ↓
+                 Results → Squadron (victory) or Game Over (player ship destroyed)
 ```
 
 ## Global Navigation Bar
 
-The Hangar, Roster, Store, and Contracts screens share a **persistent navigation bar** at the top of the screen. This provides consistent navigation without back buttons.
+The Squadron, Store, and Contracts screens share a **persistent navigation bar** at the top of the screen. This provides consistent navigation without back buttons.
 
 ### Layout
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│  [HANGAR]  [ROSTER]  [STORE]  [CONTRACTS]         SECTOR 1   1250cr  │
+│  [SQUADRON]  [STORE]  [CONTRACTS]                 SECTOR 1   1250cr  │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Requirements
 - **Position**: Fixed at top of viewport, always visible
-- **Tabs**: Four navigation tabs - Hangar, Roster, Store, Contracts
+- **Tabs**: Three navigation tabs - Squadron, Store, Contracts
 - **Active State**: Current screen's tab is highlighted (primary color, underline or background)
 - **Inactive State**: Other tabs are dimmed but clearly clickable
 - **Right Side**: Sector indicator and credits display (moved from individual screens)
@@ -49,28 +48,27 @@ The Hangar, Roster, Store, and Contracts screens share a **persistent navigation
 ### Tab Behavior
 | Tab | Destination | Notes |
 |-----|-------------|-------|
-| HANGAR | Hangar screen | Ship management and loadouts |
-| ROSTER | Roster screen | Pilot management and assignment |
+| SQUADRON | Squadron screen | Pilot and ship management (unified) |
 | STORE | Store screen | Equipment shop |
 | CONTRACTS | Contracts screen | Mission selection, launches mission on contract click |
 
 ### Screen-Specific Actions
 Actions that are specific to each screen should be placed **within the screen content**, not in the navigation bar:
-- **Hangar**: NO toolbar row - maximizes vertical space for ship viewer
-- **Store**: Resupply button + Buy/Sell buttons in detail panel (Resupply moved here from Hangar)
+- **Squadron**: NO toolbar row - maximizes vertical space for viewers
+- **Store**: Resupply button + Buy/Sell buttons in detail panel
 - **Contracts**: Mission details and accept button in detail panel
 
 ---
 
 ## Consistent Screen Layout
 
-All four main screens (Hangar, Roster, Store, Contracts) MUST use consistent layout dimensions:
+All three main screens (Squadron, Store, Contracts) MUST use consistent layout dimensions:
 
 ### Fixed Content Width
 - **Maximum content width**: 1200px (centered on larger screens)
 - **Minimum content width**: 800px
 - **Horizontal padding**: 24px on each side
-- **ALL THREE SCREENS** (Hangar, Store, Contracts) MUST use identical max-width
+- **ALL THREE SCREENS** (Squadron, Store, Contracts) MUST use identical max-width
 
 ### Height Constraints
 - **No scrolling required** for core interface on standard desktop viewport (1080p)
@@ -97,139 +95,100 @@ All column widths must be **fixed** - content within columns should not cause la
 
 ---
 
-## Screen: Hangar
+## Screen: Squadron
 
 ### Purpose
-Ship management hub. Player reviews their ships, manages weapon loadouts, and views ship statistics.
+Unified pilot and ship management hub. Players can view deployed pilot-ship pairs, manage loadouts, view pilot stats, deploy available pilots to ships/hulls, and hire new recruits.
 
 ### Layout
 Three-column grid:
-- **Left (240px)**: Ship list
-- **Center (flex)**: Ship viewer or placeholder
-- **Right (280px)**: Ship details or placeholder
+- **Left (240px)**: Unified list (DEPLOYED, AVAILABLE, RECRUITS sections)
+- **Center (flex)**: Tabbed viewer [LOADOUT][PILOT] or pilot/recruit viewer
+- **Right (280px)**: Ship stats panel (when ship is selected)
 
-### Data Displayed
-- **Credits** (top corner via nav bar) - current balance
-- **Current Sector** (via nav bar) - campaign progress indicator
-- **Ship List** - all owned ships showing:
-  - Pilot name (or "Commander" for player)
-  - Pilot skill level (for wingmen, hidden for commander)
-  - Ship class
-  - Hull percentage and damage amount
+### Unified List (Left Panel)
+The list is divided into sections:
+
+**DEPLOYED Section** - Pilot-ship pairs showing:
+- Pilot name
+- Ship class
+- Weapon status (e.g., "2/2" primary, "4/8" secondary)
+- Commander highlighted with amber border
+
+**AVAILABLE Section** - Unassigned pilots showing:
+- Pilot name
+- "Available" status
+- Commander highlighted with amber border
+
+**RECRUITS Section** - Hireable pilots showing:
+- Pilot name
+- Skill level
+- Hire price
+- Dimmed if unaffordable
 
 ### User Interactions
 | Action | Trigger | Result |
 |--------|---------|--------|
-| Select ship | Click ship in list | Opens ship viewer in center, shows ship details in right panel |
-| Deselect | Click selected ship again or close button | Closes viewer, shows placeholder |
+| Select deployed | Click deployed item | Shows tabbed viewer with LOADOUT/PILOT tabs |
+| Select available | Click available pilot | Shows pilot viewer with assignment options |
+| Select recruit | Click recruit | Shows recruit viewer with hire option |
+| Switch tab | Click LOADOUT or PILOT tab | Switches between loadout and pilot views |
 | Equip weapon | Click empty hardpoint slot | Opens weapon picker |
 | Unequip weapon | Click filled hardpoint slot | Returns weapon to storage |
-
-*Note: Resupply button is on the Store screen*
-*Note: Pilot management is on the Roster screen*
+| Assign to ship | Click ship button in viewer | Assigns pilot to available ship |
+| Deploy with hull | Click hull card in viewer | Creates new ship from stored hull |
+| Hire recruit | Click "Hire" button | Deducts credits, adds pilot to AVAILABLE |
+| Change ship | Click "Change Ship" button | Opens ship picker to swap ships |
 
 *Navigation via global nav bar (see Global Navigation Bar section)*
 
-### Ship Viewer (Center Panel)
-When a ship is selected, shows:
-- Ship schematic with hardpoint slots
-- Primary weapon banks (above ship icon - front of ship)
-- Secondary weapon banks (below ship icon - back of ship)
-- Pilot name displayed in header
-- Click hardpoint to equip/unequip weapons
+### Tabbed Viewer (Center Panel - Deployed Selection)
+When a deployed pilot-ship pair is selected, shows tabs:
 
-### Ship Details Panel (Right Column)
-When a ship is selected, the right panel shows ship stats:
-- Ship class and role (e.g., "Dogfighter", "Heavy Tank")
-- Hull (current/max, highlighted if damaged)
+**[LOADOUT] Tab** - Ship schematic with:
+- Ship class and pilot name in header
+- Primary weapon banks (above ship icon)
+- Secondary weapon banks (below ship icon)
+- Change Ship button
+- Click hardpoints to equip/unequip weapons
+
+**[PILOT] Tab** - Pilot career stats:
+- Pilot name and rank
+- Career stats (missions, victories, kills, assists, damage dealt/received)
+- Currently assigned ship with preview
+- Change Ship and View Loadout buttons
+
+### Pilot Viewer (Center Panel - Available Pilot Selection)
+When an available (unassigned) pilot is selected, shows:
+- Pilot name and rank
+- Career stats
+- Assignment options:
+  - "Assign to ship:" - buttons for ships without pilots
+  - "Deploy with hull:" - hull cards for stored hulls
+
+### Recruit Viewer (Center Panel - Recruit Selection)
+When a recruit is selected, shows:
+- Recruit name and skill level badge
+- Price to hire
+- Skill description
+- Fresh stats (0 kills, 0 missions)
+- **[Hire Pilot]** button (disabled if can't afford)
+
+### Ship Stats Panel (Right Column)
+When a ship is selected (via deployed item), shows:
+- Ship class
+- Hull points
 - Shields and regen rate
 - Speed, Turn Rate, Acceleration
-- Primary Banks (count and sizes)
-- Secondary Banks (count and sizes)
+- Primary Banks (count with colored dots)
+- Secondary Banks (count with colored dots)
 - Heat Capacity and Cooling Rate
 
 ### States
 - **Default** - No selection, center shows placeholder, right shows placeholder
-- **Ship Selected** - Ship viewer in center, ship details in right panel
-
----
-
-## Screen: Roster
-
-### Purpose
-Pilot management hub. Player views pilot statistics, assigns pilots to ships, deploys new ships from stored hulls, and **hires new pilots**.
-
-### Layout
-Two-column grid:
-- **Left (280px)**: Pilots list (YOUR PILOTS + RECRUITS sections)
-- **Right (flex)**: Pilot viewer or recruit viewer or placeholder
-
-### Data Displayed
-- **Credits** (top corner via nav bar) - current balance
-- **Current Sector** (via nav bar) - campaign progress indicator
-- **YOUR PILOTS section** - owned pilots showing:
-  - Pilot name
-  - Pilot skill (for wingmen)
-  - Assignment status (Assigned/Available)
-  - Assigned ship class (if assigned)
-- **RECRUITS section** - hireable pilots showing:
-  - Pilot name
-  - Skill level
-  - Hire price
-
-### User Interactions
-| Action | Trigger | Result |
-|--------|---------|--------|
-| Select pilot | Click pilot in YOUR PILOTS | Opens pilot viewer in right panel |
-| Select recruit | Click recruit in RECRUITS | Opens recruit viewer with hire option |
-| Deselect | Click selected item again | Closes viewer |
-| Assign to ship | Click ship button in viewer | Assigns pilot to selected ship |
-| Deploy with hull | Click hull button in viewer | Creates new ship from stored hull with pilot |
-| Unassign pilot | Click "Unassign" button | Returns pilot to available pool |
-| Hire recruit | Click "Hire" button | Deducts credits, adds recruit to YOUR PILOTS |
-
-*Navigation via global nav bar (see Global Navigation Bar section)*
-*See "Feature: Pilot Hiring" section for detailed hiring mechanics*
-
-### Pilot Viewer (Right Panel)
-When a pilot is selected, shows:
-- **Header**:
-  - Pilot name (large)
-  - Rank below name ("PLAYER" for commander, skill level for others)
-- **Career Stats**:
-  - Missions Flown
-  - Victories
-  - Kills
-  - Assists
-  - Damage Dealt
-  - Damage Received
-- **Current Assignment** (if assigned):
-  - Ship class
-  - Unassign button
-- **Assignment Options** (if unassigned):
-  - "Assign to ship:" - buttons for available ships without pilots
-  - "Deploy with hull:" - hull cards showing:
-    - Ship icon with abbreviation
-    - Ship class name
-    - Hull health bar with percentage
-
-### Hull Card Buttons
-When assigning a pilot to a stored hull, each hull card shows:
-- Ship icon placeholder with class abbreviation
-- Ship class name
-- Hull health bar (colored based on damage)
-- Hull percentage text
-
-### Pilot Card States
-- **Default** - Standard display
-- **Selected** - Highlighted with cyan accent
-- **Assigned** - Status shows "Assigned" in green, ship class visible
-- **Unassigned** - Status shows "Available", slightly dimmed
-- **Commander** - Amber accent border (player's pilot)
-
-### States
-- **Default** - No selection, right panel shows placeholder
-- **Pilot Selected** - Pilot viewer in right panel with stats and options
+- **Deployed Selected** - Tabbed viewer in center, ship stats in right
+- **Available Selected** - Pilot viewer with assignment options, no ship stats
+- **Recruit Selected** - Recruit viewer with hire button, no ship stats
 
 ---
 
@@ -410,7 +369,7 @@ The contracts screen uses a **two-click selection process** to prevent accidenta
 ## Screen: Results
 
 ### Purpose
-Post-mission debrief showing combat statistics and rewards collected. Styled consistently with Hangar/Roster/Store/Contracts screens.
+Post-mission debrief showing combat statistics and rewards collected. Styled consistently with Squadron/Store/Contracts screens.
 
 ### Layout Structure
 ```
@@ -435,7 +394,7 @@ Post-mission debrief showing combat statistics and rewards collected. Styled con
 ```
 
 ### Layout Requirements
-- **Max-width**: 1200px centered (same as Roster/Store)
+- **Max-width**: 1200px centered (same as Squadron/Store)
 - **Tab Bar**: Results-specific tabs (Debrief/Rewards), not main navigation
 - **Status Display**: Sector/credits in top-right (read-only, no navigation)
 - **Scrollable Content**: Content pane scrolls, NOT the whole screen
@@ -464,10 +423,10 @@ Post-mission debrief showing combat statistics and rewards collected. Styled con
 | Action | Trigger | Result |
 |--------|---------|--------|
 | Switch tab | Click "Debrief" or "Rewards" | Shows selected content |
-| Continue | Click "Return to Hangar" / "Continue" | Returns to Hangar |
+| Continue | Click "Return to Squadron" / "Continue" | Returns to Squadron |
 
 ### States
-- **Victory** - Shows mission reward, button says "Return to Hangar"
+- **Victory** - Shows mission reward, button says "Return to Squadron"
 - **Defeat** - No reward shown, button says "Continue"
 - **No Salvage** - Shows "No salvage collected" message
 
@@ -495,7 +454,7 @@ Campaign ended because player's ship was destroyed. Shows final stats and allows
 ### User Interactions
 | Action | Trigger | Result |
 |--------|---------|--------|
-| Restart | Click "Start New Campaign" | Resets game, returns to Hangar with fresh state |
+| Restart | Click "Start New Campaign" | Resets game, returns to Squadron with fresh state |
 
 ---
 
@@ -534,7 +493,7 @@ Campaign ended because player's ship was destroyed. Shows final stats and allows
 
 ### Ship Viewer Component
 
-The Hangar screen features a **central ship viewer** as a technical schematic with hardpoints positioned around the ship icon.
+The Squadron screen features a **central ship viewer** as a technical schematic with hardpoints positioned around the ship icon (visible in the LOADOUT tab).
 
 #### Layout - Schematic Diagram Style
 Hardpoints are positioned **above and below** the ship SVG with connecting lines, like a technical diagram showing actual mounting points on the hull. Primary weapons are at the FRONT (top), secondary weapons at the BACK (bottom).
@@ -663,8 +622,7 @@ Below the ship diagram, show minimal stats in a single row:
 - **Fallback**: Weapon abbreviation text (3 letters) if SVG not found
 
 **Display Locations** (icons must appear in all these places):
-- Hangar ship viewer hardpoint slots
-- Hangar storage inventory panel
+- Squadron ship viewer hardpoint slots (LOADOUT tab)
 - Store item list and detail panel
 - Weapon picker dropdown
 
@@ -677,9 +635,9 @@ Below the ship diagram, show minimal stats in a single row:
 - **Fallback**: Ship class abbreviation text (3 letters) if SVG not found
 
 **Display Locations** (icons must appear in all these places):
-- Hangar squadron list (ship cards)
-- Hangar ship viewer (large central display)
-- Hangar stored hulls inventory
+- Squadron unified list (deployed items)
+- Squadron ship viewer (large central display in LOADOUT tab)
+- Squadron pilot viewer (stored hulls section)
 - Store hulls category list and detail panel
 
 ### Bank Size Visualization
@@ -818,34 +776,34 @@ Until SVG icons are provided, use text-based placeholders:
 
 ### Viewport Layout Constraints
 
-All main screens (Hangar, Store, Contracts) must fit within the viewport **without scrolling** on a standard desktop (1080p):
+All main screens (Squadron, Store, Contracts) must fit within the viewport **without scrolling** on a standard desktop (1080p):
 
 **No Page Scrolling**:
 - The entire interface fits in `100vh - 56px` (below nav bar)
 - No vertical scrollbar on the main container
 - Individual panels may have internal scroll for lists only
 
-**Layout Structure** (Hangar example):
+**Layout Structure** (Squadron example):
 ```
 ┌─────────────────────────────────────────┐  ← Nav Bar (56px)
 ├─────────────────────────────────────────┤
-│ [Ships]  │  [Ship Diagram]  │ [Storage] │
-│ scroll   │  NO SCROLL       │  scroll   │  ← Fills remaining height
-│          │  (compact)       │           │
+│ [List]  │  [Tabbed Viewer]  │ [Stats]   │
+│ scroll  │  NO SCROLL        │  scroll   │  ← Fills remaining height
+│         │  (compact)        │           │
 └─────────────────────────────────────────┘
 ```
 
 **Key Requirements**:
 - Ship viewer/diagram: Fixed height, compact layout with side hardpoints
-- Lists only: Ship list, storage inventory may scroll if needed
+- Lists only: Squadron list, ship stats may scroll if needed
 - Center content: NEVER requires scrolling - use horizontal layout for hardpoints
 
 **Column Widths** (3-column fixed layout):
-- Ship List: 240px fixed
-- Ship Viewer: flexible (1fr) - shows placeholder when no ship selected
-- Storage: 280px fixed
+- Squadron List: 240px fixed
+- Tabbed Viewer: flexible (1fr) - shows placeholder when no selection
+- Ship Stats: 280px fixed
 
-The Storage column must **never shift position** when the ship viewer opens/closes.
+The Stats column must **never shift position** when the viewer opens/closes.
 
 **Store Screen Layout** (3-column with synchronized storage):
 ```
@@ -894,6 +852,7 @@ Styles are in separate CSS files under `src/ui/styles/`:
 - `index.css` - Main entry point, imports all CSS
 - `theme.css` - CSS custom properties (colors, fonts)
 - `screens/*.css` - Screen-specific styles
+- `screens/squadron/` - Squadron screen styles (layout.css, list.css, viewer-tabs.css)
 - `ship/*.css` - Ship component styles
 - `store/*.css` - Store screen styles
 
@@ -901,37 +860,41 @@ See `docs/ARCHITECTURE.md` for full CSS file structure.
 
 ---
 
-## Feature: Pilot Hiring (Roster Screen)
+## Feature: Pilot Hiring (Squadron Screen)
 
 ### Purpose
-Allow players to hire new pilots from the Roster screen. Pilots are a consumable resource - they can die in combat and need to be replaced. All pilot management is unified in the Roster.
+Allow players to hire new pilots from the Squadron screen. Pilots are a consumable resource - they can die in combat and need to be replaced. All pilot management is unified in the Squadron screen.
 
 ### Integration Point
-Extend the existing Roster screen's pilots list to include a "Recruits" section showing pilots available for hire.
+The Squadron screen's unified list includes a "Recruits" section showing pilots available for hire.
 
-### Roster Layout with Hiring
+### Squadron Layout with Hiring
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
-│ [HANGAR]  [ROSTER]  [STORE]  [CONTRACTS]                    SECTOR 1   1250cr  │
-├────────────────────┬────────────────────────────────────────────────────────────┤
-│ YOUR PILOTS (3)    │                                                            │
-│  ★ Commander       │    [Pilot Viewer]                                          │
-│  • Alpha 2         │    - Stats, assignment options (existing)                  │
-│  • Alpha 3         │    - OR recruit details + hire button                      │
-│                    │                                                            │
-│ ─────────────────  │                                                            │
-│ RECRUITS (4)       │                                                            │
-│  ○ Vex      100 cr │                                                            │
-│  ○ Nova     650 cr │                                                            │
-│  ○ Rex       75 cr │                                                            │
-│  ○ Kai      350 cr │                                                            │
-└────────────────────┴────────────────────────────────────────────────────────────┘
+│ [SQUADRON]  [STORE]  [CONTRACTS]                            SECTOR 1   1250cr  │
+├────────────────────┬─────────────────────────────────┬──────────────────────────┤
+│ DEPLOYED (3)       │                                 │                          │
+│  ★ Commander       │    [Tabbed Viewer]              │   [Ship Stats]           │
+│    Fighter  2/2 4/8│    [LOADOUT] [PILOT]            │   Hull, Shields, etc.    │
+│  • Viper           │                                 │                          │
+│    Fighter  2/2 4/8│                                 │                          │
+│                    │                                 │                          │
+│ AVAILABLE (1)      │                                 │                          │
+│  • Alpha 3         │                                 │                          │
+│                    │                                 │                          │
+│ RECRUITS (4)       │                                 │                          │
+│  ○ Vex      100 cr │                                 │                          │
+│  ○ Nova     650 cr │                                 │                          │
+│  ○ Rex       75 cr │                                 │                          │
+│  ○ Kai      350 cr │                                 │                          │
+└────────────────────┴─────────────────────────────────┴──────────────────────────┘
 ```
 
-### Pilot List Sections
-The left panel is divided into two sections:
-1. **YOUR PILOTS** - Existing roster (current behavior)
-2. **RECRUITS** - Available pilots for hire (new)
+### Unified List Sections
+The left panel is divided into three sections:
+1. **DEPLOYED** - Pilot-ship pairs with weapon status
+2. **AVAILABLE** - Unassigned pilots ready to be deployed
+3. **RECRUITS** - Available pilots for hire
 
 ### Recruit Generation
 - Campaign generates 3-5 hireable recruits
@@ -983,10 +946,11 @@ interface HireablePilot {
 }
 ```
 
-### Why Roster, Not Store?
-- **Coherent mental model**: "Roster = all pilot stuff" vs "Store = equipment stuff"
+### Why Squadron, Not Store?
+- **Coherent mental model**: "Squadron = all pilot and ship stuff" vs "Store = equipment stuff"
 - **No duplication**: Store doesn't need a "Your Pilots" storage panel
-- **Natural flow**: Lost a pilot? Go to Roster to hire replacement and assign to ship
+- **Natural flow**: Lost a pilot? Go to Squadron to hire replacement and assign to ship
+- **Unified workflow**: View deployed status, manage loadouts, and recruit - all in one place
 
 ---
 

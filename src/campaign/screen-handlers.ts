@@ -5,56 +5,39 @@
  */
 
 import type { World } from '../core/types';
+import type { NavDestination } from '../ui/common/nav-bar';
 import {
   getScreenElement,
   goToContracts,
   goToGameOver,
-  goToHangar,
-  goToRoster,
+  goToSquadron,
   goToStore,
   Screen,
   updateCampaignState,
 } from '../ui/common/screens';
-import type { NavDestination } from '../ui/screens/hangar';
-import { createHangarUI } from '../ui/screens/hangar';
 import { createGameOverUI, createResultsUI } from '../ui/screens/results';
-import { createRosterUI } from '../ui/screens/roster';
+import { createSquadronUI, type ListSelection } from '../ui/screens/squadron';
 import { createStoreUI } from '../ui/store/store';
 import type { CampaignController } from './controller';
 import type { SalvageResult } from './salvage';
 import { createNewCampaign } from './state';
 import type { Contract } from './types';
 
-/** Setup hangar screen */
-export function setupHangarScreen(
+/** Setup squadron screen */
+export function setupSquadronScreen(
   controller: CampaignController,
-  hangarElement: HTMLElement,
+  squadronElement: HTMLElement,
   setupContractsScreen: (controller: CampaignController) => void,
-): void {
-  setupHangarScreenWithShip(controller, hangarElement, setupContractsScreen);
-}
-
-/** Setup hangar screen with optional initial ship selection */
-export function setupHangarScreenWithShip(
-  controller: CampaignController,
-  hangarElement: HTMLElement,
-  setupContractsScreen: (controller: CampaignController) => void,
-  initialShipId?: string,
+  initialSelection?: ListSelection,
 ): void {
   const { screenManager } = controller;
 
   // Navigation handler for all screens
   const onNavigate = (destination: NavDestination) => {
     switch (destination) {
-      case 'hangar':
-        // Already on hangar, no-op
+      case 'squadron':
+        // Already on squadron, no-op
         break;
-      case 'roster': {
-        goToRoster(screenManager);
-        const rosterElement = getScreenElement(screenManager, Screen.ROSTER);
-        setupRosterScreen(controller, rosterElement, setupContractsScreen);
-        break;
-      }
       case 'store': {
         goToStore(screenManager);
         const storeElement = getScreenElement(screenManager, Screen.STORE);
@@ -68,30 +51,17 @@ export function setupHangarScreenWithShip(
     }
   };
 
-  // Loadout change handler - updates campaign state
+  // State update handler
   const onStateUpdate = (newState: typeof screenManager.campaignState) => {
     updateCampaignState(screenManager, newState);
   };
 
-  // View pilot handler - navigate to roster with pilot selected
-  const onViewPilot = (pilotId: string) => {
-    goToRoster(screenManager);
-    const rosterElement = getScreenElement(screenManager, Screen.ROSTER);
-    setupRosterScreenWithPilot(
-      controller,
-      rosterElement,
-      setupContractsScreen,
-      pilotId,
-    );
-  };
-
-  createHangarUI(
-    hangarElement,
+  createSquadronUI(
+    squadronElement,
     screenManager.campaignState,
     onNavigate,
     onStateUpdate,
-    initialShipId,
-    onViewPilot,
+    initialSelection,
   );
 }
 
@@ -106,16 +76,13 @@ export function setupStoreScreen(
   // Navigation handler for all screens
   const onNavigate = (destination: NavDestination) => {
     switch (destination) {
-      case 'hangar': {
-        goToHangar(screenManager);
-        const hangarElement = getScreenElement(screenManager, Screen.HANGAR);
-        setupHangarScreen(controller, hangarElement, setupContractsScreen);
-        break;
-      }
-      case 'roster': {
-        goToRoster(screenManager);
-        const rosterElement = getScreenElement(screenManager, Screen.ROSTER);
-        setupRosterScreen(controller, rosterElement, setupContractsScreen);
+      case 'squadron': {
+        goToSquadron(screenManager);
+        const squadronElement = getScreenElement(
+          screenManager,
+          Screen.SQUADRON,
+        );
+        setupSquadronScreen(controller, squadronElement, setupContractsScreen);
         break;
       }
       case 'store':
@@ -141,76 +108,6 @@ export function setupStoreScreen(
   );
 }
 
-/** Setup roster screen */
-export function setupRosterScreen(
-  controller: CampaignController,
-  rosterElement: HTMLElement,
-  setupContractsScreen: (controller: CampaignController) => void,
-): void {
-  setupRosterScreenWithPilot(controller, rosterElement, setupContractsScreen);
-}
-
-/** Setup roster screen with optional initial pilot selection */
-export function setupRosterScreenWithPilot(
-  controller: CampaignController,
-  rosterElement: HTMLElement,
-  setupContractsScreen: (controller: CampaignController) => void,
-  initialPilotId?: string,
-): void {
-  const { screenManager } = controller;
-
-  // Navigation handler for all screens
-  const onNavigate = (destination: NavDestination) => {
-    switch (destination) {
-      case 'hangar': {
-        goToHangar(screenManager);
-        const hangarElement = getScreenElement(screenManager, Screen.HANGAR);
-        setupHangarScreen(controller, hangarElement, setupContractsScreen);
-        break;
-      }
-      case 'roster':
-        // Already on roster, no-op
-        break;
-      case 'store': {
-        goToStore(screenManager);
-        const storeElement = getScreenElement(screenManager, Screen.STORE);
-        setupStoreScreen(controller, storeElement, setupContractsScreen);
-        break;
-      }
-      case 'contracts':
-        goToContracts(screenManager);
-        setupContractsScreen(controller);
-        break;
-    }
-  };
-
-  // State update handler
-  const onStateUpdate = (newState: typeof screenManager.campaignState) => {
-    updateCampaignState(screenManager, newState);
-  };
-
-  // View ship handler - navigate to hangar with ship selected
-  const onViewShip = (shipId: string) => {
-    goToHangar(screenManager);
-    const hangarElement = getScreenElement(screenManager, Screen.HANGAR);
-    setupHangarScreenWithShip(
-      controller,
-      hangarElement,
-      setupContractsScreen,
-      shipId,
-    );
-  };
-
-  createRosterUI(
-    rosterElement,
-    screenManager.campaignState,
-    onNavigate,
-    onStateUpdate,
-    onViewShip,
-    initialPilotId,
-  );
-}
-
 /** Show results screen after mission */
 export function showResults(
   controller: CampaignController,
@@ -229,10 +126,10 @@ export function showResults(
     contract,
     screenManager.campaignState,
     () => {
-      // Return to hangar with resupply support
-      goToHangar(screenManager);
-      const hangarElement = getScreenElement(screenManager, Screen.HANGAR);
-      setupHangarScreen(controller, hangarElement, setupContractsScreen);
+      // Return to squadron screen
+      goToSquadron(screenManager);
+      const squadronElement = getScreenElement(screenManager, Screen.SQUADRON);
+      setupSquadronScreen(controller, squadronElement, setupContractsScreen);
     },
     world,
     salvage,
@@ -252,10 +149,10 @@ export function showGameOver(
     const newState = createNewCampaign();
     updateCampaignState(screenManager, newState);
 
-    // Go to hangar with resupply support
-    goToHangar(screenManager);
-    const hangarElement = getScreenElement(screenManager, Screen.HANGAR);
-    setupHangarScreen(controller, hangarElement, setupContractsScreen);
+    // Go to squadron screen
+    goToSquadron(screenManager);
+    const squadronElement = getScreenElement(screenManager, Screen.SQUADRON);
+    setupSquadronScreen(controller, squadronElement, setupContractsScreen);
   });
 
   goToGameOver(screenManager);

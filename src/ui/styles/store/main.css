@@ -94,9 +94,22 @@
 @media (max-width: 1000px) {
   .store-layout {
     grid-template-columns: 280px minmax(0, 1fr);
+    grid-template-rows: 1fr 1fr;
   }
+
+  .store-list {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .store-details {
+    grid-column: 2;
+    grid-row: 1 / -1;
+  }
+
   .store-storage {
-    display: none;
+    grid-column: 1;
+    grid-row: 2;
   }
 }
 

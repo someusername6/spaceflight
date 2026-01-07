@@ -283,4 +283,9 @@
   .contracts-layout {
     grid-template-columns: 1fr;
   }
+
+  .contracts-list-panel,
+  .contracts-detail-panel {
+    max-width: none;
+  }
 }

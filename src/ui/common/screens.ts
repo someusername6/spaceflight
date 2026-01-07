@@ -2,8 +2,7 @@
  * Screen state machine - manages transitions between game screens.
  *
  * Screens:
- * - HANGAR: Ship/loadout management
- * - ROSTER: Pilot management
+ * - SQUADRON: Unified pilot and ship management
  * - STORE: Equipment shop
  * - CONTRACTS: Mission selection
  * - MISSION: 3D combat (game running)
@@ -15,8 +14,7 @@ import type { CampaignState, Contract } from '../../campaign/types';
 
 /** Game screen states */
 export enum Screen {
-  HANGAR = 'hangar',
-  ROSTER = 'roster',
+  SQUADRON = 'squadron',
   STORE = 'store',
   CONTRACTS = 'contracts',
   MISSION = 'mission',
@@ -33,8 +31,7 @@ export interface ScreenManager {
   lastMissionVictory: boolean;
 
   // Screen elements (created lazily)
-  hangarElement: HTMLElement | null;
-  rosterElement: HTMLElement | null;
+  squadronElement: HTMLElement | null;
   storeElement: HTMLElement | null;
   contractsElement: HTMLElement | null;
   resultsElement: HTMLElement | null;
@@ -52,13 +49,12 @@ export function createScreenManager(
   campaignState: CampaignState,
 ): ScreenManager {
   return {
-    currentScreen: Screen.HANGAR,
+    currentScreen: Screen.SQUADRON,
     container,
     campaignState,
     selectedContract: null,
     lastMissionVictory: false,
-    hangarElement: null,
-    rosterElement: null,
+    squadronElement: null,
     storeElement: null,
     contractsElement: null,
     resultsElement: null,
@@ -116,14 +112,9 @@ function showScreen(manager: ScreenManager, screen: Screen): void {
   manager.currentScreen = screen;
 }
 
-/** Transition to hangar screen */
-export function goToHangar(manager: ScreenManager): void {
-  showScreen(manager, Screen.HANGAR);
-}
-
-/** Transition to roster screen */
-export function goToRoster(manager: ScreenManager): void {
-  showScreen(manager, Screen.ROSTER);
+/** Transition to squadron screen */
+export function goToSquadron(manager: ScreenManager): void {
+  showScreen(manager, Screen.SQUADRON);
 }
 
 /** Transition to store screen */

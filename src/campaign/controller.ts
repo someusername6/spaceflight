@@ -10,8 +10,7 @@ import { initMatchStats } from '../systems/stats';
 import {
   createScreenManager,
   getScreenElement,
-  goToHangar,
-  goToRoster,
+  goToSquadron,
   goToStore,
   Screen,
   setMissionContainer,
@@ -35,11 +34,7 @@ import {
   createWaveState,
   spawnWave,
 } from './mission-waves';
-import {
-  setupHangarScreen,
-  setupRosterScreen,
-  setupStoreScreen,
-} from './screen-handlers';
+import { setupSquadronScreen, setupStoreScreen } from './screen-handlers';
 import {
   spawnPlayerFromCampaign,
   spawnWingmanFromCampaign,
@@ -70,12 +65,12 @@ export function startCampaign(container: HTMLElement): CampaignController {
     missionEnded: false,
   };
 
-  // Setup hangar screen with resupply support
-  const hangarElement = getScreenElement(screenManager, Screen.HANGAR);
-  setupHangarScreen(controller, hangarElement, setupContractsScreen);
+  // Setup squadron screen
+  const squadronElement = getScreenElement(screenManager, Screen.SQUADRON);
+  setupSquadronScreen(controller, squadronElement, setupContractsScreen);
 
-  // Show hangar initially
-  goToHangar(screenManager);
+  // Show squadron initially
+  goToSquadron(screenManager);
 
   console.log('Campaign started');
   console.log(`Starting credits: ${campaignState.credits}`);
@@ -95,16 +90,17 @@ function setupContractsScreen(controller: CampaignController): void {
     (destination) => {
       // Navigation handler for contracts screen
       switch (destination) {
-        case 'hangar': {
-          goToHangar(screenManager);
-          const hangarElement = getScreenElement(screenManager, Screen.HANGAR);
-          setupHangarScreen(controller, hangarElement, setupContractsScreen);
-          break;
-        }
-        case 'roster': {
-          goToRoster(screenManager);
-          const rosterElement = getScreenElement(screenManager, Screen.ROSTER);
-          setupRosterScreen(controller, rosterElement, setupContractsScreen);
+        case 'squadron': {
+          goToSquadron(screenManager);
+          const squadronElement = getScreenElement(
+            screenManager,
+            Screen.SQUADRON,
+          );
+          setupSquadronScreen(
+            controller,
+            squadronElement,
+            setupContractsScreen,
+          );
           break;
         }
         case 'store': {

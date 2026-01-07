@@ -5,7 +5,7 @@
  */
 
 /** Navigation destinations */
-export type NavDestination = 'hangar' | 'roster' | 'store' | 'contracts';
+export type NavDestination = 'squadron' | 'store' | 'contracts';
 
 /** Props for nav bar rendering */
 export interface NavBarProps {
@@ -36,8 +36,7 @@ export function renderNavBar(props: NavBarProps): string {
   const { activeTab, credits, sector } = props;
 
   const tabs: { id: NavDestination; label: string; icon: string }[] = [
-    { id: 'hangar', label: 'HANGAR', icon: '◈' },
-    { id: 'roster', label: 'ROSTER', icon: '★' },
+    { id: 'squadron', label: 'SQUADRON', icon: '◈' },
     { id: 'store', label: 'STORE', icon: '⬡' },
     { id: 'contracts', label: 'CONTRACTS', icon: '▶' },
   ];

@@ -58,11 +58,14 @@
    SCREEN-SPECIFIC STYLES
    ======================================== */
 
-/* Hangar - ship management */
+/* Hangar - ship management (legacy, kept for compatibility) */
 @import "./screens/hangar.css";
 
-/* Roster - pilot management */
+/* Roster - pilot management (legacy, kept for compatibility) */
 @import "./screens/roster/index.css";
+
+/* Squadron - unified pilot and ship management */
+@import "./screens/squadron/index.css";
 
 /* Loadout - weapon configuration */
 @import "./screens/loadout.css";

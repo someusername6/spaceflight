@@ -202,13 +202,13 @@ function renderContractDetail(
 
   // Warning for unarmed ships (soft warning, doesn't block)
   const unarmedWarning = hasUnarmed
-    ? `<button class="btn btn-warning-action btn-goto-hangar">⚠ UNARMED SHIPS — EQUIP IN HANGAR</button>`
+    ? `<button class="btn btn-warning-action btn-goto-squadron">⚠ UNARMED SHIPS — EQUIP IN SQUADRON</button>`
     : '';
 
   // Accept button or commander warning (hard block)
   const acceptButton = canLaunch
     ? `<button class="btn btn-accept-mission" id="btn-accept-mission">ACCEPT MISSION</button>`
-    : `<button class="btn btn-warning-action btn-goto-hangar">⚠ ASSIGN COMMANDER IN HANGAR</button>`;
+    : `<button class="btn btn-warning-action btn-goto-squadron">⚠ ASSIGN COMMANDER IN SQUADRON</button>`;
 
   return `
     <div class="contract-detail">
@@ -329,10 +329,10 @@ function renderAndBindContracts(ui: ContractsUI): void {
     }
   }
 
-  // Bind warning action buttons (navigate to hangar to fix issues)
-  ui.element.querySelectorAll('.btn-goto-hangar').forEach((btn) => {
+  // Bind warning action buttons (navigate to squadron to fix issues)
+  ui.element.querySelectorAll('.btn-goto-squadron').forEach((btn) => {
     btn.addEventListener('click', () => {
-      ui.onNavigate('hangar');
+      ui.onNavigate('squadron');
     });
   });
 }
