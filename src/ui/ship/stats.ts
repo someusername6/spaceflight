@@ -14,7 +14,7 @@ export interface ShipStatsOptions {
  * Format bank sizes as colored dots with counts.
  * Example: [2, 2, 1, 1, 1] → "●● ×2, ● ×3" (with color class)
  */
-function formatBankSizes(banks: number[], colorClass: string): string {
+export function formatBankSizes(banks: number[], colorClass: string): string {
   // Count occurrences of each bank size
   const counts = new Map<number, number>();
   for (const size of banks) {
