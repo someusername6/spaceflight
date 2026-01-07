@@ -189,7 +189,7 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     afterburnerHeatRate: 55,
     primaryBanks: [2],
     secondaryBanks: [2, 2, 2, 1, 1, 1, 1],
-    primaryHardpoints: [{ row: 0, x: 0.5, svgX: 32, svgY: 20 }],
+    primaryHardpoints: [{ row: 1, x: 0.5, svgX: 32, svgY: 20 }],
     secondaryHardpoints: [
       { row: 0, x: 0.15, svgX: 10, svgY: 26 },
       { row: 2, x: 0.5, svgX: 32, svgY: 32 },

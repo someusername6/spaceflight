@@ -11,6 +11,14 @@ interface Point {
   y: number;
 }
 
+/** Rectangle for slot occlusion mask */
+interface SlotRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 /** Connector path from slot to hardpoint */
 interface ConnectorPath {
   points: Point[];
@@ -163,6 +171,28 @@ function getHardpointPosition(
 }
 
 /**
+ * Get bounding rectangles of all slot elements relative to container.
+ * Used to create an occlusion mask so connector lines appear "behind" slots.
+ */
+function getSlotRects(diagram: Element): SlotRect[] {
+  const rects: SlotRect[] = [];
+  const containerRect = diagram.getBoundingClientRect();
+  const slots = diagram.querySelectorAll('.schematic-slot');
+
+  for (const slot of slots) {
+    const slotRect = slot.getBoundingClientRect();
+    rects.push({
+      x: slotRect.left - containerRect.left,
+      y: slotRect.top - containerRect.top,
+      width: slotRect.width,
+      height: slotRect.height,
+    });
+  }
+
+  return rects;
+}
+
+/**
  * Calculate all connector paths for a ship viewer.
  */
 function calculateConnectors(diagram: Element): ConnectorPath[] {
@@ -202,15 +232,39 @@ function calculateConnectors(diagram: Element): ConnectorPath[] {
   return connectors;
 }
 
+/** Counter for unique mask IDs (prevents conflicts with multiple viewers) */
+let maskIdCounter = 0;
+
 /**
- * Render connector paths as SVG elements.
+ * Render occlusion mask rectangles for slot boxes.
+ * White background shows everything, black rectangles hide connector lines.
  */
-function renderConnectorsSVG(
-  connectors: ConnectorPath[],
+function renderOcclusionMask(
+  slotRects: SlotRect[],
   width: number,
   height: number,
+  maskId: string,
 ): string {
-  const paths = connectors
+  const maskRects = slotRects
+    .map(
+      (r) =>
+        `<rect x="${r.x}" y="${r.y}" width="${r.width}" height="${r.height}" fill="black" />`,
+    )
+    .join('\n');
+
+  return `
+    <mask id="${maskId}">
+      <rect x="0" y="0" width="${width}" height="${height}" fill="white" />
+      ${maskRects}
+    </mask>
+  `;
+}
+
+/**
+ * Render connector paths as SVG path elements.
+ */
+function renderConnectorPaths(connectors: ConnectorPath[]): string {
+  return connectors
     .map((c) => {
       const d = pointsToPath(c.points);
       const colorClass =
@@ -219,10 +273,27 @@ function renderConnectorsSVG(
       return `<path d="${d}" class="connector-line ${colorClass} ${filledClass}" />`;
     })
     .join('\n');
+}
+
+/**
+ * Render complete connector SVG with occlusion mask.
+ */
+function renderConnectorsSVG(
+  connectors: ConnectorPath[],
+  slotRects: SlotRect[],
+  width: number,
+  height: number,
+  maskId: string,
+): string {
+  const paths = renderConnectorPaths(connectors);
+  const mask = renderOcclusionMask(slotRects, width, height, maskId);
 
   return `
-    <svg class="connector-overlay" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
-      ${paths}
+    <svg class="connector-overlay" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" data-mask-id="${maskId}">
+      <defs>${mask}</defs>
+      <g mask="url(#${maskId})">
+        ${paths}
+      </g>
     </svg>
   `;
 }
@@ -239,37 +310,39 @@ export function updateShipConnectors(viewer: Element): void {
   const rect = diagram.getBoundingClientRect();
   if (rect.width === 0 || rect.height === 0) return;
 
-  // Calculate connector paths
+  // Calculate connector paths and slot occlusion rects
   const connectors = calculateConnectors(diagram);
+  const slotRects = getSlotRects(diagram);
 
   // Find or create SVG overlay
-  let svg = diagram.querySelector('.connector-overlay');
+  let svg = diagram.querySelector('.connector-overlay') as SVGElement | null;
   if (!svg) {
+    // Generate unique mask ID for this viewer
+    const maskId = `slot-mask-${++maskIdCounter}`;
     const svgContainer = document.createElement('div');
     svgContainer.innerHTML = renderConnectorsSVG(
       connectors,
+      slotRects,
       rect.width,
       rect.height,
+      maskId,
     );
-    svg = svgContainer.firstElementChild;
+    svg = svgContainer.firstElementChild as SVGElement | null;
     if (svg) {
       diagram.appendChild(svg);
     }
   } else {
-    // Update existing SVG
+    // Update existing SVG with new paths and mask (reuse existing mask ID)
+    const maskId = svg.dataset.maskId ?? `slot-mask-${++maskIdCounter}`;
     svg.setAttribute('viewBox', `0 0 ${rect.width} ${rect.height}`);
-    const paths = connectors
-      .map((c) => {
-        const d = pointsToPath(c.points);
-        const colorClass =
-          c.slotType === 'primary'
-            ? 'connector-primary'
-            : 'connector-secondary';
-        const filledClass = c.filled ? 'filled' : '';
-        return `<path d="${d}" class="connector-line ${colorClass} ${filledClass}" />`;
-      })
-      .join('\n');
-    svg.innerHTML = paths;
+    const paths = renderConnectorPaths(connectors);
+    const mask = renderOcclusionMask(
+      slotRects,
+      rect.width,
+      rect.height,
+      maskId,
+    );
+    svg.innerHTML = `<defs>${mask}</defs><g mask="url(#${maskId})">${paths}</g>`;
   }
 }
 
