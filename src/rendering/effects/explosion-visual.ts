@@ -56,6 +56,16 @@ function createParticleVelocities(
   count: number = PARTICLES_PER_EXPLOSION,
 ): Float32Array {
   const velocities = new Float32Array(count * 3);
+  fillParticleVelocities(velocities, entitySeed, count);
+  return velocities;
+}
+
+/** Fill existing array with random unit vectors (avoids allocation) */
+function fillParticleVelocities(
+  velocities: Float32Array,
+  entitySeed: Entity,
+  count: number,
+): void {
   const prng = createPRNG(entitySeed * 31337); // Deterministic seed from entity ID
 
   for (let i = 0; i < count; i++) {
@@ -68,8 +78,6 @@ function createParticleVelocities(
     velocities[idx + 1] = Math.sin(phi) * Math.sin(theta);
     velocities[idx + 2] = Math.cos(phi);
   }
-
-  return velocities;
 }
 
 /** Creates visual elements for one explosion */
@@ -262,7 +270,74 @@ export function updateExplosionVisual(
   }
 }
 
-/** Cleanup visual resources */
+/** Reinitialize a pooled explosion visual for reuse */
+export function reinitializeExplosionVisual(
+  visual: ExplosionVisual,
+  entity: Entity,
+  explosion: Explosion,
+  position: THREE.Vector3,
+): void {
+  const isNuke = explosion.variant === 'nuke';
+  const particleCount = isNuke ? NUKE_PARTICLES : PARTICLES_PER_EXPLOSION;
+
+  // Reset sphere
+  const initialColor = isNuke ? new THREE.Color(1, 1, 1) : explosion.color;
+  (visual.sphere.material as THREE.MeshBasicMaterial).color.copy(initialColor);
+  (visual.sphere.material as THREE.MeshBasicMaterial).opacity = 0.6;
+  visual.sphere.position.copy(position);
+  visual.sphere.scale.setScalar(0.1);
+  visual.sphere.visible = true;
+
+  // Reset particles
+  const particlePositions = visual.particles.geometry.attributes.position
+    ?.array as Float32Array;
+  for (let i = 0; i < particleCount * 3; i++) {
+    particlePositions[i] = 0;
+  }
+  const posAttr = visual.particles.geometry.attributes.position;
+  if (posAttr) {
+    posAttr.needsUpdate = true;
+  }
+  (visual.particles.material as THREE.PointsMaterial).color.copy(
+    explosion.color,
+  );
+  (visual.particles.material as THREE.PointsMaterial).opacity = 1;
+  visual.particles.visible = true;
+
+  // Regenerate particle velocities in-place for new entity seed (no allocation)
+  fillParticleVelocities(visual.particleVelocities, entity, particleCount);
+
+  // Reset nuke-specific elements
+  if (isNuke) {
+    if (visual.flash) {
+      (visual.flash.material as THREE.MeshBasicMaterial).opacity = 1;
+      visual.flash.position.copy(position);
+      visual.flash.scale.setScalar(explosion.size * 0.5);
+      visual.flash.visible = true;
+    }
+    if (visual.ring) {
+      (visual.ring.material as THREE.MeshBasicMaterial).opacity = 0.8;
+      visual.ring.position.copy(position);
+      visual.ring.scale.setScalar(explosion.size * 0.5);
+      visual.ring.visible = true;
+    }
+    if (visual.light) {
+      visual.light.intensity = 50;
+      visual.light.position.copy(position);
+    }
+  }
+}
+
+/** Hide a visual (for pooling - doesn't dispose) */
+export function hideExplosionVisual(visual: ExplosionVisual): void {
+  visual.sphere.visible = false;
+  visual.particles.visible = false;
+  if (visual.flash) visual.flash.visible = false;
+  if (visual.ring) visual.ring.visible = false;
+  if (visual.light) visual.light.intensity = 0;
+}
+
+/** Cleanup visual resources (full dispose) */
 export function disposeExplosionVisual(
   visual: ExplosionVisual,
   scene: THREE.Scene,

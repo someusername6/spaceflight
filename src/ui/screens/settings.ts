@@ -1,91 +1,49 @@
 /**
- * Settings Screen - Key binding configuration.
- *
- * Displays:
- * - Categorized list of key bindings
- * - Click-to-rebind interface
- * - Reset to defaults option
+ * Settings Screen - Graphics and Controls configuration with tabbed interface.
  */
 
 import {
-  ACTION_CATEGORIES,
   ACTION_DISPLAY_NAMES,
   DEFAULT_BINDINGS,
   findKeyConflict,
   type GameAction,
   getKeyBindings,
-  getKeyDisplayName,
   resetToDefaults,
   saveKeyBindings,
   setKeyBinding,
 } from '../../input/key-bindings';
+import {
+  type FrameRateCap,
+  setFrameRateCap,
+} from '../../settings/game-settings';
 import {
   createScreen,
   type Screen,
   type ScreenAPI,
   type ScreenHandle,
 } from '../framework/screen';
+import { renderControlsTab } from './settings-controls';
+import {
+  cleanupPopoverListener,
+  positionFpsPopover,
+  renderGraphicsTab,
+  setupPopoverListener,
+} from './settings-graphics';
 
 /** Settings screen callbacks */
 export interface SettingsScreenCallbacks {
   onBack: () => void;
 }
 
+/** Settings tab types */
+type SettingsTab = 'graphics' | 'controls';
+
 /** Settings UI state */
 interface SettingsState {
+  selectedTab: SettingsTab;
   listeningAction: GameAction | null;
   showResetConfirm: boolean;
-}
-
-/** Render a single key binding row */
-function renderBindingRow(
-  action: GameAction,
-  listeningAction: GameAction | null,
-): string {
-  const bindings = getKeyBindings();
-  const currentKey = bindings[action];
-  const displayName = ACTION_DISPLAY_NAMES[action];
-  const keyLabel = getKeyDisplayName(currentKey);
-  const isListening = listeningAction === action;
-  const isDefault = currentKey === DEFAULT_BINDINGS[action];
-
-  return `
-    <div class="binding-row" data-action="${action}">
-      <span class="binding-label">${displayName}</span>
-      <div class="binding-controls">
-        <button
-          class="btn btn-small binding-key ${isListening ? 'listening' : ''}"
-          data-action="${action}"
-          aria-label="Rebind ${displayName}"
-        >
-          ${isListening ? 'Press a key...' : keyLabel}
-        </button>
-        ${
-          !isDefault
-            ? `<button class="btn btn-small btn-reset-key" data-action="${action}" title="Reset to default">
-                 <span class="reset-icon">&#8634;</span>
-               </button>`
-            : ''
-        }
-      </div>
-    </div>
-  `;
-}
-
-/** Render a category section */
-function renderCategory(
-  name: string,
-  actions: GameAction[],
-  listeningAction: GameAction | null,
-): string {
-  return `
-    <div class="settings-category">
-      <h3 class="category-header">${name}</h3>
-      <div class="category-bindings">
-        ${actions.map((action) => renderBindingRow(action, listeningAction)).join('')}
-      </div>
-    </div>
-  `;
+  showFpsPopover: boolean;
 }
 
 /** Render the reset confirmation view */
@@ -106,11 +64,28 @@ function renderResetConfirmView(): string {
   `;
 }
 
+/** Render the tab bar */
+function renderTabBar(selectedTab: SettingsTab): string {
+  return `
+    <nav class="settings-tabs" role="tablist" aria-label="Settings categories">
+      <button class="btn ${selectedTab === 'graphics' ? 'btn-primary' : ''}"
+              data-tab="graphics" role="tab" aria-selected="${selectedTab === 'graphics'}">
+        Graphics
+      </button>
+      <button class="btn ${selectedTab === 'controls' ? 'btn-primary' : ''}"
+              data-tab="controls" role="tab" aria-selected="${selectedTab === 'controls'}">
+        Controls
+      </button>
+    </nav>
+  `;
+}
+
 /** Render main settings view */
-function renderMainView(listeningAction: GameAction | null): string {
-  const categories = Object.entries(ACTION_CATEGORIES)
-    .map(([name, actions]) => renderCategory(name, actions, listeningAction))
-    .join('');
+function renderMainView(state: SettingsState): string {
+  const tabContent =
+    state.selectedTab === 'graphics'
+      ? renderGraphicsTab(state.showFpsPopover)
+      : renderControlsTab(state.listeningAction);
 
   return `
     <div class="settings-container">
@@ -118,18 +93,10 @@ function renderMainView(listeningAction: GameAction | null): string {
         <h2>Settings</h2>
       </header>
 
+      ${renderTabBar(state.selectedTab)}
+
       <div class="settings-content">
-        <div class="settings-section">
-          <div class="section-header">
-            <h3>Key Bindings</h3>
-            <button class="btn btn-small" id="btn-reset-all">
-              Reset All to Defaults
-            </button>
-          </div>
-          <div class="bindings-list">
-            ${categories}
-          </div>
-        </div>
+        ${tabContent}
       </div>
 
       <footer class="settings-footer">
@@ -153,7 +120,7 @@ const SettingsScreenComponent: Screen<SettingsState, SettingsScreenCallbacks> =
       if (state.showResetConfirm) {
         content = renderResetConfirmView();
       } else {
-        content = renderMainView(state.listeningAction);
+        content = renderMainView(state);
       }
 
       return `
@@ -169,13 +136,47 @@ const SettingsScreenComponent: Screen<SettingsState, SettingsScreenCallbacks> =
     bind(api: ScreenAPI<SettingsState>, props: SettingsScreenCallbacks) {
       const state = api.getState();
 
+      // Tab switching
+      api.on('.settings-tabs .btn', 'click', (_e, el) => {
+        const tab = el.dataset.tab as SettingsTab;
+        if (tab && tab !== state.selectedTab) {
+          cleanupKeyListener();
+          api.setState({ selectedTab: tab, listeningAction: null });
+        }
+      });
+
       // Back button
       api.on('#btn-settings-back', 'click', () => {
         cleanupKeyListener();
         props.onBack();
       });
 
-      // Reset all button - show confirmation
+      // Frame rate cap popover trigger (graphics tab)
+      api.on('#fps-cap-trigger', 'click', (e) => {
+        e.stopPropagation();
+        cleanupPopoverListener();
+        api.setState({ showFpsPopover: !state.showFpsPopover });
+      });
+
+      // Frame rate cap popover item selection
+      api.on('.settings-picker-item', 'click', (e, el) => {
+        e.stopPropagation();
+        const fps = el.dataset.fps;
+        if (fps !== undefined) {
+          const value = Number.parseInt(fps, 10) as FrameRateCap;
+          setFrameRateCap(value);
+          cleanupPopoverListener();
+          api.setState({ showFpsPopover: false });
+        }
+      });
+
+      // Close popover on outside click and position it
+      if (state.showFpsPopover) {
+        setupPopoverListener(() => api.setState({ showFpsPopover: false }));
+        positionFpsPopover();
+      }
+
+      // Reset all button - show confirmation (controls tab)
       api.on('#btn-reset-all', 'click', () => {
         api.setState({ showResetConfirm: true });
       });
@@ -191,7 +192,7 @@ const SettingsScreenComponent: Screen<SettingsState, SettingsScreenCallbacks> =
         api.setState({ showResetConfirm: false });
       });
 
-      // Key binding buttons - start listening
+      // Key binding buttons - start listening (controls tab)
       api.on('.binding-key', 'click', (_e, el) => {
         const action = el.dataset.action;
         if (action && action in ACTION_DISPLAY_NAMES) {
@@ -199,7 +200,7 @@ const SettingsScreenComponent: Screen<SettingsState, SettingsScreenCallbacks> =
         }
       });
 
-      // Reset individual key buttons
+      // Reset individual key buttons (controls tab)
       api.on('.btn-reset-key', 'click', (_e, el) => {
         const action = el.dataset.action;
         if (action && action in DEFAULT_BINDINGS) {
@@ -216,8 +217,35 @@ const SettingsScreenComponent: Screen<SettingsState, SettingsScreenCallbacks> =
       if (state.listeningAction) {
         setupKeyListener(api, state.listeningAction);
       }
+
+      // Re-attach battle simulation canvas after re-render (if present)
+      reattachBattleCanvas();
     },
   };
+
+/** Store canvas reference for re-attachment across re-renders */
+let battleCanvas: HTMLCanvasElement | null = null;
+
+/** Store the canvas when it's first attached */
+export function storeBattleCanvas(canvas: HTMLCanvasElement): void {
+  battleCanvas = canvas;
+}
+
+/** Re-attach battle canvas after re-render */
+function reattachBattleCanvas(): void {
+  if (battleCanvas) {
+    const bgContainer = document.getElementById('settings-battle-bg');
+    const settingsScreen = document.querySelector('.settings-screen');
+    if (bgContainer) {
+      // Re-attach canvas if needed
+      if (battleCanvas.parentElement !== bgContainer) {
+        bgContainer.appendChild(battleCanvas);
+      }
+      // Restore the with-battle-bg class (lost during re-render)
+      settingsScreen?.classList.add('with-battle-bg');
+    }
+  }
+}
 
 /** Set up capture-phase key listener for rebinding */
 function setupKeyListener(
@@ -282,8 +310,10 @@ let screenHandle: ScreenHandle<SettingsState, SettingsScreenCallbacks> | null =
 export function renderSettingsScreen(element: HTMLElement): void {
   // For backwards compatibility, just set innerHTML with initial state
   const initialState: SettingsState = {
+    selectedTab: 'graphics',
     listeningAction: null,
     showResetConfirm: false,
+    showFpsPopover: false,
   };
   element.innerHTML = SettingsScreenComponent.render(initialState, {
     onBack: () => {},
@@ -300,8 +330,10 @@ export function bindSettingsScreen(
   cleanupKeyListener();
 
   const initialState: SettingsState = {
+    selectedTab: 'graphics',
     listeningAction: null,
     showResetConfirm: false,
+    showFpsPopover: false,
   };
 
   screenHandle = createScreen(
@@ -315,6 +347,7 @@ export function bindSettingsScreen(
 /** Cleanup settings screen (cancel any listening and reset state) */
 export function cleanupSettingsScreen(): void {
   cleanupKeyListener();
+  cleanupPopoverListener();
   screenHandle?.destroy();
   screenHandle = null;
 }

@@ -42,13 +42,13 @@
   top: 0;
   right: 0;
   bottom: 0;
-  width: 6px;
-  background: rgba(0, 0, 0, 0.4);
+  width: var(--scrollbar-width);
+  background: var(--scrollbar-track);
   pointer-events: none;
 }
 
 .storage-content::-webkit-scrollbar {
-  width: 6px;
+  width: var(--scrollbar-width);
 }
 
 .storage-content::-webkit-scrollbar-track {
@@ -56,8 +56,12 @@
 }
 
 .storage-content::-webkit-scrollbar-thumb {
-  background: var(--border-light);
-  border-radius: 3px;
+  background: var(--scrollbar-thumb);
+  border-radius: 4px;
+}
+
+.storage-content::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
 }
 
 .storage-section {

@@ -6,6 +6,7 @@
 
 import { createWorld } from './core/ecs';
 import type { SystemFn, World } from './core/types';
+import { getFrameIntervalMs } from './settings/game-settings';
 import { aiSystem } from './systems/ai/ai';
 import { aimErrorSystem } from './systems/aim-error';
 import { cleanupSystem } from './systems/cleanup';
@@ -83,6 +84,8 @@ export interface Game {
   world: World;
   accumulator: number;
   lastTime: number;
+  /** Last render timestamp for frame rate capping */
+  lastRenderTime: number;
   running: boolean;
   /** Tracks last notified result to prevent duplicate callbacks */
   lastNotifiedResult: MissionResult;
@@ -97,6 +100,7 @@ export function createGame(seed = 12345): Game {
     world: createWorld(seed),
     accumulator: 0,
     lastTime: 0,
+    lastRenderTime: 0,
     running: false,
     lastNotifiedResult: MissionResult.InProgress,
   };
@@ -134,6 +138,7 @@ export function gameFrame(game: Game, currentTime: number): void {
   // Calculate delta time
   if (game.lastTime === 0) {
     game.lastTime = currentTime;
+    game.lastRenderTime = currentTime;
   }
   const delta = currentTime - game.lastTime;
   game.lastTime = currentTime;
@@ -147,10 +152,18 @@ export function gameFrame(game: Game, currentTime: number): void {
     game.accumulator -= TICK_MS;
   }
 
-  // Render with interpolation
-  const alpha = game.accumulator / TICK_MS;
-  if (game.onRender) {
-    game.onRender(game.world, alpha);
+  // Frame rate capping - only render if enough time has passed
+  const frameInterval = getFrameIntervalMs();
+  const timeSinceLastRender = currentTime - game.lastRenderTime;
+
+  // Render with interpolation (respecting frame cap)
+  // frameInterval of 0 means uncapped (render every frame)
+  if (frameInterval === 0 || timeSinceLastRender >= frameInterval) {
+    game.lastRenderTime = currentTime;
+    const alpha = game.accumulator / TICK_MS;
+    if (game.onRender) {
+      game.onRender(game.world, alpha);
+    }
   }
 }
 
@@ -158,6 +171,7 @@ export function gameFrame(game: Game, currentTime: number): void {
 export function startGame(game: Game): void {
   game.running = true;
   game.lastTime = 0;
+  game.lastRenderTime = 0;
   game.accumulator = 0;
 
   function loop(time: number) {

@@ -10,7 +10,7 @@
   background: var(--bg-panel);
   border: 1px solid var(--border-color);
   padding: var(--space-3);
-  padding-right: calc(var(--space-3) + 8px);
+  padding-right: calc(var(--space-3) + var(--scrollbar-width));
   overflow-y: scroll;
   min-height: 0;
   min-width: 0;
@@ -25,14 +25,14 @@
   top: 0;
   right: 0;
   bottom: 0;
-  width: 8px;
-  background: rgba(0, 0, 0, 0.4);
+  width: var(--scrollbar-width);
+  background: var(--scrollbar-track);
   pointer-events: none;
 }
 
 /* Custom scrollbar styling */
 .store-list::-webkit-scrollbar {
-  width: 8px;
+  width: var(--scrollbar-width);
 }
 
 .store-list::-webkit-scrollbar-track {
@@ -40,12 +40,12 @@
 }
 
 .store-list::-webkit-scrollbar-thumb {
-  background: rgba(255, 159, 28, 0.6);
+  background: var(--scrollbar-thumb);
   border-radius: 4px;
 }
 
 .store-list::-webkit-scrollbar-thumb:hover {
-  background: var(--color-primary);
+  background: var(--scrollbar-thumb-hover);
 }
 
 .store-item {

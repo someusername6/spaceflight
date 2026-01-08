@@ -92,6 +92,7 @@
 
 /* Settings screen */
 @import "./screens/settings.css";
+@import "./screens/settings-picker.css";
 
 /* Pause menu modal */
 @import "./screens/pause-menu.css";

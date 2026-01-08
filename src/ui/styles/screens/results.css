@@ -64,11 +64,11 @@
   overflow-y: auto;
   padding: var(--space-6) 0;
   scrollbar-width: thin;
-  scrollbar-color: var(--color-primary) transparent;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 
 .results-content-scroll::-webkit-scrollbar {
-  width: 6px;
+  width: var(--scrollbar-width);
 }
 
 .results-content-scroll::-webkit-scrollbar-track {
@@ -76,8 +76,12 @@
 }
 
 .results-content-scroll::-webkit-scrollbar-thumb {
-  background: var(--color-primary-dim);
-  border-radius: 0;
+  background: var(--scrollbar-thumb);
+  border-radius: 4px;
+}
+
+.results-content-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
 }
 
 /* ========================================

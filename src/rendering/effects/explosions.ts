@@ -12,6 +12,8 @@ import {
   createExplosionVisual,
   disposeExplosionVisual,
   type ExplosionVisual,
+  hideExplosionVisual,
+  reinitializeExplosionVisual,
   updateExplosionVisual,
 } from './explosion-visual';
 
@@ -21,6 +23,12 @@ export interface ExplosionRenderer {
   visuals: Map<Entity, ExplosionVisual>;
   sphereGeometry: THREE.SphereGeometry;
   nukeRingGeometry: THREE.TorusGeometry;
+  /** Pool of inactive standard explosion visuals (for reuse) */
+  standardPool: ExplosionVisual[];
+  /** Pool of inactive nuke explosion visuals (for reuse) */
+  nukePool: ExplosionVisual[];
+  /** Scene reference for pool management */
+  scene: THREE.Scene | null;
 }
 
 /** Creates the explosion renderer */
@@ -34,7 +42,52 @@ export function createExplosionRenderer(): ExplosionRenderer {
     visuals: new Map(),
     sphereGeometry,
     nukeRingGeometry,
+    standardPool: [],
+    nukePool: [],
+    scene: null,
   };
+}
+
+/** Acquire an explosion visual from pool or create new */
+function acquireExplosionVisual(
+  renderer: ExplosionRenderer,
+  scene: THREE.Scene,
+  entity: Entity,
+  explosion: Explosion,
+  position: THREE.Vector3,
+): ExplosionVisual {
+  // Store scene reference
+  renderer.scene = scene;
+
+  const isNuke = explosion.variant === 'nuke';
+  const pool = isNuke ? renderer.nukePool : renderer.standardPool;
+
+  // Try to get from pool
+  const pooled = pool.pop();
+  if (pooled) {
+    reinitializeExplosionVisual(pooled, entity, explosion, position);
+    return pooled;
+  }
+
+  // Create new if pool is empty
+  return createExplosionVisual(
+    renderer.sphereGeometry,
+    renderer.nukeRingGeometry,
+    scene,
+    entity,
+    explosion,
+    position,
+  );
+}
+
+/** Release an explosion visual back to pool */
+function releaseExplosionVisual(
+  renderer: ExplosionRenderer,
+  visual: ExplosionVisual,
+): void {
+  hideExplosionVisual(visual);
+  const pool = visual.isNuke ? renderer.nukePool : renderer.standardPool;
+  pool.push(visual);
 }
 
 /** Updates explosion visuals */
@@ -66,10 +119,9 @@ export function updateExplosionRenderer(
     let visual = renderer.visuals.get(entity);
 
     if (!visual) {
-      // Create new visual
-      visual = createExplosionVisual(
-        renderer.sphereGeometry,
-        renderer.nukeRingGeometry,
+      // Acquire from pool or create new
+      visual = acquireExplosionVisual(
+        renderer,
         scene,
         entity,
         explosion,
@@ -82,10 +134,10 @@ export function updateExplosionRenderer(
     updateExplosionVisual(visual, transform.position, explosion, progress);
   }
 
-  // Remove visuals for explosions that no longer exist
+  // Release visuals for explosions that no longer exist (return to pool)
   for (const [entity, visual] of renderer.visuals) {
     if (!seenExplosions.has(entity)) {
-      disposeExplosionVisual(visual, scene);
+      releaseExplosionVisual(renderer, visual);
       renderer.visuals.delete(entity);
     }
   }
@@ -96,10 +148,26 @@ export function disposeExplosionRenderer(
   renderer: ExplosionRenderer,
   scene: THREE.Scene,
 ): void {
+  // Dispose active visuals
   for (const visual of renderer.visuals.values()) {
     disposeExplosionVisual(visual, scene);
   }
   renderer.visuals.clear();
+
+  // Dispose pooled standard visuals
+  for (const visual of renderer.standardPool) {
+    disposeExplosionVisual(visual, scene);
+  }
+  renderer.standardPool.length = 0;
+
+  // Dispose pooled nuke visuals
+  for (const visual of renderer.nukePool) {
+    disposeExplosionVisual(visual, scene);
+  }
+  renderer.nukePool.length = 0;
+
+  // Dispose shared geometries
   renderer.sphereGeometry.dispose();
   renderer.nukeRingGeometry.dispose();
+  renderer.scene = null;
 }

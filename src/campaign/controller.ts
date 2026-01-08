@@ -4,6 +4,7 @@
  */
 
 import { initKeyBindings } from '../input/key-bindings';
+import { initGameSettings } from '../settings/game-settings';
 import { initInput } from '../systems/input';
 import {
   createScreenManager,
@@ -24,6 +25,7 @@ import {
   bindSettingsScreen,
   cleanupSettingsScreen,
   renderSettingsScreen,
+  storeBattleCanvas,
 } from '../ui/screens/settings';
 import { showSquadSelection } from '../ui/screens/squad-selection';
 import {
@@ -46,6 +48,7 @@ export type { CampaignController } from './controller-types';
 export function startCampaign(container: HTMLElement): CampaignController {
   // Initialize systems
   initKeyBindings();
+  initGameSettings();
   initInput();
 
   // Create placeholder campaign state (will be replaced by new game or load)
@@ -151,6 +154,8 @@ function setupSettingsScreen(controller: CampaignController): void {
     if (canvas && settingsScreen && settingsBg) {
       settingsBg.appendChild(canvas);
       settingsScreen.classList.add('with-battle-bg');
+      // Store canvas reference so settings screen can re-attach after tab switches
+      storeBattleCanvas(canvas);
     }
   }
 }

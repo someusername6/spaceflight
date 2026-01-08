@@ -1,15 +1,11 @@
 /**
- * Trail Rendering - Visual trails for projectiles.
+ * Trail Rendering - Visual trails for projectiles with object pooling.
  *
  * Trails are purely visual (not ECS state). Each projectile gets a trail
  * that fades out behind it, giving a sense of speed and direction.
  *
- * Visual appearance varies by weapon type:
- * - Plasma: Green glowing spheres, medium trail
- * - Pulse: Cyan rapid-fire small bolts, short trail
- * - Ion: Blue electric orbs, medium trail
- * - Autocannon: Yellow/orange short streaks
- * - Railgun: White long piercing trails
+ * Object pooling: Trail objects (Line, Mesh, Materials) are pooled and reused
+ * to avoid GPU resource allocation/deallocation churn during gameplay.
  */
 
 import * as THREE from 'three';
@@ -18,84 +14,7 @@ import type { Projectile, WeaponName } from '../../components/projectile';
 import type { Transform } from '../../components/transform';
 import { getComponent, queryEntities } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
-
-/** Weapon-specific visual configuration */
-interface WeaponVisualConfig {
-  color: THREE.Color;
-  enemyColor: THREE.Color;
-  trailLength: number;
-  boltSize: number; // Scale for bolt mesh
-  boltShape: 'sphere' | 'cylinder';
-}
-
-/** Visual configs per weapon */
-const WEAPON_VISUALS: Record<string, WeaponVisualConfig> = {
-  // Energy weapons
-  Plasma: {
-    color: new THREE.Color(0.2, 1.0, 0.4), // Bright green
-    enemyColor: new THREE.Color(1.0, 0.2, 0.3), // Red-pink
-    trailLength: 8,
-    boltSize: 0.6,
-    boltShape: 'sphere',
-  },
-  Pulse: {
-    color: new THREE.Color(0.3, 0.9, 1.0), // Cyan
-    enemyColor: new THREE.Color(1.0, 0.5, 0.2), // Orange
-    trailLength: 5,
-    boltSize: 0.35,
-    boltShape: 'sphere',
-  },
-  Ion: {
-    color: new THREE.Color(0.4, 0.5, 1.0), // Blue-purple
-    enemyColor: new THREE.Color(1.0, 0.3, 0.5), // Magenta
-    trailLength: 7,
-    boltSize: 0.5,
-    boltShape: 'sphere',
-  },
-  // Ballistic weapons
-  Autocannon: {
-    color: new THREE.Color(1.0, 0.85, 0.3), // Yellow-gold
-    enemyColor: new THREE.Color(1.0, 0.6, 0.2), // Orange
-    trailLength: 4,
-    boltSize: 0.25,
-    boltShape: 'cylinder',
-  },
-  Railgun: {
-    color: new THREE.Color(1.0, 1.0, 1.0), // Pure white
-    enemyColor: new THREE.Color(0.9, 0.9, 1.0), // Slight blue-white
-    trailLength: 14, // Long trail
-    boltSize: 0.2,
-    boltShape: 'cylinder',
-  },
-  Flak: {
-    color: new THREE.Color(1.0, 0.2, 0.2), // Red
-    enemyColor: new THREE.Color(1.0, 0.3, 0.1), // Red-orange
-    trailLength: 6,
-    boltSize: 0.4,
-    boltShape: 'sphere',
-  },
-  Shrapnel: {
-    color: new THREE.Color(1.0, 0.9, 0.3), // Yellow (like autocannon)
-    enemyColor: new THREE.Color(1.0, 0.7, 0.2), // Orange-yellow
-    trailLength: 3, // Short trail
-    boltSize: 0.15, // Small
-    boltShape: 'cylinder',
-  },
-};
-
-/** Default visual config for unknown weapons */
-const DEFAULT_VISUAL: WeaponVisualConfig = {
-  color: new THREE.Color(0.5, 1.0, 0.5),
-  enemyColor: new THREE.Color(1.0, 0.5, 0.3),
-  trailLength: 6,
-  boltSize: 0.4,
-  boltShape: 'sphere',
-};
-
-/** Get visual config for a weapon */
-function getWeaponVisual(weaponName: WeaponName): WeaponVisualConfig {
-  return WEAPON_VISUALS[weaponName] ?? DEFAULT_VISUAL;
-}
+import { getWeaponVisual, MAX_TRAIL_LENGTH } from './trail-config';
 
 // Reusable Set for tracking seen projectiles
 const seenProjectiles = new Set<Entity>();
@@ -106,6 +25,7 @@ interface ProjectileTrail {
   bolt: THREE.Mesh; // Glowing bolt at projectile head
   positions: Float32Array; // Ring buffer of positions
   colors: Float32Array; // Per-vertex colors for fading
+  orderedPositions: Float32Array; // Pre-allocated buffer for ordered output
   writeIndex: number; // Next position to write
   pointCount: number; // How many points are valid (fills up over time)
   trailLength: number; // Max trail points (varies by weapon)
@@ -119,6 +39,10 @@ export interface TrailRenderer {
   trails: Map<Entity, ProjectileTrail>;
   energyBoltGeometry: THREE.SphereGeometry;
   ballisticBoltGeometry: THREE.CylinderGeometry;
+  /** Pool of inactive trail objects (for reuse) */
+  pool: ProjectileTrail[];
+  /** Scene reference for adding/removing objects */
+  scene: THREE.Scene | null;
 }
 
 /** Creates the trail renderer */
@@ -129,11 +53,93 @@ export function createTrailRenderer(): TrailRenderer {
     energyBoltGeometry: new THREE.SphereGeometry(0.5, 8, 6),
     // Ballistic bolts: elongated cylinders (bullet-like)
     ballisticBoltGeometry: new THREE.CylinderGeometry(0.15, 0.15, 1.2, 6),
+    // Object pool for reusing trail objects
+    pool: [],
+    scene: null,
   };
 }
 
-/** Creates a trail for a projectile */
-function createTrail(
+/** Get a trail from pool or create a new one */
+function acquireTrail(
+  renderer: TrailRenderer,
+  scene: THREE.Scene,
+  weaponName: WeaponName,
+  faction: Faction,
+  startPosition: THREE.Vector3,
+): ProjectileTrail {
+  // Store scene reference for pool management
+  renderer.scene = scene;
+
+  // Try to get from pool first
+  const pooledTrail = renderer.pool.pop();
+  if (pooledTrail) {
+    // Reinitialize pooled trail for new projectile
+    reinitializeTrail(pooledTrail, weaponName, faction, startPosition);
+    // Make visible again
+    pooledTrail.line.visible = true;
+    pooledTrail.bolt.visible = true;
+    return pooledTrail;
+  }
+
+  // Create new trail if pool is empty
+  return createNewTrail(renderer, scene, weaponName, faction, startPosition);
+}
+
+/** Reinitialize a pooled trail for a new projectile */
+function reinitializeTrail(
+  trail: ProjectileTrail,
+  weaponName: WeaponName,
+  faction: Faction,
+  startPosition: THREE.Vector3,
+): void {
+  const visual = getWeaponVisual(weaponName);
+  const trailLength = visual.trailLength;
+
+  // Reset positions to start position
+  for (let i = 0; i < MAX_TRAIL_LENGTH; i++) {
+    const idx = i * 3;
+    trail.positions[idx] = startPosition.x;
+    trail.positions[idx + 1] = startPosition.y;
+    trail.positions[idx + 2] = startPosition.z;
+  }
+
+  // Select color based on faction
+  const baseColor =
+    faction === Faction.Enemy ? visual.enemyColor : visual.color;
+
+  // Reset colors
+  for (let i = 0; i < MAX_TRAIL_LENGTH; i++) {
+    const idx = i * 3;
+    trail.colors[idx] = baseColor.r;
+    trail.colors[idx + 1] = baseColor.g;
+    trail.colors[idx + 2] = baseColor.b;
+  }
+
+  // Update geometry attributes
+  const posAttr = trail.line.geometry.getAttribute('position');
+  const colorAttr = trail.line.geometry.getAttribute('color');
+  posAttr.needsUpdate = true;
+  colorAttr.needsUpdate = true;
+
+  // Reset state
+  trail.writeIndex = 0;
+  trail.pointCount = 1;
+  trail.trailLength = trailLength;
+  trail.weaponName = weaponName;
+  trail.faction = faction;
+  trail.baseColor.copy(baseColor);
+
+  // Update bolt material color and scale
+  (trail.bolt.material as THREE.MeshBasicMaterial).color.copy(baseColor);
+  trail.bolt.scale.setScalar(visual.boltSize / 0.5);
+  trail.bolt.position.copy(startPosition);
+
+  // Reset draw range
+  trail.line.geometry.setDrawRange(0, 1);
+}
+
+/** Creates a new trail (only called when pool is empty) */
+function createNewTrail(
   renderer: TrailRenderer,
   scene: THREE.Scene,
   weaponName: WeaponName,
@@ -142,11 +148,14 @@ function createTrail(
 ): ProjectileTrail {
   const visual = getWeaponVisual(weaponName);
   const trailLength = visual.trailLength;
-  const positions = new Float32Array(trailLength * 3);
-  const colors = new Float32Array(trailLength * 3);
+
+  // Allocate for max trail length (enables reuse for any weapon)
+  const positions = new Float32Array(MAX_TRAIL_LENGTH * 3);
+  const colors = new Float32Array(MAX_TRAIL_LENGTH * 3);
+  const orderedPositions = new Float32Array(MAX_TRAIL_LENGTH * 3);
 
   // Initialize all positions to start position
-  for (let i = 0; i < trailLength; i++) {
+  for (let i = 0; i < MAX_TRAIL_LENGTH; i++) {
     const idx = i * 3;
     positions[idx] = startPosition.x;
     positions[idx + 1] = startPosition.y;
@@ -156,7 +165,7 @@ function createTrail(
   // Select color based on faction (player vs enemy)
   const baseColor =
     faction === Faction.Enemy ? visual.enemyColor : visual.color;
-  for (let i = 0; i < trailLength; i++) {
+  for (let i = 0; i < MAX_TRAIL_LENGTH; i++) {
     const idx = i * 3;
     colors[idx] = baseColor.r;
     colors[idx + 1] = baseColor.g;
@@ -178,11 +187,11 @@ function createTrail(
   const line = new THREE.Line(geometry, material);
   scene.add(line);
 
-  // Create bolt mesh (projectile head)
+  // Create bolt mesh - use shared geometry (don't clone)
   const boltGeometry =
     visual.boltShape === 'sphere'
-      ? renderer.energyBoltGeometry.clone()
-      : renderer.ballisticBoltGeometry.clone();
+      ? renderer.energyBoltGeometry
+      : renderer.ballisticBoltGeometry;
 
   const boltMaterial = new THREE.MeshBasicMaterial({
     color: baseColor,
@@ -194,7 +203,7 @@ function createTrail(
 
   const bolt = new THREE.Mesh(boltGeometry, boltMaterial);
   bolt.position.copy(startPosition);
-  bolt.scale.setScalar(visual.boltSize / 0.5); // Normalize to base size
+  bolt.scale.setScalar(visual.boltSize / 0.5);
   scene.add(bolt);
 
   return {
@@ -202,13 +211,23 @@ function createTrail(
     bolt,
     positions,
     colors,
+    orderedPositions,
     writeIndex: 0,
     pointCount: 1,
     trailLength,
     weaponName,
     faction,
-    baseColor,
+    baseColor: baseColor.clone(),
   };
+}
+
+/** Release a trail back to the pool */
+function releaseTrail(renderer: TrailRenderer, trail: ProjectileTrail): void {
+  // Hide instead of removing from scene
+  trail.line.visible = false;
+  trail.bolt.visible = false;
+  // Return to pool
+  renderer.pool.push(trail);
 }
 
 /** Updates trail visuals */
@@ -238,7 +257,7 @@ export function updateTrailRenderer(
     let trail = renderer.trails.get(entity);
 
     if (!trail) {
-      trail = createTrail(
+      trail = acquireTrail(
         renderer,
         scene,
         projectile.weaponName,
@@ -252,15 +271,10 @@ export function updateTrailRenderer(
     updateTrail(trail, transform.position, projectile.direction);
   }
 
-  // Remove trails for projectiles that no longer exist
+  // Release trails for projectiles that no longer exist (return to pool)
   for (const [entity, trail] of renderer.trails) {
     if (!seenProjectiles.has(entity)) {
-      scene.remove(trail.line);
-      scene.remove(trail.bolt);
-      trail.line.geometry.dispose();
-      (trail.line.material as THREE.Material).dispose();
-      trail.bolt.geometry.dispose();
-      (trail.bolt.material as THREE.Material).dispose();
+      releaseTrail(renderer, trail);
       renderer.trails.delete(entity);
     }
   }
@@ -276,7 +290,14 @@ function updateTrail(
   position: THREE.Vector3,
   direction: THREE.Vector3,
 ): void {
-  const { positions, colors, writeIndex, trailLength, baseColor } = trail;
+  const {
+    positions,
+    colors,
+    orderedPositions,
+    writeIndex,
+    trailLength,
+    baseColor,
+  } = trail;
 
   // Write new position at current index
   const idx = writeIndex * 3;
@@ -289,8 +310,7 @@ function updateTrail(
   trail.pointCount = Math.min(trail.pointCount + 1, trailLength);
 
   // Rebuild position array in order (oldest to newest) for line rendering
-  const orderedPositions = new Float32Array(trail.pointCount * 3);
-
+  // Uses pre-allocated orderedPositions buffer (no per-frame allocation)
   for (let i = 0; i < trail.pointCount; i++) {
     // Read from ring buffer in order (oldest first)
     const readIdx =
@@ -309,13 +329,13 @@ function updateTrail(
     colors[writeIdx + 2] = baseColor.b * intensity;
   }
 
-  // Update geometry with ordered positions
+  // Update geometry with ordered positions (direct copy from pre-allocated buffer)
   const posAttr = trail.line.geometry.getAttribute('position');
   const colorAttr = trail.line.geometry.getAttribute('color');
+  const posArray = posAttr.array as Float32Array;
 
-  // Copy ordered positions back
   for (let i = 0; i < trail.pointCount * 3; i++) {
-    (posAttr.array as Float32Array)[i] = orderedPositions[i] as number;
+    posArray[i] = orderedPositions[i] as number;
   }
 
   posAttr.needsUpdate = true;
@@ -330,20 +350,35 @@ function updateTrail(
   trail.bolt.quaternion.copy(boltQuat);
 }
 
+/** Dispose a single trail's resources */
+function disposeTrail(trail: ProjectileTrail, scene: THREE.Scene): void {
+  scene.remove(trail.line);
+  scene.remove(trail.bolt);
+  trail.line.geometry.dispose();
+  (trail.line.material as THREE.Material).dispose();
+  // Note: bolt geometry is shared (not cloned), so don't dispose it per-trail
+  (trail.bolt.material as THREE.Material).dispose();
+}
+
 /** Disposes of trail renderer resources */
 export function disposeTrailRenderer(
   renderer: TrailRenderer,
   scene: THREE.Scene,
 ): void {
+  // Dispose active trails
   for (const trail of renderer.trails.values()) {
-    scene.remove(trail.line);
-    scene.remove(trail.bolt);
-    trail.line.geometry.dispose();
-    (trail.line.material as THREE.Material).dispose();
-    trail.bolt.geometry.dispose();
-    (trail.bolt.material as THREE.Material).dispose();
+    disposeTrail(trail, scene);
   }
   renderer.trails.clear();
+
+  // Dispose pooled trails (important: these are still in the scene, just hidden)
+  for (const trail of renderer.pool) {
+    disposeTrail(trail, scene);
+  }
+  renderer.pool.length = 0;
+
+  // Dispose shared geometries
   renderer.energyBoltGeometry.dispose();
   renderer.ballisticBoltGeometry.dispose();
+  renderer.scene = null;
 }
