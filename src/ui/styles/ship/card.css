@@ -19,7 +19,7 @@
   padding: var(--space-3) var(--space-3);
   gap: var(--space-3);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color var(--duration-base) var(--ease-out);
   border-bottom: 1px solid var(--border-color);
   position: relative;
 }
@@ -36,11 +36,16 @@
   bottom: 0;
   width: 3px;
   background: transparent;
-  transition: all 0.2s ease;
+  transition: background-color var(--duration-base) var(--ease-out);
 }
 
 .ship-card:hover {
   background: var(--bg-panel-hover);
+}
+
+.ship-card:focus-visible {
+  outline: 2px solid var(--color-secondary);
+  outline-offset: -2px;
 }
 
 .ship-card:hover::before {

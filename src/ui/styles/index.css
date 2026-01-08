@@ -39,6 +39,7 @@
 
 /* Picker dropdowns (weapons, missiles) */
 @import "./picker.css";
+@import "./picker-popover.css";
 
 /* Ship picker (quick ship swap) */
 @import "./ship-picker.css";

@@ -74,7 +74,9 @@
   border: 1px solid transparent;
   margin-bottom: var(--space-1-5);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition:
+    background-color var(--duration-base) var(--ease-out),
+    border-color var(--duration-base) var(--ease-out);
   position: relative;
 }
 
@@ -85,6 +87,11 @@
 .storage-item:hover {
   background: rgba(255, 159, 28, 0.08);
   border-color: var(--border-color);
+}
+
+.storage-item:focus-visible {
+  outline: 2px solid var(--color-secondary);
+  outline-offset: -2px;
 }
 
 .storage-item.selected {

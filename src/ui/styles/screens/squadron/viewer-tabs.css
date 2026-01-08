@@ -27,18 +27,20 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 12px 24px;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6);
   flex: 1;
   background: transparent;
   border: none;
   cursor: pointer;
   font-family: var(--font-ui);
-  font-size: 0.8rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  letter-spacing: var(--tracking-widest);
   color: var(--text-dim);
-  transition: all 0.2s ease;
+  transition:
+    color var(--duration-base) var(--ease-out),
+    background-color var(--duration-base) var(--ease-out);
 }
 
 /* Underline indicator */
@@ -51,12 +53,17 @@
   width: 0;
   height: 2px;
   background: var(--color-secondary);
-  transition: width 0.25s ease;
+  transition: width var(--duration-slow) var(--ease-out);
 }
 
 .viewer-tab:hover {
   color: var(--text-secondary);
   background: rgba(0, 245, 255, 0.05);
+}
+
+.viewer-tab:focus-visible {
+  outline: none;
+  background: rgba(0, 245, 255, 0.1);
 }
 
 .viewer-tab:hover::after {
@@ -78,9 +85,11 @@
    ======================================== */
 
 .viewer-tab-icon {
-  font-size: 0.9rem;
+  font-size: var(--text-sm);
   opacity: 0.7;
-  transition: all 0.2s ease;
+  transition:
+    opacity var(--duration-base) var(--ease-out),
+    text-shadow var(--duration-base) var(--ease-out);
 }
 
 .viewer-tab.active .viewer-tab-icon {
@@ -98,7 +107,7 @@
 
 @media (max-width: 600px) {
   .viewer-tab {
-    padding: 10px 16px;
+    padding: var(--space-2-5) var(--space-4);
   }
 
   .viewer-tab-label {
@@ -106,6 +115,6 @@
   }
 
   .viewer-tab-icon {
-    font-size: 1.1rem;
+    font-size: var(--text-lg);
   }
 }

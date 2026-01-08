@@ -86,13 +86,20 @@
   background: var(--bg-panel);
   border: 1px solid var(--border-color);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition:
+    background-color var(--duration-base) var(--ease-out),
+    border-color var(--duration-base) var(--ease-out);
   min-width: 110px;
 }
 
 .ship-picker-card:hover {
   border-color: var(--color-secondary);
   background: rgba(0, 245, 255, 0.08);
+}
+
+.ship-picker-card:focus-visible {
+  outline: 2px solid var(--color-secondary);
+  outline-offset: 2px;
 }
 
 .ship-picker-icon {

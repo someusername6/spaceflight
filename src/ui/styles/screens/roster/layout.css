@@ -14,7 +14,7 @@
   width: 100%;
   max-width: var(--content-max-width);
   margin: 0 auto;
-  padding: 16px 24px;
+  padding: var(--space-4) var(--space-6);
   box-sizing: border-box;
   overflow: hidden;
 }
@@ -26,7 +26,7 @@
 .roster-layout {
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr);
-  gap: 20px;
+  gap: var(--space-5);
   width: 100%;
   flex: 1;
   min-height: 0;
@@ -71,11 +71,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 14px;
+  padding: var(--space-3) var(--space-4);
   background: var(--bg-panel);
   border-bottom: 1px solid var(--border-color);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color var(--duration-base) var(--ease-out);
 }
 
 .roster-pilot-card:last-child {
@@ -84,6 +84,11 @@
 
 .roster-pilot-card:hover {
   background: rgba(0, 245, 255, 0.05);
+}
+
+.roster-pilot-card:focus-visible {
+  outline: 2px solid var(--color-secondary);
+  outline-offset: -2px;
 }
 
 .roster-pilot-card.selected {
@@ -107,21 +112,21 @@
 .roster-pilot-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-0-5);
 }
 
 .roster-pilot-name {
   font-family: var(--font-ui);
-  font-size: 0.9rem;
-  font-weight: 500;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
   color: var(--text-primary);
 }
 
 .roster-pilot-status {
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   color: var(--text-dim);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--tracking-wide);
 }
 
 .roster-pilot-card.assigned .roster-pilot-status {

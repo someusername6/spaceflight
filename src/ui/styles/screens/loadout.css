@@ -9,7 +9,7 @@
 .loadout-panel {
   background: var(--bg-panel);
   border: 1px solid var(--border-color);
-  padding: 20px;
+  padding: var(--space-5);
   position: relative;
 }
 
@@ -32,8 +32,8 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-4);
   border-bottom: 1px solid var(--border-color);
 }
 
@@ -43,16 +43,16 @@
 
 .weapon-name {
   font-family: var(--font-ui);
-  font-size: 0.9rem;
-  font-weight: 500;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
   color: var(--text-primary);
-  margin-bottom: 2px;
+  margin-bottom: var(--space-0-5);
 }
 
 .btn-unequip,
 .btn-equip {
-  padding: 4px 10px;
-  font-size: 0.7rem;
+  padding: var(--space-1) var(--space-2-5);
+  font-size: var(--text-2xs);
 }
 
 .btn-unequip {
