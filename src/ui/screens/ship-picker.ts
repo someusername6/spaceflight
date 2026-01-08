@@ -1,13 +1,13 @@
 /**
  * Ship Picker - Popover for quickly swapping a pilot to a different ship.
  *
- * Displays available ships (empty active ships and stored hulls) using
- * the same visual style as the hull card buttons in pilot-viewer.
+ * Displays available ships (empty active ships and stored ships) using
+ * the same visual style as the ship card buttons in pilot-viewer.
  */
 
 import {
-  swapPilotToHull,
   swapPilotToShip,
+  swapPilotToStoredShip,
   unassignPilot,
 } from '../../campaign/loadout';
 import type { CampaignState } from '../../campaign/types';
@@ -44,19 +44,19 @@ function renderShipCard(
   `;
 }
 
-/** Group stored hulls by ship class, returning first index of each group */
-function groupHullsByClass(
-  hulls: { shipClass: string }[],
+/** Group stored ships by ship class, returning first index of each group */
+function groupStoredShipsByClass(
+  ships: { shipClass: string }[],
 ): { shipClass: string; firstIndex: number; count: number }[] {
   const groups = new Map<string, { firstIndex: number; count: number }>();
-  for (let i = 0; i < hulls.length; i++) {
-    const hull = hulls[i];
-    if (!hull) continue;
-    const existing = groups.get(hull.shipClass);
+  for (let i = 0; i < ships.length; i++) {
+    const ship = ships[i];
+    if (!ship) continue;
+    const existing = groups.get(ship.shipClass);
     if (existing) {
       existing.count++;
     } else {
-      groups.set(hull.shipClass, { firstIndex: i, count: 1 });
+      groups.set(ship.shipClass, { firstIndex: i, count: 1 });
     }
   }
   return [...groups.entries()].map(([shipClass, data]) => ({
@@ -73,7 +73,7 @@ function renderShipPickerContent(
   const emptyShips = state.ships.filter(
     (s) => s.pilot === null && s.id !== currentShipId,
   );
-  const storedHulls = state.storedHulls;
+  const storedShips = state.storedShips;
 
   const scrollableSections: string[] = [];
 
@@ -96,14 +96,14 @@ function renderShipPickerContent(
     `);
   }
 
-  // Stored hulls section (grouped by ship class)
-  if (storedHulls.length > 0) {
-    const groupedHulls = groupHullsByClass(storedHulls);
-    const hullCards = groupedHulls
+  // Stored ships section (grouped by ship class)
+  if (storedShips.length > 0) {
+    const groupedShips = groupStoredShipsByClass(storedShips);
+    const shipCards = groupedShips
       .map((group) =>
         renderShipCard(
           group.shipClass,
-          `data-action="swap-to-hull" data-hull-index="${group.firstIndex}"`,
+          `data-action="swap-to-stored-ship" data-stored-ship-index="${group.firstIndex}"`,
           group.count,
         ),
       )
@@ -111,14 +111,14 @@ function renderShipPickerContent(
 
     scrollableSections.push(`
       <div class="ship-picker-section">
-        <div class="ship-picker-section-label">Stored Hulls</div>
-        <div class="ship-picker-grid">${hullCards}</div>
+        <div class="ship-picker-section-label">Stored Ships</div>
+        <div class="ship-picker-grid">${shipCards}</div>
       </div>
     `);
   }
 
-  // No options message (if no ships or hulls available)
-  if (emptyShips.length === 0 && storedHulls.length === 0) {
+  // No options message (if no ships available)
+  if (emptyShips.length === 0 && storedShips.length === 0) {
     scrollableSections.push(`
       <div class="ship-picker-empty">
         No other ships available
@@ -205,13 +205,17 @@ export function showShipPicker(
           }
           break;
         }
-        case 'swap-to-hull': {
-          const hullIndex = parseInt(
-            (e.currentTarget as HTMLElement).dataset.hullIndex ?? '-1',
+        case 'swap-to-stored-ship': {
+          const storedShipIndex = parseInt(
+            (e.currentTarget as HTMLElement).dataset.storedShipIndex ?? '-1',
             10,
           );
-          if (hullIndex >= 0) {
-            newState = swapPilotToHull(state, currentShipId, hullIndex);
+          if (storedShipIndex >= 0) {
+            newState = swapPilotToStoredShip(
+              state,
+              currentShipId,
+              storedShipIndex,
+            );
           }
           break;
         }

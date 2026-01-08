@@ -5,7 +5,7 @@
 
 import type {
   CampaignState,
-  StoredHull,
+  StoredShip,
   StoredWeapon,
 } from '../../campaign/types';
 import { MISSILES } from '../../data/missiles';
@@ -42,12 +42,12 @@ function renderStorageItem(
   `;
 }
 
-/** Group hulls by ship class and count */
-function groupHullsByClass(hulls: StoredHull[]): Map<string, number> {
+/** Group stored ships by ship class and count */
+function groupStoredShipsByClass(ships: StoredShip[]): Map<string, number> {
   const groups = new Map<string, number>();
-  for (const hull of hulls) {
-    const existing = groups.get(hull.shipClass) ?? 0;
-    groups.set(hull.shipClass, existing + 1);
+  for (const ship of ships) {
+    const existing = groups.get(ship.shipClass) ?? 0;
+    groups.set(ship.shipClass, existing + 1);
   }
   return groups;
 }
@@ -81,12 +81,12 @@ export function renderStoreStorage(
   selectedCategory: StoreCategory | null,
   selectedItem: string | null,
 ): string {
-  const hasHulls = state.storedHulls.length > 0;
+  const hasShips = state.storedShips.length > 0;
   const hasWeapons = state.storedWeapons.length > 0;
   const hasAmmo = state.storedAmmo.length > 0;
   const hasScrap = Object.values(state.storedScrap).some((c) => c > 0);
 
-  const isEmpty = !hasHulls && !hasWeapons && !hasAmmo && !hasScrap;
+  const isEmpty = !hasShips && !hasWeapons && !hasAmmo && !hasScrap;
 
   if (isEmpty) {
     return `
@@ -101,20 +101,20 @@ export function renderStoreStorage(
   const isSelected = (cat: StoreCategory, id: string): boolean =>
     selectedCategory === cat && selectedItem === id;
 
-  // Render hulls section (grouped by ship class)
-  const hullGroups = groupHullsByClass(state.storedHulls);
-  const hullsSection = hasHulls
+  // Render ships section (grouped by ship class)
+  const shipGroups = groupStoredShipsByClass(state.storedShips);
+  const shipsSection = hasShips
     ? `
       <div class="storage-section">
-        <div class="storage-label">Ship Hulls</div>
-        ${Array.from(hullGroups.entries())
+        <div class="storage-label">Stored Ships</div>
+        ${Array.from(shipGroups.entries())
           .map(([shipClass, count]) =>
             renderStorageItem(
-              'hulls',
+              'ships',
               shipClass,
               capitalize(shipClass),
               count,
-              isSelected('hulls', shipClass),
+              isSelected('ships', shipClass),
             ),
           )
           .join('')}
@@ -198,7 +198,7 @@ export function renderStoreStorage(
     <div class="store-storage">
       <div class="storage-header">Storage</div>
       <div class="storage-content">
-        ${hullsSection}
+        ${shipsSection}
         ${weaponsSection}
         ${ammoSection}
         ${scrapSection}

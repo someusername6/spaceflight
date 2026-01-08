@@ -68,8 +68,8 @@ function renderDeployedItem(
         <div class="squadron-item-ship">${ship.shipClass}</div>
       </div>
       <div class="squadron-item-weapons">
-        <span class="weapon-count primary ${weapons.primaryUnarmed ? 'unarmed' : ''}">${weapons.primary}</span>
-        <span class="weapon-count secondary ${weapons.secondaryUnarmed ? 'unarmed' : ''}">${weapons.secondary}</span>
+        <span class="weapon-count primary ${weapons.primaryUnarmed ? 'unarmed' : ''}">● ${weapons.primary}</span>
+        <span class="weapon-count secondary ${weapons.secondaryUnarmed ? 'unarmed' : ''}">◆ ${weapons.secondary}</span>
       </div>
     </article>
   `;

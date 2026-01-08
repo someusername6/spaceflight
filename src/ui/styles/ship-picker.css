@@ -1,7 +1,7 @@
 /**
  * Ship Picker - Quick ship swap popover
  *
- * Uses same visual style as hull-card-btn in pilot-viewer.css
+ * Uses same visual style as stored-ship-card-btn in pilot-viewer.css
  */
 
 /* ========================================
@@ -74,7 +74,7 @@
 }
 
 /* ========================================
-   SHIP CARD BUTTONS (matches hull-card-btn)
+   SHIP CARD BUTTONS (matches stored-ship-card-btn)
    ======================================== */
 
 .ship-picker-card {

@@ -10,19 +10,19 @@ function getAvailableShipsForPilot(state: CampaignState): OwnedShip[] {
   return state.ships.filter((s) => s.pilot === null);
 }
 
-/** Group stored hulls by ship class, returning first index of each group */
-function groupHullsByClass(
-  hulls: { shipClass: string }[],
+/** Group stored ships by ship class, returning first index of each group */
+function groupStoredShipsByClass(
+  ships: { shipClass: string }[],
 ): { shipClass: string; firstIndex: number; count: number }[] {
   const groups = new Map<string, { firstIndex: number; count: number }>();
-  for (let i = 0; i < hulls.length; i++) {
-    const hull = hulls[i];
-    if (!hull) continue;
-    const existing = groups.get(hull.shipClass);
+  for (let i = 0; i < ships.length; i++) {
+    const ship = ships[i];
+    if (!ship) continue;
+    const existing = groups.get(ship.shipClass);
     if (existing) {
       existing.count++;
     } else {
-      groups.set(hull.shipClass, { firstIndex: i, count: 1 });
+      groups.set(ship.shipClass, { firstIndex: i, count: 1 });
     }
   }
   return [...groups.entries()].map(([shipClass, data]) => ({
@@ -78,29 +78,29 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
       `
       : '';
 
-  // Stored hulls for creating new ships (grouped by ship class)
-  const groupedHulls = groupHullsByClass(state.storedHulls);
-  const hullOptions =
-    !isAssigned && state.storedHulls.length > 0
+  // Stored ships for creating new active ships (grouped by ship class)
+  const groupedStoredShips = groupStoredShipsByClass(state.storedShips);
+  const storedShipOptions =
+    !isAssigned && state.storedShips.length > 0
       ? `
         <div class="pilot-assignment">
-          <div class="assignment-label">Deploy with hull</div>
-          <div class="hull-options">
-            ${groupedHulls
+          <div class="assignment-label">Assign to stored ship</div>
+          <div class="stored-ship-options">
+            ${groupedStoredShips
               .map((group) => {
                 const iconPath = getShipIconPath(group.shipClass);
                 const countBadge =
                   group.count > 1
-                    ? `<span class="hull-card-count">×${group.count}</span>`
+                    ? `<span class="stored-ship-card-count">×${group.count}</span>`
                     : '';
                 return `
-              <button class="hull-card-btn"
+              <button class="stored-ship-card-btn"
                       data-pilot="${pilot.id}"
-                      data-hull-index="${group.firstIndex}">
-                <div class="hull-card-icon">
-                  <img src="${iconPath}" alt="${group.shipClass}" class="hull-icon-svg" onerror="this.onerror=null; this.src='${FALLBACK_ICON_PATH}'" />
+                      data-stored-ship-index="${group.firstIndex}">
+                <div class="stored-ship-card-icon">
+                  <img src="${iconPath}" alt="${group.shipClass}" class="stored-ship-icon-svg" onerror="this.onerror=null; this.src='${FALLBACK_ICON_PATH}'" />
                 </div>
-                <div class="hull-card-name">${group.shipClass}${countBadge}</div>
+                <div class="stored-ship-card-name">${group.shipClass}${countBadge}</div>
               </button>
             `;
               })
@@ -110,13 +110,13 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
       `
       : '';
 
-  // Message when no ships or hulls available
-  const noHullsMessage =
-    !isAssigned && availableShips.length === 0 && state.storedHulls.length === 0
+  // Message when no ships available
+  const noShipsMessage =
+    !isAssigned && availableShips.length === 0 && state.storedShips.length === 0
       ? `
-        <div class="no-hulls-section">
-          <div class="no-hulls-message">No available ships or hulls for this pilot</div>
-          <button class="btn btn-go-to-store" data-section="hulls">Buy Hull in Store</button>
+        <div class="no-ships-section">
+          <div class="no-ships-message">No available ships for this pilot</div>
+          <button class="btn btn-go-to-store" data-section="ships">Buy Ship in Store</button>
         </div>
       `
       : '';
@@ -159,8 +159,8 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
 
       ${unassignSection}
       ${shipOptions}
-      ${hullOptions}
-      ${noHullsMessage}
+      ${storedShipOptions}
+      ${noShipsMessage}
     </div>
   `;
 }

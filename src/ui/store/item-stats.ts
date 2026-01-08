@@ -35,17 +35,17 @@ const iconError = `onerror="this.onerror=null; this.src='${FALLBACK_ICON_PATH}'"
 /** Render item preview - stylized visual representation */
 function renderItemPreview(category: StoreCategory, id: string): string {
   const categoryColors: Record<StoreCategory, string> = {
-    hulls: 'var(--color-secondary)',
+    ships: 'var(--color-secondary)',
     primaries: 'var(--color-primary)',
     secondaries: 'var(--color-danger)',
     ammo: 'var(--color-success)',
     scrap: 'var(--color-text-dim)',
   };
 
-  // Use hull schematic for hulls (shows ship + hardpoint slots)
-  if (category === 'hulls') {
+  // Use ship schematic for ships (shows ship + hardpoint slots)
+  if (category === 'ships') {
     return `
-      <div class="item-preview hull-preview-container" style="--preview-color: ${categoryColors[category]}">
+      <div class="item-preview ship-preview-container" style="--preview-color: ${categoryColors[category]}">
         ${renderHullSchematic(id)}
       </div>
     `;
@@ -90,13 +90,13 @@ function renderItemPreview(category: StoreCategory, id: string): string {
   `;
 }
 
-/** Render ship hull stats */
-export function renderHullStats(shipClass: string): string {
+/** Render ship stats */
+export function renderShipStats(shipClass: string): string {
   const statsRows = renderShipStatsRows(shipClass, { classPrefix: 'stat' });
   if (!statsRows) return '';
 
   return `
-    ${renderItemPreview('hulls', shipClass)}
+    ${renderItemPreview('ships', shipClass)}
     <div class="item-stats">
       ${statsRows}
     </div>

@@ -47,8 +47,8 @@
     drop-shadow(0 0 16px var(--color-secondary-glow));
 }
 
-/* Schematic preview containers (hull and scrap) - uses schematic diagram */
-.item-preview.hull-preview-container,
+/* Schematic preview containers (ships and scrap) - uses schematic diagram */
+.item-preview.ship-preview-container,
 .item-preview.scrap-preview-container {
   padding: var(--space-4);
   min-height: 200px;

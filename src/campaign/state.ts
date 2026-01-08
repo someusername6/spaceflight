@@ -122,7 +122,7 @@ export function createNewCampaign(): CampaignState {
     commanderId: commander.id,
     ships: [commanderShip, wingman1, wingman2, wingman3],
     pilots: allPilots, // All pilots stored here
-    storedHulls: [], // No spare hulls at start
+    storedShips: [], // No spare ships at start
     storedWeapons: [],
     storedAmmo: [], // No spare ammo at start
     storedScrap: {}, // No scrap at start

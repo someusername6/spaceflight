@@ -8,9 +8,9 @@
 import type { SalvageableShip } from '../components/combat-stats';
 import {
   getAmmoPrice,
-  getHullPrice,
   getPrimaryPrice,
   getSecondaryPrice,
+  getShipPrice,
 } from '../data/prices';
 import { mergeAmmoIntoStorage, mergeSecondaryIntoStorage } from './ship-utils';
 import type { CampaignState, StoredAmmo, StoredWeapon } from './types';
@@ -63,9 +63,9 @@ export function calculateSalvage(
     if (scrapCount > 0) {
       result.scrap[ship.shipClass] =
         (result.scrap[ship.shipClass] ?? 0) + scrapCount;
-      // Value: scrap * (hull price / 100)
-      const hullPrice = getHullPrice(ship.shipClass, 'buy');
-      result.totalValue += scrapCount * (hullPrice / 100);
+      // Value: scrap * (ship price / 100)
+      const shipPrice = getShipPrice(ship.shipClass, 'buy');
+      result.totalValue += scrapCount * (shipPrice / 100);
     }
 
     // Primary weapons: each has (multiplier) chance to drop

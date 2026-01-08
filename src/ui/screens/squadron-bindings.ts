@@ -5,8 +5,8 @@
  */
 
 import {
-  assignPilotToHull,
   assignPilotToShip,
+  assignPilotToStoredShip,
   unassignPilot,
 } from '../../campaign/loadout';
 import { hirePilot } from '../../campaign/recruits';
@@ -231,19 +231,26 @@ export function bindPilotAssignment(
     });
   });
 
-  // Deploy pilot with hull
-  ui.element.querySelectorAll('.hull-card-btn').forEach((btn) => {
+  // Deploy pilot with stored ship
+  ui.element.querySelectorAll('.stored-ship-card-btn').forEach((btn) => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       const button = (e.target as HTMLElement).closest(
-        '.hull-card-btn',
+        '.stored-ship-card-btn',
       ) as HTMLElement;
       if (!button) return;
       const pilotId = button.dataset.pilot;
-      const hullIndex = Number.parseInt(button.dataset.hullIndex ?? '0', 10);
+      const storedShipIndex = Number.parseInt(
+        button.dataset.storedShipIndex ?? '0',
+        10,
+      );
       if (!pilotId) return;
 
-      const newState = assignPilotToHull(ui.state, pilotId, hullIndex);
+      const newState = assignPilotToStoredShip(
+        ui.state,
+        pilotId,
+        storedShipIndex,
+      );
       if (newState !== ui.state) {
         ui.state = newState;
         if (ui.onStateUpdate) ui.onStateUpdate(newState);

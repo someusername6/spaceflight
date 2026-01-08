@@ -5,15 +5,15 @@
  */
 
 import {
-  getHullPrice,
   getPrimaryPrice,
   getScrapPrice,
   getSecondaryPrice,
+  getShipPrice,
   SCRAP_CONVERSION_FEE,
-  SCRAP_PER_HULL,
+  SCRAP_PER_SHIP,
 } from '../data/prices';
 import { mergeSecondaryIntoStorage } from './ship-utils';
-import type { CampaignState, StoredHull, StoredWeapon } from './types';
+import type { CampaignState, StoredShip, StoredWeapon } from './types';
 
 // Re-export ammo functions
 export {
@@ -28,9 +28,9 @@ export {
 export {
   createInitialStoreStock,
   getAvailableAmmo,
-  getAvailableHulls,
   getAvailablePrimaries,
   getAvailableSecondaries,
+  getAvailableShips,
   getScrapTypes,
 } from './store-catalog';
 
@@ -42,20 +42,20 @@ function generateId(): string {
   return `item_${++itemIdCounter}`;
 }
 
-// ============ Hull Buy/Sell ============
+// ============ Ship Buy/Sell ============
 
-/** Buy a ship hull (add to storage) */
-export function buyHull(
+/** Buy a ship (add to storage) */
+export function buyShip(
   state: CampaignState,
   shipClass: string,
 ): CampaignState {
-  const price = getHullPrice(shipClass, 'buy');
-  const stock = state.storeStock.hulls[shipClass] ?? 0;
+  const price = getShipPrice(shipClass, 'buy');
+  const stock = state.storeStock.ships[shipClass] ?? 0;
   if (price === 0 || state.credits < price || stock <= 0) {
     return state;
   }
 
-  const newHull: StoredHull = {
+  const newShip: StoredShip = {
     id: generateId(),
     shipClass,
     hullDamage: 0,
@@ -64,35 +64,40 @@ export function buyHull(
   return {
     ...state,
     credits: state.credits - price,
-    storedHulls: [...state.storedHulls, newHull],
+    storedShips: [...state.storedShips, newShip],
     storeStock: {
       ...state.storeStock,
-      hulls: { ...state.storeStock.hulls, [shipClass]: stock - 1 },
+      ships: { ...state.storeStock.ships, [shipClass]: stock - 1 },
     },
   };
 }
 
-/** Sell a stored hull */
-export function sellHull(
+/** Sell a stored ship */
+export function sellShip(
   state: CampaignState,
-  hullIndex: number,
+  storedShipIndex: number,
 ): CampaignState {
-  const hull = state.storedHulls[hullIndex];
-  if (!hull) {
+  const storedShip = state.storedShips[storedShipIndex];
+  if (!storedShip) {
     return state;
   }
 
-  const price = getHullPrice(hull.shipClass, 'sell');
-  const newStoredHulls = state.storedHulls.filter((_, i) => i !== hullIndex);
-  const currentStock = state.storeStock.hulls[hull.shipClass] ?? 0;
+  const price = getShipPrice(storedShip.shipClass, 'sell');
+  const newStoredShips = state.storedShips.filter(
+    (_, i) => i !== storedShipIndex,
+  );
+  const currentStock = state.storeStock.ships[storedShip.shipClass] ?? 0;
 
   return {
     ...state,
     credits: state.credits + price,
-    storedHulls: newStoredHulls,
+    storedShips: newStoredShips,
     storeStock: {
       ...state.storeStock,
-      hulls: { ...state.storeStock.hulls, [hull.shipClass]: currentStock + 1 },
+      ships: {
+        ...state.storeStock.ships,
+        [storedShip.shipClass]: currentStock + 1,
+      },
     },
   };
 }
@@ -278,42 +283,42 @@ export function sellScrap(
 // ============ Scrap Conversion ============
 
 /**
- * Calculate the conversion fee to turn scrap into a hull.
- * Fee = 5% of hull buy price.
+ * Calculate the conversion fee to turn scrap into a ship.
+ * Fee = 5% of ship buy price.
  */
 export function getScrapConversionFee(shipClass: string): number {
-  const hullPrice = getHullPrice(shipClass, 'buy');
-  return Math.floor(hullPrice * SCRAP_CONVERSION_FEE);
+  const shipPrice = getShipPrice(shipClass, 'buy');
+  return Math.floor(shipPrice * SCRAP_CONVERSION_FEE);
 }
 
 /**
- * Check if player can convert scrap to a hull.
- * Requires SCRAP_PER_HULL (100) scrap + conversion fee in credits.
+ * Check if player can convert scrap to a ship.
+ * Requires SCRAP_PER_SHIP (100) scrap + conversion fee in credits.
  */
-export function canConvertScrapToHull(
+export function canConvertScrapToShip(
   state: CampaignState,
   shipClass: string,
 ): boolean {
   const scrapCount = state.storedScrap[shipClass] ?? 0;
   const fee = getScrapConversionFee(shipClass);
-  return scrapCount >= SCRAP_PER_HULL && state.credits >= fee;
+  return scrapCount >= SCRAP_PER_SHIP && state.credits >= fee;
 }
 
 /**
- * Convert scrap to a fully repaired hull.
- * Consumes SCRAP_PER_HULL scrap + conversion fee, creates new hull in storage.
+ * Convert scrap to a fully repaired ship.
+ * Consumes SCRAP_PER_SHIP scrap + conversion fee, creates new ship in storage.
  */
-export function convertScrapToHull(
+export function convertScrapToShip(
   state: CampaignState,
   shipClass: string,
 ): CampaignState {
-  if (!canConvertScrapToHull(state, shipClass)) {
+  if (!canConvertScrapToShip(state, shipClass)) {
     return state;
   }
 
   const fee = getScrapConversionFee(shipClass);
   const currentScrap = state.storedScrap[shipClass] ?? 0;
-  const remaining = currentScrap - SCRAP_PER_HULL;
+  const remaining = currentScrap - SCRAP_PER_SHIP;
 
   // Update scrap
   const newStoredScrap = { ...state.storedScrap };
@@ -323,8 +328,8 @@ export function convertScrapToHull(
     newStoredScrap[shipClass] = remaining;
   }
 
-  // Create new fully repaired hull
-  const newHull: StoredHull = {
+  // Create new fully repaired ship
+  const newShip: StoredShip = {
     id: generateId(),
     shipClass,
     hullDamage: 0,
@@ -334,6 +339,6 @@ export function convertScrapToHull(
     ...state,
     credits: state.credits - fee,
     storedScrap: newStoredScrap,
-    storedHulls: [...state.storedHulls, newHull],
+    storedShips: [...state.storedShips, newShip],
   };
 }

@@ -16,10 +16,10 @@ import type {
 
 // Re-export pilot assignment functions for backwards compatibility
 export {
-  assignPilotToHull,
   assignPilotToShip,
-  swapPilotToHull,
+  assignPilotToStoredShip,
   swapPilotToShip,
+  swapPilotToStoredShip,
   unassignPilot,
 } from './pilot-assignment';
 

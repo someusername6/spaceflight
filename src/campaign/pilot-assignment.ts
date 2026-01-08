@@ -1,42 +1,42 @@
 /**
- * Pilot assignment - assign/unassign pilots to ships and hulls.
+ * Pilot assignment - assign/unassign pilots to ships.
  */
 
 import {
   createEmptyWeaponSlots,
   transferShipWeaponsToStorage,
 } from './ship-utils';
-import type { CampaignState, OwnedShip, StoredHull } from './types';
+import type { CampaignState, OwnedShip, StoredShip } from './types';
 
-/** Move pilot from active ship to stored hull, current ship goes to storage */
-export function swapPilotToHull(
+/** Move pilot from active ship to stored ship, current ship goes to storage */
+export function swapPilotToStoredShip(
   state: CampaignState,
   shipId: string,
-  hullIndex: number,
+  storedShipIndex: number,
 ): CampaignState {
   const ship = state.ships.find((s) => s.id === shipId);
-  const hull = state.storedHulls[hullIndex];
-  if (!ship || !hull || !ship.pilot) {
+  const storedShip = state.storedShips[storedShipIndex];
+  if (!ship || !storedShip || !ship.pilot) {
     return state; // Ship must have a pilot assigned
   }
 
   // Get bank counts for new ship class
   const { primaryWeapons, secondaryWeapons } = createEmptyWeaponSlots(
-    hull.shipClass,
+    storedShip.shipClass,
   );
 
-  // Create new active ship from hull with the same pilot
+  // Create new active ship from stored ship with the same pilot
   const newShip: OwnedShip = {
-    id: hull.id,
-    shipClass: hull.shipClass,
+    id: storedShip.id,
+    shipClass: storedShip.shipClass,
     primaryWeapons, // Null-filled array matching bank count
     secondaryWeapons, // Null-filled array matching bank count
     pilot: ship.pilot,
-    hullDamage: hull.hullDamage,
+    hullDamage: storedShip.hullDamage,
   };
 
-  // Old ship becomes a stored hull (weapons go to storage)
-  const oldHull: StoredHull = {
+  // Old ship becomes a stored ship (weapons go to storage)
+  const oldStoredShip: StoredShip = {
     id: ship.id,
     shipClass: ship.shipClass,
     hullDamage: ship.hullDamage,
@@ -52,24 +52,24 @@ export function swapPilotToHull(
   return {
     ...state,
     ships: state.ships.map((s) => (s.id === shipId ? newShip : s)),
-    storedHulls: [
-      ...state.storedHulls.filter((_, i) => i !== hullIndex),
-      oldHull,
+    storedShips: [
+      ...state.storedShips.filter((_, i) => i !== storedShipIndex),
+      oldStoredShip,
     ],
     storedWeapons,
     storedAmmo,
   };
 }
 
-/** Assign a pilot to a stored hull, creating a new active ship */
-export function assignPilotToHull(
+/** Assign a pilot to a stored ship, creating a new active ship */
+export function assignPilotToStoredShip(
   state: CampaignState,
   pilotId: string,
-  hullIndex: number,
+  storedShipIndex: number,
 ): CampaignState {
   const pilot = state.pilots.find((p) => p.id === pilotId);
-  const hull = state.storedHulls[hullIndex];
-  if (!pilot || !hull) {
+  const storedShip = state.storedShips[storedShipIndex];
+  if (!pilot || !storedShip) {
     return state;
   }
 
@@ -81,23 +81,23 @@ export function assignPilotToHull(
 
   // Get bank counts for new ship class
   const { primaryWeapons, secondaryWeapons } = createEmptyWeaponSlots(
-    hull.shipClass,
+    storedShip.shipClass,
   );
 
-  // Create new active ship from hull + pilot
+  // Create new active ship from stored ship + pilot
   const newShip: OwnedShip = {
-    id: hull.id,
-    shipClass: hull.shipClass,
+    id: storedShip.id,
+    shipClass: storedShip.shipClass,
     primaryWeapons, // Null-filled array matching bank count
     secondaryWeapons, // Null-filled array matching bank count
     pilot,
-    hullDamage: hull.hullDamage,
+    hullDamage: storedShip.hullDamage,
   };
 
   return {
     ...state,
     ships: [...state.ships, newShip],
-    storedHulls: state.storedHulls.filter((_, i) => i !== hullIndex),
+    storedShips: state.storedShips.filter((_, i) => i !== storedShipIndex),
   };
 }
 
@@ -150,8 +150,8 @@ export function swapPilotToShip(
     return state;
   }
 
-  // Old ship becomes a stored hull (weapons go to storage)
-  const oldHull: StoredHull = {
+  // Old ship becomes a stored ship (weapons go to storage)
+  const oldStoredShip: StoredShip = {
     id: currentShip.id,
     shipClass: currentShip.shipClass,
     hullDamage: currentShip.hullDamage,
@@ -172,7 +172,7 @@ export function swapPilotToShip(
   return {
     ...state,
     ships: updatedShips,
-    storedHulls: [...state.storedHulls, oldHull],
+    storedShips: [...state.storedShips, oldStoredShip],
     storedWeapons,
     storedAmmo,
   };
@@ -188,8 +188,8 @@ export function unassignPilot(
     return state;
   }
 
-  // Ship becomes a stored hull (pilot is unassigned but stays in state.pilots)
-  const newHull: StoredHull = {
+  // Ship becomes a stored ship (pilot is unassigned but stays in state.pilots)
+  const storedShip: StoredShip = {
     id: ship.id,
     shipClass: ship.shipClass,
     hullDamage: ship.hullDamage,
@@ -205,7 +205,7 @@ export function unassignPilot(
   return {
     ...state,
     ships: state.ships.filter((s) => s.id !== shipId),
-    storedHulls: [...state.storedHulls, newHull],
+    storedShips: [...state.storedShips, storedShip],
     storedWeapons,
     storedAmmo,
   };

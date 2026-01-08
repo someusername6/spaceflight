@@ -5,7 +5,7 @@
 import {
   equipPrimary,
   equipSecondary,
-  swapPilotToHull,
+  swapPilotToStoredShip,
   unassignPilot,
 } from '../../campaign/loadout';
 import { getMaxMissileCapacity } from '../../campaign/store-ammo';
@@ -347,14 +347,14 @@ function bindSecondaryPickerEvents(
   });
 }
 
-/** Handle swapping pilot to a different hull */
-export function handleSwapHull(
+/** Handle swapping pilot to a different stored ship */
+export function handleSwapToStoredShip(
   state: CampaignState,
   shipId: string,
-  hullIndex: number,
+  storedShipIndex: number,
   onStateUpdate: (newState: CampaignState) => void,
 ): boolean {
-  const newState = swapPilotToHull(state, shipId, hullIndex);
+  const newState = swapPilotToStoredShip(state, shipId, storedShipIndex);
   if (newState !== state) {
     onStateUpdate(newState);
     return true;

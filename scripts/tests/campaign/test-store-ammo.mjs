@@ -33,11 +33,11 @@ function createTestState(
       },
     ],
     pilots: [],
-    storedHulls: [],
+    storedShips: [],
     storedWeapons: [],
     storedAmmo: [],
     storeStock: {
-      hulls: {},
+      ships: {},
       primaries: {},
       secondaries: {},
       ammo: { autocannon: 10000, railgun: 10000, flak: 10000 },

@@ -10,8 +10,8 @@
  * Weapons are one-time purchases. Ammo/missiles are consumables.
  */
 
-/** Hull (ship chassis) prices */
-export const HULL_PRICES: Record<string, { buy: number; sell: number }> = {
+/** Ship chassis prices */
+export const SHIP_PRICES: Record<string, { buy: number; sell: number }> = {
   patrol: { buy: 200, sell: 100 },
   scout: { buy: 300, sell: 150 },
   fighter: { buy: 400, sell: 200 },
@@ -74,9 +74,9 @@ export const SECONDARY_PRICES: Record<string, { buy: number; sell: number }> = {
   decoy: { buy: 20, sell: 10 },
 };
 
-/** Get hull price (returns 0 if unknown) */
-export function getHullPrice(shipClass: string, type: 'buy' | 'sell'): number {
-  const price = HULL_PRICES[shipClass.toLowerCase()];
+/** Get ship price (returns 0 if unknown) */
+export function getShipPrice(shipClass: string, type: 'buy' | 'sell'): number {
+  const price = SHIP_PRICES[shipClass.toLowerCase()];
   return price ? price[type] : 0;
 }
 
@@ -110,18 +110,18 @@ export function getSecondaryPrice(
 }
 
 /**
- * Scrap prices - sell only (80% of hull price / 100).
+ * Scrap prices - sell only (80% of ship price / 100).
  * Scrap cannot be bought, only obtained through salvage.
  */
 export function getScrapPrice(shipClass: string): number {
-  const hullPrice = getHullPrice(shipClass, 'buy');
-  if (hullPrice === 0) return 0;
-  // Sell value = 80% of (hull price / 100 scrap)
-  return Math.floor((hullPrice / 100) * 0.8);
+  const shipPrice = getShipPrice(shipClass, 'buy');
+  if (shipPrice === 0) return 0;
+  // Sell value = 80% of (ship price / 100 scrap)
+  return Math.floor((shipPrice / 100) * 0.8);
 }
 
-/** Scrap required to convert to a hull */
-export const SCRAP_PER_HULL = 100;
+/** Scrap required to convert to a ship */
+export const SCRAP_PER_SHIP = 100;
 
-/** Conversion fee as fraction of hull buy price */
+/** Conversion fee as fraction of ship buy price */
 export const SCRAP_CONVERSION_FEE = 0.05;

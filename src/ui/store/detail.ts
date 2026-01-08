@@ -3,28 +3,28 @@
  */
 
 import {
-  canConvertScrapToHull,
+  canConvertScrapToShip,
   getScrapConversionFee,
 } from '../../campaign/store';
 import type { CampaignState } from '../../campaign/types';
-import { SCRAP_PER_HULL } from '../../data/prices';
+import { SCRAP_PER_SHIP } from '../../data/prices';
 import { PRIMARY_WEAPONS } from '../../data/weapons';
 import {
   getItemPrice,
   getStorageCount,
   renderAmmoStats,
-  renderHullStats,
   renderPrimaryStats,
   renderScrapStats,
   renderSecondaryStats,
+  renderShipStats,
   type StoreCategory,
 } from './render';
 
 /** Render stats section based on category */
 function renderStats(category: StoreCategory, itemId: string): string {
   switch (category) {
-    case 'hulls':
-      return renderHullStats(itemId);
+    case 'ships':
+      return renderShipStats(itemId);
     case 'primaries':
       return renderPrimaryStats(itemId);
     case 'secondaries':
@@ -48,7 +48,7 @@ function renderScrapDetail(
   const canSellBulk10 = storageCount >= 10;
   const canSellBulk100 = storageCount >= 100;
   const conversionFee = getScrapConversionFee(itemId);
-  const canConvert = canConvertScrapToHull(state, itemId);
+  const canConvert = canConvertScrapToShip(state, itemId);
   const storageText = storageCount > 0 ? `In storage: ${storageCount}` : '';
   const displayName = itemId.charAt(0).toUpperCase() + itemId.slice(1);
 
@@ -59,7 +59,7 @@ function renderScrapDetail(
       ${storageText ? `<div class="detail-storage">${storageText}</div>` : ''}
       <div class="detail-actions detail-actions-bottom">
         <button class="btn btn-convert" id="btn-convert" ${canConvert ? '' : 'disabled'}>
-          Convert&nbsp;to&nbsp;Hull (${SCRAP_PER_HULL}&nbsp;scrap,&nbsp;${conversionFee}&nbsp;cr)
+          Convert&nbsp;to&nbsp;Ship (${SCRAP_PER_SHIP}&nbsp;scrap,&nbsp;${conversionFee}&nbsp;cr)
         </button>
         <button class="btn btn-sell" id="btn-sell" ${canSell ? '' : 'disabled'}>
           Sell&nbsp;×1<br>(${sellPrice}&nbsp;cr)

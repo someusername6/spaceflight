@@ -4,14 +4,14 @@
 
 import {
   buyAmmo,
-  buyHull,
   buyPrimaryWeapon,
   buySecondaryWeapon,
+  buyShip,
   sellAmmo,
-  sellHull,
   sellPrimaryWeapon,
   sellScrap,
   sellSecondaryWeapon,
+  sellShip,
 } from '../../campaign/store';
 import type { CampaignState } from '../../campaign/types';
 import { getStorageIndex, type StoreCategory } from './render';
@@ -33,8 +33,8 @@ export function handleBuy(
   itemId: string,
 ): CampaignState {
   switch (category) {
-    case 'hulls':
-      return buyHull(state, itemId);
+    case 'ships':
+      return buyShip(state, itemId);
     case 'primaries':
       return buyPrimaryWeapon(state, itemId);
     case 'secondaries':
@@ -70,8 +70,8 @@ export function handleSell(
   if (storageIndex < 0) return state;
 
   switch (category) {
-    case 'hulls':
-      return sellHull(state, storageIndex);
+    case 'ships':
+      return sellShip(state, storageIndex);
     case 'primaries':
       return sellPrimaryWeapon(state, storageIndex);
     case 'secondaries':

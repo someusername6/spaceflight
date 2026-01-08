@@ -5,24 +5,24 @@
 import { MISSILES } from '../data/missiles';
 import {
   getAmmoPrice,
-  getHullPrice,
   getPrimaryPrice,
   getScrapPrice,
   getSecondaryPrice,
+  getShipPrice,
 } from '../data/prices';
 import { SHIP_CLASSES } from '../data/ships';
 import { PRIMARY_WEAPONS } from '../data/weapons';
 import type { StoreStock } from './types';
 
-/** Get list of available hulls for purchase (derived from SHIP_CLASSES) */
-export function getAvailableHulls(): Array<{
+/** Get list of available ships for purchase (derived from SHIP_CLASSES) */
+export function getAvailableShips(): Array<{
   shipClass: string;
   buyPrice: number;
 }> {
   return Object.keys(SHIP_CLASSES)
     .map((shipClass) => ({
       shipClass,
-      buyPrice: getHullPrice(shipClass, 'buy'),
+      buyPrice: getShipPrice(shipClass, 'buy'),
     }))
     .filter((item) => item.buyPrice > 0);
 }
@@ -86,8 +86,8 @@ const DEFAULT_STOCK = 10000;
 /** Create initial store stock with default quantities */
 export function createInitialStoreStock(): StoreStock {
   return {
-    hulls: Object.fromEntries(
-      getAvailableHulls().map((h) => [h.shipClass, DEFAULT_STOCK]),
+    ships: Object.fromEntries(
+      getAvailableShips().map((h) => [h.shipClass, DEFAULT_STOCK]),
     ),
     primaries: Object.fromEntries(
       getAvailablePrimaries().map((w) => [w.weaponType, DEFAULT_STOCK]),

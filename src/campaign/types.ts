@@ -48,8 +48,8 @@ export interface OwnedShip {
   hullDamage: number; // 0 = full health, positive = damage taken
 }
 
-/** A ship hull in storage (no pilot, no weapons equipped) */
-export interface StoredHull {
+/** A ship in storage (no pilot, no weapons equipped) */
+export interface StoredShip {
   id: string;
   shipClass: string; // 'interceptor', 'striker', etc.
   hullDamage: number;
@@ -86,7 +86,7 @@ export interface ContractEnemy {
 
 /** Store inventory - stock of items available for purchase */
 export interface StoreStock {
-  hulls: Record<string, number>; // shipClass -> count
+  ships: Record<string, number>; // shipClass -> count
   primaries: Record<string, number>; // weaponType -> count
   secondaries: Record<string, number>; // weaponType -> count (missiles)
   ammo: Record<string, number>; // weaponType -> count (rounds)
@@ -98,7 +98,7 @@ export interface CampaignState {
   commanderId: string; // ID of the commander pilot (player)
   ships: OwnedShip[];
   pilots: Pilot[]; // all pilots (assigned and unassigned)
-  storedHulls: StoredHull[]; // ship hulls in storage (no pilot/weapons)
+  storedShips: StoredShip[]; // ships in storage (no pilot/weapons)
   storedWeapons: StoredWeapon[]; // weapons in storage
   storedAmmo: StoredAmmo[]; // ammo in storage (for ballistic primaries)
   storedScrap: Record<string, number>; // shipClass -> scrap count

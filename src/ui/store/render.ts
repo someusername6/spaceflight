@@ -4,33 +4,33 @@
 
 import {
   getAvailableAmmo,
-  getAvailableHulls,
   getAvailablePrimaries,
   getAvailableSecondaries,
+  getAvailableShips,
   getScrapTypes,
 } from '../../campaign/store';
 import type { CampaignState, StoreStock } from '../../campaign/types';
 import { MISSILES } from '../../data/missiles';
 import {
   getAmmoPrice,
-  getHullPrice,
   getPrimaryPrice,
   getScrapPrice,
   getSecondaryPrice,
+  getShipPrice,
 } from '../../data/prices';
 import { PRIMARY_WEAPONS } from '../../data/weapons';
 
 // Re-export stat renderers from item-stats module
 export {
   renderAmmoStats,
-  renderHullStats,
   renderPrimaryStats,
   renderScrapStats,
   renderSecondaryStats,
+  renderShipStats,
 } from './item-stats';
 
 export type StoreCategory =
-  | 'hulls'
+  | 'ships'
   | 'primaries'
   | 'secondaries'
   | 'ammo'
@@ -47,13 +47,13 @@ export function getCategoryItems(
   storedScrap?: Record<string, number>,
 ): Array<{ id: string; name: string; stock: number }> {
   switch (category) {
-    case 'hulls':
-      return getAvailableHulls()
-        .filter(({ shipClass }) => (storeStock.hulls[shipClass] ?? 0) > 0)
+    case 'ships':
+      return getAvailableShips()
+        .filter(({ shipClass }) => (storeStock.ships[shipClass] ?? 0) > 0)
         .map(({ shipClass }) => ({
           id: shipClass,
           name: shipClass.charAt(0).toUpperCase() + shipClass.slice(1),
-          stock: storeStock.hulls[shipClass] ?? 0,
+          stock: storeStock.ships[shipClass] ?? 0,
         }));
     case 'primaries':
       return getAvailablePrimaries()
@@ -108,8 +108,8 @@ export function getItemPrice(
   type: 'buy' | 'sell',
 ): number {
   switch (category) {
-    case 'hulls':
-      return getHullPrice(id, type);
+    case 'ships':
+      return getShipPrice(id, type);
     case 'primaries':
       return getPrimaryPrice(id, type);
     case 'secondaries':
@@ -125,8 +125,8 @@ export function getItemPrice(
 /** Check if a category has any items in store stock */
 function hasStoreStock(state: CampaignState, category: StoreCategory): boolean {
   switch (category) {
-    case 'hulls':
-      return Object.values(state.storeStock.hulls).some((count) => count > 0);
+    case 'ships':
+      return Object.values(state.storeStock.ships).some((count) => count > 0);
     case 'primaries':
       return Object.values(state.storeStock.primaries).some(
         (count) => count > 0,
@@ -149,8 +149,8 @@ function hasStorageItems(
   category: StoreCategory,
 ): boolean {
   switch (category) {
-    case 'hulls':
-      return state.storedHulls.length > 0;
+    case 'ships':
+      return state.storedShips.length > 0;
     case 'primaries':
       return state.storedWeapons.some((w) => w.category === 'primary');
     case 'secondaries':
@@ -175,7 +175,7 @@ export function getFirstVisibleCategory(
   state: CampaignState,
 ): StoreCategory | null {
   const categories: StoreCategory[] = [
-    'hulls',
+    'ships',
     'primaries',
     'secondaries',
     'ammo',
@@ -191,8 +191,8 @@ export function getStorageCount(
   id: string,
 ): number {
   switch (category) {
-    case 'hulls':
-      return state.storedHulls.filter((h) => h.shipClass === id).length;
+    case 'ships':
+      return state.storedShips.filter((h) => h.shipClass === id).length;
     case 'primaries':
       return state.storedWeapons.filter(
         (w) => w.category === 'primary' && w.weaponType === id,
@@ -223,8 +223,8 @@ export function getStorageIndex(
   id: string,
 ): number {
   switch (category) {
-    case 'hulls':
-      return state.storedHulls.findIndex((h) => h.shipClass === id);
+    case 'ships':
+      return state.storedShips.findIndex((h) => h.shipClass === id);
     case 'primaries':
       return state.storedWeapons.findIndex(
         (w) => w.category === 'primary' && w.weaponType === id,

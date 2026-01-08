@@ -3,7 +3,7 @@
  */
 
 import { getResupplyStatus, storeResupplyAllShips } from '../../campaign/state';
-import { convertScrapToHull } from '../../campaign/store';
+import { convertScrapToShip } from '../../campaign/store';
 import type { CampaignState } from '../../campaign/types';
 import {
   bindNavBar,
@@ -132,7 +132,7 @@ function renderStore(ui: StoreUI): string {
       <main class="store-screen" aria-label="Equipment Store">
         <nav class="store-categories" aria-label="Store categories">
           <div class="category-tabs" role="tablist" aria-label="Item categories">
-            ${renderCategoryTab(ui.state, ui.selectedCategory, 'hulls', 'Hulls')}
+            ${renderCategoryTab(ui.state, ui.selectedCategory, 'ships', 'Ships')}
             ${renderCategoryTab(ui.state, ui.selectedCategory, 'primaries', 'Primaries')}
             ${renderCategoryTab(ui.state, ui.selectedCategory, 'secondaries', 'Missiles')}
             ${renderCategoryTab(ui.state, ui.selectedCategory, 'ammo', 'Ammo')}
@@ -285,12 +285,12 @@ function bindStoreEvents(ui: StoreUI): void {
     });
   }
 
-  // Convert scrap to hull button
+  // Convert scrap to ship button
   const convertBtn = ui.element.querySelector('#btn-convert');
   if (convertBtn && ui.selectedItem && ui.selectedCategory === 'scrap') {
     const shipClass = ui.selectedItem;
     convertBtn.addEventListener('click', () => {
-      const newState = convertScrapToHull(ui.state, shipClass);
+      const newState = convertScrapToShip(ui.state, shipClass);
       if (newState !== ui.state) {
         ui.state = newState;
         ui.onStateUpdate(newState);
@@ -314,12 +314,12 @@ function renderAndBindStore(ui: StoreUI): void {
   ui.element.innerHTML = renderStore(ui);
   bindStoreEvents(ui);
 
-  // Hull and scrap previews display schematic connector lines from slots to ship
+  // Ship and scrap previews display schematic connector lines from slots to ship
   // hardpoints. These require manual initialization after render since the SVG
   // overlay needs to measure element positions.
-  if (ui.selectedCategory === 'hulls' || ui.selectedCategory === 'scrap') {
+  if (ui.selectedCategory === 'ships' || ui.selectedCategory === 'scrap') {
     const previewContainer = ui.element.querySelector(
-      '.hull-preview-container, .scrap-preview-container',
+      '.ship-preview-container, .scrap-preview-container',
     );
     if (previewContainer) {
       initShipConnectors(previewContainer);
@@ -334,8 +334,8 @@ export function createStoreUI(
   onNavigate: (destination: NavDestination) => void,
   onStateUpdate: (newState: CampaignState) => void,
 ): StoreUI {
-  // Start with first visible category (or hulls as fallback if somehow none visible)
-  const initialCategory = getFirstVisibleCategory(state) ?? 'hulls';
+  // Start with first visible category (or ships as fallback if somehow none visible)
+  const initialCategory = getFirstVisibleCategory(state) ?? 'ships';
 
   const ui: StoreUI = {
     element,
