@@ -175,10 +175,21 @@
 }
 
 .schematic-slot:hover {
-  border-color: var(--color-secondary);
-  background: rgba(0, 245, 255, 0.1);
-  box-shadow: 0 0 12px var(--color-secondary-glow);
   z-index: 10;
+}
+
+/* Empty primary slot hover - amber */
+.schematic-slot.primary.empty:hover {
+  border-color: var(--color-primary);
+  background: rgba(255, 159, 28, 0.1);
+  box-shadow: 0 0 12px var(--color-primary-glow);
+}
+
+/* Empty secondary slot hover - red */
+.schematic-slot.secondary.empty:hover {
+  border-color: var(--color-danger);
+  background: rgba(255, 51, 102, 0.1);
+  box-shadow: 0 0 12px var(--color-danger-glow);
 }
 
 .schematic-slot:focus-visible {
