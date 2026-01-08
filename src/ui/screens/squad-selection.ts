@@ -47,7 +47,6 @@ function renderShipCard(
   const pilot = ship.pilot;
   if (!pilot) return '';
 
-  const skillClass = pilot.skill.toLowerCase();
   const iconPath = getShipIconPath(ship.shipClass);
 
   const cardClasses = [
@@ -69,21 +68,18 @@ function renderShipCard(
     >
       <div class="squad-toggle" aria-hidden="true"></div>
 
-      <div class="squad-ship-info">
-        <div class="squad-ship-name-row">
-          <span class="squad-ship-pilot">${pilot.name}</span>
-          ${isCommander ? '<span class="squad-badge you">You</span>' : ''}
-        </div>
-        <div class="squad-ship-details">
-          <div class="squad-ship-class-row">
-            <img src="${iconPath}" alt="${ship.shipClass}" class="squad-ship-icon" onerror="this.onerror=null; this.src='${FALLBACK_ICON_PATH}'" />
-            <span class="squad-ship-class">${ship.shipClass}</span>
-          </div>
-        </div>
-        <div class="squad-ship-loadout">${renderLoadoutSummary(ship)}</div>
-      </div>
+      <img src="${iconPath}" alt="${ship.shipClass}" class="squad-ship-icon" onerror="this.onerror=null; this.src='${FALLBACK_ICON_PATH}'" />
 
-      ${isCommander ? '' : `<span class="squad-skill-badge ${skillClass}">${pilot.skill}</span>`}
+      <div class="squad-ship-info">
+        <div class="squad-ship-names">
+          <div class="squad-ship-name-row">
+            <span class="squad-ship-pilot">${pilot.name}</span>
+            ${isCommander ? '<span class="squad-badge you">You</span>' : ''}
+          </div>
+          <span class="squad-ship-class">${ship.shipClass}</span>
+        </div>
+        <span class="squad-ship-loadout">${renderLoadoutSummary(ship)}</span>
+      </div>
     </article>
   `;
 }
@@ -107,27 +103,31 @@ function renderModal(
     })
     .join('');
 
+  // Build capacity bar segments
+  const capacitySegments = Array.from({ length: MAX_DEPLOYMENT }, (_, i) => {
+    const filled = i < selectedCount;
+    return `<div class="capacity-segment${filled ? ' filled' : ''}"></div>`;
+  }).join('');
+
   return `
     <div class="squad-selection-overlay" role="dialog" aria-modal="true" aria-labelledby="squad-title">
       <div class="squad-selection-modal">
-        <header class="squad-header">
+        <header class="squad-header panel-header">
           <h2 class="squad-title" id="squad-title">${contract.name}</h2>
-          <div class="squad-subtitle">Select ships to deploy</div>
-          <div class="squad-ready-indicator">
-            <div class="ready-dot"></div>
-            <span class="ready-text">Ready</span>
-          </div>
         </header>
 
-        <div class="squad-ship-list" role="group" aria-label="Available ships">
-          ${shipCards}
+        <div class="squad-content">
+          <div class="squad-ship-list" role="group" aria-label="Available ships">
+            ${shipCards}
+          </div>
         </div>
 
         <footer class="squad-footer">
-          <div class="squad-footer-status">
-            <div class="squad-deploy-count">
-              Deploying: <strong>${selectedCount}</strong> / ${MAX_DEPLOYMENT} ships
+          <div class="squad-capacity">
+            <div class="capacity-bar" role="meter" aria-valuenow="${selectedCount}" aria-valuemin="0" aria-valuemax="${MAX_DEPLOYMENT}">
+              ${capacitySegments}
             </div>
+            <div class="capacity-label"><span class="capacity-current">${selectedCount}</span>/${MAX_DEPLOYMENT} ships</div>
           </div>
           <div class="squad-footer-actions">
             <button class="btn btn-large" id="btn-squad-cancel">Cancel</button>
@@ -198,10 +198,22 @@ export function showSquadSelection(
         el.setAttribute('aria-checked', String(isSelected));
       });
 
-      // Update deploy count
-      const countEl = container.querySelector('.squad-deploy-count strong');
-      if (countEl) {
-        countEl.textContent = String(selectedIds.size);
+      // Update capacity bar segments
+      const segments = container.querySelectorAll('.capacity-segment');
+      segments.forEach((seg, i) => {
+        seg.classList.toggle('filled', i < selectedIds.size);
+      });
+
+      // Update capacity label
+      const currentEl = container.querySelector('.capacity-current');
+      if (currentEl) {
+        currentEl.textContent = String(selectedIds.size);
+      }
+
+      // Update capacity bar aria
+      const capacityBar = container.querySelector('.capacity-bar');
+      if (capacityBar) {
+        capacityBar.setAttribute('aria-valuenow', String(selectedIds.size));
       }
 
       // Update launch button
@@ -227,15 +239,21 @@ export function showSquadSelection(
       updateUI();
     };
 
+    /** Cleanup event listeners */
+    const cleanup = () => {
+      document.removeEventListener('keydown', handleKeydown);
+      container.remove();
+    };
+
     /** Handle cancel */
     const handleCancel = () => {
-      container.remove();
+      cleanup();
       resolve({ confirmed: false, deployedShipIds: [] });
     };
 
     /** Handle launch */
     const handleLaunch = () => {
-      container.remove();
+      cleanup();
       resolve({
         confirmed: true,
         deployedShipIds: Array.from(selectedIds),

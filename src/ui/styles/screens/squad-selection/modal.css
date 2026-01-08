@@ -36,6 +36,7 @@
     var(--color-scanline) 4px
   );
   pointer-events: none;
+  z-index: 100;
 }
 
 /* ========================================
@@ -87,48 +88,20 @@
    ======================================== */
 
 .squad-header {
-  padding: var(--space-3) var(--space-4);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-2-5) var(--space-4);
   background: rgba(255, 159, 28, 0.08);
   border-bottom: 1px solid var(--border-color);
-  position: relative;
 }
 
 .squad-title {
   font-family: var(--font-ui);
-  font-size: var(--text-xl);
+  font-size: var(--text-sm);
   font-weight: var(--font-semibold);
   color: var(--color-primary);
-  margin: 0 0 var(--space-1);
-}
-
-.squad-subtitle {
-  font-family: var(--font-ui);
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-  line-height: var(--leading-normal);
-}
-
-.squad-ready-indicator {
-  position: absolute;
-  top: var(--space-3);
-  right: var(--space-4);
-  display: flex;
-  align-items: center;
-  gap: var(--space-1-5);
-}
-
-.ready-dot {
-  width: 8px;
-  height: 8px;
-  background: var(--color-success);
-  border-radius: 50%;
-  box-shadow: 0 0 6px var(--color-success);
-}
-
-.ready-text {
-  font-family: var(--font-ui);
-  font-size: var(--text-xs);
-  color: var(--color-success);
-  letter-spacing: var(--tracking-widest);
   text-transform: uppercase;
+  letter-spacing: var(--tracking-widest);
+  margin: 0;
 }

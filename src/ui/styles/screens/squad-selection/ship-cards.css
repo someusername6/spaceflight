@@ -3,6 +3,20 @@
  */
 
 /* ========================================
+   CONTENT AREA
+   Dark background like page under panes
+   ======================================== */
+
+.squad-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-4);
+  background: var(--bg-deep);
+  min-height: 0;
+}
+
+/* ========================================
    SHIP LIST
    Same pattern as .roster-pilots
    ======================================== */
@@ -14,9 +28,8 @@
   flex-direction: column;
   gap: 0;
   min-height: 180px;
+  max-height: 320px;
   border: 1px solid var(--border-color);
-  border-top: none;
-  margin: 0 var(--space-3);
 }
 
 /* ========================================
@@ -26,7 +39,7 @@
 
 .squad-ship-card {
   display: grid;
-  grid-template-columns: 28px 1fr auto;
+  grid-template-columns: 24px 48px 1fr;
   gap: var(--space-3);
   align-items: center;
   padding: var(--space-3) var(--space-4);
@@ -124,9 +137,17 @@
 
 .squad-ship-info {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
   min-width: 0;
+}
+
+.squad-ship-names {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  flex-shrink: 0;
 }
 
 .squad-ship-name-row {
@@ -161,28 +182,9 @@
   border: 1px solid rgba(255, 159, 28, 0.3);
 }
 
-.squad-badge.damaged {
-  background: rgba(255, 68, 68, 0.15);
-  color: var(--color-danger);
-  border: 1px solid rgba(255, 68, 68, 0.3);
-}
-
-.squad-ship-details {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  flex-wrap: wrap;
-}
-
-.squad-ship-class-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1-5);
-}
-
 .squad-ship-icon {
-  width: 20px;
-  height: 20px;
+  width: 48px;
+  height: 48px;
   object-fit: contain;
   filter: var(--filter-cyan) drop-shadow(0 0 3px var(--color-secondary))
     drop-shadow(0 0 6px var(--color-secondary-glow));
@@ -200,40 +202,9 @@
   font-family: var(--font-ui);
   font-size: var(--text-xs);
   color: var(--text-dim);
-}
-
-/* ========================================
-   SKILL BADGE
-   Same pattern as roster recruit skills
-   ======================================== */
-
-.squad-skill-badge {
-  padding: var(--space-1) var(--space-2);
-  font-family: var(--font-ui);
-  font-size: var(--text-2xs);
-  font-weight: var(--font-medium);
-  letter-spacing: var(--tracking-widest);
-  text-transform: uppercase;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid currentColor;
-}
-
-.squad-skill-badge.rookie {
-  color: var(--text-secondary);
-}
-
-.squad-skill-badge.regular {
-  color: var(--color-secondary-dim);
-}
-
-.squad-skill-badge.veteran {
-  color: var(--color-success);
-}
-
-.squad-skill-badge.ace {
-  color: var(--color-warning);
-}
-
-.squad-skill-badge.elite {
-  color: var(--color-danger);
+  text-align: right;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

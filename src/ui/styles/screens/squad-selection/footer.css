@@ -7,41 +7,59 @@
    ======================================== */
 
 .squad-footer {
-  padding: var(--space-3) var(--space-4) var(--space-4);
+  padding: var(--space-4);
   border-top: 1px solid var(--border-color);
   background: rgba(0, 0, 0, 0.15);
 }
 
-.squad-footer-status {
+/* ========================================
+   CAPACITY BAR - Segmented deployment indicator
+   ======================================== */
+
+.squad-capacity {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
-  margin-bottom: var(--space-3);
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
 }
 
-.squad-deploy-count {
+.capacity-bar {
+  display: flex;
+  width: 80%;
+  gap: 4px;
+  padding: var(--space-1);
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border-color);
+}
+
+.capacity-segment {
+  flex: 1;
+  height: 12px;
+  background: rgba(0, 245, 255, 0.15);
+  border: 1px solid rgba(0, 245, 255, 0.3);
+  transition:
+    background-color var(--duration-base) var(--ease-out),
+    border-color var(--duration-base) var(--ease-out),
+    box-shadow var(--duration-base) var(--ease-out);
+}
+
+.capacity-segment.filled {
+  background: var(--color-secondary);
+  border-color: var(--color-secondary);
+  box-shadow: 0 0 8px var(--color-secondary-glow);
+}
+
+.capacity-label {
   font-family: var(--font-ui);
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
+  font-size: var(--text-base);
+  color: var(--text-dim);
   letter-spacing: var(--tracking-wider);
 }
 
-.squad-deploy-count strong {
+.capacity-label .capacity-current {
   color: var(--color-secondary);
   font-weight: var(--font-semibold);
-}
-
-.squad-warning {
-  font-family: var(--font-ui);
-  font-size: var(--text-2xs);
-  color: var(--color-warning);
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-}
-
-.squad-warning::before {
-  content: "\26A0";
 }
 
 .squad-footer-actions {
@@ -82,7 +100,7 @@
     padding: var(--space-2-5) var(--space-3);
   }
 
-  .squad-skill-badge {
+  .squad-ship-icon {
     display: none;
   }
 
