@@ -126,7 +126,7 @@
   font-size: var(--text-xs);
   color: var(--text-dim);
   text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
+  letter-spacing: var(--tracking-widest);
 }
 
 .roster-pilot-card.assigned .roster-pilot-status {

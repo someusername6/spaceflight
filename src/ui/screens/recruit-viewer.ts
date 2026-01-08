@@ -52,7 +52,7 @@ export function renderRecruitViewer(
           ${recruit.price.toLocaleString()}<span class="currency">cr</span>
         </div>
         <button
-          class="btn-hire-pilot"
+          class="btn btn-large btn-success btn-hire-pilot"
           id="btn-hire-recruit"
           data-recruit-id="${recruit.id}"
           ${canAfford ? '' : 'disabled'}

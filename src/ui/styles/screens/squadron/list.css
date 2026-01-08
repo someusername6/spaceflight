@@ -117,16 +117,18 @@
 }
 
 .squadron-item-ship {
+  font-family: var(--font-ui);
   font-size: var(--text-xs);
   color: var(--color-secondary);
   text-transform: capitalize;
 }
 
 .squadron-item-status {
+  font-family: var(--font-ui);
   font-size: var(--text-xs);
   color: var(--text-dim);
   text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
+  letter-spacing: var(--tracking-widest);
 }
 
 /* Skill level colors for recruits */

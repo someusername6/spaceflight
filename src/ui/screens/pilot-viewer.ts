@@ -46,7 +46,7 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
     isAssigned && currentShip && !isCommander
       ? `
         <div class="pilot-unassign-section">
-          <button class="btn btn-lg btn-danger btn-unassign-pilot"
+          <button class="btn btn-large btn-danger btn-unassign-pilot"
                   data-pilot="${pilot.id}"
                   data-ship="${currentShip.id}">
             Unassign Pilot

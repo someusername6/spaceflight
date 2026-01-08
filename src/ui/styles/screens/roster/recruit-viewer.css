@@ -127,45 +127,9 @@
   margin-left: var(--space-1);
 }
 
+/* Full-width hire button */
 .btn-hire-pilot {
   width: 100%;
-  padding: var(--space-4) var(--space-6);
-  font-family: var(--font-ui);
-  font-size: var(--text-base);
-  font-weight: var(--font-semibold);
-  letter-spacing: var(--tracking-widest);
-  text-transform: uppercase;
-  color: var(--color-success);
-  background: rgba(0, 255, 136, 0.05);
-  border: 1px solid var(--color-success);
-  cursor: pointer;
-  transition:
-    background-color var(--duration-base) var(--ease-out),
-    box-shadow var(--duration-base) var(--ease-out);
-  clip-path: polygon(
-    0 0,
-    calc(100% - 8px) 0,
-    100% 8px,
-    100% 100%,
-    8px 100%,
-    0 calc(100% - 8px)
-  );
-}
-
-.btn-hire-pilot:hover:not(:disabled) {
-  background: rgba(0, 255, 136, 0.15);
-  box-shadow: 0 0 20px var(--color-success-glow);
-}
-
-.btn-hire-pilot:focus-visible {
-  outline: 2px solid var(--color-success);
-  outline-offset: 2px;
-}
-
-.btn-hire-pilot:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  box-shadow: none;
 }
 
 .recruit-hire-note {

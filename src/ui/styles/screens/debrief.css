@@ -208,7 +208,7 @@
   font-size: var(--text-base);
   font-weight: var(--font-semibold);
   color: var(--text-primary);
-  letter-spacing: var(--tracking-wider);
+  letter-spacing: var(--tracking-widest);
 }
 
 .pilot-card.player .callsign {
@@ -224,7 +224,7 @@
   font-size: var(--text-xs);
   color: var(--text-dim);
   text-transform: capitalize;
-  letter-spacing: var(--tracking-wide);
+  letter-spacing: var(--tracking-widest);
 }
 
 .debrief-ship-icon {

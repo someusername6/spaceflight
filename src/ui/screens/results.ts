@@ -254,7 +254,7 @@ function renderResults(
         </div>
       </main>
       <footer class="results-footer">
-        <button class="btn btn-primary btn-continue" id="btn-continue">
+        <button class="btn btn-xl btn-primary" id="btn-continue">
           ${buttonText}
         </button>
       </footer>
@@ -334,7 +334,7 @@ function renderGameOver(state: CampaignState): string {
             <span class="stat-value">${state.currentSector}</span>
           </div>
         </div>
-        <button class="btn btn-primary btn-restart" id="btn-restart">
+        <button class="btn btn-xl btn-danger" id="btn-restart">
           Start New Campaign
         </button>
       </div>

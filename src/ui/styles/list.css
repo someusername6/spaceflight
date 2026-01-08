@@ -116,9 +116,9 @@
 }
 
 .ship-status {
+  font-family: var(--font-ui);
   font-size: var(--text-xs);
   margin-top: var(--space-1);
-  font-family: var(--font-body);
 }
 
 .ship-status.ok {

@@ -102,7 +102,7 @@
   font-size: var(--text-xs);
   color: var(--text-dim);
   text-transform: uppercase;
-  letter-spacing: var(--tracking-wider);
+  letter-spacing: var(--tracking-widest);
 }
 
 .pilot-assignment > .assignment-label {
@@ -120,12 +120,6 @@
   padding: var(--space-2) var(--space-4);
   font-size: var(--text-xs);
   text-transform: capitalize;
-}
-
-/* Large buttons (matching store buy/sell size) */
-.btn-lg {
-  padding: var(--space-3) var(--space-6);
-  font-size: var(--text-sm);
 }
 
 .btn-change-ship {

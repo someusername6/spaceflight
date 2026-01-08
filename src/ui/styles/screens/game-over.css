@@ -94,53 +94,11 @@
   color: var(--text-primary);
 }
 
-.btn-restart {
-  min-width: 240px;
-  padding: var(--space-4) var(--space-10);
-  font-family: var(--font-ui);
-  font-size: var(--text-sm);
-  font-weight: var(--font-semibold);
-  letter-spacing: var(--tracking-ultra);
-  text-transform: uppercase;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 51, 102, 0.15) 0%,
-    rgba(255, 51, 102, 0.08) 100%
-  );
-  border: 1px solid var(--color-danger);
-  color: var(--color-danger);
-  cursor: pointer;
-  transition:
-    background var(--duration-base) var(--ease-out),
-    box-shadow var(--duration-base) var(--ease-out);
-  clip-path: polygon(
-    12px 0,
-    100% 0,
-    100% calc(100% - 12px),
-    calc(100% - 12px) 100%,
-    0 100%,
-    0 12px
-  );
+/* Game over restart button - staggered animation */
+.game-over-content .btn {
   animation: fadeSlideIn var(--duration-slower) var(--ease-out)
     calc(var(--stagger-delay) * 6);
   animation-fill-mode: both;
-}
-
-.btn-restart:hover {
-  background: linear-gradient(
-    180deg,
-    rgba(255, 51, 102, 0.25) 0%,
-    rgba(255, 51, 102, 0.15) 100%
-  );
-  box-shadow:
-    0 0 20px var(--color-danger-glow),
-    inset 0 0 20px rgba(255, 51, 102, 0.1);
-  transform: translateY(-1px);
-}
-
-.btn-restart:focus-visible {
-  outline: 2px solid var(--color-danger);
-  outline-offset: 2px;
 }
 
 /* ========================================
@@ -151,18 +109,5 @@
   .game-over-title {
     font-size: 2.5rem;
     letter-spacing: 0.15em;
-  }
-
-  .btn-restart {
-    min-width: 180px;
-    padding: var(--space-4) var(--space-7);
-    clip-path: polygon(
-      8px 0,
-      100% 0,
-      100% calc(100% - 8px),
-      calc(100% - 8px) 100%,
-      0 100%,
-      0 8px
-    );
   }
 }
