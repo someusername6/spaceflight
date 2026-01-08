@@ -185,8 +185,9 @@
 }
 
 .schematic-slot:hover {
-  border-color: var(--border-light);
-  background: rgba(255, 159, 28, 0.1);
+  border-color: var(--color-secondary);
+  background: rgba(0, 245, 255, 0.1);
+  box-shadow: 0 0 12px var(--color-secondary-glow);
   z-index: 10;
 }
 
@@ -207,11 +208,13 @@
 .schematic-slot.primary.filled:hover {
   background: rgba(255, 159, 28, 0.2);
   border-color: var(--color-primary);
+  box-shadow: 0 0 12px var(--color-primary-glow);
 }
 
 .schematic-slot.secondary.filled:hover {
   background: rgba(255, 51, 102, 0.15);
   border-color: var(--color-danger);
+  box-shadow: 0 0 12px var(--color-danger-glow);
 }
 
 /* Slot connector stub - small visual anchor, main lines drawn by SVG overlay */

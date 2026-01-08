@@ -11,10 +11,17 @@ export interface ShipStatsOptions {
 }
 
 /**
- * Format bank sizes as colored dots with counts.
+ * Format bank sizes as colored shapes with counts.
+ * Uses different shapes for accessibility (colorblind support):
+ * - Primary banks: ● (filled circle)
+ * - Secondary banks: ◆ (filled diamond)
  * Example: [2, 2, 1, 1, 1] → "●● ×2, ● ×3" (with color class)
  */
-export function formatBankSizes(banks: number[], colorClass: string): string {
+export function formatBankSizes(
+  banks: number[],
+  colorClass: string,
+  shape: '●' | '◆' = '●',
+): string {
   // Count occurrences of each bank size
   const counts = new Map<number, number>();
   for (const size of banks) {
@@ -24,11 +31,11 @@ export function formatBankSizes(banks: number[], colorClass: string): string {
   // Sort by bank size descending (larger banks first)
   const sorted = [...counts.entries()].sort((a, b) => b[0] - a[0]);
 
-  // Format each group with colored dots (always show count)
+  // Format each group with colored shapes (always show count)
   return sorted
     .map(([size, count]) => {
-      const dots = `<span class="${colorClass}">${'●'.repeat(size)}</span>`;
-      return `${dots} ×${count}`;
+      const shapes = `<span class="${colorClass}">${shape.repeat(size)}</span>`;
+      return `${shapes} ×${count}`;
     })
     .join(', ');
 }
@@ -46,10 +53,12 @@ export function renderShipStatsRows(
   const primaryBankStr = formatBankSizes(
     stats.primaryBanks,
     'bank-dots-primary',
+    '●',
   );
   const secondaryBankStr = formatBankSizes(
     stats.secondaryBanks,
     'bank-dots-secondary',
+    '◆',
   );
 
   // Use appropriate class names based on prefix

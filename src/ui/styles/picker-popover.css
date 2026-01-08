@@ -61,7 +61,6 @@
   font-family: var(--font-ui);
   font-size: var(--text-xs);
   color: var(--text-dim);
-  text-transform: uppercase;
   letter-spacing: var(--tracking-wider);
   margin-top: var(--space-1);
 }

@@ -82,8 +82,7 @@
   font-size: var(--text-2xs);
   font-weight: var(--font-medium);
   color: var(--text-dim);
-  letter-spacing: var(--tracking-ultra);
-  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
   margin-bottom: var(--space-2);
 }
 
