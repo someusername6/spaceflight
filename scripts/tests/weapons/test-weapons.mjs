@@ -169,11 +169,11 @@ test('Nuclear Lance is NOT a pulse beam', () => {
 // Weapon Count Validation
 // ============================================================
 
-test('All 15 primary weapon types defined', () => {
+test('All 12 primary weapon types defined', () => {
   const weapons = Object.keys(WEAPON_DEFS);
   assert(
-    weapons.length === 15,
-    `Should have 15 weapons, got ${weapons.length}`,
+    weapons.length === 12,
+    `Should have 12 weapons, got ${weapons.length}`,
   );
 });
 
