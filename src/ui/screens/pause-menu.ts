@@ -14,6 +14,12 @@ import {
   saveGame,
 } from '../../campaign/save-system';
 import type { CampaignState } from '../../campaign/types';
+import {
+  type ModalProps,
+  type Screen,
+  type ScreenAPI,
+  showModal,
+} from '../framework/screen';
 import { escapeHtml } from '../utils';
 
 /** Pause menu result */
@@ -29,6 +35,19 @@ type PauseView =
   | 'confirm-quit'
   | 'confirm-overwrite'
   | 'error';
+
+/** Pause menu state */
+interface PauseState {
+  view: PauseView;
+  pendingOverwriteSlot: number | null;
+  errorMessage: string | null;
+}
+
+/** Pause menu props */
+interface PauseProps extends ModalProps<PauseMenuResult> {
+  campaignState: CampaignState;
+  canSave: boolean;
+}
 
 /** Render save slot for saving */
 function renderSaveSlotForSave(
@@ -153,41 +172,149 @@ function renderMainView(canSave: boolean): string {
   `;
 }
 
-/** Render the pause menu modal */
-function renderPauseModal(
-  view: PauseView,
-  canSave: boolean,
-  overwriteSlot?: number,
-  errorMessage?: string,
-): string {
-  let content: string;
+/** Pause menu screen component */
+const PauseMenuScreen: Screen<PauseState, PauseProps> = {
+  render(state, props) {
+    let content: string;
 
-  switch (view) {
-    case 'main':
-      content = renderMainView(canSave);
-      break;
-    case 'save':
-      content = renderSaveView();
-      break;
-    case 'confirm-quit':
-      content = renderConfirmQuitView();
-      break;
-    case 'confirm-overwrite':
-      content = renderConfirmOverwriteView(overwriteSlot ?? 1);
-      break;
-    case 'error':
-      content = renderErrorView(errorMessage ?? 'An error occurred.');
-      break;
-  }
+    switch (state.view) {
+      case 'main':
+        content = renderMainView(props.canSave);
+        break;
+      case 'save':
+        content = renderSaveView();
+        break;
+      case 'confirm-quit':
+        content = renderConfirmQuitView();
+        break;
+      case 'confirm-overwrite':
+        content = renderConfirmOverwriteView(state.pendingOverwriteSlot ?? 1);
+        break;
+      case 'error':
+        content = renderErrorView(state.errorMessage ?? 'An error occurred.');
+        break;
+    }
 
-  return `
-    <div class="pause-overlay" role="dialog" aria-modal="true" aria-labelledby="pause-title">
-      <div class="pause-modal">
-        ${content}
+    return `
+      <div class="pause-overlay" role="dialog" aria-modal="true" aria-labelledby="pause-title">
+        <div class="pause-modal">
+          ${content}
+        </div>
       </div>
-    </div>
-  `;
-}
+    `;
+  },
+
+  bind(api: ScreenAPI<PauseState>, props: PauseProps) {
+    // Resume button
+    api.on('#btn-pause-resume', 'click', () => {
+      props.onComplete({ action: 'resume' });
+    });
+
+    // Save button
+    api.on('#btn-pause-save', 'click', () => {
+      api.setState({ view: 'save' });
+    });
+
+    // Settings button
+    api.on('#btn-pause-settings', 'click', () => {
+      props.onComplete({ action: 'settings' });
+    });
+
+    // Quit button - show confirmation
+    api.on('#btn-pause-quit', 'click', () => {
+      api.setState({ view: 'confirm-quit' });
+    });
+
+    // Back button (from save view)
+    api.on('#btn-pause-back', 'click', () => {
+      api.setState({ view: 'main' });
+    });
+
+    // Save to slot buttons
+    api.on('.btn-save-to-slot', 'click', (_e, el) => {
+      const slot = parseInt(el.dataset.slot ?? '0', 10);
+      if (slot > 0) {
+        const existing = getAllSaveMetadata()[slot - 1];
+        if (existing) {
+          // Show overwrite confirmation
+          api.setState({
+            pendingOverwriteSlot: slot,
+            view: 'confirm-overwrite',
+          });
+        } else {
+          // Empty slot, save directly
+          if (saveGame(slot, props.campaignState)) {
+            props.onComplete({ action: 'save', saveSlot: slot });
+          } else {
+            api.setState({
+              errorMessage: `Failed to save game to Slot ${slot}. Storage may be full.`,
+              view: 'error',
+            });
+          }
+        }
+      }
+    });
+
+    // Error OK button
+    api.on('#btn-error-ok', 'click', () => {
+      api.setState({ errorMessage: null, view: 'save' });
+    });
+
+    // Confirm cancel button
+    api.on('#btn-confirm-cancel', 'click', () => {
+      const state = api.getState();
+      if (state.view === 'confirm-quit') {
+        api.setState({ view: 'main' });
+      } else {
+        api.setState({ pendingOverwriteSlot: null, view: 'save' });
+      }
+    });
+
+    // Confirm quit button
+    api.on('#btn-confirm-quit', 'click', () => {
+      props.onComplete({ action: 'quit' });
+    });
+
+    // Confirm overwrite button
+    api.on('#btn-confirm-overwrite', 'click', () => {
+      const state = api.getState();
+      if (state.pendingOverwriteSlot) {
+        if (saveGame(state.pendingOverwriteSlot, props.campaignState)) {
+          props.onComplete({
+            action: 'save',
+            saveSlot: state.pendingOverwriteSlot,
+          });
+        } else {
+          api.setState({
+            errorMessage: `Failed to save game to Slot ${state.pendingOverwriteSlot}. Storage may be full.`,
+            pendingOverwriteSlot: null,
+            view: 'error',
+          });
+        }
+      }
+    });
+
+    // Keyboard navigation
+    api.onGlobal('keydown', (e) => {
+      if ((e as KeyboardEvent).code === 'Escape') {
+        e.preventDefault();
+        const state = api.getState();
+
+        if (state.view === 'save') {
+          api.setState({ view: 'main' });
+        } else if (state.view === 'error') {
+          api.setState({ errorMessage: null, view: 'save' });
+        } else if (state.view === 'confirm-quit') {
+          api.setState({ view: 'main' });
+        } else if (state.view === 'confirm-overwrite') {
+          api.setState({ pendingOverwriteSlot: null, view: 'save' });
+        } else {
+          props.onComplete({ action: 'resume' });
+        }
+      }
+    });
+  },
+};
 
 /**
  * Show the pause menu and wait for user action.
@@ -199,172 +326,18 @@ export function showPauseMenu(
   state: CampaignState,
   canSave: boolean,
 ): Promise<PauseMenuResult> {
-  return new Promise((resolve) => {
-    let currentView: PauseView = 'main';
-    let pendingOverwriteSlot: number | null = null;
-    let errorMessage: string | null = null;
+  const initialState: PauseState = {
+    view: 'main',
+    pendingOverwriteSlot: null,
+    errorMessage: null,
+  };
 
-    // Create container
-    const container = document.createElement('div');
-    container.innerHTML = renderPauseModal(currentView, canSave);
-    document.body.appendChild(container);
-
-    /** Update the UI */
-    const update = () => {
-      container.innerHTML = renderPauseModal(
-        currentView,
-        canSave,
-        pendingOverwriteSlot ?? undefined,
-        errorMessage ?? undefined,
-      );
-      bindEvents();
-    };
-
-    /** Cleanup and resolve */
-    const cleanup = (result: PauseMenuResult) => {
-      document.removeEventListener('keydown', handleKeydown);
-      container.remove();
-      resolve(result);
-    };
-
-    /** Handle keyboard */
-    const handleKeydown = (e: KeyboardEvent) => {
-      if (e.code === 'Escape') {
-        e.preventDefault();
-        if (currentView === 'save') {
-          currentView = 'main';
-          update();
-        } else if (currentView === 'error') {
-          // Escape from error returns to save view
-          errorMessage = null;
-          currentView = 'save';
-          update();
-        } else if (
-          currentView === 'confirm-quit' ||
-          currentView === 'confirm-overwrite'
-        ) {
-          currentView = currentView === 'confirm-quit' ? 'main' : 'save';
-          pendingOverwriteSlot = null;
-          update();
-        } else {
-          cleanup({ action: 'resume' });
-        }
-      }
-    };
-
-    /** Bind event handlers */
-    const bindEvents = () => {
-      // Resume button
-      const resumeBtn = container.querySelector('#btn-pause-resume');
-      resumeBtn?.addEventListener('click', () => {
-        cleanup({ action: 'resume' });
-      });
-
-      // Save button
-      const saveBtn = container.querySelector('#btn-pause-save');
-      saveBtn?.addEventListener('click', () => {
-        currentView = 'save';
-        update();
-      });
-
-      // Settings button
-      const settingsBtn = container.querySelector('#btn-pause-settings');
-      settingsBtn?.addEventListener('click', () => {
-        cleanup({ action: 'settings' });
-      });
-
-      // Quit button - show confirmation
-      const quitBtn = container.querySelector('#btn-pause-quit');
-      quitBtn?.addEventListener('click', () => {
-        currentView = 'confirm-quit';
-        update();
-      });
-
-      // Back button (from save view)
-      const backBtn = container.querySelector('#btn-pause-back');
-      backBtn?.addEventListener('click', () => {
-        currentView = 'main';
-        update();
-      });
-
-      // Save to slot buttons
-      container.querySelectorAll('.btn-save-to-slot').forEach((btn) => {
-        btn.addEventListener('click', (e) => {
-          const slot = parseInt(
-            (e.target as HTMLElement).dataset.slot ?? '0',
-            10,
-          );
-          if (slot > 0) {
-            const existing = getAllSaveMetadata()[slot - 1];
-            if (existing) {
-              // Show overwrite confirmation
-              pendingOverwriteSlot = slot;
-              currentView = 'confirm-overwrite';
-              update();
-            } else {
-              // Empty slot, save directly
-              if (saveGame(slot, state)) {
-                cleanup({ action: 'save', saveSlot: slot });
-              } else {
-                // Show error on save failure
-                errorMessage = `Failed to save game to Slot ${slot}. Storage may be full.`;
-                currentView = 'error';
-                update();
-              }
-            }
-          }
-        });
-      });
-
-      // Error OK button
-      const errorOkBtn = container.querySelector('#btn-error-ok');
-      errorOkBtn?.addEventListener('click', () => {
-        errorMessage = null;
-        currentView = 'save';
-        update();
-      });
-
-      // Confirm cancel button
-      const cancelBtn = container.querySelector('#btn-confirm-cancel');
-      cancelBtn?.addEventListener('click', () => {
-        if (currentView === 'confirm-quit') {
-          currentView = 'main';
-        } else {
-          currentView = 'save';
-        }
-        pendingOverwriteSlot = null;
-        update();
-      });
-
-      // Confirm quit button
-      const confirmQuitBtn = container.querySelector('#btn-confirm-quit');
-      confirmQuitBtn?.addEventListener('click', () => {
-        cleanup({ action: 'quit' });
-      });
-
-      // Confirm overwrite button
-      const confirmOverwriteBtn = container.querySelector(
-        '#btn-confirm-overwrite',
-      );
-      confirmOverwriteBtn?.addEventListener('click', () => {
-        if (pendingOverwriteSlot) {
-          if (saveGame(pendingOverwriteSlot, state)) {
-            cleanup({ action: 'save', saveSlot: pendingOverwriteSlot });
-          } else {
-            // Show error on save failure
-            errorMessage = `Failed to save game to Slot ${pendingOverwriteSlot}. Storage may be full.`;
-            pendingOverwriteSlot = null;
-            currentView = 'error';
-            update();
-          }
-        }
-      });
-
-      // Keyboard handler
-      document.addEventListener('keydown', handleKeydown);
-    };
-
-    // Initial bind
-    bindEvents();
-  });
+  return showModal<PauseState, PauseProps, PauseMenuResult>(
+    PauseMenuScreen,
+    initialState,
+    {
+      campaignState: state,
+      canSave,
+    },
+  );
 }

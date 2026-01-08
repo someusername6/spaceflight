@@ -1438,3 +1438,97 @@ interface MissionConfig {
 - Allows strategic preservation of damaged/valuable ships
 - Commander ship is always in deployedShipIds
 - Modal cleans up keydown listener on close (prevents memory leak)
+
+---
+
+## Screen Framework Implementation
+
+All UI screens are implemented using the Screen framework in `src/ui/framework/screen.ts`. This provides automatic event delegation, cleanup, and state management.
+
+### Architecture Overview
+
+```typescript
+interface Screen<State, Props> {
+  render(state: State, props: Props): string;  // Returns HTML
+  bind(api: ScreenAPI<State>, props: Props): void;  // Registers events
+}
+```
+
+**Key benefits:**
+- **Event delegation**: One listener per event type, matches via `closest()`
+- **Automatic cleanup**: Handlers cleared on re-render, listeners removed on destroy
+- **Type-safe state**: `setState(partial)` triggers re-render
+
+### Screen Files
+
+| Screen | File | State |
+|--------|------|-------|
+| Title | `src/ui/screens/title.ts` | view, deleteSlot, errorMessage |
+| Settings | `src/ui/screens/settings.ts` | listeningAction, showResetConfirm |
+| Pause Menu | `src/ui/screens/pause-menu.ts` | view, pendingOverwriteSlot |
+| Contracts | `src/ui/screens/contracts.ts` | selectedContractId |
+| Results | `src/ui/screens/results.ts` | selectedTab |
+| Store | `src/ui/store/store.ts` | selectedCategory, selectedItem |
+| Squad Selection | `src/ui/screens/squad-selection.ts` | selectedIds |
+| Squadron | `src/ui/screens/squadron.ts` | selection, activeTab |
+
+### Event Binding Pattern
+
+```typescript
+bind(api: ScreenAPI<MyState>, props: MyProps) {
+  // Click delegation - matches via closest()
+  api.on('#btn-action', 'click', () => {
+    props.onAction();
+  });
+
+  // Access clicked element
+  api.on('.item', 'click', (_e, el) => {
+    api.setState({ selectedId: el.dataset.id ?? null });
+  });
+
+  // Global events (auto-cleaned on destroy)
+  api.onGlobal('keydown', (e) => {
+    if ((e as KeyboardEvent).code === 'Escape') {
+      props.onClose();
+    }
+  });
+}
+```
+
+### Modal Pattern
+
+For modal dialogs, use `showModal()` which returns a Promise:
+
+```typescript
+const result = await showModal<ModalState, ModalProps, ResultType>(
+  ModalScreenComponent,
+  initialState,
+  { ...props, onClose: (result) => resolve(result) }
+);
+```
+
+The modal calls `props.onClose(result)` to resolve the promise.
+
+### Props Update Pattern
+
+When props change externally (e.g., `campaignState` updates), screens use the `setProps()` handle method:
+
+```typescript
+const wrappedOnStateUpdate = (newState: CampaignState) => {
+  onStateUpdate(newState);
+  if (screenHandle && currentProps) {
+    currentProps = { ...currentProps, campaignState: newState };
+    screenHandle.setProps(currentProps);
+  }
+};
+```
+
+This triggers a re-render with the new props.
+
+### File Organization
+
+- `src/ui/framework/screen.ts` - Core framework
+- `src/ui/screens/*.ts` - Full-page screens
+- `src/ui/store/*.ts` - Store screen and sub-modules
+- `src/ui/common/*.ts` - Shared components (nav-bar)
+- `src/ui/ship/*.ts` - Ship viewer components

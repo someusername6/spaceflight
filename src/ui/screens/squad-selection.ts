@@ -6,6 +6,12 @@
  */
 
 import type { CampaignState, Contract, OwnedShip } from '../../campaign/types';
+import {
+  type ModalProps,
+  type Screen,
+  type ScreenAPI,
+  showModal,
+} from '../framework/screen';
 import { FALLBACK_ICON_PATH, getShipIconPath } from '../ship/viewer';
 
 /** Maximum ships that can be deployed */
@@ -15,6 +21,18 @@ const MAX_DEPLOYMENT = 4;
 export interface SquadSelectionResult {
   confirmed: boolean;
   deployedShipIds: string[];
+}
+
+/** Squad selection state */
+interface SquadState {
+  selectedIds: string[];
+}
+
+/** Squad selection props */
+interface SquadProps extends ModalProps<SquadSelectionResult> {
+  campaignState: CampaignState;
+  contract: Contract;
+  commanderShipId: string;
 }
 
 /** Render loadout summary for a ship */
@@ -84,219 +102,150 @@ function renderShipCard(
   `;
 }
 
-/** Render the squad selection modal */
-function renderModal(
-  state: CampaignState,
-  contract: Contract,
-  selectedIds: Set<string>,
-): string {
-  // Get ships with pilots (can deploy)
-  const deployableShips = state.ships.filter((s) => s.pilot !== null);
-  const selectedCount = selectedIds.size;
+/** Squad selection screen component */
+const SquadSelectionScreen: Screen<SquadState, SquadProps> = {
+  render(state, props) {
+    const { campaignState, contract, commanderShipId } = props;
+    const selectedSet = new Set(state.selectedIds);
+    const selectedCount = selectedSet.size;
 
-  // Render ship cards
-  const shipCards = deployableShips
-    .map((ship) => {
-      const isCommander = ship.pilot?.id === state.commanderId;
-      const isSelected = selectedIds.has(ship.id);
-      return renderShipCard(ship, isCommander, isSelected);
-    })
-    .join('');
+    // Get ships with pilots (can deploy)
+    const deployableShips = campaignState.ships.filter((s) => s.pilot !== null);
 
-  // Build capacity bar segments
-  const capacitySegments = Array.from({ length: MAX_DEPLOYMENT }, (_, i) => {
-    const filled = i < selectedCount;
-    return `<div class="capacity-segment${filled ? ' filled' : ''}"></div>`;
-  }).join('');
+    // Render ship cards
+    const shipCards = deployableShips
+      .map((ship) => {
+        const isCommander = ship.id === commanderShipId;
+        const isSelected = selectedSet.has(ship.id);
+        return renderShipCard(ship, isCommander, isSelected);
+      })
+      .join('');
 
-  return `
-    <div class="squad-selection-overlay" role="dialog" aria-modal="true" aria-labelledby="squad-title">
-      <div class="squad-selection-modal">
-        <header class="squad-header panel-header">
-          <h2 class="squad-title" id="squad-title">${contract.name}</h2>
-        </header>
+    // Build capacity bar segments
+    const capacitySegments = Array.from({ length: MAX_DEPLOYMENT }, (_, i) => {
+      const filled = i < selectedCount;
+      return `<div class="capacity-segment${filled ? ' filled' : ''}"></div>`;
+    }).join('');
 
-        <div class="squad-content">
-          <div class="squad-ship-list" role="group" aria-label="Available ships">
-            ${shipCards}
-          </div>
-        </div>
+    return `
+      <div class="squad-selection-overlay" role="dialog" aria-modal="true" aria-labelledby="squad-title">
+        <div class="squad-selection-modal">
+          <header class="squad-header panel-header">
+            <h2 class="squad-title" id="squad-title">${contract.name}</h2>
+          </header>
 
-        <footer class="squad-footer">
-          <div class="squad-capacity">
-            <div class="capacity-bar" role="meter" aria-valuenow="${selectedCount}" aria-valuemin="0" aria-valuemax="${MAX_DEPLOYMENT}">
-              ${capacitySegments}
+          <div class="squad-content">
+            <div class="squad-ship-list" role="group" aria-label="Available ships">
+              ${shipCards}
             </div>
-            <div class="capacity-label"><span class="capacity-current">${selectedCount}</span>/${MAX_DEPLOYMENT} ships</div>
           </div>
-          <div class="squad-footer-actions">
-            <button class="btn btn-large" id="btn-squad-cancel">Cancel</button>
-            <button
-              class="btn btn-large btn-success"
-              id="btn-squad-launch"
-              ${selectedCount === 0 ? 'disabled' : ''}
-            >
-              <span class="launch-icon">&#9654;</span>
-              Launch Mission
-            </button>
-          </div>
-        </footer>
+
+          <footer class="squad-footer">
+            <div class="squad-capacity">
+              <div class="capacity-bar" role="meter" aria-valuenow="${selectedCount}" aria-valuemin="0" aria-valuemax="${MAX_DEPLOYMENT}">
+                ${capacitySegments}
+              </div>
+              <div class="capacity-label"><span class="capacity-current">${selectedCount}</span>/${MAX_DEPLOYMENT} ships</div>
+            </div>
+            <div class="squad-footer-actions">
+              <button class="btn btn-large" id="btn-squad-cancel">Cancel</button>
+              <button
+                class="btn btn-large btn-success"
+                id="btn-squad-launch"
+                ${selectedCount === 0 ? 'disabled' : ''}
+              >
+                <span class="launch-icon">&#9654;</span>
+                Launch Mission
+              </button>
+            </div>
+          </footer>
+        </div>
       </div>
-    </div>
-  `;
-}
+    `;
+  },
+
+  bind(api: ScreenAPI<SquadState>, props: SquadProps) {
+    const { commanderShipId, onComplete } = props;
+
+    // Ship card clicks
+    api.on('.squad-ship-card', 'click', (_e, el) => {
+      const shipId = el.dataset.shipId;
+      if (!shipId) return;
+
+      // Don't allow deselecting commander
+      if (shipId === commanderShipId) return;
+
+      const state = api.getState();
+      const selectedSet = new Set(state.selectedIds);
+
+      if (selectedSet.has(shipId)) {
+        selectedSet.delete(shipId);
+      } else if (selectedSet.size < MAX_DEPLOYMENT) {
+        selectedSet.add(shipId);
+      }
+
+      api.setState({ selectedIds: Array.from(selectedSet) });
+    });
+
+    // Cancel button
+    api.on('#btn-squad-cancel', 'click', () => {
+      onComplete({ confirmed: false, deployedShipIds: [] });
+    });
+
+    // Launch button
+    api.on('#btn-squad-launch', 'click', () => {
+      const state = api.getState();
+      onComplete({ confirmed: true, deployedShipIds: state.selectedIds });
+    });
+
+    // Keyboard navigation
+    api.onGlobal('keydown', (e) => {
+      if ((e as KeyboardEvent).key === 'Escape') {
+        onComplete({ confirmed: false, deployedShipIds: [] });
+      }
+    });
+  },
+};
 
 /** Show squad selection modal and return selected ship IDs */
 export function showSquadSelection(
   state: CampaignState,
   contract: Contract,
 ): Promise<SquadSelectionResult> {
-  return new Promise((resolve) => {
-    // Find commander ship
-    const commanderShip = state.ships.find(
-      (s) => s.pilot?.id === state.commanderId,
-    );
-    if (!commanderShip) {
-      // No commander, shouldn't happen but handle gracefully
-      resolve({ confirmed: false, deployedShipIds: [] });
-      return;
+  // Find commander ship
+  const commanderShip = state.ships.find(
+    (s) => s.pilot?.id === state.commanderId,
+  );
+  if (!commanderShip) {
+    // No commander, shouldn't happen but handle gracefully
+    return Promise.resolve({ confirmed: false, deployedShipIds: [] });
+  }
+
+  // Initialize selection: all ships with pilots, up to MAX_DEPLOYMENT
+  const initialSelectedIds = state.ships
+    .filter((s) => s.pilot !== null)
+    .slice(0, MAX_DEPLOYMENT)
+    .map((s) => s.id);
+
+  // Ensure commander is in selection
+  if (!initialSelectedIds.includes(commanderShip.id)) {
+    initialSelectedIds.unshift(commanderShip.id);
+    if (initialSelectedIds.length > MAX_DEPLOYMENT) {
+      initialSelectedIds.pop();
     }
+  }
 
-    // Initialize selection: commander always selected, all wingmen selected by default
-    const selectedIds = new Set<string>(
-      state.ships
-        .filter((s) => s.pilot !== null)
-        .slice(0, MAX_DEPLOYMENT)
-        .map((s) => s.id),
-    );
+  const initialState: SquadState = {
+    selectedIds: initialSelectedIds,
+  };
 
-    // Ensure commander is selected
-    selectedIds.add(commanderShip.id);
-
-    // Create container
-    const container = document.createElement('div');
-    container.innerHTML = renderModal(state, contract, selectedIds);
-    document.body.appendChild(container);
-
-    // Focus management
-    const modal = container.querySelector('.squad-selection-modal');
-    if (modal instanceof HTMLElement) {
-      modal.focus();
-    }
-
-    /** Update UI without full re-render to avoid flash */
-    const updateUI = () => {
-      // Update each ship card's classes
-      container.querySelectorAll('.squad-ship-card').forEach((card) => {
-        const el = card as HTMLElement;
-        const shipId = el.dataset.shipId;
-        if (!shipId) return;
-
-        const isSelected = selectedIds.has(shipId);
-        el.classList.toggle('selected', isSelected);
-        el.classList.toggle('unselected', !isSelected);
-        el.setAttribute('aria-checked', String(isSelected));
-      });
-
-      // Update capacity bar segments
-      const segments = container.querySelectorAll('.capacity-segment');
-      segments.forEach((seg, i) => {
-        seg.classList.toggle('filled', i < selectedIds.size);
-      });
-
-      // Update capacity label
-      const currentEl = container.querySelector('.capacity-current');
-      if (currentEl) {
-        currentEl.textContent = String(selectedIds.size);
-      }
-
-      // Update capacity bar aria
-      const capacityBar = container.querySelector('.capacity-bar');
-      if (capacityBar) {
-        capacityBar.setAttribute('aria-valuenow', String(selectedIds.size));
-      }
-
-      // Update launch button
-      const launchBtn = container.querySelector(
-        '#btn-squad-launch',
-      ) as HTMLButtonElement;
-      if (launchBtn) {
-        launchBtn.disabled = selectedIds.size === 0;
-      }
-    };
-
-    /** Handle ship card click */
-    const handleCardClick = (shipId: string) => {
-      // Don't allow deselecting commander
-      if (commanderShip.id === shipId) return;
-
-      if (selectedIds.has(shipId)) {
-        selectedIds.delete(shipId);
-      } else if (selectedIds.size < MAX_DEPLOYMENT) {
-        selectedIds.add(shipId);
-      }
-
-      updateUI();
-    };
-
-    /** Cleanup event listeners */
-    const cleanup = () => {
-      document.removeEventListener('keydown', handleKeydown);
-      container.remove();
-    };
-
-    /** Handle cancel */
-    const handleCancel = () => {
-      cleanup();
-      resolve({ confirmed: false, deployedShipIds: [] });
-    };
-
-    /** Handle launch */
-    const handleLaunch = () => {
-      cleanup();
-      resolve({
-        confirmed: true,
-        deployedShipIds: Array.from(selectedIds),
-      });
-    };
-
-    /** Handle keyboard */
-    const handleKeydown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        handleCancel();
-      }
-    };
-
-    /** Bind all event handlers */
-    const bindEvents = () => {
-      // Ship card clicks
-      container.querySelectorAll('.squad-ship-card').forEach((card) => {
-        const el = card as HTMLElement;
-        const shipId = el.dataset.shipId;
-        if (!shipId) return;
-
-        el.addEventListener('click', () => handleCardClick(shipId));
-        el.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            handleCardClick(shipId);
-          }
-        });
-      });
-
-      // Cancel button
-      const cancelBtn = container.querySelector('#btn-squad-cancel');
-      cancelBtn?.addEventListener('click', handleCancel);
-
-      // Launch button
-      const launchBtn = container.querySelector('#btn-squad-launch');
-      launchBtn?.addEventListener('click', handleLaunch);
-
-      // Keyboard handler
-      document.addEventListener('keydown', handleKeydown);
-    };
-
-    // Initial bind
-    bindEvents();
-  });
+  return showModal<SquadState, SquadProps, SquadSelectionResult>(
+    SquadSelectionScreen,
+    initialState,
+    {
+      campaignState: state,
+      contract,
+      commanderShipId: commanderShip.id,
+    },
+  );
 }

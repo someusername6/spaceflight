@@ -17,10 +17,16 @@ import {
   type SaveMetadata,
 } from '../../campaign/save-system';
 import type { CampaignState } from '../../campaign/types';
+import {
+  createScreen,
+  type Screen,
+  type ScreenAPI,
+  type ScreenHandle,
+} from '../framework/screen';
 import { escapeHtml } from '../utils';
 
 /** Title screen callbacks */
-export interface TitleScreenCallbacks {
+export interface TitleScreenProps {
   onNewGame: () => void;
   onContinue: (state: CampaignState, slot: number) => void;
   onSettings: () => void;
@@ -30,20 +36,11 @@ export interface TitleScreenCallbacks {
 type TitleView = 'main' | 'saves' | 'confirm-delete' | 'error';
 
 /** Title screen UI state */
-interface TitleUIState {
+interface TitleState {
   view: TitleView;
   deleteSlot: number | null;
   errorMessage: string | null;
 }
-
-let uiState: TitleUIState = {
-  view: 'main',
-  deleteSlot: null,
-  errorMessage: null,
-};
-
-/** Cleanup function for keyboard handler */
-let keyboardCleanup: (() => void) | null = null;
 
 /** Render a save slot card */
 function renderSaveSlot(metadata: SaveMetadata | null, index: number): string {
@@ -176,165 +173,165 @@ function renderMainView(): string {
   `;
 }
 
-/** Render the title screen */
+/** Title screen component */
+const TitleScreenComponent: Screen<TitleState, TitleScreenProps> = {
+  render(state, _props) {
+    let content: string;
+
+    switch (state.view) {
+      case 'main':
+        content = renderMainView();
+        break;
+      case 'saves':
+        content = renderSavesView();
+        break;
+      case 'confirm-delete':
+        content = renderConfirmDeleteView(state.deleteSlot ?? 1);
+        break;
+      case 'error':
+        content = renderErrorView(state.errorMessage ?? 'An error occurred.');
+        break;
+    }
+
+    return `
+      <div class="title-screen">
+        ${content}
+      </div>
+    `;
+  },
+
+  bind(api: ScreenAPI<TitleState>, props: TitleScreenProps) {
+    // Main menu buttons
+    api.on('#btn-new-game', 'click', () => {
+      props.onNewGame();
+    });
+
+    api.on('#btn-continue', 'click', () => {
+      api.setState({ view: 'saves' });
+    });
+
+    api.on('#btn-settings', 'click', () => {
+      props.onSettings();
+    });
+
+    // Save view buttons
+    api.on('#btn-back-to-title', 'click', () => {
+      api.setState({ view: 'main' });
+    });
+
+    // Load buttons
+    api.on('.btn-load', 'click', (_e, el) => {
+      const slot = parseInt(el.dataset.slot ?? '0', 10);
+      if (slot > 0) {
+        const loadedState = loadGame(slot);
+        if (loadedState) {
+          api.setState({ view: 'main' });
+          props.onContinue(loadedState, slot);
+        } else {
+          api.setState({
+            errorMessage: `Failed to load save from Slot ${slot}. The save data may be corrupted.`,
+            view: 'error',
+          });
+        }
+      }
+    });
+
+    // Error OK button
+    api.on('#btn-error-ok', 'click', () => {
+      api.setState({ errorMessage: null, view: 'saves' });
+    });
+
+    // Delete buttons - show confirmation
+    api.on('.btn-delete', 'click', (_e, el) => {
+      const slot = parseInt(el.dataset.slot ?? '0', 10);
+      if (slot > 0) {
+        api.setState({ deleteSlot: slot, view: 'confirm-delete' });
+      }
+    });
+
+    // Confirm cancel button
+    api.on('#btn-confirm-cancel', 'click', () => {
+      api.setState({ view: 'saves', deleteSlot: null });
+    });
+
+    // Confirm delete button
+    api.on('#btn-confirm-delete', 'click', () => {
+      const currentState = api.getState();
+      if (currentState.deleteSlot) {
+        deleteSave(currentState.deleteSlot);
+        api.setState({ deleteSlot: null, view: 'saves' });
+      }
+    });
+
+    // Keyboard navigation
+    api.onGlobal('keydown', (e) => {
+      if ((e as KeyboardEvent).code === 'Escape') {
+        e.preventDefault();
+        const currentState = api.getState();
+        if (currentState.view === 'saves') {
+          api.setState({ view: 'main' });
+        } else if (currentState.view === 'confirm-delete') {
+          api.setState({ view: 'saves', deleteSlot: null });
+        } else if (currentState.view === 'error') {
+          api.setState({ errorMessage: null, view: 'saves' });
+        }
+      }
+    });
+  },
+};
+
+/** Screen handle for external control */
+let screenHandle: ScreenHandle<TitleState, TitleScreenProps> | null = null;
+
+/** Render and bind the title screen */
 export function renderTitleScreen(element: HTMLElement): void {
-  let content: string;
-
-  switch (uiState.view) {
-    case 'main':
-      content = renderMainView();
-      break;
-    case 'saves':
-      content = renderSavesView();
-      break;
-    case 'confirm-delete':
-      content = renderConfirmDeleteView(uiState.deleteSlot ?? 1);
-      break;
-    case 'error':
-      content = renderErrorView(uiState.errorMessage ?? 'An error occurred.');
-      break;
-  }
-
-  element.innerHTML = `
-    <div class="title-screen">
-      ${content}
-    </div>
-  `;
+  // This is called for initial render - actual binding happens in bindTitleScreen
+  // For backwards compatibility, we just set innerHTML here
+  const initialState: TitleState = {
+    view: 'main',
+    deleteSlot: null,
+    errorMessage: null,
+  };
+  element.innerHTML = TitleScreenComponent.render(initialState, {
+    onNewGame: () => {},
+    onContinue: () => {},
+    onSettings: () => {},
+  });
 }
 
 /** Bind title screen event handlers */
 export function bindTitleScreen(
   element: HTMLElement,
-  callbacks: TitleScreenCallbacks,
+  callbacks: TitleScreenProps,
 ): void {
-  const update = () => {
-    renderTitleScreen(element);
-    bindTitleScreen(element, callbacks);
-  };
+  // Clean up previous handle if exists
+  screenHandle?.destroy();
 
-  // Setup keyboard handler (only once)
-  if (!keyboardCleanup) {
-    const handleKeydown = (e: KeyboardEvent) => {
-      if (e.code === 'Escape') {
-        e.preventDefault();
-        if (uiState.view === 'saves') {
-          uiState.view = 'main';
-          update();
-        } else if (uiState.view === 'confirm-delete') {
-          uiState.view = 'saves';
-          uiState.deleteSlot = null;
-          update();
-        } else if (uiState.view === 'error') {
-          uiState.errorMessage = null;
-          uiState.view = 'saves';
-          update();
-        }
-        // 'main' view: Escape does nothing (nowhere to go back)
-      }
-    };
-
-    document.addEventListener('keydown', handleKeydown);
-    keyboardCleanup = () => {
-      document.removeEventListener('keydown', handleKeydown);
-    };
-  }
-
-  // Main menu buttons
-  const newGameBtn = element.querySelector('#btn-new-game');
-  newGameBtn?.addEventListener('click', () => {
-    callbacks.onNewGame();
-  });
-
-  const continueBtn = element.querySelector('#btn-continue');
-  continueBtn?.addEventListener('click', () => {
-    uiState.view = 'saves';
-    update();
-  });
-
-  const settingsBtn = element.querySelector('#btn-settings');
-  settingsBtn?.addEventListener('click', () => {
-    callbacks.onSettings();
-  });
-
-  // Save view buttons
-  const backBtn = element.querySelector('#btn-back-to-title');
-  backBtn?.addEventListener('click', () => {
-    uiState.view = 'main';
-    update();
-  });
-
-  // Load buttons
-  element.querySelectorAll('.btn-load').forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      const slot = parseInt((e.target as HTMLElement).dataset.slot ?? '0', 10);
-      if (slot > 0) {
-        const state = loadGame(slot);
-        if (state) {
-          uiState.view = 'main';
-          callbacks.onContinue(state, slot);
-        } else {
-          // Show error if load failed
-          uiState.errorMessage = `Failed to load save from Slot ${slot}. The save data may be corrupted.`;
-          uiState.view = 'error';
-          update();
-        }
-      }
-    });
-  });
-
-  // Error OK button
-  const errorOkBtn = element.querySelector('#btn-error-ok');
-  errorOkBtn?.addEventListener('click', () => {
-    uiState.errorMessage = null;
-    uiState.view = 'saves';
-    update();
-  });
-
-  // Delete buttons - show confirmation
-  element.querySelectorAll('.btn-delete').forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      const slot = parseInt((e.target as HTMLElement).dataset.slot ?? '0', 10);
-      if (slot > 0) {
-        uiState.deleteSlot = slot;
-        uiState.view = 'confirm-delete';
-        update();
-      }
-    });
-  });
-
-  // Confirm cancel button
-  const cancelBtn = element.querySelector('#btn-confirm-cancel');
-  cancelBtn?.addEventListener('click', () => {
-    uiState.view = 'saves';
-    uiState.deleteSlot = null;
-    update();
-  });
-
-  // Confirm delete button
-  const confirmDeleteBtn = element.querySelector('#btn-confirm-delete');
-  confirmDeleteBtn?.addEventListener('click', () => {
-    if (uiState.deleteSlot) {
-      deleteSave(uiState.deleteSlot);
-      uiState.deleteSlot = null;
-      uiState.view = 'saves';
-      update();
-    }
-  });
-}
-
-/** Reset title screen state (e.g., when returning from game) */
-export function resetTitleScreen(): void {
-  uiState = {
+  const initialState: TitleState = {
     view: 'main',
     deleteSlot: null,
     errorMessage: null,
   };
+
+  screenHandle = createScreen(
+    TitleScreenComponent,
+    element,
+    initialState,
+    callbacks,
+  );
+}
+
+/** Reset title screen state (e.g., when returning from game) */
+export function resetTitleScreen(): void {
+  screenHandle?.replaceState({
+    view: 'main',
+    deleteSlot: null,
+    errorMessage: null,
+  });
 }
 
 /** Cleanup title screen (remove keyboard handler) */
 export function cleanupTitleScreen(): void {
-  if (keyboardCleanup) {
-    keyboardCleanup();
-    keyboardCleanup = null;
-  }
+  screenHandle?.destroy();
+  screenHandle = null;
 }

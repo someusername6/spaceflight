@@ -2,16 +2,17 @@
  * Store UI - equipment shop for buying/selling ships, weapons, and ammo.
  */
 
-import { getResupplyStatus, storeResupplyAllShips } from '../../campaign/state';
+import { storeResupplyAllShips } from '../../campaign/state';
 import { convertScrapToShip } from '../../campaign/store';
 import type { CampaignState } from '../../campaign/types';
+import { bindNavBar, type NavDestination } from '../common/nav-bar';
 import {
-  bindNavBar,
-  type NavDestination,
-  renderNavBar,
-} from '../common/nav-bar';
+  createScreen,
+  type Screen,
+  type ScreenAPI,
+  type ScreenHandle,
+} from '../framework/screen';
 import { initShipConnectors } from '../ship/connectors';
-import { renderDetailPanel } from './detail';
 import {
   handleBulkBuy,
   handleBulkSell,
@@ -20,15 +21,26 @@ import {
   handleSell,
 } from './events';
 import {
-  getCategoryItems,
   getFirstVisibleCategory,
-  getItemPrice,
   isCategoryVisible,
   type StoreCategory,
 } from './render';
-import { renderStoreStorage } from './storage';
+import { renderStoreContent } from './store-content';
 
-/** Store UI state */
+/** Store screen state */
+interface StoreState {
+  selectedCategory: StoreCategory;
+  selectedItem: string | null;
+}
+
+/** Store screen props */
+interface StoreProps {
+  campaignState: CampaignState;
+  onNavigate: (destination: NavDestination) => void;
+  onStateUpdate: (newState: CampaignState) => void;
+}
+
+/** Legacy UI interface for backwards compatibility */
 export interface StoreUI {
   element: HTMLElement;
   state: CampaignState;
@@ -42,290 +54,180 @@ export type { NavDestination } from '../common/nav-bar';
 // Re-export types for external use
 export type { StoreCategory } from './render';
 
-/** Render a category tab if visible */
-function renderCategoryTab(
-  state: CampaignState,
-  selected: StoreCategory,
-  category: StoreCategory,
-  label: string,
-): string {
-  if (!isCategoryVisible(state, category)) return '';
-  const isSelected = selected === category;
-  return `<button class="btn ${isSelected ? 'btn-primary' : ''}" data-cat="${category}" role="tab" aria-selected="${isSelected}">${label}</button>`;
-}
+/** Store screen component */
+const StoreScreenComponent: Screen<StoreState, StoreProps> = {
+  render(state, props) {
+    // If current category is no longer visible, switch to first visible one
+    let category = state.selectedCategory;
+    if (!isCategoryVisible(props.campaignState, category)) {
+      category = getFirstVisibleCategory(props.campaignState) ?? 'ships';
+    }
 
-/** Render the resupply button (for categories bar) */
-function renderResupplyButton(state: CampaignState): string {
-  const resupply = getResupplyStatus(state);
+    return renderStoreContent(
+      category,
+      state.selectedItem,
+      props.campaignState,
+      props.onNavigate,
+    );
+  },
 
-  if (resupply.status === 'supplied') {
-    return `<span class="resupply-status">✓ Supplied</span>`;
-  }
+  bind(api: ScreenAPI<StoreState>, props: StoreProps) {
+    const state = api.getState();
+    const { campaignState, onNavigate, onStateUpdate } = props;
 
-  if (resupply.status === 'insufficient') {
-    return `<span class="resupply-status resupply-warning">⚠ Insufficient Supply</span>`;
-  }
+    // Bind navigation bar
+    const rootEl = document.querySelector('.campaign-page');
+    if (rootEl) {
+      bindNavBar(rootEl as HTMLElement, onNavigate);
+    }
 
-  const canAfford = state.credits >= resupply.cost;
-  const warningClass = resupply.hasShortages ? ' has-shortage' : '';
-
-  return `
-    <button class="btn btn-resupply-small${warningClass}" id="btn-resupply" ${canAfford ? '' : 'disabled'}>
-      Resupply (${resupply.cost} cr)${resupply.hasShortages ? ' ⚠' : ''}
-    </button>
-  `;
-}
-
-/** Render the store content */
-function renderStore(ui: StoreUI): string {
-  const items = getCategoryItems(
-    ui.selectedCategory,
-    ui.state.storeStock,
-    ui.state.storedScrap,
-  );
-  const selected = ui.selectedItem;
-  const isScrap = ui.selectedCategory === 'scrap';
-
-  const itemList = items
-    .map((item) => {
-      const isSelected = item.id === selected;
-      // For scrap, show sell price only (no stock - scrap comes from player storage)
-      if (isScrap) {
-        const sellPrice = getItemPrice(ui.selectedCategory, item.id, 'sell');
-        return `
-          <div class="store-item ${isSelected ? 'selected' : ''}" data-item="${item.id}" role="option" aria-selected="${isSelected}" tabindex="0">
-            <span class="item-name">${item.name}</span>
-            <span class="item-price sell-price" aria-label="Sell price: ${sellPrice} credits">${sellPrice} cr</span>
-          </div>
-        `;
-      }
-      const buyPrice = getItemPrice(ui.selectedCategory, item.id, 'buy');
-      const canAfford = ui.state.credits >= buyPrice;
-      return `
-        <div class="store-item ${isSelected ? 'selected' : ''}" data-item="${item.id}" role="option" aria-selected="${isSelected}" tabindex="0">
-          <span class="item-name">${item.name}</span>
-          <span class="item-stock" aria-label="${item.stock} in stock">×${item.stock}</span>
-          <span class="item-price ${canAfford ? '' : 'expensive'}" aria-label="Price: ${buyPrice} credits${canAfford ? '' : ', cannot afford'}">${buyPrice}&nbsp;cr</span>
-        </div>
-      `;
-    })
-    .join('');
-
-  // Detail panel for selected item
-  const detailPanel = renderDetailPanel(
-    ui.state,
-    ui.selectedCategory,
-    selected,
-    items,
-  );
-
-  const navBar = renderNavBar({
-    activeTab: 'store',
-    credits: ui.state.credits,
-    sector: ui.state.currentSector,
-    onNavigate: ui.onNavigate,
-  });
-
-  return `
-    <div class="campaign-page">
-      ${navBar}
-      <main class="store-screen" aria-label="Equipment Store">
-        <nav class="store-categories" aria-label="Store categories">
-          <div class="category-tabs" role="tablist" aria-label="Item categories">
-            ${renderCategoryTab(ui.state, ui.selectedCategory, 'ships', 'Ships')}
-            ${renderCategoryTab(ui.state, ui.selectedCategory, 'primaries', 'Primaries')}
-            ${renderCategoryTab(ui.state, ui.selectedCategory, 'secondaries', 'Missiles')}
-            ${renderCategoryTab(ui.state, ui.selectedCategory, 'ammo', 'Ammo')}
-            ${renderCategoryTab(ui.state, ui.selectedCategory, 'scrap', 'Scrap')}
-          </div>
-          <div class="category-actions">
-            ${renderResupplyButton(ui.state)}
-          </div>
-        </nav>
-        <div class="store-layout">
-          <aside class="store-list" role="listbox" aria-label="Available items">
-            ${itemList}
-          </aside>
-          <section class="store-details" aria-label="Item details">
-            ${detailPanel || '<div class="empty-state-panel" role="status">Select an item to view details</div>'}
-          </section>
-          ${renderStoreStorage(ui.state, ui.selectedCategory, ui.selectedItem)}
-        </div>
-      </main>
-    </div>
-  `;
-}
-
-/** Bind store event handlers */
-function bindStoreEvents(ui: StoreUI): void {
-  // Bind navigation bar
-  bindNavBar(ui.element, ui.onNavigate);
-
-  // Bind resupply button
-  const resupplyBtn = ui.element.querySelector('#btn-resupply');
-  if (resupplyBtn) {
-    resupplyBtn.addEventListener('click', () => {
-      const newState = storeResupplyAllShips(ui.state);
-      if (newState !== ui.state) {
-        ui.state = newState;
-        ui.onStateUpdate(newState);
-        renderAndBindStore(ui);
+    // Resupply button
+    api.on('#btn-resupply', 'click', () => {
+      const newState = storeResupplyAllShips(campaignState);
+      if (newState !== campaignState) {
+        onStateUpdate(newState);
       }
     });
-  }
 
-  // Category buttons
-  ui.element.querySelectorAll('[data-cat]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const cat = (btn as HTMLElement).dataset.cat as StoreCategory;
-      ui.selectedCategory = cat;
-      ui.selectedItem = null;
-      renderAndBindStore(ui);
+    // Category buttons
+    api.on('[data-cat]', 'click', (_e, el) => {
+      const cat = el.dataset.cat as StoreCategory;
+      api.setState({ selectedCategory: cat, selectedItem: null });
     });
-  });
 
-  // Item selection (store list)
-  ui.element.querySelectorAll('.store-item').forEach((item) => {
-    item.addEventListener('click', () => {
-      const itemId = (item as HTMLElement).dataset.item;
+    // Item selection (store list)
+    api.on('.store-item', 'click', (_e, el) => {
+      const itemId = el.dataset.item;
       if (itemId) {
-        ui.selectedItem = itemId === ui.selectedItem ? null : itemId;
-        renderAndBindStore(ui);
+        const currentState = api.getState();
+        api.setState({
+          selectedItem: itemId === currentState.selectedItem ? null : itemId,
+        });
       }
     });
-  });
 
-  // Storage item selection (synchronized with store)
-  ui.element.querySelectorAll('.storage-item').forEach((item) => {
-    item.addEventListener('click', () => {
-      const el = item as HTMLElement;
+    // Storage item selection (synchronized with store)
+    api.on('.storage-item', 'click', (_e, el) => {
       const category = el.dataset.category as StoreCategory;
       const itemId = el.dataset.item;
       if (category && itemId) {
-        // Switch to the correct category and select the item
-        ui.selectedCategory = category;
-        ui.selectedItem = itemId;
-        renderAndBindStore(ui);
+        api.setState({ selectedCategory: category, selectedItem: itemId });
       }
     });
-  });
 
-  // Buy button
-  const buyBtn = ui.element.querySelector('#btn-buy');
-  if (buyBtn && ui.selectedItem) {
-    const itemId = ui.selectedItem;
-    const category = ui.selectedCategory;
-    buyBtn.addEventListener('click', () => {
-      const newState = handleBuy(ui.state, category, itemId);
-      if (newState !== ui.state) {
-        ui.state = newState;
-        ui.onStateUpdate(newState);
-        renderAndBindStore(ui);
+    // Buy button
+    api.on('#btn-buy', 'click', () => {
+      const currentState = api.getState();
+      if (currentState.selectedItem) {
+        const newState = handleBuy(
+          campaignState,
+          currentState.selectedCategory,
+          currentState.selectedItem,
+        );
+        if (newState !== campaignState) {
+          onStateUpdate(newState);
+        }
       }
     });
-  }
 
-  // Sell button
-  const sellBtn = ui.element.querySelector('#btn-sell');
-  if (sellBtn && ui.selectedItem) {
-    const itemId = ui.selectedItem;
-    const category = ui.selectedCategory;
-    sellBtn.addEventListener('click', () => {
-      const newState = handleSell(ui.state, category, itemId);
-      if (newState !== ui.state) {
-        ui.state = newState;
-        ui.onStateUpdate(newState);
-        renderAndBindStore(ui);
+    // Sell button
+    api.on('#btn-sell', 'click', () => {
+      const currentState = api.getState();
+      if (currentState.selectedItem) {
+        const newState = handleSell(
+          campaignState,
+          currentState.selectedCategory,
+          currentState.selectedItem,
+        );
+        if (newState !== campaignState) {
+          onStateUpdate(newState);
+        }
       }
     });
-  }
 
-  // Bulk buy button (missiles ×10, ammo ×100)
-  const bulkBuyBtn = ui.element.querySelector('#btn-buy-bulk');
-  if (bulkBuyBtn && ui.selectedItem) {
-    const itemId = ui.selectedItem;
-    const category = ui.selectedCategory;
-    bulkBuyBtn.addEventListener('click', () => {
-      const newState = handleBulkBuy(ui.state, category, itemId);
-      if (newState !== ui.state) {
-        ui.state = newState;
-        ui.onStateUpdate(newState);
-        renderAndBindStore(ui);
+    // Bulk buy button (missiles ×10, ammo ×100)
+    api.on('#btn-buy-bulk', 'click', () => {
+      const currentState = api.getState();
+      if (currentState.selectedItem) {
+        const newState = handleBulkBuy(
+          campaignState,
+          currentState.selectedCategory,
+          currentState.selectedItem,
+        );
+        if (newState !== campaignState) {
+          onStateUpdate(newState);
+        }
       }
     });
-  }
 
-  // Bulk sell button (missiles ×10, ammo ×100, scrap ×10)
-  const bulkSellBtn = ui.element.querySelector('#btn-sell-bulk');
-  if (bulkSellBtn && ui.selectedItem) {
-    const itemId = ui.selectedItem;
-    const category = ui.selectedCategory;
-    bulkSellBtn.addEventListener('click', () => {
-      const newState = handleBulkSell(ui.state, category, itemId);
-      if (newState !== ui.state) {
-        ui.state = newState;
-        ui.onStateUpdate(newState);
-        renderAndBindStore(ui);
+    // Bulk sell button (missiles ×10, ammo ×100, scrap ×10)
+    api.on('#btn-sell-bulk', 'click', () => {
+      const currentState = api.getState();
+      if (currentState.selectedItem) {
+        const newState = handleBulkSell(
+          campaignState,
+          currentState.selectedCategory,
+          currentState.selectedItem,
+        );
+        if (newState !== campaignState) {
+          onStateUpdate(newState);
+        }
       }
     });
-  }
 
-  // Bulk sell ×100 button (scrap only)
-  const bulkSell100Btn = ui.element.querySelector('#btn-sell-bulk-100');
-  if (bulkSell100Btn && ui.selectedItem) {
-    const itemId = ui.selectedItem;
-    const category = ui.selectedCategory;
-    bulkSell100Btn.addEventListener('click', () => {
-      const newState = handleBulkSell100(ui.state, category, itemId);
-      if (newState !== ui.state) {
-        ui.state = newState;
-        ui.onStateUpdate(newState);
-        renderAndBindStore(ui);
+    // Bulk sell ×100 button (scrap only)
+    api.on('#btn-sell-bulk-100', 'click', () => {
+      const currentState = api.getState();
+      if (currentState.selectedItem) {
+        const newState = handleBulkSell100(
+          campaignState,
+          currentState.selectedCategory,
+          currentState.selectedItem,
+        );
+        if (newState !== campaignState) {
+          onStateUpdate(newState);
+        }
       }
     });
-  }
 
-  // Convert scrap to ship button
-  const convertBtn = ui.element.querySelector('#btn-convert');
-  if (convertBtn && ui.selectedItem && ui.selectedCategory === 'scrap') {
-    const shipClass = ui.selectedItem;
-    convertBtn.addEventListener('click', () => {
-      const newState = convertScrapToShip(ui.state, shipClass);
-      if (newState !== ui.state) {
-        ui.state = newState;
-        ui.onStateUpdate(newState);
-        renderAndBindStore(ui);
+    // Convert scrap to ship button
+    api.on('#btn-convert', 'click', () => {
+      const currentState = api.getState();
+      if (
+        currentState.selectedItem &&
+        currentState.selectedCategory === 'scrap'
+      ) {
+        const newState = convertScrapToShip(
+          campaignState,
+          currentState.selectedItem,
+        );
+        if (newState !== campaignState) {
+          onStateUpdate(newState);
+        }
       }
     });
-  }
-}
 
-/** Internal: render and bind */
-function renderAndBindStore(ui: StoreUI): void {
-  // If current category is no longer visible, switch to first visible one
-  if (!isCategoryVisible(ui.state, ui.selectedCategory)) {
-    const firstVisible = getFirstVisibleCategory(ui.state);
-    if (firstVisible) {
-      ui.selectedCategory = firstVisible;
-      ui.selectedItem = null;
+    // Ship and scrap previews display schematic connector lines from slots to ship
+    // hardpoints. These require manual initialization after render since the SVG
+    // overlay needs to measure element positions.
+    if (
+      state.selectedCategory === 'ships' ||
+      state.selectedCategory === 'scrap'
+    ) {
+      const previewContainer = document.querySelector(
+        '.ship-preview-container, .scrap-preview-container',
+      );
+      if (previewContainer) {
+        initShipConnectors(previewContainer);
+      }
     }
-  }
+  },
+};
 
-  ui.element.innerHTML = renderStore(ui);
-  bindStoreEvents(ui);
-
-  // Ship and scrap previews display schematic connector lines from slots to ship
-  // hardpoints. These require manual initialization after render since the SVG
-  // overlay needs to measure element positions.
-  if (ui.selectedCategory === 'ships' || ui.selectedCategory === 'scrap') {
-    const previewContainer = ui.element.querySelector(
-      '.ship-preview-container, .scrap-preview-container',
-    );
-    if (previewContainer) {
-      initShipConnectors(previewContainer);
-    }
-  }
-}
+/** Screen handle for external control */
+let screenHandle: ScreenHandle<StoreState, StoreProps> | null = null;
+/** Store current props for state updates */
+let currentProps: StoreProps | null = null;
 
 /** Create store UI */
 export function createStoreUI(
@@ -334,10 +236,42 @@ export function createStoreUI(
   onNavigate: (destination: NavDestination) => void,
   onStateUpdate: (newState: CampaignState) => void,
 ): StoreUI {
+  // Clean up previous handle
+  screenHandle?.destroy();
+
   // Start with first visible category (or ships as fallback if somehow none visible)
   const initialCategory = getFirstVisibleCategory(state) ?? 'ships';
 
-  const ui: StoreUI = {
+  const initialState: StoreState = {
+    selectedCategory: initialCategory,
+    selectedItem: null,
+  };
+
+  // Wrap onStateUpdate to also update the screen props
+  const wrappedOnStateUpdate = (newCampaignState: CampaignState) => {
+    onStateUpdate(newCampaignState);
+    // Update props for the screen
+    if (screenHandle && currentProps) {
+      currentProps = { ...currentProps, campaignState: newCampaignState };
+      screenHandle.setProps(currentProps);
+    }
+  };
+
+  currentProps = {
+    campaignState: state,
+    onNavigate,
+    onStateUpdate: wrappedOnStateUpdate,
+  };
+
+  screenHandle = createScreen(
+    StoreScreenComponent,
+    element,
+    initialState,
+    currentProps,
+  );
+
+  // Return legacy UI object for compatibility
+  return {
     element,
     state,
     selectedCategory: initialCategory,
@@ -345,7 +279,4 @@ export function createStoreUI(
     onNavigate,
     onStateUpdate,
   };
-
-  renderAndBindStore(ui);
-  return ui;
 }

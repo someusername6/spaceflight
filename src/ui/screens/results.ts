@@ -11,15 +11,37 @@ import type { SalvageResult } from '../../campaign/salvage';
 import type { CampaignState, Contract } from '../../campaign/types';
 import type { World } from '../../core/types';
 import {
+  createScreen,
+  type Screen,
+  type ScreenAPI,
+  type ScreenHandle,
+} from '../framework/screen';
+import {
   collectDebriefData,
   type MissionDebriefData,
   renderDebrief,
 } from './debrief';
+import { renderSalvageSection } from './results-salvage';
 
 /** Results tab type */
 export type ResultsTab = 'debrief' | 'rewards';
 
-/** Results UI state */
+/** Results screen state */
+interface ResultsState {
+  selectedTab: ResultsTab;
+}
+
+/** Results screen props */
+interface ResultsProps {
+  victory: boolean;
+  contract: Contract | null;
+  campaignState: CampaignState;
+  debriefData: MissionDebriefData | null;
+  salvage: SalvageResult | null;
+  onContinue: () => void;
+}
+
+/** Legacy UI interface for backwards compatibility */
 export interface ResultsUI {
   element: HTMLElement;
   onContinue: () => void;
@@ -113,154 +135,65 @@ function renderRewards(
   `;
 }
 
-/** Render salvage section within rewards */
-function renderSalvageSection(salvage: SalvageResult | null): string {
-  if (!salvage) {
+/** Results screen component */
+const ResultsScreenComponent: Screen<ResultsState, ResultsProps> = {
+  render(state, props) {
+    const { victory, contract, campaignState, debriefData, salvage } = props;
+
+    const tabBar = renderResultsTabBar(
+      state.selectedTab,
+      campaignState.credits,
+      campaignState.currentSector,
+    );
+
+    // Tab content
+    const tabContent =
+      state.selectedTab === 'debrief'
+        ? debriefData
+          ? renderDebrief(debriefData)
+          : '<div class="empty-state-panel">No debrief data available</div>'
+        : renderRewards(victory, contract, salvage);
+
+    const buttonText = victory ? 'Return to Hangar' : 'Continue';
+
     return `
-      <div class="rewards-salvage">
-        <div class="rewards-section-header">
-          <span class="rewards-section-icon" aria-hidden="true">◈</span>
-          <span class="rewards-section-title">SALVAGE</span>
-        </div>
-        <div class="salvage-empty">No salvage collected</div>
+      <div class="results-screen">
+        ${tabBar}
+        <main class="results-main" aria-label="Mission results">
+          <div class="results-content-scroll">
+            ${tabContent}
+          </div>
+        </main>
+        <footer class="results-footer">
+          <button class="btn btn-xl btn-primary" id="btn-continue">
+            ${buttonText}
+          </button>
+        </footer>
       </div>
     `;
-  }
+  },
 
-  const scrapEntries = Object.entries(salvage.scrap);
-  const hasScrap = scrapEntries.length > 0;
-  const hasWeapons = salvage.weapons.length > 0;
-  const hasAmmo = salvage.ammo.length > 0;
+  bind(api: ScreenAPI<ResultsState>, props: ResultsProps) {
+    // Continue button
+    api.on('#btn-continue', 'click', () => {
+      props.onContinue();
+    });
 
-  if (!hasScrap && !hasWeapons && !hasAmmo) {
-    return `
-      <div class="rewards-salvage">
-        <div class="rewards-section-header">
-          <span class="rewards-section-icon" aria-hidden="true">◈</span>
-          <span class="rewards-section-title">SALVAGE</span>
-        </div>
-        <div class="salvage-empty">No salvage collected</div>
-      </div>
-    `;
-  }
+    // Tab buttons
+    api.on('.results-tab', 'click', (_e, el) => {
+      const tab = el.dataset.tab as ResultsTab;
+      if (tab) {
+        const state = api.getState();
+        if (tab !== state.selectedTab) {
+          api.setState({ selectedTab: tab });
+        }
+      }
+    });
+  },
+};
 
-  // Render scrap
-  const scrapHtml = hasScrap
-    ? `
-      <div class="salvage-category">
-        <h3>Scrap</h3>
-        ${scrapEntries
-          .map(
-            ([shipClass, count]) => `
-          <div class="salvage-item">
-            <span class="item-name">${shipClass.charAt(0).toUpperCase() + shipClass.slice(1)} Scrap</span>
-            <span class="item-count">×${count}</span>
-          </div>
-        `,
-          )
-          .join('')}
-      </div>
-    `
-    : '';
-
-  // Render weapons
-  const weaponHtml = hasWeapons
-    ? `
-      <div class="salvage-category">
-        <h3>Weapons</h3>
-        ${salvage.weapons
-          .map(
-            (w) => `
-          <div class="salvage-item">
-            <span class="item-name">${w.weaponType}</span>
-            <span class="item-category">${w.category}</span>
-            ${w.count > 1 ? `<span class="item-count">×${w.count}</span>` : ''}
-          </div>
-        `,
-          )
-          .join('')}
-      </div>
-    `
-    : '';
-
-  // Render ammo
-  const ammoHtml = hasAmmo
-    ? `
-      <div class="salvage-category">
-        <h3>Ammo</h3>
-        ${salvage.ammo
-          .map(
-            (a) => `
-          <div class="salvage-item">
-            <span class="item-name">${a.weaponType} Ammo</span>
-            <span class="item-count">×${a.count}</span>
-          </div>
-        `,
-          )
-          .join('')}
-      </div>
-    `
-    : '';
-
-  const totalValueStr = Math.floor(salvage.totalValue).toLocaleString();
-
-  return `
-    <div class="rewards-salvage">
-      <div class="rewards-section-header">
-        <span class="rewards-section-icon" aria-hidden="true">◈</span>
-        <span class="rewards-section-title">SALVAGE</span>
-        <span class="rewards-section-value">Est. Value: ~${totalValueStr} cr</span>
-      </div>
-      <div class="salvage-items">
-        ${scrapHtml}
-        ${weaponHtml}
-        ${ammoHtml}
-      </div>
-    </div>
-  `;
-}
-
-/** Render results screen */
-function renderResults(
-  victory: boolean,
-  contract: Contract | null,
-  state: CampaignState,
-  debriefData: MissionDebriefData | null,
-  salvage: SalvageResult | null,
-  selectedTab: ResultsTab,
-): string {
-  const tabBar = renderResultsTabBar(
-    selectedTab,
-    state.credits,
-    state.currentSector,
-  );
-
-  // Tab content
-  const tabContent =
-    selectedTab === 'debrief'
-      ? debriefData
-        ? renderDebrief(debriefData)
-        : '<div class="empty-state-panel">No debrief data available</div>'
-      : renderRewards(victory, contract, salvage);
-
-  const buttonText = victory ? 'Return to Hangar' : 'Continue';
-
-  return `
-    <div class="results-screen">
-      ${tabBar}
-      <main class="results-main" aria-label="Mission results">
-        <div class="results-content-scroll">
-          ${tabContent}
-        </div>
-      </main>
-      <footer class="results-footer">
-        <button class="btn btn-xl btn-primary" id="btn-continue">
-          ${buttonText}
-        </button>
-      </footer>
-    </div>
-  `;
-}
+/** Screen handle for external control */
+let resultsScreenHandle: ScreenHandle<ResultsState, ResultsProps> | null = null;
 
 /** Create results UI */
 export function createResultsUI(
@@ -272,75 +205,88 @@ export function createResultsUI(
   world?: World,
   salvage?: SalvageResult | null,
 ): ResultsUI {
-  const debriefData = world ? collectDebriefData(world) : null;
+  // Clean up previous handle
+  resultsScreenHandle?.destroy();
 
-  const ui: ResultsUI = {
+  const debriefData = world ? collectDebriefData(world) : null;
+  const initialState: ResultsState = { selectedTab: 'debrief' };
+  const props: ResultsProps = {
+    victory,
+    contract,
+    campaignState: state,
+    debriefData,
+    salvage: salvage ?? null,
+    onContinue,
+  };
+
+  resultsScreenHandle = createScreen(
+    ResultsScreenComponent,
+    element,
+    initialState,
+    props,
+  );
+
+  // Return legacy UI object for compatibility
+  return {
     element,
     onContinue,
     selectedTab: 'debrief',
   };
-
-  // Internal render and bind
-  const renderAndBind = () => {
-    element.innerHTML = renderResults(
-      victory,
-      contract,
-      state,
-      debriefData,
-      salvage ?? null,
-      ui.selectedTab,
-    );
-
-    // Bind continue button
-    const btn = element.querySelector('#btn-continue');
-    if (btn) {
-      btn.addEventListener('click', onContinue);
-    }
-
-    // Bind tab buttons
-    element.querySelectorAll('.results-tab').forEach((tabBtn) => {
-      tabBtn.addEventListener('click', () => {
-        const tab = (tabBtn as HTMLElement).dataset.tab as ResultsTab;
-        if (tab && tab !== ui.selectedTab) {
-          ui.selectedTab = tab;
-          renderAndBind();
-        }
-      });
-    });
-  };
-
-  renderAndBind();
-  return ui;
 }
 
-/** Render game over screen */
-function renderGameOver(state: CampaignState): string {
-  return `
-    <div class="results-screen game-over-screen">
-      <div class="game-over-content">
-        <h1 class="game-over-title">GAME OVER</h1>
-        <div class="game-over-stats">
-          <div class="game-over-message">Your ship was destroyed.</div>
-          <div class="game-over-stat">
-            <span class="stat-label">Final Credits</span>
-            <span class="stat-value">${state.credits.toLocaleString()}</span>
+/** Game over state (empty - no interactive state) */
+interface GameOverState {
+  _placeholder: boolean;
+}
+
+/** Game over props */
+interface GameOverProps {
+  campaignState: CampaignState;
+  onRestart: () => void;
+}
+
+/** Game over screen component */
+const GameOverScreenComponent: Screen<GameOverState, GameOverProps> = {
+  render(_state, props) {
+    const { campaignState } = props;
+
+    return `
+      <div class="results-screen game-over-screen">
+        <div class="game-over-content">
+          <h1 class="game-over-title">GAME OVER</h1>
+          <div class="game-over-stats">
+            <div class="game-over-message">Your ship was destroyed.</div>
+            <div class="game-over-stat">
+              <span class="stat-label">Final Credits</span>
+              <span class="stat-value">${campaignState.credits.toLocaleString()}</span>
+            </div>
+            <div class="game-over-stat">
+              <span class="stat-label">Missions Completed</span>
+              <span class="stat-value">${campaignState.missionCount}</span>
+            </div>
+            <div class="game-over-stat">
+              <span class="stat-label">Sector Reached</span>
+              <span class="stat-value">${campaignState.currentSector}</span>
+            </div>
           </div>
-          <div class="game-over-stat">
-            <span class="stat-label">Missions Completed</span>
-            <span class="stat-value">${state.missionCount}</span>
-          </div>
-          <div class="game-over-stat">
-            <span class="stat-label">Sector Reached</span>
-            <span class="stat-value">${state.currentSector}</span>
-          </div>
+          <button class="btn btn-xl btn-danger" id="btn-restart">
+            Start New Campaign
+          </button>
         </div>
-        <button class="btn btn-xl btn-danger" id="btn-restart">
-          Start New Campaign
-        </button>
       </div>
-    </div>
-  `;
-}
+    `;
+  },
+
+  bind(api: ScreenAPI<GameOverState>, props: GameOverProps) {
+    api.on('#btn-restart', 'click', () => {
+      props.onRestart();
+    });
+  },
+};
+
+/** Screen handle for game over */
+let gameOverScreenHandle: ScreenHandle<GameOverState, GameOverProps> | null =
+  null;
 
 /** Create game over UI */
 export function createGameOverUI(
@@ -348,11 +294,19 @@ export function createGameOverUI(
   state: CampaignState,
   onRestart: () => void,
 ): void {
-  element.innerHTML = renderGameOver(state);
+  // Clean up previous handle
+  gameOverScreenHandle?.destroy();
 
-  // Bind restart button
-  const btn = element.querySelector('#btn-restart');
-  if (btn) {
-    btn.addEventListener('click', onRestart);
-  }
+  const initialState: GameOverState = { _placeholder: true };
+  const props: GameOverProps = {
+    campaignState: state,
+    onRestart,
+  };
+
+  gameOverScreenHandle = createScreen(
+    GameOverScreenComponent,
+    element,
+    initialState,
+    props,
+  );
 }

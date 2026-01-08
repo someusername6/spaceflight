@@ -28,7 +28,7 @@ export interface SquadronUIState {
   state: CampaignState;
   selection: ListSelection;
   activeTab: ViewerTab;
-  onStateUpdate?: (newState: CampaignState) => void;
+  onStateUpdate?: ((newState: CampaignState) => void) | undefined;
   onNavigate: (destination: 'squadron' | 'store' | 'contracts') => void;
 }
 

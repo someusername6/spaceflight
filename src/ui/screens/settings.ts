@@ -19,6 +19,12 @@ import {
   saveKeyBindings,
   setKeyBinding,
 } from '../../input/key-bindings';
+import {
+  createScreen,
+  type Screen,
+  type ScreenAPI,
+  type ScreenHandle,
+} from '../framework/screen';
 
 /** Settings screen callbacks */
 export interface SettingsScreenCallbacks {
@@ -26,25 +32,21 @@ export interface SettingsScreenCallbacks {
 }
 
 /** Settings UI state */
-interface SettingsUIState {
+interface SettingsState {
   listeningAction: GameAction | null;
-  listeningCleanup: (() => void) | null;
   showResetConfirm: boolean;
 }
 
-const uiState: SettingsUIState = {
-  listeningAction: null,
-  listeningCleanup: null,
-  showResetConfirm: false,
-};
-
 /** Render a single key binding row */
-function renderBindingRow(action: GameAction): string {
+function renderBindingRow(
+  action: GameAction,
+  listeningAction: GameAction | null,
+): string {
   const bindings = getKeyBindings();
   const currentKey = bindings[action];
   const displayName = ACTION_DISPLAY_NAMES[action];
   const keyLabel = getKeyDisplayName(currentKey);
-  const isListening = uiState.listeningAction === action;
+  const isListening = listeningAction === action;
   const isDefault = currentKey === DEFAULT_BINDINGS[action];
 
   return `
@@ -71,12 +73,16 @@ function renderBindingRow(action: GameAction): string {
 }
 
 /** Render a category section */
-function renderCategory(name: string, actions: GameAction[]): string {
+function renderCategory(
+  name: string,
+  actions: GameAction[],
+  listeningAction: GameAction | null,
+): string {
   return `
     <div class="settings-category">
       <h3 class="category-header">${name}</h3>
       <div class="category-bindings">
-        ${actions.map((action) => renderBindingRow(action)).join('')}
+        ${actions.map((action) => renderBindingRow(action, listeningAction)).join('')}
       </div>
     </div>
   `;
@@ -100,63 +106,122 @@ function renderResetConfirmView(): string {
   `;
 }
 
-/** Render the settings screen */
-export function renderSettingsScreen(element: HTMLElement): void {
-  // Show confirmation view if active
-  if (uiState.showResetConfirm) {
-    element.innerHTML = `
-      <div class="settings-screen">
-        ${renderResetConfirmView()}
-      </div>
-    `;
-    return;
-  }
-
+/** Render main settings view */
+function renderMainView(listeningAction: GameAction | null): string {
   const categories = Object.entries(ACTION_CATEGORIES)
-    .map(([name, actions]) => renderCategory(name, actions))
+    .map(([name, actions]) => renderCategory(name, actions, listeningAction))
     .join('');
 
-  element.innerHTML = `
-    <div class="settings-screen">
-      <div class="settings-container">
-        <header class="panel-header">
-          <h2>Settings</h2>
-        </header>
+  return `
+    <div class="settings-container">
+      <header class="panel-header">
+        <h2>Settings</h2>
+      </header>
 
-        <div class="settings-content">
-          <div class="settings-section">
-            <div class="section-header">
-              <h3>Key Bindings</h3>
-              <button class="btn btn-small" id="btn-reset-all">
-                Reset All to Defaults
-              </button>
-            </div>
-            <div class="bindings-list">
-              ${categories}
-            </div>
+      <div class="settings-content">
+        <div class="settings-section">
+          <div class="section-header">
+            <h3>Key Bindings</h3>
+            <button class="btn btn-small" id="btn-reset-all">
+              Reset All to Defaults
+            </button>
+          </div>
+          <div class="bindings-list">
+            ${categories}
           </div>
         </div>
-
-        <footer class="settings-footer">
-          <button class="btn btn-large" id="btn-settings-back">
-            Back
-          </button>
-        </footer>
       </div>
+
+      <footer class="settings-footer">
+        <button class="btn btn-large" id="btn-settings-back">
+          Back
+        </button>
+      </footer>
     </div>
   `;
 }
 
-/** Start listening for a key press to rebind an action */
-function startListening(
-  action: GameAction,
-  element: HTMLElement,
-  callbacks: SettingsScreenCallbacks,
-): void {
-  // Cancel any existing listener
-  cancelListening();
+/** Active key listener cleanup (stored outside state for capture phase handling) */
+let activeKeyListener: ((e: KeyboardEvent) => void) | null = null;
 
-  uiState.listeningAction = action;
+/** Settings screen component */
+const SettingsScreenComponent: Screen<SettingsState, SettingsScreenCallbacks> =
+  {
+    render(state, _props) {
+      let content: string;
+
+      if (state.showResetConfirm) {
+        content = renderResetConfirmView();
+      } else {
+        content = renderMainView(state.listeningAction);
+      }
+
+      return `
+      <div class="settings-screen">
+        ${content}
+      </div>
+    `;
+    },
+
+    bind(api: ScreenAPI<SettingsState>, props: SettingsScreenCallbacks) {
+      const state = api.getState();
+
+      // Back button
+      api.on('#btn-settings-back', 'click', () => {
+        cleanupKeyListener();
+        props.onBack();
+      });
+
+      // Reset all button - show confirmation
+      api.on('#btn-reset-all', 'click', () => {
+        api.setState({ showResetConfirm: true });
+      });
+
+      // Reset confirmation - cancel
+      api.on('#btn-reset-cancel', 'click', () => {
+        api.setState({ showResetConfirm: false });
+      });
+
+      // Reset confirmation - confirm
+      api.on('#btn-reset-confirm', 'click', () => {
+        resetToDefaults();
+        api.setState({ showResetConfirm: false });
+      });
+
+      // Key binding buttons - start listening
+      api.on('.binding-key', 'click', (_e, el) => {
+        const action = el.dataset.action;
+        if (action && action in ACTION_DISPLAY_NAMES) {
+          startListening(api, action as GameAction);
+        }
+      });
+
+      // Reset individual key buttons
+      api.on('.btn-reset-key', 'click', (_e, el) => {
+        const action = el.dataset.action;
+        if (action && action in DEFAULT_BINDINGS) {
+          setKeyBinding(
+            action as GameAction,
+            DEFAULT_BINDINGS[action as GameAction],
+          );
+          saveKeyBindings();
+          api.setState({}); // Re-render to show updated binding
+        }
+      });
+
+      // If we're in listening mode, set up the capture-phase listener
+      if (state.listeningAction) {
+        setupKeyListener(api, state.listeningAction);
+      }
+    },
+  };
+
+/** Set up capture-phase key listener for rebinding */
+function setupKeyListener(
+  api: ScreenAPI<SettingsState>,
+  action: GameAction,
+): void {
+  cleanupKeyListener();
 
   const handleKeyDown = (e: KeyboardEvent) => {
     e.preventDefault();
@@ -164,9 +229,8 @@ function startListening(
 
     // Escape cancels rebinding
     if (e.code === 'Escape') {
-      cancelListening();
-      renderSettingsScreen(element);
-      bindSettingsScreen(element, callbacks);
+      cleanupKeyListener();
+      api.setState({ listeningAction: null });
       return;
     }
 
@@ -182,29 +246,45 @@ function startListening(
     setKeyBinding(action, e.code);
     saveKeyBindings();
 
-    cancelListening();
-    renderSettingsScreen(element);
-    bindSettingsScreen(element, callbacks);
+    cleanupKeyListener();
+    api.setState({ listeningAction: null });
   };
 
-  uiState.listeningCleanup = () => {
-    document.removeEventListener('keydown', handleKeyDown, true);
-  };
-
+  activeKeyListener = handleKeyDown;
   document.addEventListener('keydown', handleKeyDown, true);
-
-  // Update UI to show listening state
-  renderSettingsScreen(element);
-  bindSettingsScreen(element, callbacks);
 }
 
-/** Cancel key listening */
-function cancelListening(): void {
-  if (uiState.listeningCleanup) {
-    uiState.listeningCleanup();
-    uiState.listeningCleanup = null;
+/** Start listening for a key press to rebind an action */
+function startListening(
+  api: ScreenAPI<SettingsState>,
+  action: GameAction,
+): void {
+  cleanupKeyListener();
+  api.setState({ listeningAction: action });
+}
+
+/** Clean up the active key listener */
+function cleanupKeyListener(): void {
+  if (activeKeyListener) {
+    document.removeEventListener('keydown', activeKeyListener, true);
+    activeKeyListener = null;
   }
-  uiState.listeningAction = null;
+}
+
+/** Screen handle for external control */
+let screenHandle: ScreenHandle<SettingsState, SettingsScreenCallbacks> | null =
+  null;
+
+/** Render the settings screen */
+export function renderSettingsScreen(element: HTMLElement): void {
+  // For backwards compatibility, just set innerHTML with initial state
+  const initialState: SettingsState = {
+    listeningAction: null,
+    showResetConfirm: false,
+  };
+  element.innerHTML = SettingsScreenComponent.render(initialState, {
+    onBack: () => {},
+  });
 }
 
 /** Bind settings screen event handlers */
@@ -212,70 +292,28 @@ export function bindSettingsScreen(
   element: HTMLElement,
   callbacks: SettingsScreenCallbacks,
 ): void {
-  const update = () => {
-    renderSettingsScreen(element);
-    bindSettingsScreen(element, callbacks);
+  // Clean up previous handle if exists
+  screenHandle?.destroy();
+  cleanupKeyListener();
+
+  const initialState: SettingsState = {
+    listeningAction: null,
+    showResetConfirm: false,
   };
 
-  // Back button
-  const backBtn = element.querySelector('#btn-settings-back');
-  backBtn?.addEventListener('click', () => {
-    cancelListening();
-    callbacks.onBack();
-  });
-
-  // Reset all button - show confirmation
-  const resetAllBtn = element.querySelector('#btn-reset-all');
-  resetAllBtn?.addEventListener('click', () => {
-    uiState.showResetConfirm = true;
-    update();
-  });
-
-  // Reset confirmation - cancel
-  const resetCancelBtn = element.querySelector('#btn-reset-cancel');
-  resetCancelBtn?.addEventListener('click', () => {
-    uiState.showResetConfirm = false;
-    update();
-  });
-
-  // Reset confirmation - confirm
-  const resetConfirmBtn = element.querySelector('#btn-reset-confirm');
-  resetConfirmBtn?.addEventListener('click', () => {
-    resetToDefaults();
-    uiState.showResetConfirm = false;
-    update();
-  });
-
-  // Key binding buttons
-  element.querySelectorAll('.binding-key').forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      const action = (e.currentTarget as HTMLElement).dataset.action;
-      if (action && action in ACTION_DISPLAY_NAMES) {
-        startListening(action as GameAction, element, callbacks);
-      }
-    });
-  });
-
-  // Reset individual key buttons
-  element.querySelectorAll('.btn-reset-key').forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      const action = (e.currentTarget as HTMLElement).dataset.action;
-      if (action && action in DEFAULT_BINDINGS) {
-        setKeyBinding(
-          action as GameAction,
-          DEFAULT_BINDINGS[action as GameAction],
-        );
-        saveKeyBindings();
-        update();
-      }
-    });
-  });
+  screenHandle = createScreen(
+    SettingsScreenComponent,
+    element,
+    initialState,
+    callbacks,
+  );
 }
 
 /** Cleanup settings screen (cancel any listening and reset state) */
 export function cleanupSettingsScreen(): void {
-  cancelListening();
-  uiState.showResetConfirm = false;
+  cleanupKeyListener();
+  screenHandle?.destroy();
+  screenHandle = null;
 }
 
 /** Reset settings screen state (for returning to screen) */

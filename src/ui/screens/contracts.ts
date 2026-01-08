@@ -9,8 +9,27 @@ import {
   type NavDestination,
   renderNavBar,
 } from '../common/nav-bar';
+import {
+  createScreen,
+  type Screen,
+  type ScreenAPI,
+  type ScreenHandle,
+} from '../framework/screen';
 
-/** Contracts UI state */
+/** Contracts screen state */
+interface ContractsState {
+  selectedContractId: string | null;
+}
+
+/** Contracts screen props */
+interface ContractsProps {
+  campaignState: CampaignState;
+  contracts: Contract[];
+  onNavigate: (destination: NavDestination) => void;
+  onAccept: (contract: Contract) => void;
+}
+
+/** Legacy UI interface for backwards compatibility */
 export interface ContractsUI {
   element: HTMLElement;
   state: CampaignState;
@@ -235,43 +254,83 @@ function renderContractDetail(
   `;
 }
 
-/** Render contracts screen */
-function renderContracts(
-  state: CampaignState,
-  contracts: Contract[],
-  selectedContractId: string | null,
-  onNavigate: (destination: NavDestination) => void,
-): string {
-  const navBar = renderNavBar({
-    activeTab: 'contracts',
-    credits: state.credits,
-    sector: state.currentSector,
-    onNavigate,
-  });
+/** Contracts screen component */
+const ContractsScreenComponent: Screen<ContractsState, ContractsProps> = {
+  render(state, props) {
+    const { campaignState, contracts, onNavigate } = props;
 
-  const selectedContract = selectedContractId
-    ? contracts.find((c) => c.id === selectedContractId)
-    : null;
+    const navBar = renderNavBar({
+      activeTab: 'contracts',
+      credits: campaignState.credits,
+      sector: campaignState.currentSector,
+      onNavigate,
+    });
 
-  const canLaunch = isCommanderAssigned(state);
-  const hasUnarmed = hasUnarmedShips(state);
+    const selectedContract = state.selectedContractId
+      ? contracts.find((c) => c.id === state.selectedContractId)
+      : null;
 
-  return `
-    <div class="campaign-page">
-      ${navBar}
-      <main class="contracts-screen" aria-label="Contract selection">
-        <div class="contracts-layout">
-          <aside class="contracts-list-panel" role="listbox" aria-label="Available contracts">
-            ${contracts.map((c) => renderContractListItem(c, c.id === selectedContractId)).join('')}
-          </aside>
-          <section class="contracts-detail-panel" aria-label="Contract details">
-            ${selectedContract ? renderContractDetail(selectedContract, canLaunch, hasUnarmed) : '<div class="empty-state-panel" role="status">Select a contract to view details</div>'}
-          </section>
-        </div>
-      </main>
-    </div>
-  `;
-}
+    const canLaunch = isCommanderAssigned(campaignState);
+    const hasUnarmed = hasUnarmedShips(campaignState);
+
+    return `
+      <div class="campaign-page">
+        ${navBar}
+        <main class="contracts-screen" aria-label="Contract selection">
+          <div class="contracts-layout">
+            <aside class="contracts-list-panel" role="listbox" aria-label="Available contracts">
+              ${contracts.map((c) => renderContractListItem(c, c.id === state.selectedContractId)).join('')}
+            </aside>
+            <section class="contracts-detail-panel" aria-label="Contract details">
+              ${selectedContract ? renderContractDetail(selectedContract, canLaunch, hasUnarmed) : '<div class="empty-state-panel" role="status">Select a contract to view details</div>'}
+            </section>
+          </div>
+        </main>
+      </div>
+    `;
+  },
+
+  bind(api: ScreenAPI<ContractsState>, props: ContractsProps) {
+    const { contracts, onNavigate, onAccept } = props;
+    const rootEl = document.querySelector('.campaign-page');
+    if (rootEl) {
+      bindNavBar(rootEl as HTMLElement, onNavigate);
+    }
+
+    // Contract list item clicks (selection toggle)
+    api.on('.contract-list-item', 'click', (_e, el) => {
+      const contractId = el.getAttribute('data-contract-id');
+      if (contractId) {
+        const currentState = api.getState();
+        // Toggle selection
+        const newId =
+          contractId === currentState.selectedContractId ? null : contractId;
+        api.setState({ selectedContractId: newId });
+      }
+    });
+
+    // Accept mission button (launches mission)
+    api.on('#btn-accept-mission', 'click', () => {
+      const state = api.getState();
+      if (state.selectedContractId) {
+        const contract = contracts.find(
+          (c) => c.id === state.selectedContractId,
+        );
+        if (contract) {
+          onAccept(contract);
+        }
+      }
+    });
+
+    // Warning action buttons (navigate to squadron)
+    api.on('.btn-goto-squadron', 'click', () => {
+      onNavigate('squadron');
+    });
+  },
+};
+
+/** Screen handle for external control */
+let screenHandle: ScreenHandle<ContractsState, ContractsProps> | null = null;
 
 /** Create contracts UI */
 export function createContractsUI(
@@ -280,66 +339,47 @@ export function createContractsUI(
   onNavigate: (destination: NavDestination) => void,
   onAccept: (contract: Contract) => void,
 ): ContractsUI {
-  const ui: ContractsUI = {
-    element,
-    state,
-    contracts: generateContracts(state.currentSector),
-    selectedContractId: null,
+  // Clean up previous handle
+  screenHandle?.destroy();
+
+  const contracts = generateContracts(state.currentSector);
+  const initialState: ContractsState = { selectedContractId: null };
+  const props: ContractsProps = {
+    campaignState: state,
+    contracts,
     onNavigate,
     onAccept,
   };
 
-  renderAndBindContracts(ui);
-  return ui;
-}
-
-/** Internal: render and bind events */
-function renderAndBindContracts(ui: ContractsUI): void {
-  ui.element.innerHTML = renderContracts(
-    ui.state,
-    ui.contracts,
-    ui.selectedContractId,
-    ui.onNavigate,
+  screenHandle = createScreen(
+    ContractsScreenComponent,
+    element,
+    initialState,
+    props,
   );
 
-  // Bind navigation bar
-  bindNavBar(ui.element, ui.onNavigate);
-
-  // Bind contract list item clicks (selection only)
-  ui.element.querySelectorAll('.contract-list-item').forEach((item) => {
-    item.addEventListener('click', () => {
-      const contractId = item.getAttribute('data-contract-id');
-      if (contractId) {
-        // Toggle selection
-        ui.selectedContractId =
-          contractId === ui.selectedContractId ? null : contractId;
-        renderAndBindContracts(ui);
-      }
-    });
-  });
-
-  // Bind accept mission button (launches mission)
-  const acceptBtn = ui.element.querySelector('#btn-accept-mission');
-  if (acceptBtn && ui.selectedContractId) {
-    const contract = ui.contracts.find((c) => c.id === ui.selectedContractId);
-    if (contract) {
-      acceptBtn.addEventListener('click', () => {
-        ui.onAccept(contract);
-      });
-    }
-  }
-
-  // Bind warning action buttons (navigate to squadron to fix issues)
-  ui.element.querySelectorAll('.btn-goto-squadron').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      ui.onNavigate('squadron');
-    });
-  });
+  // Return legacy UI object for compatibility
+  return {
+    element,
+    state,
+    contracts,
+    selectedContractId: null,
+    onNavigate,
+    onAccept,
+  };
 }
 
 /** Update contracts UI */
 export function updateContractsUI(ui: ContractsUI, state: CampaignState): void {
   ui.state = state;
   ui.contracts = generateContracts(state.currentSector);
-  renderAndBindContracts(ui);
+
+  if (screenHandle) {
+    screenHandle.setProps({
+      campaignState: state,
+      contracts: ui.contracts,
+      onNavigate: ui.onNavigate,
+      onAccept: ui.onAccept,
+    });
+  }
 }
