@@ -36,13 +36,3 @@
   flex-wrap: wrap;
   gap: var(--space-1);
 }
-
-.btn-danger {
-  border-color: var(--color-danger);
-  color: var(--color-danger);
-}
-
-.btn-danger:hover {
-  background: rgba(255, 51, 102, 0.15);
-  box-shadow: 0 0 10px var(--color-danger-glow);
-}

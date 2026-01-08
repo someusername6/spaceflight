@@ -71,9 +71,6 @@
 /* Squadron - unified pilot and ship management */
 @import "./screens/squadron/index.css";
 
-/* Loadout - weapon configuration */
-@import "./screens/loadout.css";
-
 /* Store - equipment purchase */
 @import "./store/main.css";
 @import "./store/list.css";

@@ -83,16 +83,6 @@
   gap: var(--space-1-5);
 }
 
-.btn-view-pilot {
-  margin-left: var(--space-2);
-  border-color: var(--color-secondary);
-  color: var(--color-secondary);
-}
-
-.btn-view-pilot:hover {
-  background: rgba(0, 245, 255, 0.1);
-}
-
 /* ========================================
    SCHEMATIC DIAGRAM - VERTICAL LAYOUT
    ======================================== */

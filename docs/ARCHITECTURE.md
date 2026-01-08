@@ -173,8 +173,7 @@ src/ui/styles/
 ├── picker.css         # Weapon/missile picker dropdowns
 ├── screens/           # Screen-specific styles
 │   ├── hangar.css
-│   ├── roster.css
-│   ├── loadout.css
+│   ├── roster/
 │   ├── results.css
 │   ├── debrief.css
 │   ├── rewards.css
