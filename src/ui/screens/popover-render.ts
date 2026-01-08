@@ -156,7 +156,7 @@ export function renderPrimaryPopover(
     </div>
     ${ammoStats}
     <div class="manager-actions">
-      <button class="btn btn-danger" data-ship="${shipId}" data-type="primary" data-index="${slotIndex}">
+      <button class="btn btn-small btn-danger" data-ship="${shipId}" data-type="primary" data-index="${slotIndex}">
         Unequip
       </button>
     </div>
@@ -216,7 +216,7 @@ export function renderSecondaryPopover(
       </div>
     </div>
     <div class="manager-actions">
-      <button class="btn btn-danger" data-ship="${shipId}" data-type="secondary" data-index="${slotIndex}">
+      <button class="btn btn-small btn-danger" data-ship="${shipId}" data-type="secondary" data-index="${slotIndex}">
         Unequip
       </button>
     </div>

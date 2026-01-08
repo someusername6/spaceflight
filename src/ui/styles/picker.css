@@ -252,6 +252,14 @@
   transition:
     background-color var(--duration-base) var(--ease-out),
     box-shadow var(--duration-base) var(--ease-out);
+  clip-path: polygon(
+    0 0,
+    calc(100% - 5px) 0,
+    100% 5px,
+    100% 100%,
+    5px 100%,
+    0 calc(100% - 5px)
+  );
 }
 
 .picker-equip-btn:hover:not(:disabled) {
