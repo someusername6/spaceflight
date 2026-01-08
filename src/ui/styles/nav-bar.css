@@ -51,3 +51,33 @@
 .nav-scanline {
   content: "";
 }
+
+/* ========================================
+   PAUSE BUTTON
+   Menu hamburger button in nav bar
+   ======================================== */
+
+.nav-pause-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-left: var(--space-4);
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: var(--text-lg);
+  cursor: pointer;
+  transition: all var(--duration-base) var(--ease-out);
+}
+
+.nav-pause-btn:hover {
+  border-color: var(--color-secondary);
+  color: var(--color-secondary);
+  background: rgba(0, 245, 255, 0.05);
+}
+
+.nav-pause-btn:active {
+  background: rgba(0, 245, 255, 0.1);
+}

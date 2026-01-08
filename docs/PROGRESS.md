@@ -51,6 +51,14 @@ Weapons (projectiles, missiles, beams, decoys), shields, AI (states, behaviors, 
 
 ---
 
-## Phase 5: Content & Polish (Next)
+## Phase 5: Content & Polish (In Progress)
 
-Planned: Procedural contracts, campaign progression, ship repairs, more ship classes, sound/music, save/load.
+### 5.1 Save System & Game Flow ✅
+- **Title Screen**: Main menu with New Game, Continue, Settings (`src/ui/screens/title.ts`)
+- **Save System**: 3 save slots with localStorage persistence and versioning (`src/campaign/save-system.ts`)
+- **Settings Screen**: Configurable key bindings with click-to-rebind UI (`src/ui/screens/settings.ts`)
+- **Pause Menu**: Modal accessible from campaign screens via Escape key (`src/ui/screens/pause-menu.ts`)
+- **Key Bindings**: Configurable controls stored in localStorage (`src/input/key-bindings.ts`)
+
+### 5.2 Remaining (Planned)
+Procedural contracts, campaign progression, ship repairs, more ship classes, sound/music.

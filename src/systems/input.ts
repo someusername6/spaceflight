@@ -5,28 +5,7 @@
 import type { PlayerControlled } from '../components/player';
 import { getComponent, queryEntities } from '../core/ecs';
 import type { World } from '../core/types';
-
-/** Key bindings (will be configurable later) */
-const KEY_BINDINGS = {
-  pitchUp: 'KeyW',
-  pitchDown: 'KeyS',
-  yawLeft: 'KeyA',
-  yawRight: 'KeyD',
-  rollLeft: 'KeyQ',
-  rollRight: 'KeyE',
-  accelerate: 'ShiftLeft',
-  decelerate: 'ControlLeft',
-  afterburner: 'KeyZ',
-  firePrimary: 'Space',
-  fireSecondary: 'KeyF',
-  launchDecoy: 'KeyC',
-  cyclePrimary: 'KeyV',
-  cycleSecondary: 'KeyX',
-  cycleTargetNext: 'BracketRight',
-  cycleTargetPrev: 'BracketLeft',
-  targetNearest: 'KeyT',
-  toggleMatchSpeed: 'KeyM',
-} as const;
+import { getKeyBindings } from '../input/key-bindings';
 
 /** Currently pressed keys */
 const pressedKeys = new Set<string>();
@@ -44,11 +23,8 @@ export function initInput(): void {
   eventHandlers.keydown = (e: KeyboardEvent) => {
     pressedKeys.add(e.code);
     // Prevent browser defaults for game keys
-    if (
-      Object.values(KEY_BINDINGS).includes(
-        e.code as (typeof KEY_BINDINGS)[keyof typeof KEY_BINDINGS],
-      )
-    ) {
+    const bindings = getKeyBindings();
+    if (Object.values(bindings).includes(e.code)) {
       e.preventDefault();
     }
   };
@@ -85,6 +61,8 @@ export function cleanupInput(): void {
 
 /** Input system - updates player input state each frame */
 export function inputSystem(world: World, _dt: number): void {
+  const bindings = getKeyBindings();
+
   for (const entity of queryEntities(world, ['playerControlled'])) {
     const player = getComponent<PlayerControlled>(
       world,
@@ -96,26 +74,26 @@ export function inputSystem(world: World, _dt: number): void {
     const input = player.input;
 
     // Movement
-    input.pitchUp = pressedKeys.has(KEY_BINDINGS.pitchUp);
-    input.pitchDown = pressedKeys.has(KEY_BINDINGS.pitchDown);
-    input.yawLeft = pressedKeys.has(KEY_BINDINGS.yawLeft);
-    input.yawRight = pressedKeys.has(KEY_BINDINGS.yawRight);
-    input.rollLeft = pressedKeys.has(KEY_BINDINGS.rollLeft);
-    input.rollRight = pressedKeys.has(KEY_BINDINGS.rollRight);
-    input.accelerate = pressedKeys.has(KEY_BINDINGS.accelerate);
-    input.decelerate = pressedKeys.has(KEY_BINDINGS.decelerate);
-    input.afterburner = pressedKeys.has(KEY_BINDINGS.afterburner);
+    input.pitchUp = pressedKeys.has(bindings.pitchUp);
+    input.pitchDown = pressedKeys.has(bindings.pitchDown);
+    input.yawLeft = pressedKeys.has(bindings.yawLeft);
+    input.yawRight = pressedKeys.has(bindings.yawRight);
+    input.rollLeft = pressedKeys.has(bindings.rollLeft);
+    input.rollRight = pressedKeys.has(bindings.rollRight);
+    input.accelerate = pressedKeys.has(bindings.accelerate);
+    input.decelerate = pressedKeys.has(bindings.decelerate);
+    input.afterburner = pressedKeys.has(bindings.afterburner);
 
     // Combat
-    input.firePrimary = pressedKeys.has(KEY_BINDINGS.firePrimary);
-    input.fireSecondary = pressedKeys.has(KEY_BINDINGS.fireSecondary);
-    input.launchDecoy = pressedKeys.has(KEY_BINDINGS.launchDecoy);
-    input.cyclePrimary = pressedKeys.has(KEY_BINDINGS.cyclePrimary);
-    input.cycleSecondary = pressedKeys.has(KEY_BINDINGS.cycleSecondary);
-    input.cycleTargetNext = pressedKeys.has(KEY_BINDINGS.cycleTargetNext);
-    input.cycleTargetPrev = pressedKeys.has(KEY_BINDINGS.cycleTargetPrev);
-    input.targetNearest = pressedKeys.has(KEY_BINDINGS.targetNearest);
-    input.toggleMatchSpeed = pressedKeys.has(KEY_BINDINGS.toggleMatchSpeed);
+    input.firePrimary = pressedKeys.has(bindings.firePrimary);
+    input.fireSecondary = pressedKeys.has(bindings.fireSecondary);
+    input.launchDecoy = pressedKeys.has(bindings.launchDecoy);
+    input.cyclePrimary = pressedKeys.has(bindings.cyclePrimary);
+    input.cycleSecondary = pressedKeys.has(bindings.cycleSecondary);
+    input.cycleTargetNext = pressedKeys.has(bindings.cycleTargetNext);
+    input.cycleTargetPrev = pressedKeys.has(bindings.cycleTargetPrev);
+    input.targetNearest = pressedKeys.has(bindings.targetNearest);
+    input.toggleMatchSpeed = pressedKeys.has(bindings.toggleMatchSpeed);
   }
 }
 

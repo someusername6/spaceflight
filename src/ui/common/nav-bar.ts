@@ -13,6 +13,7 @@ export interface NavBarProps {
   credits: number;
   sector: number;
   onNavigate: (destination: NavDestination) => void;
+  onPause?: () => void;
 }
 
 /** Render the status display (sector + credits) - integrated into nav bar */
@@ -33,7 +34,7 @@ function renderStatusDisplay(credits: number, sector: number): string {
 
 /** Render the navigation bar HTML with integrated status display */
 export function renderNavBar(props: NavBarProps): string {
-  const { activeTab, credits, sector } = props;
+  const { activeTab, credits, sector, onPause } = props;
 
   const tabs: { id: NavDestination; label: string; icon: string }[] = [
     { id: 'squadron', label: 'SQUADRON', icon: '◈' },
@@ -61,12 +62,20 @@ export function renderNavBar(props: NavBarProps): string {
 
   const statusHtml = renderStatusDisplay(credits, sector);
 
+  // Pause button (only shown if onPause callback is provided)
+  const pauseButton = onPause
+    ? `<button class="nav-pause-btn" aria-label="Pause menu" title="Menu (Esc)">
+        <span aria-hidden="true">☰</span>
+      </button>`
+    : '';
+
   return `
     <nav class="global-nav" role="navigation" aria-label="Main navigation">
       <div class="nav-tabs" role="tablist" aria-label="Screen navigation">
         ${tabsHtml}
       </div>
       ${statusHtml}
+      ${pauseButton}
       <div class="nav-scanline" aria-hidden="true"></div>
     </nav>
   `;
@@ -76,6 +85,7 @@ export function renderNavBar(props: NavBarProps): string {
 export function bindNavBar(
   container: HTMLElement,
   onNavigate: (destination: NavDestination) => void,
+  onPause?: () => void,
 ): void {
   container.querySelectorAll('.nav-tab').forEach((tab) => {
     tab.addEventListener('click', () => {
@@ -85,4 +95,10 @@ export function bindNavBar(
       }
     });
   });
+
+  // Bind pause button if callback provided
+  if (onPause) {
+    const pauseBtn = container.querySelector('.nav-pause-btn');
+    pauseBtn?.addEventListener('click', onPause);
+  }
 }

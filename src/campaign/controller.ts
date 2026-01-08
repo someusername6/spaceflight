@@ -3,54 +3,50 @@
  * and mission spawning.
  */
 
-import { Vector3 } from 'three';
-import { createGame, startGame } from '../game';
+import { initKeyBindings } from '../input/key-bindings';
 import { initInput } from '../systems/input';
-import { initMatchStats } from '../systems/stats';
 import {
   createScreenManager,
   getScreenElement,
+  goBackFromSettings,
+  goToSettings,
   goToSquadron,
   goToStore,
+  goToTitle,
   Screen,
-  setMissionContainer,
+  setCurrentSaveSlot,
   startMission,
+  updateCampaignState,
 } from '../ui/common/screens';
 import { createContractsUI } from '../ui/screens/contracts';
+import { showPauseMenu } from '../ui/screens/pause-menu';
+import {
+  bindSettingsScreen,
+  cleanupSettingsScreen,
+  renderSettingsScreen,
+} from '../ui/screens/settings';
 import { showSquadSelection } from '../ui/screens/squad-selection';
+import {
+  bindTitleScreen,
+  cleanupTitleScreen,
+  renderTitleScreen,
+  resetTitleScreen,
+} from '../ui/screens/title';
 import type { CampaignController } from './controller-types';
-import {
-  createMissionEndCallback,
-  createMissionEndExecutor,
-  createTickCallback,
-} from './mission-callbacks';
-import {
-  createMissionRenderers,
-  updateMissionRenderers,
-} from './mission-renderer';
-import {
-  calculateWaveDelay,
-  createMissionEndState,
-  createWaveState,
-  spawnWave,
-} from './mission-waves';
+import { launchMission } from './mission-launcher';
 import { setupSquadronScreen, setupStoreScreen } from './screen-handlers';
-import {
-  spawnPlayerFromCampaign,
-  spawnWingmanFromCampaign,
-} from './ship-spawning';
-import { createNewCampaign, getCommanderShip, getWingmanShips } from './state';
-import type { Contract } from './types';
-import { getGameSeed } from './utils';
+import { createNewCampaign } from './state';
+import type { CampaignState, Contract } from './types';
 
 export type { CampaignController } from './controller-types';
 
 /** Create and start the campaign */
 export function startCampaign(container: HTMLElement): CampaignController {
-  // Initialize input system
+  // Initialize systems
+  initKeyBindings();
   initInput();
 
-  // Create initial campaign state
+  // Create placeholder campaign state (will be replaced by new game or load)
   const campaignState = createNewCampaign();
 
   // Create screen manager
@@ -65,24 +61,184 @@ export function startCampaign(container: HTMLElement): CampaignController {
     missionEnded: false,
   };
 
-  // Setup squadron screen
-  const squadronElement = getScreenElement(screenManager, Screen.SQUADRON);
-  setupSquadronScreen(controller, squadronElement, setupContractsScreen);
+  // Setup title screen
+  setupTitleScreen(controller);
 
-  // Show squadron initially
-  goToSquadron(screenManager);
+  // Show title screen initially
+  goToTitle(screenManager);
 
-  console.log('Campaign started');
-  console.log(`Starting credits: ${campaignState.credits}`);
-  console.log(`Ships: ${campaignState.ships.length}`);
+  console.log('Campaign initialized - showing title screen');
 
   return controller;
+}
+
+/** Setup title screen with callbacks */
+function setupTitleScreen(controller: CampaignController): void {
+  const { screenManager } = controller;
+  const titleElement = getScreenElement(screenManager, Screen.TITLE);
+
+  renderTitleScreen(titleElement);
+  bindTitleScreen(titleElement, {
+    onNewGame: () => {
+      // Create fresh campaign state
+      const newState = createNewCampaign();
+      updateCampaignState(screenManager, newState);
+      setCurrentSaveSlot(screenManager, null);
+
+      // Transition to squadron
+      startCampaignGameplay(controller);
+    },
+    onContinue: (state: CampaignState, slot: number) => {
+      // Use loaded campaign state
+      updateCampaignState(screenManager, state);
+      setCurrentSaveSlot(screenManager, slot);
+
+      // Transition to squadron
+      startCampaignGameplay(controller);
+    },
+    onSettings: () => {
+      goToSettings(screenManager);
+      setupSettingsScreen(controller);
+    },
+  });
+}
+
+/** Setup settings screen with callbacks */
+function setupSettingsScreen(controller: CampaignController): void {
+  const { screenManager } = controller;
+  const settingsElement = getScreenElement(screenManager, Screen.SETTINGS);
+
+  renderSettingsScreen(settingsElement);
+  bindSettingsScreen(settingsElement, {
+    onBack: () => {
+      cleanupSettingsScreen();
+      goBackFromSettings(screenManager);
+
+      // Re-setup the screen we're returning to
+      const currentScreen = screenManager.currentScreen;
+      if (currentScreen === Screen.TITLE) {
+        setupTitleScreen(controller);
+      } else if (currentScreen === Screen.SQUADRON) {
+        const squadronElement = getScreenElement(
+          screenManager,
+          Screen.SQUADRON,
+        );
+        setupSquadronScreen(controller, squadronElement, () =>
+          setupContractsScreen(controller),
+        );
+      }
+    },
+  });
+}
+
+/** Global escape key handler reference for cleanup */
+let escapeHandler: ((e: KeyboardEvent) => void) | null = null;
+
+/** Start gameplay (from new game or continue) */
+function startCampaignGameplay(controller: CampaignController): void {
+  const { screenManager } = controller;
+
+  // Setup squadron screen
+  const squadronElement = getScreenElement(screenManager, Screen.SQUADRON);
+  setupSquadronScreen(controller, squadronElement, () =>
+    setupContractsScreen(controller),
+  );
+
+  // Show squadron
+  goToSquadron(screenManager);
+
+  // Setup global escape key handler for pause menu
+  setupEscapeHandler(controller);
+
+  const { campaignState } = screenManager;
+  console.log('Campaign gameplay started');
+  console.log(`Credits: ${campaignState.credits}`);
+  console.log(`Ships: ${campaignState.ships.length}`);
+}
+
+/** Setup global escape key handler for pause menu */
+function setupEscapeHandler(controller: CampaignController): void {
+  // Remove any existing handler
+  cleanupEscapeHandler();
+
+  escapeHandler = async (e: KeyboardEvent) => {
+    const { screenManager } = controller;
+
+    // Only handle escape on campaign screens (not title, settings, or mission)
+    const campaignScreens = [
+      Screen.SQUADRON,
+      Screen.STORE,
+      Screen.CONTRACTS,
+      Screen.RESULTS,
+    ];
+
+    if (
+      e.code === 'Escape' &&
+      campaignScreens.includes(screenManager.currentScreen)
+    ) {
+      e.preventDefault();
+      // Can save on pre-mission screens, not during results
+      const canSave = screenManager.currentScreen !== Screen.RESULTS;
+      await handlePauseMenu(controller, canSave);
+    }
+  };
+
+  document.addEventListener('keydown', escapeHandler);
+}
+
+/** Cleanup global escape key handler */
+function cleanupEscapeHandler(): void {
+  if (escapeHandler) {
+    document.removeEventListener('keydown', escapeHandler);
+    escapeHandler = null;
+  }
+}
+
+/** Handle pause menu from campaign screens */
+export async function handlePauseMenu(
+  controller: CampaignController,
+  canSave: boolean,
+): Promise<void> {
+  const { screenManager } = controller;
+
+  const result = await showPauseMenu(screenManager.campaignState, canSave);
+
+  switch (result.action) {
+    case 'resume':
+      // Just close the menu, nothing to do
+      break;
+
+    case 'save':
+      if (result.saveSlot) {
+        setCurrentSaveSlot(screenManager, result.saveSlot);
+        console.log(`Game saved to slot ${result.saveSlot}`);
+      }
+      break;
+
+    case 'settings':
+      goToSettings(screenManager);
+      setupSettingsScreen(controller);
+      break;
+
+    case 'quit':
+      // Cleanup handlers and return to title
+      cleanupEscapeHandler();
+      cleanupTitleScreen();
+      resetTitleScreen();
+      goToTitle(screenManager);
+      setupTitleScreen(controller);
+      break;
+  }
 }
 
 /** Setup contracts screen with callbacks */
 function setupContractsScreen(controller: CampaignController): void {
   const { screenManager } = controller;
   const contractsElement = getScreenElement(screenManager, Screen.CONTRACTS);
+
+  // Create wrapper for recursive setup call
+  const setupContracts = (ctrl: CampaignController) =>
+    setupContractsScreen(ctrl);
 
   createContractsUI(
     contractsElement,
@@ -96,17 +252,13 @@ function setupContractsScreen(controller: CampaignController): void {
             screenManager,
             Screen.SQUADRON,
           );
-          setupSquadronScreen(
-            controller,
-            squadronElement,
-            setupContractsScreen,
-          );
+          setupSquadronScreen(controller, squadronElement, setupContracts);
           break;
         }
         case 'store': {
           goToStore(screenManager);
           const storeElement = getScreenElement(screenManager, Screen.STORE);
-          setupStoreScreen(controller, storeElement, setupContractsScreen);
+          setupStoreScreen(controller, storeElement, setupContracts);
           break;
         }
         case 'contracts':
@@ -128,144 +280,12 @@ function setupContractsScreen(controller: CampaignController): void {
 
       // Start mission with selected ships
       startMission(screenManager, contract);
-      launchMission(controller, contract, result.deployedShipIds);
+      launchMission(
+        controller,
+        contract,
+        result.deployedShipIds,
+        setupContracts,
+      );
     },
-  );
-}
-
-/** Launch a mission with the selected contract */
-function launchMission(
-  controller: CampaignController,
-  contract: Contract,
-  deployedShipIds: string[],
-): void {
-  const { container, screenManager } = controller;
-
-  // Reset mission ended flag
-  controller.missionEnded = false;
-
-  // Create mission container if needed
-  if (!controller.missionContainer) {
-    controller.missionContainer = document.createElement('div');
-    controller.missionContainer.id = 'mission-container';
-    controller.missionContainer.style.cssText =
-      'position: absolute; top: 0; left: 0; width: 100%; height: 100%;';
-    container.appendChild(controller.missionContainer);
-    setMissionContainer(screenManager, controller.missionContainer);
-  }
-
-  // Clear any previous mission content
-  controller.missionContainer.innerHTML = '';
-
-  // Create game with seed
-  const seed = getGameSeed();
-  const game = createGame(seed);
-  controller.game = game;
-
-  // Create all renderers
-  const renderers = createMissionRenderers(controller.missionContainer, seed);
-
-  // Spawn player and wingmen from campaign state (uses campaign loadout/ammo)
-  // Only spawn ships that were selected for deployment
-  const { campaignState } = screenManager;
-  const playerShip = getCommanderShip(campaignState);
-  const allWingmen = getWingmanShips(campaignState);
-  const deployedIdSet = new Set(deployedShipIds);
-
-  // Filter wingmen to only deployed ships
-  const wingmen = allWingmen.filter((w) => deployedIdSet.has(w.id));
-
-  if (playerShip) {
-    spawnPlayerFromCampaign(game.world, playerShip, new Vector3(0, 0, 0));
-  }
-
-  // Spawn deployed wingmen in tight symmetric formation near player
-  wingmen.forEach((wingman, index) => {
-    const side = index % 2 === 0 ? 1 : -1;
-    const xOffset = 20 * side; // 20m left/right
-    const zOffset = -10 - Math.floor(index / 2) * 15; // Staggered rows behind
-    spawnWingmanFromCampaign(
-      game.world,
-      wingman,
-      new Vector3(xOffset, 0, zOffset),
-    );
-  });
-
-  // Initialize match stats for debrief
-  initMatchStats(game.world);
-
-  // Wave state for tracking progress
-  const waveState = createWaveState(contract.waves.length);
-
-  // Mission end state for delayed transition
-  const missionEndState = createMissionEndState();
-
-  // Handle first wave - spawn immediately or after delay
-  const firstWave = contract.waves[0];
-  if (firstWave) {
-    const firstWaveDelay = calculateWaveDelay(firstWave.delay, game.world.prng);
-    if (firstWaveDelay > 0) {
-      // Set currentWave = -1 so tick callback increments to 0 when spawning
-      waveState.currentWave = -1;
-      waveState.waveCleared = true;
-      waveState.delayRemaining = firstWaveDelay;
-      console.log(
-        `[WAVE ${performance.now().toFixed(0)}ms] First wave in ${firstWaveDelay.toFixed(1)}s`,
-      );
-    } else {
-      // Spawn immediately (no delay)
-      spawnWave(game.world, firstWave, 0);
-      console.log(
-        `[WAVE ${performance.now().toFixed(0)}ms] Wave 1/${waveState.totalWaves} spawned`,
-      );
-    }
-  }
-
-  // Set render callback
-  game.onRender = (world, _alpha) => {
-    updateMissionRenderers(
-      renderers,
-      world,
-      controller.missionContainer?.clientWidth ?? 800,
-      controller.missionContainer?.clientHeight ?? 600,
-    );
-  };
-
-  // Create callbacks for mission management
-  const executeMissionEnd = createMissionEndExecutor(
-    controller,
-    game,
-    contract,
-    missionEndState,
-    setupContractsScreen,
-  );
-
-  game.onTick = createTickCallback(
-    controller,
-    game,
-    contract,
-    waveState,
-    missionEndState,
-    executeMissionEnd,
-  );
-
-  game.onMissionEnd = createMissionEndCallback(
-    controller,
-    waveState,
-    missionEndState,
-  );
-
-  // Start the game
-  startGame(game);
-
-  const totalEnemies = contract.waves.reduce(
-    (sum, w) => sum + w.enemies.reduce((s, e) => s + e.count, 0),
-    0,
-  );
-  console.log(
-    `[MISSION ${performance.now().toFixed(0)}ms] Mission started: ${contract.name}`,
-  );
-  console.log(
-    `[MISSION ${performance.now().toFixed(0)}ms] ${totalEnemies} enemies across ${contract.waves.length} waves`,
   );
 }

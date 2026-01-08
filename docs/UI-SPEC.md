@@ -4,25 +4,39 @@ This document describes the campaign UI screens for the spaceflight game. Use th
 
 ## Overview
 
-The game has 6 screens managed by a state machine:
+The game has 8 screens managed by a state machine:
 
 | Screen | Purpose |
 |--------|---------|
+| **Title** | Main menu - new game, continue, settings |
 | **Squadron** | Unified pilot and ship management - view deployed pilots, manage loadouts, hire recruits |
 | **Store** | Equipment shop - buy/sell hulls, weapons, ammo, and scrap |
 | **Contracts** | Mission selection - choose from available contracts |
 | **Mission** | 3D combat gameplay (not covered here - uses WebGL renderer) |
 | **Results** | Post-mission debrief and salvage display |
 | **Game Over** | Campaign ended - final stats and restart option |
+| **Settings** | Key bindings configuration |
 
 ## Navigation Flow
 
 ```
+Title Screen
+    ├── New Game → Squadron
+    ├── Continue → (load save) → Squadron
+    └── Settings → Settings Screen → back to Title
+
+Campaign Loop (Escape opens Pause Menu from any screen):
 Squadron ←→ Store ←→ Contracts
                         ↓
                  Mission (3D gameplay)
                         ↓
                  Results → Squadron (victory) or Game Over (player ship destroyed)
+
+Pause Menu (accessible via Escape from Squadron/Store/Contracts/Results):
+    ├── Resume → close menu
+    ├── Save Game → save slots view
+    ├── Settings → Settings Screen
+    └── Quit to Title → confirmation → Title Screen
 ```
 
 ## Global Navigation Bar
@@ -458,34 +472,384 @@ Campaign ended because player's ship was destroyed. Shows final stats and allows
 
 ---
 
+## Screen: Title
+
+### Purpose
+Main menu displayed on game launch. Players can start a new game, continue from a save, or access settings.
+
+### Layout
+```
+┌────────────────────────────────────────────────────────────┐
+│                                                            │
+│                      SPACEFLIGHT                           │  ← Large title (amber glow)
+│                   SQUADRON COMMANDER                       │  ← Subtitle
+│                                                            │
+│                     [NEW GAME]                             │  ← Primary button (amber)
+│                     [CONTINUE]                             │  ← Secondary (disabled if no saves)
+│                     [SETTINGS]                             │  ← Secondary
+│                                                            │
+│                        v0.1.0                              │  ← Version (bottom center)
+└────────────────────────────────────────────────────────────┘
+```
+
+### Save Slots View (Continue)
+When Continue is clicked, shows save slots:
+```
+┌────────────────────────────────────────────────────────────┐
+│                      LOAD GAME                             │
+├────────────────────────────────────────────────────────────┤
+│  SLOT 1                            Jan 8, 2026, 01:43 PM   │
+│  Sector: 3  |  Missions: 12  |  Credits: 5,000  |  Ships: 4│
+│  [Load]  [Delete]                                          │
+├────────────────────────────────────────────────────────────┤
+│  SLOT 2                                           Empty    │
+├────────────────────────────────────────────────────────────┤
+│  SLOT 3                                           Empty    │
+├────────────────────────────────────────────────────────────┤
+│                        [Back]                              │
+└────────────────────────────────────────────────────────────┘
+```
+
+### User Interactions
+| Action | Trigger | Result |
+|--------|---------|--------|
+| New Game | Click "New Game" | Creates fresh campaign, goes to Squadron |
+| Continue | Click "Continue" | Shows save slots view |
+| Settings | Click "Settings" | Goes to Settings screen |
+| Load Save | Click "Load" on slot | Loads save, goes to Squadron |
+| Delete Save | Click "Delete" on slot | Shows delete confirmation |
+| Back | Click "Back" | Returns to main title menu |
+
+### States
+- **No Saves**: Continue button is disabled
+- **Occupied Slot**: Shows metadata and Load/Delete buttons
+- **Empty Slot**: Shows "Empty" with no action buttons
+- **Delete Confirmation**: Inline panel replaces main view
+
+---
+
+## Screen: Settings
+
+### Purpose
+Configure key bindings for game controls. Accessible from title screen and pause menu.
+
+### Layout
+```
+┌────────────────────────────────────────────────────────────┐
+│                       SETTINGS                             │
+├────────────────────────────────────────────────────────────┤
+│  KEY BINDINGS                                              │
+│                                                            │
+│  FLIGHT                                                    │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │ Pitch Up          [W]                                │  │
+│  │ Pitch Down        [S]                                │  │
+│  │ Roll Left         [A]                                │  │
+│  │ Roll Right        [D]                                │  │
+│  │ Throttle Up       [Shift]                            │  │
+│  │ Throttle Down     [Ctrl]                             │  │
+│  └──────────────────────────────────────────────────────┘  │
+│                                                            │
+│  COMBAT                                                    │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │ Fire Primary      [Space]                            │  │
+│  │ Fire Secondary    [F]                                │  │
+│  │ Cycle Target      [Tab]                              │  │
+│  │ Target Nearest    [E]                                │  │
+│  └──────────────────────────────────────────────────────┘  │
+│                                                            │
+│  CAMERA                                                    │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │ Camera Mode       [V]                                │  │
+│  │ Target Camera     [T]                                │  │
+│  │ Match Speed       [M]                                │  │
+│  └──────────────────────────────────────────────────────┘  │
+│                                                            │
+│  [Reset to Defaults]                    [Back]             │
+└────────────────────────────────────────────────────────────┘
+```
+
+### Key Rebinding Flow
+1. Click on a key binding (e.g., "[W]" next to "Pitch Up")
+2. Key changes to "[Press a key...]" with highlight
+3. Press any valid key
+4. New binding is saved, display updates
+5. If key conflicts with existing binding, old binding is cleared
+
+### User Interactions
+| Action | Trigger | Result |
+|--------|---------|--------|
+| Start rebinding | Click key display | Enters listening mode |
+| Set binding | Press key while listening | Updates binding |
+| Cancel rebinding | Press Escape while listening | Keeps original binding |
+| Reset defaults | Click "Reset to Defaults" | Restores all default bindings |
+| Back | Click "Back" | Returns to previous screen (title or pause menu) |
+
+### Bindable Actions
+| Category | Actions |
+|----------|---------|
+| Flight | pitchUp, pitchDown, rollLeft, rollRight, yawLeft, yawRight, throttleUp, throttleDown |
+| Combat | firePrimary, fireSecondary, cycleTarget, targetNearest |
+| Camera | cameraMode, targetCamera, matchSpeed |
+| System | pause |
+
+---
+
+## Modal: Pause Menu
+
+### Purpose
+In-game menu accessible during campaign gameplay (not during missions). Allows saving, settings access, and returning to title.
+
+### Trigger
+Press Escape key on Squadron, Store, Contracts, or Results screens.
+
+### Layout - Main View
+```
+┌────────────────────────────────────────────────────────────┐
+│                        PAUSED                              │
+│                                                            │
+│                      [RESUME]                              │  ← Primary
+│                    [SAVE GAME]                             │  ← Disabled during Results
+│                     [SETTINGS]                             │
+│                  [QUIT TO TITLE]                           │  ← Danger
+└────────────────────────────────────────────────────────────┘
+```
+
+### Layout - Save View
+```
+┌────────────────────────────────────────────────────────────┐
+│                      SAVE GAME                             │
+├────────────────────────────────────────────────────────────┤
+│  SLOT 1                            Jan 8, 2026, 01:43 PM   │
+│  Sector 3  |  12 missions  |  5,000 credits                │
+│  [Overwrite]                                               │
+├────────────────────────────────────────────────────────────┤
+│  SLOT 2                                      Empty Slot    │
+│  [Save Here]                                               │
+├────────────────────────────────────────────────────────────┤
+│  SLOT 3                                      Empty Slot    │
+│  [Save Here]                                               │
+├────────────────────────────────────────────────────────────┤
+│                        [Back]                              │
+└────────────────────────────────────────────────────────────┘
+```
+
+### Inline Confirmation Views
+Confirmations use inline panels instead of browser dialogs:
+
+**Quit Confirmation:**
+```
+┌────────────────────────────────────────────────────────────┐
+│                    QUIT TO TITLE?                          │
+│            Unsaved progress will be lost.                  │
+│                                                            │
+│              [Cancel]        [Quit]                        │
+└────────────────────────────────────────────────────────────┘
+```
+
+**Overwrite Confirmation:**
+```
+┌────────────────────────────────────────────────────────────┐
+│                   OVERWRITE SAVE?                          │
+│          This will replace the save in Slot 1.            │
+│                                                            │
+│              [Cancel]      [Overwrite]                     │
+└────────────────────────────────────────────────────────────┘
+```
+
+### User Interactions
+| Action | Trigger | Result |
+|--------|---------|--------|
+| Resume | Click "Resume" or press Escape | Closes menu |
+| Save Game | Click "Save Game" | Shows save slots view |
+| Settings | Click "Settings" | Goes to Settings screen |
+| Quit | Click "Quit to Title" | Shows quit confirmation |
+| Save to slot | Click "Save Here" (empty) | Saves immediately |
+| Overwrite slot | Click "Overwrite" (occupied) | Shows overwrite confirmation |
+| Confirm quit | Click "Quit" in confirmation | Returns to title screen |
+
+### States
+- **Can Save**: Save Game button enabled (Squadron, Store, Contracts)
+- **Cannot Save**: Save Game button disabled with tooltip (Results screen)
+- **Modal Visible**: Dark overlay with blur, keyboard focus trapped
+
+---
+
 ## Visual Design Notes
 
-### Current Color Palette
-| Purpose | Color |
-|---------|-------|
-| Primary/Accent | `#4da6ff` (cyan blue) |
-| Primary Hover | `#6a9aca` |
-| Success | `#44cc66` (green) |
-| Warning | `#ffaa44` (orange) |
-| Danger | `#cc4444` (red) |
-| Panel Background | `rgba(20, 30, 50, 0.9)` |
-| Text Primary | `#e0e0e0` |
-| Text Secondary | `#7a9aba` |
+### Design Theme: "Tactical Command Interface"
+A military spacecraft CIC (Combat Information Center) aesthetic with amber warning displays, scan lines, angular panels, and holographic elements.
+
+### Color Palette
+| Purpose | Color | Usage |
+|---------|-------|-------|
+| **Primary** | `#FF9F1C` (amber) | Headers, titles, commander elements, warnings |
+| **Primary Dim** | `#CC7A00` | Dimmed primary accents |
+| **Secondary** | `#00F5FF` (cyan) | Selected states, interactive highlights, wingman elements |
+| **Secondary Dim** | `#00B4B4` | Dimmed secondary accents |
+| **Success** | `#00FF88` (green) | Positive actions, confirm buttons |
+| **Warning** | `#FFD93D` (yellow) | Caution states |
+| **Danger** | `#FF3366` (red/pink) | Destructive actions, KIA states, damage |
+| **Text Primary** | `#E8E8E8` | Main body text |
+| **Text Secondary** | `#8899AA` | Labels, captions |
+| **Text Dim** | `#778899` | Disabled, placeholder text |
+| **Background Deep** | `#050508` | Deepest background (canvas) |
+| **Background Panel** | `rgba(12, 18, 30, 0.95)` | Raised surfaces (panels, cards) |
+| **Border Color** | `#1A2A3A` | Standard panel borders |
+| **Border Light** | `#2A4A6A` | Hover/active borders |
 
 ### Typography
-- Monospace font throughout (`Courier New`)
-- Uppercase for labels and badges
+Three font families are used:
+- **Display** (`Orbitron`): Large headings, titles, hero text
+- **UI** (`Rajdhani`): Labels, buttons, navigation, panel headers
+- **Body** (`JetBrains Mono`): Body text, stats, data
+
+All fonts use uppercase for labels and badges with wide letter-spacing (`0.1em`).
+
+### Special Effects
+- **Scanlines**: Subtle horizontal lines (2px spacing) with cyan tint overlay the entire screen
+- **Vignette**: Radial gradient darkening edges of viewport
+- **Glow effects**: Text and elements use `text-shadow` and `box-shadow` for holographic glow
+- **Corner brackets**: Amber L-shaped corners on major panels (top-left, bottom-right)
 
 ### Layout Patterns
-- Full-screen flexbox containers
-- Semi-transparent bordered panels
-- Two-column layouts (main + sidebar) for complex screens
-- Button rows with consistent spacing
+- Full-screen flexbox containers with `max-width: 1200px`
+- Semi-transparent bordered panels with inset shadows
+- Three-column layouts for main screens (list | viewer | stats/storage)
+- Fixed panel widths prevent layout shifts
 
 ### Interactive Elements
-- Buttons: Bordered, color-coded by action type
-- Lists: Clickable items with hover/selected states
-- Tabs: Active tab highlighted with primary color
+- **Buttons**: Use standardized `.btn` system with variants (`.btn-success`, `.btn-danger`)
+- **Lists**: Items have hover (cyan tint) and selected (cyan border-left) states
+- **Commander elements**: Amber accents instead of cyan
+- **Tabs**: Active tab has primary color background or underline
+
+---
+
+## Common Design Patterns
+
+### Panel Header Pattern
+Used for section headers within panels (Squadron list sections, Store categories):
+```css
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  background: rgba(255, 159, 28, 0.08);  /* Amber tint */
+  border-bottom: 1px solid var(--border-color);
+}
+.panel-header h2 {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-primary);  /* Amber */
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+```
+
+### Corner Brackets Pattern
+Amber L-shaped corners on major panels to create a "targeting reticle" effect:
+```css
+.screen-panel::before,
+.screen-panel::after {
+  content: "";
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-color: var(--color-primary);  /* Amber */
+  border-style: solid;
+  pointer-events: none;
+}
+.screen-panel::before {
+  top: -1px;
+  left: -1px;
+  border-width: 2px 0 0 2px;  /* Top-left corner */
+}
+.screen-panel::after {
+  bottom: -1px;
+  right: -1px;
+  border-width: 0 2px 2px 0;  /* Bottom-right corner */
+}
+```
+
+### Scanline Overlay Pattern
+Subtle CRT-style horizontal lines across the entire viewport:
+```css
+.game-screen::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 245, 255, 0.03) 2px,  /* Cyan tint */
+    rgba(0, 245, 255, 0.03) 4px
+  );
+  pointer-events: none;
+  z-index: -1;
+}
+```
+
+### List Item Selection Pattern
+Consistent selection states for list items (roster, store, contracts):
+- **Hover**: `background: rgba(0, 245, 255, 0.05)`
+- **Selected**: `background: rgba(0, 245, 255, 0.1)` + `border-left: 2px solid var(--color-secondary)`
+- **Commander/Special**: Amber instead of cyan (`rgba(255, 159, 28, 0.1)`)
+
+### Capacity Bar Pattern
+Segmented visual indicators for ammo, deployment slots, etc:
+```css
+.capacity-bar {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border-color);
+}
+.capacity-segment {
+  flex: 1;
+  height: 12px;
+  background: rgba(0, 245, 255, 0.15);  /* Empty */
+  border: 1px solid rgba(0, 245, 255, 0.3);
+}
+.capacity-segment.filled {
+  background: var(--color-secondary);  /* Cyan */
+  box-shadow: 0 0 8px rgba(0, 245, 255, 0.3);
+}
+```
+
+### Badge Pattern
+Small status indicators for skill levels, tags, etc:
+```css
+.badge {
+  padding: 2px 6px;
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: rgba(255, 159, 28, 0.15);
+  color: var(--color-primary);
+  border: 1px solid rgba(255, 159, 28, 0.3);
+}
+```
+
+### Glow Effect Pattern
+Holographic glow on icons and active elements:
+```css
+.icon-glow {
+  filter:
+    var(--filter-cyan)  /* Tints icon cyan */
+    drop-shadow(0 0 3px var(--color-secondary))
+    drop-shadow(0 0 6px rgba(0, 245, 255, 0.3));
+}
+```
 
 ---
 
@@ -963,58 +1327,76 @@ Before launching a mission, player selects which ships from their fleet to deplo
 Appears as a modal/overlay after clicking "Accept Mission" on the Contracts screen, before the mission actually starts.
 
 ### Layout - Squad Selection Modal
+The modal uses the standard panel styling with corner brackets and scanline overlay:
+
 ```
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                         DEPLOY SQUADRON                                       │
-│                         ────────────────                                      │
-│  Select ships to deploy (max 4)                                              │
-│                                                                              │
-│  ┌─────────────────────────────────────────────────────────────────────────┐ │
-│  │ [✓] COMMANDER • Fighter • Hull: 100%                              [You] │ │
-│  │     Loadout: Plasma ×2, Seeker ×8                                       │ │
-│  └─────────────────────────────────────────────────────────────────────────┘ │
-│                                                                              │
-│  ┌─────────────────────────────────────────────────────────────────────────┐ │
-│  │ [✓] ALPHA 2 • Fighter • Hull: 85%                              Regular │ │
-│  │     Loadout: Plasma ×2, Dart ×6                                         │ │
-│  └─────────────────────────────────────────────────────────────────────────┘ │
-│                                                                              │
-│  ┌─────────────────────────────────────────────────────────────────────────┐ │
-│  │ [ ] ALPHA 3 • Interceptor • Hull: 45%                          Veteran │ │
-│  │     Loadout: Autocannon ×2, Seeker ×8                          DAMAGED │ │
-│  └─────────────────────────────────────────────────────────────────────────┘ │
-│                                                                              │
-│  ┌─────────────────────────────────────────────────────────────────────────┐ │
-│  │ [✓] ALPHA 4 • Striker • Hull: 100%                              Rookie │ │
-│  │     Loadout: Plasma ×3, Torpedo ×4                                      │ │
-│  └─────────────────────────────────────────────────────────────────────────┘ │
-│                                                                              │
-│  ────────────────────────────────────────────────────────────────────────── │
-│  Deploying: 3/4 ships                                                        │
-│                                                                              │
-│  [Cancel]                                              [LAUNCH MISSION]      │
-└──────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│ ┌─ PATROL DUTY ────────────────────────────────────────────────┐│  ← Panel header (amber bg, mission name)
+│ │                                                               ││
+│ │  ┌───────────────────────────────────────────────────────┐   ││  ← Dark content area (bg-deep)
+│ │  │ [✓] [SHIP] Commander    Plasma, Seeker x8        [You]│   ││
+│ │  │     FIGHTER                                           │   ││
+│ │  ├───────────────────────────────────────────────────────┤   ││
+│ │  │ [✓] [SHIP] Viper        Plasma, Dart x6              │   ││
+│ │  │     FIGHTER                                           │   ││
+│ │  ├───────────────────────────────────────────────────────┤   ││
+│ │  │ [✓] [SHIP] Ghost        Autocannon, Seeker x8        │   ││
+│ │  │     INTERCEPTOR                                       │   ││
+│ │  ├───────────────────────────────────────────────────────┤   ││
+│ │  │ [✓] [SHIP] Shadow       Plasma, Torpedo x4           │   ││
+│ │  │     STRIKER                                           │   ││
+│ │  └───────────────────────────────────────────────────────┘   ││
+│ │                                                               ││
+│ │  ┌─────────────────────────────────────────────────────────┐ ││  ← Footer (lighter bg)
+│ │  │         [████] [████] [████] [████]                     │ ││  ← Cyan segmented capacity bar (80% width)
+│ │  │                   4/4 ships                             │ ││  ← Capacity label
+│ │  │  [Cancel]                          [▶ Launch Mission]   │ ││
+│ │  └─────────────────────────────────────────────────────────┘ ││
+│ └───────────────────────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────────────┘
 ```
 
+### Modal Structure
+- **Overlay**: Dark semi-transparent background with scanline texture
+- **Container**: Panel with amber corner brackets (top-left, bottom-right)
+- **Header**: Panel-header style with mission name (amber background tint)
+- **Content**: Dark background (`--bg-deep`) with padded ship list
+- **Ship List**: Bordered, scrollable if many ships
+- **Footer**: Lighter background with capacity bar and action buttons
+
+### Ship Card Layout
+Each card uses a grid layout: `[toggle] [icon] [info]`
+- **Toggle**: Checkbox (cyan when selected, amber for commander)
+- **Icon**: 48×48px ship class icon with cyan glow
+- **Info**: Two-column flex layout:
+  - Left: Pilot name (+ "You" badge if commander), ship class below
+  - Right: Loadout summary (truncated with ellipsis, max 180px)
+
+### Capacity Bar
+A segmented visual indicator (like missile ammo bar):
+- **4 segments** representing max deployment slots
+- **Filled segments**: Cyan with glow effect
+- **Empty segments**: Dim cyan outline
+- **Label below**: "X/4 ships" with cyan number
+
 ### Requirements
-- **Commander always deployed**: The player's ship cannot be deselected (checkbox disabled but checked)
-- **Max deployment**: 4 ships maximum (configurable)
+- **Commander always deployed**: Cannot be deselected (checkbox always checked, amber styling)
+- **Max deployment**: 4 ships maximum
 - **Ship cards show**:
+  - Checkbox toggle
+  - Ship class icon (48×48px)
   - Pilot name
   - Ship class
-  - Hull percentage (highlighted if damaged <50%)
-  - Pilot skill level
-  - Brief loadout summary (primary weapons, secondary count)
-- **Deployment counter**: Shows "Deploying: X/4 ships"
-- **Launch button**: Only enabled if at least 1 ship selected
+  - Loadout summary (weapon types)
+- **Capacity bar**: Visual segmented indicator + text count
+- **Launch button**: Enabled if at least 1 ship selected
 
 ### Ship Card States
 | State | Visual |
 |-------|--------|
-| Selected | Checkbox checked, card has cyan border |
-| Unselected | Checkbox unchecked, card dimmed |
-| Commander | Checkbox disabled (always checked), amber border, "[You]" badge |
-| Damaged | Hull text in warning color, "DAMAGED" badge if <50% |
+| Selected | Checkbox checked (cyan fill), card has cyan left-border |
+| Unselected | Checkbox empty, card dimmed (50% opacity) |
+| Commander | Checkbox amber (always checked), amber left-border, "You" badge |
 
 ### User Interactions
 | Action | Trigger | Result |
@@ -1022,14 +1404,16 @@ Appears as a modal/overlay after clicking "Accept Mission" on the Contracts scre
 | Toggle ship | Click card or checkbox | Selects/deselects ship for deployment |
 | Cancel | Click "Cancel" | Returns to Contracts screen |
 | Launch | Click "Launch Mission" | Starts mission with selected ships |
+| Keyboard | Escape key | Closes modal (same as Cancel) |
 
 ### Integration Flow
 1. Player clicks "Accept Mission" on contract
-2. Squad Selection modal appears
-3. Player toggles ships on/off
-4. Player clicks "Launch Mission"
-5. Only selected ships spawn in mission
-6. Non-deployed ships stay safe in hangar
+2. Squad Selection modal appears with all ships pre-selected
+3. Player toggles ships on/off (except commander)
+4. Capacity bar updates in real-time
+5. Player clicks "Launch Mission"
+6. Only selected ships spawn in mission
+7. Non-deployed ships stay safe in hangar
 
 ### Data Flow
 ```typescript
@@ -1040,8 +1424,17 @@ interface MissionConfig {
 }
 ```
 
+### Styling Details
+- Scanline overlay: `z-index: 100` to appear above modal content
+- Corner brackets: 20×20px, 2px border, amber color
+- Header: `rgba(255, 159, 28, 0.08)` background tint
+- Content area: `--bg-deep` (#050508)
+- Ship icons: Cyan filter with drop-shadow glow
+- Capacity segments: 12px height, flex-grow to fill 80% width
+
 ### Implementation Notes
 - Ships not deployed are preserved (no risk of loss)
-- Non-deployed ships still consume no ammo
+- Non-deployed ships consume no ammo
 - Allows strategic preservation of damaged/valuable ships
 - Commander ship is always in deployedShipIds
+- Modal cleans up keydown listener on close (prevents memory leak)

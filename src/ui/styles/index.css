@@ -86,3 +86,12 @@
 
 /* Squad selection modal */
 @import "./screens/squad-selection/index.css";
+
+/* Title screen */
+@import "./screens/title.css";
+
+/* Settings screen */
+@import "./screens/settings.css";
+
+/* Pause menu modal */
+@import "./screens/pause-menu.css";

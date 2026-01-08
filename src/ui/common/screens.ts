@@ -2,24 +2,28 @@
  * Screen state machine - manages transitions between game screens.
  *
  * Screens:
+ * - TITLE: Main menu (new game, continue, settings)
  * - SQUADRON: Unified pilot and ship management
  * - STORE: Equipment shop
  * - CONTRACTS: Mission selection
  * - MISSION: 3D combat (game running)
  * - RESULTS: Post-mission outcome
  * - GAME_OVER: Campaign ended
+ * - SETTINGS: Key bindings and options
  */
 
 import type { CampaignState, Contract } from '../../campaign/types';
 
 /** Game screen states */
 export enum Screen {
+  TITLE = 'title',
   SQUADRON = 'squadron',
   STORE = 'store',
   CONTRACTS = 'contracts',
   MISSION = 'mission',
   RESULTS = 'results',
   GAME_OVER = 'game_over',
+  SETTINGS = 'settings',
 }
 
 /** Screen manager state */
@@ -29,14 +33,20 @@ export interface ScreenManager {
   campaignState: CampaignState;
   selectedContract: Contract | null;
   lastMissionVictory: boolean;
+  currentSaveSlot: number | null;
 
   // Screen elements (created lazily)
+  titleElement: HTMLElement | null;
   squadronElement: HTMLElement | null;
   storeElement: HTMLElement | null;
   contractsElement: HTMLElement | null;
   resultsElement: HTMLElement | null;
   gameOverElement: HTMLElement | null;
+  settingsElement: HTMLElement | null;
   missionContainer: HTMLElement | null;
+
+  // Navigation history for settings (return to previous screen)
+  previousScreen: Screen | null;
 
   // Callbacks
   onStartMission?: (contract: Contract) => void;
@@ -49,17 +59,21 @@ export function createScreenManager(
   campaignState: CampaignState,
 ): ScreenManager {
   return {
-    currentScreen: Screen.SQUADRON,
+    currentScreen: Screen.TITLE,
     container,
     campaignState,
     selectedContract: null,
     lastMissionVictory: false,
+    currentSaveSlot: null,
+    titleElement: null,
     squadronElement: null,
     storeElement: null,
     contractsElement: null,
     resultsElement: null,
     gameOverElement: null,
+    settingsElement: null,
     missionContainer: null,
+    previousScreen: null,
   };
 }
 
@@ -174,4 +188,31 @@ export function updateCampaignState(
   state: CampaignState,
 ): void {
   manager.campaignState = state;
+}
+
+/** Transition to title screen */
+export function goToTitle(manager: ScreenManager): void {
+  manager.currentSaveSlot = null;
+  showScreen(manager, Screen.TITLE);
+}
+
+/** Transition to settings screen (remembers previous screen for back navigation) */
+export function goToSettings(manager: ScreenManager): void {
+  manager.previousScreen = manager.currentScreen;
+  showScreen(manager, Screen.SETTINGS);
+}
+
+/** Return from settings to previous screen */
+export function goBackFromSettings(manager: ScreenManager): void {
+  const target = manager.previousScreen ?? Screen.TITLE;
+  manager.previousScreen = null;
+  showScreen(manager, target);
+}
+
+/** Set the current save slot (for auto-save tracking) */
+export function setCurrentSaveSlot(
+  manager: ScreenManager,
+  slot: number | null,
+): void {
+  manager.currentSaveSlot = slot;
 }
