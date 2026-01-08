@@ -30,8 +30,21 @@
 
 .storage-content {
   flex: 1;
-  overflow-y: auto;
+  overflow-y: scroll;
   min-height: 0;
+  position: relative;
+}
+
+/* Visual scroll track - always visible on right edge */
+.storage-content::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 6px;
+  background: rgba(0, 0, 0, 0.4);
+  pointer-events: none;
 }
 
 .storage-content::-webkit-scrollbar {
@@ -39,7 +52,7 @@
 }
 
 .storage-content::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
+  background: transparent;
 }
 
 .storage-content::-webkit-scrollbar-thumb {

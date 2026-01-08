@@ -10,24 +10,38 @@
   background: var(--bg-panel);
   border: 1px solid var(--border-color);
   padding: var(--space-3);
-  overflow-y: auto;
+  padding-right: calc(var(--space-3) + 8px);
+  overflow-y: scroll;
   min-height: 0;
   min-width: 0;
   max-width: 280px;
+  position: relative;
 }
 
-/* Custom scrollbar */
+/* Visual scroll track - always visible on right edge */
+.store-list::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 8px;
+  background: rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+
+/* Custom scrollbar styling */
 .store-list::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
 .store-list::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
+  background: transparent;
 }
 
 .store-list::-webkit-scrollbar-thumb {
-  background: var(--border-light);
-  border-radius: 3px;
+  background: rgba(255, 159, 28, 0.6);
+  border-radius: 4px;
 }
 
 .store-list::-webkit-scrollbar-thumb:hover {

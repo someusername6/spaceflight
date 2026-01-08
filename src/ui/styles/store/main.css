@@ -152,15 +152,6 @@
   min-width: 0;
 }
 
-.no-selection {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  color: var(--text-dim);
-  text-align: center;
-}
-
 .store-detail {
   display: flex;
   flex-direction: column;
@@ -176,69 +167,6 @@
   margin-bottom: var(--space-4);
   padding-bottom: var(--space-3);
   border-bottom: 1px solid var(--border-color);
-}
-
-.item-description {
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-  line-height: var(--leading-normal);
-  margin-bottom: var(--space-4);
-  padding: var(--space-3);
-  background: rgba(0, 0, 0, 0.2);
-  border-left: 2px solid var(--border-color);
-}
-
-/* ========================================
-   PRICING
-   ======================================== */
-
-.detail-prices {
-  background: rgba(0, 0, 0, 0.3);
-  padding: var(--space-3);
-  margin-bottom: var(--space-5);
-}
-
-.price-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--space-1-5) 0;
-  font-size: var(--text-sm);
-}
-
-.price-row:first-child {
-  padding-top: 0;
-}
-
-.price-row:last-child {
-  padding-bottom: 0;
-}
-
-.price-label {
-  color: var(--text-secondary);
-}
-
-.price-value {
-  font-family: var(--font-display);
-  font-weight: var(--font-medium);
-}
-
-.price-value.buy {
-  color: var(--color-success);
-}
-
-.price-value.sell {
-  color: var(--color-warning);
-}
-
-.stock-count {
-  color: var(--text-dim);
-  font-size: var(--text-sm);
-}
-
-.storage-count {
-  color: var(--color-secondary);
-  font-size: var(--text-sm);
 }
 
 .detail-storage {
@@ -293,21 +221,4 @@
   background: rgba(255, 217, 61, 0.1);
   border-color: var(--color-warning);
   color: var(--color-warning);
-}
-
-/* ========================================
-   SCRAP SPECIFIC
-   ======================================== */
-
-.scrap-conversion-info {
-  background: rgba(0, 245, 255, 0.05);
-  border: 1px solid var(--color-secondary);
-  padding: var(--space-3);
-  margin-bottom: var(--space-4);
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-}
-
-.scrap-conversion-info strong {
-  color: var(--color-secondary);
 }

@@ -129,20 +129,6 @@
   color: var(--color-danger);
 }
 
-.stat-note {
-  font-size: var(--text-xs);
-  color: var(--text-dim);
-  padding: var(--space-2) 0 var(--space-1);
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-  margin-top: var(--space-2);
-}
-
-.stat-divider {
-  height: 1px;
-  background: var(--border-color);
-  margin: var(--space-2) 0;
-}
-
 /* ========================================
    SCRAP CONVERT BUTTON
    ======================================== */
