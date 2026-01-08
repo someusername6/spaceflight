@@ -100,11 +100,12 @@ export function updateMissionRenderers(
   world: World,
   containerWidth: number,
   containerHeight: number,
+  alpha = 1,
 ): void {
   const { renderer } = renderers;
   const scene = getScene(renderer);
 
-  syncScene(renderer, world);
+  syncScene(renderer, world, alpha);
   updateExplosionRenderer(renderers.explosionRenderer, scene, world);
   updateTrailRenderer(renderers.trailRenderer, scene, world);
   updateExhaustRenderer(

@@ -2,7 +2,7 @@
  * Physics component - velocity, speed limits, and movement parameters.
  */
 
-import { Vector3 } from 'three';
+import { Quaternion, Vector3 } from 'three';
 import type { ComponentBase } from '../core/types';
 
 export interface Physics extends ComponentBase {
@@ -21,6 +21,9 @@ export interface Physics extends ComponentBase {
   // Rotational inertia (smooth turning)
   angularVelocity: Vector3; // Current angular velocity (deg/sec): x=pitch, y=yaw, z=roll
   angularAcceleration: number; // How fast rotation spins up/down (deg/sec²)
+  // Previous tick state for render interpolation
+  prevPosition: Vector3;
+  prevRotation: Quaternion;
 }
 
 /** Creates a Physics component with ship-like defaults */
@@ -50,6 +53,9 @@ export function createPhysics(params: {
     afterburnerLocked: false,
     angularVelocity: new Vector3(),
     angularAcceleration: params.angularAcceleration ?? 800, // Reaches full turn in ~0.125s
+    // Initialize prev to zero - will be set properly on first physics tick
+    prevPosition: new Vector3(),
+    prevRotation: new Quaternion(),
   };
 }
 

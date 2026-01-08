@@ -16,7 +16,6 @@ import type { Transform } from '../../components/transform';
 import { entityExists, getComponent } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
 import {
-  accelerateTo,
   calculateEscapeDirection,
   FLEE_RETURN_THRESHOLD,
   isKitingShip,
@@ -24,6 +23,7 @@ import {
   REPOSITION_AWAY_WEIGHT,
   REPOSITION_DISTANCE_THRESHOLD,
   REPOSITION_PERPENDICULAR_WEIGHT,
+  setSpeedInputs,
   tempVectors,
   turnToward,
 } from './ai-movement';
@@ -61,7 +61,7 @@ export function updateReposition(
   ai: AIControlled,
   transform: Transform,
   physics: Physics,
-  dt: number,
+  _dt: number,
 ): void {
   const profile = ai.profile;
   const { toTarget, forward } = tempVectors;
@@ -118,10 +118,10 @@ export function updateReposition(
       REPOSITION_PERPENDICULAR_WEIGHT,
       REPOSITION_AWAY_WEIGHT,
     );
-    turnToward(transform, physics, escapeDir, dt);
+    turnToward(ai, transform, escapeDir);
   }
 
   // Use afterburner for fast repositioning (80% of max afterburner speed)
   const afterburnerSpeed = physics.maxSpeed * physics.afterburnerMultiplier;
-  accelerateTo(physics, afterburnerSpeed * 0.8, dt, 1.3);
+  setSpeedInputs(ai, physics, afterburnerSpeed * 0.8, true);
 }

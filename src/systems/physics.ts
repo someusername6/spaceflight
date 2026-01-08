@@ -45,6 +45,10 @@ export function physicsSystem(world: World, dt: number): void {
     ) as Transform;
     const physics = getComponent<Physics>(world, entity, 'physics') as Physics;
 
+    // Save current state for render interpolation (before any updates)
+    physics.prevPosition.copy(transform.position);
+    physics.prevRotation.copy(transform.rotation);
+
     // Dead or dying entities coast with current velocity (no control input)
     const health = getComponent<Health>(world, entity, 'health');
     if (health && isDead(health)) {
@@ -104,14 +108,13 @@ export function physicsSystem(world: World, dt: number): void {
         player.prevTargetDistance = 0;
       }
     } else if (ai) {
-      // AI movement handled directly in ai.ts via transform.rotation and physics.currentSpeed
-      // AI does not use the input abstraction - it sets rotation/speed directly each frame
-      // Skip the rest of speed control for AI - they manage their own speed and afterburner
-      forward.set(0, 0, -1);
-      forward.applyQuaternion(transform.rotation);
-      physics.velocity.copy(forward).multiplyScalar(physics.currentSpeed);
-      transform.position.addScaledVector(physics.velocity, dt);
-      continue;
+      // AI uses input abstraction - behaviors set inputs, physics processes them
+      pitchInput = ai.input.pitch;
+      yawInput = ai.input.yaw;
+      rollInput = ai.input.roll;
+      accelerating = ai.input.accelerate;
+      decelerating = ai.input.decelerate;
+      afterburner = ai.input.afterburner;
     }
 
     // Calculate target angular velocity from input

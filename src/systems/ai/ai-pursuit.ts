@@ -14,10 +14,10 @@ import { getComponent } from '../../core/ecs';
 import { calculateInterceptPoint } from '../../core/lead-calculation';
 import type { Entity, World } from '../../core/types';
 import {
-  accelerateTo,
   aimToward,
   DEFAULT_PROJECTILE_SPEED,
-  decelerateToZero,
+  setDecelerateInputs,
+  setSpeedInputs,
   tempVectors,
 } from './ai-movement';
 
@@ -44,7 +44,7 @@ export function pursueTarget(
   ai: AIControlled,
   transform: Transform,
   physics: Physics,
-  dt: number,
+  _dt: number,
   closeUrgently = false,
 ): void {
   const { toTarget, leadPoint } = tempVectors;
@@ -102,19 +102,10 @@ export function pursueTarget(
   toTarget.copy(aimPoint).sub(transform.position);
   if (toTarget.lengthSq() > 0.001) {
     toTarget.normalize();
-    aimToward(
-      world,
-      entity,
-      transform,
-      physics,
-      toTarget,
-      dt,
-      weapons,
-      aimError,
-    );
+    aimToward(world, entity, ai, transform, toTarget, weapons, aimError);
   }
 
-  accelerateTo(physics, physics.maxSpeed, dt);
+  setSpeedInputs(ai, physics, physics.maxSpeed);
 }
 
 /**
@@ -127,7 +118,7 @@ export function maintainDistanceEngage(
   ai: AIControlled,
   transform: Transform,
   physics: Physics,
-  dt: number,
+  _dt: number,
 ): void {
   const { toTarget, leadPoint } = tempVectors;
 
@@ -172,19 +163,10 @@ export function maintainDistanceEngage(
   toTarget.copy(aimPoint).sub(transform.position);
   if (toTarget.lengthSq() > 0.001) {
     toTarget.normalize();
-    aimToward(
-      world,
-      entity,
-      transform,
-      physics,
-      toTarget,
-      dt,
-      weapons,
-      aimError,
-    );
+    aimToward(world, entity, ai, transform, toTarget, weapons, aimError);
   }
 
   // Stop moving - we're facing the target for aiming, so any forward
   // movement would close distance
-  decelerateToZero(physics, dt);
+  setDecelerateInputs(ai);
 }

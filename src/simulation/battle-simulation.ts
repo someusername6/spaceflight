@@ -241,22 +241,22 @@ export function createBattleSimulation(
     checkRespawns(sim);
   };
 
-  // Set up render callback
-  game.onRender = () => {
-    updateRender(sim);
+  // Set up render callback with alpha for interpolation
+  game.onRender = (_world, alpha) => {
+    updateRender(sim, alpha);
   };
 
   return sim;
 }
 
 /** Update rendering for a simulation frame */
-function updateRender(sim: BattleSimulation): void {
+function updateRender(sim: BattleSimulation, alpha: number): void {
   const { game, renderer, camera } = sim;
   const world = game.world;
   const scene = getScene(renderer);
 
-  // Sync scene with world state
-  syncScene(renderer, world);
+  // Sync scene with world state (with interpolation)
+  syncScene(renderer, world, alpha);
 
   // Update effect renderers
   updateExplosionRenderer(sim.explosionRenderer, scene, world);

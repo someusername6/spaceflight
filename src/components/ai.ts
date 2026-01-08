@@ -16,6 +16,22 @@ export enum AIState {
   Reposition = 'reposition',
 }
 
+/** AI control inputs - set by AI behaviors, processed by physics system */
+export interface AIInput {
+  /** Pitch input (-1 to 1) */
+  pitch: number;
+  /** Yaw input (-1 to 1) */
+  yaw: number;
+  /** Roll input (-1 to 1) */
+  roll: number;
+  /** Accelerate flag */
+  accelerate: boolean;
+  /** Decelerate flag */
+  decelerate: boolean;
+  /** Afterburner flag */
+  afterburner: boolean;
+}
+
 export interface AIControlled extends ComponentBase {
   readonly type: 'aiControlled';
   state: AIState;
@@ -27,6 +43,8 @@ export interface AIControlled extends ComponentBase {
   lastRepositionTime: number;
   /** AI behavior profile (determines competence level) */
   profile: AIProfile;
+  /** Control inputs set by AI behaviors, processed by physics */
+  input: AIInput;
   /**
    * Preferred combat range. AI will actively close to this distance.
    * If undefined, uses profile.engageRange as the threshold.
@@ -54,6 +72,14 @@ export function createAIControlled(
     lastDecoyTime: 0,
     lastRepositionTime: 0,
     profile,
+    input: {
+      pitch: 0,
+      yaw: 0,
+      roll: 0,
+      accelerate: false,
+      decelerate: false,
+      afterburner: false,
+    },
   };
 
   // Only add optional fields if defined (exactOptionalPropertyTypes)

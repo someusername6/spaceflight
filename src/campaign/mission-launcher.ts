@@ -122,13 +122,14 @@ export function launchMission(
     }
   }
 
-  // Set render callback
-  game.onRender = (world, _alpha) => {
+  // Set render callback with alpha for interpolation
+  game.onRender = (world, alpha) => {
     updateMissionRenderers(
       renderers,
       world,
       controller.missionContainer?.clientWidth ?? 800,
       controller.missionContainer?.clientHeight ?? 600,
+      alpha,
     );
   };
 

@@ -19,12 +19,12 @@ import { entityExists, getComponent } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
 import type { AIProfile } from '../../data/ai-profiles';
 import {
-  accelerateTo,
   calculateEscapeDirection,
   EVADE_AWAY_WEIGHT,
   EVADE_PERPENDICULAR_WEIGHT,
   FLEE_RETURN_THRESHOLD,
   isKitingShip,
+  setSpeedInputs,
   tempVectors,
   turnToward,
 } from './ai-movement';
@@ -79,11 +79,11 @@ export function updateEvade(
   transform: Transform,
   physics: Physics,
   shields: Shields | undefined,
-  heat: Heat | undefined,
-  dt: number,
+  _heat: Heat | undefined,
+  _dt: number,
 ): void {
   const profile = ai.profile;
-  const { toTarget, forward, deltaQuat } = tempVectors;
+  const { toTarget, forward } = tempVectors;
 
   // Distance-flee (kiting) ships: return to ENGAGE when distance regained
   if (isKitingShip(ai) && ai.target && entityExists(world, ai.target)) {
@@ -132,7 +132,7 @@ export function updateEvade(
 
         if (isKitingShip(ai)) {
           // Kiting ships: flee DIRECTLY away to maximize distance gain
-          turnToward(transform, physics, toTarget, dt);
+          turnToward(ai, transform, toTarget);
         } else {
           // Normal evade: perpendicular movement to maximize angular velocity
           forward.set(0, 0, -1).applyQuaternion(transform.rotation);
@@ -142,19 +142,16 @@ export function updateEvade(
             EVADE_PERPENDICULAR_WEIGHT,
             EVADE_AWAY_WEIGHT,
           );
-          turnToward(transform, physics, escapeDir, dt);
+          turnToward(ai, transform, escapeDir);
         }
       }
     }
   }
 
-  // Add erratic movement (barrel roll effect) - skip for kiting ships
+  // Add erratic movement (barrel roll effect) via roll input - skip for kiting ships
   if (!isKitingShip(ai)) {
-    const wobble = Math.sin(ai.stateTimer * 8) * 0.3;
-    forward.set(0, 0, -1).applyQuaternion(transform.rotation);
-    deltaQuat.setFromAxisAngle(forward, wobble * dt);
-    transform.rotation.multiply(deltaQuat);
-    transform.rotation.normalize();
+    const wobble = Math.sin(ai.stateTimer * 8);
+    ai.input.roll = wobble;
   }
 
   // Afterburner escape - use boosted speed if not heat-locked
@@ -162,20 +159,10 @@ export function updateEvade(
   const afterburnerSpeed = physics.maxSpeed * physics.afterburnerMultiplier;
 
   if (canAfterburn) {
-    accelerateTo(physics, afterburnerSpeed, dt, 1.5);
-    physics.isAfterburning = true;
-
-    // Generate heat while afterburning
-    if (heat) {
-      heat.current = Math.min(
-        heat.max,
-        heat.current + physics.afterburnerHeatRate * dt,
-      );
-    }
+    setSpeedInputs(ai, physics, afterburnerSpeed, true);
   } else {
     // Heat-locked - use normal max speed
-    accelerateTo(physics, physics.maxSpeed, dt);
-    physics.isAfterburning = false;
+    setSpeedInputs(ai, physics, physics.maxSpeed);
   }
 }
 
@@ -188,7 +175,7 @@ export function updateRegroup(
   physics: Physics,
   shields: Shields | undefined,
   heat: Heat | undefined,
-  dt: number,
+  _dt: number,
 ): void {
   const profile = ai.profile;
   const { toTarget, localUp } = tempVectors;
@@ -219,11 +206,11 @@ export function updateRegroup(
         localUp.set(0, 1, 0).applyQuaternion(transform.rotation);
         toTarget.addScaledVector(localUp, 0.3);
         toTarget.normalize();
-        turnToward(transform, physics, toTarget, dt);
+        turnToward(ai, transform, toTarget);
       }
     }
   }
 
   // Cruise at moderate speed to conserve heat
-  accelerateTo(physics, physics.maxSpeed * 0.7, dt);
+  setSpeedInputs(ai, physics, physics.maxSpeed * 0.7);
 }

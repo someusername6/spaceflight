@@ -23,9 +23,71 @@ export const tempVectors = {
   localUp: new Vector3(),
   escapeDir: new Vector3(),
   leadPoint: new Vector3(),
+  localDir: new Vector3(),
+  inverseRot: new Quaternion(),
 };
 
 const DEG_TO_RAD = Math.PI / 180;
+
+/** Angle threshold for proportional input (radians) - below this, input is proportional */
+const PROPORTIONAL_THRESHOLD = 10 * DEG_TO_RAD;
+
+/** Speed threshold for "close enough" - AI coasts when within this of target speed */
+const SPEED_COAST_THRESHOLD = 5;
+
+/**
+ * Set AI rotation inputs to turn toward a target direction.
+ * Uses input-based control that physics system processes through angular velocity.
+ *
+ * @param ai - AI component to set inputs on
+ * @param transform - Ship's transform component
+ * @param direction - Target direction (normalized, world space)
+ */
+export function setRotationInputs(
+  ai: AIControlled,
+  transform: Transform,
+  direction: Vector3,
+): void {
+  const { localDir, inverseRot } = tempVectors;
+
+  // Transform direction to local space
+  inverseRot.copy(transform.rotation).invert();
+  localDir.copy(direction).applyQuaternion(inverseRot);
+
+  // In local space, forward is (0, 0, -1)
+  // localDir.x > 0 means target is to the right
+  // localDir.y > 0 means target is above
+
+  // Calculate yaw angle (rotation around Y axis)
+  // atan2(-x, -z) gives angle from forward in XZ plane
+  const yawAngle = Math.atan2(-localDir.x, -localDir.z);
+
+  // Calculate pitch angle (rotation around X axis)
+  // asin(y) gives elevation angle (clamped to avoid NaN)
+  const pitchAngle = Math.asin(Math.max(-1, Math.min(1, localDir.y)));
+
+  // Convert angles to inputs with proportional zone for small angles
+  // Positive yaw input = yaw left, negative = yaw right
+  // Positive pitch input = pitch up, negative = pitch down
+  ai.input.yaw = angleToInput(yawAngle);
+  ai.input.pitch = angleToInput(pitchAngle);
+
+  // Roll is not set here - AI doesn't actively roll toward targets
+  ai.input.roll = 0;
+}
+
+/**
+ * Convert angle to input value (-1 to 1).
+ * Uses proportional control for small angles, saturated for large.
+ */
+function angleToInput(angle: number): number {
+  if (Math.abs(angle) < PROPORTIONAL_THRESHOLD) {
+    // Proportional zone: smooth control for small corrections
+    return angle / PROPORTIONAL_THRESHOLD;
+  }
+  // Saturated: full input for large angles
+  return angle > 0 ? 1 : -1;
+}
 
 // === Distance-flee (kiting) thresholds ===
 /** Distance must exceed this fraction of preferredCombatRange to return from flee */
@@ -61,42 +123,18 @@ export function isKitingShip(ai: AIControlled): boolean {
 
 /**
  * Turn ship toward a target direction.
+ * Sets AI inputs that physics system processes through angular velocity.
  *
+ * @param ai - AI component to set inputs on
  * @param transform - Ship's transform component
- * @param physics - Ship's physics component (for turn rate)
  * @param direction - Target direction (normalized)
- * @param dt - Delta time
  */
 export function turnToward(
+  ai: AIControlled,
   transform: Transform,
-  physics: Physics,
   direction: Vector3,
-  dt: number,
 ): void {
-  const { forward, rotationAxis, deltaQuat } = tempVectors;
-
-  forward.set(0, 0, -1).applyQuaternion(transform.rotation);
-  const dot = forward.dot(direction);
-  const turnSpeed = physics.turnRate * DEG_TO_RAD * dt;
-
-  if (dot < 0.999) {
-    rotationAxis.crossVectors(forward, direction);
-    const axisLengthSq = rotationAxis.lengthSq();
-
-    if (axisLengthSq > 0.0001) {
-      rotationAxis.multiplyScalar(1 / Math.sqrt(axisLengthSq));
-      const angle = Math.acos(Math.max(-1, Math.min(1, dot)));
-      deltaQuat.setFromAxisAngle(rotationAxis, Math.min(angle, turnSpeed));
-      transform.rotation.premultiply(deltaQuat);
-      transform.rotation.normalize();
-    } else if (dot < -0.9) {
-      // Anti-parallel case: pick arbitrary perpendicular axis (up)
-      rotationAxis.set(0, 1, 0);
-      deltaQuat.setFromAxisAngle(rotationAxis, turnSpeed);
-      transform.rotation.premultiply(deltaQuat);
-      transform.rotation.normalize();
-    }
-  }
+  setRotationInputs(ai, transform, direction);
 }
 
 /**
@@ -110,10 +148,9 @@ export function turnToward(
 export function aimToward(
   world: World,
   entity: Entity,
+  ai: AIControlled,
   transform: Transform,
-  physics: Physics,
   direction: Vector3,
-  dt: number,
   weapons?: PrimaryWeapons | null,
   aimError?: AimError | null,
 ): void {
@@ -124,9 +161,9 @@ export function aimToward(
 
   if (w?.hasBeams && e) {
     const perceivedDir = applyAimError(direction, e);
-    turnToward(transform, physics, perceivedDir, dt);
+    turnToward(ai, transform, perceivedDir);
   } else {
-    turnToward(transform, physics, direction, dt);
+    turnToward(ai, transform, direction);
   }
 }
 
@@ -173,37 +210,43 @@ export function calculateEscapeDirection(
 }
 
 /**
- * Accelerate ship toward target speed.
+ * Set AI speed inputs to accelerate toward target speed.
+ * Physics system will process these through smooth acceleration.
+ *
+ * @param ai - AI component to set inputs on
+ * @param physics - Physics component (for current speed comparison)
+ * @param targetSpeed - Target speed to reach
+ * @param useAfterburner - Whether to use afterburner (for speeds above maxSpeed)
  */
-export function accelerateTo(
+export function setSpeedInputs(
+  ai: AIControlled,
   physics: Physics,
   targetSpeed: number,
-  dt: number,
-  accelerationMultiplier = 1,
+  useAfterburner = false,
 ): void {
-  if (physics.currentSpeed < targetSpeed) {
-    physics.currentSpeed = Math.min(
-      physics.currentSpeed + physics.acceleration * accelerationMultiplier * dt,
-      targetSpeed,
-    );
-  } else if (physics.currentSpeed > targetSpeed) {
-    physics.currentSpeed = Math.max(
-      physics.currentSpeed - physics.acceleration * dt,
-      targetSpeed,
-    );
+  if (physics.currentSpeed < targetSpeed - SPEED_COAST_THRESHOLD) {
+    ai.input.accelerate = true;
+    ai.input.decelerate = false;
+    ai.input.afterburner = useAfterburner && targetSpeed > physics.maxSpeed;
+  } else if (physics.currentSpeed > targetSpeed + SPEED_COAST_THRESHOLD) {
+    ai.input.accelerate = false;
+    ai.input.decelerate = true;
+    ai.input.afterburner = false;
+  } else {
+    // Near target speed - coast
+    ai.input.accelerate = false;
+    ai.input.decelerate = false;
+    ai.input.afterburner = false;
   }
 }
 
 /**
- * Decelerate ship to zero.
+ * Set AI speed inputs to decelerate to zero.
  */
-export function decelerateToZero(physics: Physics, dt: number): void {
-  if (physics.currentSpeed > 0) {
-    physics.currentSpeed = Math.max(
-      physics.currentSpeed - physics.acceleration * dt,
-      0,
-    );
-  }
+export function setDecelerateInputs(ai: AIControlled): void {
+  ai.input.accelerate = false;
+  ai.input.decelerate = true;
+  ai.input.afterburner = false;
 }
 
 /** Default projectile speed for lead calculation when no weapon found */

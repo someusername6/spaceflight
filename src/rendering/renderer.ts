@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { Faction, type FactionComponent } from '../components/faction';
 import type { Missile } from '../components/missile';
+import type { Physics } from '../components/physics';
 import type { Transform } from '../components/transform';
 import { getComponent, hasComponent, isShip, queryEntities } from '../core/ecs';
 import type { Entity, World } from '../core/types';
@@ -40,6 +41,16 @@ export interface Renderer {
 // Reusable objects (avoid per-frame allocations)
 const cameraOffset = new THREE.Vector3();
 const seenEntities = new Set<Entity>();
+// Reusable vectors for interpolation
+const interpPos = new THREE.Vector3();
+const interpRot = new THREE.Quaternion();
+
+/**
+ * Position smoothing to reduce jitter from frame timing variations.
+ * Uses exponential moving average on the interpolated position.
+ */
+const smoothedPositions = new Map<Entity, THREE.Vector3>();
+const POSITION_SMOOTH_FACTOR = 0.4; // Higher = more responsive, lower = smoother
 
 /** Creates the renderer and attaches to container */
 export function createRenderer(container: HTMLElement, seed: number): Renderer {
@@ -99,8 +110,11 @@ export function createRenderer(container: HTMLElement, seed: number): Renderer {
   };
 }
 
-/** Syncs Three.js scene with ECS world */
-export function syncScene(renderer: Renderer, world: World): void {
+/**
+ * Syncs Three.js scene with ECS world.
+ * @param alpha - Interpolation factor (0-1) for smooth rendering between physics ticks
+ */
+export function syncScene(renderer: Renderer, world: World, alpha = 1): void {
   const { scene, entityMeshes, beamLines } = renderer;
   // Clear reusable Set (avoid per-frame allocations)
   seenEntities.clear();
@@ -142,9 +156,38 @@ export function syncScene(renderer: Renderer, world: World): void {
       entityMeshes.set(entity, mesh);
     }
 
-    // Update transform
-    mesh.position.copy(transform.position);
-    mesh.quaternion.copy(transform.rotation);
+    // Update transform with interpolation for entities with Physics
+    const physics = getComponent<Physics>(world, entity, 'physics');
+    if (physics) {
+      // Interpolate between previous tick position and current position
+      interpPos.lerpVectors(physics.prevPosition, transform.position, alpha);
+      interpRot.slerpQuaternions(
+        physics.prevRotation,
+        transform.rotation,
+        alpha,
+      );
+
+      // Apply position smoothing only to ships (reduces frame timing jitter)
+      // Projectiles/missiles need precise positions for hit detection
+      if (isShipEntity) {
+        let smoothed = smoothedPositions.get(entity);
+        if (!smoothed) {
+          smoothed = new THREE.Vector3().copy(interpPos);
+          smoothedPositions.set(entity, smoothed);
+        } else {
+          smoothed.lerp(interpPos, POSITION_SMOOTH_FACTOR);
+        }
+        mesh.position.copy(smoothed);
+      } else {
+        mesh.position.copy(interpPos);
+      }
+
+      mesh.quaternion.copy(interpRot);
+    } else {
+      // No physics component - use current transform directly
+      mesh.position.copy(transform.position);
+      mesh.quaternion.copy(transform.rotation);
+    }
   }
 
   // Remove meshes for entities that no longer exist
@@ -152,6 +195,7 @@ export function syncScene(renderer: Renderer, world: World): void {
     if (!seenEntities.has(entity)) {
       scene.remove(mesh);
       entityMeshes.delete(entity);
+      smoothedPositions.delete(entity);
     }
   }
 

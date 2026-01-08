@@ -52,6 +52,14 @@ export function aiSystem(world: World, dt: number): void {
     const physics = getComponent(world, entity, 'physics') as Physics;
     const faction = getComponent(world, entity, 'faction') as FactionComponent;
 
+    // Reset inputs each frame (behaviors will set them as needed)
+    ai.input.pitch = 0;
+    ai.input.yaw = 0;
+    ai.input.roll = 0;
+    ai.input.accelerate = false;
+    ai.input.decelerate = false;
+    ai.input.afterburner = false;
+
     // Update state timer
     ai.stateTimer += dt;
 
