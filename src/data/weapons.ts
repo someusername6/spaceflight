@@ -161,41 +161,6 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
     damage: 50,
   },
 
-  // === HEAVY BEAM WEAPONS (2x damage, 2x heat, 2x beam width) ===
-  heavyRedLaser: {
-    name: 'Heavy Red Laser',
-    listName: 'Heavy Red',
-    category: 'beam',
-    heatPerShot: 30,
-    projectileSpeed: 0,
-    fireRate: 0,
-    range: 400,
-    damage: 240,
-    beamWidth: 2,
-  },
-  heavyGreenLaser: {
-    name: 'Heavy Green Laser',
-    listName: 'Heavy Green',
-    category: 'beam',
-    heatPerShot: 24,
-    projectileSpeed: 0,
-    fireRate: 0,
-    range: 800,
-    damage: 160,
-    beamWidth: 2,
-  },
-  heavyBlueLaser: {
-    name: 'Heavy Blue Laser',
-    listName: 'Heavy Blue',
-    category: 'beam',
-    heatPerShot: 20,
-    projectileSpeed: 0,
-    fireRate: 0,
-    range: 1200,
-    damage: 100,
-    beamWidth: 2,
-  },
-
   // === SPECIAL BEAM WEAPONS ===
   lightning: {
     name: 'Lightning',

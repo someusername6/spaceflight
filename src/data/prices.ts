@@ -39,9 +39,6 @@ export const PRIMARY_PRICES: Record<string, { buy: number; sell: number }> = {
   redLaser: { buy: 250, sell: 125 },
   greenLaser: { buy: 200, sell: 100 },
   blueLaser: { buy: 180, sell: 90 },
-  heavyRedLaser: { buy: 500, sell: 250 },
-  heavyGreenLaser: { buy: 400, sell: 200 },
-  heavyBlueLaser: { buy: 360, sell: 180 },
   lightning: { buy: 220, sell: 110 },
   torch: { buy: 280, sell: 140 }, // Short-range plasma cutter
   nuclearLance: { buy: 500, sell: 250 },

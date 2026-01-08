@@ -124,9 +124,6 @@ const BEAM_COLORS: Record<string, THREE.Color> = {
   'Red Laser': new THREE.Color(1, 0, 0),
   'Green Laser': new THREE.Color(0, 1, 0),
   'Blue Laser': new THREE.Color(0, 0, 1),
-  'Heavy Red Laser': new THREE.Color(1, 0, 0),
-  'Heavy Green Laser': new THREE.Color(0, 1, 0),
-  'Heavy Blue Laser': new THREE.Color(0, 0, 1),
   Lightning: new THREE.Color(0.6, 0.8, 1.0), // Electric blue-white
   Torch: new THREE.Color(1.0, 0.6, 0.2), // Orange-white plasma cutter
   'Nuclear Lance': new THREE.Color(1.0, 0.95, 0.8), // Bright white-gold
