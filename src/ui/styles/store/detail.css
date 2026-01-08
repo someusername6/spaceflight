@@ -103,6 +103,7 @@
   padding: var(--space-1-5) 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   font-size: var(--text-sm);
+  font-family: var(--font-ui);
 }
 
 .stat-row:last-child {
@@ -111,11 +112,12 @@
 
 .stat-row span:first-child {
   color: var(--text-secondary);
+  font-weight: var(--font-medium);
 }
 
 .stat-row span:last-child {
   color: var(--text-primary);
-  font-family: var(--font-body);
+  font-weight: var(--font-semibold);
 }
 
 /* Bank dots inside stat values need their own colors */

@@ -194,7 +194,7 @@ function bindPopoverEvents(
   });
 
   // Unequip button
-  popover.querySelector('.manager-unequip')?.addEventListener('click', (e) => {
+  popover.querySelector('.btn-danger')?.addEventListener('click', (e) => {
     e.stopPropagation();
     const newState =
       slotType === 'primary'
@@ -226,7 +226,7 @@ export function showWeaponPopover(
   closePopover();
 
   const popover = document.createElement('div');
-  popover.className = 'weapon-popover';
+  popover.className = `weapon-popover weapon-popover-${slotType}`;
 
   const content =
     slotType === 'primary'

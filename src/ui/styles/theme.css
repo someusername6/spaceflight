@@ -64,6 +64,10 @@
   --bg-interactive-hover: rgba(255, 159, 28, 0.12);
   --bg-interactive-active: rgba(255, 159, 28, 0.16);
 
+  /* Tinted surfaces (for type-coded elements) */
+  --bg-tinted-primary: rgb(30, 22, 12);
+  --bg-tinted-danger: rgb(30, 14, 14);
+
   /* ========================================
      SHADOWS - Depth & Elevation
      ======================================== */

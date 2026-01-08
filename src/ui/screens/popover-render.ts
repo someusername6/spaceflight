@@ -59,6 +59,25 @@ function statRow(label: string, value: string | number, unit = ''): string {
   return `<div class="popover-stat"><span class="popover-stat-label">${label}</span><span class="popover-stat-value">${value}${unit}</span></div>`;
 }
 
+/** Max segments before switching to continuous bar in popover */
+const MAX_POPOVER_SEGMENTS = 16;
+
+/** Render ammo bar - segmented for low counts, continuous for high */
+function renderAmmoBar(current: number, max: number): string {
+  if (max <= MAX_POPOVER_SEGMENTS) {
+    // Segmented bar
+    const segments = Array.from(
+      { length: max },
+      (_, i) =>
+        `<div class="ammo-segment${i < current ? ' filled' : ''}"></div>`,
+    ).join('');
+    return `<div class="ammo-bar segmented">${segments}</div>`;
+  }
+  // Continuous bar
+  const fillPct = max > 0 ? Math.round((current / max) * 100) : 0;
+  return `<div class="ammo-bar"><div class="ammo-bar-fill" style="width: ${fillPct}%"></div></div>`;
+}
+
 /** Render primary weapon popover content (full stats + actions) */
 export function renderPrimaryPopover(
   weapon: EquippedPrimary,
@@ -102,23 +121,23 @@ export function renderPrimaryPopover(
 
     ammoStats = `
     <div class="popover-ammo">
-      ${statRow('Loaded', `${current}/${max}`)}
+      ${renderAmmoBar(current, max)}
+      <div class="ammo-count">${current}<span class="ammo-max">/${max}</span></div>
       <div class="popover-controls">
-        <button class="manager-btn" data-action="unload-all" ${canUnload ? '' : 'disabled'} title="Empty">▼</button>
-        <button class="manager-btn" data-action="unload" ${canUnload ? '' : 'disabled'}>−</button>
-        <button class="manager-btn" data-action="load" ${canLoad ? '' : 'disabled'}>+</button>
-        <button class="manager-btn" data-action="load-all" ${canLoad ? '' : 'disabled'} title="Fill">▲</button>
+        <button class="manager-btn" data-action="unload-all" data-label="All" ${canUnload ? '' : 'disabled'}>▼</button>
+        <button class="manager-btn" data-action="unload" data-label="−10" ${canUnload ? '' : 'disabled'}>−</button>
+        <button class="manager-btn" data-action="load" data-label="+10" ${canLoad ? '' : 'disabled'}>+</button>
+        <button class="manager-btn" data-action="load-all" data-label="All" ${canLoad ? '' : 'disabled'}>▲</button>
       </div>
-      ${statRow('Storage', stored)}
     </div>
     `;
   }
 
   return `
-    <div class="popover-header">
+    <div class="popover-header popover-header-primary">
       <div class="popover-title">
+        <span class="manager-size">${'●'.repeat(weapon.bankSize)}</span>
         <span class="manager-name">${stats.name}</span>
-        <span class="manager-size manager-size-primary">${'●'.repeat(weapon.bankSize)}</span>
       </div>
       <div class="popover-subtitle">${categoryName(category)}</div>
     </div>
@@ -137,7 +156,7 @@ export function renderPrimaryPopover(
     </div>
     ${ammoStats}
     <div class="manager-actions">
-      <button class="manager-unequip" data-ship="${shipId}" data-type="primary" data-index="${slotIndex}">
+      <button class="btn btn-danger" data-ship="${shipId}" data-type="primary" data-index="${slotIndex}">
         Unequip
       </button>
     </div>
@@ -171,10 +190,10 @@ export function renderSecondaryPopover(
       : 'Dumbfire Missile';
 
   return `
-    <div class="popover-header">
+    <div class="popover-header popover-header-secondary">
       <div class="popover-title">
+        <span class="manager-size">${'◆'.repeat(weapon.bankSize)}</span>
         <span class="manager-name">${stats.name}</span>
-        <span class="manager-size manager-size-secondary">${'◆'.repeat(weapon.bankSize)}</span>
       </div>
       <div class="popover-subtitle">${typeLabel}</div>
     </div>
@@ -187,17 +206,17 @@ export function renderSecondaryPopover(
       ${stats.aoeRadius ? statRow('Blast Radius', stats.aoeRadius, 'm') : ''}
     </div>
     <div class="popover-ammo">
-      ${statRow('Loaded', `${weapon.count}/${weapon.maxCount}`)}
+      ${renderAmmoBar(weapon.count, weapon.maxCount)}
+      <div class="ammo-count">${weapon.count}<span class="ammo-max">/${weapon.maxCount}</span></div>
       <div class="popover-controls">
-        <button class="manager-btn" data-action="unload-all" ${canUnload ? '' : 'disabled'} title="Empty">▼</button>
-        <button class="manager-btn" data-action="unload" ${canUnload ? '' : 'disabled'}>−</button>
-        <button class="manager-btn" data-action="load" ${canLoad ? '' : 'disabled'}>+</button>
-        <button class="manager-btn" data-action="load-all" ${canLoad ? '' : 'disabled'} title="Fill">▲</button>
+        <button class="manager-btn" data-action="unload-all" data-label="All" ${canUnload ? '' : 'disabled'}>▼</button>
+        <button class="manager-btn" data-action="unload" data-label="−1" ${canUnload ? '' : 'disabled'}>−</button>
+        <button class="manager-btn" data-action="load" data-label="+1" ${canLoad ? '' : 'disabled'}>+</button>
+        <button class="manager-btn" data-action="load-all" data-label="All" ${canLoad ? '' : 'disabled'}>▲</button>
       </div>
-      ${statRow('Storage', stored)}
     </div>
     <div class="manager-actions">
-      <button class="manager-unequip" data-ship="${shipId}" data-type="secondary" data-index="${slotIndex}">
+      <button class="btn btn-danger" data-ship="${shipId}" data-type="secondary" data-index="${slotIndex}">
         Unequip
       </button>
     </div>

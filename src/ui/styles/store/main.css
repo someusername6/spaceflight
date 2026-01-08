@@ -238,6 +238,7 @@
 }
 
 .detail-storage {
+  font-family: var(--font-ui);
   font-size: var(--text-sm);
   color: var(--color-secondary);
   padding: var(--space-2) var(--space-3);

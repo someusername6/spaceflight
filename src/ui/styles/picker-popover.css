@@ -17,15 +17,42 @@
   pointer-events: auto;
 }
 
-/* Pinned state - visual indicator */
-.weapon-popover.pinned {
-  border-color: var(--color-secondary);
+/* Primary weapon popover - amber tinted background */
+.weapon-popover-primary {
+  background: var(--bg-tinted-primary);
+  border-color: var(--color-primary);
   box-shadow:
     0 4px 20px rgba(0, 0, 0, 0.5),
-    0 0 40px var(--color-secondary-glow);
+    0 0 30px var(--color-primary-glow);
 }
 
-.weapon-popover.pinned::before {
+/* Secondary weapon popover - red tinted background */
+.weapon-popover-secondary {
+  background: var(--bg-tinted-danger);
+  border-color: var(--color-danger);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.5),
+    0 0 30px var(--color-danger-glow);
+}
+
+/* Pinned state - visual indicator (preserves weapon type colors) */
+.weapon-popover.pinned {
+  position: relative;
+}
+
+.weapon-popover-primary.pinned {
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.5),
+    0 0 40px var(--color-primary-glow);
+}
+
+.weapon-popover-secondary.pinned {
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.5),
+    0 0 40px var(--color-danger-glow);
+}
+
+.weapon-popover-primary.pinned::before {
   content: "";
   position: absolute;
   top: 0;
@@ -35,7 +62,22 @@
   background: linear-gradient(
     90deg,
     transparent,
-    var(--color-secondary),
+    var(--color-primary),
+    transparent
+  );
+}
+
+.weapon-popover-secondary.pinned::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-danger),
     transparent
   );
 }
@@ -59,10 +101,18 @@
 
 .popover-subtitle {
   font-family: var(--font-ui);
-  font-size: var(--text-xs);
-  color: var(--text-dim);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
   letter-spacing: var(--tracking-wider);
   margin-top: var(--space-1);
+}
+
+.popover-header-primary .popover-subtitle {
+  color: var(--color-primary-dim);
+}
+
+.popover-header-secondary .popover-subtitle {
+  color: var(--color-danger-dim);
 }
 
 /* Popover stats grid - matches ship details panel */
@@ -70,7 +120,6 @@
   display: flex;
   flex-direction: column;
   background: rgba(0, 0, 0, 0.2);
-  padding: var(--space-2-5) var(--space-3);
   margin-bottom: var(--space-2-5);
 }
 
@@ -88,79 +137,134 @@
 
 .popover-stat-label {
   color: var(--text-secondary);
-  font-family: var(--font-body);
+  font-family: var(--font-ui);
+  font-weight: var(--font-medium);
   flex-shrink: 0;
   margin-right: var(--space-2);
 }
 
 .popover-stat-value {
   color: var(--text-primary);
-  font-family: var(--font-body);
-  text-align: right;
-}
-
-.manager-abbrev {
-  font-family: var(--font-display);
-  font-size: var(--text-sm);
+  font-family: var(--font-ui);
   font-weight: var(--font-semibold);
-  color: var(--color-primary);
-  letter-spacing: var(--tracking-widest);
+  text-align: right;
 }
 
 .manager-name {
   font-family: var(--font-ui);
   font-size: var(--text-xl);
   font-weight: var(--font-semibold);
-  color: var(--color-primary);
   text-transform: capitalize;
-  flex: 1;
 }
 
 .manager-size {
   font-family: var(--font-ui);
   font-size: var(--text-sm);
-  color: var(--text-dim);
 }
 
-.manager-size-primary {
+/* Primary header - all elements amber */
+.popover-header-primary .manager-size,
+.popover-header-primary .manager-name {
   color: var(--color-primary);
+  text-shadow: 0 0 8px var(--color-primary-glow);
 }
 
-.manager-size-secondary {
+/* Secondary header - all elements red */
+.popover-header-secondary .manager-size,
+.popover-header-secondary .manager-name {
   color: var(--color-danger);
+  text-shadow: 0 0 8px var(--color-danger-glow);
 }
 
 /* Popover ammo/loading section */
 .popover-ammo {
   background: rgba(0, 0, 0, 0.2);
-  padding: var(--space-2-5) var(--space-3);
+  padding: var(--space-3);
   margin-bottom: var(--space-2-5);
 }
 
-.popover-ammo .popover-stat {
-  padding: var(--space-1-5) 0;
+/* Continuous ammo bar (high capacity) */
+.ammo-bar {
+  height: 8px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border-color);
+  margin-bottom: var(--space-1-5);
+  overflow: hidden;
 }
 
-.popover-ammo .popover-stat:first-child {
-  padding-top: 0;
+.ammo-bar-fill {
+  height: 100%;
+  transition: width var(--duration-base) var(--ease-out);
 }
 
-.popover-ammo .popover-stat:last-child {
-  padding-bottom: 0;
-  border-bottom: none;
+/* Segmented ammo bar (low capacity - missiles/decoys) */
+.ammo-bar.segmented {
+  display: flex;
+  gap: 2px;
+  background: transparent;
+  border: none;
+}
+
+.ammo-segment {
+  flex: 1;
+  height: 100%;
+  border-radius: 1px;
+}
+
+/* Primary popover bar colors */
+.weapon-popover-primary .ammo-bar-fill {
+  background: var(--color-primary);
+  box-shadow: 0 0 8px var(--color-primary-glow);
+}
+
+.weapon-popover-primary .ammo-segment {
+  background: color-mix(in srgb, var(--color-primary) 30%, black);
+}
+
+.weapon-popover-primary .ammo-segment.filled {
+  background: var(--color-primary);
+  box-shadow: 0 0 4px var(--color-primary-glow);
+}
+
+/* Secondary popover bar colors */
+.weapon-popover-secondary .ammo-bar-fill {
+  background: var(--color-danger);
+  box-shadow: 0 0 8px var(--color-danger-glow);
+}
+
+.weapon-popover-secondary .ammo-segment {
+  background: color-mix(in srgb, var(--color-danger) 30%, black);
+}
+
+.weapon-popover-secondary .ammo-segment.filled {
+  background: var(--color-danger);
+  box-shadow: 0 0 4px var(--color-danger-glow);
+}
+
+.ammo-count {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  text-align: center;
+  margin-bottom: var(--space-2);
+}
+
+.ammo-max {
+  font-weight: var(--font-normal);
+  color: var(--text-dim);
 }
 
 /* Popover controls (load/unload buttons) */
 .popover-controls {
   display: flex;
-  gap: var(--space-1-5);
+  gap: var(--space-3);
   justify-content: center;
-  padding: var(--space-2-5) 0;
+  padding: var(--space-1) 0 var(--space-2-5);
 }
 
 .manager-btn {
-  width: 32px;
-  height: 32px;
+  width: 36px;
   border: 1px solid var(--border-color);
   background: rgba(0, 0, 0, 0.3);
   color: var(--text-primary);
@@ -168,18 +272,33 @@
   font-weight: var(--font-semibold);
   cursor: pointer;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  padding: var(--space-1-5) var(--space-1);
+  gap: var(--space-0-5);
   transition:
     background-color var(--duration-base) var(--ease-out),
     border-color var(--duration-base) var(--ease-out),
     color var(--duration-base) var(--ease-out);
 }
 
+.manager-btn::after {
+  content: attr(data-label);
+  font-size: var(--text-2xs);
+  font-weight: var(--font-normal);
+  color: var(--text-dim);
+  letter-spacing: var(--tracking-wide);
+}
+
 .manager-btn:hover:not(:disabled) {
   border-color: var(--color-primary);
   color: var(--color-primary);
   background: rgba(255, 159, 28, 0.15);
+}
+
+.manager-btn:hover:not(:disabled)::after {
+  color: var(--color-primary-dim);
 }
 
 .manager-btn:disabled {
@@ -192,31 +311,19 @@
   outline-offset: 2px;
 }
 
-/* Unequip button */
+/* Secondary popover button hover uses red */
+.weapon-popover-secondary .manager-btn:hover:not(:disabled) {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+  background: rgba(255, 51, 102, 0.15);
+}
+
+.weapon-popover-secondary .manager-btn:hover:not(:disabled)::after {
+  color: var(--color-danger-dim);
+}
+
+/* Unequip button container */
 .manager-actions {
   display: flex;
   justify-content: flex-end;
-}
-
-.manager-unequip {
-  padding: var(--space-2) var(--space-4);
-  border: 1px solid var(--color-danger);
-  background: rgba(255, 77, 77, 0.1);
-  color: var(--color-danger);
-  font-family: var(--font-ui);
-  font-size: var(--text-sm);
-  font-weight: var(--font-semibold);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-wider);
-  cursor: pointer;
-  transition: background-color var(--duration-base) var(--ease-out);
-}
-
-.manager-unequip:hover {
-  background: rgba(255, 77, 77, 0.25);
-}
-
-.manager-unequip:focus-visible {
-  outline: 2px solid var(--color-danger);
-  outline-offset: 2px;
 }
