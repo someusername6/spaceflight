@@ -15,6 +15,9 @@
 /* Base styles and typography */
 @import "./base.css";
 
+/* Global scrollbar styling */
+@import "./scrollbar.css";
+
 /* Button system */
 @import "./buttons.css";
 

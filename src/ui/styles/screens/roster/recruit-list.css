@@ -6,13 +6,7 @@
    RECRUITS SECTION - Available for Hire
    ======================================== */
 
-.recruits-header {
-  margin-top: var(--space-2);
-}
-
-.recruits-header .panel-icon {
-  color: var(--color-secondary);
-}
+/* recruits-header inherits from panel-header - no overrides needed */
 
 .roster-recruits {
   display: flex;

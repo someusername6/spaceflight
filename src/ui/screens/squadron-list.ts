@@ -64,7 +64,7 @@ function renderDeployedItem(
         <img src="${iconPath}" alt="${ship.shipClass}" class="squadron-ship-icon" onerror="this.onerror=null; this.src='${FALLBACK_ICON_PATH}'" />
       </div>
       <div class="squadron-item-info">
-        <div class="squadron-item-name">${pilot.name}</div>
+        <div class="squadron-item-name">${isCommander ? '<span class="commander-icon" aria-label="Commander">★</span>' : ''}${pilot.name}</div>
         <div class="squadron-item-ship">${ship.shipClass}</div>
       </div>
       <div class="squadron-item-weapons">
@@ -97,7 +97,7 @@ function renderAvailableItem(
         <img src="${FALLBACK_ICON_PATH}" alt="No ship" class="squadron-ship-icon squadron-ship-icon-empty" />
       </div>
       <div class="squadron-item-info">
-        <div class="squadron-item-name">${pilot.name}</div>
+        <div class="squadron-item-name">${isCommander ? '<span class="commander-icon" aria-label="Commander">★</span>' : ''}${pilot.name}</div>
         <div class="squadron-item-status">Available</div>
       </div>
     </article>
