@@ -26,11 +26,9 @@ import {
 // Re-export for external use
 export {
   FALLBACK_ICON_PATH,
-  getMissileAbbrev,
   getMissileIconPath,
   getShipAbbrev,
   getShipIconPath,
-  getWeaponAbbrev,
   getWeaponIconPath,
 } from './viewer-icons';
 

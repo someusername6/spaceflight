@@ -22,46 +22,6 @@ export function getShipAbbrev(shipClass: string): string {
   );
 }
 
-/** Get weapon abbreviation for slot display */
-export function getWeaponAbbrev(weaponType: string): string {
-  const abbrevs: Record<string, string> = {
-    plasma: 'PLS',
-    pulse: 'PUL',
-    ion: 'ION',
-    autocannon: 'AUT',
-    railgun: 'RAI',
-    flak: 'FLK',
-    redlaser: 'RED',
-    greenlaser: 'GRN',
-    bluelaser: 'BLU',
-    lightning: 'LTN',
-    nuclearlance: 'NUK',
-    torch: 'TCH',
-  };
-  return (
-    abbrevs[weaponType.toLowerCase()] ??
-    weaponType.substring(0, 3).toUpperCase()
-  );
-}
-
-/** Get missile abbreviation */
-export function getMissileAbbrev(missileType: string): string {
-  const abbrevs: Record<string, string> = {
-    rocket: 'RKT',
-    cluster: 'CLU',
-    seeker: 'SKR',
-    dart: 'DRT',
-    swarm: 'SWM',
-    torpedo: 'TRP',
-    nuke: 'NUK',
-    decoy: 'DCY',
-  };
-  return (
-    abbrevs[missileType.toLowerCase()] ??
-    missileType.substring(0, 3).toUpperCase()
-  );
-}
-
 /** Get weapon category color - all primaries use same yellow */
 export function getWeaponColor(_weaponType: string): string {
   return 'var(--color-warning)';

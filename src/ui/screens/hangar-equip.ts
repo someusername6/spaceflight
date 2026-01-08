@@ -14,7 +14,11 @@ import { MISSILES } from '../../data/missiles';
 import { SHIP_CLASSES } from '../../data/ships';
 import { PRIMARY_WEAPONS } from '../../data/weapons';
 import { hideTooltip } from '../common/tooltip';
-import { getMissileAbbrev, getWeaponAbbrev } from '../ship/viewer';
+import {
+  getMissileIconPath,
+  getWeaponIconPath,
+  iconErrorHandler,
+} from '../ship/viewer-icons';
 import { activePicker, closePopover, setActivePicker } from './weapon-popover';
 
 // Re-export popover functions for hangar.ts
@@ -90,11 +94,11 @@ function renderPrimaryPickerContent(weapons: GroupedWeapon[]): string {
 
   return weapons
     .map((w) => {
-      const abbrev = getWeaponAbbrev(w.weaponType);
+      const iconPath = getWeaponIconPath(w.weaponType);
       const displayName = PRIMARY_WEAPONS[w.weaponType]?.name ?? w.weaponType;
       return `
         <button class="picker-item" data-weapon-type="${w.weaponType}">
-          <span class="picker-abbrev">${abbrev}</span>
+          <img src="${iconPath}" alt="${w.weaponType}" class="picker-icon" ${iconErrorHandler()} />
           <span class="picker-name">${displayName}</span>
           <span class="picker-stock">×${w.totalCount}</span>
         </button>
@@ -114,14 +118,14 @@ function renderSecondaryPickerContent(
 
   return weapons
     .map((w) => {
-      const abbrev = getMissileAbbrev(w.weaponType);
+      const iconPath = getMissileIconPath(w.weaponType);
       const displayName = MISSILES[w.weaponType]?.name ?? w.weaponType;
       const maxCapacity = getMaxMissileCapacity(w.weaponType, bankSize);
       const maxLoadable = Math.min(w.totalCount, maxCapacity);
       return `
         <div class="picker-missile-row" data-weapon-type="${w.weaponType}">
           <div class="picker-missile-info">
-            <span class="picker-abbrev">${abbrev}</span>
+            <img src="${iconPath}" alt="${w.weaponType}" class="picker-icon" ${iconErrorHandler()} />
             <span class="picker-name">${displayName}</span>
             <span class="picker-storage">×${w.totalCount}</span>
           </div>
@@ -159,7 +163,7 @@ export function showWeaponPicker(
   const bankSize = getBankSize(state, shipId, slotType, slotIndex);
 
   const picker = document.createElement('div');
-  picker.className = `weapon-picker ${slotType === 'secondary' ? 'missile-picker' : ''}`;
+  picker.className = `weapon-picker ${slotType === 'primary' ? 'primary-picker' : 'missile-picker'}`;
 
   const content =
     slotType === 'primary'
