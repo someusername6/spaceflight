@@ -130,9 +130,9 @@ function renderModal(
             </div>
           </div>
           <div class="squad-footer-actions">
-            <button class="btn-squad-cancel" id="btn-squad-cancel">Cancel</button>
+            <button class="btn btn-large" id="btn-squad-cancel">Cancel</button>
             <button
-              class="btn-squad-launch"
+              class="btn btn-large btn-success"
               id="btn-squad-launch"
               ${selectedCount === 0 ? 'disabled' : ''}
             >

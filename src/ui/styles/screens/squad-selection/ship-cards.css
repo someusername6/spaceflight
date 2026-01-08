@@ -151,7 +151,7 @@
   font-family: var(--font-ui);
   font-size: var(--text-3xs);
   font-weight: var(--font-semibold);
-  letter-spacing: var(--tracking-wider);
+  letter-spacing: var(--tracking-widest);
   text-transform: uppercase;
 }
 
@@ -193,7 +193,7 @@
   font-size: var(--text-2xs);
   color: var(--text-dim);
   text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
+  letter-spacing: var(--tracking-widest);
 }
 
 .squad-ship-loadout {
@@ -212,7 +212,7 @@
   font-family: var(--font-ui);
   font-size: var(--text-2xs);
   font-weight: var(--font-medium);
-  letter-spacing: var(--tracking-wider);
+  letter-spacing: var(--tracking-widest);
   text-transform: uppercase;
   background: rgba(0, 0, 0, 0.3);
   border: 1px solid currentColor;

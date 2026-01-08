@@ -23,7 +23,7 @@
   font-family: var(--font-ui);
   font-size: var(--text-sm);
   color: var(--text-secondary);
-  letter-spacing: var(--tracking-wide);
+  letter-spacing: var(--tracking-wider);
 }
 
 .squad-deploy-count strong {
@@ -51,88 +51,18 @@
 
 /* ========================================
    FOOTER BUTTONS
-   Using .btn pattern from buttons.css
+   Layout overrides for .btn classes
    ======================================== */
 
-.btn-squad-cancel {
+.squad-footer-actions .btn:first-child {
   flex: 0 0 auto;
-  font-family: var(--font-ui);
-  font-size: var(--text-base);
-  font-weight: var(--font-semibold);
-  padding: var(--space-4) var(--space-6);
-  background: transparent;
-  border: 1px solid var(--border-light);
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-widest);
-  cursor: pointer;
-  transition:
-    background-color var(--duration-base) var(--ease-out),
-    border-color var(--duration-base) var(--ease-out),
-    color var(--duration-base) var(--ease-out);
-  clip-path: polygon(
-    0 0,
-    calc(100% - 8px) 0,
-    100% 8px,
-    100% 100%,
-    8px 100%,
-    0 calc(100% - 8px)
-  );
 }
 
-.btn-squad-cancel:hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-  background: var(--bg-panel-hover);
-}
-
-.btn-squad-cancel:focus-visible {
-  outline: 2px solid var(--color-secondary);
-  outline-offset: 2px;
-}
-
-.btn-squad-launch {
+.squad-footer-actions .btn:last-child {
   flex: 1;
-  font-family: var(--font-ui);
-  font-size: var(--text-base);
-  font-weight: var(--font-semibold);
-  padding: var(--space-4) var(--space-6);
-  background: rgba(0, 255, 136, 0.05);
-  border: 1px solid var(--color-success);
-  color: var(--color-success);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-widest);
-  cursor: pointer;
-  transition:
-    background-color var(--duration-base) var(--ease-out),
-    box-shadow var(--duration-base) var(--ease-out);
-  clip-path: polygon(
-    0 0,
-    calc(100% - 8px) 0,
-    100% 8px,
-    100% 100%,
-    8px 100%,
-    0 calc(100% - 8px)
-  );
 }
 
-.btn-squad-launch:hover:not(:disabled) {
-  background: rgba(0, 255, 136, 0.15);
-  box-shadow: 0 0 20px var(--color-success-glow);
-}
-
-.btn-squad-launch:focus-visible {
-  outline: 2px solid var(--color-success);
-  outline-offset: 2px;
-}
-
-.btn-squad-launch:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-.btn-squad-launch .launch-icon {
+.squad-footer-actions .btn .launch-icon {
   margin-right: var(--space-2);
 }
 
