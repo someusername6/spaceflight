@@ -105,14 +105,7 @@
   font-weight: var(--font-medium);
   letter-spacing: var(--tracking-wider);
   margin-top: var(--space-1);
-}
-
-.popover-header-primary .popover-subtitle {
-  color: var(--color-primary-dim);
-}
-
-.popover-header-secondary .popover-subtitle {
-  color: var(--color-danger-dim);
+  color: var(--text-primary);
 }
 
 /* Popover stats grid - matches ship details panel */
