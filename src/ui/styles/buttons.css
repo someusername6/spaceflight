@@ -127,6 +127,51 @@
   outline-color: var(--color-danger);
 }
 
+.btn-success {
+  border-color: var(--color-success);
+  color: var(--color-success);
+  background: rgba(0, 255, 136, 0.05);
+}
+
+.btn-success:hover:not(:disabled) {
+  background: rgba(0, 255, 136, 0.15);
+  border-color: var(--color-success);
+  color: var(--color-success);
+  box-shadow:
+    var(--shadow-md),
+    0 0 20px var(--color-success-glow),
+    inset 0 1px 0 var(--highlight-medium);
+}
+
+.btn-success:focus-visible {
+  outline-color: var(--color-success);
+}
+
+.btn-warning {
+  border-color: var(--color-warning);
+  color: var(--color-warning);
+  background: rgba(255, 217, 61, 0.08);
+}
+
+.btn-warning:hover:not(:disabled) {
+  background: rgba(255, 217, 61, 0.18);
+  border-color: var(--color-warning);
+  color: var(--color-warning);
+  box-shadow:
+    var(--shadow-md),
+    0 0 15px var(--color-warning-glow),
+    inset 0 1px 0 var(--highlight-medium);
+}
+
+.btn-warning:focus-visible {
+  outline-color: var(--color-warning);
+}
+
+.btn-large {
+  padding: var(--space-4) var(--space-6);
+  font-size: var(--text-base);
+}
+
 .btn-small {
   padding: var(--space-1-5) var(--space-3);
   font-size: var(--text-xs);

@@ -142,6 +142,7 @@
 }
 
 .contract-detail-desc {
+  font-family: var(--font-ui);
   font-size: var(--text-sm);
   color: var(--text-secondary);
   line-height: var(--leading-normal);
@@ -173,29 +174,16 @@
   padding: var(--space-1-5) var(--space-3);
   background: rgba(255, 51, 102, 0.1);
   border: 1px solid var(--color-danger);
+  font-family: var(--font-ui);
   font-size: var(--text-sm);
   color: var(--text-primary);
   text-transform: capitalize;
 }
 
 .contract-waves {
+  font-family: var(--font-ui);
   font-size: var(--text-sm);
   color: var(--text-dim);
-}
-
-.btn-accept-mission {
-  padding: var(--space-4) var(--space-6);
-  font-size: var(--text-base);
-  font-weight: var(--font-semibold);
-  letter-spacing: var(--tracking-widest);
-  border-color: var(--color-success);
-  color: var(--color-success);
-  background: rgba(0, 255, 136, 0.05);
-}
-
-.btn-accept-mission:hover {
-  background: rgba(0, 255, 136, 0.15);
-  box-shadow: 0 0 20px var(--color-success-glow);
 }
 
 /* ========================================
@@ -217,9 +205,9 @@
   font-family: var(--font-display);
   font-size: var(--text-2xl);
   font-weight: var(--font-bold);
-  color: var(--color-primary);
+  color: var(--color-success);
   letter-spacing: var(--tracking-wide);
-  text-shadow: 0 0 var(--glow-lg) var(--color-primary-glow);
+  text-shadow: 0 0 var(--glow-lg) var(--color-success-glow);
   padding-bottom: var(--space-2);
 }
 
@@ -238,22 +226,6 @@
 
 .contract-actions .btn {
   width: 100%;
-}
-
-.btn-warning-action {
-  padding: var(--space-4) var(--space-6);
-  font-size: var(--text-sm);
-  font-weight: var(--font-semibold);
-  letter-spacing: var(--tracking-wider);
-  border-color: var(--color-warning);
-  color: var(--color-warning);
-  background: rgba(255, 217, 61, 0.08);
-  cursor: pointer;
-}
-
-.btn-warning-action:hover {
-  background: rgba(255, 217, 61, 0.18);
-  box-shadow: 0 0 15px var(--color-warning-glow);
 }
 
 /* ========================================

@@ -202,13 +202,13 @@ function renderContractDetail(
 
   // Warning for unarmed ships (soft warning, doesn't block)
   const unarmedWarning = hasUnarmed
-    ? `<button class="btn btn-warning-action btn-goto-squadron">⚠ UNARMED SHIPS — EQUIP IN SQUADRON</button>`
+    ? `<button class="btn btn-warning btn-goto-squadron">⚠ UNARMED SHIPS — EQUIP IN SQUADRON</button>`
     : '';
 
   // Accept button or commander warning (hard block)
   const acceptButton = canLaunch
-    ? `<button class="btn btn-accept-mission" id="btn-accept-mission">ACCEPT MISSION</button>`
-    : `<button class="btn btn-warning-action btn-goto-squadron">⚠ ASSIGN COMMANDER IN SQUADRON</button>`;
+    ? `<button class="btn btn-large btn-success" id="btn-accept-mission">ACCEPT MISSION</button>`
+    : `<button class="btn btn-warning btn-goto-squadron">⚠ ASSIGN COMMANDER IN SQUADRON</button>`;
 
   return `
     <div class="contract-detail">
