@@ -2,6 +2,7 @@
  * Title Screen - Main menu with new game, continue, and settings options.
  *
  * Displays:
+ * - Animated battle simulation in background
  * - Game logo/title
  * - New Game button
  * - Continue button (shows save slots)
@@ -17,6 +18,13 @@ import {
   type SaveMetadata,
 } from '../../campaign/save-system';
 import type { CampaignState } from '../../campaign/types';
+import { TITLE_SCREEN_BATTLE } from '../../simulation/battle-configs';
+import {
+  type BattleSimulation,
+  createBattleSimulation,
+  disposeBattleSimulation,
+  startBattleSimulation,
+} from '../../simulation/battle-simulation';
 import {
   createScreen,
   type Screen,
@@ -147,24 +155,26 @@ function renderMainView(): string {
 
   return `
     <div class="title-main-view">
-      <div class="title-logo">
-        <h1 class="title-name">Spaceflight</h1>
-        <div class="title-subtitle">Squadron Commander</div>
-      </div>
-      <div class="title-menu">
-        <button class="btn btn-title btn-primary" id="btn-new-game">
-          New Game
-        </button>
-        <button
-          class="btn btn-title"
-          id="btn-continue"
-          ${canContinue ? '' : 'disabled'}
-        >
-          Continue
-        </button>
-        <button class="btn btn-title" id="btn-settings">
-          Settings
-        </button>
+      <div class="title-left-column">
+        <div class="title-logo">
+          <h1 class="title-name">Spaceflight</h1>
+          <div class="title-subtitle">Squadron Commander</div>
+        </div>
+        <div class="title-menu">
+          <button class="btn btn-title btn-primary" id="btn-new-game">
+            New Game
+          </button>
+          <button
+            class="btn btn-title"
+            id="btn-continue"
+            ${canContinue ? '' : 'disabled'}
+          >
+            Continue
+          </button>
+          <button class="btn btn-title" id="btn-settings">
+            Settings
+          </button>
+        </div>
       </div>
       <div class="title-footer">
         <span class="title-version">v0.1.0</span>
@@ -195,7 +205,10 @@ const TitleScreenComponent: Screen<TitleState, TitleScreenProps> = {
 
     return `
       <div class="title-screen">
-        ${content}
+        <div class="title-background" id="title-battle-bg"></div>
+        <div class="title-content">
+          ${content}
+        </div>
       </div>
     `;
   },
@@ -277,11 +290,25 @@ const TitleScreenComponent: Screen<TitleState, TitleScreenProps> = {
         }
       }
     });
+
+    // Re-attach battle simulation canvas after re-render
+    if (battleSimulation) {
+      const bgContainer = document.getElementById('title-battle-bg');
+      if (bgContainer) {
+        const canvas = battleSimulation.renderer.webglRenderer.domElement;
+        if (canvas.parentElement !== bgContainer) {
+          bgContainer.appendChild(canvas);
+        }
+      }
+    }
   },
 };
 
 /** Screen handle for external control */
 let screenHandle: ScreenHandle<TitleState, TitleScreenProps> | null = null;
+
+/** Battle simulation for title background */
+let battleSimulation: BattleSimulation | null = null;
 
 /** Render and bind the title screen */
 export function renderTitleScreen(element: HTMLElement): void {
@@ -307,6 +334,12 @@ export function bindTitleScreen(
   // Clean up previous handle if exists
   screenHandle?.destroy();
 
+  // Clean up previous simulation if exists
+  if (battleSimulation) {
+    disposeBattleSimulation(battleSimulation);
+    battleSimulation = null;
+  }
+
   const initialState: TitleState = {
     view: 'main',
     deleteSlot: null,
@@ -319,6 +352,18 @@ export function bindTitleScreen(
     initialState,
     callbacks,
   );
+
+  // Start battle simulation in background (deferred to next frame for layout)
+  requestAnimationFrame(() => {
+    const bgContainer = document.getElementById('title-battle-bg');
+    if (bgContainer && bgContainer.clientWidth > 0) {
+      battleSimulation = createBattleSimulation(
+        bgContainer,
+        TITLE_SCREEN_BATTLE,
+      );
+      startBattleSimulation(battleSimulation);
+    }
+  });
 }
 
 /** Reset title screen state (e.g., when returning from game) */
@@ -330,8 +375,25 @@ export function resetTitleScreen(): void {
   });
 }
 
-/** Cleanup title screen (remove keyboard handler) */
+/** Cleanup title screen (remove keyboard handler and simulation) */
 export function cleanupTitleScreen(): void {
   screenHandle?.destroy();
   screenHandle = null;
+
+  // Dispose battle simulation
+  if (battleSimulation) {
+    disposeBattleSimulation(battleSimulation);
+    battleSimulation = null;
+  }
+}
+
+/** Get the battle simulation canvas element (for transferring to other screens) */
+export function getBattleSimulationCanvas(): HTMLCanvasElement | null {
+  if (!battleSimulation) return null;
+  return battleSimulation.renderer.webglRenderer.domElement;
+}
+
+/** Check if battle simulation is currently active */
+export function hasBattleSimulation(): boolean {
+  return battleSimulation !== null;
 }

@@ -29,6 +29,8 @@ import { showSquadSelection } from '../ui/screens/squad-selection';
 import {
   bindTitleScreen,
   cleanupTitleScreen,
+  getBattleSimulationCanvas,
+  hasBattleSimulation,
   renderTitleScreen,
   resetTitleScreen,
 } from '../ui/screens/title';
@@ -107,10 +109,20 @@ function setupTitleScreen(controller: CampaignController): void {
 function setupSettingsScreen(controller: CampaignController): void {
   const { screenManager } = controller;
   const settingsElement = getScreenElement(screenManager, Screen.SETTINGS);
+  const comingFromTitle = screenManager.previousScreen === Screen.TITLE;
 
   renderSettingsScreen(settingsElement);
   bindSettingsScreen(settingsElement, {
     onBack: () => {
+      // Transfer canvas back to title if needed
+      if (comingFromTitle && hasBattleSimulation()) {
+        const canvas = getBattleSimulationCanvas();
+        const titleBg = document.getElementById('title-battle-bg');
+        if (canvas && titleBg) {
+          titleBg.appendChild(canvas);
+        }
+      }
+
       cleanupSettingsScreen();
       goBackFromSettings(screenManager);
 
@@ -129,6 +141,18 @@ function setupSettingsScreen(controller: CampaignController): void {
       }
     },
   });
+
+  // Transfer battle simulation to settings background AFTER bind (which re-renders)
+  if (comingFromTitle && hasBattleSimulation()) {
+    const canvas = getBattleSimulationCanvas();
+    const settingsScreen = settingsElement.querySelector('.settings-screen');
+    const settingsBg = settingsElement.querySelector('#settings-battle-bg');
+
+    if (canvas && settingsScreen && settingsBg) {
+      settingsBg.appendChild(canvas);
+      settingsScreen.classList.add('with-battle-bg');
+    }
+  }
 }
 
 /** Global escape key handler reference for cleanup */

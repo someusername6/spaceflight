@@ -158,7 +158,10 @@ const SettingsScreenComponent: Screen<SettingsState, SettingsScreenCallbacks> =
 
       return `
       <div class="settings-screen">
-        ${content}
+        <div class="settings-background" id="settings-battle-bg"></div>
+        <div class="settings-content-wrapper">
+          ${content}
+        </div>
       </div>
     `;
     },
