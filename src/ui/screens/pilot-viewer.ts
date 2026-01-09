@@ -41,9 +41,9 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
   // Rank: "PLAYER" for commander, skill level for others
   const rankText = isCommander ? 'PLAYER' : pilot.skill.toUpperCase();
 
-  // Unassign button for assigned non-commander pilots
+  // Unassign button for assigned pilots (including commander)
   const unassignSection =
-    isAssigned && currentShip && !isCommander
+    isAssigned && currentShip
       ? `
         <div class="pilot-unassign-section">
           <button class="btn btn-large btn-danger btn-unassign-pilot"

@@ -12,11 +12,11 @@ export function capitalize(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-/** Render bank size indicator (colored dots) - internal helper */
+/** Render bank size indicator (circles for primary, diamonds for secondary) */
 function renderBankIndicator(size: number, cssClass: string): string {
-  const dot = '●';
-  const dots = dot.repeat(size);
-  return `<span class="bank-indicator ${cssClass}">${dots}</span>`;
+  const symbol = cssClass === 'secondary' ? '◆' : '●';
+  const symbols = symbol.repeat(size);
+  return `<span class="bank-indicator ${cssClass}">${symbols}</span>`;
 }
 
 /** Render primary weapons summary for a ship (HTML with colored indicators) */

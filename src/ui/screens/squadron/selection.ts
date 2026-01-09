@@ -89,8 +89,14 @@ const SquadSelectionScreen: Screen<SquadState, SquadProps> = {
     const selectedSet = new Set(state.selectedIds);
     const selectedCount = selectedSet.size;
 
-    // Get ships with pilots (can deploy)
-    const deployableShips = campaignState.ships.filter((s) => s.pilot !== null);
+    // Get ships with pilots (can deploy), commander first
+    const deployableShips = campaignState.ships
+      .filter((s) => s.pilot !== null)
+      .sort((a, b) => {
+        if (a.id === commanderShipId) return -1;
+        if (b.id === commanderShipId) return 1;
+        return 0;
+      });
 
     // Render ship cards
     const shipCards = deployableShips

@@ -353,9 +353,9 @@
   --filter-cyan: invert(83%) sepia(69%) saturate(1879%) hue-rotate(144deg)
     brightness(104%) contrast(101%);
 
-  /* Base filter to convert black to amber/yellow (primary color) */
-  --filter-amber: invert(70%) sepia(98%) saturate(456%) hue-rotate(359deg)
-    brightness(103%) contrast(101%);
+  /* Base filter to convert black to amber/orange (primary color #ff9f1c) */
+  --filter-amber: invert(67%) sepia(89%) saturate(1200%) hue-rotate(360deg)
+    brightness(101%) contrast(101%);
 
   /* Base filter to convert black to red (danger color) */
   --filter-red: invert(40%) sepia(95%) saturate(1500%) hue-rotate(330deg)
