@@ -48,6 +48,7 @@ export function physicsSystem(world: World, dt: number): void {
     // Save current state for render interpolation (before any updates)
     physics.prevPosition.copy(transform.position);
     physics.prevRotation.copy(transform.rotation);
+    physics.prevVelocity.copy(physics.velocity);
 
     // Dead or dying entities coast with current velocity (no control input)
     const health = getComponent<Health>(world, entity, 'health');

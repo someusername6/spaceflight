@@ -9,6 +9,7 @@ import type { Physics } from '../components/physics';
 import type { Transform } from '../components/transform';
 import { getComponent, hasComponent, isShip, queryEntities } from '../core/ecs';
 import type { Entity, World } from '../core/types';
+import { TICK_SEC } from '../game';
 import {
   type BeamLineEntry,
   disposeBeamLine,
@@ -45,12 +46,38 @@ const seenEntities = new Set<Entity>();
 const interpPos = new THREE.Vector3();
 const interpRot = new THREE.Quaternion();
 
+/** Store interpolated positions for camera to use */
+const interpolatedPositions = new Map<Entity, THREE.Vector3>();
+/** Store interpolated rotations for camera to use */
+const interpolatedRotations = new Map<Entity, THREE.Quaternion>();
+
 /**
- * Position smoothing to reduce jitter from frame timing variations.
- * Uses exponential moving average on the interpolated position.
+ * Hermite interpolation for smooth velocity across tick boundaries.
+ * Unlike linear lerp, this ensures visual velocity is continuous.
  */
-const smoothedPositions = new Map<Entity, THREE.Vector3>();
-const POSITION_SMOOTH_FACTOR = 0.4; // Higher = more responsive, lower = smoother
+function hermiteInterp(
+  p0: THREE.Vector3,
+  v0: THREE.Vector3,
+  p1: THREE.Vector3,
+  v1: THREE.Vector3,
+  t: number,
+  dt: number,
+  out: THREE.Vector3,
+): void {
+  const t2 = t * t;
+  const t3 = t2 * t;
+  // Hermite basis functions
+  const h00 = 2 * t3 - 3 * t2 + 1;
+  const h10 = t3 - 2 * t2 + t;
+  const h01 = -2 * t3 + 3 * t2;
+  const h11 = t3 - t2;
+
+  out.set(0, 0, 0);
+  out.addScaledVector(p0, h00);
+  out.addScaledVector(v0, h10 * dt);
+  out.addScaledVector(p1, h01);
+  out.addScaledVector(v1, h11 * dt);
+}
 
 /** Creates the renderer and attaches to container */
 export function createRenderer(container: HTMLElement, seed: number): Renderer {
@@ -159,30 +186,42 @@ export function syncScene(renderer: Renderer, world: World, alpha = 1): void {
     // Update transform with interpolation for entities with Physics
     const physics = getComponent<Physics>(world, entity, 'physics');
     if (physics) {
-      // Interpolate between previous tick position and current position
-      interpPos.lerpVectors(physics.prevPosition, transform.position, alpha);
+      // Use Hermite interpolation for position (smooth velocity across tick boundaries)
+      hermiteInterp(
+        physics.prevPosition,
+        physics.prevVelocity,
+        transform.position,
+        physics.velocity,
+        alpha,
+        TICK_SEC,
+        interpPos,
+      );
+      // SLERP for rotation
       interpRot.slerpQuaternions(
         physics.prevRotation,
         transform.rotation,
         alpha,
       );
 
-      // Apply position smoothing only to ships (reduces frame timing jitter)
-      // Projectiles/missiles need precise positions for hit detection
-      if (isShipEntity) {
-        let smoothed = smoothedPositions.get(entity);
-        if (!smoothed) {
-          smoothed = new THREE.Vector3().copy(interpPos);
-          smoothedPositions.set(entity, smoothed);
-        } else {
-          smoothed.lerp(interpPos, POSITION_SMOOTH_FACTOR);
-        }
-        mesh.position.copy(smoothed);
-      } else {
-        mesh.position.copy(interpPos);
-      }
-
+      mesh.position.copy(interpPos);
       mesh.quaternion.copy(interpRot);
+
+      // Store interpolated state for ships (used by camera)
+      if (isShipEntity) {
+        let storedPos = interpolatedPositions.get(entity);
+        if (!storedPos) {
+          storedPos = new THREE.Vector3();
+          interpolatedPositions.set(entity, storedPos);
+        }
+        storedPos.copy(interpPos);
+
+        let storedRot = interpolatedRotations.get(entity);
+        if (!storedRot) {
+          storedRot = new THREE.Quaternion();
+          interpolatedRotations.set(entity, storedRot);
+        }
+        storedRot.copy(interpRot);
+      }
     } else {
       // No physics component - use current transform directly
       mesh.position.copy(transform.position);
@@ -195,7 +234,8 @@ export function syncScene(renderer: Renderer, world: World, alpha = 1): void {
     if (!seenEntities.has(entity)) {
       scene.remove(mesh);
       entityMeshes.delete(entity);
-      smoothedPositions.delete(entity);
+      interpolatedPositions.delete(entity);
+      interpolatedRotations.delete(entity);
     }
   }
 
@@ -233,6 +273,26 @@ export function followEntity(
 /** Gets the Three.js scene */
 export function getScene(renderer: Renderer): THREE.Scene {
   return renderer.scene;
+}
+
+/**
+ * Get the interpolated position for an entity.
+ * Returns the same position the mesh is rendered at.
+ * Returns null if no interpolated position exists.
+ */
+export function getInterpolatedPosition(entity: Entity): THREE.Vector3 | null {
+  return interpolatedPositions.get(entity) ?? null;
+}
+
+/**
+ * Get the interpolated rotation for an entity.
+ * Returns the same rotation the mesh is rendered at.
+ * Returns null if no interpolated rotation exists.
+ */
+export function getInterpolatedRotation(
+  entity: Entity,
+): THREE.Quaternion | null {
+  return interpolatedRotations.get(entity) ?? null;
 }
 
 /** Disposes of renderer resources */

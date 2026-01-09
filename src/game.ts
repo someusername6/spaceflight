@@ -33,9 +33,10 @@ import { projectileSystem } from './systems/weapons/projectiles';
 import { weaponSystem } from './systems/weapons/weapons';
 
 /** Fixed timestep: 60 ticks per second */
-const TICK_RATE = 60;
+export const TICK_RATE = 60;
 const TICK_MS = 1000 / TICK_RATE;
-const TICK_SEC = 1 / TICK_RATE;
+/** Time step in seconds (exported for interpolation) */
+export const TICK_SEC = 1 / TICK_RATE;
 
 /**
  * System execution order.

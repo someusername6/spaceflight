@@ -24,6 +24,7 @@ export interface Physics extends ComponentBase {
   // Previous tick state for render interpolation
   prevPosition: Vector3;
   prevRotation: Quaternion;
+  prevVelocity: Vector3;
 }
 
 /** Creates a Physics component with ship-like defaults */
@@ -56,6 +57,7 @@ export function createPhysics(params: {
     // Initialize prev to zero - will be set properly on first physics tick
     prevPosition: new Vector3(),
     prevRotation: new Quaternion(),
+    prevVelocity: new Vector3(),
   };
 }
 

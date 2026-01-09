@@ -55,6 +55,8 @@ import {
 import {
   createRenderer,
   disposeRenderer,
+  getInterpolatedPosition,
+  getInterpolatedRotation,
   getScene,
   render,
   syncScene,
@@ -280,8 +282,14 @@ function updateRender(sim: BattleSimulation, alpha: number): void {
   if (followed !== null) {
     const transform = getComponent<Transform>(world, followed, 'transform');
     if (transform) {
-      updateSmoothedCamera(sim, followed, transform);
-      updateDustSystem(sim.dustSystem, transform.position);
+      // Use interpolated position/rotation for camera (same as what's rendered)
+      const interpPos = getInterpolatedPosition(followed);
+      const interpRot = getInterpolatedRotation(followed);
+      updateSmoothedCamera(sim, followed, transform, interpPos, interpRot);
+      // Dust uses interpolated position for consistency
+      if (interpPos) {
+        updateDustSystem(sim.dustSystem, interpPos);
+      }
     }
   }
 
@@ -298,29 +306,32 @@ function updateSmoothedCamera(
   sim: BattleSimulation,
   followedEntity: Entity,
   transform: Transform,
+  interpPos: THREE.Vector3 | null,
+  interpRot: THREE.Quaternion | null,
 ): void {
   const { renderer, smoothedCamera } = sim;
   const threeCamera = renderer.camera;
 
+  // Use interpolated values if available, otherwise fall back to raw transform
+  const shipPosition = interpPos ?? transform.position;
+  const shipRotation = interpRot ?? transform.rotation;
+
   // Calculate target position (behind and above ship)
   targetOffset.copy(CAMERA_SMOOTHING.offset);
-  targetOffset.applyQuaternion(transform.rotation);
-  targetPosition.copy(transform.position).add(targetOffset);
+  targetOffset.applyQuaternion(shipRotation);
+  targetPosition.copy(shipPosition).add(targetOffset);
 
   // Reset smoothing when target changes or on first frame
   const targetChanged = smoothedCamera.lastFollowed !== followedEntity;
   if (!smoothedCamera.initialized || targetChanged) {
     smoothedCamera.position.copy(targetPosition);
-    smoothedCamera.rotation.copy(transform.rotation);
+    smoothedCamera.rotation.copy(shipRotation);
     smoothedCamera.initialized = true;
     smoothedCamera.lastFollowed = followedEntity;
   } else {
     // Smoothly interpolate position and rotation
     smoothedCamera.position.lerp(targetPosition, CAMERA_SMOOTHING.positionLerp);
-    smoothedCamera.rotation.slerp(
-      transform.rotation,
-      CAMERA_SMOOTHING.rotationLerp,
-    );
+    smoothedCamera.rotation.slerp(shipRotation, CAMERA_SMOOTHING.rotationLerp);
   }
 
   // Apply smoothed values to actual camera
