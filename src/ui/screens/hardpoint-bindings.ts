@@ -1,7 +1,12 @@
 /**
  * Hardpoint Bindings - Event handlers for weapon slot interactions.
+ *
+ * Note: Uses direct event listeners instead of delegation because
+ * mouseenter/mouseleave don't bubble.
  */
 
+import type { CampaignState } from '../../campaign/types';
+import type { ScreenAPI } from '../framework/screen';
 import {
   hideWeaponPopoverIfNotPinned,
   pinWeaponPopover,
@@ -10,17 +15,28 @@ import {
   showWeaponPopover,
   showWeaponSwapPicker,
 } from './hangar-equip';
-import type { SquadronUIState } from './squadron-bindings';
+import type { SquadronProps, SquadronState } from './squadron-bind-events';
 
 /** Bind hardpoint slot interactions */
 export function bindHardpointEvents(
-  ui: SquadronUIState,
-  rerender: () => void,
+  element: HTMLElement,
+  api: ScreenAPI<SquadronState>,
+  props: SquadronProps,
 ): void {
   // Set up the change weapon handler for popovers
   setChangeWeaponHandler(showWeaponSwapPicker);
 
-  ui.element.querySelectorAll('.schematic-slot').forEach((slot) => {
+  // Helper to update campaign state
+  const onStateChange = (newState: CampaignState) => {
+    if (props.onStateUpdate) {
+      props.onStateUpdate(newState);
+    }
+  };
+
+  // Helper to trigger re-render
+  const rerender = () => api.setState({});
+
+  element.querySelectorAll('.schematic-slot').forEach((slot) => {
     const el = slot as HTMLElement;
     const slotType = el.dataset.type as 'primary' | 'secondary';
     const shipId = el.dataset.ship;
@@ -29,7 +45,7 @@ export function bindHardpointEvents(
 
     if (!shipId || !slotType) return;
 
-    const ship = ui.state.ships.find((s) => s.id === shipId);
+    const ship = props.campaignState.ships.find((s) => s.id === shipId);
     if (!ship) return;
 
     if (isFilled) {
@@ -44,15 +60,12 @@ export function bindHardpointEvents(
       el.addEventListener('mouseenter', () => {
         showWeaponPopover(
           el,
-          ui.state,
+          props.campaignState,
           shipId,
           slotType,
           slotIndex,
           weapon,
-          (newState) => {
-            ui.state = newState;
-            if (ui.onStateUpdate) ui.onStateUpdate(newState);
-          },
+          onStateChange,
           rerender,
         );
       });
@@ -68,18 +81,15 @@ export function bindHardpointEvents(
         hideWeaponPopoverIfNotPinned();
       });
     } else {
-      // Empty slot: hover to preview, click to pin (same as filled slots)
+      // Empty slot: hover to preview, click to pin
       el.addEventListener('mouseenter', () => {
         showWeaponPicker(
           el,
-          ui.state,
+          props.campaignState,
           shipId,
           slotType,
           slotIndex,
-          (newState) => {
-            ui.state = newState;
-            if (ui.onStateUpdate) ui.onStateUpdate(newState);
-          },
+          onStateChange,
           rerender,
         );
       });

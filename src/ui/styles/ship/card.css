@@ -145,15 +145,4 @@
   color: var(--color-warning);
   border-color: var(--color-warning);
   background: rgba(255, 217, 61, 0.1);
-  animation: unarmedPulse 2s ease-in-out infinite;
-}
-
-@keyframes unarmedPulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.6;
-  }
 }

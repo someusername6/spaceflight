@@ -21,27 +21,16 @@ import {
   type NavDestination,
   renderNavBar,
 } from '../common/nav-bar';
-import {
-  createScreen,
-  type Screen,
-  type ScreenAPI,
-  type ScreenHandle,
-} from '../framework/screen';
+import { createScreen, type Screen, type ScreenAPI } from '../framework/screen';
 import { destroyShipConnectors, initShipConnectors } from '../ship/connectors';
 import { renderPilotViewer } from './pilot-viewer';
 import { renderRecruitViewer } from './recruit-viewer';
 import { closeShipPicker } from './ship-picker';
 import {
-  bindChangeShipButton,
-  bindGoToStore,
-  bindHardpointEvents,
-  bindHireRecruit,
-  bindListSelection,
-  bindPilotAssignment,
-  bindResupplyAllButton,
-  bindResupplyShipButton,
-  bindUnassignPilot,
-} from './squadron-bindings';
+  bindSquadronEvents,
+  type SquadronProps,
+  type SquadronState,
+} from './squadron-bind-events';
 import { type ListSelection, renderSquadronList } from './squadron-list';
 import {
   anyShipsNeedAmmoResupply,
@@ -55,27 +44,16 @@ import {
   type ViewerTab,
 } from './squadron-viewer';
 
-/** Squadron screen state */
-interface SquadronState {
-  selection: ListSelection;
-  activeTab: ViewerTab;
-}
-
-/** Squadron screen props */
-interface SquadronProps {
-  campaignState: CampaignState;
-  onNavigate: (destination: NavDestination) => void;
-  onStateUpdate?: ((newState: CampaignState) => void) | undefined;
-}
-
-/** Legacy UI interface for backwards compatibility */
+/** Squadron UI interface */
 export interface SquadronUI {
   element: HTMLElement;
   state: CampaignState;
-  selection: ListSelection;
-  activeTab: ViewerTab;
   onNavigate: (destination: NavDestination) => void;
   onStateUpdate?: ((newState: CampaignState) => void) | undefined;
+  /** Update campaign state and re-render */
+  update(newState: CampaignState): void;
+  /** Clean up resources */
+  destroy(): void;
 }
 
 /** Render the squadron screen content */
@@ -196,13 +174,6 @@ function renderSquadronContent(
   `;
 }
 
-/** Screen handle for external control */
-let screenHandle: ScreenHandle<SquadronState, SquadronProps> | null = null;
-/** Store root element for bindings */
-let currentElement: HTMLElement | null = null;
-/** Store current props for state updates */
-let currentProps: SquadronProps | null = null;
-
 /** Squadron screen component */
 const SquadronScreenComponent: Screen<SquadronState, SquadronProps> = {
   render(state, props) {
@@ -218,21 +189,8 @@ const SquadronScreenComponent: Screen<SquadronState, SquadronProps> = {
   },
 
   bind(api: ScreenAPI<SquadronState>, props: SquadronProps) {
-    if (!currentElement) return;
-
-    const state = api.getState();
-    const element = currentElement;
-    const { campaignState, onNavigate, onStateUpdate } = props;
-
-    // Create a legacy UI object for the binding functions
-    const legacyUI: SquadronUI = {
-      element,
-      state: campaignState,
-      selection: state.selection,
-      activeTab: state.activeTab,
-      onNavigate,
-      onStateUpdate,
-    };
+    const element = api.getRoot();
+    const { onNavigate } = props;
 
     // Clean up existing connectors
     const existingViewer = element.querySelector('.ship-viewer');
@@ -254,37 +212,8 @@ const SquadronScreenComponent: Screen<SquadronState, SquadronProps> = {
       api.setState({ activeTab: tab });
     });
 
-    // Create rerender callback that updates state and triggers re-render
-    const rerender = () => {
-      // The legacy binding functions may modify legacyUI.state or legacyUI.selection
-      // We need to sync these changes to the screen state and props
-      if (legacyUI.state !== campaignState && onStateUpdate) {
-        onStateUpdate(legacyUI.state);
-      }
-      if (
-        legacyUI.selection !== state.selection ||
-        legacyUI.activeTab !== state.activeTab
-      ) {
-        api.setState({
-          selection: legacyUI.selection,
-          activeTab: legacyUI.activeTab,
-        });
-      } else {
-        // Force re-render if state update happened but selection didn't change
-        api.setState({});
-      }
-    };
-
-    // Bind all legacy binding functions
-    bindListSelection(legacyUI, rerender);
-    bindChangeShipButton(legacyUI, rerender);
-    bindResupplyShipButton(legacyUI, rerender);
-    bindResupplyAllButton(legacyUI, rerender);
-    bindHardpointEvents(legacyUI, rerender);
-    bindPilotAssignment(legacyUI, rerender);
-    bindHireRecruit(legacyUI, rerender);
-    bindGoToStore(legacyUI);
-    bindUnassignPilot(legacyUI, rerender);
+    // Bind all squadron screen events
+    bindSquadronEvents(api, props, element);
   },
 };
 
@@ -296,50 +225,53 @@ export function createSquadronUI(
   onStateUpdate?: (newState: CampaignState) => void,
   initialSelection?: ListSelection,
 ): SquadronUI {
-  // Clean up previous handle
-  screenHandle?.destroy();
-
-  currentElement = element;
-
   const initialState: SquadronState = {
     selection: initialSelection ?? { type: 'none', id: null },
     activeTab: 'loadout',
   };
 
+  // Props object updated via closure
+  let props: SquadronProps;
+
   // Wrap onStateUpdate to also update the screen props
   const wrappedOnStateUpdate = onStateUpdate
     ? (newCampaignState: CampaignState) => {
         onStateUpdate(newCampaignState);
-        // Update props for the screen
-        if (screenHandle && currentProps) {
-          currentProps = { ...currentProps, campaignState: newCampaignState };
-          screenHandle.setProps(currentProps);
-        }
+        props = { ...props, campaignState: newCampaignState };
+        handle.setProps(props);
       }
     : undefined;
 
-  currentProps = {
+  props = {
     campaignState: state,
     onNavigate,
     onStateUpdate: wrappedOnStateUpdate,
   };
 
-  screenHandle = createScreen(
+  const handle = createScreen(
     SquadronScreenComponent,
     element,
     initialState,
-    currentProps,
+    props,
   );
 
-  // Return legacy UI object for compatibility
-  return {
+  // UI object with methods using closures
+  const ui: SquadronUI = {
     element,
     state,
-    selection: initialState.selection,
-    activeTab: initialState.activeTab,
     onNavigate,
     onStateUpdate,
+    update(newState: CampaignState) {
+      ui.state = newState;
+      props = { ...props, campaignState: newState };
+      handle.setProps(props);
+    },
+    destroy() {
+      handle.destroy();
+    },
   };
+
+  return ui;
 }
 
 // Re-export NavDestination for external use
@@ -348,9 +280,5 @@ export type { ListSelection } from './squadron-list';
 
 /** Update squadron UI with new state */
 export function updateSquadronUI(ui: SquadronUI, state: CampaignState): void {
-  ui.state = state;
-  if (screenHandle && currentProps) {
-    currentProps = { ...currentProps, campaignState: state };
-    screenHandle.setProps(currentProps);
-  }
+  ui.update(state);
 }

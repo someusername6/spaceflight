@@ -31,6 +31,9 @@
 /* Lists (ship list) */
 @import "./list.css";
 
+/* Shared ship list item component */
+@import "./components/ship-item.css";
+
 /* Contracts screen */
 @import "./screens/contracts.css";
 

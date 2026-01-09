@@ -292,13 +292,9 @@ const ContractsScreenComponent: Screen<ContractsState, ContractsProps> = {
 
   bind(api: ScreenAPI<ContractsState>, props: ContractsProps) {
     const { contracts, onNavigate, onAccept } = props;
+
     // Bind navigation bar
-    // Note: bindNavBar uses addEventListener directly, so we query for this
-    // screen's element to avoid finding hidden screens' nav bars
-    const screenEl = document.querySelector('#screen-contracts');
-    if (screenEl) {
-      bindNavBar(screenEl as HTMLElement, onNavigate);
-    }
+    bindNavBar(api.getRoot(), onNavigate);
 
     // Contract list item clicks (selection toggle)
     api.on('.contract-list-item', 'click', (_e, el) => {

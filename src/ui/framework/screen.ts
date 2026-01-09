@@ -25,8 +25,14 @@ export interface ScreenAPI<State> {
   /** Update state and trigger re-render */
   setState(partial: Partial<State>): void;
 
+  /** Update state WITHOUT re-rendering (for direct DOM manipulation) */
+  updateState(partial: Partial<State>): void;
+
   /** Get current state (use in async handlers to get latest) */
   getState(): State;
+
+  /** Get the root element for direct DOM access */
+  getRoot(): HTMLElement;
 }
 
 /**
@@ -47,6 +53,9 @@ export interface Screen<State, Props> {
 export interface ScreenHandle<State, Props> {
   /** Update state and re-render */
   setState(partial: Partial<State>): void;
+
+  /** Update state WITHOUT re-rendering */
+  updateState(partial: Partial<State>): void;
 
   /** Replace entire state and re-render */
   replaceState(state: State): void;
@@ -127,8 +136,16 @@ export function createScreen<S, P>(
       render();
     },
 
+    updateState(partial) {
+      state = { ...state, ...partial };
+    },
+
     getState() {
       return state;
+    },
+
+    getRoot() {
+      return element;
     },
   });
 
@@ -180,6 +197,10 @@ export function createScreen<S, P>(
       render();
     },
 
+    updateState(partial) {
+      state = { ...state, ...partial };
+    },
+
     replaceState(newState) {
       state = newState;
       render();
@@ -216,6 +237,9 @@ export interface ModalProps<R> {
 /**
  * Show a modal screen and return a promise that resolves when closed.
  * Creates a container div, mounts the screen, and cleans up on completion.
+ *
+ * The container has the 'modal-container' class which can be used for
+ * entry animations that shouldn't replay on re-renders.
  */
 export function showModal<S, P extends ModalProps<R>, R>(
   screen: Screen<S, P>,
@@ -224,6 +248,7 @@ export function showModal<S, P extends ModalProps<R>, R>(
 ): Promise<R> {
   return new Promise((resolve) => {
     const container = document.createElement('div');
+    container.className = 'modal-container';
     document.body.appendChild(container);
 
     let handle: ScreenHandle<S, P> | null = null;

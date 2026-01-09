@@ -8,13 +8,13 @@
 import { needsAttention } from '../../campaign/resupply/resupply-constrained';
 import { getMaxAmmoCapacity } from '../../campaign/store/store-ammo';
 import type { CampaignState, Contract, OwnedShip } from '../../campaign/types';
+import { renderShipItem } from '../components/ship-item';
 import {
   type ModalProps,
   type Screen,
   type ScreenAPI,
   showModal,
 } from '../framework/screen';
-import { FALLBACK_ICON_PATH, getShipIconPath } from '../ship/viewer';
 
 /** Maximum ships that can be deployed */
 const MAX_DEPLOYMENT = 4;
@@ -65,55 +65,35 @@ function renderLoadoutSummary(ship: OwnedShip): string {
   return parts.length > 0 ? parts.join(', ') : 'No weapons';
 }
 
+/** Render checkbox toggle for ship selection */
+function renderToggle(isCommander: boolean, isSelected: boolean): string {
+  const stateClass = isCommander ? 'commander' : isSelected ? 'selected' : '';
+  return `<div class="ship-item-toggle${stateClass ? ` ${stateClass}` : ''}" aria-hidden="true"></div>`;
+}
+
 /** Render a ship card */
 function renderShipCard(
   ship: OwnedShip,
   isCommander: boolean,
   isSelected: boolean,
 ): string {
-  const pilot = ship.pilot;
-  if (!pilot) return '';
+  const loadout = renderLoadoutSummary(ship);
+  const showWarning = needsAttention(ship);
+  const warningBadge = showWarning
+    ? '<span class="ship-item-warning" aria-label="Needs attention">!</span>'
+    : '';
 
-  const iconPath = getShipIconPath(ship.shipClass);
-  const showResupplyWarning = needsAttention(ship);
-
-  const cardClasses = [
-    'squad-ship-card',
-    isCommander ? 'commander' : '',
-    isSelected ? 'selected' : 'unselected',
-    showResupplyWarning ? 'needs-resupply' : '',
-  ]
-    .filter(Boolean)
-    .join(' ');
-
-  return `
-    <article
-      class="${cardClasses}"
-      data-ship-id="${ship.id}"
-      role="checkbox"
-      aria-checked="${isSelected}"
-      aria-label="${pilot.name}, ${ship.shipClass}${isCommander ? ', your ship' : ''}${showResupplyWarning ? ', needs resupply' : ''}"
-      tabindex="0"
-    >
-      <div class="squad-toggle" aria-hidden="true"></div>
-
-      <div class="squad-icon-wrapper">
-        <img src="${iconPath}" alt="${ship.shipClass}" class="squad-ship-icon" onerror="this.onerror=null; this.src='${FALLBACK_ICON_PATH}'" />
-        ${showResupplyWarning ? '<span class="squad-resupply-warning" aria-label="Needs resupply">!</span>' : ''}
-      </div>
-
-      <div class="squad-ship-info">
-        <div class="squad-ship-names">
-          <div class="squad-ship-name-row">
-            <span class="squad-ship-pilot">${pilot.name}</span>
-            ${isCommander ? '<span class="squad-badge you">You</span>' : ''}
-          </div>
-          <span class="squad-ship-class">${ship.shipClass}</span>
-        </div>
-        <span class="squad-ship-loadout">${renderLoadoutSummary(ship)}</span>
-      </div>
-    </article>
-  `;
+  const warningClass = showWarning ? 'needs-attention' : '';
+  return renderShipItem({
+    ship,
+    isCommander,
+    isSelected,
+    extraClasses: `squad-card ${warningClass}`.trim(),
+    dataAttrs: { 'ship-id': ship.id },
+    beforeContent: renderToggle(isCommander, isSelected),
+    iconContent: warningBadge,
+    afterContent: `<span class="ship-item-loadout">${loadout}</span>`,
+  });
 }
 
 /** Squad selection screen component */
@@ -180,9 +160,10 @@ const SquadSelectionScreen: Screen<SquadState, SquadProps> = {
 
   bind(api: ScreenAPI<SquadState>, props: SquadProps) {
     const { commanderShipId, onComplete } = props;
+    const root = api.getRoot();
 
-    // Ship card clicks
-    api.on('.squad-ship-card', 'click', (_e, el) => {
+    // Ship card clicks - direct DOM manipulation for smooth toggling
+    api.on('.squad-card', 'click', (_e, el) => {
       const shipId = el.dataset.shipId;
       if (!shipId) return;
 
@@ -191,14 +172,53 @@ const SquadSelectionScreen: Screen<SquadState, SquadProps> = {
 
       const state = api.getState();
       const selectedSet = new Set(state.selectedIds);
+      const wasSelected = selectedSet.has(shipId);
 
-      if (selectedSet.has(shipId)) {
+      // Check if we can add more
+      if (!wasSelected && selectedSet.size >= MAX_DEPLOYMENT) return;
+
+      // Toggle selection
+      if (wasSelected) {
         selectedSet.delete(shipId);
-      } else if (selectedSet.size < MAX_DEPLOYMENT) {
+      } else {
         selectedSet.add(shipId);
       }
+      const isNowSelected = !wasSelected;
+      const newCount = selectedSet.size;
 
-      api.setState({ selectedIds: Array.from(selectedSet) });
+      // Update state without re-render
+      api.updateState({ selectedIds: Array.from(selectedSet) });
+
+      // Update card classes
+      el.classList.toggle('selected', isNowSelected);
+      el.setAttribute('aria-selected', String(isNowSelected));
+
+      // Update toggle inside card
+      const toggle = el.querySelector('.ship-item-toggle');
+      if (toggle) {
+        toggle.classList.toggle('selected', isNowSelected);
+      }
+
+      // Update capacity bar segments
+      const segments = root.querySelectorAll('.capacity-segment');
+      segments.forEach((seg, i) => {
+        seg.classList.toggle('filled', i < newCount);
+      });
+
+      // Update capacity count text
+      const countEl = root.querySelector('.capacity-current');
+      if (countEl) countEl.textContent = String(newCount);
+
+      // Update capacity bar aria
+      const capacityBar = root.querySelector('.capacity-bar');
+      if (capacityBar)
+        capacityBar.setAttribute('aria-valuenow', String(newCount));
+
+      // Update launch button
+      const launchBtn = root.querySelector(
+        '#btn-squad-launch',
+      ) as HTMLButtonElement | null;
+      if (launchBtn) launchBtn.disabled = newCount === 0;
     });
 
     // Cancel button

@@ -1,10 +1,10 @@
 /**
- * Squad Selection Modal - Ship list and card styles
+ * Squad Selection Modal - Squad-specific ship item styles.
+ * Base ship item styles are in components/ship-item.css
  */
 
 /* ========================================
    CONTENT AREA
-   Dark background like page under panes
    ======================================== */
 
 .squad-content {
@@ -18,7 +18,6 @@
 
 /* ========================================
    SHIP LIST
-   Same pattern as .roster-pilots
    ======================================== */
 
 .squad-ship-list {
@@ -33,66 +32,28 @@
 }
 
 /* ========================================
-   SHIP CARDS
-   Based on .roster-pilot-card pattern
+   SQUAD-SPECIFIC SHIP ITEM OVERRIDES
    ======================================== */
 
-.squad-ship-card {
-  display: grid;
-  grid-template-columns: 24px 48px 1fr;
-  gap: var(--space-3);
-  align-items: center;
-  padding: var(--space-3) var(--space-4);
-  background: var(--bg-panel);
-  border-bottom: 1px solid var(--border-color);
-  cursor: pointer;
-  transition: background-color var(--duration-base) var(--ease-out);
-}
-
-.squad-ship-card:last-child {
-  border-bottom: none;
-}
-
-.squad-ship-card:hover {
-  background: rgba(0, 245, 255, 0.05);
-}
-
-.squad-ship-card:focus-visible {
-  outline: 2px solid var(--color-secondary);
-  outline-offset: -2px;
-}
-
-/* Selected state - cyan accent like roster cards */
-.squad-ship-card.selected {
-  background: rgba(0, 245, 255, 0.1);
-  border-left: 2px solid var(--color-secondary);
-}
-
-/* Commander - amber accent */
-.squad-ship-card.commander {
-  border-left: 2px solid var(--color-primary);
-}
-
-.squad-ship-card.commander.selected {
-  background: rgba(255, 159, 28, 0.1);
-  border-left: 2px solid var(--color-primary);
+/* Grid layout with toggle, icon, info, and loadout */
+.squad-card {
+  grid-template-columns: 24px 48px 1fr auto;
 }
 
 /* Unselected dimming */
-.squad-ship-card.unselected {
+.squad-card:not(.selected):not(.commander) {
   opacity: 0.5;
 }
 
-.squad-ship-card.unselected:hover {
+.squad-card:not(.selected):not(.commander):hover {
   opacity: 0.7;
 }
 
 /* ========================================
    TOGGLE CHECKBOX
-   Simple checkbox matching UI style
    ======================================== */
 
-.squad-toggle {
+.ship-item-toggle {
   width: 18px;
   height: 18px;
   display: flex;
@@ -105,26 +66,25 @@
     border-color var(--duration-base) var(--ease-out);
 }
 
-.squad-ship-card.selected .squad-toggle {
+.ship-item-toggle.selected {
   border-color: var(--color-secondary);
   background: var(--color-secondary);
 }
 
-/* Checkmark using CSS content */
-.squad-ship-card.selected .squad-toggle::before {
+.ship-item-toggle.selected::before {
   content: "\2713";
   font-size: 12px;
   font-weight: bold;
   color: var(--bg-deep);
 }
 
-.squad-ship-card.commander .squad-toggle {
+.ship-item-toggle.commander {
   border-color: var(--color-primary);
   background: var(--color-primary);
   cursor: not-allowed;
 }
 
-.squad-ship-card.commander .squad-toggle::before {
+.ship-item-toggle.commander::before {
   content: "\2713";
   font-size: 12px;
   font-weight: bold;
@@ -132,103 +92,10 @@
 }
 
 /* ========================================
-   SHIP INFO
+   LOADOUT TEXT
    ======================================== */
 
-.squad-ship-info {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  min-width: 0;
-}
-
-.squad-ship-names {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-0-5);
-  flex-shrink: 0;
-}
-
-.squad-ship-name-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.squad-ship-pilot {
-  font-family: var(--font-ui);
-  font-size: var(--text-sm);
-  font-weight: var(--font-medium);
-  color: var(--text-primary);
-}
-
-.squad-ship-card.commander .squad-ship-pilot {
-  color: var(--color-primary);
-}
-
-.squad-badge {
-  padding: var(--space-0-5) var(--space-1-5);
-  font-family: var(--font-ui);
-  font-size: var(--text-3xs);
-  font-weight: var(--font-semibold);
-  letter-spacing: var(--tracking-widest);
-  text-transform: uppercase;
-}
-
-.squad-badge.you {
-  background: rgba(255, 159, 28, 0.15);
-  color: var(--color-primary);
-  border: 1px solid rgba(255, 159, 28, 0.3);
-}
-
-.squad-icon-wrapper {
-  position: relative;
-  width: 48px;
-  height: 48px;
-  flex-shrink: 0;
-}
-
-.squad-ship-icon {
-  width: 48px;
-  height: 48px;
-  object-fit: contain;
-  filter: var(--filter-cyan) drop-shadow(0 0 3px var(--color-secondary))
-    drop-shadow(0 0 6px var(--color-secondary-glow));
-}
-
-/* Resupply warning badge */
-.squad-resupply-warning {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  width: 16px;
-  height: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-primary);
-  color: #000;
-  font-size: 11px;
-  font-weight: bold;
-  border-radius: 50%;
-  box-shadow: 0 0 6px var(--color-primary);
-}
-
-/* Needs resupply card styling */
-.squad-ship-card.needs-resupply .squad-ship-loadout {
-  color: var(--color-warning);
-}
-
-.squad-ship-class {
-  font-family: var(--font-ui);
-  font-size: var(--text-2xs);
-  color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-widest);
-}
-
-.squad-ship-loadout {
+.ship-item-loadout {
   font-family: var(--font-ui);
   font-size: var(--text-xs);
   color: var(--text-dim);
@@ -237,4 +104,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.ship-item.needs-attention .ship-item-loadout {
+  color: var(--color-warning);
 }

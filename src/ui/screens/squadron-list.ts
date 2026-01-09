@@ -7,8 +7,8 @@ import {
   needsAttention,
 } from '../../campaign/resupply/resupply-constrained';
 import type { HireablePilot, OwnedShip, Pilot } from '../../campaign/types';
-import { SHIP_CLASSES } from '../../data/ships';
-import { FALLBACK_ICON_PATH, getShipIconPath } from '../ship/viewer';
+import { renderShipItem, renderWeaponBadges } from '../components/ship-item';
+import { FALLBACK_ICON_PATH } from '../ship/viewer';
 
 /** List selection types */
 export type ListSelection =
@@ -18,31 +18,8 @@ export type ListSelection =
   | { type: 'recruit'; id: string }
   | { type: 'ship'; id: string };
 
-/** Render weapon status (e.g., "2/2" or "4/8") */
-function renderWeaponStatus(ship: OwnedShip): {
-  primary: string;
-  secondary: string;
-  primaryUnarmed: boolean;
-  secondaryUnarmed: boolean;
-} {
-  const stats = SHIP_CLASSES[ship.shipClass];
-  const totalPrimary = stats?.primaryBanks.length ?? 0;
-  const totalSecondary = stats?.secondaryBanks.length ?? 0;
-  const equippedPrimary = ship.primaryWeapons.filter((w) => w !== null).length;
-  const equippedSecondary = ship.secondaryWeapons.filter(
-    (w) => w !== null,
-  ).length;
-
-  return {
-    primary: `${equippedPrimary}/${totalPrimary}`,
-    secondary: `${equippedSecondary}/${totalSecondary}`,
-    primaryUnarmed: equippedPrimary === 0 && totalPrimary > 0,
-    secondaryUnarmed: equippedSecondary === 0 && totalSecondary > 0,
-  };
-}
-
-/** Render the warning tooltip content */
-function renderWarningTooltip(ship: OwnedShip): string {
+/** Render warning badge and tooltip for icon */
+function renderWarningBadge(ship: OwnedShip): string {
   const reasons = getAttentionReasons(ship);
   if (reasons.length === 0) return '';
 
@@ -50,7 +27,10 @@ function renderWarningTooltip(ship: OwnedShip): string {
     .map((r) => `<div class="warning-tooltip-line">${r}</div>`)
     .join('');
 
-  return `<div class="warning-tooltip">${tooltipContent}</div>`;
+  return `
+    <span class="ship-item-warning" aria-label="Needs attention">!</span>
+    <div class="warning-tooltip">${tooltipContent}</div>
+  `;
 }
 
 /** Render a deployed item (pilot-ship pair) */
@@ -59,41 +39,17 @@ function renderDeployedItem(
   isSelected: boolean,
   isCommander: boolean,
 ): string {
-  const pilot = ship.pilot;
-  if (!pilot) return '';
+  const showWarning = needsAttention(ship);
 
-  const weapons = renderWeaponStatus(ship);
-  const selectedClass = isSelected ? 'selected' : '';
-  const commanderClass = isCommander ? 'commander' : '';
-  const iconPath = getShipIconPath(ship.shipClass);
-  const showResupplyWarning = needsAttention(ship);
-
-  const warningClass = showResupplyWarning ? 'has-warning' : '';
-
-  return `
-    <article
-      class="squadron-item deployed ${selectedClass} ${commanderClass}"
-      data-deployed-id="${ship.id}"
-      role="option"
-      aria-selected="${isSelected}"
-      tabindex="0"
-      aria-label="${pilot.name}, ${ship.shipClass}${showResupplyWarning ? ', needs resupply' : ''}"
-    >
-      <div class="squadron-item-icon ${warningClass}">
-        <img src="${iconPath}" alt="${ship.shipClass}" class="squadron-ship-icon" onerror="this.onerror=null; this.src='${FALLBACK_ICON_PATH}'" />
-        ${showResupplyWarning ? '<span class="resupply-warning" aria-label="Needs attention">!</span>' : ''}
-        ${showResupplyWarning ? renderWarningTooltip(ship) : ''}
-      </div>
-      <div class="squadron-item-info">
-        <div class="squadron-item-name">${isCommander ? '<span class="commander-icon" aria-label="Commander">★</span>' : ''}${pilot.name}</div>
-        <div class="squadron-item-ship">${ship.shipClass}</div>
-      </div>
-      <div class="squadron-item-weapons">
-        <span class="weapon-count primary ${weapons.primaryUnarmed ? 'unarmed' : ''}">● ${weapons.primary}</span>
-        <span class="weapon-count secondary ${weapons.secondaryUnarmed ? 'unarmed' : ''}">◆ ${weapons.secondary}</span>
-      </div>
-    </article>
-  `;
+  return renderShipItem({
+    ship,
+    isCommander,
+    isSelected,
+    extraClasses: `deployed ${showWarning ? 'has-warning' : ''}`,
+    dataAttrs: { 'deployed-id': ship.id },
+    iconContent: showWarning ? renderWarningBadge(ship) : '',
+    afterContent: renderWeaponBadges(ship),
+  });
 }
 
 /** Render an available pilot item */
@@ -107,19 +63,21 @@ function renderAvailableItem(
 
   return `
     <article
-      class="squadron-item available ${selectedClass} ${commanderClass}"
+      class="ship-item available ${selectedClass} ${commanderClass}"
       data-pilot-id="${pilot.id}"
       role="option"
       aria-selected="${isSelected}"
       tabindex="0"
       aria-label="${pilot.name}, available"
     >
-      <div class="squadron-item-icon">
-        <img src="${FALLBACK_ICON_PATH}" alt="No ship" class="squadron-ship-icon squadron-ship-icon-empty" />
+      <div class="ship-item-icon">
+        <img src="${FALLBACK_ICON_PATH}" alt="No ship" class="ship-item-img ship-item-img-empty" />
       </div>
-      <div class="squadron-item-info">
-        <div class="squadron-item-name">${isCommander ? '<span class="commander-icon" aria-label="Commander">★</span>' : ''}${pilot.name}</div>
-        <div class="squadron-item-status">Available</div>
+      <div class="ship-item-info">
+        <div class="ship-item-name-row">
+          <span class="ship-item-pilot">${isCommander ? '<span class="commander-star" aria-label="Commander">★</span>' : ''}${pilot.name}</span>
+        </div>
+        <span class="ship-item-status">Available</span>
       </div>
     </article>
   `;
@@ -137,18 +95,20 @@ function renderRecruitItem(
 
   return `
     <article
-      class="squadron-item recruit ${selectedClass} ${affordClass}"
+      class="ship-item recruit ${selectedClass} ${affordClass}"
       data-recruit-id="${recruit.id}"
       role="option"
       aria-selected="${isSelected}"
       tabindex="0"
       aria-label="${recruit.name}, ${recruit.skill} pilot, ${recruit.price} credits${canAfford ? '' : ', cannot afford'}"
     >
-      <div class="squadron-item-info">
-        <div class="squadron-item-name">${recruit.name}</div>
-        <div class="squadron-item-status ${skillClass}">${recruit.skill}</div>
+      <div class="ship-item-info recruit-info">
+        <div class="ship-item-name-row">
+          <span class="ship-item-pilot">${recruit.name}</span>
+        </div>
+        <span class="ship-item-status ${skillClass}">${recruit.skill}</span>
       </div>
-      <div class="squadron-item-price">${recruit.price} cr</div>
+      <div class="ship-item-price">${recruit.price} cr</div>
     </article>
   `;
 }

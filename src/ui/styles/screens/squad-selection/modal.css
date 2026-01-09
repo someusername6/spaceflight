@@ -6,6 +6,11 @@
    MODAL OVERLAY
    ======================================== */
 
+/* Modal container - stable element that persists across re-renders */
+.modal-container {
+  animation: fadeSlideIn var(--duration-base) var(--ease-out);
+}
+
 .squad-selection-overlay {
   position: fixed;
   top: 0;
@@ -17,7 +22,6 @@
   align-items: center;
   justify-content: center;
   z-index: var(--z-overlay);
-  animation: fadeSlideIn var(--duration-base) var(--ease-out);
 }
 
 /* Same scanline pattern as .game-screen::before */

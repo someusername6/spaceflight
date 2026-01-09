@@ -1,0 +1,176 @@
+/**
+ * Shared ship list item styles - used by squadron list and squad selection.
+ */
+
+/* ========================================
+   BASE SHIP ITEM
+   ======================================== */
+
+.ship-item {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: background-color var(--duration-base) var(--ease-out);
+}
+
+.ship-item:last-child {
+  border-bottom: none;
+}
+
+.ship-item:hover {
+  background: rgba(0, 245, 255, 0.05);
+}
+
+.ship-item:focus-visible {
+  outline: 2px solid var(--color-secondary);
+  outline-offset: -2px;
+}
+
+/* Selected state */
+.ship-item.selected {
+  background: rgba(0, 245, 255, 0.1);
+  border-left: 2px solid var(--color-secondary);
+}
+
+/* Commander state */
+.ship-item.commander {
+  border-left: 2px solid var(--color-primary);
+}
+
+.ship-item.commander.selected {
+  background: rgba(255, 159, 28, 0.1);
+  border-left: 2px solid var(--color-primary);
+}
+
+/* ========================================
+   SHIP ICON
+   ======================================== */
+
+.ship-item-icon {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+}
+
+.ship-item-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: var(--filter-cyan) drop-shadow(0 0 3px var(--color-secondary))
+    drop-shadow(0 0 6px var(--color-secondary-glow));
+}
+
+/* Warning badge */
+.ship-item-warning {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-primary);
+  color: #000;
+  font-size: 11px;
+  font-weight: bold;
+  border-radius: 50%;
+  box-shadow: 0 0 6px var(--color-primary);
+}
+
+/* ========================================
+   SHIP INFO
+   ======================================== */
+
+.ship-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  min-width: 0;
+}
+
+.ship-item-name-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ship-item-pilot {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ship-item.commander .ship-item-pilot {
+  color: var(--color-primary);
+}
+
+.ship-item-class {
+  font-family: var(--font-ui);
+  font-size: var(--text-2xs);
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-widest);
+}
+
+/* Commander badge */
+.ship-item-badge {
+  padding: var(--space-0-5) var(--space-1-5);
+  font-family: var(--font-ui);
+  font-size: var(--text-3xs);
+  font-weight: var(--font-semibold);
+  letter-spacing: var(--tracking-widest);
+  text-transform: uppercase;
+}
+
+.ship-item-badge.commander-badge {
+  background: rgba(255, 159, 28, 0.15);
+  color: var(--color-primary);
+  border: 1px solid rgba(255, 159, 28, 0.3);
+}
+
+/* ========================================
+   WEAPON BADGES
+   ======================================== */
+
+.ship-item-weapons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.weapon-badge {
+  font-family: var(--font-body);
+  font-size: var(--text-2xs);
+  padding: var(--space-0-5) var(--space-1-5);
+  border: 1px solid var(--border-color);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.weapon-badge.primary {
+  color: var(--color-primary);
+  border-color: rgba(255, 159, 28, 0.3);
+}
+
+.weapon-badge.secondary {
+  color: var(--color-danger);
+  border-color: rgba(255, 51, 102, 0.3);
+}
+
+.weapon-badge.unarmed {
+  color: var(--color-warning);
+  border-color: var(--color-warning);
+  background: rgba(255, 217, 61, 0.1);
+}
