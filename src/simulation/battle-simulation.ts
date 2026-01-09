@@ -45,8 +45,8 @@ import {
   updateShieldEffectRenderer,
 } from '../rendering/effects/shield-effects';
 import {
-  createTrailRenderer,
-  updateTrailRenderer,
+  createBoltRenderer,
+  updateBoltRenderer,
 } from '../rendering/effects/trails';
 import {
   createExhaustRenderer,
@@ -102,7 +102,7 @@ export interface BattleSimulation {
   // Effect renderers
   dustSystem: ReturnType<typeof createDustSystem>;
   explosionRenderer: ReturnType<typeof createExplosionRenderer>;
-  trailRenderer: ReturnType<typeof createTrailRenderer>;
+  boltRenderer: ReturnType<typeof createBoltRenderer>;
   exhaustRenderer: ReturnType<typeof createExhaustRenderer>;
   shieldEffectRenderer: ReturnType<typeof createShieldEffectRenderer>;
   muzzleFlashRenderer: ReturnType<typeof createMuzzleFlashRenderer>;
@@ -226,7 +226,7 @@ export function createBattleSimulation(
     lastRenderTime: 0,
     dustSystem: createDustSystem(scene),
     explosionRenderer: createExplosionRenderer(),
-    trailRenderer: createTrailRenderer(),
+    boltRenderer: createBoltRenderer(),
     exhaustRenderer: createExhaustRenderer(),
     shieldEffectRenderer: createShieldEffectRenderer(),
     muzzleFlashRenderer: createMuzzleFlashRenderer(),
@@ -269,7 +269,7 @@ function updateRender(sim: BattleSimulation, alpha: number): void {
 
   // Update effect renderers
   updateExplosionRenderer(sim.explosionRenderer, scene, world);
-  updateTrailRenderer(sim.trailRenderer, scene, world);
+  updateBoltRenderer(sim.boltRenderer, scene, world);
   updateExhaustRenderer(
     sim.exhaustRenderer,
     scene,

@@ -178,6 +178,9 @@ let escapeHandler: ((e: KeyboardEvent) => void) | null = null;
 function startCampaignGameplay(controller: CampaignController): void {
   const { screenManager } = controller;
 
+  // Stop title screen battle simulation (it was running in the background)
+  cleanupTitleScreen();
+
   // Setup squadron screen
   const squadronElement = getScreenElement(screenManager, Screen.SQUADRON);
   setupSquadronScreen(controller, squadronElement, () =>

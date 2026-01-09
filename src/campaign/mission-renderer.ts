@@ -37,8 +37,9 @@ import {
   updateShieldEffectRenderer,
 } from '../rendering/effects/shield-effects';
 import {
-  createTrailRenderer,
-  updateTrailRenderer,
+  createBoltRenderer,
+  disposeBoltRenderer,
+  updateBoltRenderer,
 } from '../rendering/effects/trails';
 import { createHUD, updateHUD } from '../rendering/hud/hud';
 import { updateTargetCamera } from '../rendering/hud/target-camera';
@@ -60,7 +61,7 @@ export interface MissionRenderers {
   renderer: ReturnType<typeof createRenderer>;
   dustSystem: ReturnType<typeof createDustSystem>;
   explosionRenderer: ReturnType<typeof createExplosionRenderer>;
-  trailRenderer: ReturnType<typeof createTrailRenderer>;
+  boltRenderer: ReturnType<typeof createBoltRenderer>;
   exhaustRenderer: ReturnType<typeof createExhaustRenderer>;
   shieldEffectRenderer: ReturnType<typeof createShieldEffectRenderer>;
   muzzleFlashRenderer: ReturnType<typeof createMuzzleFlashRenderer>;
@@ -83,7 +84,7 @@ export function createMissionRenderers(
     renderer,
     dustSystem: createDustSystem(scene),
     explosionRenderer: createExplosionRenderer(),
-    trailRenderer: createTrailRenderer(),
+    boltRenderer: createBoltRenderer(),
     exhaustRenderer: createExhaustRenderer(),
     shieldEffectRenderer: createShieldEffectRenderer(),
     muzzleFlashRenderer: createMuzzleFlashRenderer(),
@@ -108,7 +109,7 @@ export function updateMissionRenderers(
 
   syncScene(renderer, world, alpha);
   updateExplosionRenderer(renderers.explosionRenderer, scene, world);
-  updateTrailRenderer(renderers.trailRenderer, scene, world);
+  updateBoltRenderer(renderers.boltRenderer, scene, world);
   updateExhaustRenderer(
     renderers.exhaustRenderer,
     scene,
@@ -153,6 +154,11 @@ export function updateMissionRenderers(
 
 /** Dispose all rendering resources */
 export function disposeMissionRenderers(renderers: MissionRenderers): void {
+  const scene = getScene(renderers.renderer);
+
+  // Dispose bolt renderer (shared geometries and pooled bolts)
+  disposeBoltRenderer(renderers.boltRenderer, scene);
+
   // Dispose main renderer (handles WebGL context, beam lines, etc.)
   disposeRenderer(renderers.renderer);
 
