@@ -3,15 +3,16 @@
  * Instant beams (Nuclear Lance) are handled by beam-instant.ts.
  */
 
-import * as THREE from 'three';
+import type * as THREE from 'three';
 import { type AIControlled, AIState } from '../../components/ai';
 import type { Health } from '../../components/health';
 import { isDead } from '../../components/health';
 import type { Heat } from '../../components/heat';
 import { addHeat } from '../../components/heat';
 import type { PlayerControlled } from '../../components/player';
+import type { Targeting } from '../../components/targeting';
 import type { Transform } from '../../components/transform';
-import type { PrimaryWeapon, PrimaryWeapons } from '../../components/weapons';
+import type { PrimaryWeapons } from '../../components/weapons';
 import {
   getEffectiveHeat,
   getWeaponIndicesForCurrentMode,
@@ -19,29 +20,19 @@ import {
 import { entityExists, getComponent, queryEntities } from '../../core/ecs';
 import type { ActiveBeam, Entity, World } from '../../core/types';
 import { getForward } from '../physics';
-import { recordBeamFired, recordShotFired } from '../stats';
+import { fireContinuousBeam } from './beam-continuous';
 import {
-  applyBeamDamageAndEffects,
-  BEAM_SPAWN_OFFSET,
   type BeamWeaponInfo,
-  calculateFalloffDamage,
-  createActiveBeam,
-  findBeamHit,
-  findBeamState,
-  getBeamColor,
   getBeamWeaponInfo,
   resetBeamWeaponPool,
   updateFadingBeams,
 } from './beam-helpers';
 import { handleInstantBeams } from './beam-instant';
-import { calculateBankOffset } from './weapon-spawning';
 
 // Re-export ActiveBeam for backward compatibility
 export type { ActiveBeam } from '../../core/types';
 
-// Reusable objects
-const rayOrigin = new THREE.Vector3();
-const rayDirection = new THREE.Vector3();
+// Reusable collectors (avoid per-frame allocations)
 const beamWeaponsCollector: BeamWeaponInfo[] = [];
 const instantBeamCollector: BeamWeaponInfo[] = [];
 
@@ -88,12 +79,16 @@ export function beamSystem(world: World, dt: number): void {
     // Check if firing and calculate beam direction
     let isFiring = false;
     let beamDirection: THREE.Vector3 | null = null;
+    let targetEntity: Entity | undefined;
 
     if (player) {
       // Player uses ship forward direction
       isFiring = player.input.firePrimary;
       if (isFiring) {
         beamDirection = getForward(transform);
+        // Get player's current target for autoaim
+        const targeting = getComponent<Targeting>(world, entity, 'targeting');
+        targetEntity = targeting?.currentTarget;
       }
     } else {
       // AI fires beams when engaging with valid target
@@ -117,6 +112,7 @@ export function beamSystem(world: World, dt: number): void {
           // Beam fires in ship's forward direction (fixed mount)
           // Aim error is applied to ship rotation in AI pursuit
           beamDirection = getForward(transform);
+          targetEntity = ai.target;
         }
       }
     }
@@ -136,6 +132,7 @@ export function beamSystem(world: World, dt: number): void {
         activeBeams,
         beamDirection,
         wasFiring,
+        targetEntity,
       );
     }
 
@@ -158,6 +155,7 @@ function fireBeamsByLinkMode(
   activeBeams: Map<Entity, ActiveBeam[]>,
   direction: THREE.Vector3,
   wasFiring: boolean,
+  targetEntity: Entity | undefined,
 ): void {
   // Reset pool and clear collectors (avoid per-frame allocations)
   resetBeamWeaponPool(world);
@@ -189,6 +187,7 @@ function fireBeamsByLinkMode(
     direction,
     instantBeamCollector,
     wasFiring,
+    targetEntity,
   );
 
   // Handle continuous beams (existing logic)
@@ -217,158 +216,13 @@ function fireBeamsByLinkMode(
       dt,
       activeBeams,
       direction,
+      targetEntity,
     );
   }
 }
 
 // Re-export BEAM_SPAWN_OFFSET for backward compatibility
 export { BEAM_SPAWN_OFFSET } from './beam-helpers';
-
-/** Fire a continuous beam and process hits */
-function fireContinuousBeam(
-  world: World,
-  owner: Entity,
-  transform: Transform,
-  weapon: PrimaryWeapon,
-  weaponIndex: number,
-  totalBanks: number,
-  dt: number,
-  activeBeams: Map<Entity, ActiveBeam[]>,
-  direction: THREE.Vector3,
-): void {
-  const gameTime = world.systemState.gameTime;
-  // Calculate beam origin with bank offset
-  const origin = calculateBankOffset(
-    transform,
-    weaponIndex,
-    totalBanks,
-    BEAM_SPAWN_OFFSET,
-  );
-  rayOrigin.copy(origin);
-  rayDirection.copy(direction);
-
-  // Get or create beam array for this entity
-  let beams = activeBeams.get(owner);
-  if (!beams) {
-    beams = [];
-    activeBeams.set(owner, beams);
-  }
-
-  // Find or create beam state for this weapon slot
-  let beam = findBeamState(beams, weaponIndex);
-  const isPulse = weapon.isPulseBeam === true;
-  const isLance = weapon.name === 'Nuclear Lance';
-  const isTorch = weapon.name === 'Torch';
-  if (!beam) {
-    beam = createActiveBeam(
-      weapon.name,
-      weaponIndex,
-      weapon.beamWidth,
-      isPulse,
-      isLance,
-      isTorch,
-      false, // Not instant beam (continuous)
-    );
-    beams.push(beam);
-  }
-
-  beam.origin.copy(rayOrigin);
-  beam.direction.copy(rayDirection);
-  beam.active = true;
-  beam.fadeStartTime = null; // Reset fade when beam becomes active
-  beam.hitPoint = null;
-  beam.color.copy(getBeamColor(weapon.name));
-  beam.weaponName = weapon.name;
-
-  // Handle pulse beam timing (Lightning)
-  let shouldDealDamage = true;
-  if (weapon.isPulseBeam && weapon.pulseInterval) {
-    const timeSinceLastPulse = gameTime - (beam.lastPulseTime ?? 0);
-    if (timeSinceLastPulse >= weapon.pulseInterval) {
-      beam.lastPulseTime = gameTime;
-      beam.pulseActive = true;
-      shouldDealDamage = true;
-      // Add heat per pulse (need to get heat component)
-      const heat = getComponent<Heat>(world, owner, 'heat');
-      if (heat) {
-        const heatPerPulse = getEffectiveHeat(weapon);
-        if (!addHeat(heat, heatPerPulse)) {
-          // Overheated - don't fire this pulse
-          beam.pulseActive = false;
-          shouldDealDamage = false;
-        } else {
-          // Track pulse as a shot (pulse beams track shots, not time)
-          recordShotFired(world, owner, weapon.name, 'beam', true);
-        }
-      }
-    } else {
-      // Between pulses - still show beam direction but no damage
-      beam.pulseActive = false;
-      shouldDealDamage = false;
-    }
-  }
-
-  // Find nearest enemy in beam path
-  const hitResult = findBeamHit(
-    world,
-    owner,
-    rayOrigin,
-    rayDirection,
-    weapon.range,
-  );
-
-  // Reuse or create hitPoint vector (avoid per-frame allocation)
-  if (!beam.hitPoint) {
-    beam.hitPoint = new THREE.Vector3();
-  }
-
-  // Track beam time fired (for continuous beams)
-  if (!weapon.isPulseBeam) {
-    recordBeamFired(world, owner, weapon.name, dt);
-  }
-
-  if (hitResult.hit) {
-    // Calculate hit point
-    beam.hitPoint
-      .copy(rayDirection)
-      .multiplyScalar(hitResult.distance)
-      .add(rayOrigin);
-
-    // Apply damage if appropriate
-    if (shouldDealDamage) {
-      let damage: number;
-      if (weapon.isPulseBeam) {
-        // Pulse beams deal fixed damage per pulse (no dt scaling)
-        damage = weapon.noFalloff
-          ? weapon.damage
-          : calculateFalloffDamage(weapon.damage, hitResult.distance);
-      } else {
-        // Continuous beams deal damage per second (scaled by dt)
-        const falloffDamage = calculateFalloffDamage(
-          weapon.damage,
-          hitResult.distance,
-        );
-        damage = falloffDamage * dt;
-      }
-      applyBeamDamageAndEffects({
-        world,
-        owner,
-        target: hitResult.entity,
-        weapon,
-        damage,
-        hitPoint: beam.hitPoint,
-        beam,
-        gameTime,
-      });
-    }
-  } else {
-    // No hit - beam extends to max range (or shorter for off-target pulse beams)
-    const range = weapon.isPulseBeam
-      ? Math.min(weapon.range, 150) // Tesla arc into nothingness
-      : weapon.range;
-    beam.hitPoint.copy(rayDirection).multiplyScalar(range).add(rayOrigin);
-  }
-}
 
 /** Get all active beams for rendering */
 export function getActiveBeams(world: World): Map<Entity, ActiveBeam[]> {

@@ -9,6 +9,7 @@ import { addHeat } from '../../components/heat';
 import type { Transform } from '../../components/transform';
 import type { PrimaryWeapon, PrimaryWeapons } from '../../components/weapons';
 import { cycleNextLinkMode, getEffectiveHeat } from '../../components/weapons';
+import { getComponent } from '../../core/ecs';
 import type { ActiveBeam, Entity, World } from '../../core/types';
 import { recordShotFired } from '../stats';
 import {
@@ -26,6 +27,7 @@ import { calculateBankOffset } from './weapon-spawning';
 // Reusable objects
 const rayOrigin = new THREE.Vector3();
 const rayDirection = new THREE.Vector3();
+const targetDirection = new THREE.Vector3();
 
 /**
  * Handle instant beams (edge-triggered, fire only ONE, no linking).
@@ -41,6 +43,7 @@ export function handleInstantBeams(
   direction: THREE.Vector3,
   instantBeamCollector: BeamWeaponInfo[],
   wasFiring: boolean,
+  targetEntity: Entity | undefined,
 ): boolean {
   if (instantBeamCollector.length === 0 || wasFiring) {
     return false;
@@ -99,6 +102,7 @@ export function handleInstantBeams(
       beam,
       direction,
       gameTime,
+      targetEntity,
     );
 
     // Consume ammo
@@ -129,6 +133,7 @@ function fireInstantBeam(
   beam: ActiveBeam,
   direction: THREE.Vector3,
   gameTime: number,
+  targetEntity: Entity | undefined,
 ): void {
   // Calculate beam origin with bank offset
   const origin = calculateBankOffset(
@@ -139,6 +144,28 @@ function fireInstantBeam(
   );
   rayOrigin.copy(origin);
   rayDirection.copy(direction);
+
+  // Apply autoaim if weapon has autoaimFov and target exists
+  if (weapon.autoaimFov && targetEntity !== undefined) {
+    const targetTransform = getComponent<Transform>(
+      world,
+      targetEntity,
+      'transform',
+    );
+    if (targetTransform) {
+      // Calculate direction to target
+      targetDirection.copy(targetTransform.position).sub(rayOrigin).normalize();
+
+      // Check if target is within autoaim FOV
+      const angleToTarget = rayDirection.angleTo(targetDirection);
+      const fovRadians = (weapon.autoaimFov * Math.PI) / 180;
+
+      if (angleToTarget <= fovRadians) {
+        // Target is within FOV - correct aim to target
+        rayDirection.copy(targetDirection);
+      }
+    }
+  }
 
   // Update beam state
   beam.origin.copy(rayOrigin);

@@ -179,6 +179,7 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
     isPulseBeam: true,
     pulseInterval: 0.1, // 100ms between bolts
     noFalloff: true,
+    autoaimFov: 5, // Arcing lightning corrects within 5° cone
   },
   torch: {
     name: 'Torch',
@@ -205,6 +206,7 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
     ammoName: 'Nuclear Lance Charges',
     noFalloff: true,
     isInstantBeam: true, // Fires once, damages all in path, fades out
+    autoaimFov: 2, // Smart targeting corrects within 2° cone
   },
 };
 
