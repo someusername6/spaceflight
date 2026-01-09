@@ -176,7 +176,6 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: var(--space-5);
 }
 
 .pause-confirm-title {
@@ -195,7 +194,7 @@
   color: var(--text-secondary);
   text-align: center;
   line-height: 1.5;
-  margin-bottom: var(--space-5);
+  margin-bottom: var(--space-8);
 }
 
 .pause-confirm-buttons {

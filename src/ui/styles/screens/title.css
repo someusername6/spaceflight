@@ -344,7 +344,7 @@
   color: var(--text-secondary);
   text-align: center;
   line-height: 1.5;
-  margin-bottom: var(--space-5);
+  margin-bottom: var(--space-8);
 }
 
 .title-confirm-buttons {
