@@ -20,6 +20,7 @@ import type {
 import {
   getCurrentSecondary,
   getEffectiveHeat,
+  getWeaponIndicesForCurrentMode,
 } from '../../components/weapons';
 import { entityExists, getComponent, queryEntities } from '../../core/ecs';
 import { calculateInterceptPoint } from '../../core/lead-calculation';
@@ -34,18 +35,18 @@ import {
   handlePlayerSecondaryWeapons,
 } from './weapons-player';
 
-// Reusable array for projectile weapons in linked fire (avoid per-frame allocations)
-interface WeaponWithIndex {
-  weapon: PrimaryWeapon;
-  index: number;
-}
-const projectileWeaponsCollector: WeaponWithIndex[] = [];
-const tempZeroVec = new THREE.Vector3(0, 0, 0);
-
 // Reusable vectors for lock cone calculation (avoid per-frame allocations)
 const tempForward = new THREE.Vector3();
 const tempToTarget = new THREE.Vector3();
+const tempZeroVec = new THREE.Vector3(0, 0, 0);
 const DEG_TO_RAD = Math.PI / 180;
+
+/** Weapon info for firing (avoids per-frame allocations) */
+interface FireableWeapon {
+  weapon: PrimaryWeapon;
+  index: number;
+}
+const fireableWeaponsCollector: FireableWeapon[] = [];
 
 /** Weapon system - handles firing and heat */
 export function weaponSystem(world: World, dt: number): void {
@@ -187,97 +188,6 @@ export function weaponSystem(world: World, dt: number): void {
   }
 }
 
-/** Fire all primary weapons together (linked mode) */
-export function fireLinkedPrimaries(
-  world: World,
-  entity: Entity,
-  transform: Transform,
-  weapons: PrimaryWeapons,
-  heat: Heat,
-  faction: FactionComponent | undefined,
-  gameTime: number,
-  aimError?: AimError,
-  target?: Entity,
-): void {
-  // Clear and reuse collector (avoid per-frame allocations)
-  projectileWeaponsCollector.length = 0;
-
-  // Find projectile weapons (non-beam) that can fire, with their indices
-  for (let i = 0; i < weapons.weapons.length; i++) {
-    const w = weapons.weapons[i];
-    if (w && w.category !== 'beam' && (w.ammo === undefined || w.ammo > 0)) {
-      projectileWeaponsCollector.push({ weapon: w, index: i });
-    }
-  }
-
-  if (projectileWeaponsCollector.length === 0) return;
-
-  // Calculate slowest fire rate among projectile weapons (avoid .map() allocation)
-  let slowestRate = 0;
-  for (const { weapon } of projectileWeaponsCollector) {
-    if (weapon.fireRate > slowestRate) slowestRate = weapon.fireRate;
-  }
-
-  // Check if enough time has passed
-  const timeSinceFire = gameTime - weapons.lastFireTime;
-  if (timeSinceFire < slowestRate) return;
-
-  // Calculate total heat for all weapons (scaled by bank size)
-  let totalHeat = 0;
-  for (const { weapon } of projectileWeaponsCollector) {
-    totalHeat += getEffectiveHeat(weapon);
-  }
-
-  // Check if we can add all heat
-  if (!addHeat(heat, totalHeat)) return;
-
-  // Pre-calculate target info for autoaim (once, not per-weapon)
-  let targetTransform: Transform | undefined;
-  let targetVelocity = tempZeroVec;
-  let ownerVelocity = tempZeroVec;
-  if (target && entityExists(world, target)) {
-    targetTransform = getComponent<Transform>(world, target, 'transform');
-    const targetPhysics = getComponent<Physics>(world, target, 'physics');
-    const ownerPhysics = getComponent<Physics>(world, entity, 'physics');
-    if (targetPhysics) targetVelocity = targetPhysics.velocity;
-    if (ownerPhysics) ownerVelocity = ownerPhysics.velocity;
-  }
-
-  // Fire all projectile weapons (with optional aim error for AI)
-  weapons.lastFireTime = gameTime;
-  const totalBanks = weapons.weapons.length;
-  for (const { weapon, index } of projectileWeaponsCollector) {
-    if (weapon.ammo !== undefined) weapon.ammo--;
-
-    // Calculate autoaim for this specific weapon if it has autoaimFov
-    let autoaim: AutoaimParams | undefined;
-    if (weapon.autoaimFov && targetTransform) {
-      const interceptPoint = calculateInterceptPoint(
-        transform.position,
-        ownerVelocity,
-        targetTransform.position,
-        targetVelocity,
-        weapon.projectileSpeed,
-      );
-      if (interceptPoint) {
-        autoaim = { interceptPoint, fovDegrees: weapon.autoaimFov };
-      }
-    }
-
-    spawnProjectileWithAimError(
-      world,
-      entity,
-      transform,
-      weapon,
-      faction,
-      aimError,
-      index,
-      totalBanks,
-      autoaim,
-    );
-  }
-}
-
 /**
  * Update lock-on progress for secondary weapons (shared by player and AI).
  *
@@ -380,4 +290,100 @@ function getPlayerInput(world: World): PlayerControlled | undefined {
     return getComponent<PlayerControlled>(world, entity, 'playerControlled');
   }
   return undefined;
+}
+
+/**
+ * Fire all weapons matching current link mode (shared by player and AI).
+ *
+ * Uses all-or-nothing heat check: either all linked weapons fire together,
+ * or none fire. This prevents the weird visual of only some linked weapons
+ * firing when near overheat.
+ */
+export function fireWeaponsByLinkMode(
+  world: World,
+  entity: Entity,
+  transform: Transform,
+  weapons: PrimaryWeapons,
+  heat: Heat,
+  faction: FactionComponent | undefined,
+  gameTime: number,
+  aimError?: AimError,
+  target?: Entity,
+): void {
+  const indices = getWeaponIndicesForCurrentMode(weapons);
+  if (indices.length === 0) return;
+
+  // Clear collector (reuse to avoid per-frame allocations)
+  fireableWeaponsCollector.length = 0;
+
+  // First pass: collect fireable weapons and find fastest fire rate
+  let fastestFireRate = Infinity;
+  for (const i of indices) {
+    const w = weapons.weapons[i];
+    if (!w || w.category === 'beam') continue; // Beams handled by beam system
+    if (w.ammo !== undefined && w.ammo <= 0) continue; // No ammo
+    fireableWeaponsCollector.push({ weapon: w, index: i });
+    fastestFireRate = Math.min(fastestFireRate, w.fireRate);
+  }
+
+  if (fireableWeaponsCollector.length === 0) return;
+
+  // Check fire rate
+  const timeSinceFire = gameTime - weapons.lastFireTime;
+  if (timeSinceFire < fastestFireRate) return;
+
+  // Calculate total heat for all weapons (all-or-nothing for linked fire)
+  let totalHeat = 0;
+  for (const { weapon } of fireableWeaponsCollector) {
+    totalHeat += getEffectiveHeat(weapon);
+  }
+
+  // Check if we can afford ALL the heat at once
+  if (!addHeat(heat, totalHeat)) return;
+
+  // Pre-calculate target info for autoaim (once, not per-weapon)
+  let targetTransform: Transform | undefined;
+  let targetVelocity = tempZeroVec;
+  let ownerVelocity = tempZeroVec;
+  if (target && entityExists(world, target)) {
+    targetTransform = getComponent<Transform>(world, target, 'transform');
+    const targetPhysics = getComponent<Physics>(world, target, 'physics');
+    const ownerPhysics = getComponent<Physics>(world, entity, 'physics');
+    if (targetPhysics) targetVelocity = targetPhysics.velocity;
+    if (ownerPhysics) ownerVelocity = ownerPhysics.velocity;
+  }
+
+  // Fire all collected weapons
+  weapons.lastFireTime = gameTime;
+  const totalBanks = weapons.weapons.length;
+  for (const { weapon, index } of fireableWeaponsCollector) {
+    if (weapon.ammo !== undefined) weapon.ammo--;
+
+    // Calculate autoaim if weapon has autoaimFov and we have a target
+    let autoaim: AutoaimParams | undefined;
+    if (weapon.autoaimFov && targetTransform) {
+      const interceptPoint = calculateInterceptPoint(
+        transform.position,
+        ownerVelocity,
+        targetTransform.position,
+        targetVelocity,
+        weapon.projectileSpeed,
+      );
+      if (interceptPoint) {
+        autoaim = { interceptPoint, fovDegrees: weapon.autoaimFov };
+      }
+    }
+
+    spawnProjectileWithAimError(
+      world,
+      entity,
+      transform,
+      weapon,
+      faction,
+      aimError,
+      index,
+      totalBanks,
+      autoaim,
+    );
+  }
 }
