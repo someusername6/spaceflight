@@ -262,4 +262,16 @@ export function bindSquadronEvents(
 
   // Hardpoint events (uses non-bubbling events, needs special handling)
   bindHardpointEvents(element, api, props);
+
+  // Weapon badge tooltip positioning (fixed positioning needs JS)
+  const TOOLTIP_OFFSET = 12; // Matches --space-3
+  api.on('.weapon-badge', 'mouseenter', (_e, el) => {
+    const tooltip = el.querySelector('.weapon-tooltip') as HTMLElement | null;
+    if (!tooltip) return;
+
+    const rect = el.getBoundingClientRect();
+    tooltip.style.top = `${rect.top + rect.height / 2}px`;
+    tooltip.style.left = `${rect.right + TOOLTIP_OFFSET}px`;
+    tooltip.style.transform = 'translateY(-50%)';
+  });
 }

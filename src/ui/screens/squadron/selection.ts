@@ -6,13 +6,16 @@
  */
 
 import { needsAttention } from '../../../campaign/resupply/resupply-constrained';
-import { getMaxAmmoCapacity } from '../../../campaign/store/store-ammo';
 import type {
   CampaignState,
   Contract,
   OwnedShip,
 } from '../../../campaign/types';
-import { renderShipItem } from '../../common/ship-item';
+import {
+  renderPrimarySummary,
+  renderSecondarySummary,
+  renderShipItem,
+} from '../../common/ship-item';
 import {
   type ModalProps,
   type Screen,
@@ -41,34 +44,6 @@ interface SquadProps extends ModalProps<SquadSelectionResult> {
   commanderShipId: string;
 }
 
-/** Render loadout summary for a ship */
-function renderLoadoutSummary(ship: OwnedShip): string {
-  const parts: string[] = [];
-
-  // Primary weapons (with ammo if applicable)
-  for (const primary of ship.primaryWeapons) {
-    if (primary) {
-      if (primary.currentAmmo !== undefined) {
-        const max = getMaxAmmoCapacity(primary.weaponType, primary.bankSize);
-        parts.push(`${primary.weaponType} (${primary.currentAmmo}/${max})`);
-      } else {
-        parts.push(primary.weaponType);
-      }
-    }
-  }
-
-  // Secondary weapons with count
-  for (const secondary of ship.secondaryWeapons) {
-    if (secondary && secondary.count > 0) {
-      parts.push(
-        `${secondary.weaponType} x${secondary.count}/${secondary.maxCount}`,
-      );
-    }
-  }
-
-  return parts.length > 0 ? parts.join(', ') : 'No weapons';
-}
-
 /** Render checkbox toggle for ship selection */
 function renderToggle(isCommander: boolean, isSelected: boolean): string {
   const stateClass = isCommander ? 'commander' : isSelected ? 'selected' : '';
@@ -81,13 +56,20 @@ function renderShipCard(
   isCommander: boolean,
   isSelected: boolean,
 ): string {
-  const loadout = renderLoadoutSummary(ship);
+  const primaryLoadout = renderPrimarySummary(ship);
+  const secondaryLoadout = renderSecondarySummary(ship);
   const showWarning = needsAttention(ship);
   const warningBadge = showWarning
     ? '<span class="ship-item-warning" aria-label="Needs attention">!</span>'
     : '';
 
   const warningClass = showWarning ? 'needs-attention' : '';
+  const loadoutHtml = `
+    <div class="ship-item-loadout-stack">
+      <span class="ship-item-loadout primary">${primaryLoadout}</span>
+      <span class="ship-item-loadout secondary">${secondaryLoadout}</span>
+    </div>
+  `;
   return renderShipItem({
     ship,
     isCommander,
@@ -96,7 +78,7 @@ function renderShipCard(
     dataAttrs: { 'ship-id': ship.id },
     beforeContent: renderToggle(isCommander, isSelected),
     iconContent: warningBadge,
-    afterContent: `<span class="ship-item-loadout">${loadout}</span>`,
+    afterContent: loadoutHtml,
   });
 }
 

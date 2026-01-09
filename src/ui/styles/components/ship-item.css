@@ -142,11 +142,13 @@
 }
 
 .weapon-badge {
+  position: relative;
   font-family: var(--font-body);
   font-size: var(--text-2xs);
   padding: var(--space-0-5) var(--space-1-5);
   border: 1px solid var(--border-color);
   background: rgba(0, 0, 0, 0.2);
+  cursor: help;
 }
 
 .weapon-badge.primary {
@@ -163,4 +165,76 @@
   color: var(--color-warning);
   border-color: var(--color-warning);
   background: rgba(255, 217, 61, 0.1);
+}
+
+/* ========================================
+   WEAPON BADGE TOOLTIPS
+   ======================================== */
+
+.weapon-tooltip {
+  /* Use fixed positioning to escape overflow containers */
+  position: fixed;
+  white-space: nowrap;
+  z-index: var(--z-tooltip);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--duration-base) var(--ease-out),
+    visibility var(--duration-base) var(--ease-out);
+  pointer-events: none;
+
+  /* Match warning tooltip styling */
+  background: var(--bg-panel);
+  border: 1px solid var(--border-light);
+  padding: var(--space-2) var(--space-3);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.5),
+    0 0 10px var(--color-secondary-glow);
+
+  /* Match other tooltip font sizes */
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+}
+
+/* Show tooltip on hover */
+.weapon-badge:hover .weapon-tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Primary badge tooltip border color */
+.weapon-badge.primary .weapon-tooltip {
+  border-color: var(--color-primary);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.5),
+    0 0 15px var(--color-primary-glow);
+}
+
+/* Secondary badge tooltip border color */
+.weapon-badge.secondary .weapon-tooltip {
+  border-color: var(--color-danger);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.5),
+    0 0 15px var(--color-danger-glow);
+}
+
+/* ========================================
+   BANK SIZE INDICATORS (colored dots)
+   ======================================== */
+
+.bank-indicator {
+  font-size: var(--text-2xs);
+  letter-spacing: -1px;
+  margin-right: var(--space-0-5);
+}
+
+.bank-indicator.primary {
+  color: var(--color-primary);
+  text-shadow: 0 0 4px var(--color-primary-glow);
+}
+
+.bank-indicator.secondary {
+  color: var(--color-danger);
+  text-shadow: 0 0 4px var(--color-danger-glow);
 }

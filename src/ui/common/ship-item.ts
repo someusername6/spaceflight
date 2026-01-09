@@ -2,9 +2,55 @@
  * Shared ship list item rendering - used by squadron list and squad selection.
  */
 
+import { getMaxAmmoCapacity } from '../../campaign/store/store-ammo';
 import type { OwnedShip } from '../../campaign/types';
 import { SHIP_CLASSES } from '../../data/ships';
 import { FALLBACK_ICON_PATH, getShipIconPath } from '../ship/viewer';
+
+/** Capitalize first letter of a string */
+export function capitalize(str: string): string {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+/** Render bank size indicator (colored dots) - internal helper */
+function renderBankIndicator(size: number, cssClass: string): string {
+  const dot = '●';
+  const dots = dot.repeat(size);
+  return `<span class="bank-indicator ${cssClass}">${dots}</span>`;
+}
+
+/** Render primary weapons summary for a ship (HTML with colored indicators) */
+export function renderPrimarySummary(ship: OwnedShip): string {
+  const parts: string[] = [];
+  for (const primary of ship.primaryWeapons) {
+    if (primary) {
+      const indicator = renderBankIndicator(primary.bankSize, 'primary');
+      const name = capitalize(primary.weaponType);
+      if (primary.currentAmmo !== undefined) {
+        const max = getMaxAmmoCapacity(primary.weaponType, primary.bankSize);
+        parts.push(`${indicator} ${name} (${primary.currentAmmo}/${max})`);
+      } else {
+        parts.push(`${indicator} ${name}`);
+      }
+    }
+  }
+  return parts.length > 0 ? parts.join(', ') : 'No primary';
+}
+
+/** Render secondary weapons summary for a ship (HTML with colored indicators) */
+export function renderSecondarySummary(ship: OwnedShip): string {
+  const parts: string[] = [];
+  for (const secondary of ship.secondaryWeapons) {
+    if (secondary && secondary.count > 0) {
+      const indicator = renderBankIndicator(secondary.bankSize, 'secondary');
+      const name = capitalize(secondary.weaponType);
+      parts.push(
+        `${indicator} ${name} (${secondary.count}/${secondary.maxCount})`,
+      );
+    }
+  }
+  return parts.length > 0 ? parts.join(', ') : 'No secondary';
+}
 
 /** Options for rendering a ship item */
 export interface ShipItemOptions {
@@ -92,15 +138,24 @@ export function renderShipItem(options: ShipItemOptions): string {
   `;
 }
 
-/** Render weapon status badges (e.g., "● 2/2", "◆ 4/8") */
+/** Render weapon status badges with tooltips (e.g., "● 2/2", "◆ 4/8") */
 export function renderWeaponBadges(ship: OwnedShip): string {
   const { primary, secondary, primaryUnarmed, secondaryUnarmed } =
     getWeaponStatus(ship);
 
+  const primaryTooltip = renderPrimarySummary(ship);
+  const secondaryTooltip = renderSecondarySummary(ship);
+
   return `
     <div class="ship-item-weapons">
-      <span class="weapon-badge primary ${primaryUnarmed ? 'unarmed' : ''}">● ${primary}</span>
-      <span class="weapon-badge secondary ${secondaryUnarmed ? 'unarmed' : ''}">◆ ${secondary}</span>
+      <span class="weapon-badge primary ${primaryUnarmed ? 'unarmed' : ''}">
+        ● ${primary}
+        <span class="weapon-tooltip">${primaryTooltip}</span>
+      </span>
+      <span class="weapon-badge secondary ${secondaryUnarmed ? 'unarmed' : ''}">
+        ◆ ${secondary}
+        <span class="weapon-tooltip">${secondaryTooltip}</span>
+      </span>
     </div>
   `;
 }

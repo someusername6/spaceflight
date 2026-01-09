@@ -101,16 +101,25 @@
    LOADOUT TEXT
    ======================================== */
 
+.ship-item-loadout-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-0-5);
+}
+
 .ship-item-loadout {
   font-family: var(--font-ui);
   font-size: var(--text-xs);
-  color: var(--text-dim);
+  color: var(--text-primary);
   text-align: right;
-  max-width: 180px;
+  max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* Bank size indicators are in components/ship-item.css */
 
 .ship-item.needs-attention .ship-item-loadout {
   color: var(--color-warning);
