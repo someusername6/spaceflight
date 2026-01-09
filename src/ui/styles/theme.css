@@ -152,9 +152,9 @@
   /* ========================================
      TYPOGRAPHY - Type Scale (1.15 ratio)
      ======================================== */
-  --text-3xs: 0.6rem; /* 9.6px - micro labels */
-  --text-2xs: 0.65rem; /* 10.4px - tiny labels */
-  --text-xs: 0.75rem; /* 12px - small text */
+  --text-3xs: 0.65rem; /* 10.4px - micro labels */
+  --text-2xs: 0.75rem; /* 12px - tiny labels */
+  --text-xs: 0.8125rem; /* 13px - small text */
   --text-sm: 0.875rem; /* 14px - labels, captions */
   --text-base: 1rem; /* 16px - body text */
   --text-lg: 1.125rem; /* 18px - large body */
