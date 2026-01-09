@@ -150,14 +150,14 @@ function renderStandardDetail(
       <div class="detail-fixed-bottom">
         ${storageText ? `<div class="detail-storage">${storageText}</div>` : ''}
         <div class="detail-actions">
-          <button class="btn btn-buy" id="btn-buy" ${canAfford ? '' : 'disabled'}>
-            Buy${buyQtyText}(${singleBuyPrice}&nbsp;cr)
-          </button>
-          ${showBulk ? `<button class="btn btn-buy" id="btn-buy-bulk" ${canAffordBulk ? '' : 'disabled'}>Buy&nbsp;×${bulkAmount}<br>(${bulkPrice}&nbsp;cr)</button>` : ''}
           <button class="btn btn-sell" id="btn-sell" ${canSell ? '' : 'disabled'}>
             Sell${sellQtyText}(${singleSellPrice}&nbsp;cr)
           </button>
           ${showBulk ? `<button class="btn btn-sell" id="btn-sell-bulk" ${canSellBulk ? '' : 'disabled'}>Sell&nbsp;×${bulkAmount}<br>(${bulkSellPrice}&nbsp;cr)</button>` : ''}
+          <button class="btn btn-buy" id="btn-buy" ${canAfford ? '' : 'disabled'}>
+            Buy${buyQtyText}(${singleBuyPrice}&nbsp;cr)
+          </button>
+          ${showBulk ? `<button class="btn btn-buy" id="btn-buy-bulk" ${canAffordBulk ? '' : 'disabled'}>Buy&nbsp;×${bulkAmount}<br>(${bulkPrice}&nbsp;cr)</button>` : ''}
         </div>
       </div>
     </div>

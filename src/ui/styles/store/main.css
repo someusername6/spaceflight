@@ -219,24 +219,43 @@
 }
 
 .btn-buy {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-success) 40%, transparent) 0%,
+    color-mix(in srgb, var(--color-success) 25%, transparent) 100%
+  );
   border-color: var(--color-success);
-  color: var(--color-success);
+  color: var(--text-primary);
 }
 
 .btn-buy:hover:not(:disabled) {
-  background: rgba(0, 255, 136, 0.1);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-success) 55%, transparent) 0%,
+    color-mix(in srgb, var(--color-success) 35%, transparent) 100%
+  );
   border-color: var(--color-success);
-  color: var(--color-success);
+  color: var(--text-primary);
   box-shadow: 0 0 15px var(--color-success-glow);
 }
 
 .btn-sell {
-  border-color: var(--color-warning);
-  color: var(--color-warning);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-danger) 40%, transparent) 0%,
+    color-mix(in srgb, var(--color-danger) 25%, transparent) 100%
+  );
+  border-color: var(--color-danger);
+  color: var(--text-primary);
 }
 
 .btn-sell:hover:not(:disabled) {
-  background: rgba(255, 217, 61, 0.1);
-  border-color: var(--color-warning);
-  color: var(--color-warning);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-danger) 55%, transparent) 0%,
+    color-mix(in srgb, var(--color-danger) 35%, transparent) 100%
+  );
+  border-color: var(--color-danger);
+  color: var(--text-primary);
+  box-shadow: 0 0 15px var(--color-danger-glow);
 }

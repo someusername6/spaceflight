@@ -133,19 +133,25 @@
 
 .detail-actions .btn-convert {
   flex: 0 0 100%;
-  margin-bottom: var(--space-3);
-  border-color: var(--color-success);
-  color: var(--color-success);
+  margin-bottom: var(--space-1);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-secondary) 40%, transparent) 0%,
+    color-mix(in srgb, var(--color-secondary) 25%, transparent) 100%
+  );
+  border-color: var(--color-secondary);
+  color: var(--text-primary);
 }
 
 .btn-convert:hover:not(:disabled) {
-  background: rgba(0, 255, 136, 0.12);
-  border-color: var(--color-success);
-  color: var(--color-success);
-  box-shadow:
-    var(--shadow-md),
-    var(--shadow-glow-success),
-    inset 0 1px 0 var(--highlight-medium);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-secondary) 55%, transparent) 0%,
+    color-mix(in srgb, var(--color-secondary) 35%, transparent) 100%
+  );
+  border-color: var(--color-secondary);
+  color: var(--text-primary);
+  box-shadow: 0 0 15px var(--color-secondary-glow);
 }
 
 .btn-convert:disabled {
