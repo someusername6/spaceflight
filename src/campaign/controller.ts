@@ -67,6 +67,7 @@ export function startCampaign(container: HTMLElement): CampaignController {
     game: null,
     missionRenderers: null,
     missionEnded: false,
+    pausedMissionForSettings: false,
   };
 
   // Setup title screen
@@ -133,8 +134,8 @@ function setupSettingsScreen(controller: CampaignController): void {
       goBackFromSettings(screenManager);
 
       // Resume game if we came from a paused mission
-      if (pausedMissionForSettings && controller.game) {
-        pausedMissionForSettings = false;
+      if (controller.pausedMissionForSettings && controller.game) {
+        controller.pausedMissionForSettings = false;
         resumeGame(controller.game);
         return; // Mission screen doesn't need re-setup
       }
@@ -172,9 +173,6 @@ function setupSettingsScreen(controller: CampaignController): void {
 
 /** Global escape key handler reference for cleanup */
 let escapeHandler: ((e: KeyboardEvent) => void) | null = null;
-
-/** Tracks if we paused a mission to go to settings (for proper resume) */
-let pausedMissionForSettings = false;
 
 /** Start gameplay (from new game or continue) */
 function startCampaignGameplay(controller: CampaignController): void {
@@ -280,7 +278,7 @@ export async function handlePauseMenu(
     case 'settings':
       // Track if we're going to settings from a paused mission
       if (inMission) {
-        pausedMissionForSettings = true;
+        controller.pausedMissionForSettings = true;
       }
       goToSettings(screenManager);
       setupSettingsScreen(controller);
@@ -288,7 +286,7 @@ export async function handlePauseMenu(
 
     case 'quit':
       // Reset paused mission tracking
-      pausedMissionForSettings = false;
+      controller.pausedMissionForSettings = false;
 
       // If in mission, stop the game and clean up mission resources
       if (inMission && controller.game) {

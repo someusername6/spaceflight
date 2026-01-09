@@ -14,4 +14,6 @@ export interface CampaignController {
   game: ReturnType<typeof createGame> | null;
   missionRenderers: MissionRenderers | null;
   missionEnded: boolean;
+  /** Tracks if we paused a mission to go to settings (for proper resume) */
+  pausedMissionForSettings: boolean;
 }
