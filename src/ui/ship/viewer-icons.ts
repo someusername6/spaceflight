@@ -22,9 +22,9 @@ export function getShipAbbrev(shipClass: string): string {
   );
 }
 
-/** Get weapon category color - all primaries use same yellow */
+/** Get weapon category color - all primaries use amber */
 export function getWeaponColor(_weaponType: string): string {
-  return 'var(--color-warning)';
+  return 'var(--color-primary)';
 }
 
 /** Get missile color */

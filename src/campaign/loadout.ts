@@ -6,7 +6,7 @@
 
 import { weaponUsesAmmo } from '../data/prices';
 import { mergeAmmoIntoStorage, mergeSecondaryIntoStorage } from './ship-utils';
-import { getMaxMissileCapacity } from './store-ammo';
+import { getMaxAmmoCapacity, getMaxMissileCapacity } from './store-ammo';
 import type {
   CampaignState,
   EquippedPrimary,
@@ -123,9 +123,42 @@ export function equipPrimary(
     return state; // Slot already occupied
   }
 
-  // Create equipped weapon - ballistic weapons start with 0 ammo
+  // Track ammo changes for ballistic weapons
+  let newStoredAmmo = state.storedAmmo;
+  let startingAmmo = 0;
+
+  // For ballistic weapons, auto-load from storage
+  if (weaponUsesAmmo(stored.weaponType)) {
+    const maxCapacity = getMaxAmmoCapacity(stored.weaponType, bankSize);
+    const ammoIndex = state.storedAmmo.findIndex(
+      (a) => a.weaponType === stored.weaponType,
+    );
+
+    if (ammoIndex >= 0 && maxCapacity > 0) {
+      const storedAmmo = state.storedAmmo[ammoIndex];
+      if (storedAmmo) {
+        // Load up to max capacity from storage
+        const toLoad = Math.min(storedAmmo.count, maxCapacity);
+        startingAmmo = toLoad;
+
+        // Update storage
+        const remaining = storedAmmo.count - toLoad;
+        newStoredAmmo = [...state.storedAmmo];
+        if (remaining <= 0) {
+          newStoredAmmo.splice(ammoIndex, 1);
+        } else {
+          newStoredAmmo[ammoIndex] = {
+            weaponType: storedAmmo.weaponType,
+            count: remaining,
+          };
+        }
+      }
+    }
+  }
+
+  // Create equipped weapon
   const equipped: EquippedPrimary = weaponUsesAmmo(stored.weaponType)
-    ? { weaponType: stored.weaponType, bankSize, currentAmmo: 0 }
+    ? { weaponType: stored.weaponType, bankSize, currentAmmo: startingAmmo }
     : { weaponType: stored.weaponType, bankSize };
 
   // Assign to specific slot
@@ -133,7 +166,7 @@ export function equipPrimary(
     i === slotIndex ? equipped : w,
   );
 
-  // Remove from storage
+  // Remove weapon from storage
   const updatedStorage = state.storedWeapons.filter(
     (_, i) => i !== storageIndex,
   );
@@ -144,6 +177,7 @@ export function equipPrimary(
       s.id === shipId ? { ...s, primaryWeapons: updatedWeapons } : s,
     ),
     storedWeapons: updatedStorage,
+    storedAmmo: newStoredAmmo,
   };
 }
 

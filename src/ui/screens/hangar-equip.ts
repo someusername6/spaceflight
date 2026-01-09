@@ -19,18 +19,26 @@ import {
   getWeaponIconPath,
   iconErrorHandler,
 } from '../ship/viewer-icons';
-import { activePicker, closePopover, setActivePicker } from './weapon-popover';
+import {
+  activePicker,
+  closePopover,
+  hideWeaponPopoverIfNotPinned,
+  resetPopoverState,
+  setActivePicker,
+  setMouseOverPopover,
+} from './weapon-popover';
 
 // Re-export popover functions for hangar.ts
 export {
   closePopover as closeWeaponPicker,
   hideWeaponPopoverIfNotPinned,
   pinWeaponPopover,
+  setChangeWeaponHandler,
   showWeaponPopover,
 } from './weapon-popover';
 
 /** Grouped weapon for display */
-interface GroupedWeapon {
+export interface GroupedWeapon {
   weaponType: string;
   category: 'primary' | 'secondary';
   totalCount: number;
@@ -43,7 +51,7 @@ export function isPopoverOpen(): boolean {
 }
 
 /** Get the bank size for a slot on a ship */
-function getBankSize(
+export function getBankSize(
   state: CampaignState,
   shipId: string,
   slotType: 'primary' | 'secondary',
@@ -61,7 +69,7 @@ function getBankSize(
 }
 
 /** Get available weapons grouped by type */
-function getGroupedWeapons(
+export function getGroupedWeapons(
   state: CampaignState,
   slotType: 'primary' | 'secondary',
 ): GroupedWeapon[] {
@@ -87,7 +95,7 @@ function getGroupedWeapons(
 }
 
 /** Render primary weapon picker content (simple click to equip) */
-function renderPrimaryPickerContent(weapons: GroupedWeapon[]): string {
+export function renderPrimaryPickerContent(weapons: GroupedWeapon[]): string {
   if (weapons.length === 0) {
     return '<div class="picker-empty">No primary weapons in storage</div>';
   }
@@ -108,7 +116,7 @@ function renderPrimaryPickerContent(weapons: GroupedWeapon[]): string {
 }
 
 /** Render secondary weapon picker content (with quantity selector) */
-function renderSecondaryPickerContent(
+export function renderSecondaryPickerContent(
   weapons: GroupedWeapon[],
   bankSize: number,
 ): string {
@@ -146,7 +154,7 @@ function findWeaponIndex(state: CampaignState, weaponType: string): number {
   return state.storedWeapons.findIndex((w) => w.weaponType === weaponType);
 }
 
-/** Show weapon picker dropdown for an empty slot */
+/** Show weapon picker dropdown for an empty slot (hover to preview, click to pin) */
 export function showWeaponPicker(
   slotElement: HTMLElement,
   state: CampaignState,
@@ -156,6 +164,9 @@ export function showWeaponPicker(
   onStateUpdate: (newState: CampaignState) => void,
   onRerender: () => void,
 ): void {
+  // Don't reopen for the same slot
+  if (activePicker && slotElement.contains(activePicker)) return;
+
   closePopover();
   hideTooltip();
 
@@ -163,22 +174,14 @@ export function showWeaponPicker(
   const bankSize = getBankSize(state, shipId, slotType, slotIndex);
 
   const picker = document.createElement('div');
-  picker.className = `weapon-picker ${slotType === 'primary' ? 'primary-picker' : 'missile-picker'}`;
+  picker.className = `weapon-popover weapon-popover-${slotType}`;
 
   const content =
     slotType === 'primary'
       ? renderPrimaryPickerContent(grouped)
       : renderSecondaryPickerContent(grouped, bankSize);
 
-  picker.innerHTML = `
-    <div class="picker-header">
-      Select ${slotType === 'primary' ? 'Weapon' : 'Missile'}
-      <button class="picker-close">✕</button>
-    </div>
-    <div class="picker-content">
-      ${content}
-    </div>
-  `;
+  picker.innerHTML = `<div class="popover-content picker-content">${content}</div>`;
 
   // Position relative to slot
   const slotRect = slotElement.getBoundingClientRect();
@@ -189,6 +192,17 @@ export function showWeaponPicker(
 
   document.body.appendChild(picker);
   setActivePicker(picker);
+  resetPopoverState();
+
+  // Track mouse over picker (same as popover)
+  picker.addEventListener('mouseenter', () => {
+    setMouseOverPopover(true);
+  });
+
+  picker.addEventListener('mouseleave', () => {
+    setMouseOverPopover(false);
+    hideWeaponPopoverIfNotPinned();
+  });
 
   // Adjust position if overflowing
   const pickerRect = picker.getBoundingClientRect();
@@ -207,12 +221,6 @@ export function showWeaponPicker(
     const newLeft = window.innerWidth - pickerRect.width - padding;
     picker.style.left = `${Math.max(padding, newLeft)}px`;
   }
-
-  // Bind close button
-  picker.querySelector('.picker-close')?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    closePopover();
-  });
 
   if (slotType === 'primary') {
     bindPrimaryPickerEvents(
@@ -235,21 +243,10 @@ export function showWeaponPicker(
       onRerender,
     );
   }
-
-  // Close on click outside
-  const closeOnOutsideClick = (e: MouseEvent) => {
-    if (!picker.contains(e.target as Node)) {
-      closePopover();
-      document.removeEventListener('click', closeOnOutsideClick);
-    }
-  };
-  setTimeout(() => {
-    document.addEventListener('click', closeOnOutsideClick);
-  }, 0);
 }
 
 /** Bind events for primary weapon picker */
-function bindPrimaryPickerEvents(
+export function bindPrimaryPickerEvents(
   picker: HTMLElement,
   state: CampaignState,
   shipId: string,
@@ -285,7 +282,7 @@ function bindPrimaryPickerEvents(
 }
 
 /** Bind events for secondary weapon picker (with quantity) */
-function bindSecondaryPickerEvents(
+export function bindSecondaryPickerEvents(
   picker: HTMLElement,
   state: CampaignState,
   shipId: string,
@@ -379,3 +376,6 @@ export function handleUnassignPilot(
   }
   return false;
 }
+
+// Re-export showWeaponSwapPicker from weapon-swap module
+export { showWeaponSwapPicker } from './weapon-swap';

@@ -2,6 +2,10 @@
  * Squadron List - Unified list component showing deployed, available, and recruits.
  */
 
+import {
+  getAttentionReasons,
+  needsAttention,
+} from '../../campaign/resupply-constrained';
 import type { HireablePilot, OwnedShip, Pilot } from '../../campaign/types';
 import { SHIP_CLASSES } from '../../data/ships';
 import { FALLBACK_ICON_PATH, getShipIconPath } from '../ship/viewer';
@@ -37,6 +41,18 @@ function renderWeaponStatus(ship: OwnedShip): {
   };
 }
 
+/** Render the warning tooltip content */
+function renderWarningTooltip(ship: OwnedShip): string {
+  const reasons = getAttentionReasons(ship);
+  if (reasons.length === 0) return '';
+
+  const tooltipContent = reasons
+    .map((r) => `<div class="warning-tooltip-line">${r}</div>`)
+    .join('');
+
+  return `<div class="warning-tooltip">${tooltipContent}</div>`;
+}
+
 /** Render a deployed item (pilot-ship pair) */
 function renderDeployedItem(
   ship: OwnedShip,
@@ -50,6 +66,9 @@ function renderDeployedItem(
   const selectedClass = isSelected ? 'selected' : '';
   const commanderClass = isCommander ? 'commander' : '';
   const iconPath = getShipIconPath(ship.shipClass);
+  const showResupplyWarning = needsAttention(ship);
+
+  const warningClass = showResupplyWarning ? 'has-warning' : '';
 
   return `
     <article
@@ -58,10 +77,12 @@ function renderDeployedItem(
       role="option"
       aria-selected="${isSelected}"
       tabindex="0"
-      aria-label="${pilot.name}, ${ship.shipClass}"
+      aria-label="${pilot.name}, ${ship.shipClass}${showResupplyWarning ? ', needs resupply' : ''}"
     >
-      <div class="squadron-item-icon">
+      <div class="squadron-item-icon ${warningClass}">
         <img src="${iconPath}" alt="${ship.shipClass}" class="squadron-ship-icon" onerror="this.onerror=null; this.src='${FALLBACK_ICON_PATH}'" />
+        ${showResupplyWarning ? '<span class="resupply-warning" aria-label="Needs attention">!</span>' : ''}
+        ${showResupplyWarning ? renderWarningTooltip(ship) : ''}
       </div>
       <div class="squadron-item-info">
         <div class="squadron-item-name">${isCommander ? '<span class="commander-icon" aria-label="Commander">★</span>' : ''}${pilot.name}</div>
@@ -132,6 +153,13 @@ function renderRecruitItem(
   `;
 }
 
+/** Options for rendering the squadron list */
+export interface SquadronListOptions {
+  showResupplyAll?: boolean;
+  resupplyAllCost?: number;
+  commanderId: string;
+}
+
 /** Render the complete squadron list */
 export function renderSquadronList(
   ships: OwnedShip[],
@@ -140,6 +168,7 @@ export function renderSquadronList(
   commanderId: string,
   credits: number,
   selection: ListSelection,
+  options?: SquadronListOptions,
 ): string {
   // Deployed: ships with pilots
   const deployedShips = ships.filter((s) => s.pilot !== null);
@@ -179,6 +208,20 @@ export function renderSquadronList(
     })
     .join('');
 
+  // Resupply All button (inside deployed section)
+  let resupplyAllBtn = '';
+  if (options?.showResupplyAll && options.commanderId) {
+    const costLabel =
+      options.resupplyAllCost && options.resupplyAllCost > 0
+        ? ` (${options.resupplyAllCost} cr)`
+        : '';
+    resupplyAllBtn = `<div class="squadron-resupply-toolbar">
+        <button class="btn btn-small btn-resupply-all" data-commander="${options.commanderId}">
+          Resupply All${costLabel}
+        </button>
+      </div>`;
+  }
+
   // Build sections
   const deployedSection =
     deployedShips.length > 0
@@ -189,6 +232,7 @@ export function renderSquadronList(
             <span class="panel-title">Deployed</span>
             <span class="panel-count" aria-label="${deployedShips.length} deployed">${deployedShips.length}</span>
           </header>
+          ${resupplyAllBtn}
           <div class="squadron-items" role="listbox" aria-label="Deployed pilots">
             ${deployedHtml}
           </div>

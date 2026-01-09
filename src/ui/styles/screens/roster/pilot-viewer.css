@@ -122,15 +122,6 @@
   text-transform: capitalize;
 }
 
-.btn-change-ship {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-}
-
-.btn-change-ship:hover {
-  background: rgba(255, 159, 28, 0.1);
-}
-
 /* ========================================
    STORED SHIP CARD BUTTONS (Assign to stored ship)
    ======================================== */

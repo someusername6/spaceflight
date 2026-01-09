@@ -14,7 +14,8 @@
  * - [PILOT] tab: Pilot career stats
  */
 
-import type { CampaignState, OwnedShip } from '../../campaign/types';
+import { estimateAllShipsResupplyCost } from '../../campaign/resupply-constrained';
+import type { CampaignState } from '../../campaign/types';
 import {
   bindNavBar,
   type NavDestination,
@@ -27,8 +28,6 @@ import {
   type ScreenHandle,
 } from '../framework/screen';
 import { destroyShipConnectors, initShipConnectors } from '../ship/connectors';
-import { renderShipStatsRows } from '../ship/stats';
-import { renderShipViewer } from '../ship/viewer';
 import { renderPilotViewer } from './pilot-viewer';
 import { renderRecruitViewer } from './recruit-viewer';
 import { closeShipPicker } from './ship-picker';
@@ -39,9 +38,17 @@ import {
   bindHireRecruit,
   bindListSelection,
   bindPilotAssignment,
+  bindResupplyAllButton,
+  bindResupplyShipButton,
   bindUnassignPilot,
 } from './squadron-bindings';
 import { type ListSelection, renderSquadronList } from './squadron-list';
+import {
+  anyShipsNeedAmmoResupply,
+  renderShipDetails,
+  renderShipViewerWithActions,
+  sortShipsCommanderFirst,
+} from './squadron-render';
 import {
   bindViewerTabs,
   renderViewerWithTabs,
@@ -69,62 +76,6 @@ export interface SquadronUI {
   activeTab: ViewerTab;
   onNavigate: (destination: NavDestination) => void;
   onStateUpdate?: ((newState: CampaignState) => void) | undefined;
-}
-
-/** Sort ships with commander's ship first */
-function sortShipsCommanderFirst(
-  ships: OwnedShip[],
-  commanderId: string,
-): OwnedShip[] {
-  return [...ships].sort((a, b) => {
-    const aIsCommander = a.pilot?.id === commanderId;
-    const bIsCommander = b.pilot?.id === commanderId;
-    if (aIsCommander && !bIsCommander) return -1;
-    if (!aIsCommander && bIsCommander) return 1;
-    return 0;
-  });
-}
-
-/** Render ship details panel */
-function renderShipDetails(ship: OwnedShip): string {
-  const statsRows = renderShipStatsRows(ship.shipClass, {
-    classPrefix: 'detail',
-  });
-
-  if (!statsRows) return '<div class="ship-details">Unknown ship class</div>';
-
-  return `
-    <div class="ship-details">
-      <div class="ship-details-header">
-        <span class="panel-icon">▦</span> Ship Stats
-      </div>
-      <div class="ship-details-stats">
-        ${statsRows}
-      </div>
-    </div>
-  `;
-}
-
-/** Render ship viewer with action buttons */
-function renderShipViewerWithActions(
-  ship: OwnedShip,
-  state: CampaignState,
-): string {
-  let viewerHtml = renderShipViewer(ship, state);
-
-  // Build header right content with buttons
-  const headerButtons = ship.pilot
-    ? `<div class="schematic-header-right">
-        <button class="btn btn-small btn-change-ship" data-pilot="${ship.pilot.id}" data-ship="${ship.id}">Change Ship</button>
-       </div>`
-    : '';
-
-  viewerHtml = viewerHtml.replace(
-    '<div class="schematic-header-right"></div>',
-    headerButtons,
-  );
-
-  return viewerHtml;
 }
 
 /** Render the squadron screen content */
@@ -163,6 +114,12 @@ function renderSquadronContent(
     onNavigate,
   });
 
+  // Check if any ships need ammo/missile resupply (not just empty slots)
+  const showResupplyAll = anyShipsNeedAmmoResupply(campaignState.ships);
+  const resupplyAllEstimate = showResupplyAll
+    ? estimateAllShipsResupplyCost(campaignState)
+    : null;
+
   // Build unified list
   const listHtml = renderSquadronList(
     sortedShips,
@@ -171,6 +128,13 @@ function renderSquadronContent(
     campaignState.commanderId,
     campaignState.credits,
     selection,
+    {
+      showResupplyAll,
+      ...(resupplyAllEstimate?.cost !== undefined && {
+        resupplyAllCost: resupplyAllEstimate.cost,
+      }),
+      commanderId: campaignState.commanderId,
+    },
   );
 
   // Build center panel based on selection
@@ -314,6 +278,8 @@ const SquadronScreenComponent: Screen<SquadronState, SquadronProps> = {
     // Bind all legacy binding functions
     bindListSelection(legacyUI, rerender);
     bindChangeShipButton(legacyUI, rerender);
+    bindResupplyShipButton(legacyUI, rerender);
+    bindResupplyAllButton(legacyUI, rerender);
     bindHardpointEvents(legacyUI, rerender);
     bindPilotAssignment(legacyUI, rerender);
     bindHireRecruit(legacyUI, rerender);

@@ -5,6 +5,8 @@
  * Commander ship is always deployed (cannot be deselected).
  */
 
+import { needsAttention } from '../../campaign/resupply-constrained';
+import { getMaxAmmoCapacity } from '../../campaign/store-ammo';
 import type { CampaignState, Contract, OwnedShip } from '../../campaign/types';
 import {
   type ModalProps,
@@ -39,17 +41,24 @@ interface SquadProps extends ModalProps<SquadSelectionResult> {
 function renderLoadoutSummary(ship: OwnedShip): string {
   const parts: string[] = [];
 
-  // Primary weapons
+  // Primary weapons (with ammo if applicable)
   for (const primary of ship.primaryWeapons) {
     if (primary) {
-      parts.push(primary.weaponType);
+      if (primary.currentAmmo !== undefined) {
+        const max = getMaxAmmoCapacity(primary.weaponType, primary.bankSize);
+        parts.push(`${primary.weaponType} (${primary.currentAmmo}/${max})`);
+      } else {
+        parts.push(primary.weaponType);
+      }
     }
   }
 
   // Secondary weapons with count
   for (const secondary of ship.secondaryWeapons) {
     if (secondary && secondary.count > 0) {
-      parts.push(`${secondary.weaponType} x${secondary.count}`);
+      parts.push(
+        `${secondary.weaponType} x${secondary.count}/${secondary.maxCount}`,
+      );
     }
   }
 
@@ -66,11 +75,13 @@ function renderShipCard(
   if (!pilot) return '';
 
   const iconPath = getShipIconPath(ship.shipClass);
+  const showResupplyWarning = needsAttention(ship);
 
   const cardClasses = [
     'squad-ship-card',
     isCommander ? 'commander' : '',
     isSelected ? 'selected' : 'unselected',
+    showResupplyWarning ? 'needs-resupply' : '',
   ]
     .filter(Boolean)
     .join(' ');
@@ -81,12 +92,15 @@ function renderShipCard(
       data-ship-id="${ship.id}"
       role="checkbox"
       aria-checked="${isSelected}"
-      aria-label="${pilot.name}, ${ship.shipClass}${isCommander ? ', your ship' : ''}"
+      aria-label="${pilot.name}, ${ship.shipClass}${isCommander ? ', your ship' : ''}${showResupplyWarning ? ', needs resupply' : ''}"
       tabindex="0"
     >
       <div class="squad-toggle" aria-hidden="true"></div>
 
-      <img src="${iconPath}" alt="${ship.shipClass}" class="squad-ship-icon" onerror="this.onerror=null; this.src='${FALLBACK_ICON_PATH}'" />
+      <div class="squad-icon-wrapper">
+        <img src="${iconPath}" alt="${ship.shipClass}" class="squad-ship-icon" onerror="this.onerror=null; this.src='${FALLBACK_ICON_PATH}'" />
+        ${showResupplyWarning ? '<span class="squad-resupply-warning" aria-label="Needs resupply">!</span>' : ''}
+      </div>
 
       <div class="squad-ship-info">
         <div class="squad-ship-names">

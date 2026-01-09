@@ -86,10 +86,23 @@
   padding: var(--space-3) var(--space-4);
 }
 
+.popover-content.picker-content {
+  padding: 0;
+}
+
+/* Picker popovers need smaller min-width than stat popovers */
+.weapon-popover-primary:has(.picker-content) {
+  min-width: 180px;
+  max-width: 220px;
+}
+
+.weapon-popover-secondary:has(.picker-content) {
+  min-width: 200px;
+  max-width: 240px;
+}
+
 /* Popover header */
 .popover-header {
-  padding-bottom: var(--space-2-5);
-  border-bottom: 1px solid var(--border-color);
   margin-bottom: var(--space-2-5);
 }
 
@@ -97,15 +110,6 @@
   display: flex;
   align-items: center;
   gap: var(--space-2-5);
-}
-
-.popover-subtitle {
-  font-family: var(--font-ui);
-  font-size: var(--text-sm);
-  font-weight: var(--font-medium);
-  letter-spacing: var(--tracking-wider);
-  margin-top: var(--space-1);
-  color: var(--text-primary);
 }
 
 /* Popover stats grid - matches ship details panel */
@@ -319,4 +323,63 @@
 .manager-actions {
   display: flex;
   justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+/* ========================================
+   PICKER CONTENT IN WEAPON POPOVER
+   ======================================== */
+
+/* Primary popover icon - amber filter */
+.weapon-popover-primary .picker-icon {
+  filter: var(--filter-amber) drop-shadow(0 0 2px var(--color-primary-glow));
+}
+
+/* Secondary popover icon - red filter */
+.weapon-popover-secondary .picker-icon {
+  filter: var(--filter-red) drop-shadow(0 0 2px var(--color-danger-glow));
+}
+
+/* Primary picker item hover - amber */
+.weapon-popover-primary .picker-item:hover {
+  background: rgba(255, 159, 28, 0.1);
+}
+
+/* Secondary picker item/row hover - red */
+.weapon-popover-secondary .picker-item:hover,
+.weapon-popover-secondary .picker-missile-row:hover {
+  background: rgba(255, 51, 102, 0.08);
+}
+
+/* Primary equip button - amber themed */
+.weapon-popover-primary .picker-equip-btn {
+  border-color: var(--color-primary);
+  background: rgba(255, 159, 28, 0.1);
+  color: var(--color-primary);
+}
+
+.weapon-popover-primary .picker-equip-btn:hover:not(:disabled) {
+  background: rgba(255, 159, 28, 0.25);
+  box-shadow: 0 0 12px var(--color-primary-glow);
+}
+
+/* Primary quantity button hover - amber */
+.weapon-popover-primary .picker-qty-btn:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: rgba(255, 159, 28, 0.1);
+}
+
+/* Secondary equip button - neutral (not red, matching default btn style) */
+.weapon-popover-secondary .picker-equip-btn {
+  border-color: var(--border-light);
+  background: var(--bg-raised);
+  color: var(--text-primary);
+}
+
+.weapon-popover-secondary .picker-equip-btn:hover:not(:disabled) {
+  background: var(--bg-raised-hover);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  box-shadow: var(--shadow-glow-primary);
 }

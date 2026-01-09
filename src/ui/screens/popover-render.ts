@@ -44,14 +44,32 @@ function getStoredMissileCount(
   return stored?.count ?? 0;
 }
 
-/** Get category display name */
-function categoryName(category: string): string {
-  const names: Record<string, string> = {
-    energy: 'Energy Weapon',
-    ballistic: 'Ballistic Weapon',
-    beam: 'Beam Weapon',
-  };
-  return names[category] ?? category;
+/** Check if there are alternative primary weapons available to swap to */
+function hasAlternativePrimary(
+  state: CampaignState,
+  currentType: string,
+  equippedCount: number,
+): boolean {
+  for (const w of state.storedWeapons) {
+    if (w.category !== 'primary') continue;
+    if (w.weaponType !== currentType) return true;
+    if (w.count > equippedCount) return true;
+  }
+  return false;
+}
+
+/** Check if there are alternative secondary weapons available to swap to */
+function hasAlternativeSecondary(
+  state: CampaignState,
+  currentType: string,
+  equippedCount: number,
+): boolean {
+  for (const w of state.storedWeapons) {
+    if (w.category !== 'secondary') continue;
+    if (w.weaponType !== currentType) return true;
+    if (w.count > equippedCount) return true;
+  }
+  return false;
 }
 
 /** Format a stat row */
@@ -139,24 +157,25 @@ export function renderPrimaryPopover(
         <span class="manager-size">${'●'.repeat(weapon.bankSize)}</span>
         <span class="manager-name">${stats.name}</span>
       </div>
-      <div class="popover-subtitle">${categoryName(category)}</div>
     </div>
     <div class="popover-stats">
       ${statRow(damageLabel, damageText)}
       ${stats.shieldDamageMultiplier && stats.shieldDamageMultiplier !== 1 ? statRow('Shield Dmg', `${Math.round(stats.damage * stats.shieldDamageMultiplier)} (${stats.shieldDamageMultiplier}×)`) : ''}
       ${stats.hullDamageMultiplier && stats.hullDamageMultiplier !== 1 ? statRow('Hull Dmg', `${Math.round(stats.damage * stats.hullDamageMultiplier)} (${stats.hullDamageMultiplier}×)`) : ''}
-      ${!isContinuousBeam ? statRow('DPS', `~${dps}`) : ''}
+      ${statRow('Range', stats.range, 'm')}
+      ${category !== 'beam' ? statRow('Speed', stats.projectileSpeed, ' m/s') : ''}
       ${isPulseBeam ? statRow('Pulse rate', `${Math.round(1 / (stats.pulseInterval ?? 0.1))}/s`) : ''}
       ${category !== 'beam' ? statRow('Fire rate', `${Math.round(1 / stats.fireRate)}/s`) : ''}
-      ${statRow('Range', stats.range, 'm')}
       ${statRow('Heat', stats.heatPerShot, isPulseBeam ? '/pulse' : isBeam ? '/s' : '/shot')}
-      ${category !== 'beam' ? statRow('Velocity', stats.projectileSpeed, ' m/s') : ''}
       ${stats.flakRadius ? statRow('Blast Radius', stats.flakRadius, 'm') : ''}
-      ${stats.autoaimFov ? statRow('Auto-Aim', stats.autoaimFov, '°') : ''}
+      ${!isContinuousBeam ? statRow('DPS', `~${dps}`) : ''}
     </div>
     ${ammoStats}
     <div class="manager-actions">
-      <button class="btn btn-small btn-danger" data-ship="${shipId}" data-type="primary" data-index="${slotIndex}">
+      <button class="btn btn-small btn-change-weapon" data-ship="${shipId}" data-type="primary" data-index="${slotIndex}" ${hasAlternativePrimary(state, weapon.weaponType, weapon.bankSize) ? '' : 'disabled'}>
+        Change
+      </button>
+      <button class="btn btn-small btn-unequip" data-ship="${shipId}" data-type="primary" data-index="${slotIndex}">
         Unequip
       </button>
     </div>
@@ -183,19 +202,12 @@ export function renderSecondaryPopover(
     ? `${(1 / stats.lockSpeed).toFixed(1)}s`
     : 'None';
 
-  const typeLabel = stats.isDecoy
-    ? 'Countermeasure'
-    : stats.requiresLock
-      ? 'Homing Missile'
-      : 'Dumbfire Missile';
-
   return `
     <div class="popover-header popover-header-secondary">
       <div class="popover-title">
         <span class="manager-size">${'◆'.repeat(weapon.bankSize)}</span>
         <span class="manager-name">${stats.name}</span>
       </div>
-      <div class="popover-subtitle">${typeLabel}</div>
     </div>
     <div class="popover-stats">
       ${!stats.isDecoy ? statRow('Damage', stats.damage) : ''}
@@ -216,7 +228,10 @@ export function renderSecondaryPopover(
       </div>
     </div>
     <div class="manager-actions">
-      <button class="btn btn-small btn-danger" data-ship="${shipId}" data-type="secondary" data-index="${slotIndex}">
+      <button class="btn btn-small btn-change-weapon" data-ship="${shipId}" data-type="secondary" data-index="${slotIndex}" ${hasAlternativeSecondary(state, weapon.weaponType, weapon.count) ? '' : 'disabled'}>
+        Change
+      </button>
+      <button class="btn btn-small btn-unequip" data-ship="${shipId}" data-type="secondary" data-index="${slotIndex}">
         Unequip
       </button>
     </div>

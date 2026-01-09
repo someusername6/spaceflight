@@ -19,6 +19,16 @@
   overflow: hidden;
 }
 
+/* Squadron toolbar with action buttons */
+.squadron-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0 0 var(--space-3) 0;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
 /* ========================================
    SQUADRON LAYOUT - THREE COLUMNS
    ======================================== */

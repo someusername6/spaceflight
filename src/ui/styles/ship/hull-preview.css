@@ -65,7 +65,7 @@
 }
 
 .hull-schematic-preview .connector-line.connector-primary {
-  stroke: var(--color-warning);
+  stroke: var(--color-primary);
 }
 
 .hull-schematic-preview .connector-line.connector-secondary {

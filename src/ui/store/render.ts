@@ -68,7 +68,6 @@ export function getCategoryItems(
         });
     case 'secondaries':
       return getAvailableSecondaries()
-        .filter(({ weaponType }) => !MISSILES[weaponType]?.isDecoy)
         .filter(
           ({ weaponType }) => (storeStock.secondaries[weaponType] ?? 0) > 0,
         )

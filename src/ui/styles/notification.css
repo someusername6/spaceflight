@@ -1,0 +1,139 @@
+/**
+ * Notification Toast Styles - Matches popover visual language
+ */
+
+/* ========================================
+   NOTIFICATION CONTAINER
+   ======================================== */
+
+.notification-container {
+  position: fixed;
+  top: var(--space-8);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  pointer-events: none;
+}
+
+/* ========================================
+   NOTIFICATION TOAST
+   ======================================== */
+
+.notification {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-light);
+  padding: var(--space-3) var(--space-5);
+  min-width: 280px;
+  max-width: 400px;
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.5),
+    0 0 30px var(--color-secondary-glow);
+  pointer-events: auto;
+  animation: notification-enter 0.3s ease-out;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.notification.exiting {
+  animation: notification-exit 0.3s ease-in forwards;
+}
+
+@keyframes notification-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes notification-exit {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+/* ========================================
+   NOTIFICATION VARIANTS
+   ======================================== */
+
+.notification-success {
+  border-color: var(--color-secondary);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.5),
+    0 0 20px var(--color-secondary-glow);
+}
+
+.notification-warning {
+  border-color: var(--color-warning);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.5),
+    0 0 20px var(--color-warning-glow);
+}
+
+.notification-error {
+  border-color: var(--color-danger);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.5),
+    0 0 20px var(--color-danger-glow);
+}
+
+.notification-info {
+  border-color: var(--color-secondary);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.5),
+    0 0 20px var(--color-secondary-glow);
+}
+
+/* ========================================
+   NOTIFICATION CONTENT
+   ======================================== */
+
+.notification-icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-base);
+}
+
+.notification-success .notification-icon {
+  color: var(--color-secondary);
+  text-shadow: 0 0 8px var(--color-secondary-glow);
+}
+
+.notification-warning .notification-icon {
+  color: var(--color-warning);
+  text-shadow: 0 0 8px var(--color-warning-glow);
+}
+
+.notification-error .notification-icon {
+  color: var(--color-danger);
+  text-shadow: 0 0 8px var(--color-danger-glow);
+}
+
+.notification-info .notification-icon {
+  color: var(--color-secondary);
+  text-shadow: 0 0 8px var(--color-secondary-glow);
+}
+
+.notification-message {
+  flex: 1;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  line-height: 1.4;
+}

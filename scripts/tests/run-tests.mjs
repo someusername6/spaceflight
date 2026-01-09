@@ -45,6 +45,9 @@ const QUICK_TESTS = [
 
   // Campaign logic tests
   'campaign/test-store-ammo.mjs',
+  'campaign/test-resupply-needs.mjs',
+  'campaign/test-resupply-ship.mjs',
+  'campaign/test-resupply-estimate.mjs',
 ];
 
 // Balance/simulation tests - run multiple fights, take longer

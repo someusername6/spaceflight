@@ -182,12 +182,42 @@
   border: 1px solid rgba(255, 159, 28, 0.3);
 }
 
+.squad-icon-wrapper {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+}
+
 .squad-ship-icon {
   width: 48px;
   height: 48px;
   object-fit: contain;
   filter: var(--filter-cyan) drop-shadow(0 0 3px var(--color-secondary))
     drop-shadow(0 0 6px var(--color-secondary-glow));
+}
+
+/* Resupply warning badge */
+.squad-resupply-warning {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-primary);
+  color: #000;
+  font-size: 11px;
+  font-weight: bold;
+  border-radius: 50%;
+  box-shadow: 0 0 6px var(--color-primary);
+}
+
+/* Needs resupply card styling */
+.squad-ship-card.needs-resupply .squad-ship-loadout {
+  color: var(--color-warning);
 }
 
 .squad-ship-class {

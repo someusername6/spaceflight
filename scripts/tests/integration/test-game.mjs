@@ -164,8 +164,8 @@ test('Weapons component creates correctly', () => {
   const weapons = createPrimaryWeapons(['plasma']);
   assert(weapons.weapons.length === 1, 'Should have 1 weapon');
   assert(weapons.weapons[0].name === 'Plasma', 'Should be Plasma');
-  assert(weapons.weapons[0].damage === 25, 'Plasma damage should be 25');
-  assert(weapons.weapons[0].heatPerShot === 8, 'Plasma heat should be 8');
+  assert(weapons.weapons[0].damage === 16, 'Plasma damage should be 16');
+  assert(weapons.weapons[0].heatPerShot === 5, 'Plasma heat should be 5');
 });
 
 // Test: Shields component

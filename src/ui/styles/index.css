@@ -40,6 +40,9 @@
 /* Tooltips */
 @import "./tooltip.css";
 
+/* Notifications */
+@import "./notification.css";
+
 /* Picker dropdowns (weapons, missiles) */
 @import "./picker.css";
 @import "./picker-popover.css";

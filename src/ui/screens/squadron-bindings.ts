@@ -10,17 +10,20 @@ import {
   unassignPilot,
 } from '../../campaign/loadout';
 import { hirePilot } from '../../campaign/recruits';
-import type { CampaignState } from '../../campaign/types';
 import {
-  closeWeaponPicker,
-  hideWeaponPopoverIfNotPinned,
-  pinWeaponPopover,
-  showWeaponPicker,
-  showWeaponPopover,
-} from './hangar-equip';
+  resupplyAllShipsConstrained,
+  resupplyShipConstrained,
+} from '../../campaign/resupply-constrained';
+import type { CampaignState } from '../../campaign/types';
+import { showNotification } from '../common/notification';
+import { closeWeaponPicker } from './hangar-equip';
+import { bindHardpointEvents } from './hardpoint-bindings';
 import { showShipPicker } from './ship-picker';
 import type { ListSelection } from './squadron-list';
 import type { ViewerTab } from './squadron-viewer';
+
+// Re-export hardpoint bindings
+export { bindHardpointEvents };
 
 /** Squadron UI state (shared interface) */
 export interface SquadronUIState {
@@ -130,79 +133,6 @@ export function bindChangeShipButton(
       );
     });
   }
-}
-
-/** Bind hardpoint slot interactions */
-export function bindHardpointEvents(
-  ui: SquadronUIState,
-  rerender: () => void,
-): void {
-  ui.element.querySelectorAll('.schematic-slot').forEach((slot) => {
-    const el = slot as HTMLElement;
-    const slotType = el.dataset.type as 'primary' | 'secondary';
-    const shipId = el.dataset.ship;
-    const slotIndex = Number.parseInt(el.dataset.index ?? '0', 10);
-    const isFilled = el.classList.contains('filled');
-
-    if (!shipId || !slotType) return;
-
-    const ship = ui.state.ships.find((s) => s.id === shipId);
-    if (!ship) return;
-
-    if (isFilled) {
-      // Filled slot: unified popover (hover to preview, click to pin)
-      const weapon =
-        slotType === 'primary'
-          ? ship.primaryWeapons[slotIndex]
-          : ship.secondaryWeapons[slotIndex];
-      if (!weapon) return;
-
-      // Hover: show popover preview
-      el.addEventListener('mouseenter', () => {
-        showWeaponPopover(
-          el,
-          ui.state,
-          shipId,
-          slotType,
-          slotIndex,
-          weapon,
-          (newState) => {
-            ui.state = newState;
-            if (ui.onStateUpdate) ui.onStateUpdate(newState);
-          },
-          rerender,
-        );
-      });
-
-      // Click: pin the popover
-      el.addEventListener('click', (e) => {
-        e.stopPropagation();
-        pinWeaponPopover();
-      });
-
-      // Leave: hide only if not pinned
-      el.addEventListener('mouseleave', () => {
-        hideWeaponPopoverIfNotPinned();
-      });
-    } else {
-      // Empty slot: click to show picker
-      el.addEventListener('click', (e) => {
-        e.stopPropagation();
-        showWeaponPicker(
-          el,
-          ui.state,
-          shipId,
-          slotType,
-          slotIndex,
-          (newState) => {
-            ui.state = newState;
-            if (ui.onStateUpdate) ui.onStateUpdate(newState);
-          },
-          rerender,
-        );
-      });
-    }
-  });
 }
 
 /** Bind pilot assignment buttons */
@@ -333,4 +263,60 @@ export function bindUnassignPilot(
       }
     });
   });
+}
+
+/** Bind resupply ship button */
+export function bindResupplyShipButton(
+  ui: SquadronUIState,
+  rerender: () => void,
+): void {
+  const resupplyBtn = ui.element.querySelector('.btn-resupply-ship');
+  if (resupplyBtn) {
+    resupplyBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const target = e.currentTarget as HTMLElement;
+      const shipId = target.dataset.ship;
+      if (!shipId) return;
+
+      const result = resupplyShipConstrained(ui.state, shipId);
+      if (result.state !== ui.state) {
+        ui.state = result.state;
+        if (ui.onStateUpdate) ui.onStateUpdate(result.state);
+        // Show notification for each message
+        const type = result.success ? 'success' : 'warning';
+        for (const msg of result.messages) {
+          showNotification(msg, { type });
+        }
+        rerender();
+      }
+    });
+  }
+}
+
+/** Bind resupply all ships button */
+export function bindResupplyAllButton(
+  ui: SquadronUIState,
+  rerender: () => void,
+): void {
+  const resupplyAllBtn = ui.element.querySelector('.btn-resupply-all');
+  if (resupplyAllBtn) {
+    resupplyAllBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const target = e.currentTarget as HTMLElement;
+      const commanderId = target.dataset.commander;
+      if (!commanderId) return;
+
+      const result = resupplyAllShipsConstrained(ui.state, commanderId);
+      if (result.state !== ui.state) {
+        ui.state = result.state;
+        if (ui.onStateUpdate) ui.onStateUpdate(result.state);
+        // Show notification for each message
+        const type = result.success ? 'success' : 'warning';
+        for (const msg of result.messages) {
+          showNotification(msg, { type });
+        }
+        rerender();
+      }
+    });
+  }
 }

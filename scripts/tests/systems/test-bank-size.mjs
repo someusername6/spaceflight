@@ -35,23 +35,23 @@ test('Energy weapon (Plasma) bank size 1 has normal heat', () => {
   const weapons = createPrimaryWeapons([{ name: 'plasma', size: 1 }]);
   const weapon = weapons.weapons[0];
   assert(weapon.bankSize === 1, 'Bank size should be 1');
-  assert(weapon.heatPerShot === 8, 'Heat per shot should be 8');
-  assert(getEffectiveHeat(weapon) === 8, 'Effective heat should be 8');
+  assert(weapon.heatPerShot === 5, 'Heat per shot should be 5');
+  assert(getEffectiveHeat(weapon) === 5, 'Effective heat should be 5');
 });
 
 test('Energy weapon (Plasma) bank size 2 has halved effective heat', () => {
   const weapons = createPrimaryWeapons([{ name: 'plasma', size: 2 }]);
   const weapon = weapons.weapons[0];
   assert(weapon.bankSize === 2, 'Bank size should be 2');
-  assert(weapon.heatPerShot === 8, 'Heat per shot should still be 8');
-  assert(getEffectiveHeat(weapon) === 4, 'Effective heat should be 4');
+  assert(weapon.heatPerShot === 5, 'Heat per shot should still be 5');
+  assert(getEffectiveHeat(weapon) === 2.5, 'Effective heat should be 2.5');
 });
 
 test('Energy weapon (Plasma) bank size 3 has 1/3 effective heat', () => {
   const weapons = createPrimaryWeapons([{ name: 'plasma', size: 3 }]);
   const weapon = weapons.weapons[0];
   assert(weapon.bankSize === 3, 'Bank size should be 3');
-  assert(getEffectiveHeat(weapon) === 8 / 3, 'Effective heat should be 8/3');
+  assert(getEffectiveHeat(weapon) === 5 / 3, 'Effective heat should be 5/3');
 });
 
 test('Energy weapon (Pulse) bank size scaling', () => {
@@ -235,7 +235,7 @@ test('Mixed weapon banks with different sizes', () => {
 
   // Plasma (energy, size 1)
   assert(weapons.weapons[0].bankSize === 1, 'Plasma bank size 1');
-  assert(getEffectiveHeat(weapons.weapons[0]) === 8, 'Plasma effective heat 8');
+  assert(getEffectiveHeat(weapons.weapons[0]) === 5, 'Plasma effective heat 5');
 
   // Autocannon (ballistic, size 2)
   assert(weapons.weapons[1].bankSize === 2, 'Autocannon bank size 2');

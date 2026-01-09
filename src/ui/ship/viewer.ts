@@ -191,7 +191,7 @@ function renderSchematicSlot(
   // Hull preview mode: empty slots with colored borders/lines (no inner content)
   if (mode === 'hull-preview') {
     const slotColor = isPrimary
-      ? 'var(--color-warning)'
+      ? 'var(--color-primary)'
       : 'var(--color-danger)';
     return `
       <div class="schematic-slot ${slotType} hull-preview ${sizeClass}"

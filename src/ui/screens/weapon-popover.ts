@@ -18,14 +18,41 @@ import type {
 } from '../../campaign/types';
 import { getWeaponAmmoInfo } from '../ship/slot-utils';
 import { renderPrimaryPopover, renderSecondaryPopover } from './popover-render';
+import {
+  activePicker,
+  activeSubmenu,
+  closePopover,
+  closeSubmenu,
+  getActiveSlotElement,
+  hideWeaponPopoverIfNotPinned,
+  pinWeaponPopover,
+  resetPopoverState,
+  setActivePicker,
+  setActiveSlotElement,
+  setActiveSubmenu,
+  setMouseOverPopover,
+} from './popover-state';
+
+// Re-export state management functions
+export {
+  activePicker,
+  activeSubmenu,
+  closePopover,
+  closeSubmenu,
+  hideWeaponPopoverIfNotPinned,
+  pinWeaponPopover,
+  resetPopoverState,
+  setActivePicker,
+  setActiveSubmenu,
+  setMouseOverPopover,
+};
 
 /** Update a slot's ammo fill bar directly (without re-rendering the viewer) */
 function updateSlotAmmoBar(
   slotType: 'primary' | 'secondary',
   weapon: EquippedPrimary | EquippedSecondary,
 ): void {
-  // Use activeSlotElement if available (more reliable than querying)
-  const slot = activeSlotElement;
+  const slot = getActiveSlotElement();
   if (!slot) return;
 
   const ammoBar = slot.querySelector('.slot-ammo-bar') as HTMLElement;
@@ -33,15 +60,12 @@ function updateSlotAmmoBar(
 
   const { current, max } = getWeaponAmmoInfo(weapon, slotType);
 
-  // Check if segmented or continuous bar
   if (ammoBar.classList.contains('segmented')) {
-    // Segmented bar: toggle filled class on each segment
     const segments = ammoBar.querySelectorAll('.slot-ammo-segment');
     segments.forEach((seg, i) => {
       seg.classList.toggle('filled', i < current);
     });
   } else {
-    // Continuous bar: update fill width
     const fillBar = ammoBar.querySelector('.slot-ammo-fill') as HTMLElement;
     if (fillBar) {
       const fillPercent = max > 0 ? Math.round((current / max) * 100) : 0;
@@ -50,31 +74,23 @@ function updateSlotAmmoBar(
   }
 }
 
-/** Popover state - shared with hangar-equip for coordination */
-export let activePicker: HTMLElement | null = null;
-let isPopoverPinned = false;
-let isMouseOverPopover = false;
-let closeTimeout: ReturnType<typeof setTimeout> | null = null;
-let activeSlotElement: HTMLElement | null = null;
+/** Change weapon handler - set by hangar.ts to avoid circular imports */
+type ChangeWeaponHandler = (
+  buttonElement: HTMLElement,
+  slotElement: HTMLElement,
+  state: CampaignState,
+  shipId: string,
+  slotType: 'primary' | 'secondary',
+  slotIndex: number,
+  onStateUpdate: (newState: CampaignState) => void,
+  onRerender: () => void,
+) => void;
 
-/** Close any open popover */
-export function closePopover(): void {
-  if (closeTimeout) {
-    clearTimeout(closeTimeout);
-    closeTimeout = null;
-  }
-  if (activePicker) {
-    activePicker.remove();
-    activePicker = null;
-  }
-  isPopoverPinned = false;
-  isMouseOverPopover = false;
-  activeSlotElement = null;
-}
+let changeWeaponHandler: ChangeWeaponHandler | null = null;
 
-/** Set the active picker (called from hangar-equip for picker dropdowns) */
-export function setActivePicker(picker: HTMLElement | null): void {
-  activePicker = picker;
+/** Set the change weapon handler (called from hangar.ts) */
+export function setChangeWeaponHandler(handler: ChangeWeaponHandler): void {
+  changeWeaponHandler = handler;
 }
 
 /** Bind events for weapon popover */
@@ -193,8 +209,29 @@ function bindPopoverEvents(
     });
   });
 
+  // Change weapon button
+  const changeBtn = popover.querySelector('.btn-change-weapon');
+  if (changeBtn) {
+    changeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const slotEl = getActiveSlotElement();
+      if (changeWeaponHandler && slotEl) {
+        changeWeaponHandler(
+          e.currentTarget as HTMLElement,
+          slotEl,
+          state,
+          shipId,
+          slotType,
+          slotIndex,
+          onStateUpdate,
+          onRerender,
+        );
+      }
+    });
+  }
+
   // Unequip button
-  popover.querySelector('.btn-danger')?.addEventListener('click', (e) => {
+  popover.querySelector('.btn-unequip')?.addEventListener('click', (e) => {
     e.stopPropagation();
     const newState =
       slotType === 'primary'
@@ -221,7 +258,7 @@ export function showWeaponPopover(
   onRerender: () => void,
 ): void {
   // Don't reopen for the same slot
-  if (activeSlotElement === slotElement && activePicker) return;
+  if (getActiveSlotElement() === slotElement && activePicker) return;
 
   closePopover();
 
@@ -253,22 +290,17 @@ export function showWeaponPopover(
   popover.style.zIndex = '1000';
 
   document.body.appendChild(popover);
-  activePicker = popover;
-  activeSlotElement = slotElement;
-  isPopoverPinned = false;
-  isMouseOverPopover = false;
+  setActivePicker(popover);
+  setActiveSlotElement(slotElement);
+  resetPopoverState();
 
   // Track mouse over popover
   popover.addEventListener('mouseenter', () => {
-    isMouseOverPopover = true;
-    if (closeTimeout) {
-      clearTimeout(closeTimeout);
-      closeTimeout = null;
-    }
+    setMouseOverPopover(true);
   });
 
   popover.addEventListener('mouseleave', () => {
-    isMouseOverPopover = false;
+    setMouseOverPopover(false);
     hideWeaponPopoverIfNotPinned();
   });
 
@@ -299,35 +331,4 @@ export function showWeaponPopover(
     onStateUpdate,
     onRerender,
   );
-}
-
-/** Pin the current popover (called on click) */
-export function pinWeaponPopover(): void {
-  if (!activePicker || isPopoverPinned) return;
-
-  isPopoverPinned = true;
-  activePicker.classList.add('pinned');
-
-  const closeOnOutsideClick = (e: MouseEvent) => {
-    if (activePicker && !activePicker.contains(e.target as Node)) {
-      closePopover();
-      document.removeEventListener('click', closeOnOutsideClick);
-    }
-  };
-  setTimeout(() => {
-    document.addEventListener('click', closeOnOutsideClick);
-  }, 0);
-}
-
-/** Hide popover on mouseleave (only if not pinned) */
-export function hideWeaponPopoverIfNotPinned(): void {
-  if (isPopoverPinned) return;
-
-  if (closeTimeout) clearTimeout(closeTimeout);
-  closeTimeout = setTimeout(() => {
-    if (!isPopoverPinned && !isMouseOverPopover) {
-      closePopover();
-    }
-    closeTimeout = null;
-  }, 50);
 }

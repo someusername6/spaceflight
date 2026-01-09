@@ -6,6 +6,21 @@ import { getAmmoPrice, getSecondaryPrice } from '../data/prices';
 import { getMaxAmmoCapacity } from './store-ammo';
 import type { CampaignState, EquippedPrimary, OwnedShip } from './types';
 
+// Re-export constrained resupply functions
+export {
+  estimateAllShipsResupplyCost,
+  estimateShipResupplyCost,
+  getShipResupplyNeeds,
+  needsAmmoResupply,
+  needsAttention,
+  needsResupply,
+  type ResupplyCostEstimate,
+  type ResupplyResult,
+  resupplyAllShipsConstrained,
+  resupplyShipConstrained,
+  type ShipResupplyNeeds,
+} from './resupply-constrained';
+
 /** Get max ammo capacity for a primary weapon (convenience wrapper) */
 function getMaxPrimaryAmmo(primary: EquippedPrimary): number {
   return getMaxAmmoCapacity(primary.weaponType, primary.bankSize);

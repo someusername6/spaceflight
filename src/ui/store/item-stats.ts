@@ -196,6 +196,7 @@ export function renderSecondaryStats(weaponType: string): string {
   return `
     ${renderItemPreview('secondaries', weaponType)}
     <div class="item-stats">
+      <div class="stat-row"><span>Size</span><span>${stats.capacity} per bank</span></div>
       <div class="stat-row"><span>Damage</span><span>${stats.damage}</span></div>
       <div class="stat-row"><span>Speed</span><span>${stats.speed} m/s</span></div>
       <div class="stat-row"><span>Range</span><span>${stats.range} m</span></div>
