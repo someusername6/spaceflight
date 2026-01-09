@@ -10,7 +10,11 @@ import type { Projectile, WeaponName } from '../../components/projectile';
 import type { Transform } from '../../components/transform';
 import { getComponent, queryEntities } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
-import { getWeaponVisual, type WeaponVisualConfig } from './trail-config';
+import {
+  getWeaponVisual,
+  setBoltScale,
+  type WeaponVisualConfig,
+} from './trail-config';
 
 // Reusable Set for tracking seen projectiles
 const seenProjectiles = new Set<Entity>();
@@ -106,7 +110,7 @@ function reinitializeBolt(
   (projectileBolt.bolt.material as THREE.MeshBasicMaterial).color.copy(
     visual.color,
   );
-  projectileBolt.bolt.scale.setScalar(visual.boltSize / 0.5);
+  setBoltScale(visual, projectileBolt.bolt.scale);
   projectileBolt.bolt.position.copy(startPosition);
 }
 
@@ -130,7 +134,7 @@ function createNewBolt(
 
   const bolt = new THREE.Mesh(boltGeometry, boltMaterial);
   bolt.position.copy(startPosition);
-  bolt.scale.setScalar(visual.boltSize / 0.5);
+  setBoltScale(visual, bolt.scale);
   scene.add(bolt);
 
   return {

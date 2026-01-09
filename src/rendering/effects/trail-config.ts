@@ -8,47 +8,66 @@ import type { WeaponName } from '../../components/projectile';
 /** Weapon-specific visual configuration */
 export interface WeaponVisualConfig {
   color: THREE.Color;
-  boltSize: number; // Scale for bolt mesh
+  radius: number; // Projectile radius in world units
+  length?: number; // Projectile length (cylinder/capsule only)
   boltShape: 'sphere' | 'cylinder' | 'capsule';
 }
 
+/** Base geometry dimensions (for scale calculation) */
+interface BaseGeometry {
+  radius: number;
+  length?: number;
+}
+
+const BASE_GEOMETRY: Record<WeaponVisualConfig['boltShape'], BaseGeometry> = {
+  sphere: { radius: 0.5 },
+  cylinder: { radius: 0.15, length: 1.2 },
+  capsule: { radius: 0.12, length: 5.0 },
+};
+
 /** Visual configs per weapon (colors are weapon-coded, not faction-coded) */
 const WEAPON_VISUALS: Record<string, WeaponVisualConfig> = {
-  // Energy weapons
+  // Energy weapons (capsule shape)
   Plasma: {
     color: new THREE.Color(0.2, 1.0, 0.4), // Bright green
-    boltSize: 2.25,
+    radius: 0.54,
+    length: 22.5,
     boltShape: 'capsule',
   },
   Pulse: {
     color: new THREE.Color(0.3, 0.9, 1.0), // Cyan
-    boltSize: 1.875,
+    radius: 0.45,
+    length: 18.75,
     boltShape: 'capsule',
   },
   Ion: {
     color: new THREE.Color(0.4, 0.5, 1.0), // Blue-purple
-    boltSize: 2.25,
+    radius: 0.54,
+    length: 22.5,
     boltShape: 'capsule',
   },
-  // Ballistic weapons
+  // Ballistic weapons (cylinder shape)
   Autocannon: {
     color: new THREE.Color(1.0, 0.85, 0.3), // Yellow-gold
-    boltSize: 0.25,
+    radius: 0.075,
+    length: 0.6,
     boltShape: 'cylinder',
   },
   Railgun: {
     color: new THREE.Color(1.0, 1.0, 1.0), // Pure white
-    boltSize: 0.2,
+    radius: 0.06,
+    length: 0.48,
     boltShape: 'cylinder',
   },
   Flak: {
     color: new THREE.Color(1.0, 0.2, 0.2), // Red
-    boltSize: 0.4,
+    radius: 0.4,
     boltShape: 'sphere',
   },
   Shrapnel: {
     color: new THREE.Color(1.0, 0.9, 0.3), // Yellow
-    boltSize: 0.15,
+    radius: 0.045,
+    length: 0.36,
     boltShape: 'cylinder',
   },
 };
@@ -56,9 +75,27 @@ const WEAPON_VISUALS: Record<string, WeaponVisualConfig> = {
 /** Default visual config for unknown weapons */
 const DEFAULT_VISUAL: WeaponVisualConfig = {
   color: new THREE.Color(1.0, 0.5, 0.2), // Orange
-  boltSize: 0.3,
+  radius: 0.072,
+  length: 3.0,
   boltShape: 'capsule',
 };
+
+/** Set scale vector to achieve desired dimensions for a given shape */
+export function setBoltScale(
+  visual: WeaponVisualConfig,
+  target: THREE.Vector3,
+): void {
+  const base = BASE_GEOMETRY[visual.boltShape];
+  const radiusScale = visual.radius / base.radius;
+
+  if (visual.boltShape === 'sphere' || !base.length) {
+    target.set(radiusScale, radiusScale, radiusScale);
+  } else {
+    // Cylinder and capsule: Y is the length axis
+    const lengthScale = (visual.length ?? base.length) / base.length;
+    target.set(radiusScale, lengthScale, radiusScale);
+  }
+}
 
 /** Get visual config for a weapon */
 export function getWeaponVisual(weaponName: WeaponName): WeaponVisualConfig {
