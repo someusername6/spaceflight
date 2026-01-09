@@ -56,8 +56,8 @@
   top: 50%;
   transform: translateY(-50%);
   margin-left: var(--space-3);
-  min-width: 200px;
   max-width: 300px;
+  white-space: nowrap;
   z-index: 100;
   opacity: 0;
   visibility: hidden;
@@ -66,13 +66,13 @@
     visibility var(--duration-base) var(--ease-out);
   pointer-events: none;
 
-  /* Match notification toast styling */
+  /* Match warning icon color */
   background: var(--bg-panel);
-  border: 1px solid var(--color-warning);
-  padding: var(--space-3) var(--space-5);
+  border: 1px solid var(--color-primary);
+  padding: var(--space-2) var(--space-3);
   box-shadow:
     0 4px 20px rgba(0, 0, 0, 0.5),
-    0 0 20px var(--color-warning-glow);
+    0 0 20px var(--color-primary-glow);
 }
 
 /* Show tooltip on icon hover */
