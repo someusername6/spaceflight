@@ -2,9 +2,9 @@
  * Resupply Ship - Single ship resupply operation.
  */
 
-import { getAmmoPrice, getSecondaryPrice } from '../data/prices';
+import { getAmmoPrice, getSecondaryPrice } from '../../data/prices';
+import type { CampaignState, StoredAmmo, StoredWeapon } from '../types';
 import { getMaxPrimaryAmmo, getShipResupplyNeeds } from './resupply-needs';
-import type { CampaignState, StoredAmmo, StoredWeapon } from './types';
 
 /** Result of a constrained resupply operation */
 export interface ResupplyResult {

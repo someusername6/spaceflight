@@ -4,49 +4,52 @@
  * Extracted from controller.ts to stay under 400 line limit.
  */
 
-import type { Transform } from '../components/transform';
-import { findEntity, getComponent } from '../core/ecs';
-import type { World } from '../core/types';
+import type { Transform } from '../../components/transform';
+import { findEntity, getComponent } from '../../core/ecs';
+import type { World } from '../../core/types';
 import {
   createLightningRenderer,
   updateLightningRenderer,
-} from '../rendering/beam-effects/lightning';
+} from '../../rendering/beam-effects/lightning';
 import {
   createNuclearLanceRenderer,
   updateNuclearLanceRenderer,
-} from '../rendering/beam-effects/nuclear-lance';
+} from '../../rendering/beam-effects/nuclear-lance';
 import {
   createTorchRenderer,
   updateTorchRenderer,
-} from '../rendering/beam-effects/torch';
-import { createDustSystem, updateDustSystem } from '../rendering/effects/dust';
+} from '../../rendering/beam-effects/torch';
+import {
+  createDustSystem,
+  updateDustSystem,
+} from '../../rendering/effects/dust';
 import {
   createExplosionRenderer,
   updateExplosionRenderer,
-} from '../rendering/effects/explosions';
+} from '../../rendering/effects/explosions';
 import {
   createMuzzleFlashRenderer,
   updateMuzzleFlashRenderer,
-} from '../rendering/effects/muzzle-flash';
+} from '../../rendering/effects/muzzle-flash';
 import {
   createProjectileHitRenderer,
   updateProjectileHitRenderer,
-} from '../rendering/effects/projectile-hits';
+} from '../../rendering/effects/projectile-hits';
 import {
   createShieldEffectRenderer,
   updateShieldEffectRenderer,
-} from '../rendering/effects/shield-effects';
+} from '../../rendering/effects/shield-effects';
 import {
   createBoltRenderer,
   disposeBoltRenderer,
   updateBoltRenderer,
-} from '../rendering/effects/trails';
-import { createHUD, updateHUD } from '../rendering/hud/hud';
-import { updateTargetCamera } from '../rendering/hud/target-camera';
+} from '../../rendering/effects/trails';
+import { createHUD, updateHUD } from '../../rendering/hud/hud';
+import { updateTargetCamera } from '../../rendering/hud/target-camera';
 import {
   createExhaustRenderer,
   updateExhaustRenderer,
-} from '../rendering/missile-exhaust';
+} from '../../rendering/missile-exhaust';
 import {
   createRenderer,
   disposeRenderer,
@@ -54,7 +57,7 @@ import {
   getScene,
   render,
   syncScene,
-} from '../rendering/renderer';
+} from '../../rendering/renderer';
 
 /** All rendering systems for a mission */
 export interface MissionRenderers {

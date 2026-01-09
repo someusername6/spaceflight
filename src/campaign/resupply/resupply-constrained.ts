@@ -5,10 +5,10 @@
  * and respect store stock and credit limits.
  */
 
-import { getAmmoPrice, getSecondaryPrice } from '../data/prices';
+import { getAmmoPrice, getSecondaryPrice } from '../../data/prices';
+import type { CampaignState } from '../types';
 import { needsResupply } from './resupply-needs';
 import { type ResupplyResult, resupplyShipConstrained } from './resupply-ship';
-import type { CampaignState } from './types';
 
 export {
   estimateAllShipsResupplyCost,

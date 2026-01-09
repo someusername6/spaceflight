@@ -6,7 +6,7 @@
 
 import { weaponUsesAmmo } from '../data/prices';
 import { mergeAmmoIntoStorage, mergeSecondaryIntoStorage } from './ship-utils';
-import { getMaxAmmoCapacity, getMaxMissileCapacity } from './store-ammo';
+import { getMaxAmmoCapacity, getMaxMissileCapacity } from './store/store-ammo';
 import type {
   CampaignState,
   EquippedPrimary,

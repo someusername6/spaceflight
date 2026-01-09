@@ -14,7 +14,7 @@
  * - [PILOT] tab: Pilot career stats
  */
 
-import { estimateAllShipsResupplyCost } from '../../campaign/resupply-constrained';
+import { estimateAllShipsResupplyCost } from '../../campaign/resupply/resupply-constrained';
 import type { CampaignState } from '../../campaign/types';
 import {
   bindNavBar,

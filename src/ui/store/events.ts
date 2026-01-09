@@ -12,7 +12,7 @@ import {
   sellScrap,
   sellSecondaryWeapon,
   sellShip,
-} from '../../campaign/store';
+} from '../../campaign/store/store';
 import type { CampaignState } from '../../campaign/types';
 import { getStorageIndex, type StoreCategory } from './render';
 

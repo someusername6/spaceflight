@@ -8,8 +8,8 @@ import {
   estimateShipResupplyCost,
   getAttentionReasons,
   resupplyAllShipsConstrained,
-} from '../../../src/campaign/resupply-constrained.ts';
-import { getMaxAmmoCapacity } from '../../../src/campaign/store-ammo.ts';
+} from '../../../src/campaign/resupply/resupply-constrained.ts';
+import { getMaxAmmoCapacity } from '../../../src/campaign/store/store-ammo.ts';
 
 /** Create a test campaign state */
 function createTestState(options = {}) {

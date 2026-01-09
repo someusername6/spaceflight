@@ -4,7 +4,7 @@
 
 import type { createGame } from '../game';
 import type { createScreenManager } from '../ui/common/screens';
-import type { MissionRenderers } from './mission-renderer';
+import type { MissionRenderers } from './mission/mission-renderer';
 
 /** Campaign controller state */
 export interface CampaignController {

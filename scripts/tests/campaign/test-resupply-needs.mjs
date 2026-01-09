@@ -8,8 +8,8 @@ import {
   needsAmmoResupply,
   needsAttention,
   needsResupply,
-} from '../../../src/campaign/resupply-constrained.ts';
-import { getMaxAmmoCapacity } from '../../../src/campaign/store-ammo.ts';
+} from '../../../src/campaign/resupply/resupply-constrained.ts';
+import { getMaxAmmoCapacity } from '../../../src/campaign/store/store-ammo.ts';
 
 console.log('=== Resupply Needs Tests ===\n');
 

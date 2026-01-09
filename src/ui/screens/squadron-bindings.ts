@@ -13,7 +13,7 @@ import { hirePilot } from '../../campaign/recruits';
 import {
   resupplyAllShipsConstrained,
   resupplyShipConstrained,
-} from '../../campaign/resupply-constrained';
+} from '../../campaign/resupply/resupply-constrained';
 import type { CampaignState } from '../../campaign/types';
 import { showNotification } from '../common/notification';
 import { closeWeaponPicker } from './hangar-equip';

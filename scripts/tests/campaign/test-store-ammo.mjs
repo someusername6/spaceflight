@@ -9,7 +9,7 @@ import {
   loadAmmoToWeapon,
   sellAmmo,
   unloadAmmoFromWeapon,
-} from '../../../src/campaign/store-ammo.ts';
+} from '../../../src/campaign/store/store-ammo.ts';
 import { getAmmoPrice } from '../../../src/data/prices.ts';
 import { PRIMARY_WEAPONS } from '../../../src/data/weapons.ts';
 

@@ -2,7 +2,7 @@
  * Slot Utilities - Shared constants and helpers for weapon slot rendering.
  */
 
-import { getMaxAmmoCapacity } from '../../campaign/store-ammo';
+import { getMaxAmmoCapacity } from '../../campaign/store/store-ammo';
 import type { EquippedPrimary, EquippedSecondary } from '../../campaign/types';
 import { weaponUsesAmmo } from '../../data/prices';
 

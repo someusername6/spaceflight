@@ -2,8 +2,8 @@
  * Resupply Needs - Status checking and needs calculation for ships.
  */
 
-import { getMaxAmmoCapacity } from './store-ammo';
-import type { EquippedPrimary, OwnedShip } from './types';
+import { getMaxAmmoCapacity } from '../store/store-ammo';
+import type { EquippedPrimary, OwnedShip } from '../types';
 
 /** Get max ammo capacity for a primary weapon (convenience wrapper) */
 export function getMaxPrimaryAmmo(primary: EquippedPrimary): number {

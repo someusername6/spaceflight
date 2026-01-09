@@ -5,8 +5,8 @@
  * Commander ship is always deployed (cannot be deselected).
  */
 
-import { needsAttention } from '../../campaign/resupply-constrained';
-import { getMaxAmmoCapacity } from '../../campaign/store-ammo';
+import { needsAttention } from '../../campaign/resupply/resupply-constrained';
+import { getMaxAmmoCapacity } from '../../campaign/store/store-ammo';
 import type { CampaignState, Contract, OwnedShip } from '../../campaign/types';
 import {
   type ModalProps,

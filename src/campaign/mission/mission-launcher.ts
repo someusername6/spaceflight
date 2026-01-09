@@ -3,10 +3,17 @@
  */
 
 import { Vector3 } from 'three';
-import { createGame, startGame } from '../game';
-import { initMatchStats } from '../systems/stats';
-import { setMissionContainer } from '../ui/common/screens';
-import type { CampaignController } from './controller-types';
+import { createGame, startGame } from '../../game';
+import { initMatchStats } from '../../systems/stats';
+import { setMissionContainer } from '../../ui/common/screens';
+import type { CampaignController } from '../controller-types';
+import {
+  spawnPlayerFromCampaign,
+  spawnWingmanFromCampaign,
+} from '../ship-spawning';
+import { getCommanderShip, getWingmanShips } from '../state';
+import type { Contract } from '../types';
+import { getGameSeed } from '../utils';
 import {
   createMissionEndCallback,
   createMissionEndExecutor,
@@ -22,13 +29,6 @@ import {
   createWaveState,
   spawnWave,
 } from './mission-waves';
-import {
-  spawnPlayerFromCampaign,
-  spawnWingmanFromCampaign,
-} from './ship-spawning';
-import { getCommanderShip, getWingmanShips } from './state';
-import type { Contract } from './types';
-import { getGameSeed } from './utils';
 
 /** Callback type for contracts screen setup */
 export type SetupContractsCallback = (controller: CampaignController) => void;

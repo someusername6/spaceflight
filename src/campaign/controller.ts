@@ -38,8 +38,8 @@ import {
   resetTitleScreen,
 } from '../ui/screens/title';
 import type { CampaignController } from './controller-types';
-import { launchMission } from './mission-launcher';
-import { disposeMissionRenderers } from './mission-renderer';
+import { launchMission } from './mission/mission-launcher';
+import { disposeMissionRenderers } from './mission/mission-renderer';
 import { setupSquadronScreen, setupStoreScreen } from './screen-handlers';
 import { createNewCampaign } from './state';
 import type { CampaignState, Contract } from './types';

@@ -2,9 +2,9 @@
  * Resupply functions - calculate and apply resupply for ships.
  */
 
-import { getAmmoPrice, getSecondaryPrice } from '../data/prices';
-import { getMaxAmmoCapacity } from './store-ammo';
-import type { CampaignState, EquippedPrimary, OwnedShip } from './types';
+import { getAmmoPrice, getSecondaryPrice } from '../../data/prices';
+import { getMaxAmmoCapacity } from '../store/store-ammo';
+import type { CampaignState, EquippedPrimary, OwnedShip } from '../types';
 
 // Re-export constrained resupply functions
 export {

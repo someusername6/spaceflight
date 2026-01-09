@@ -8,7 +8,7 @@ import {
   swapPilotToStoredShip,
   unassignPilot,
 } from '../../campaign/loadout';
-import { getMaxMissileCapacity } from '../../campaign/store-ammo';
+import { getMaxMissileCapacity } from '../../campaign/store/store-ammo';
 import type { CampaignState } from '../../campaign/types';
 import { MISSILES } from '../../data/missiles';
 import { SHIP_CLASSES } from '../../data/ships';

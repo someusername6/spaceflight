@@ -5,8 +5,8 @@
 import { createPRNG, random } from '../core/prng';
 import { getArchetype } from '../factories/ship';
 import { generateInitialRecruits } from './recruits';
-import { createInitialStoreStock } from './store';
-import { getMaxMissileCapacity } from './store-ammo';
+import { createInitialStoreStock } from './store/store';
+import { getMaxMissileCapacity } from './store/store-ammo';
 
 // Re-export resupply functions from dedicated module
 export {
@@ -16,7 +16,7 @@ export {
   resupplyAllShips,
   resupplyShip,
   storeResupplyAllShips,
-} from './resupply';
+} from './resupply/resupply';
 
 import type {
   CampaignState,

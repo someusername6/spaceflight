@@ -2,8 +2,8 @@
  * Mission Callbacks - game loop callbacks for mission execution.
  */
 
-import { random } from '../core/prng';
-import type { World } from '../core/types';
+import { random } from '../../core/prng';
+import type { World } from '../../core/types';
 import {
   countLivingEnemyShips,
   type Game,
@@ -11,23 +11,23 @@ import {
   resetMissionNotification,
   resetMissionState,
   stopGame,
-} from '../game';
-import { finalizeMatchStats } from '../systems/stats';
-import { endMission, updateCampaignState } from '../ui/common/screens';
-import type { CampaignController } from './controller-types';
+} from '../../game';
+import { finalizeMatchStats } from '../../systems/stats';
+import { endMission, updateCampaignState } from '../../ui/common/screens';
+import type { CampaignController } from '../controller-types';
+import { refreshRecruits } from '../recruits';
+import { applySalvage, calculateSalvage } from '../salvage';
+import { showGameOver, showResults } from '../screen-handlers';
+import { extractAmmoFromWorld } from '../ship-spawning';
+import { applyAmmoUsage, applyMissionResults, isGameOver } from '../state';
+import type { Contract } from '../types';
+import { createMissionResultOverlay } from '../utils';
 import type { MissionEndState, WaveState } from './mission-waves';
 import {
   calculateWaveDelay,
   MISSION_END_DELAY,
   spawnWave,
 } from './mission-waves';
-import { refreshRecruits } from './recruits';
-import { applySalvage, calculateSalvage } from './salvage';
-import { showGameOver, showResults } from './screen-handlers';
-import { extractAmmoFromWorld } from './ship-spawning';
-import { applyAmmoUsage, applyMissionResults, isGameOver } from './state';
-import type { Contract } from './types';
-import { createMissionResultOverlay } from './utils';
 
 /** Create the mission end execution callback */
 export function createMissionEndExecutor(

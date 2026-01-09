@@ -2,12 +2,12 @@
  * Missile Store Functions - transfer missiles between storage and weapons.
  */
 
-import { MISSILES } from '../data/missiles';
+import { MISSILES } from '../../data/missiles';
 import {
   cloneShipWithSecondary,
   mergeSecondaryIntoStorage,
-} from './ship-utils';
-import type { CampaignState, EquippedSecondary, StoredWeapon } from './types';
+} from '../ship-utils';
+import type { CampaignState, EquippedSecondary, StoredWeapon } from '../types';
 
 /** Get max missile capacity for a secondary weapon (capacity × bankSize) */
 export function getMaxMissileCapacity(

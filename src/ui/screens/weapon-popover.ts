@@ -10,7 +10,7 @@ import {
   loadMissilesToWeapon,
   unloadAmmoFromWeapon,
   unloadMissilesFromWeapon,
-} from '../../campaign/store-ammo';
+} from '../../campaign/store/store-ammo';
 import type {
   CampaignState,
   EquippedPrimary,

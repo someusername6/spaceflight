@@ -2,9 +2,9 @@
  * Resupply Estimate - Cost estimation for resupply operations.
  */
 
-import { getAmmoPrice, getSecondaryPrice } from '../data/prices';
+import { getAmmoPrice, getSecondaryPrice } from '../../data/prices';
+import type { CampaignState } from '../types';
 import { getShipResupplyNeeds } from './resupply-needs';
-import type { CampaignState } from './types';
 
 /** Estimated cost for resupply (accounts for storage) */
 export interface ResupplyCostEstimate {

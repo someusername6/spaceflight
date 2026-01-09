@@ -3,7 +3,7 @@
  */
 
 import { storeResupplyAllShips } from '../../campaign/state';
-import { convertScrapToShip } from '../../campaign/store';
+import { convertScrapToShip } from '../../campaign/store/store';
 import type { CampaignState } from '../../campaign/types';
 import { bindNavBar, type NavDestination } from '../common/nav-bar';
 import {

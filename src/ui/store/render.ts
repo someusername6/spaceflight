@@ -8,7 +8,7 @@ import {
   getAvailableSecondaries,
   getAvailableShips,
   getScrapTypes,
-} from '../../campaign/store';
+} from '../../campaign/store/store';
 import type { CampaignState, StoreStock } from '../../campaign/types';
 import { MISSILES } from '../../data/missiles';
 import {

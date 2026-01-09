@@ -11,7 +11,7 @@ import {
   unequipPrimary,
   unequipSecondary,
 } from '../../campaign/loadout';
-import { getMaxMissileCapacity } from '../../campaign/store-ammo';
+import { getMaxMissileCapacity } from '../../campaign/store/store-ammo';
 import type { CampaignState, EquippedSecondary } from '../../campaign/types';
 import { MISSILES } from '../../data/missiles';
 import { PRIMARY_WEAPONS } from '../../data/weapons';

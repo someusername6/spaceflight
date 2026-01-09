@@ -11,9 +11,9 @@ import {
   getShipPrice,
   SCRAP_CONVERSION_FEE,
   SCRAP_PER_SHIP,
-} from '../data/prices';
-import { mergeSecondaryIntoStorage } from './ship-utils';
-import type { CampaignState, StoredShip, StoredWeapon } from './types';
+} from '../../data/prices';
+import { mergeSecondaryIntoStorage } from '../ship-utils';
+import type { CampaignState, StoredShip, StoredWeapon } from '../types';
 
 // Re-export ammo functions
 export {

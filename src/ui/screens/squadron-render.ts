@@ -5,7 +5,7 @@
 import {
   estimateShipResupplyCost,
   needsAmmoResupply,
-} from '../../campaign/resupply-constrained';
+} from '../../campaign/resupply/resupply-constrained';
 import type { CampaignState, OwnedShip } from '../../campaign/types';
 import { renderShipStatsRows } from '../ship/stats';
 import { renderShipViewer } from '../ship/viewer';

@@ -2,7 +2,7 @@
  * Popover Render - HTML rendering functions for weapon popovers.
  */
 
-import { getMaxAmmoCapacity } from '../../campaign/store-ammo';
+import { getMaxAmmoCapacity } from '../../campaign/store/store-ammo';
 import type {
   CampaignState,
   EquippedPrimary,

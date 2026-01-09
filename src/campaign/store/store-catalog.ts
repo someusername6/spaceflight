@@ -2,17 +2,17 @@
  * Store catalog functions - lists of available items for purchase.
  */
 
-import { MISSILES } from '../data/missiles';
+import { MISSILES } from '../../data/missiles';
 import {
   getAmmoPrice,
   getPrimaryPrice,
   getScrapPrice,
   getSecondaryPrice,
   getShipPrice,
-} from '../data/prices';
-import { SHIP_CLASSES } from '../data/ships';
-import { PRIMARY_WEAPONS } from '../data/weapons';
-import type { StoreStock } from './types';
+} from '../../data/prices';
+import { SHIP_CLASSES } from '../../data/ships';
+import { PRIMARY_WEAPONS } from '../../data/weapons';
+import type { StoreStock } from '../types';
 
 /** Get list of available ships for purchase (derived from SHIP_CLASSES) */
 export function getAvailableShips(): Array<{

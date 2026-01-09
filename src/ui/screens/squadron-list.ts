@@ -5,7 +5,7 @@
 import {
   getAttentionReasons,
   needsAttention,
-} from '../../campaign/resupply-constrained';
+} from '../../campaign/resupply/resupply-constrained';
 import type { HireablePilot, OwnedShip, Pilot } from '../../campaign/types';
 import { SHIP_CLASSES } from '../../data/ships';
 import { FALLBACK_ICON_PATH, getShipIconPath } from '../ship/viewer';

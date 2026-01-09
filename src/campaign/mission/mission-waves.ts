@@ -3,16 +3,16 @@
  */
 
 import { Quaternion, Vector3 } from 'three';
-import type { FactionComponent } from '../components/faction';
-import { getEnemyCallsignPrefix } from '../components/ship-identity';
-import type { Transform } from '../components/transform';
-import { getComponent, isShip, queryEntities } from '../core/ecs';
-import type { PRNGState } from '../core/prng';
-import { randomRange, randomUnitVector } from '../core/prng';
-import { Faction, type World } from '../core/types';
-import type { ProfileName } from '../data/ai-profiles';
-import { createEnemyShip } from '../factories/ship';
-import type { ContractWave } from './types';
+import type { FactionComponent } from '../../components/faction';
+import { getEnemyCallsignPrefix } from '../../components/ship-identity';
+import type { Transform } from '../../components/transform';
+import { getComponent, isShip, queryEntities } from '../../core/ecs';
+import type { PRNGState } from '../../core/prng';
+import { randomRange, randomUnitVector } from '../../core/prng';
+import { Faction, type World } from '../../core/types';
+import type { ProfileName } from '../../data/ai-profiles';
+import { createEnemyShip } from '../../factories/ship';
+import type { ContractWave } from '../types';
 
 /** Wave state for tracking mission progress */
 export interface WaveState {
