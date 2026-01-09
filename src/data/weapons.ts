@@ -98,7 +98,7 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
   autocannon: {
     name: 'Autocannon',
     category: 'ballistic',
-    heatPerShot: 2,
+    heatPerShot: 1,
     projectileSpeed: 500,
     fireRate: 0.065, // 65ms
     range: 400,

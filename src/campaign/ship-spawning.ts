@@ -104,7 +104,7 @@ export function spawnPlayerFromCampaign(
   addComponent(
     world,
     entity,
-    createShipIdentity(ship.shipClass, 'Alpha 1', ship.id),
+    createShipIdentity(ship.shipClass, 'Commander', ship.id),
   );
   addComponent(world, entity, createTargeting());
   addComponent(world, entity, createHeat(stats.maxHeat, stats.coolingRate));
