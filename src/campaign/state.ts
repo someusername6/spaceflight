@@ -7,17 +7,6 @@ import { getArchetype } from '../factories/ship';
 import { generateInitialRecruits } from './recruits';
 import { createInitialStoreStock } from './store/store';
 import { getMaxMissileCapacity } from './store/store-ammo';
-
-// Re-export resupply functions from dedicated module
-export {
-  calculateResupplyCost,
-  getResupplyStatus,
-  type ResupplyStatus,
-  resupplyAllShips,
-  resupplyShip,
-  storeResupplyAllShips,
-} from './resupply/resupply';
-
 import type {
   CampaignState,
   EquippedPrimary,

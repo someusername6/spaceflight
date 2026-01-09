@@ -2,7 +2,6 @@
  * Store UI - equipment shop for buying/selling ships, weapons, and ammo.
  */
 
-import { storeResupplyAllShips } from '../../../campaign/state';
 import { convertScrapToShip } from '../../../campaign/store/store';
 import type { CampaignState } from '../../../campaign/types';
 import { bindNavBar, type NavDestination } from '../../common/nav-bar';
@@ -82,14 +81,6 @@ const StoreScreenComponent: Screen<StoreState, StoreProps> = {
     if (screenEl) {
       bindNavBar(screenEl as HTMLElement, onNavigate);
     }
-
-    // Resupply button
-    api.on('#btn-resupply', 'click', () => {
-      const newState = storeResupplyAllShips(props.campaignState);
-      if (newState !== props.campaignState) {
-        onStateUpdate(newState);
-      }
-    });
 
     // Category buttons
     api.on('[data-cat]', 'click', (_e, el) => {

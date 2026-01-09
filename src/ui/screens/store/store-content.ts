@@ -2,7 +2,6 @@
  * Store Content Rendering - Layout and content generation for store screen.
  */
 
-import { getResupplyStatus } from '../../../campaign/state';
 import type { CampaignState } from '../../../campaign/types';
 import { type NavDestination, renderNavBar } from '../../common/nav-bar';
 import { renderDetailPanel } from './detail';
@@ -24,28 +23,6 @@ function renderCategoryTab(
   if (!isCategoryVisible(campaignState, category)) return '';
   const isSelected = selected === category;
   return `<button class="btn ${isSelected ? 'btn-primary' : ''}" data-cat="${category}" role="tab" aria-selected="${isSelected}">${label}</button>`;
-}
-
-/** Render the resupply button (for categories bar) */
-function renderResupplyButton(state: CampaignState): string {
-  const resupply = getResupplyStatus(state);
-
-  if (resupply.status === 'supplied') {
-    return `<span class="resupply-status">✓ Supplied</span>`;
-  }
-
-  if (resupply.status === 'insufficient') {
-    return `<span class="resupply-status resupply-warning">⚠ Insufficient Supply</span>`;
-  }
-
-  const canAfford = state.credits >= resupply.cost;
-  const warningClass = resupply.hasShortages ? ' has-shortage' : '';
-
-  return `
-    <button class="btn btn-resupply-small${warningClass}" id="btn-resupply" ${canAfford ? '' : 'disabled'}>
-      Resupply (${resupply.cost} cr)${resupply.hasShortages ? ' ⚠' : ''}
-    </button>
-  `;
 }
 
 /** Render the store content */
@@ -113,9 +90,6 @@ export function renderStoreContent(
             ${renderCategoryTab(campaignState, selectedCategory, 'secondaries', 'Missiles')}
             ${renderCategoryTab(campaignState, selectedCategory, 'ammo', 'Ammo')}
             ${renderCategoryTab(campaignState, selectedCategory, 'scrap', 'Scrap')}
-          </div>
-          <div class="category-actions">
-            ${renderResupplyButton(campaignState)}
           </div>
         </nav>
         <div class="store-layout">
