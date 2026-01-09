@@ -70,9 +70,9 @@ import type { BattleConfig, TeamConfig } from './battle-configs';
 
 /** Smoothed camera state for cinematic following */
 interface SmoothedCamera {
-  /** Current smoothed position */
+  /** Current camera position (computed from ship + offset) */
   position: THREE.Vector3;
-  /** Current smoothed rotation */
+  /** Current smoothed rotation (trails behind ship for cinematic effect) */
   rotation: THREE.Quaternion;
   /** Whether the camera has been initialized */
   initialized: boolean;
