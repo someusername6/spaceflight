@@ -138,6 +138,47 @@ export interface WeaponBankSpec {
   size: number;
 }
 
+/**
+ * Build link modes for primary weapons.
+ * Each bank gets an individual mode (index as string).
+ * 'all' mode added if 2+ non-instant-beam weapons (fires all except instant beams).
+ * Default is 'all' if it exists, otherwise first bank.
+ */
+export function buildLinkModes(weapons: PrimaryWeapon[]): {
+  linkModes: string[];
+  defaultLinkMode: number;
+} {
+  // Each bank is an individual mode (index as string)
+  const linkModes: string[] = weapons.map((_, i) => String(i));
+
+  // Count non-instant-beam weapons for 'all' mode eligibility
+  let nonInstantCount = 0;
+  for (const weapon of weapons) {
+    if (!weapon.isInstantBeam) nonInstantCount++;
+  }
+
+  // Add 'all' mode if 2+ non-instant-beam weapons
+  if (nonInstantCount >= 2) {
+    linkModes.push('all');
+  }
+
+  // Default to 'all' if it exists, otherwise first non-instant-beam, otherwise 0
+  let defaultLinkMode = linkModes.indexOf('all');
+  if (defaultLinkMode === -1) {
+    // Find first non-instant-beam weapon
+    for (let i = 0; i < weapons.length; i++) {
+      if (!weapons[i]?.isInstantBeam) {
+        defaultLinkMode = i;
+        break;
+      }
+    }
+    // If all are instant beams, default to 0
+    if (defaultLinkMode === -1) defaultLinkMode = 0;
+  }
+
+  return { linkModes, defaultLinkMode };
+}
+
 /** Creates a PrimaryWeapons component from bank specs */
 export function createPrimaryWeapons(
   bankSpecs: WeaponBankSpec[] | string[],
@@ -168,25 +209,15 @@ export function createPrimaryWeapons(
     if (weapon.category === 'beam') beamCount++;
   }
 
-  // Compute unique weapon types in order of first appearance
-  const seenTypes = new Set<string>();
-  const weaponTypes: string[] = [];
-  for (const weapon of weapons) {
-    if (!seenTypes.has(weapon.name)) {
-      seenTypes.add(weapon.name);
-      weaponTypes.push(weapon.name);
-    }
-  }
-  // Add 'all' mode at the end (only if multiple types)
-  const linkModes =
-    weaponTypes.length > 1 ? [...weaponTypes, 'all'] : weaponTypes;
+  // Build link modes: each bank individually, plus 'all' if 2+ non-instant-beam weapons
+  const { linkModes, defaultLinkMode } = buildLinkModes(weapons);
 
   return {
     type: 'primaryWeapons',
     weapons,
     currentIndex: 0,
     lastFireTime: 0,
-    linkMode: 0, // Default to first weapon type
+    linkMode: defaultLinkMode,
     linkModes,
     hasBeams: beamCount > 0,
     hasOnlyBeams: beamCount === weapons.length,
@@ -259,17 +290,30 @@ export function getWeaponIndicesForCurrentMode(
   weapons: PrimaryWeapons,
 ): number[] {
   const mode = getCurrentLinkMode(weapons);
+
+  // 'all' mode: fire all non-instant-beam weapons
   if (mode === 'all') {
-    return weapons.weapons.map((_, i) => i);
-  }
-  // Return indices of all weapons matching this type
-  const indices: number[] = [];
-  for (let i = 0; i < weapons.weapons.length; i++) {
-    if (weapons.weapons[i]?.name === mode) {
-      indices.push(i);
+    const indices: number[] = [];
+    for (let i = 0; i < weapons.weapons.length; i++) {
+      if (!weapons.weapons[i]?.isInstantBeam) {
+        indices.push(i);
+      }
     }
+    return indices;
   }
-  return indices;
+
+  // Individual bank mode: mode is bank index as string ('0', '1', etc.)
+  const bankIndex = Number.parseInt(mode, 10);
+  if (
+    !Number.isNaN(bankIndex) &&
+    bankIndex >= 0 &&
+    bankIndex < weapons.weapons.length
+  ) {
+    return [bankIndex];
+  }
+
+  // Fallback: empty array (shouldn't happen with valid linkModes)
+  return [];
 }
 
 /** Set link mode by weapon type name (for AI) */

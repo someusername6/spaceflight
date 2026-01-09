@@ -2,11 +2,12 @@
  * Campaign weapon conversion - converts campaign loadouts to game components.
  */
 
-import type {
-  PrimaryWeapon,
-  PrimaryWeapons,
-  SecondaryWeapon,
-  SecondaryWeapons,
+import {
+  buildLinkModes,
+  type PrimaryWeapon,
+  type PrimaryWeapons,
+  type SecondaryWeapon,
+  type SecondaryWeapons,
 } from '../components/weapons';
 import { MISSILES } from '../data/missiles';
 import { PRIMARY_WEAPONS } from '../data/weapons';
@@ -99,25 +100,15 @@ export function createPrimaryWeaponsFromCampaign(
     if (weapon.category === 'beam') beamCount++;
   }
 
-  // Compute unique weapon types in order of first appearance
-  const seenTypes = new Set<string>();
-  const weaponTypes: string[] = [];
-  for (const weapon of weapons) {
-    if (!seenTypes.has(weapon.name)) {
-      seenTypes.add(weapon.name);
-      weaponTypes.push(weapon.name);
-    }
-  }
-  // Add 'all' mode at the end (only if multiple types)
-  const linkModes =
-    weaponTypes.length > 1 ? [...weaponTypes, 'all'] : weaponTypes;
+  // Build link modes: each bank individually, plus 'all' if 2+ non-instant-beam weapons
+  const { linkModes, defaultLinkMode } = buildLinkModes(weapons);
 
   return {
     type: 'primaryWeapons',
     weapons,
     currentIndex: 0,
     lastFireTime: 0,
-    linkMode: 0,
+    linkMode: defaultLinkMode,
     linkModes,
     hasBeams: beamCount > 0,
     hasOnlyBeams: beamCount === weapons.length,

@@ -149,13 +149,28 @@ export function updateWeaponDisplay(
     const currentMode = getCurrentLinkMode(primary);
     if (display.lastLinkMode !== currentMode) {
       display.lastLinkMode = currentMode;
-      const modeLabel =
-        currentMode === 'all' ? 'ALL' : currentMode.toUpperCase();
+      let modeLabel: string;
+      let isLinked: boolean;
+
+      if (currentMode === 'all') {
+        modeLabel = 'ALL';
+        isLinked = true;
+      } else {
+        // Individual bank mode - show weapon name + bank number (1-indexed)
+        const bankIndex = Number.parseInt(currentMode, 10);
+        if (!Number.isNaN(bankIndex) && primary.weapons[bankIndex]) {
+          const weaponName = primary.weapons[bankIndex].name.toUpperCase();
+          modeLabel = `${weaponName} ${bankIndex + 1}`;
+        } else {
+          modeLabel = currentMode.toUpperCase();
+        }
+        isLinked = false;
+      }
+
       display.linkIndicator.textContent = modeLabel;
-      display.linkIndicator.className =
-        currentMode === 'all'
-          ? 'link-indicator linked'
-          : 'link-indicator single';
+      display.linkIndicator.className = isLinked
+        ? 'link-indicator linked'
+        : 'link-indicator single';
     }
 
     const heatPct = heat ? Math.round((heat.current / heat.max) * 100) : 0;
@@ -177,7 +192,8 @@ export function updateWeaponDisplay(
     for (let i = 0; i < primary.weapons.length; i++) {
       const w = primary.weapons[i] as (typeof primary.weapons)[0];
       const bank = display.primaryBanks[i] as (typeof display.primaryBanks)[0];
-      const isSelected = i === primary.currentIndex;
+      // Highlight all weapons in current link mode, not just currentIndex
+      const isSelected = linkModeIndices.includes(i);
       const ammoText = w.ammo !== undefined ? `${w.ammo}/${w.maxAmmo}` : '∞';
 
       // Cooldown logic: weapons in current link mode show cooldown together

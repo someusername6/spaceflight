@@ -36,6 +36,7 @@ const QUICK_TESTS = [
   'weapons/test-weapons-integration.mjs',
   'weapons/test-missile-lock-cone.mjs',
   'weapons/test-missile-owner-collision.mjs',
+  'weapons/test-link-modes.mjs',
 
   // AI logic tests (non-simulation)
   'ai/test-ai-lock-system.mjs',
