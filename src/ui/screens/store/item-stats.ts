@@ -33,7 +33,7 @@ function formatBeamDamage(stats: WeaponStats): string {
 const iconError = `onerror="this.onerror=null; this.src='${FALLBACK_ICON_PATH}'"`;
 
 /** Render item preview - stylized visual representation */
-function renderItemPreview(category: StoreCategory, id: string): string {
+export function renderItemPreview(category: StoreCategory, id: string): string {
   const categoryColors: Record<StoreCategory, string> = {
     ships: 'var(--color-secondary)',
     primaries: 'var(--color-primary)',
@@ -90,20 +90,19 @@ function renderItemPreview(category: StoreCategory, id: string): string {
   `;
 }
 
-/** Render ship stats */
+/** Render ship stats (stats section only, no preview) */
 export function renderShipStats(shipClass: string): string {
   const statsRows = renderShipStatsRows(shipClass, { classPrefix: 'stat' });
   if (!statsRows) return '';
 
   return `
-    ${renderItemPreview('ships', shipClass)}
     <div class="item-stats">
       ${statsRows}
     </div>
   `;
 }
 
-/** Render primary weapon stats */
+/** Render primary weapon stats (stats section only, no preview) */
 export function renderPrimaryStats(weaponType: string): string {
   const stats = PRIMARY_WEAPONS[weaponType];
   if (!stats) return '';
@@ -167,7 +166,6 @@ export function renderPrimaryStats(weaponType: string): string {
     stats.projectileSpeed > 0 ? `${stats.projectileSpeed} m/s` : '';
 
   return `
-    ${renderItemPreview('primaries', weaponType)}
     <div class="item-stats">
       <div class="stat-row"><span>Category</span><span>${categoryText}</span></div>
       <div class="stat-row"><span>${damageLabel}</span><span>${damageText}</span></div>
@@ -183,7 +181,7 @@ export function renderPrimaryStats(weaponType: string): string {
   `;
 }
 
-/** Render secondary weapon stats */
+/** Render secondary weapon stats (stats section only, no preview) */
 export function renderSecondaryStats(weaponType: string): string {
   const stats = MISSILES[weaponType];
   if (!stats) return '';
@@ -194,7 +192,6 @@ export function renderSecondaryStats(weaponType: string): string {
     : 'N/A';
 
   return `
-    ${renderItemPreview('secondaries', weaponType)}
     <div class="item-stats">
       <div class="stat-row"><span>Size</span><span>${stats.capacity} per bank</span></div>
       <div class="stat-row"><span>Damage</span><span>${stats.damage}</span></div>
@@ -207,14 +204,13 @@ export function renderSecondaryStats(weaponType: string): string {
   `;
 }
 
-/** Render ammo stats */
+/** Render ammo stats (stats section only, no preview) */
 export function renderAmmoStats(weaponType: string): string {
   const weapon = PRIMARY_WEAPONS[weaponType];
   if (!weapon || weapon.ammo === undefined) return '';
 
   const roundsText = weapon.ammo === 1 ? 'round' : 'rounds';
   return `
-    ${renderItemPreview('ammo', weaponType)}
     <div class="item-stats">
       <div class="stat-row"><span>Weapon</span><span>${weapon.name}</span></div>
       <div class="stat-row"><span>Capacity per bank size</span><span>${weapon.ammo} ${roundsText}</span></div>
@@ -222,7 +218,7 @@ export function renderAmmoStats(weaponType: string): string {
   `;
 }
 
-/** Render scrap stats */
+/** Render scrap stats (stats section only, no preview) */
 export function renderScrapStats(shipClass: string): string {
   const ship = SHIP_CLASSES[shipClass];
   if (!ship) return '';
@@ -238,7 +234,6 @@ export function renderScrapStats(shipClass: string): string {
   );
 
   return `
-    ${renderItemPreview('scrap', shipClass)}
     <div class="item-stats">
       <div class="stat-row"><span>Hull</span><span>${displayName}</span></div>
       <div class="stat-row"><span>Primary banks</span><span>${primaryBankStr}</span></div>

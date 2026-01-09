@@ -23,6 +23,7 @@ import { PRIMARY_WEAPONS } from '../../../data/weapons';
 // Re-export stat renderers from item-stats module
 export {
   renderAmmoStats,
+  renderItemPreview,
   renderPrimaryStats,
   renderScrapStats,
   renderSecondaryStats,

@@ -13,6 +13,7 @@ import {
   getItemPrice,
   getStorageCount,
   renderAmmoStats,
+  renderItemPreview,
   renderPrimaryStats,
   renderScrapStats,
   renderSecondaryStats,
@@ -39,6 +40,7 @@ function renderStats(category: StoreCategory, itemId: string): string {
 /** Render scrap detail panel (sell-only with conversion) */
 function renderScrapDetail(
   state: CampaignState,
+  category: StoreCategory,
   itemId: string,
   storageCount: number,
   sellPrice: number,
@@ -51,25 +53,33 @@ function renderScrapDetail(
   const canConvert = canConvertScrapToShip(state, itemId);
   const storageText = storageCount > 0 ? `In storage: ${storageCount}` : '';
   const displayName = itemId.charAt(0).toUpperCase() + itemId.slice(1);
+  const previewHtml = renderItemPreview(category, itemId);
 
   return `
     <div class="store-detail">
-      <div class="detail-header">${displayName} Scrap</div>
-      ${statsHtml}
-      ${storageText ? `<div class="detail-storage">${storageText}</div>` : ''}
-      <div class="detail-actions detail-actions-bottom">
-        <button class="btn btn-convert" id="btn-convert" ${canConvert ? '' : 'disabled'}>
-          Convert&nbsp;to&nbsp;Ship (${SCRAP_PER_SHIP}&nbsp;scrap,&nbsp;${conversionFee}&nbsp;cr)
-        </button>
-        <button class="btn btn-sell" id="btn-sell" ${canSell ? '' : 'disabled'}>
-          Sell&nbsp;×1<br>(${sellPrice}&nbsp;cr)
-        </button>
-        <button class="btn btn-sell" id="btn-sell-bulk" ${canSellBulk10 ? '' : 'disabled'}>
-          Sell&nbsp;×10<br>(${sellPrice * 10}&nbsp;cr)
-        </button>
-        <button class="btn btn-sell" id="btn-sell-bulk-100" ${canSellBulk100 ? '' : 'disabled'}>
-          Sell&nbsp;×100<br>(${sellPrice * 100}&nbsp;cr)
-        </button>
+      <div class="detail-fixed-top">
+        <div class="detail-header">${displayName} Scrap</div>
+        ${previewHtml}
+      </div>
+      <div class="detail-scrollable">
+        ${statsHtml}
+      </div>
+      <div class="detail-fixed-bottom">
+        ${storageText ? `<div class="detail-storage">${storageText}</div>` : ''}
+        <div class="detail-actions">
+          <button class="btn btn-convert" id="btn-convert" ${canConvert ? '' : 'disabled'}>
+            Convert&nbsp;to&nbsp;Ship (${SCRAP_PER_SHIP}&nbsp;scrap,&nbsp;${conversionFee}&nbsp;cr)
+          </button>
+          <button class="btn btn-sell" id="btn-sell" ${canSell ? '' : 'disabled'}>
+            Sell&nbsp;×1<br>(${sellPrice}&nbsp;cr)
+          </button>
+          <button class="btn btn-sell" id="btn-sell-bulk" ${canSellBulk10 ? '' : 'disabled'}>
+            Sell&nbsp;×10<br>(${sellPrice * 10}&nbsp;cr)
+          </button>
+          <button class="btn btn-sell" id="btn-sell-bulk-100" ${canSellBulk100 ? '' : 'disabled'}>
+            Sell&nbsp;×100<br>(${sellPrice * 100}&nbsp;cr)
+          </button>
+        </div>
       </div>
     </div>
   `;
@@ -89,6 +99,7 @@ function renderStandardDetail(
   const canAfford = state.credits >= buyPrice && storeStockCount > 0;
   const canSell = storageCount > 0;
   const storageText = storageCount > 0 ? `In storage: ${storageCount}` : '';
+  const previewHtml = renderItemPreview(category, itemId);
 
   // Batch sizes depend on item type
   const isMissile = category === 'secondaries';
@@ -129,18 +140,25 @@ function renderStandardDetail(
 
   return `
     <div class="store-detail">
-      <div class="detail-header">${headerTitle}</div>
-      ${statsHtml}
-      ${storageText ? `<div class="detail-storage">${storageText}</div>` : ''}
-      <div class="detail-actions">
-        <button class="btn btn-buy" id="btn-buy" ${canAfford ? '' : 'disabled'}>
-          Buy${buyQtyText}(${singleBuyPrice}&nbsp;cr)
-        </button>
-        ${showBulk ? `<button class="btn btn-buy" id="btn-buy-bulk" ${canAffordBulk ? '' : 'disabled'}>Buy&nbsp;×${bulkAmount}<br>(${bulkPrice}&nbsp;cr)</button>` : ''}
-        <button class="btn btn-sell" id="btn-sell" ${canSell ? '' : 'disabled'}>
-          Sell${sellQtyText}(${singleSellPrice}&nbsp;cr)
-        </button>
-        ${showBulk ? `<button class="btn btn-sell" id="btn-sell-bulk" ${canSellBulk ? '' : 'disabled'}>Sell&nbsp;×${bulkAmount}<br>(${bulkSellPrice}&nbsp;cr)</button>` : ''}
+      <div class="detail-fixed-top">
+        <div class="detail-header">${headerTitle}</div>
+        ${previewHtml}
+      </div>
+      <div class="detail-scrollable">
+        ${statsHtml}
+      </div>
+      <div class="detail-fixed-bottom">
+        ${storageText ? `<div class="detail-storage">${storageText}</div>` : ''}
+        <div class="detail-actions">
+          <button class="btn btn-buy" id="btn-buy" ${canAfford ? '' : 'disabled'}>
+            Buy${buyQtyText}(${singleBuyPrice}&nbsp;cr)
+          </button>
+          ${showBulk ? `<button class="btn btn-buy" id="btn-buy-bulk" ${canAffordBulk ? '' : 'disabled'}>Buy&nbsp;×${bulkAmount}<br>(${bulkPrice}&nbsp;cr)</button>` : ''}
+          <button class="btn btn-sell" id="btn-sell" ${canSell ? '' : 'disabled'}>
+            Sell${sellQtyText}(${singleSellPrice}&nbsp;cr)
+          </button>
+          ${showBulk ? `<button class="btn btn-sell" id="btn-sell-bulk" ${canSellBulk ? '' : 'disabled'}>Sell&nbsp;×${bulkAmount}<br>(${bulkSellPrice}&nbsp;cr)</button>` : ''}
+        </div>
       </div>
     </div>
   `;
@@ -173,6 +191,7 @@ export function renderDetailPanel(
   if (category === 'scrap') {
     return renderScrapDetail(
       state,
+      category,
       selectedItem,
       storageCount,
       sellPrice,

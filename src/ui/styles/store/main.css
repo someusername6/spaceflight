@@ -146,8 +146,7 @@
   background: var(--bg-panel);
   border: 1px solid var(--border-color);
   padding: var(--space-5);
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
   min-height: 0;
   min-width: 0;
 }
@@ -156,6 +155,26 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  overflow: hidden;
+}
+
+/* Fixed top section: header + preview image */
+.detail-fixed-top {
+  flex-shrink: 0;
+}
+
+/* Scrollable middle section: stats */
+.detail-scrollable {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  scrollbar-gutter: stable;
+}
+
+/* Fixed bottom section: action buttons */
+.detail-fixed-bottom {
+  flex-shrink: 0;
+  padding-top: var(--space-4);
 }
 
 .detail-header {
@@ -176,7 +195,7 @@
   padding: var(--space-2) var(--space-3);
   background: rgba(0, 245, 255, 0.05);
   border: 1px solid var(--border-color);
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-3);
 }
 
 /* ========================================
@@ -187,7 +206,6 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
-  margin-top: auto;
 }
 
 .detail-actions .btn {
