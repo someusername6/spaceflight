@@ -80,13 +80,9 @@ interface SmoothedCamera {
   lastFollowed: Entity | null;
 }
 
-/** Camera smoothing configuration */
-const CAMERA_SMOOTHING = {
-  /** Position lerp factor (0-1, higher = faster/less smooth) */
-  positionLerp: 0.08,
-  /** Rotation slerp factor (0-1, higher = faster/less smooth) */
-  rotationLerp: 0.05,
-  /** Camera offset behind and above ship */
+/** Camera configuration */
+const CAMERA_CONFIG = {
+  /** Camera offset behind and above ship (in ship's local space) */
   offset: new THREE.Vector3(0, 5, 20),
 };
 
@@ -97,7 +93,7 @@ export interface BattleSimulation {
   container: HTMLElement;
   renderer: ReturnType<typeof createRenderer>;
   camera: BattleCamera;
-  /** Smoothed camera for cinematic effect */
+  /** Camera state for following ships */
   smoothedCamera: SmoothedCamera;
   // Effect renderers
   dustSystem: ReturnType<typeof createDustSystem>;
@@ -276,9 +272,8 @@ function updateRender(sim: BattleSimulation, alpha: number): void {
   updateTorchRenderer(sim.torchRenderer, scene, world);
   updateProjectileHitRenderer(sim.projectileHitRenderer, scene, world);
 
-  // Update camera following with smoothing
-  const dt = 1 / 60; // Fixed timestep
-  const followed = updateBattleCamera(camera, world, dt);
+  // Update camera following
+  const followed = updateBattleCamera(camera, world, 1 / 60);
   if (followed !== null) {
     const transform = getComponent<Transform>(world, followed, 'transform');
     if (transform) {
@@ -301,7 +296,14 @@ function updateRender(sim: BattleSimulation, alpha: number): void {
 const targetPosition = new THREE.Vector3();
 const targetOffset = new THREE.Vector3();
 
-/** Update camera with smooth following */
+/**
+ * Update camera to follow ship directly using interpolated state.
+ *
+ * Key insight: Physics interpolation already provides smooth motion.
+ * Adding camera smoothing on top creates "double smoothing" that fights
+ * the interpolation and causes jitter. The camera should follow the
+ * interpolated position exactly, with smoothing ONLY during target transitions.
+ */
 function updateSmoothedCamera(
   sim: BattleSimulation,
   followedEntity: Entity,
@@ -316,31 +318,28 @@ function updateSmoothedCamera(
   const shipPosition = interpPos ?? transform.position;
   const shipRotation = interpRot ?? transform.rotation;
 
-  // Reset smoothing when target changes or on first frame
+  // Calculate target camera position (offset behind ship using ship's rotation)
+  targetOffset.copy(CAMERA_CONFIG.offset);
+  targetOffset.applyQuaternion(shipRotation);
+  targetPosition.copy(shipPosition).add(targetOffset);
+
+  // Detect target change
   const targetChanged = smoothedCamera.lastFollowed !== followedEntity;
+
   if (!smoothedCamera.initialized || targetChanged) {
+    // First frame or target switch: snap to position (no smoothing)
+    smoothedCamera.position.copy(targetPosition);
     smoothedCamera.rotation.copy(shipRotation);
-    // Calculate initial position using ship rotation
-    targetOffset.copy(CAMERA_SMOOTHING.offset);
-    targetOffset.applyQuaternion(shipRotation);
-    smoothedCamera.position.copy(shipPosition).add(targetOffset);
     smoothedCamera.initialized = true;
     smoothedCamera.lastFollowed = followedEntity;
   } else {
-    // First: smooth rotation toward ship rotation
-    smoothedCamera.rotation.slerp(shipRotation, CAMERA_SMOOTHING.rotationLerp);
-
-    // Calculate offset using CAMERA's smoothed rotation (not ship's)
-    // This prevents rotation discontinuities from causing position jumps
-    targetOffset.copy(CAMERA_SMOOTHING.offset);
-    targetOffset.applyQuaternion(smoothedCamera.rotation);
-    targetPosition.copy(shipPosition).add(targetOffset);
-
-    // Smooth position toward target
-    smoothedCamera.position.lerp(targetPosition, CAMERA_SMOOTHING.positionLerp);
+    // Normal following: use interpolated position directly (no additional smoothing)
+    // This ensures camera maintains exact offset from ship with no delay/oscillation
+    smoothedCamera.position.copy(targetPosition);
+    smoothedCamera.rotation.copy(shipRotation);
   }
 
-  // Apply smoothed values to actual camera
+  // Apply to actual camera
   threeCamera.position.copy(smoothedCamera.position);
   threeCamera.quaternion.copy(smoothedCamera.rotation);
 }
