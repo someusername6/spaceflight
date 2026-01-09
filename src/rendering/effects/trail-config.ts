@@ -11,7 +11,7 @@ export interface WeaponVisualConfig {
   enemyColor: THREE.Color;
   trailLength: number;
   boltSize: number; // Scale for bolt mesh
-  boltShape: 'sphere' | 'cylinder';
+  boltShape: 'sphere' | 'cylinder' | 'capsule';
 }
 
 /** Visual configs per weapon */
@@ -21,22 +21,22 @@ const WEAPON_VISUALS: Record<string, WeaponVisualConfig> = {
     color: new THREE.Color(0.2, 1.0, 0.4), // Bright green
     enemyColor: new THREE.Color(1.0, 0.2, 0.3), // Red-pink
     trailLength: 8,
-    boltSize: 0.6,
-    boltShape: 'sphere',
+    boltSize: 0.3,
+    boltShape: 'capsule',
   },
   Pulse: {
     color: new THREE.Color(0.3, 0.9, 1.0), // Cyan
     enemyColor: new THREE.Color(1.0, 0.5, 0.2), // Orange
     trailLength: 5,
-    boltSize: 0.35,
-    boltShape: 'sphere',
+    boltSize: 0.25,
+    boltShape: 'capsule',
   },
   Ion: {
     color: new THREE.Color(0.4, 0.5, 1.0), // Blue-purple
     enemyColor: new THREE.Color(1.0, 0.3, 0.5), // Magenta
     trailLength: 7,
-    boltSize: 0.5,
-    boltShape: 'sphere',
+    boltSize: 0.3,
+    boltShape: 'capsule',
   },
   // Ballistic weapons
   Autocannon: {
@@ -74,8 +74,8 @@ const DEFAULT_VISUAL: WeaponVisualConfig = {
   color: new THREE.Color(0.5, 1.0, 0.5),
   enemyColor: new THREE.Color(1.0, 0.5, 0.3),
   trailLength: 6,
-  boltSize: 0.4,
-  boltShape: 'sphere',
+  boltSize: 0.3,
+  boltShape: 'capsule',
 };
 
 /** Get visual config for a weapon */

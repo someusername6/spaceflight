@@ -20,7 +20,6 @@ import { DUST_LAYER } from './effects/dust';
 import {
   createDecoyMesh,
   createMissileMesh,
-  createProjectileMesh,
   createShipMesh,
 } from './mesh-factory';
 import {
@@ -149,12 +148,12 @@ export function syncScene(renderer: Renderer, world: World, alpha = 1): void {
   // Update or create meshes for entities with transforms
   for (const entity of queryEntities(world, ['transform'])) {
     // Whitelist: only create meshes for known renderable entity types
-    const isProjectile = hasComponent(world, entity, 'projectile');
+    // Note: projectiles use trail bolt as visual (no entity mesh needed)
     const isMissile = hasComponent(world, entity, 'missile');
     const isDecoy = hasComponent(world, entity, 'decoy');
     const isShipEntity = isShip(world, entity);
 
-    if (!isProjectile && !isMissile && !isDecoy && !isShipEntity) continue;
+    if (!isMissile && !isDecoy && !isShipEntity) continue;
 
     seenEntities.add(entity);
     // Query guarantees this component exists
@@ -169,9 +168,7 @@ export function syncScene(renderer: Renderer, world: World, alpha = 1): void {
 
     if (!mesh) {
       // Create appropriate mesh based on entity type
-      if (isProjectile) {
-        mesh = createProjectileMesh(faction?.faction ?? Faction.Neutral);
-      } else if (isMissile) {
+      if (isMissile) {
         const missile = getComponent<Missile>(world, entity, 'missile');
         mesh = createMissileMesh(missile?.missileType ?? 'seeker');
       } else if (isDecoy) {

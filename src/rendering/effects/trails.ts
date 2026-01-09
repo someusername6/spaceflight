@@ -39,6 +39,7 @@ export interface TrailRenderer {
   trails: Map<Entity, ProjectileTrail>;
   energyBoltGeometry: THREE.SphereGeometry;
   ballisticBoltGeometry: THREE.CylinderGeometry;
+  capsuleBoltGeometry: THREE.CapsuleGeometry;
   /** Pool of inactive trail objects (for reuse) */
   pool: ProjectileTrail[];
   /** Scene reference for adding/removing objects */
@@ -53,6 +54,8 @@ export function createTrailRenderer(): TrailRenderer {
     energyBoltGeometry: new THREE.SphereGeometry(0.5, 8, 6),
     // Ballistic bolts: elongated cylinders (bullet-like)
     ballisticBoltGeometry: new THREE.CylinderGeometry(0.15, 0.15, 1.2, 6),
+    // Capsule bolts: elongated blaster-style (rounded cylinder)
+    capsuleBoltGeometry: new THREE.CapsuleGeometry(0.12, 0.5, 4, 8),
     // Object pool for reusing trail objects
     pool: [],
     scene: null,
@@ -191,7 +194,9 @@ function createNewTrail(
   const boltGeometry =
     visual.boltShape === 'sphere'
       ? renderer.energyBoltGeometry
-      : renderer.ballisticBoltGeometry;
+      : visual.boltShape === 'capsule'
+        ? renderer.capsuleBoltGeometry
+        : renderer.ballisticBoltGeometry;
 
   const boltMaterial = new THREE.MeshBasicMaterial({
     color: baseColor,
@@ -380,5 +385,6 @@ export function disposeTrailRenderer(
   // Dispose shared geometries
   renderer.energyBoltGeometry.dispose();
   renderer.ballisticBoltGeometry.dispose();
+  renderer.capsuleBoltGeometry.dispose();
   renderer.scene = null;
 }
