@@ -164,8 +164,12 @@
 }
 
 .btn-title.btn-primary:hover {
-  background: rgba(255, 159, 28, 0.25);
-  box-shadow: 0 0 12px var(--color-primary-glow);
+  background: rgba(255, 159, 28, 0.35);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  box-shadow:
+    0 0 20px var(--color-primary-glow),
+    inset 0 0 12px rgba(255, 159, 28, 0.15);
 }
 
 .title-footer {
