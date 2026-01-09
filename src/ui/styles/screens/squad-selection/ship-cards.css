@@ -40,6 +40,12 @@
   grid-template-columns: 24px 48px 1fr auto;
 }
 
+/* Multiselect: remove yellow background/border since checkbox shows state */
+.squad-card.selected {
+  background: var(--bg-panel);
+  border-left: none;
+}
+
 /* Unselected dimming */
 .squad-card:not(.selected):not(.commander) {
   opacity: 0.5;

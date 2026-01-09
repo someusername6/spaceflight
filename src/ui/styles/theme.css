@@ -59,10 +59,16 @@
   --bg-panel: var(--bg-raised);
   --bg-panel-hover: var(--bg-raised-hover);
 
-  /* Interactive surface states */
+  /* Interactive surface states (amber - for buttons, controls) */
   --bg-interactive: rgba(255, 159, 28, 0.08);
   --bg-interactive-hover: rgba(255, 159, 28, 0.12);
   --bg-interactive-active: rgba(255, 159, 28, 0.16);
+
+  /* List item states (cyan hover, yellow selected - for selectable lists) */
+  --bg-list-hover: rgba(0, 245, 255, 0.12);
+  --border-list-hover: rgba(0, 245, 255, 0.4);
+  --bg-list-selected: rgba(255, 217, 61, 0.15);
+  --border-list-selected: var(--color-warning);
 
   /* Tinted surfaces (for type-coded elements) */
   --bg-tinted-primary: rgb(30, 22, 12);

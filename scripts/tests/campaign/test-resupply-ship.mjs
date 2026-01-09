@@ -242,7 +242,7 @@ console.log('\nTesting message generation...');
   console.log('  - One message per item type: PASS');
 }
 
-// Test: shortageReason in messages
+// Test: shortageReason in messages with explicit item names
 console.log('\nTesting shortageReason in resupply messages...');
 {
   const creditShortageState = createTestState({
@@ -263,6 +263,11 @@ console.log('\nTesting shortageReason in resupply messages...');
     creditMessages.includes('insufficient credits'),
     'Message mentions credits',
   );
+  assert.ok(
+    creditMessages.includes('autocannon'),
+    'Message mentions specific item',
+  );
+  assert.ok(creditMessages.includes('Short'), 'Message uses Short prefix');
 
   const stockShortageState = createTestState({
     currentAmmo: 0,
@@ -275,9 +280,14 @@ console.log('\nTesting shortageReason in resupply messages...');
   assert.strictEqual(stockResult.shortageReason, 'stock', 'Reason is stock');
   const stockMessages = stockResult.messages.join(' ');
   assert.ok(stockMessages.includes('out of stock'), 'Message mentions stock');
+  assert.ok(
+    stockMessages.includes('autocannon'),
+    'Message mentions specific item',
+  );
 
   console.log('  - Credit shortage reason: PASS');
   console.log('  - Stock shortage reason: PASS');
+  console.log('  - Messages include specific item names: PASS');
 }
 
 console.log('\n=== All Resupply Ship Tests Passed ===');

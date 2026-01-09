@@ -85,22 +85,23 @@
 .btn-primary {
   background: linear-gradient(
     180deg,
-    rgba(255, 159, 28, 0.2) 0%,
-    rgba(255, 159, 28, 0.1) 100%
+    color-mix(in srgb, var(--color-primary) 40%, transparent) 0%,
+    color-mix(in srgb, var(--color-primary) 25%, transparent) 100%
   );
   border-color: var(--color-primary);
-  color: var(--color-primary);
+  color: var(--text-primary);
 }
 
 .btn-primary:hover:not(:disabled) {
   background: linear-gradient(
     180deg,
-    rgba(255, 159, 28, 0.3) 0%,
-    rgba(255, 159, 28, 0.15) 100%
+    color-mix(in srgb, var(--color-primary) 55%, transparent) 0%,
+    color-mix(in srgb, var(--color-primary) 35%, transparent) 100%
   );
+  color: var(--text-primary);
   box-shadow:
     var(--shadow-md),
-    var(--shadow-glow-primary),
+    0 0 15px var(--color-primary-glow),
     inset 0 1px 0 var(--highlight-strong);
 }
 
@@ -128,18 +129,26 @@
 }
 
 .btn-success {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-success) 40%, transparent) 0%,
+    color-mix(in srgb, var(--color-success) 25%, transparent) 100%
+  );
   border-color: var(--color-success);
-  color: var(--color-success);
-  background: rgba(0, 255, 136, 0.05);
+  color: var(--text-primary);
 }
 
 .btn-success:hover:not(:disabled) {
-  background: rgba(0, 255, 136, 0.15);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-success) 55%, transparent) 0%,
+    color-mix(in srgb, var(--color-success) 35%, transparent) 100%
+  );
   border-color: var(--color-success);
-  color: var(--color-success);
+  color: var(--text-primary);
   box-shadow:
     var(--shadow-md),
-    0 0 20px var(--color-success-glow),
+    0 0 15px var(--color-success-glow),
     inset 0 1px 0 var(--highlight-medium);
 }
 

@@ -48,7 +48,7 @@ export function renderRecruitViewer(
       </div>
 
       <div class="recruit-hire-section">
-        <div class="recruit-price-large">
+        <div class="recruit-price-large${canAfford ? '' : ' expensive'}">
           ${recruit.price.toLocaleString()}<span class="currency">cr</span>
         </div>
         <button
@@ -59,7 +59,6 @@ export function renderRecruitViewer(
         >
           Hire Pilot
         </button>
-        ${canAfford ? '' : '<div class="recruit-hire-note error">Insufficient credits</div>'}
       </div>
     </div>
   `;

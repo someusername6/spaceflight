@@ -72,16 +72,16 @@
 }
 
 .store-item:hover {
-  background: var(--bg-interactive-hover);
-  border-color: var(--border-interactive-hover);
+  background: var(--bg-list-hover);
+  border-color: var(--border-list-hover);
 }
 
 .store-item.selected {
-  background: var(--bg-interactive-active);
-  border-color: var(--color-primary);
+  background: var(--bg-list-selected);
+  border-color: var(--border-list-selected);
   box-shadow:
-    inset 0 0 12px rgba(255, 159, 28, 0.1),
-    0 0 8px var(--color-primary-glow);
+    inset 0 0 12px color-mix(in srgb, var(--color-warning) 10%, transparent),
+    0 0 8px var(--color-warning-glow);
 }
 
 .store-item.selected::before {
@@ -91,7 +91,7 @@
   top: 0;
   bottom: 0;
   width: 3px;
-  background: var(--color-primary);
+  background: var(--color-warning);
 }
 
 .store-item .item-name {

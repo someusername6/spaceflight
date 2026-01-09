@@ -23,7 +23,7 @@
 }
 
 .ship-item:hover {
-  background: rgba(0, 245, 255, 0.05);
+  background: var(--bg-list-hover);
 }
 
 .ship-item:focus-visible {
@@ -31,20 +31,10 @@
   outline-offset: -2px;
 }
 
-/* Selected state */
+/* Selected state - yellow for consistency with store */
 .ship-item.selected {
-  background: rgba(0, 245, 255, 0.1);
-  border-left: 2px solid var(--color-secondary);
-}
-
-/* Commander state */
-.ship-item.commander {
-  border-left: 2px solid var(--color-primary);
-}
-
-.ship-item.commander.selected {
-  background: rgba(255, 159, 28, 0.1);
-  border-left: 2px solid var(--color-primary);
+  background: var(--bg-list-selected);
+  border-left: 2px solid var(--border-list-selected);
 }
 
 /* ========================================

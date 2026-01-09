@@ -8,7 +8,11 @@
 import { getAmmoPrice, getSecondaryPrice } from '../../data/prices';
 import type { CampaignState } from '../types';
 import { needsResupply } from './resupply-needs';
-import { type ResupplyResult, resupplyShipConstrained } from './resupply-ship';
+import {
+  getShortageReason,
+  type ResupplyResult,
+  resupplyShipConstrained,
+} from './resupply-ship';
 
 export {
   estimateAllShipsResupplyCost,
@@ -54,7 +58,6 @@ export function resupplyAllShipsConstrained(
   let creditsSpent = 0;
   let currentState = state;
   let shipsResupplied = 0;
-  let shipsWithShortages = 0;
 
   for (const ship of sortedShips) {
     if (!needsResupply(ship)) continue;
@@ -84,9 +87,6 @@ export function resupplyAllShipsConstrained(
     }
 
     shipsResupplied++;
-    if (!result.success) {
-      shipsWithShortages++;
-    }
   }
 
   // Build messages
@@ -151,20 +151,22 @@ export function resupplyAllShipsConstrained(
     }
   }
 
-  if (shipsWithShortages > 0) {
-    const shipWord = shipsWithShortages === 1 ? 'ship' : 'ships';
-    if (shortageReason === 'credits') {
-      messages.push(
-        `${shipsWithShortages} ${shipWord} short (insufficient credits)`,
-      );
-    } else if (shortageReason === 'stock') {
-      messages.push(`${shipsWithShortages} ${shipWord} short (out of stock)`);
-    } else {
-      messages.push(
-        `${shipsWithShortages} ${shipWord} short (insufficient credits)`,
-      );
-      messages.push(`${shipsWithShortages} ${shipWord} short (out of stock)`);
-    }
+  // Generate per-item shortage messages with explicit reasons
+  for (const [wt, count] of shortages.ammo) {
+    const stock = currentState.storeStock.ammo[wt] ?? 0;
+    const pricePerUnit = getAmmoPrice(wt, 'buy');
+    const canAffordOne =
+      pricePerUnit > 0 && currentState.credits >= pricePerUnit;
+    const reason = getShortageReason(stock, canAffordOne);
+    messages.push(`Short ${count} ${wt} ammo (${reason})`);
+  }
+  for (const [wt, count] of shortages.missiles) {
+    const stock = currentState.storeStock.secondaries[wt] ?? 0;
+    const pricePerUnit = getSecondaryPrice(wt, 'buy');
+    const canAffordOne =
+      pricePerUnit > 0 && currentState.credits >= pricePerUnit;
+    const reason = getShortageReason(stock, canAffordOne);
+    messages.push(`Short ${count} ${wt} (${reason})`);
   }
 
   return {

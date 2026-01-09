@@ -74,6 +74,20 @@ function consumeMissilesFromStorage(
   return { newStorage, consumed };
 }
 
+/** Get shortage reason based on stock and affordability */
+export function getShortageReason(
+  stock: number,
+  canAffordOne: boolean,
+): string {
+  if (stock === 0 && !canAffordOne) {
+    return 'insufficient credits and stock';
+  }
+  if (stock === 0) {
+    return 'out of stock';
+  }
+  return 'insufficient credits';
+}
+
 /** Create empty result helper */
 export function emptyResult(
   state: CampaignState,
@@ -310,14 +324,20 @@ export function resupplyShipConstrained(
     messages.push(`Bought ${count} ${wt} for ${cost} cr`);
   }
 
-  if (totalShortage > 0) {
-    if (shortageReason === 'credits') {
-      messages.push(`${totalShortage} unavailable (insufficient credits)`);
-    } else if (shortageReason === 'stock') {
-      messages.push(`${totalShortage} unavailable (out of stock)`);
-    } else {
-      messages.push(`${totalShortage} unavailable (low credits/stock)`);
-    }
+  // Generate per-item shortage messages with explicit reasons
+  for (const [wt, count] of shortages.ammo) {
+    const stock = newStoreStock.ammo[wt] ?? 0;
+    const pricePerUnit = getAmmoPrice(wt, 'buy');
+    const canAffordOne = pricePerUnit > 0 && newCredits >= pricePerUnit;
+    const reason = getShortageReason(stock, canAffordOne);
+    messages.push(`Short ${count} ${wt} ammo (${reason})`);
+  }
+  for (const [wt, count] of shortages.missiles) {
+    const stock = newStoreStock.secondaries[wt] ?? 0;
+    const pricePerUnit = getSecondaryPrice(wt, 'buy');
+    const canAffordOne = pricePerUnit > 0 && newCredits >= pricePerUnit;
+    const reason = getShortageReason(stock, canAffordOne);
+    messages.push(`Short ${count} ${wt} (${reason})`);
   }
 
   return {

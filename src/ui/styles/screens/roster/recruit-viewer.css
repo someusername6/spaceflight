@@ -127,18 +127,12 @@
   margin-left: var(--space-1);
 }
 
+.recruit-price-large.expensive {
+  color: var(--color-danger);
+  text-shadow: 0 0 var(--glow-lg) var(--color-danger-glow);
+}
+
 /* Full-width hire button */
 .btn-hire-pilot {
   width: 100%;
-}
-
-.recruit-hire-note {
-  font-family: var(--font-body);
-  font-size: var(--text-2xs);
-  color: var(--text-dim);
-  text-align: center;
-}
-
-.recruit-hire-note.error {
-  color: var(--color-danger);
 }
