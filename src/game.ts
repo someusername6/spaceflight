@@ -88,6 +88,8 @@ export interface Game {
   /** Last render timestamp for frame rate capping */
   lastRenderTime: number;
   running: boolean;
+  /** Paused state - physics stops but rendering continues */
+  paused: boolean;
   /** Tracks last notified result to prevent duplicate callbacks */
   lastNotifiedResult: MissionResult;
   onTick?: (world: World) => void;
@@ -103,6 +105,7 @@ export function createGame(seed = 12345): Game {
     lastTime: 0,
     lastRenderTime: 0,
     running: false,
+    paused: false,
     lastNotifiedResult: MissionResult.InProgress,
   };
 }
@@ -144,13 +147,16 @@ export function gameFrame(game: Game, currentTime: number): void {
   const delta = currentTime - game.lastTime;
   game.lastTime = currentTime;
 
-  // Accumulate time
-  game.accumulator += delta;
+  // When paused, skip physics but still render frozen frame
+  if (!game.paused) {
+    // Accumulate time
+    game.accumulator += delta;
 
-  // Fixed timestep updates (deterministic)
-  while (game.accumulator >= TICK_MS) {
-    tick(game);
-    game.accumulator -= TICK_MS;
+    // Fixed timestep updates (deterministic)
+    while (game.accumulator >= TICK_MS) {
+      tick(game);
+      game.accumulator -= TICK_MS;
+    }
   }
 
   // Frame rate capping - only render if enough time has passed
@@ -161,7 +167,7 @@ export function gameFrame(game: Game, currentTime: number): void {
   // frameInterval of 0 means uncapped (render every frame)
   if (frameInterval === 0 || timeSinceLastRender >= frameInterval) {
     game.lastRenderTime = currentTime;
-    const alpha = game.accumulator / TICK_MS;
+    const alpha = game.paused ? 1 : game.accumulator / TICK_MS;
     if (game.onRender) {
       game.onRender(game.world, alpha);
     }
@@ -188,6 +194,18 @@ export function startGame(game: Game): void {
 /** Stop the game loop */
 export function stopGame(game: Game): void {
   game.running = false;
+}
+
+/** Pause the game (physics stops, rendering continues) */
+export function pauseGame(game: Game): void {
+  game.paused = true;
+}
+
+/** Resume the game from pause */
+export function resumeGame(game: Game): void {
+  game.paused = false;
+  // Reset lastTime to avoid accumulator spike from time spent paused
+  game.lastTime = 0;
 }
 
 /** Get the world from game (convenience) */

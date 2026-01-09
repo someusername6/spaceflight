@@ -48,6 +48,7 @@ import {
 } from '../rendering/missile-exhaust';
 import {
   createRenderer,
+  disposeRenderer,
   followEntity,
   getScene,
   render,
@@ -148,4 +149,15 @@ export function updateMissionRenderers(
     containerWidth,
     containerHeight,
   );
+}
+
+/** Dispose all rendering resources */
+export function disposeMissionRenderers(renderers: MissionRenderers): void {
+  // Dispose main renderer (handles WebGL context, beam lines, etc.)
+  disposeRenderer(renderers.renderer);
+
+  // Remove HUD elements from DOM
+  if (renderers.hud.container.parentNode) {
+    renderers.hud.container.parentNode.removeChild(renderers.hud.container);
+  }
 }

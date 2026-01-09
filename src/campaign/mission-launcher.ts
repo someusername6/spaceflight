@@ -63,8 +63,9 @@ export function launchMission(
   const game = createGame(seed);
   controller.game = game;
 
-  // Create all renderers
+  // Create all renderers and store in controller for disposal
   const renderers = createMissionRenderers(controller.missionContainer, seed);
+  controller.missionRenderers = renderers;
 
   // Spawn player and wingmen from campaign state (uses campaign loadout/ammo)
   // Only spawn ships that were selected for deployment

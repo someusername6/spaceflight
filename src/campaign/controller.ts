@@ -3,6 +3,7 @@
  * and mission spawning.
  */
 
+import { pauseGame, resumeGame, stopGame } from '../game';
 import { initKeyBindings } from '../input/key-bindings';
 import { initGameSettings } from '../settings/game-settings';
 import { initInput } from '../systems/input';
@@ -38,6 +39,7 @@ import {
 } from '../ui/screens/title';
 import type { CampaignController } from './controller-types';
 import { launchMission } from './mission-launcher';
+import { disposeMissionRenderers } from './mission-renderer';
 import { setupSquadronScreen, setupStoreScreen } from './screen-handlers';
 import { createNewCampaign } from './state';
 import type { CampaignState, Contract } from './types';
@@ -63,6 +65,7 @@ export function startCampaign(container: HTMLElement): CampaignController {
     screenManager,
     missionContainer: null,
     game: null,
+    missionRenderers: null,
     missionEnded: false,
   };
 
@@ -129,6 +132,13 @@ function setupSettingsScreen(controller: CampaignController): void {
       cleanupSettingsScreen();
       goBackFromSettings(screenManager);
 
+      // Resume game if we came from a paused mission
+      if (pausedMissionForSettings && controller.game) {
+        pausedMissionForSettings = false;
+        resumeGame(controller.game);
+        return; // Mission screen doesn't need re-setup
+      }
+
       // Re-setup the screen we're returning to
       const currentScreen = screenManager.currentScreen;
       if (currentScreen === Screen.TITLE) {
@@ -163,6 +173,9 @@ function setupSettingsScreen(controller: CampaignController): void {
 /** Global escape key handler reference for cleanup */
 let escapeHandler: ((e: KeyboardEvent) => void) | null = null;
 
+/** Tracks if we paused a mission to go to settings (for proper resume) */
+let pausedMissionForSettings = false;
+
 /** Start gameplay (from new game or continue) */
 function startCampaignGameplay(controller: CampaignController): void {
   const { screenManager } = controller;
@@ -193,22 +206,41 @@ function setupEscapeHandler(controller: CampaignController): void {
   escapeHandler = async (e: KeyboardEvent) => {
     const { screenManager } = controller;
 
-    // Only handle escape on campaign screens (not title, settings, or mission)
-    const campaignScreens = [
+    // Handle escape on campaign screens and during missions
+    const pauseableScreens = [
       Screen.SQUADRON,
       Screen.STORE,
       Screen.CONTRACTS,
       Screen.RESULTS,
+      Screen.MISSION,
     ];
 
     if (
       e.code === 'Escape' &&
-      campaignScreens.includes(screenManager.currentScreen)
+      pauseableScreens.includes(screenManager.currentScreen)
     ) {
       e.preventDefault();
-      // Can save on pre-mission screens, not during results
-      const canSave = screenManager.currentScreen !== Screen.RESULTS;
-      await handlePauseMenu(controller, canSave);
+
+      const inMission = screenManager.currentScreen === Screen.MISSION;
+
+      // Pause game during mission
+      if (inMission && controller.game) {
+        pauseGame(controller.game);
+      }
+
+      // Can save on pre-mission screens, not during results or mission
+      const canSave =
+        !inMission && screenManager.currentScreen !== Screen.RESULTS;
+      await handlePauseMenu(controller, canSave, inMission);
+
+      // Resume game if still in mission (not quit)
+      if (
+        inMission &&
+        controller.game &&
+        screenManager.currentScreen === Screen.MISSION
+      ) {
+        resumeGame(controller.game);
+      }
     }
   };
 
@@ -227,6 +259,7 @@ function cleanupEscapeHandler(): void {
 export async function handlePauseMenu(
   controller: CampaignController,
   canSave: boolean,
+  inMission = false,
 ): Promise<void> {
   const { screenManager } = controller;
 
@@ -245,11 +278,35 @@ export async function handlePauseMenu(
       break;
 
     case 'settings':
+      // Track if we're going to settings from a paused mission
+      if (inMission) {
+        pausedMissionForSettings = true;
+      }
       goToSettings(screenManager);
       setupSettingsScreen(controller);
       break;
 
     case 'quit':
+      // Reset paused mission tracking
+      pausedMissionForSettings = false;
+
+      // If in mission, stop the game and clean up mission resources
+      if (inMission && controller.game) {
+        stopGame(controller.game);
+        controller.game = null;
+
+        // Dispose renderer resources (WebGL context, etc.)
+        if (controller.missionRenderers) {
+          disposeMissionRenderers(controller.missionRenderers);
+          controller.missionRenderers = null;
+        }
+
+        // Clear mission container
+        if (controller.missionContainer) {
+          controller.missionContainer.innerHTML = '';
+        }
+      }
+
       // Cleanup handlers and return to title
       cleanupEscapeHandler();
       cleanupTitleScreen();
