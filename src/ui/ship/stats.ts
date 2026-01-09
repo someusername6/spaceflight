@@ -65,7 +65,6 @@ export function renderShipStatsRows(
   const rowClass = `${classPrefix}-row`;
   const labelClass = classPrefix === 'detail' ? 'detail-label' : '';
   const valueClass = classPrefix === 'detail' ? 'detail-value' : '';
-  const dividerClass = `${classPrefix}-divider`;
 
   // Helper to create a row
   const row = (label: string, value: string) => {
@@ -85,7 +84,6 @@ export function renderShipStatsRows(
     ${row('Speed', `${stats.maxSpeed} m/s`)}
     ${row('Turn rate', `${stats.turnRate}°/s`)}
     ${row('Acceleration', `${stats.acceleration} m/s²`)}
-    <div class="${dividerClass}"></div>
     ${row('Primary banks', primaryBankStr)}
     ${row('Secondary banks', secondaryBankStr)}
     ${row('Heat capacity', `${stats.maxHeat}`)}
