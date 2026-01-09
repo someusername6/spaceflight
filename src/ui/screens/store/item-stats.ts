@@ -2,16 +2,16 @@
  * Store Item Stats Renderers - render stat displays for store items.
  */
 
-import { MISSILES } from '../../data/missiles';
-import { SHIP_CLASSES } from '../../data/ships';
-import { PRIMARY_WEAPONS, type WeaponStats } from '../../data/weapons';
-import { formatBankSizes, renderShipStatsRows } from '../ship/stats';
+import { MISSILES } from '../../../data/missiles';
+import { SHIP_CLASSES } from '../../../data/ships';
+import { PRIMARY_WEAPONS, type WeaponStats } from '../../../data/weapons';
+import { formatBankSizes, renderShipStatsRows } from '../../ship/stats';
 import {
   FALLBACK_ICON_PATH,
   getMissileIconPath,
   getWeaponIconPath,
   renderHullSchematic,
-} from '../ship/viewer';
+} from '../../ship/viewer';
 import type { StoreCategory } from './render';
 
 /** Effective range for beam weapons (full damage at this distance or closer) */

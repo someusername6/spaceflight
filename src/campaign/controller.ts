@@ -28,7 +28,7 @@ import {
   renderSettingsScreen,
   storeBattleCanvas,
 } from '../ui/screens/settings';
-import { showSquadSelection } from '../ui/screens/squad-selection';
+import { showSquadSelection } from '../ui/screens/squadron/selection';
 import {
   bindTitleScreen,
   cleanupTitleScreen,

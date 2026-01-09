@@ -7,9 +7,9 @@ import type {
   CampaignState,
   StoredShip,
   StoredWeapon,
-} from '../../campaign/types';
-import { MISSILES } from '../../data/missiles';
-import { PRIMARY_WEAPONS } from '../../data/weapons';
+} from '../../../campaign/types';
+import { MISSILES } from '../../../data/missiles';
+import { PRIMARY_WEAPONS } from '../../../data/weapons';
 import type { StoreCategory } from './render';
 
 /** Storage item with category info for selection sync */

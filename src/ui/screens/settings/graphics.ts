@@ -6,7 +6,7 @@ import {
   FRAME_RATE_OPTIONS,
   type FrameRateCap,
   getFrameRateCap,
-} from '../../settings/game-settings';
+} from '../../../settings/game-settings';
 
 /** Get label for current FPS cap value */
 export function getFpsLabel(value: FrameRateCap): string {

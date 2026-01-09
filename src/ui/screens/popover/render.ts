@@ -2,15 +2,15 @@
  * Popover Render - HTML rendering functions for weapon popovers.
  */
 
-import { getMaxAmmoCapacity } from '../../campaign/store/store-ammo';
+import { getMaxAmmoCapacity } from '../../../campaign/store/store-ammo';
 import type {
   CampaignState,
   EquippedPrimary,
   EquippedSecondary,
-} from '../../campaign/types';
-import { MISSILES } from '../../data/missiles';
-import { weaponUsesAmmo } from '../../data/prices';
-import { PRIMARY_WEAPONS, type WeaponStats } from '../../data/weapons';
+} from '../../../campaign/types';
+import { MISSILES } from '../../../data/missiles';
+import { weaponUsesAmmo } from '../../../data/prices';
+import { PRIMARY_WEAPONS, type WeaponStats } from '../../../data/weapons';
 
 /** Effective range for beam weapons (full damage at this distance or closer) */
 const BEAM_EFFECTIVE_RANGE = 100;

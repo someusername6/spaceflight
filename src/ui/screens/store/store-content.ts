@@ -2,9 +2,9 @@
  * Store Content Rendering - Layout and content generation for store screen.
  */
 
-import { getResupplyStatus } from '../../campaign/state';
-import type { CampaignState } from '../../campaign/types';
-import { type NavDestination, renderNavBar } from '../common/nav-bar';
+import { getResupplyStatus } from '../../../campaign/state';
+import type { CampaignState } from '../../../campaign/types';
+import { type NavDestination, renderNavBar } from '../../common/nav-bar';
 import { renderDetailPanel } from './detail';
 import {
   getCategoryItems,

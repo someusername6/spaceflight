@@ -17,7 +17,7 @@ import {
 } from '../ui/common/screens';
 import { createGameOverUI, createResultsUI } from '../ui/screens/results';
 import { createSquadronUI, type ListSelection } from '../ui/screens/squadron';
-import { createStoreUI } from '../ui/store/store';
+import { createStoreUI } from '../ui/screens/store/store';
 import type { CampaignController } from './controller';
 import type { SalvageResult } from './salvage';
 import { createNewCampaign } from './state';

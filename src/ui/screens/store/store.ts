@@ -2,17 +2,17 @@
  * Store UI - equipment shop for buying/selling ships, weapons, and ammo.
  */
 
-import { storeResupplyAllShips } from '../../campaign/state';
-import { convertScrapToShip } from '../../campaign/store/store';
-import type { CampaignState } from '../../campaign/types';
-import { bindNavBar, type NavDestination } from '../common/nav-bar';
+import { storeResupplyAllShips } from '../../../campaign/state';
+import { convertScrapToShip } from '../../../campaign/store/store';
+import type { CampaignState } from '../../../campaign/types';
+import { bindNavBar, type NavDestination } from '../../common/nav-bar';
 import {
   createScreen,
   type Screen,
   type ScreenAPI,
   type ScreenHandle,
-} from '../framework/screen';
-import { initShipConnectors } from '../ship/connectors';
+} from '../../framework/screen';
+import { initShipConnectors } from '../../ship/connectors';
 import {
   handleBulkBuy,
   handleBulkSell,
@@ -50,7 +50,7 @@ export interface StoreUI {
   onStateUpdate: (newState: CampaignState) => void;
 }
 
-export type { NavDestination } from '../common/nav-bar';
+export type { NavDestination } from '../../common/nav-bar';
 // Re-export types for external use
 export type { StoreCategory } from './render';
 

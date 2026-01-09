@@ -5,10 +5,10 @@
 import {
   getAttentionReasons,
   needsAttention,
-} from '../../campaign/resupply/resupply-constrained';
-import type { HireablePilot, OwnedShip, Pilot } from '../../campaign/types';
-import { renderShipItem, renderWeaponBadges } from '../components/ship-item';
-import { FALLBACK_ICON_PATH } from '../ship/viewer';
+} from '../../../campaign/resupply/resupply-constrained';
+import type { HireablePilot, OwnedShip, Pilot } from '../../../campaign/types';
+import { renderShipItem, renderWeaponBadges } from '../../common/ship-item';
+import { FALLBACK_ICON_PATH } from '../../ship/viewer';
 
 /** List selection types */
 export type ListSelection =

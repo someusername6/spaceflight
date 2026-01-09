@@ -5,10 +5,10 @@
 import {
   estimateShipResupplyCost,
   needsAmmoResupply,
-} from '../../campaign/resupply/resupply-constrained';
-import type { CampaignState, OwnedShip } from '../../campaign/types';
-import { renderShipStatsRows } from '../ship/stats';
-import { renderShipViewer } from '../ship/viewer';
+} from '../../../campaign/resupply/resupply-constrained';
+import type { CampaignState, OwnedShip } from '../../../campaign/types';
+import { renderShipStatsRows } from '../../ship/stats';
+import { renderShipViewer } from '../../ship/viewer';
 
 /** Sort ships with commander's ship first */
 export function sortShipsCommanderFirst(

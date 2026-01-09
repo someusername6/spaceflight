@@ -5,16 +5,20 @@
  * Commander ship is always deployed (cannot be deselected).
  */
 
-import { needsAttention } from '../../campaign/resupply/resupply-constrained';
-import { getMaxAmmoCapacity } from '../../campaign/store/store-ammo';
-import type { CampaignState, Contract, OwnedShip } from '../../campaign/types';
-import { renderShipItem } from '../components/ship-item';
+import { needsAttention } from '../../../campaign/resupply/resupply-constrained';
+import { getMaxAmmoCapacity } from '../../../campaign/store/store-ammo';
+import type {
+  CampaignState,
+  Contract,
+  OwnedShip,
+} from '../../../campaign/types';
+import { renderShipItem } from '../../common/ship-item';
 import {
   type ModalProps,
   type Screen,
   type ScreenAPI,
   showModal,
-} from '../framework/screen';
+} from '../../framework/screen';
 
 /** Maximum ships that can be deployed */
 const MAX_DEPLOYMENT = 4;

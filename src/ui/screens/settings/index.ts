@@ -11,24 +11,24 @@ import {
   resetToDefaults,
   saveKeyBindings,
   setKeyBinding,
-} from '../../input/key-bindings';
+} from '../../../input/key-bindings';
 import {
   type FrameRateCap,
   setFrameRateCap,
-} from '../../settings/game-settings';
+} from '../../../settings/game-settings';
 import {
   createScreen,
   type Screen,
   type ScreenAPI,
   type ScreenHandle,
-} from '../framework/screen';
-import { renderControlsTab } from './settings-controls';
+} from '../../framework/screen';
+import { renderControlsTab } from './controls';
 import {
   cleanupPopoverListener,
   positionFpsPopover,
   renderGraphicsTab,
   setupPopoverListener,
-} from './settings-graphics';
+} from './graphics';
 
 /** Settings screen callbacks */
 export interface SettingsScreenCallbacks {

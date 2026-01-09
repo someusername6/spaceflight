@@ -8,17 +8,17 @@ import {
   getAvailableSecondaries,
   getAvailableShips,
   getScrapTypes,
-} from '../../campaign/store/store';
-import type { CampaignState, StoreStock } from '../../campaign/types';
-import { MISSILES } from '../../data/missiles';
+} from '../../../campaign/store/store';
+import type { CampaignState, StoreStock } from '../../../campaign/types';
+import { MISSILES } from '../../../data/missiles';
 import {
   getAmmoPrice,
   getPrimaryPrice,
   getScrapPrice,
   getSecondaryPrice,
   getShipPrice,
-} from '../../data/prices';
-import { PRIMARY_WEAPONS } from '../../data/weapons';
+} from '../../../data/prices';
+import { PRIMARY_WEAPONS } from '../../../data/weapons';
 
 // Re-export stat renderers from item-stats module
 export {

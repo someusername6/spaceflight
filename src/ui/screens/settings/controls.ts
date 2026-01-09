@@ -9,7 +9,7 @@ import {
   type GameAction,
   getKeyBindings,
   getKeyDisplayName,
-} from '../../input/key-bindings';
+} from '../../../input/key-bindings';
 
 /** Render a single key binding row */
 function renderBindingRow(

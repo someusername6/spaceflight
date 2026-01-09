@@ -14,35 +14,38 @@
  * - [PILOT] tab: Pilot career stats
  */
 
-import { estimateAllShipsResupplyCost } from '../../campaign/resupply/resupply-constrained';
-import type { CampaignState } from '../../campaign/types';
+import { estimateAllShipsResupplyCost } from '../../../campaign/resupply/resupply-constrained';
+import type { CampaignState } from '../../../campaign/types';
 import {
   bindNavBar,
   type NavDestination,
   renderNavBar,
-} from '../common/nav-bar';
-import { createScreen, type Screen, type ScreenAPI } from '../framework/screen';
-import { destroyShipConnectors, initShipConnectors } from '../ship/connectors';
-import { renderPilotViewer } from './pilot-viewer';
-import { renderRecruitViewer } from './recruit-viewer';
-import { closeShipPicker } from './ship-picker';
+} from '../../common/nav-bar';
+import {
+  createScreen,
+  type Screen,
+  type ScreenAPI,
+} from '../../framework/screen';
+import {
+  destroyShipConnectors,
+  initShipConnectors,
+} from '../../ship/connectors';
+import { renderPilotViewer } from '../pilot-viewer';
+import { renderRecruitViewer } from '../recruit-viewer';
+import { closeShipPicker } from '../ship-picker';
 import {
   bindSquadronEvents,
   type SquadronProps,
   type SquadronState,
-} from './squadron-bind-events';
-import { type ListSelection, renderSquadronList } from './squadron-list';
+} from './bind-events';
+import { type ListSelection, renderSquadronList } from './list';
 import {
   anyShipsNeedAmmoResupply,
   renderShipDetails,
   renderShipViewerWithActions,
   sortShipsCommanderFirst,
-} from './squadron-render';
-import {
-  bindViewerTabs,
-  renderViewerWithTabs,
-  type ViewerTab,
-} from './squadron-viewer';
+} from './render';
+import { bindViewerTabs, renderViewerWithTabs, type ViewerTab } from './viewer';
 
 /** Squadron UI interface */
 export interface SquadronUI {
@@ -275,8 +278,8 @@ export function createSquadronUI(
 }
 
 // Re-export NavDestination for external use
-export type { NavDestination } from '../common/nav-bar';
-export type { ListSelection } from './squadron-list';
+export type { NavDestination } from '../../common/nav-bar';
+export type { ListSelection } from './list';
 
 /** Update squadron UI with new state */
 export function updateSquadronUI(ui: SquadronUI, state: CampaignState): void {

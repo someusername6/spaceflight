@@ -10,28 +10,24 @@ import {
   equipSecondary,
   unequipPrimary,
   unequipSecondary,
-} from '../../campaign/loadout';
-import { getMaxMissileCapacity } from '../../campaign/store/store-ammo';
-import type { CampaignState, EquippedSecondary } from '../../campaign/types';
-import { MISSILES } from '../../data/missiles';
-import { PRIMARY_WEAPONS } from '../../data/weapons';
-import { hideTooltip } from '../common/tooltip';
+} from '../../../campaign/loadout';
+import { getMaxMissileCapacity } from '../../../campaign/store/store-ammo';
+import type { CampaignState, EquippedSecondary } from '../../../campaign/types';
+import { MISSILES } from '../../../data/missiles';
+import { PRIMARY_WEAPONS } from '../../../data/weapons';
+import { hideTooltip } from '../../common/tooltip';
 import {
   getMissileIconPath,
   getWeaponIconPath,
   iconErrorHandler,
-} from '../ship/viewer-icons';
-import {
-  type GroupedWeapon,
-  getBankSize,
-  getGroupedWeapons,
-} from './hangar-equip';
+} from '../../ship/viewer-icons';
+import { type GroupedWeapon, getBankSize, getGroupedWeapons } from './equip';
 import {
   activePicker,
   closePopover,
   closeSubmenu,
   setActiveSubmenu,
-} from './weapon-popover';
+} from './weapon';
 
 /** Filter grouped weapons to exclude/reduce the currently equipped weapon */
 function filterForSwap(

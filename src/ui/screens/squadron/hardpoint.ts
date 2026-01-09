@@ -5,8 +5,8 @@
  * mouseenter/mouseleave don't bubble.
  */
 
-import type { CampaignState } from '../../campaign/types';
-import type { ScreenAPI } from '../framework/screen';
+import type { CampaignState } from '../../../campaign/types';
+import type { ScreenAPI } from '../../framework/screen';
 import {
   hideWeaponPopoverIfNotPinned,
   pinWeaponPopover,
@@ -14,8 +14,8 @@ import {
   showWeaponPicker,
   showWeaponPopover,
   showWeaponSwapPicker,
-} from './hangar-equip';
-import type { SquadronProps, SquadronState } from './squadron-bind-events';
+} from '../popover/equip';
+import type { SquadronProps, SquadronState } from './bind-events';
 
 /** Bind hardpoint slot interactions */
 export function bindHardpointEvents(

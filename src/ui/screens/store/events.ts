@@ -12,8 +12,8 @@ import {
   sellScrap,
   sellSecondaryWeapon,
   sellShip,
-} from '../../campaign/store/store';
-import type { CampaignState } from '../../campaign/types';
+} from '../../../campaign/store/store';
+import type { CampaignState } from '../../../campaign/types';
 import { getStorageIndex, type StoreCategory } from './render';
 
 /** Get single buy/sell amount for ammo (autocannon ×10, others ×1) */

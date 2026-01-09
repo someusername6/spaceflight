@@ -5,4 +5,4 @@
  * This file only re-exports the hardpoint bindings.
  */
 
-export { bindHardpointEvents } from './hardpoint-bindings';
+export { bindHardpointEvents } from './hardpoint';

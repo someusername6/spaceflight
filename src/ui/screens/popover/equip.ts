@@ -7,18 +7,18 @@ import {
   equipSecondary,
   swapPilotToStoredShip,
   unassignPilot,
-} from '../../campaign/loadout';
-import { getMaxMissileCapacity } from '../../campaign/store/store-ammo';
-import type { CampaignState } from '../../campaign/types';
-import { MISSILES } from '../../data/missiles';
-import { SHIP_CLASSES } from '../../data/ships';
-import { PRIMARY_WEAPONS } from '../../data/weapons';
-import { hideTooltip } from '../common/tooltip';
+} from '../../../campaign/loadout';
+import { getMaxMissileCapacity } from '../../../campaign/store/store-ammo';
+import type { CampaignState } from '../../../campaign/types';
+import { MISSILES } from '../../../data/missiles';
+import { SHIP_CLASSES } from '../../../data/ships';
+import { PRIMARY_WEAPONS } from '../../../data/weapons';
+import { hideTooltip } from '../../common/tooltip';
 import {
   getMissileIconPath,
   getWeaponIconPath,
   iconErrorHandler,
-} from '../ship/viewer-icons';
+} from '../../ship/viewer-icons';
 import {
   activePicker,
   closePopover,
@@ -26,7 +26,7 @@ import {
   resetPopoverState,
   setActivePicker,
   setMouseOverPopover,
-} from './weapon-popover';
+} from './weapon';
 
 // Re-export popover functions for hangar.ts
 export {
@@ -35,7 +35,7 @@ export {
   pinWeaponPopover,
   setChangeWeaponHandler,
   showWeaponPopover,
-} from './weapon-popover';
+} from './weapon';
 
 /** Grouped weapon for display */
 export interface GroupedWeapon {
@@ -378,4 +378,4 @@ export function handleUnassignPilot(
 }
 
 // Re-export showWeaponSwapPicker from weapon-swap module
-export { showWeaponSwapPicker } from './weapon-swap';
+export { showWeaponSwapPicker } from './swap';

@@ -4,7 +4,7 @@
  * Shows [LOADOUT] and [PILOT] tabs for switching between views.
  */
 
-import type { CampaignState, OwnedShip, Pilot } from '../../campaign/types';
+import type { CampaignState, OwnedShip, Pilot } from '../../../campaign/types';
 
 /** Viewer tab types */
 export type ViewerTab = 'loadout' | 'pilot';

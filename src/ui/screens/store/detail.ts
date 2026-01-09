@@ -5,10 +5,10 @@
 import {
   canConvertScrapToShip,
   getScrapConversionFee,
-} from '../../campaign/store/store';
-import type { CampaignState } from '../../campaign/types';
-import { SCRAP_PER_SHIP } from '../../data/prices';
-import { PRIMARY_WEAPONS } from '../../data/weapons';
+} from '../../../campaign/store/store';
+import type { CampaignState } from '../../../campaign/types';
+import { SCRAP_PER_SHIP } from '../../../data/prices';
+import { PRIMARY_WEAPONS } from '../../../data/weapons';
 import {
   getItemPrice,
   getStorageCount,

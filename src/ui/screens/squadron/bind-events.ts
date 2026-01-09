@@ -8,21 +8,21 @@ import {
   assignPilotToShip,
   assignPilotToStoredShip,
   unassignPilot,
-} from '../../campaign/loadout';
-import { hirePilot } from '../../campaign/recruits';
+} from '../../../campaign/loadout';
+import { hirePilot } from '../../../campaign/recruits';
 import {
   resupplyAllShipsConstrained,
   resupplyShipConstrained,
-} from '../../campaign/resupply/resupply-constrained';
-import type { CampaignState } from '../../campaign/types';
-import type { NavDestination } from '../common/nav-bar';
-import { showNotification } from '../common/notification';
-import type { ScreenAPI } from '../framework/screen';
-import { closeWeaponPicker } from './hangar-equip';
-import { bindHardpointEvents } from './hardpoint-bindings';
-import { showShipPicker } from './ship-picker';
-import type { ListSelection } from './squadron-list';
-import type { ViewerTab } from './squadron-viewer';
+} from '../../../campaign/resupply/resupply-constrained';
+import type { CampaignState } from '../../../campaign/types';
+import type { NavDestination } from '../../common/nav-bar';
+import { showNotification } from '../../common/notification';
+import type { ScreenAPI } from '../../framework/screen';
+import { closeWeaponPicker } from '../popover/equip';
+import { showShipPicker } from '../ship-picker';
+import { bindHardpointEvents } from './hardpoint';
+import type { ListSelection } from './list';
+import type { ViewerTab } from './viewer';
 
 /** Squadron screen state */
 export interface SquadronState {

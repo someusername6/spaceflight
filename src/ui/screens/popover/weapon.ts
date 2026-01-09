@@ -4,20 +4,20 @@
  * Shows weapon stats on hover, pins on click for load/unload controls.
  */
 
-import { unequipPrimary, unequipSecondary } from '../../campaign/loadout';
+import { unequipPrimary, unequipSecondary } from '../../../campaign/loadout';
 import {
   loadAmmoToWeapon,
   loadMissilesToWeapon,
   unloadAmmoFromWeapon,
   unloadMissilesFromWeapon,
-} from '../../campaign/store/store-ammo';
+} from '../../../campaign/store/store-ammo';
 import type {
   CampaignState,
   EquippedPrimary,
   EquippedSecondary,
-} from '../../campaign/types';
-import { getWeaponAmmoInfo } from '../ship/slot-utils';
-import { renderPrimaryPopover, renderSecondaryPopover } from './popover-render';
+} from '../../../campaign/types';
+import { getWeaponAmmoInfo } from '../../ship/slot-utils';
+import { renderPrimaryPopover, renderSecondaryPopover } from './render';
 import {
   activePicker,
   activeSubmenu,
@@ -31,7 +31,7 @@ import {
   setActiveSlotElement,
   setActiveSubmenu,
   setMouseOverPopover,
-} from './popover-state';
+} from './state';
 
 // Re-export state management functions
 export {
