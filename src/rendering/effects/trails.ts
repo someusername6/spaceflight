@@ -6,7 +6,6 @@
  */
 
 import * as THREE from 'three';
-import { Faction, type FactionComponent } from '../../components/faction';
 import type { Projectile, WeaponName } from '../../components/projectile';
 import type { Transform } from '../../components/transform';
 import { getComponent, queryEntities } from '../../core/ecs';
@@ -28,19 +27,10 @@ function getBoltGeometry(
       : renderer.ballisticBoltGeometry;
 }
 
-/** Get the bolt color based on faction */
-function getBoltColor(
-  visual: WeaponVisualConfig,
-  faction: Faction,
-): THREE.Color {
-  return faction === Faction.Enemy ? visual.enemyColor : visual.color;
-}
-
 /** Bolt state for one projectile */
 interface ProjectileBolt {
   bolt: THREE.Mesh;
   weaponName: WeaponName;
-  faction: Faction;
 }
 
 /** Bolt renderer state */
@@ -76,7 +66,6 @@ function acquireBolt(
   renderer: BoltRenderer,
   scene: THREE.Scene,
   weaponName: WeaponName,
-  faction: Faction,
   startPosition: THREE.Vector3,
 ): ProjectileBolt {
   // Store scene reference for pool management
@@ -86,13 +75,13 @@ function acquireBolt(
   const pooledBolt = renderer.pool.pop();
   if (pooledBolt) {
     // Reinitialize pooled bolt for new projectile
-    reinitializeBolt(renderer, pooledBolt, weaponName, faction, startPosition);
+    reinitializeBolt(renderer, pooledBolt, weaponName, startPosition);
     pooledBolt.bolt.visible = true;
     return pooledBolt;
   }
 
   // Create new bolt if pool is empty
-  return createNewBolt(renderer, scene, weaponName, faction, startPosition);
+  return createNewBolt(renderer, scene, weaponName, startPosition);
 }
 
 /** Reinitialize a pooled bolt for a new projectile */
@@ -100,15 +89,12 @@ function reinitializeBolt(
   renderer: BoltRenderer,
   projectileBolt: ProjectileBolt,
   weaponName: WeaponName,
-  faction: Faction,
   startPosition: THREE.Vector3,
 ): void {
   const visual = getWeaponVisual(weaponName);
-  const baseColor = getBoltColor(visual, faction);
 
   // Update state
   projectileBolt.weaponName = weaponName;
-  projectileBolt.faction = faction;
 
   // Update bolt geometry if shape changed (shared geometry, just swap reference)
   const newGeometry = getBoltGeometry(renderer, visual);
@@ -118,7 +104,7 @@ function reinitializeBolt(
 
   // Update bolt material color and scale
   (projectileBolt.bolt.material as THREE.MeshBasicMaterial).color.copy(
-    baseColor,
+    visual.color,
   );
   projectileBolt.bolt.scale.setScalar(visual.boltSize / 0.5);
   projectileBolt.bolt.position.copy(startPosition);
@@ -129,15 +115,13 @@ function createNewBolt(
   renderer: BoltRenderer,
   scene: THREE.Scene,
   weaponName: WeaponName,
-  faction: Faction,
   startPosition: THREE.Vector3,
 ): ProjectileBolt {
   const visual = getWeaponVisual(weaponName);
-  const baseColor = getBoltColor(visual, faction);
   const boltGeometry = getBoltGeometry(renderer, visual);
 
   const boltMaterial = new THREE.MeshBasicMaterial({
-    color: baseColor,
+    color: visual.color,
     transparent: true,
     opacity: 1.0,
     blending: THREE.AdditiveBlending,
@@ -152,7 +136,6 @@ function createNewBolt(
   return {
     bolt,
     weaponName,
-    faction,
   };
 }
 
@@ -187,7 +170,6 @@ export function updateBoltRenderer(
       entity,
       'transform',
     ) as Transform;
-    const faction = getComponent<FactionComponent>(world, entity, 'faction');
 
     let projectileBolt = renderer.bolts.get(entity);
 
@@ -196,7 +178,6 @@ export function updateBoltRenderer(
         renderer,
         scene,
         projectile.weaponName,
-        faction?.faction ?? Faction.Neutral,
         transform.position,
       );
       renderer.bolts.set(entity, projectileBolt);

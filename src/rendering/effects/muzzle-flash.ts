@@ -6,7 +6,7 @@
  */
 
 import * as THREE from 'three';
-import { Faction, type FactionComponent } from '../../components/faction';
+import type { Projectile, WeaponName } from '../../components/projectile';
 import type { Transform } from '../../components/transform';
 import { getComponent, queryEntities } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
@@ -14,12 +14,21 @@ import type { Entity, World } from '../../core/types';
 /** Flash duration in seconds */
 const FLASH_DURATION = 0.08;
 
-/** Flash colors by faction */
-const FLASH_COLORS = {
-  [Faction.Player]: new THREE.Color(0.2, 1.0, 0.3), // Green
-  [Faction.Enemy]: new THREE.Color(1.0, 0.4, 0.1), // Orange
-  [Faction.Neutral]: new THREE.Color(1.0, 1.0, 0.3), // Yellow
+/** Flash colors by weapon type (weapon-coded, not faction-coded) */
+const WEAPON_FLASH_COLORS: Record<string, THREE.Color> = {
+  // Energy weapons - match bolt color
+  Plasma: new THREE.Color(0.2, 1.0, 0.4), // Bright green
+  Pulse: new THREE.Color(0.3, 0.9, 1.0), // Cyan
+  Ion: new THREE.Color(0.4, 0.5, 1.0), // Blue-purple
+  // Ballistic weapons - explosion-colored (orange/yellow)
+  Autocannon: new THREE.Color(1.0, 0.6, 0.2), // Orange
+  Railgun: new THREE.Color(1.0, 1.0, 1.0), // White
+  Flak: new THREE.Color(1.0, 0.5, 0.2), // Orange
+  Shrapnel: new THREE.Color(1.0, 0.6, 0.2), // Orange
 };
+
+/** Default flash color for unknown weapons */
+const DEFAULT_FLASH_COLOR = new THREE.Color(1.0, 0.5, 0.2); // Orange
 
 /** Beam glow colors (match beam colors from beam-helpers.ts) */
 const BEAM_GLOW_COLORS: Record<string, THREE.Color> = {
@@ -34,7 +43,10 @@ const DEFAULT_BEAM_GLOW = new THREE.Color(1.0, 1.0, 1.0);
 
 // Track seen projectiles to detect new ones
 const seenProjectiles = new Set<Entity>();
-const newProjectiles: Array<{ position: THREE.Vector3; faction: Faction }> = [];
+const newProjectiles: Array<{
+  position: THREE.Vector3;
+  weaponName: WeaponName;
+}> = [];
 
 /** Flash visual state */
 interface FlashVisual {
@@ -71,9 +83,9 @@ function createFlashMesh(
   renderer: MuzzleFlashRenderer,
   scene: THREE.Scene,
   position: THREE.Vector3,
-  faction: Faction,
+  weaponName: WeaponName,
 ): THREE.Mesh {
-  const color = FLASH_COLORS[faction] ?? FLASH_COLORS[Faction.Neutral];
+  const color = WEAPON_FLASH_COLORS[weaponName] ?? DEFAULT_FLASH_COLOR;
   const material = new THREE.MeshBasicMaterial({
     color,
     transparent: true,
@@ -126,7 +138,7 @@ export function updateMuzzleFlashRenderer(
   // Create flashes for new projectiles
   for (const proj of newProjectiles) {
     const flash: FlashVisual = {
-      mesh: createFlashMesh(renderer, scene, proj.position, proj.faction),
+      mesh: createFlashMesh(renderer, scene, proj.position, proj.weaponName),
       startTime: gameTime,
     };
     renderer.flashes.push(flash);
@@ -173,11 +185,11 @@ function detectNewProjectiles(world: World): void {
         entity,
         'transform',
       ) as Transform;
-      const faction = getComponent<FactionComponent>(world, entity, 'faction');
+      const projectile = getComponent<Projectile>(world, entity, 'projectile');
 
       newProjectiles.push({
         position: transform.position.clone(),
-        faction: faction?.faction ?? Faction.Neutral,
+        weaponName: projectile?.weaponName ?? 'Plasma',
       });
     }
   }
