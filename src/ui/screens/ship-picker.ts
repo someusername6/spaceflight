@@ -11,7 +11,7 @@ import {
   unassignPilot,
 } from '../../campaign/loadout';
 import type { CampaignState } from '../../campaign/types';
-import { FALLBACK_ICON_PATH, getShipIconPath } from '../ship/viewer';
+import { getShipIconPath, iconErrorHandler } from '../ship/viewer';
 
 /** Currently active ship picker element */
 let activeShipPicker: HTMLElement | null = null;
@@ -37,7 +37,7 @@ function renderShipCard(
     <button class="ship-picker-card" ${dataAttrs}>
       <div class="ship-picker-icon">
         <img src="${iconPath}" alt="${shipClass}" class="ship-picker-svg"
-             onerror="this.onerror=null; this.src='${FALLBACK_ICON_PATH}'" />
+             ${iconErrorHandler()} />
       </div>
       <div class="ship-picker-name">${shipClass}${countBadge}</div>
     </button>

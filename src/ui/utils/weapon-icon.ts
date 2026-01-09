@@ -28,7 +28,12 @@ import {
 } from './inline-svg';
 
 /** Weapons with internal SVG glow filters (don't need CSS drop-shadow) */
-const WEAPONS_WITH_SVG_GLOW = new Set(['redlaser', 'bluelaser', 'greenlaser']);
+const WEAPONS_WITH_SVG_GLOW = new Set([
+  'redlaser',
+  'bluelaser',
+  'greenlaser',
+  'nuclearlance',
+]);
 
 /** Check if a weapon has internal SVG glow filters */
 export function hasInternalGlow(weaponType: string): boolean {

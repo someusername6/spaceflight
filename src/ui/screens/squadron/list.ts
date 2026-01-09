@@ -8,7 +8,7 @@ import {
 } from '../../../campaign/resupply/resupply-constrained';
 import type { HireablePilot, OwnedShip, Pilot } from '../../../campaign/types';
 import { renderShipItem, renderWeaponBadges } from '../../common/ship-item';
-import { FALLBACK_ICON_PATH } from '../../ship/viewer';
+import { getFallbackSvgUrl } from '../../utils/inline-svg';
 
 /** List selection types */
 export type ListSelection =
@@ -71,7 +71,7 @@ function renderAvailableItem(
       aria-label="${pilot.name}, available"
     >
       <div class="ship-item-icon">
-        <img src="${FALLBACK_ICON_PATH}" alt="No ship" class="ship-item-img ship-item-img-empty" />
+        <img src="${getFallbackSvgUrl()}" alt="No ship" class="ship-item-img ship-item-img-empty" />
       </div>
       <div class="ship-item-info">
         <div class="ship-item-name-row">

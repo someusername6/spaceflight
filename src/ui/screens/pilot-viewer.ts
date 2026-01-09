@@ -3,7 +3,7 @@
  */
 
 import type { CampaignState, OwnedShip, Pilot } from '../../campaign/types';
-import { FALLBACK_ICON_PATH, getShipIconPath } from '../ship/viewer';
+import { getShipIconPath, iconErrorHandler } from '../ship/viewer';
 
 /** Get available ships for pilot assignment (ships without pilots) */
 function getAvailableShipsForPilot(state: CampaignState): OwnedShip[] {
@@ -98,7 +98,7 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
                       data-pilot="${pilot.id}"
                       data-stored-ship-index="${group.firstIndex}">
                 <div class="stored-ship-card-icon">
-                  <img src="${iconPath}" alt="${group.shipClass}" class="stored-ship-icon-svg" onerror="this.onerror=null; this.src='${FALLBACK_ICON_PATH}'" />
+                  <img src="${iconPath}" alt="${group.shipClass}" class="stored-ship-icon-svg" ${iconErrorHandler()} />
                 </div>
                 <div class="stored-ship-card-name">${group.shipClass}${countBadge}</div>
               </button>

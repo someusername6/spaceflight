@@ -11,7 +11,7 @@ import type { Health } from '../../components/health';
 import type { ShipIdentity } from '../../components/ship-identity';
 import { getComponent, hasComponent, queryEntities } from '../../core/ecs';
 import type { World } from '../../core/types';
-import { FALLBACK_ICON_PATH, getShipIconPath } from '../ship/viewer';
+import { getShipIconPath, iconErrorHandler } from '../ship/viewer';
 
 /** Data for a pilot's debrief card */
 export interface PilotDebriefData {
@@ -237,7 +237,7 @@ function renderPilotCard(pilot: PilotDebriefData): string {
         <div class="pilot-info">
           <span class="callsign">${pilot.callsign}</span>
           <span class="archetype">
-            <img src="${iconPath}" alt="${pilot.archetype}" class="debrief-ship-icon" onerror="this.onerror=null; this.src='${FALLBACK_ICON_PATH}'" />
+            <img src="${iconPath}" alt="${pilot.archetype}" class="debrief-ship-icon" ${iconErrorHandler()} />
             ${pilot.archetype}
           </span>
         </div>

@@ -23,9 +23,9 @@ import { getMissileColor, getWeaponColor } from './viewer-icons';
 
 // Re-export for external use
 export {
-  FALLBACK_ICON_PATH,
   getShipAbbrev,
   getShipIconPath,
+  iconErrorHandler,
 } from './viewer-icons';
 
 /** Rendering mode for schematic slots */

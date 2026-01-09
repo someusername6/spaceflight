@@ -222,11 +222,12 @@ The `renderWeaponIcon()` function automatically detects lasers and applies the `
 
 ### SVG Filter ID Convention
 
-Laser SVGs use internal filters for glow effects. Filter IDs must be unique per weapon to avoid collision when multiple icons are on the same page:
+Beam weapons with internal filters for glow effects. Filter IDs must be unique per weapon to avoid collision when multiple icons are on the same page:
 
 - `rl-beam`, `rl-body` - Red laser
 - `bl-beam`, `bl-body` - Blue laser
 - `gl-beam`, `gl-body` - Green laser
+- `nl-beam`, `nl-body` - Nuclear lance
 
 ### Adding New Icons
 

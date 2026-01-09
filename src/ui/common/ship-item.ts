@@ -5,7 +5,7 @@
 import { getMaxAmmoCapacity } from '../../campaign/store/store-ammo';
 import type { OwnedShip } from '../../campaign/types';
 import { SHIP_CLASSES } from '../../data/ships';
-import { FALLBACK_ICON_PATH, getShipIconPath } from '../ship/viewer';
+import { getShipIconPath, iconErrorHandler } from '../ship/viewer';
 
 /** Capitalize first letter of a string */
 export function capitalize(str: string): string {
@@ -120,7 +120,7 @@ export function renderShipItem(options: ShipItemOptions): string {
           src="${iconPath}"
           alt="${ship.shipClass}"
           class="ship-item-img"
-          onerror="this.onerror=null; this.src='${FALLBACK_ICON_PATH}'"
+          ${iconErrorHandler()}
         />
         ${iconContent}
       </div>
