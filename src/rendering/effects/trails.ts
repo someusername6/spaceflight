@@ -187,8 +187,13 @@ export function updateBoltRenderer(
       renderer.bolts.set(entity, projectileBolt);
     }
 
-    // Update bolt position and orientation
-    updateBolt(projectileBolt, transform.position, projectile.direction);
+    // Update bolt position, orientation, and growth
+    updateBolt(
+      projectileBolt,
+      transform.position,
+      projectile.direction,
+      projectile.distanceTraveled,
+    );
   }
 
   // Release bolts for projectiles that no longer exist (return to pool)
@@ -204,13 +209,36 @@ export function updateBoltRenderer(
 const boltQuat = new THREE.Quaternion();
 const boltForward = new THREE.Vector3(0, 1, 0); // Cylinder points in +Y
 
-/** Updates a single bolt with new position */
+/** Updates a single bolt with new position, handling length growth for long projectiles */
 function updateBolt(
   projectileBolt: ProjectileBolt,
   position: THREE.Vector3,
   direction: THREE.Vector3,
+  distanceTraveled: number,
 ): void {
+  const visual = getWeaponVisual(projectileBolt.weaponName);
+
+  // Calculate effective length based on distance traveled (projectile "emerges" from muzzle)
+  // Spheres have no length, so skip growth logic for them
+  let effectiveLength: number | undefined;
+  let positionOffset = 0;
+
+  if (visual.boltShape !== 'sphere' && visual.length) {
+    effectiveLength = Math.min(distanceTraveled, visual.length);
+    // Offset position backward so the back of the bolt stays at spawn point until fully emerged
+    positionOffset = -effectiveLength / 2;
+  }
+
+  // Update scale with effective length
+  setBoltScale(visual, projectileBolt.bolt.scale, effectiveLength);
+
+  // Update position with offset along direction
   projectileBolt.bolt.position.copy(position);
+  if (positionOffset !== 0) {
+    projectileBolt.bolt.position.addScaledVector(direction, positionOffset);
+  }
+
+  // Update orientation
   boltQuat.setFromUnitVectors(boltForward, direction);
   projectileBolt.bolt.quaternion.copy(boltQuat);
 }

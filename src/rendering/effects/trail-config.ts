@@ -30,33 +30,33 @@ const WEAPON_VISUALS: Record<string, WeaponVisualConfig> = {
   // Energy weapons (capsule shape)
   Plasma: {
     color: new THREE.Color(0.2, 1.0, 0.4), // Bright green
-    radius: 0.54,
-    length: 22.5,
+    radius: 0.5,
+    length: 50,
     boltShape: 'capsule',
   },
   Pulse: {
     color: new THREE.Color(0.3, 0.9, 1.0), // Cyan
-    radius: 0.45,
-    length: 18.75,
+    radius: 0.5,
+    length: 20,
     boltShape: 'capsule',
   },
   Ion: {
     color: new THREE.Color(0.4, 0.5, 1.0), // Blue-purple
-    radius: 0.54,
-    length: 22.5,
+    radius: 1,
+    length: 20,
     boltShape: 'capsule',
   },
   // Ballistic weapons (cylinder shape)
   Autocannon: {
     color: new THREE.Color(1.0, 0.85, 0.3), // Yellow-gold
-    radius: 0.075,
-    length: 0.6,
+    radius: 0.25,
+    length: 15,
     boltShape: 'cylinder',
   },
   Railgun: {
     color: new THREE.Color(1.0, 1.0, 1.0), // Pure white
-    radius: 0.06,
-    length: 0.48,
+    radius: 0.5,
+    length: 100,
     boltShape: 'cylinder',
   },
   Flak: {
@@ -66,8 +66,8 @@ const WEAPON_VISUALS: Record<string, WeaponVisualConfig> = {
   },
   Shrapnel: {
     color: new THREE.Color(1.0, 0.9, 0.3), // Yellow
-    radius: 0.045,
-    length: 0.36,
+    radius: 0.25,
+    length: 15,
     boltShape: 'cylinder',
   },
 };
@@ -84,6 +84,7 @@ const DEFAULT_VISUAL: WeaponVisualConfig = {
 export function setBoltScale(
   visual: WeaponVisualConfig,
   target: THREE.Vector3,
+  lengthOverride?: number,
 ): void {
   const base = BASE_GEOMETRY[visual.boltShape];
   const radiusScale = visual.radius / base.radius;
@@ -92,7 +93,8 @@ export function setBoltScale(
     target.set(radiusScale, radiusScale, radiusScale);
   } else {
     // Cylinder and capsule: Y is the length axis
-    const lengthScale = (visual.length ?? base.length) / base.length;
+    const length = lengthOverride ?? visual.length ?? base.length;
+    const lengthScale = length / base.length;
     target.set(radiusScale, lengthScale, radiusScale);
   }
 }
