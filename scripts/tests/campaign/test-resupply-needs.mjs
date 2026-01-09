@@ -11,58 +11,6 @@ import {
 } from '../../../src/campaign/resupply-constrained.ts';
 import { getMaxAmmoCapacity } from '../../../src/campaign/store-ammo.ts';
 
-/** Create a test campaign state */
-function createTestState(options = {}) {
-  const {
-    currentAmmo = 50,
-    missileCount = 4,
-    maxMissiles = 4,
-    storedAmmo = 0,
-    storeStockAmmo = 1000,
-    credits = 1000,
-  } = options;
-
-  return {
-    commanderId: 'commander1',
-    credits,
-    ships: [
-      {
-        id: 'ship1',
-        shipClass: 'firefly',
-        primaryWeapons: [
-          { weaponType: 'autocannon', bankSize: 1, currentAmmo },
-        ],
-        secondaryWeapons: [
-          {
-            weaponType: 'heatseeking',
-            bankSize: 1,
-            count: missileCount,
-            maxCount: maxMissiles,
-          },
-        ],
-        pilot: { id: 'commander1', name: 'Commander' },
-        hullDamage: 0,
-        isPlayerShip: true,
-      },
-    ],
-    pilots: [{ id: 'commander1', name: 'Commander' }],
-    storedShips: [],
-    storedWeapons: [],
-    storedAmmo:
-      storedAmmo > 0 ? [{ weaponType: 'autocannon', count: storedAmmo }] : [],
-    storeStock: {
-      ships: {},
-      primaries: {},
-      secondaries: { heatseeking: 100 },
-      ammo: { autocannon: storeStockAmmo },
-    },
-    availableRecruits: [],
-    currentSector: 1,
-    completedContracts: [],
-    missionCount: 0,
-  };
-}
-
 console.log('=== Resupply Needs Tests ===\n');
 
 // Test: needsResupply detects low ammo
