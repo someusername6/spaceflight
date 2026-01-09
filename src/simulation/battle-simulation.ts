@@ -84,6 +84,8 @@ interface SmoothedCamera {
 const CAMERA_CONFIG = {
   /** Camera offset behind and above ship (in ship's local space) */
   offset: new THREE.Vector3(0, 5, 20),
+  /** Rotation smoothing speed (higher = faster/tighter following) */
+  rotationSpeed: 4.0,
 };
 
 /** Battle simulation instance */
@@ -95,6 +97,8 @@ export interface BattleSimulation {
   camera: BattleCamera;
   /** Camera state for following ships */
   smoothedCamera: SmoothedCamera;
+  /** Last render time for frame delta calculation */
+  lastRenderTime: number;
   // Effect renderers
   dustSystem: ReturnType<typeof createDustSystem>;
   explosionRenderer: ReturnType<typeof createExplosionRenderer>;
@@ -219,6 +223,7 @@ export function createBattleSimulation(
       initialized: false,
       lastFollowed: null,
     },
+    lastRenderTime: 0,
     dustSystem: createDustSystem(scene),
     explosionRenderer: createExplosionRenderer(),
     trailRenderer: createTrailRenderer(),
@@ -253,6 +258,12 @@ function updateRender(sim: BattleSimulation, alpha: number): void {
   const world = game.world;
   const scene = getScene(renderer);
 
+  // Calculate actual frame delta for frame-rate independent camera smoothing
+  const now = performance.now();
+  const frameDt =
+    sim.lastRenderTime === 0 ? 1 / 60 : (now - sim.lastRenderTime) / 1000;
+  sim.lastRenderTime = now;
+
   // Sync scene with world state (with interpolation)
   syncScene(renderer, world, alpha);
 
@@ -280,7 +291,14 @@ function updateRender(sim: BattleSimulation, alpha: number): void {
       // Use interpolated position/rotation for camera (same as what's rendered)
       const interpPos = getInterpolatedPosition(followed);
       const interpRot = getInterpolatedRotation(followed);
-      updateSmoothedCamera(sim, followed, transform, interpPos, interpRot);
+      updateSmoothedCamera(
+        sim,
+        followed,
+        transform,
+        interpPos,
+        interpRot,
+        frameDt,
+      );
       // Dust uses interpolated position for consistency
       if (interpPos) {
         updateDustSystem(sim.dustSystem, interpPos);
@@ -292,17 +310,19 @@ function updateRender(sim: BattleSimulation, alpha: number): void {
   render(renderer);
 }
 
-// Reusable vectors to avoid per-frame allocations
-const targetPosition = new THREE.Vector3();
+// Reusable vector to avoid per-frame allocations
 const targetOffset = new THREE.Vector3();
 
 /**
- * Update camera to follow ship directly using interpolated state.
+ * Update camera with cinematic following.
  *
- * Key insight: Physics interpolation already provides smooth motion.
- * Adding camera smoothing on top creates "double smoothing" that fights
- * the interpolation and causes jitter. The camera should follow the
- * interpolated position exactly, with smoothing ONLY during target transitions.
+ * Key insight: Position smoothing causes jitter because the variable lag
+ * fights with physics interpolation. Instead, we:
+ * 1. Follow the interpolated ship position EXACTLY (no position lag)
+ * 2. Smooth only the camera ROTATION (cinematic trailing effect)
+ * 3. Calculate offset using the smoothed rotation (smooth orbit during turns)
+ *
+ * This gives a cinematic feel without jitter.
  */
 function updateSmoothedCamera(
   sim: BattleSimulation,
@@ -310,6 +330,7 @@ function updateSmoothedCamera(
   transform: Transform,
   interpPos: THREE.Vector3 | null,
   interpRot: THREE.Quaternion | null,
+  dt: number,
 ): void {
   const { renderer, smoothedCamera } = sim;
   const threeCamera = renderer.camera;
@@ -318,26 +339,27 @@ function updateSmoothedCamera(
   const shipPosition = interpPos ?? transform.position;
   const shipRotation = interpRot ?? transform.rotation;
 
-  // Calculate target camera position (offset behind ship using ship's rotation)
-  targetOffset.copy(CAMERA_CONFIG.offset);
-  targetOffset.applyQuaternion(shipRotation);
-  targetPosition.copy(shipPosition).add(targetOffset);
-
   // Detect target change
   const targetChanged = smoothedCamera.lastFollowed !== followedEntity;
 
   if (!smoothedCamera.initialized || targetChanged) {
-    // First frame or target switch: snap to position (no smoothing)
-    smoothedCamera.position.copy(targetPosition);
+    // First frame or target switch: snap rotation (no smoothing)
     smoothedCamera.rotation.copy(shipRotation);
     smoothedCamera.initialized = true;
     smoothedCamera.lastFollowed = followedEntity;
   } else {
-    // Normal following: use interpolated position directly (no additional smoothing)
-    // This ensures camera maintains exact offset from ship with no delay/oscillation
-    smoothedCamera.position.copy(targetPosition);
-    smoothedCamera.rotation.copy(shipRotation);
+    // Smooth only rotation - gives cinematic "trailing" effect during turns
+    // Frame-rate independent using exponential decay
+    const rotLerp = 1 - Math.exp(-CAMERA_CONFIG.rotationSpeed * dt);
+    smoothedCamera.rotation.slerp(shipRotation, rotLerp);
   }
+
+  // Calculate offset using SMOOTHED rotation (camera orbits smoothly during turns)
+  targetOffset.copy(CAMERA_CONFIG.offset);
+  targetOffset.applyQuaternion(smoothedCamera.rotation);
+
+  // Position follows ship exactly - NO position smoothing (prevents jitter)
+  smoothedCamera.position.copy(shipPosition).add(targetOffset);
 
   // Apply to actual camera
   threeCamera.position.copy(smoothedCamera.position);
