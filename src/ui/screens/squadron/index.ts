@@ -25,6 +25,7 @@ import {
   createScreen,
   type Screen,
   type ScreenAPI,
+  type ScreenHandle,
 } from '../../framework/screen';
 import {
   destroyShipConnectors,
@@ -38,6 +39,7 @@ import {
   type SquadronProps,
   type SquadronState,
 } from './bind-events';
+import { destroyHardpointListeners } from './hardpoint';
 import { type ListSelection, renderSquadronList } from './list';
 import {
   anyShipsNeedAmmoResupply,
@@ -45,7 +47,12 @@ import {
   renderShipViewerWithActions,
   sortShipsCommanderFirst,
 } from './render';
-import { bindViewerTabs, renderViewerWithTabs, type ViewerTab } from './viewer';
+import {
+  bindViewerTabs,
+  destroyViewerTabListeners,
+  renderViewerWithTabs,
+  type ViewerTab,
+} from './viewer';
 
 /** Squadron UI interface */
 export interface SquadronUI {
@@ -220,6 +227,9 @@ const SquadronScreenComponent: Screen<SquadronState, SquadronProps> = {
   },
 };
 
+/** Screen handle for external control */
+let screenHandle: ScreenHandle<SquadronState, SquadronProps> | null = null;
+
 /** Create squadron UI */
 export function createSquadronUI(
   element: HTMLElement,
@@ -228,6 +238,11 @@ export function createSquadronUI(
   onStateUpdate?: (newState: CampaignState) => void,
   initialSelection?: ListSelection,
 ): SquadronUI {
+  // Clean up previous screen to prevent stale closures
+  destroyHardpointListeners();
+  destroyViewerTabListeners();
+  screenHandle?.destroy();
+
   const initialState: SquadronState = {
     selection: initialSelection ?? { type: 'none', id: null },
     activeTab: 'loadout',
@@ -241,7 +256,7 @@ export function createSquadronUI(
     ? (newCampaignState: CampaignState) => {
         onStateUpdate(newCampaignState);
         props = { ...props, campaignState: newCampaignState };
-        handle.setProps(props);
+        screenHandle?.setProps(props);
       }
     : undefined;
 
@@ -251,7 +266,7 @@ export function createSquadronUI(
     onStateUpdate: wrappedOnStateUpdate,
   };
 
-  const handle = createScreen(
+  screenHandle = createScreen(
     SquadronScreenComponent,
     element,
     initialState,
@@ -267,10 +282,12 @@ export function createSquadronUI(
     update(newState: CampaignState) {
       ui.state = newState;
       props = { ...props, campaignState: newState };
-      handle.setProps(props);
+      screenHandle?.setProps(props);
     },
     destroy() {
-      handle.destroy();
+      destroyHardpointListeners();
+      destroyViewerTabListeners();
+      screenHandle?.destroy();
     },
   };
 

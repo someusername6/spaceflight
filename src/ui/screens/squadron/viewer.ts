@@ -77,17 +77,48 @@ export function renderViewerWithTabs(
   `;
 }
 
+/** Tracked listener for cleanup */
+interface TrackedListener {
+  el: HTMLElement;
+  event: string;
+  handler: EventListener;
+}
+
+/** Cleanup function for previous tab listeners */
+let tabCleanup: (() => void) | null = null;
+
+/** Clean up tab listeners (call on screen destroy) */
+export function destroyViewerTabListeners(): void {
+  tabCleanup?.();
+  tabCleanup = null;
+}
+
 /** Bind tab click events */
 export function bindViewerTabs(
   container: HTMLElement,
   onTabChange: (tab: ViewerTab) => void,
 ): void {
-  container.querySelectorAll('.viewer-tab').forEach((tab) => {
-    tab.addEventListener('click', () => {
-      const tabType = (tab as HTMLElement).dataset.tab as ViewerTab;
+  // Clean up previous listeners to prevent duplicates
+  tabCleanup?.();
+
+  const listeners: TrackedListener[] = [];
+
+  container.querySelectorAll('.viewer-tab').forEach((tabEl) => {
+    const handler = () => {
+      const tabType = (tabEl as HTMLElement).dataset.tab as ViewerTab;
       if (tabType) {
         onTabChange(tabType);
       }
-    });
+    };
+    tabEl.addEventListener('click', handler);
+    listeners.push({ el: tabEl as HTMLElement, event: 'click', handler });
   });
+
+  // Store cleanup function for next call
+  tabCleanup = () => {
+    for (const { el, event, handler } of listeners) {
+      el.removeEventListener(event, handler);
+    }
+    listeners.length = 0;
+  };
 }

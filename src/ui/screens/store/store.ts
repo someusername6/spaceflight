@@ -73,7 +73,7 @@ const StoreScreenComponent: Screen<StoreState, StoreProps> = {
 
   bind(api: ScreenAPI<StoreState>, props: StoreProps) {
     const state = api.getState();
-    const { campaignState, onNavigate, onStateUpdate } = props;
+    const { onNavigate, onStateUpdate } = props;
 
     // Bind navigation bar
     // Note: bindNavBar uses addEventListener directly, so we query for this
@@ -85,8 +85,8 @@ const StoreScreenComponent: Screen<StoreState, StoreProps> = {
 
     // Resupply button
     api.on('#btn-resupply', 'click', () => {
-      const newState = storeResupplyAllShips(campaignState);
-      if (newState !== campaignState) {
+      const newState = storeResupplyAllShips(props.campaignState);
+      if (newState !== props.campaignState) {
         onStateUpdate(newState);
       }
     });
@@ -122,11 +122,11 @@ const StoreScreenComponent: Screen<StoreState, StoreProps> = {
       const currentState = api.getState();
       if (currentState.selectedItem) {
         const newState = handleBuy(
-          campaignState,
+          props.campaignState,
           currentState.selectedCategory,
           currentState.selectedItem,
         );
-        if (newState !== campaignState) {
+        if (newState !== props.campaignState) {
           onStateUpdate(newState);
         }
       }
@@ -137,11 +137,11 @@ const StoreScreenComponent: Screen<StoreState, StoreProps> = {
       const currentState = api.getState();
       if (currentState.selectedItem) {
         const newState = handleSell(
-          campaignState,
+          props.campaignState,
           currentState.selectedCategory,
           currentState.selectedItem,
         );
-        if (newState !== campaignState) {
+        if (newState !== props.campaignState) {
           onStateUpdate(newState);
         }
       }
@@ -152,11 +152,11 @@ const StoreScreenComponent: Screen<StoreState, StoreProps> = {
       const currentState = api.getState();
       if (currentState.selectedItem) {
         const newState = handleBulkBuy(
-          campaignState,
+          props.campaignState,
           currentState.selectedCategory,
           currentState.selectedItem,
         );
-        if (newState !== campaignState) {
+        if (newState !== props.campaignState) {
           onStateUpdate(newState);
         }
       }
@@ -167,11 +167,11 @@ const StoreScreenComponent: Screen<StoreState, StoreProps> = {
       const currentState = api.getState();
       if (currentState.selectedItem) {
         const newState = handleBulkSell(
-          campaignState,
+          props.campaignState,
           currentState.selectedCategory,
           currentState.selectedItem,
         );
-        if (newState !== campaignState) {
+        if (newState !== props.campaignState) {
           onStateUpdate(newState);
         }
       }
@@ -182,11 +182,11 @@ const StoreScreenComponent: Screen<StoreState, StoreProps> = {
       const currentState = api.getState();
       if (currentState.selectedItem) {
         const newState = handleBulkSell100(
-          campaignState,
+          props.campaignState,
           currentState.selectedCategory,
           currentState.selectedItem,
         );
-        if (newState !== campaignState) {
+        if (newState !== props.campaignState) {
           onStateUpdate(newState);
         }
       }
@@ -200,10 +200,10 @@ const StoreScreenComponent: Screen<StoreState, StoreProps> = {
         currentState.selectedCategory === 'scrap'
       ) {
         const newState = convertScrapToShip(
-          campaignState,
+          props.campaignState,
           currentState.selectedItem,
         );
-        if (newState !== campaignState) {
+        if (newState !== props.campaignState) {
           onStateUpdate(newState);
         }
       }

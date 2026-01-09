@@ -1,5 +1,5 @@
 #!/bin/bash
-# Pre-commit hook: runs linting and file size check
+# Pre-commit hook: runs linting, file size check, and tests
 # Install with: cp scripts/build/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
 
 set -e
@@ -13,5 +13,9 @@ npx biome check --staged src/ scripts/
 # Run file size check
 echo "Checking file sizes..."
 bash scripts/build/check-file-size.sh
+
+# Run quick tests
+echo "Running tests..."
+npm test
 
 echo "Pre-commit checks passed!"
