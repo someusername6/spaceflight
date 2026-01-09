@@ -56,6 +56,12 @@ export interface WeaponStats {
    * Can push target heat above 100%, causing prolonged overheat.
    */
   heatInjection?: number;
+  /**
+   * Instant beam: fires once on press, applies all damage instantly to
+   * all targets in beam path, consumes ammo, then fades out visually.
+   * Uses fireRate as cooldown between shots.
+   */
+  isInstantBeam?: boolean;
 }
 
 /**
@@ -190,14 +196,15 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
     name: 'Nuclear Lance',
     listName: 'Nuke Lance',
     category: 'beam',
-    heatPerShot: 0, // No heat
+    heatPerShot: 30, // Significant heat cost per shot
     projectileSpeed: 0,
-    fireRate: 0.5, // Single shot with cooldown
+    fireRate: 0.5, // Cooldown between shots
     range: 3000,
-    damage: 500, // Single massive hit
+    damage: 500, // Single massive hit to all targets in path
     ammo: 1, // Limited ammo
     ammoName: 'Nuclear Lance Charges',
     noFalloff: true,
+    isInstantBeam: true, // Fires once, damages all in path, fades out
   },
 };
 

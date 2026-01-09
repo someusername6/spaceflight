@@ -112,20 +112,24 @@ export function renderPrimaryPopover(
   const category = stats.category ?? 'unknown';
   const isBeam = category === 'beam';
   const isPulseBeam = stats.isPulseBeam === true;
+  const isInstantBeam = stats.isInstantBeam === true;
   // For pulse beams, DPS = damage * pulses per second
   // For continuous beams, damage IS the DPS
+  // For instant beams, DPS = damage / fireRate (cooldown)
   // For projectile weapons, DPS = damage / fireRate
-  const isContinuousBeam = isBeam && !isPulseBeam;
+  const isContinuousBeam = isBeam && !isPulseBeam && !isInstantBeam;
   const dps = isPulseBeam
     ? Math.round(stats.damage / (stats.pulseInterval ?? 0.1))
-    : isBeam
+    : isContinuousBeam
       ? stats.damage
       : Math.round(stats.damage / stats.fireRate);
   const damageLabel = isPulseBeam
     ? 'Dmg/pulse'
     : isContinuousBeam
       ? 'DPS'
-      : 'Damage';
+      : isInstantBeam
+        ? 'Dmg/shot'
+        : 'Damage';
   const damageText = isBeam ? formatBeamDamage(stats) : `${stats.damage}`;
 
   // Ammo section (only for ballistic weapons)
@@ -165,10 +169,11 @@ export function renderPrimaryPopover(
       ${statRow('Range', stats.range, 'm')}
       ${category !== 'beam' ? statRow('Speed', stats.projectileSpeed, ' m/s') : ''}
       ${isPulseBeam ? statRow('Pulse rate', `${Math.round(1 / (stats.pulseInterval ?? 0.1))}/s`) : ''}
+      ${isInstantBeam ? statRow('Cooldown', `${stats.fireRate}s`) : ''}
       ${category !== 'beam' ? statRow('Fire rate', `${Math.round(1 / stats.fireRate)}/s`) : ''}
-      ${statRow('Heat', stats.heatPerShot, isPulseBeam ? '/pulse' : isBeam ? '/s' : '/shot')}
+      ${statRow('Heat', stats.heatPerShot, isPulseBeam ? '/pulse' : isContinuousBeam ? '/s' : '/shot')}
       ${stats.flakRadius ? statRow('Blast Radius', stats.flakRadius, 'm') : ''}
-      ${!isContinuousBeam ? statRow('DPS', `~${dps}`) : ''}
+      ${!isContinuousBeam && !isInstantBeam ? statRow('DPS', `~${dps}`) : ''}
     </div>
     ${ammoStats}
     <div class="manager-actions">

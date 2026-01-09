@@ -1,5 +1,6 @@
 /**
  * Beam System - Handles continuous beam weapon firing and damage.
+ * Instant beams (Nuclear Lance) are handled by beam-instant.ts.
  */
 
 import * as THREE from 'three';
@@ -18,10 +19,6 @@ import {
 import { entityExists, getComponent, queryEntities } from '../../core/ecs';
 import type { ActiveBeam, Entity, World } from '../../core/types';
 import { getForward } from '../physics';
-
-// Re-export ActiveBeam for backward compatibility
-export type { ActiveBeam } from '../../core/types';
-
 import { recordBeamFired, recordShotFired } from '../stats';
 import {
   applyBeamDamageAndEffects,
@@ -30,21 +27,28 @@ import {
   calculateFalloffDamage,
   createActiveBeam,
   findBeamHit,
+  findBeamState,
   getBeamColor,
   getBeamWeaponInfo,
   resetBeamWeaponPool,
   updateFadingBeams,
 } from './beam-helpers';
+import { handleInstantBeams } from './beam-instant';
 import { calculateBankOffset } from './weapon-spawning';
+
+// Re-export ActiveBeam for backward compatibility
+export type { ActiveBeam } from '../../core/types';
 
 // Reusable objects
 const rayOrigin = new THREE.Vector3();
 const rayDirection = new THREE.Vector3();
 const beamWeaponsCollector: BeamWeaponInfo[] = [];
+const instantBeamCollector: BeamWeaponInfo[] = [];
 
-/** Beam system - handles continuous beam damage */
+/** Beam system - handles continuous and instant beam damage */
 export function beamSystem(world: World, dt: number): void {
   const activeBeams = world.systemState.beams.activeBeams;
+  const prevFireState = world.systemState.beams.prevFireState;
 
   // Clear all beam states first
   for (const beams of activeBeams.values()) {
@@ -117,19 +121,26 @@ export function beamSystem(world: World, dt: number): void {
       }
     }
 
-    if (!isFiring || !beamDirection) continue;
+    // Get previous fire state for edge-triggering instant beams
+    const wasFiring = prevFireState.get(entity) ?? false;
 
-    // Fire beams matching current link mode
-    fireBeamsByLinkMode(
-      world,
-      entity,
-      transform,
-      weapons,
-      heat,
-      dt,
-      activeBeams,
-      beamDirection,
-    );
+    if (isFiring && beamDirection) {
+      // Fire beams matching current link mode
+      fireBeamsByLinkMode(
+        world,
+        entity,
+        transform,
+        weapons,
+        heat,
+        dt,
+        activeBeams,
+        beamDirection,
+        wasFiring,
+      );
+    }
+
+    // Update previous fire state
+    prevFireState.set(entity, isFiring);
   }
 
   // Update fading beams (positions follow ship during fadeout)
@@ -146,20 +157,41 @@ function fireBeamsByLinkMode(
   dt: number,
   activeBeams: Map<Entity, ActiveBeam[]>,
   direction: THREE.Vector3,
+  wasFiring: boolean,
 ): void {
-  // Reset pool and clear collector (avoid per-frame allocations)
+  // Reset pool and clear collectors (avoid per-frame allocations)
   resetBeamWeaponPool(world);
   beamWeaponsCollector.length = 0;
+  instantBeamCollector.length = 0;
 
-  // Find beam weapons matching current link mode
+  // Find beam weapons matching current link mode, separate instant from continuous
   const indices = getWeaponIndicesForCurrentMode(weapons);
   for (const i of indices) {
     const weapon = weapons.weapons[i];
     if (weapon && weapon.category === 'beam') {
-      beamWeaponsCollector.push(getBeamWeaponInfo(world, weapon, i));
+      const info = getBeamWeaponInfo(world, weapon, i);
+      if (weapon.isInstantBeam) {
+        instantBeamCollector.push(info);
+      } else {
+        beamWeaponsCollector.push(info);
+      }
     }
   }
 
+  // Handle instant beams (edge-triggered, fire only ONE, no linking)
+  handleInstantBeams(
+    world,
+    owner,
+    transform,
+    weapons,
+    heat,
+    activeBeams,
+    direction,
+    instantBeamCollector,
+    wasFiring,
+  );
+
+  // Handle continuous beams (existing logic)
   if (beamWeaponsCollector.length === 0) return;
 
   // Calculate total heat per second for all beams (scaled by bank size)
@@ -172,10 +204,10 @@ function fireBeamsByLinkMode(
   // Check if we can add all the heat
   if (!addHeat(heat, heatToAdd)) return; // Overheated
 
-  // Fire all matching beams
+  // Fire all matching continuous beams
   const totalBanks = weapons.weapons.length;
   for (const { weapon, index } of beamWeaponsCollector) {
-    fireBeam(
+    fireContinuousBeam(
       world,
       owner,
       transform,
@@ -192,8 +224,8 @@ function fireBeamsByLinkMode(
 // Re-export BEAM_SPAWN_OFFSET for backward compatibility
 export { BEAM_SPAWN_OFFSET } from './beam-helpers';
 
-/** Fire a beam and process hits */
-function fireBeam(
+/** Fire a continuous beam and process hits */
+function fireContinuousBeam(
   world: World,
   owner: Entity,
   transform: Transform,
@@ -213,7 +245,7 @@ function fireBeam(
     BEAM_SPAWN_OFFSET,
   );
   rayOrigin.copy(origin);
-  rayDirection.copy(direction); // Use provided direction (ship forward)
+  rayDirection.copy(direction);
 
   // Get or create beam array for this entity
   let beams = activeBeams.get(owner);
@@ -222,14 +254,8 @@ function fireBeam(
     activeBeams.set(owner, beams);
   }
 
-  // Find or create beam state for this weapon slot (loop instead of .find())
-  let beam: ActiveBeam | undefined;
-  for (let i = 0; i < beams.length; i++) {
-    if (beams[i]?.weaponIndex === weaponIndex) {
-      beam = beams[i];
-      break;
-    }
-  }
+  // Find or create beam state for this weapon slot
+  let beam = findBeamState(beams, weaponIndex);
   const isPulse = weapon.isPulseBeam === true;
   const isLance = weapon.name === 'Nuclear Lance';
   const isTorch = weapon.name === 'Torch';
@@ -241,6 +267,7 @@ function fireBeam(
       isPulse,
       isLance,
       isTorch,
+      false, // Not instant beam (continuous)
     );
     beams.push(beam);
   }
@@ -250,7 +277,7 @@ function fireBeam(
   beam.active = true;
   beam.fadeStartTime = null; // Reset fade when beam becomes active
   beam.hitPoint = null;
-  beam.color.copy(getBeamColor(weapon.name)); // Update color in case weapon changed
+  beam.color.copy(getBeamColor(weapon.name));
   beam.weaponName = weapon.name;
 
   // Handle pulse beam timing (Lightning)

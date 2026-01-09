@@ -98,28 +98,35 @@ export function renderPrimaryStats(weaponType: string): string {
   if (!stats) return '';
 
   const ammoText =
-    stats.ammo !== undefined ? `${stats.ammo} rounds` : 'Unlimited';
+    stats.ammo !== undefined
+      ? `${stats.ammo} ${stats.ammo === 1 ? 'round' : 'rounds'}`
+      : 'Unlimited';
   const categoryText =
     stats.category.charAt(0).toUpperCase() + stats.category.slice(1);
 
   // Beam weapon classification
   const isBeam = stats.category === 'beam';
   const isPulseBeam = stats.isPulseBeam === true;
-  const isContinuousBeam = isBeam && !isPulseBeam;
+  const isInstantBeam = stats.isInstantBeam === true;
+  const isContinuousBeam = isBeam && !isPulseBeam && !isInstantBeam;
 
   // Fire rate display
   const fireRateText = isPulseBeam
     ? `${Math.round(1 / (stats.pulseInterval ?? 0.1))} pulses/s`
     : isContinuousBeam
       ? 'Continuous'
-      : `${(1 / stats.fireRate).toFixed(1)}/s`;
+      : isInstantBeam
+        ? `${stats.fireRate}s cooldown`
+        : `${(1 / stats.fireRate).toFixed(1)}/s`;
 
   // Damage label and text
   const damageLabel = isPulseBeam
     ? 'Damage per pulse'
     : isContinuousBeam
       ? 'Damage per second'
-      : 'Damage';
+      : isInstantBeam
+        ? 'Damage per shot'
+        : 'Damage';
   const damageText = isBeam ? formatBeamDamage(stats) : `${stats.damage}`;
 
   // Heat label

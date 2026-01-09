@@ -44,6 +44,12 @@ export interface PrimaryWeapon {
   ionize?: boolean;
   /** Heat injection rate (heat per second added to target ship by Torch) */
   heatInjection?: number;
+  /**
+   * Instant beam: fires once on press, applies all damage instantly to
+   * all targets in beam path, consumes ammo, then fades out visually.
+   * Uses fireRate as cooldown between shots.
+   */
+  isInstantBeam?: boolean;
 }
 
 /** Secondary weapon definition */

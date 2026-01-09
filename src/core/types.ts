@@ -56,6 +56,10 @@ export interface ActiveBeam {
   fadeStartTime: number | null;
   /** Last time a hit effect was queued (for throttling continuous beams) */
   lastHitEffectTime?: number;
+  /** Instant beam - fires once on press, damages all in path */
+  isInstantBeam?: boolean;
+  /** Last time this instant beam fired (for cooldown tracking) */
+  lastInstantFireTime?: number;
 }
 
 /** System-specific state stored in World (not module-level) */
@@ -89,6 +93,8 @@ export interface SystemState {
   /** Beam system state - stores active beams for renderer */
   beams: {
     activeBeams: Map<Entity, ActiveBeam[]>;
+    /** Track previous fire state per entity for edge-triggered instant beams */
+    prevFireState: Map<Entity, boolean>;
   };
   /** Mission system state */
   mission: {

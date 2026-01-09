@@ -48,6 +48,9 @@ function createPrimaryFromEquipped(equipped: EquippedPrimary): PrimaryWeapon {
     weapon.shieldDamageMultiplier = stats.shieldDamageMultiplier;
   if (stats.hullDamageMultiplier)
     weapon.hullDamageMultiplier = stats.hullDamageMultiplier;
+  if (stats.ionize) weapon.ionize = stats.ionize;
+  if (stats.heatInjection) weapon.heatInjection = stats.heatInjection;
+  if (stats.isInstantBeam) weapon.isInstantBeam = stats.isInstantBeam;
 
   return weapon;
 }

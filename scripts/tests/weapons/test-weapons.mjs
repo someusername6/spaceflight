@@ -146,8 +146,12 @@ test('Nuclear Lance has correct stats', () => {
     'Nuclear Lance damage should be 500',
   );
   assert(
-    WEAPON_DEFS.nuclearLance.heatPerShot === 0,
-    'Nuclear Lance should generate no heat',
+    WEAPON_DEFS.nuclearLance.heatPerShot === 30,
+    'Nuclear Lance should have 30 heat per shot',
+  );
+  assert(
+    WEAPON_DEFS.nuclearLance.isInstantBeam === true,
+    'Nuclear Lance should be an instant beam',
   );
 });
 

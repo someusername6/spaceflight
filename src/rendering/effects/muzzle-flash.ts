@@ -25,6 +25,8 @@ const WEAPON_FLASH_COLORS: Record<string, THREE.Color> = {
   Railgun: new THREE.Color(1.0, 1.0, 1.0), // White
   Flak: new THREE.Color(1.0, 0.5, 0.2), // Orange
   Shrapnel: new THREE.Color(1.0, 0.6, 0.2), // Orange
+  // Instant beam weapons
+  'Nuclear Lance': new THREE.Color(1.0, 0.95, 0.8), // Bright white-gold
 };
 
 /** Default flash color for unknown weapons */
@@ -201,6 +203,9 @@ function detectNewProjectiles(world: World): void {
   }
 }
 
+/** Track instant beam flashes to avoid duplicate flashes per fire */
+const instantBeamFlashTimes = new Map<string, number>();
+
 /** Update beam origin glows */
 function updateBeamGlows(
   renderer: MuzzleFlashRenderer,
@@ -212,6 +217,32 @@ function updateBeamGlows(
 
   for (const [entity, beams] of activeBeams) {
     for (const beam of beams) {
+      // Handle instant beam flashes (one-shot flash when fired)
+      if (beam.isInstantBeam && beam.lanceFireTime !== undefined) {
+        const flashKey = `instant-${entity}-${beam.weaponIndex}`;
+        const lastFlashTime = instantBeamFlashTimes.get(flashKey) ?? 0;
+
+        // Create a flash if this is a new fire (different lanceFireTime)
+        if (beam.lanceFireTime > lastFlashTime) {
+          instantBeamFlashTimes.set(flashKey, beam.lanceFireTime);
+
+          // Create a flash at the beam origin
+          const flash: FlashVisual = {
+            mesh: createFlashMesh(
+              renderer,
+              scene,
+              beam.origin.clone(),
+              'Nuclear Lance',
+            ),
+            startTime: beam.lanceFireTime,
+          };
+          // Make instant beam flash bigger
+          flash.mesh.scale.setScalar(2);
+          renderer.flashes.push(flash);
+        }
+        continue; // Instant beams don't show continuous glow
+      }
+
       if (!beam.active) continue;
 
       const key = `${entity}-${beam.weaponIndex}`;

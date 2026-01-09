@@ -50,6 +50,7 @@ export function createWorld(seed: number = 0): World {
       },
       beams: {
         activeBeams: new Map(),
+        prevFireState: new Map(),
       },
       mission: {
         result: MissionResult.InProgress,
