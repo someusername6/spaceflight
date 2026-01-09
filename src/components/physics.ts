@@ -62,7 +62,7 @@ export function createPhysics(params: {
 }
 
 /** Initial spawn speed for all ships (m/s) */
-export const INITIAL_SPAWN_SPEED = 5;
+export const INITIAL_SPAWN_SPEED = 50;
 
 /** Set initial velocity based on transform rotation and speed */
 export function setInitialVelocity(
