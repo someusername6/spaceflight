@@ -17,7 +17,7 @@ const FLASH_DURATION = 0.08;
 /** Flash colors by weapon type (weapon-coded, not faction-coded) */
 const WEAPON_FLASH_COLORS: Record<string, THREE.Color> = {
   // Energy weapons - match bolt color
-  Plasma: new THREE.Color(0.2, 1.0, 0.4), // Bright green
+  Plasma: new THREE.Color(0.0, 1.0, 0.0), // Pure green (#0f0)
   Pulse: new THREE.Color(0.3, 0.9, 1.0), // Cyan
   Ion: new THREE.Color(0.4, 0.5, 1.0), // Blue-purple
   // Ballistic weapons - explosion-colored (orange/yellow)

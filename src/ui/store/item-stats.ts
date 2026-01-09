@@ -162,6 +162,10 @@ export function renderPrimaryStats(weaponType: string): string {
       ? `${Math.round(stats.damage * hullDamageMultiplier)} (${hullDamageMultiplier}×)`
       : '';
 
+  // Projectile speed (only for non-beam weapons)
+  const speedText =
+    stats.projectileSpeed > 0 ? `${stats.projectileSpeed} m/s` : '';
+
   return `
     ${renderItemPreview('primaries', weaponType)}
     <div class="item-stats">
@@ -170,6 +174,7 @@ export function renderPrimaryStats(weaponType: string): string {
       ${shieldDamageText ? `<div class="stat-row"><span>Shield damage</span><span>${shieldDamageText}</span></div>` : ''}
       ${hullDamageText ? `<div class="stat-row"><span>Hull damage</span><span>${hullDamageText}</span></div>` : ''}
       <div class="stat-row"><span>Range</span><span>${stats.range} m</span></div>
+      ${speedText ? `<div class="stat-row"><span>Speed</span><span>${speedText}</span></div>` : ''}
       <div class="stat-row"><span>Fire rate</span><span>${fireRateText}</span></div>
       <div class="stat-row"><span>${heatLabel}</span><span>${stats.heatPerShot}</span></div>
       ${flakStats}

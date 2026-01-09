@@ -68,11 +68,11 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
   plasma: {
     name: 'Plasma',
     category: 'energy',
-    heatPerShot: 8,
-    projectileSpeed: 400,
-    fireRate: 0.2, // 200ms
+    heatPerShot: 5,
+    projectileSpeed: 600,
+    fireRate: 0.125, // 125ms (8 shots/sec)
     range: 800,
-    damage: 25,
+    damage: 16,
   },
   pulse: {
     name: 'Pulse',
@@ -87,7 +87,7 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
     name: 'Ion',
     category: 'energy',
     heatPerShot: 6,
-    projectileSpeed: 400,
+    projectileSpeed: 600,
     fireRate: 0.18, // 180ms
     range: 700,
     damage: 10,

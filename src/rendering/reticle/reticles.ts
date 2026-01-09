@@ -51,16 +51,12 @@ const cameraForward = new THREE.Vector3();
 // Track previous target to detect target changes (for lead indicator smoothing reset)
 let previousTarget: Entity | undefined;
 
-// Track which enemy entities currently have reticles (for debug logging)
-const currentEnemyReticles = new Set<Entity>();
-
 // Reusable targets array (stores references from pool, cleared each frame)
 const targets: TargetInfo[] = [];
 
 /** Reset all reticle state - call on game restart */
 export function resetReticleState(): void {
   previousTarget = undefined;
-  currentEnemyReticles.clear();
   targets.length = 0;
   resetLeadIndicatorState();
 }
@@ -128,9 +124,6 @@ export function updateReticles(
 
   // Reset lead indicator smoothing when target changes (snap to new target)
   if (currentTarget !== previousTarget) {
-    console.log(
-      `[RETICLE ${performance.now().toFixed(0)}ms] Target changed: ${previousTarget} -> ${currentTarget}`,
-    );
     resetLeadIndicatorSmoothing();
     previousTarget = currentTarget;
   }
@@ -169,14 +162,7 @@ export function updateReticles(
 
     // Skip dead or dying entities (no reticle drawn for them)
     const health = getComponent<Health>(world, entity, 'health');
-    if (health && isDead(health)) {
-      if (entity === currentTarget) {
-        console.log(
-          `[RETICLE ${performance.now().toFixed(0)}ms] Target ${entity} is dead - NOT drawing reticle`,
-        );
-      }
-      continue;
-    }
+    if (health && isDead(health)) continue;
 
     // Query guarantees these components exist
     const transform = getComponent<Transform>(
@@ -211,31 +197,6 @@ export function updateReticles(
     target.lockProgress = isLockTarget ? lockProgress : 0;
     target.isMissile = isMissile;
     targets.push(target);
-  }
-
-  // Track enemy reticles and log changes
-  const newEnemyReticles = new Set<Entity>();
-  for (const t of targets) {
-    if (t.isEnemy && !t.isMissile) {
-      newEnemyReticles.add(t.entity);
-      if (!currentEnemyReticles.has(t.entity)) {
-        const hasShipId = hasComponent(world, t.entity, 'shipIdentity');
-        console.log(
-          `[RETICLE ${performance.now().toFixed(0)}ms] RED reticle ADDED for entity ${t.entity} (hasShipIdentity=${hasShipId})`,
-        );
-      }
-    }
-  }
-  for (const entity of currentEnemyReticles) {
-    if (!newEnemyReticles.has(entity)) {
-      console.log(
-        `[RETICLE ${performance.now().toFixed(0)}ms] RED reticle REMOVED for entity ${entity}`,
-      );
-    }
-  }
-  currentEnemyReticles.clear();
-  for (const entity of newEnemyReticles) {
-    currentEnemyReticles.add(entity);
   }
 
   // Sort: selected last (so it renders on top), then by distance descending (far first)

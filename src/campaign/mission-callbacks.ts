@@ -41,9 +41,6 @@ export function createMissionEndExecutor(
 
   return () => {
     controller.missionEnded = true;
-    console.log(
-      `[MISSION ${performance.now().toFixed(0)}ms] Transitioning to results`,
-    );
 
     // Finalize match stats before stopping
     finalizeMatchStats(game.world);
@@ -64,14 +61,8 @@ export function createMissionEndExecutor(
         // Only include player faction ships with campaign IDs
         if ((record.wasPlayer || record.isWingman) && record.campaignShipId) {
           shipsLost.push(record.campaignShipId);
-          console.log(
-            `[MISSION] KIA: ${record.callsign} (${record.wasPlayer ? 'player' : 'wingman'})`,
-          );
         }
       }
-    }
-    if (shipsLost.length > 0) {
-      console.log(`[MISSION] Ships lost: ${shipsLost.length}`);
     }
     const hullDamage = new Map<string, number>();
 
@@ -96,17 +87,6 @@ export function createMissionEndExecutor(
       const rng = () => random(game.world.prng);
       salvageResult = calculateSalvage(matchStats.salvageableShips, rng);
       newState = applySalvage(newState, salvageResult);
-
-      // Log salvage results
-      const scrapTotal = Object.values(salvageResult.scrap).reduce(
-        (a, b) => a + b,
-        0,
-      );
-      const weaponCount = salvageResult.weapons.length;
-      const ammoCount = salvageResult.ammo.reduce((a, b) => a + b.count, 0);
-      console.log(
-        `[MISSION] Salvage: ${scrapTotal} scrap, ${weaponCount} weapons, ${ammoCount} ammo (value: ~${Math.floor(salvageResult.totalValue)} cr)`,
-      );
     }
 
     // Refresh available recruits after each mission
@@ -173,9 +153,6 @@ export function createTickCallback(
             nextWave.delay,
             world.prng,
           );
-          console.log(
-            `[WAVE ${performance.now().toFixed(0)}ms] Wave ${waveState.currentWave + 1} cleared! Next wave in ${waveState.delayRemaining.toFixed(1)}s`,
-          );
         }
       }
     }
@@ -199,9 +176,6 @@ export function createTickCallback(
           resetMissionNotification(game);
 
           spawnWave(world, nextWave, waveState.currentWave);
-          console.log(
-            `[WAVE ${performance.now().toFixed(0)}ms] Wave ${waveState.currentWave + 1}/${waveState.totalWaves} spawned`,
-          );
         }
       }
     }
@@ -219,25 +193,11 @@ export function createMissionEndCallback(
     const allWavesComplete = waveState.currentWave >= waveState.totalWaves - 1;
     const isDefeat = result === MissionResult.Defeat;
 
-    console.log(
-      `[MISSION ${performance.now().toFixed(0)}ms] onMissionEnd called: result=${result}, wave=${waveState.currentWave + 1}/${waveState.totalWaves}, allWavesComplete=${allWavesComplete}`,
-    );
-
     // Only end mission if it's a defeat OR all waves are complete
-    if (!isDefeat && !allWavesComplete) {
-      console.log(
-        `[MISSION ${performance.now().toFixed(0)}ms] Wave cleared, awaiting next wave`,
-      );
-      return;
-    }
+    if (!isDefeat && !allWavesComplete) return;
 
     // Prevent multiple calls (check both flags)
-    if (controller.missionEnded || missionEndState.pending) {
-      console.log(
-        `[MISSION ${performance.now().toFixed(0)}ms] Ignoring - already ending`,
-      );
-      return;
-    }
+    if (controller.missionEnded || missionEndState.pending) return;
 
     // Start the mission end delay (game keeps running so explosions play out)
     missionEndState.pending = true;
@@ -247,9 +207,5 @@ export function createMissionEndCallback(
     // Show victory/defeat overlay immediately
     const overlay = createMissionResultOverlay(isDefeat);
     controller.missionContainer?.appendChild(overlay);
-
-    console.log(
-      `[MISSION ${performance.now().toFixed(0)}ms] ${isDefeat ? 'DEFEAT' : 'VICTORY'} - transitioning in ${MISSION_END_DELAY}s`,
-    );
   };
 }

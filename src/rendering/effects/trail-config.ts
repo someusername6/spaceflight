@@ -29,9 +29,9 @@ const BASE_GEOMETRY: Record<WeaponVisualConfig['boltShape'], BaseGeometry> = {
 const WEAPON_VISUALS: Record<string, WeaponVisualConfig> = {
   // Energy weapons (capsule shape)
   Plasma: {
-    color: new THREE.Color(0.2, 1.0, 0.4), // Bright green
+    color: new THREE.Color(0.0, 1.0, 0.0), // Pure green (#0f0)
     radius: 0.5,
-    length: 50,
+    length: 25,
     boltShape: 'capsule',
   },
   Pulse: {
