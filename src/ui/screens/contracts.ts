@@ -188,22 +188,8 @@ function renderContractListItem(
   `;
 }
 
-/** Check if any deployed ship is completely unarmed */
-function hasUnarmedShips(state: CampaignState): boolean {
-  return state.ships.some(
-    (ship) =>
-      ship.pilot !== null &&
-      ship.primaryWeapons.every((w) => w === null) &&
-      ship.secondaryWeapons.every((w) => w === null),
-  );
-}
-
 /** Render contract detail panel */
-function renderContractDetail(
-  contract: Contract,
-  canLaunch: boolean,
-  hasUnarmed: boolean,
-): string {
+function renderContractDetail(contract: Contract, canLaunch: boolean): string {
   // Summarize enemies across all waves
   const enemyCounts = new Map<string, number>();
   for (const wave of contract.waves) {
@@ -218,11 +204,6 @@ function renderContractDetail(
 
   const totalEnemies = countTotalEnemies(contract);
   const waveCount = contract.waves.length;
-
-  // Warning for unarmed ships (soft warning, doesn't block)
-  const unarmedWarning = hasUnarmed
-    ? `<button class="btn btn-warning btn-goto-squadron">⚠ UNARMED SHIPS — EQUIP IN SQUADRON</button>`
-    : '';
 
   // Accept button or commander warning (hard block)
   const acceptButton = canLaunch
@@ -247,7 +228,6 @@ function renderContractDetail(
       </div>
       <div class="contract-actions">
         <div class="contract-reward-price">${contract.reward.toLocaleString()}<span class="currency">cr</span></div>
-        ${unarmedWarning}
         ${acceptButton}
       </div>
     </div>
@@ -271,7 +251,6 @@ const ContractsScreenComponent: Screen<ContractsState, ContractsProps> = {
       : null;
 
     const canLaunch = isCommanderAssigned(campaignState);
-    const hasUnarmed = hasUnarmedShips(campaignState);
 
     return `
       <div class="campaign-page">
@@ -282,7 +261,7 @@ const ContractsScreenComponent: Screen<ContractsState, ContractsProps> = {
               ${contracts.map((c) => renderContractListItem(c, c.id === state.selectedContractId)).join('')}
             </aside>
             <section class="contracts-detail-panel" aria-label="Contract details">
-              ${selectedContract ? renderContractDetail(selectedContract, canLaunch, hasUnarmed) : '<div class="empty-state-panel" role="status">Select a contract to view details</div>'}
+              ${selectedContract ? renderContractDetail(selectedContract, canLaunch) : '<div class="empty-state-panel" role="status">Select a contract to view details</div>'}
             </section>
           </div>
         </main>
