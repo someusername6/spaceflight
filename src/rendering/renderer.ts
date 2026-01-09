@@ -10,6 +10,7 @@ import type { Transform } from '../components/transform';
 import { getComponent, hasComponent, isShip, queryEntities } from '../core/ecs';
 import type { Entity, World } from '../core/types';
 import { TICK_SEC } from '../game';
+import { setLightningResolution } from './beam-effects/lightning';
 import {
   type BeamLineEntry,
   disposeBeamLine,
@@ -114,8 +115,9 @@ export function createRenderer(container: HTMLElement, seed: number): Renderer {
   // Generate procedural skybox
   scene.background = generateSkyboxTexture(webglRenderer, { seed: skyboxSeed });
 
-  // Set initial beam resolution
+  // Set initial line resolutions for Line2-based renderers
   setBeamResolution(container.clientWidth, container.clientHeight);
+  setLightningResolution(container.clientWidth, container.clientHeight);
 
   // Handle resize (stored for cleanup)
   const resizeHandler = () => {
@@ -123,6 +125,7 @@ export function createRenderer(container: HTMLElement, seed: number): Renderer {
     camera.updateProjectionMatrix();
     webglRenderer.setSize(container.clientWidth, container.clientHeight);
     setBeamResolution(container.clientWidth, container.clientHeight);
+    setLightningResolution(container.clientWidth, container.clientHeight);
   };
   window.addEventListener('resize', resizeHandler);
 

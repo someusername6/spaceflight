@@ -179,6 +179,8 @@ export function updateFadingBeams(
       // Start fadeout if just became inactive
       if (beam.fadeStartTime === null) {
         beam.fadeStartTime = gameTime;
+        // Reset pulse state so lightning renderer doesn't keep generating bolts
+        beam.pulseActive = false;
       }
 
       // Calculate beam length BEFORE updating origin (need old positions)
