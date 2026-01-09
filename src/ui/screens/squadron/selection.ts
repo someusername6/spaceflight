@@ -5,7 +5,11 @@
  * Commander ship is always deployed (cannot be deselected).
  */
 
-import { needsAttention } from '../../../campaign/resupply/resupply-constrained';
+import {
+  needsAttention,
+  needsPrimaryAttention,
+  needsSecondaryAttention,
+} from '../../../campaign/resupply/resupply-constrained';
 import type {
   CampaignState,
   Contract,
@@ -59,22 +63,25 @@ function renderShipCard(
   const primaryLoadout = renderPrimarySummary(ship);
   const secondaryLoadout = renderSecondarySummary(ship);
   const showWarning = needsAttention(ship);
+  const primaryWarning = needsPrimaryAttention(ship);
+  const secondaryWarning = needsSecondaryAttention(ship);
   const warningBadge = showWarning
     ? '<span class="ship-item-warning" aria-label="Needs attention">!</span>'
     : '';
 
-  const warningClass = showWarning ? 'needs-attention' : '';
+  const primaryClass = primaryWarning ? 'warning' : '';
+  const secondaryClass = secondaryWarning ? 'warning' : '';
   const loadoutHtml = `
     <div class="ship-item-loadout-stack">
-      <span class="ship-item-loadout primary">${primaryLoadout}</span>
-      <span class="ship-item-loadout secondary">${secondaryLoadout}</span>
+      <span class="ship-item-loadout primary ${primaryClass}">${primaryLoadout}</span>
+      <span class="ship-item-loadout secondary ${secondaryClass}">${secondaryLoadout}</span>
     </div>
   `;
   return renderShipItem({
     ship,
     isCommander,
     isSelected,
-    extraClasses: `squad-card ${warningClass}`.trim(),
+    extraClasses: 'squad-card',
     dataAttrs: { 'ship-id': ship.id },
     beforeContent: renderToggle(isCommander, isSelected),
     iconContent: warningBadge,

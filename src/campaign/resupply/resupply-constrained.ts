@@ -25,7 +25,9 @@ export {
   getShipResupplyNeeds,
   needsAmmoResupply,
   needsAttention,
+  needsPrimaryAttention,
   needsResupply,
+  needsSecondaryAttention,
   type ShipResupplyNeeds,
 } from './resupply-needs';
 export { type ResupplyResult, resupplyShipConstrained } from './resupply-ship';

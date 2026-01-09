@@ -106,6 +106,9 @@
   flex-direction: column;
   align-items: flex-end;
   gap: var(--space-0-5);
+  /* Fixed max width that fits well in the modal */
+  max-width: 260px;
+  min-width: 0;
 }
 
 .ship-item-loadout {
@@ -113,14 +116,20 @@
   font-size: var(--text-xs);
   color: var(--text-primary);
   text-align: right;
-  max-width: 200px;
+  /* Allow 2-line wrapping before truncating */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.4;
+  /* Ensure width is constrained */
+  max-width: 100%;
+  word-break: break-word;
 }
 
 /* Bank size indicators are in components/ship-item.css */
 
-.ship-item.needs-attention .ship-item-loadout {
+/* Individual warning styling for primary/secondary */
+.ship-item-loadout.warning {
   color: var(--color-warning);
 }

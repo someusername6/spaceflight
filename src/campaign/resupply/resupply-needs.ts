@@ -12,16 +12,28 @@ export function getMaxPrimaryAmmo(primary: EquippedPrimary): number {
 
 /** Check if a ship needs attention (empty slots or needs ammo/missiles) */
 export function needsAttention(ship: OwnedShip): boolean {
-  // Check for empty weapon slots
+  return needsPrimaryAttention(ship) || needsSecondaryAttention(ship);
+}
+
+/** Check if primary weapons need attention (empty slots or low ammo) */
+export function needsPrimaryAttention(ship: OwnedShip): boolean {
   for (const primary of ship.primaryWeapons) {
     if (primary === null) return true;
+    if (primary.currentAmmo !== undefined) {
+      const maxAmmo = getMaxPrimaryAmmo(primary);
+      if (primary.currentAmmo < maxAmmo) return true;
+    }
   }
+  return false;
+}
+
+/** Check if secondary weapons need attention (empty slots or low missiles) */
+export function needsSecondaryAttention(ship: OwnedShip): boolean {
   for (const secondary of ship.secondaryWeapons) {
     if (secondary === null) return true;
+    if (secondary.count < secondary.maxCount) return true;
   }
-
-  // Also check for low ammo/missiles
-  return needsAmmoResupply(ship);
+  return false;
 }
 
 /** Check if a ship needs ammo or missile resupply (not empty slots) */
