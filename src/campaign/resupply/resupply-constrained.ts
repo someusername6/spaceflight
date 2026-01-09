@@ -5,7 +5,9 @@
  * and respect store stock and credit limits.
  */
 
+import { getMissileDisplayName } from '../../data/missiles';
 import { getAmmoPrice, getSecondaryPrice } from '../../data/prices';
+import { getAmmoDisplayName } from '../../data/weapons';
 import type { CampaignState } from '../types';
 import { needsResupply } from './resupply-needs';
 import {
@@ -112,22 +114,24 @@ export function resupplyAllShipsConstrained(
 
   // Build detailed loaded messages (one per item type)
   for (const [wt, count] of fromStorage.ammo) {
-    messages.push(`Loaded ${count} ${wt} ammo from storage`);
+    messages.push(`Loaded ${count} ${getAmmoDisplayName(wt)} from storage`);
   }
   for (const [wt, count] of fromStorage.missiles) {
-    messages.push(`Loaded ${count} ${wt} from storage`);
+    messages.push(`Loaded ${count} ${getMissileDisplayName(wt)} from storage`);
   }
 
   // Build detailed bought messages (one per item type)
   for (const [wt, count] of bought.ammo) {
     const pricePerUnit = getAmmoPrice(wt, 'buy');
     const cost = Math.round(count * pricePerUnit);
-    messages.push(`Bought ${count} ${wt} ammo for ${cost} cr`);
+    messages.push(`Bought ${count} ${getAmmoDisplayName(wt)} for ${cost} cr`);
   }
   for (const [wt, count] of bought.missiles) {
     const pricePerUnit = getSecondaryPrice(wt, 'buy');
     const cost = count * pricePerUnit;
-    messages.push(`Bought ${count} ${wt} for ${cost} cr`);
+    messages.push(
+      `Bought ${count} ${getMissileDisplayName(wt)} for ${cost} cr`,
+    );
   }
 
   // Determine shortage reason
@@ -160,7 +164,7 @@ export function resupplyAllShipsConstrained(
     const canAffordOne =
       pricePerUnit > 0 && currentState.credits >= pricePerUnit;
     const reason = getShortageReason(stock, canAffordOne);
-    messages.push(`Short ${count} ${wt} ammo (${reason})`);
+    messages.push(`Short ${count} ${getAmmoDisplayName(wt)} (${reason})`);
   }
   for (const [wt, count] of shortages.missiles) {
     const stock = currentState.storeStock.secondaries[wt] ?? 0;
@@ -168,7 +172,7 @@ export function resupplyAllShipsConstrained(
     const canAffordOne =
       pricePerUnit > 0 && currentState.credits >= pricePerUnit;
     const reason = getShortageReason(stock, canAffordOne);
-    messages.push(`Short ${count} ${wt} (${reason})`);
+    messages.push(`Short ${count} ${getMissileDisplayName(wt)} (${reason})`);
   }
 
   return {

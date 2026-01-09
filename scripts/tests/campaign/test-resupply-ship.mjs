@@ -232,8 +232,8 @@ console.log('\nTesting message generation...');
   assert.ok(allMessages.includes('Bought'), 'Message mentions purchase');
   assert.ok(result.messages.length >= 2, 'Separate messages per item');
   assert.ok(
-    result.messages.some((m) => m.includes('autocannon')),
-    'Has message for autocannon',
+    result.messages.some((m) => m.includes('Autocannon')),
+    'Has message for Autocannon',
   );
 
   console.log('  - Messages array format: PASS');
@@ -264,7 +264,7 @@ console.log('\nTesting shortageReason in resupply messages...');
     'Message mentions credits',
   );
   assert.ok(
-    creditMessages.includes('autocannon'),
+    creditMessages.includes('Autocannon'),
     'Message mentions specific item',
   );
   assert.ok(creditMessages.includes('Short'), 'Message uses Short prefix');
@@ -281,7 +281,7 @@ console.log('\nTesting shortageReason in resupply messages...');
   const stockMessages = stockResult.messages.join(' ');
   assert.ok(stockMessages.includes('out of stock'), 'Message mentions stock');
   assert.ok(
-    stockMessages.includes('autocannon'),
+    stockMessages.includes('Autocannon'),
     'Message mentions specific item',
   );
 

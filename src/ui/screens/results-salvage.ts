@@ -3,6 +3,7 @@
  */
 
 import type { SalvageResult } from '../../campaign/salvage';
+import { getAmmoDisplayName, getWeaponDisplayName } from '../../data/weapons';
 
 /** Render salvage section within rewards */
 export function renderSalvageSection(salvage: SalvageResult | null): string {
@@ -63,7 +64,7 @@ export function renderSalvageSection(salvage: SalvageResult | null): string {
           .map(
             (w) => `
           <div class="salvage-item">
-            <span class="item-name">${w.weaponType}</span>
+            <span class="item-name">${getWeaponDisplayName(w.weaponType)}</span>
             <span class="item-category">${w.category}</span>
             ${w.count > 1 ? `<span class="item-count">×${w.count}</span>` : ''}
           </div>
@@ -83,7 +84,7 @@ export function renderSalvageSection(salvage: SalvageResult | null): string {
           .map(
             (a) => `
           <div class="salvage-item">
-            <span class="item-name">${a.weaponType} Ammo</span>
+            <span class="item-name">${getAmmoDisplayName(a.weaponType)}</span>
             <span class="item-count">×${a.count}</span>
           </div>
         `,

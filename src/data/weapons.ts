@@ -215,3 +215,17 @@ export type WeaponName = keyof typeof PRIMARY_WEAPONS;
 export function getWeaponStats(name: string): WeaponStats | undefined {
   return PRIMARY_WEAPONS[name];
 }
+
+/** Get weapon display name from internal key (e.g., "nuclearLance" -> "Nuclear Lance") */
+export function getWeaponDisplayName(key: string): string {
+  const stats = PRIMARY_WEAPONS[key];
+  return stats?.name ?? key;
+}
+
+/** Get ammo display name from weapon key (e.g., "nuclearLance" -> "Nuclear Lance Charges") */
+export function getAmmoDisplayName(key: string): string {
+  const stats = PRIMARY_WEAPONS[key];
+  if (!stats) return key;
+  // Use ammoName if defined (e.g., "Autocannon Rounds"), otherwise weapon name
+  return stats.ammoName ?? stats.name;
+}

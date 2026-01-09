@@ -8,9 +8,13 @@ import type {
   EquippedPrimary,
   EquippedSecondary,
 } from '../../../campaign/types';
-import { MISSILES } from '../../../data/missiles';
+import { getMissileDisplayName, MISSILES } from '../../../data/missiles';
 import { weaponUsesAmmo } from '../../../data/prices';
-import { PRIMARY_WEAPONS, type WeaponStats } from '../../../data/weapons';
+import {
+  getWeaponDisplayName,
+  PRIMARY_WEAPONS,
+  type WeaponStats,
+} from '../../../data/weapons';
 
 /** Effective range for beam weapons (full damage at this distance or closer) */
 const BEAM_EFFECTIVE_RANGE = 100;
@@ -106,7 +110,7 @@ export function renderPrimaryPopover(
   const stats = PRIMARY_WEAPONS[weapon.weaponType];
 
   if (!stats) {
-    return `<div class="popover-header"><div class="popover-title"><span class="manager-name">${weapon.weaponType}</span></div></div>`;
+    return `<div class="popover-header"><div class="popover-title"><span class="manager-name">${getWeaponDisplayName(weapon.weaponType)}</span></div></div>`;
   }
 
   const category = stats.category ?? 'unknown';
@@ -200,7 +204,7 @@ export function renderSecondaryPopover(
   const canUnload = weapon.count > 0;
 
   if (!stats) {
-    return `<div class="popover-header"><div class="popover-title"><span class="manager-name">${weapon.weaponType}</span></div></div>`;
+    return `<div class="popover-header"><div class="popover-title"><span class="manager-name">${getMissileDisplayName(weapon.weaponType)}</span></div></div>`;
   }
 
   const lockInfo = stats.requiresLock

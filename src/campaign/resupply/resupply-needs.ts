@@ -2,6 +2,8 @@
  * Resupply Needs - Status checking and needs calculation for ships.
  */
 
+import { getMissileDisplayName } from '../../data/missiles';
+import { getWeaponDisplayName } from '../../data/weapons';
 import { getMaxAmmoCapacity } from '../store/store-ammo';
 import type { EquippedPrimary, OwnedShip } from '../types';
 
@@ -84,7 +86,7 @@ export function getAttentionReasons(ship: OwnedShip): string[] {
     const maxAmmo = getMaxPrimaryAmmo(primary);
     if (primary.currentAmmo < maxAmmo) {
       const pct = Math.round((primary.currentAmmo / maxAmmo) * 100);
-      lowAmmo.push(`${primary.weaponType} (${pct}%)`);
+      lowAmmo.push(`${getWeaponDisplayName(primary.weaponType)} (${pct}%)`);
     }
   }
   if (lowAmmo.length > 0) {
@@ -97,7 +99,7 @@ export function getAttentionReasons(ship: OwnedShip): string[] {
     if (secondary === null) continue;
     if (secondary.count < secondary.maxCount) {
       lowMissiles.push(
-        `${secondary.weaponType} (${secondary.count}/${secondary.maxCount})`,
+        `${getMissileDisplayName(secondary.weaponType)} (${secondary.count}/${secondary.maxCount})`,
       );
     }
   }

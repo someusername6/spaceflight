@@ -152,6 +152,12 @@ export function getMissileStats(name: string): MissileStats | undefined {
   return MISSILES[name.toLowerCase()];
 }
 
+/** Get missile display name from internal key (e.g., "seeker" -> "Seeker") */
+export function getMissileDisplayName(key: string): string {
+  const stats = MISSILES[key.toLowerCase()];
+  return stats?.name ?? key;
+}
+
 /** Decoy-specific constants */
 export const DECOY_CONSTANTS = {
   speed: 50, // m/s (slow movement)

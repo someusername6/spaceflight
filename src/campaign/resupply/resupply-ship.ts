@@ -2,7 +2,9 @@
  * Resupply Ship - Single ship resupply operation.
  */
 
+import { getMissileDisplayName } from '../../data/missiles';
 import { getAmmoPrice, getSecondaryPrice } from '../../data/prices';
+import { getAmmoDisplayName } from '../../data/weapons';
 import type { CampaignState, StoredAmmo, StoredWeapon } from '../types';
 import { getMaxPrimaryAmmo, getShipResupplyNeeds } from './resupply-needs';
 
@@ -306,22 +308,24 @@ export function resupplyShipConstrained(
 
   // Build detailed loaded messages (one per item type)
   for (const [wt, count] of fromStorage.ammo) {
-    messages.push(`Loaded ${count} ${wt} ammo from storage`);
+    messages.push(`Loaded ${count} ${getAmmoDisplayName(wt)} from storage`);
   }
   for (const [wt, count] of fromStorage.missiles) {
-    messages.push(`Loaded ${count} ${wt} from storage`);
+    messages.push(`Loaded ${count} ${getMissileDisplayName(wt)} from storage`);
   }
 
   // Build detailed bought messages (one per item type)
   for (const [wt, count] of bought.ammo) {
     const pricePerUnit = getAmmoPrice(wt, 'buy');
     const cost = Math.round(count * pricePerUnit);
-    messages.push(`Bought ${count} ${wt} ammo for ${cost} cr`);
+    messages.push(`Bought ${count} ${getAmmoDisplayName(wt)} for ${cost} cr`);
   }
   for (const [wt, count] of bought.missiles) {
     const pricePerUnit = getSecondaryPrice(wt, 'buy');
     const cost = count * pricePerUnit;
-    messages.push(`Bought ${count} ${wt} for ${cost} cr`);
+    messages.push(
+      `Bought ${count} ${getMissileDisplayName(wt)} for ${cost} cr`,
+    );
   }
 
   // Generate per-item shortage messages with explicit reasons
@@ -330,14 +334,14 @@ export function resupplyShipConstrained(
     const pricePerUnit = getAmmoPrice(wt, 'buy');
     const canAffordOne = pricePerUnit > 0 && newCredits >= pricePerUnit;
     const reason = getShortageReason(stock, canAffordOne);
-    messages.push(`Short ${count} ${wt} ammo (${reason})`);
+    messages.push(`Short ${count} ${getAmmoDisplayName(wt)} (${reason})`);
   }
   for (const [wt, count] of shortages.missiles) {
     const stock = newStoreStock.secondaries[wt] ?? 0;
     const pricePerUnit = getSecondaryPrice(wt, 'buy');
     const canAffordOne = pricePerUnit > 0 && newCredits >= pricePerUnit;
     const reason = getShortageReason(stock, canAffordOne);
-    messages.push(`Short ${count} ${wt} (${reason})`);
+    messages.push(`Short ${count} ${getMissileDisplayName(wt)} (${reason})`);
   }
 
   return {
