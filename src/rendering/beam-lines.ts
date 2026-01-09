@@ -121,6 +121,9 @@ export function updateAllBeamLines(
       // Skip beams with no hitPoint (not yet fired)
       if (!beam.hitPoint) continue;
 
+      // Skip Nuclear Lance - has dedicated renderer with volumetric effects
+      if (beam.weaponName === 'Nuclear Lance') continue;
+
       // Skip fully faded beams
       if (beam.fadeStartTime !== null) {
         const fadeAge = gameTime - beam.fadeStartTime;
