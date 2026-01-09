@@ -316,22 +316,28 @@ function updateSmoothedCamera(
   const shipPosition = interpPos ?? transform.position;
   const shipRotation = interpRot ?? transform.rotation;
 
-  // Calculate target position (behind and above ship)
-  targetOffset.copy(CAMERA_SMOOTHING.offset);
-  targetOffset.applyQuaternion(shipRotation);
-  targetPosition.copy(shipPosition).add(targetOffset);
-
   // Reset smoothing when target changes or on first frame
   const targetChanged = smoothedCamera.lastFollowed !== followedEntity;
   if (!smoothedCamera.initialized || targetChanged) {
-    smoothedCamera.position.copy(targetPosition);
     smoothedCamera.rotation.copy(shipRotation);
+    // Calculate initial position using ship rotation
+    targetOffset.copy(CAMERA_SMOOTHING.offset);
+    targetOffset.applyQuaternion(shipRotation);
+    smoothedCamera.position.copy(shipPosition).add(targetOffset);
     smoothedCamera.initialized = true;
     smoothedCamera.lastFollowed = followedEntity;
   } else {
-    // Smoothly interpolate position and rotation
-    smoothedCamera.position.lerp(targetPosition, CAMERA_SMOOTHING.positionLerp);
+    // First: smooth rotation toward ship rotation
     smoothedCamera.rotation.slerp(shipRotation, CAMERA_SMOOTHING.rotationLerp);
+
+    // Calculate offset using CAMERA's smoothed rotation (not ship's)
+    // This prevents rotation discontinuities from causing position jumps
+    targetOffset.copy(CAMERA_SMOOTHING.offset);
+    targetOffset.applyQuaternion(smoothedCamera.rotation);
+    targetPosition.copy(shipPosition).add(targetOffset);
+
+    // Smooth position toward target
+    smoothedCamera.position.lerp(targetPosition, CAMERA_SMOOTHING.positionLerp);
   }
 
   // Apply smoothed values to actual camera
