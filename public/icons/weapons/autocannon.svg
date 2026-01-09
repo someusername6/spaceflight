@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <!-- Autocannon: Multi-barrel gatling style -->
-  <rect x="8" y="10" width="24" height="12" rx="2"/>
-  <path d="M32 12 L88 12"/>
-  <path d="M32 16 L88 16"/>
-  <path d="M32 20 L88 20"/>
-  <path d="M88 8 L88 24"/>
-</svg>

@@ -6,12 +6,8 @@ import { MISSILES } from '../../../data/missiles';
 import { SHIP_CLASSES } from '../../../data/ships';
 import { PRIMARY_WEAPONS, type WeaponStats } from '../../../data/weapons';
 import { formatBankSizes, renderShipStatsRows } from '../../ship/stats';
-import {
-  FALLBACK_ICON_PATH,
-  getMissileIconPath,
-  getWeaponIconPath,
-  renderHullSchematic,
-} from '../../ship/viewer';
+import { renderHullSchematic } from '../../ship/viewer';
+import { renderMissileIcon, renderWeaponIcon } from '../../utils/weapon-icon';
 import type { StoreCategory } from './render';
 
 /** Effective range for beam weapons (full damage at this distance or closer) */
@@ -28,9 +24,6 @@ function formatBeamDamage(stats: WeaponStats): string {
   );
   return `${stats.damage}&nbsp;at&nbsp;${BEAM_EFFECTIVE_RANGE}&nbsp;m, ${damageAtMax}&nbsp;at&nbsp;${stats.range}&nbsp;m`;
 }
-
-/** Generate onerror handler for fallback icon */
-const iconError = `onerror="this.onerror=null; this.src='${FALLBACK_ICON_PATH}'"`;
 
 /** Render item preview - stylized visual representation */
 export function renderItemPreview(category: StoreCategory, id: string): string {
@@ -60,32 +53,29 @@ export function renderItemPreview(category: StoreCategory, id: string): string {
     `;
   }
 
-  // Use weapon SVG icon for primaries
+  // Use inline weapon SVG for primaries
   if (category === 'primaries') {
-    const iconPath = getWeaponIconPath(id);
     return `
       <div class="item-preview" style="--preview-color: ${categoryColors[category]}">
-        <img src="${iconPath}" alt="${id}" class="item-preview-weapon-icon" ${iconError} />
+        ${renderWeaponIcon(id, { size: 'xl' })}
       </div>
     `;
   }
 
-  // Use missile SVG icon for secondaries
+  // Use inline missile SVG for secondaries
   if (category === 'secondaries') {
-    const iconPath = getMissileIconPath(id);
     return `
       <div class="item-preview" style="--preview-color: ${categoryColors[category]}">
-        <img src="${iconPath}" alt="${id}" class="item-preview-missile-icon" ${iconError} />
+        ${renderMissileIcon(id, { size: 'xl' })}
       </div>
     `;
   }
 
-  // Use weapon SVG icon for ammo (green coloring)
+  // Use inline weapon SVG for ammo (green coloring)
   // category === 'ammo' is the only remaining case
-  const iconPath = getWeaponIconPath(id);
   return `
     <div class="item-preview" style="--preview-color: ${categoryColors[category]}">
-      <img src="${iconPath}" alt="${id}" class="item-preview-ammo-icon" ${iconError} />
+      ${renderWeaponIcon(id, { size: 'xl', color: 'var(--color-success)', glowColor: 'var(--color-success-glow)' })}
     </div>
   `;
 }

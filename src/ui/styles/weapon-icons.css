@@ -1,0 +1,141 @@
+/**
+ * Weapon Icon Styles
+ *
+ * Shared styles for inline SVG weapon/missile/ship icons.
+ * Used across store, pickers, and ship schematic slots.
+ *
+ * Icons use:
+ * - `color` property to set currentColor in SVG (weapon body)
+ * - `--glow-color` custom property for drop-shadow glow
+ * - `.has-svg-glow` class to disable CSS glow (weapon handles its own)
+ */
+
+/* ========================================
+   BASE ICON STYLES
+   ======================================== */
+
+.weapon-icon,
+.missile-icon,
+.ship-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.weapon-icon svg,
+.missile-icon svg,
+.ship-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* ========================================
+   WEAPON ICON SIZES
+   ======================================== */
+
+.weapon-icon-xs {
+  width: 36px;
+  height: 12px;
+  filter: drop-shadow(0 0 2px var(--glow-color, var(--color-primary-glow)));
+}
+
+.weapon-icon-sm {
+  width: 48px;
+  height: 16px;
+  filter: drop-shadow(0 0 2px var(--glow-color, var(--color-primary-glow)));
+}
+
+.weapon-icon-md {
+  width: 64px;
+  height: 21px;
+  filter: drop-shadow(0 0 3px var(--glow-color, var(--color-primary-glow)));
+}
+
+.weapon-icon-lg {
+  width: 78px;
+  height: 26px;
+  filter: drop-shadow(0 0 3px var(--glow-color, var(--color-primary-glow)));
+}
+
+.weapon-icon-xl {
+  width: 200px;
+  height: 100px;
+  filter: drop-shadow(0 0 8px var(--glow-color, var(--color-primary)))
+    drop-shadow(0 0 16px var(--glow-color, var(--color-primary-glow)));
+}
+
+/* Weapons with internal SVG glow don't need CSS drop-shadow */
+.weapon-icon.has-svg-glow {
+  filter: none;
+}
+
+/* ========================================
+   MISSILE ICON SIZES
+   ======================================== */
+
+.missile-icon-xs {
+  width: 36px;
+  height: 12px;
+  filter: drop-shadow(0 0 2px var(--glow-color, var(--color-danger-glow)));
+}
+
+.missile-icon-sm {
+  width: 48px;
+  height: 16px;
+  filter: drop-shadow(0 0 2px var(--glow-color, var(--color-danger-glow)));
+}
+
+.missile-icon-md {
+  width: 64px;
+  height: 21px;
+  filter: drop-shadow(0 0 3px var(--glow-color, var(--color-danger-glow)));
+}
+
+.missile-icon-lg {
+  width: 78px;
+  height: 26px;
+  filter: drop-shadow(0 0 3px var(--glow-color, var(--color-danger-glow)));
+}
+
+.missile-icon-xl {
+  width: 200px;
+  height: 100px;
+  filter: drop-shadow(0 0 8px var(--glow-color, var(--color-danger)))
+    drop-shadow(0 0 16px var(--glow-color, var(--color-danger-glow)));
+}
+
+/* ========================================
+   SHIP ICON SIZES
+   ======================================== */
+
+.ship-icon-xs {
+  width: 36px;
+  height: 36px;
+  filter: drop-shadow(0 0 2px var(--glow-color, var(--color-secondary-glow)));
+}
+
+.ship-icon-sm {
+  width: 48px;
+  height: 48px;
+  filter: drop-shadow(0 0 2px var(--glow-color, var(--color-secondary-glow)));
+}
+
+.ship-icon-md {
+  width: 64px;
+  height: 64px;
+  filter: drop-shadow(0 0 3px var(--glow-color, var(--color-secondary-glow)));
+}
+
+.ship-icon-lg {
+  width: 100px;
+  height: 100px;
+  filter: drop-shadow(0 0 4px var(--glow-color, var(--color-secondary-glow)));
+}
+
+.ship-icon-xl {
+  width: 150px;
+  height: 150px;
+  filter: drop-shadow(0 0 8px var(--glow-color, var(--color-secondary)))
+    drop-shadow(0 0 16px var(--glow-color, var(--color-secondary-glow)));
+}

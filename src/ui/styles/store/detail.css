@@ -53,29 +53,10 @@
   min-height: 200px;
 }
 
-.item-preview-weapon-icon {
-  width: 200px;
-  height: 100px;
-  object-fit: contain;
-  filter: var(--filter-amber) drop-shadow(0 0 8px var(--color-primary))
-    drop-shadow(0 0 16px var(--color-primary-glow));
-}
-
-.item-preview-missile-icon {
-  width: 200px;
-  height: 100px;
-  object-fit: contain;
-  filter: var(--filter-red) drop-shadow(0 0 8px var(--color-danger))
-    drop-shadow(0 0 16px var(--color-danger-glow));
-}
-
-.item-preview-ammo-icon {
-  width: 200px;
-  height: 100px;
-  object-fit: contain;
-  filter: var(--filter-green) drop-shadow(0 0 8px var(--color-success))
-    drop-shadow(0 0 16px var(--color-success-glow));
-}
+/*
+ * Store preview icons now use shared weapon-icon styles from weapon-icons.css.
+ * Size 'xl' is used for the large store preview.
+ */
 
 .item-preview-scrap-icon {
   width: 100px;

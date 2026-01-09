@@ -46,6 +46,9 @@
 /* Notifications */
 @import "./notification.css";
 
+/* Weapon/missile/ship icons (inline SVG) */
+@import "./weapon-icons.css";
+
 /* Picker dropdowns (weapons, missiles) */
 @import "./picker.css";
 @import "./picker-popover.css";

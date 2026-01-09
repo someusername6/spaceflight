@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 32" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <defs>
+    <filter id="gl-beam" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="gl-body" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <g stroke="#0f0" filter="url(#gl-beam)">
+    <path d="M32 16 H88"/>
+    <path d="M78 6 V26"/>
+    <path d="M86.66 21 L 69.34 11"/>
+    <path d="M83 24.66 L 73 7.34"/>
+    <path d="M69.34 21 L 86.66 11"/>
+    <path d="M72 24.66 L 83 7.34"/>
+  </g>
+
+  <rect stroke="currentColor" filter="url(#gl-body)" x="7" y="10" width="24" height="12" rx="2"/>
+</svg>

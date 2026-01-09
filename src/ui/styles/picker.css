@@ -113,21 +113,15 @@
   background: rgba(255, 51, 102, 0.08);
 }
 
+/*
+ * Picker icons
+ * Now rendered as inline SVG via weapon-icon utility.
+ * Color is set via style attribute; size is overridden here.
+ */
 .picker-icon {
   width: 48px;
   height: 20px;
-  object-fit: contain;
   flex-shrink: 0;
-}
-
-/* Primary picker icon - amber filter */
-.primary-picker .picker-icon {
-  filter: var(--filter-amber) drop-shadow(0 0 2px var(--color-primary-glow));
-}
-
-/* Secondary picker icon - red filter */
-.missile-picker .picker-icon {
-  filter: var(--filter-red) drop-shadow(0 0 2px var(--color-danger-glow));
 }
 
 .picker-name {

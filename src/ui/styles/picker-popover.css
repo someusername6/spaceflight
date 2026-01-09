@@ -241,15 +241,7 @@
    PICKER CONTENT IN WEAPON POPOVER
    ======================================== */
 
-/* Primary popover icon - amber filter */
-.weapon-popover-primary .picker-icon {
-  filter: var(--filter-amber) drop-shadow(0 0 2px var(--color-primary-glow));
-}
-
-/* Secondary popover icon - red filter */
-.weapon-popover-secondary .picker-icon {
-  filter: var(--filter-red) drop-shadow(0 0 2px var(--color-danger-glow));
-}
+/* Icons now use inline SVG with color set via style attribute */
 
 /* Primary picker item hover - amber */
 .weapon-popover-primary .picker-item:hover {

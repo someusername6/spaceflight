@@ -12,36 +12,30 @@ import type {
   OwnedShip,
 } from '../../campaign/types';
 import { type Hardpoint, SHIP_CLASSES } from '../../data/ships';
+import {
+  renderMissileIcon,
+  renderShipIcon as renderShipIconInline,
+  renderWeaponIcon,
+} from '../utils/weapon-icon';
 import { renderShipActions } from './actions';
 import { getWeaponAmmoInfo, shouldUseSegmentedBar } from './slot-utils';
-import {
-  getMissileColor,
-  getMissileIconPath,
-  getShipIconPath,
-  getWeaponColor,
-  getWeaponIconPath,
-  iconErrorHandler,
-} from './viewer-icons';
+import { getMissileColor, getWeaponColor } from './viewer-icons';
 
 // Re-export for external use
 export {
   FALLBACK_ICON_PATH,
-  getMissileIconPath,
   getShipAbbrev,
   getShipIconPath,
-  getWeaponIconPath,
 } from './viewer-icons';
 
 /** Rendering mode for schematic slots */
 export type SchematicRenderMode = 'interactive' | 'hull-preview';
 
-/** Render ship icon using SVG */
+/** Render ship icon using inline SVG */
 function renderShipIcon(shipClass: string): string {
-  const iconPath = getShipIconPath(shipClass);
-
   return `
     <div class="ship-icon-large">
-      <img src="${iconPath}" alt="${shipClass}" class="ship-icon-svg" ${iconErrorHandler()} />
+      ${renderShipIconInline(shipClass, { className: 'ship-icon-svg' })}
     </div>
   `;
 }
@@ -234,7 +228,7 @@ function renderSchematicSlot(
     }
   }
 
-  // Render weapon display: SVG icons repeated based on bank size
+  // Render weapon display: inline SVG icons repeated based on bank size
   let weaponDisplay = '';
   if (isEmpty) {
     // Show + for each empty slot in the bank
@@ -242,12 +236,19 @@ function renderSchematicSlot(
       .fill('<span class="slot-empty-icon">+</span>')
       .join('');
   } else if (isPrimary) {
-    const iconPath = getWeaponIconPath(weaponType);
-    const icon = `<img src="${iconPath}" alt="${weaponType}" class="slot-weapon-icon" ${iconErrorHandler()} />`;
+    // Size 'lg' is the base size; CSS scales down for larger banks
+    const icon = renderWeaponIcon(weaponType, {
+      size: 'lg',
+      color,
+      className: 'slot-weapon-icon',
+    });
     weaponDisplay = Array(bankSize).fill(icon).join('');
   } else {
-    const iconPath = getMissileIconPath(weaponType);
-    const icon = `<img src="${iconPath}" alt="${weaponType}" class="slot-missile-icon" ${iconErrorHandler()} />`;
+    const icon = renderMissileIcon(weaponType, {
+      size: 'lg',
+      color,
+      className: 'slot-missile-icon',
+    });
     weaponDisplay = Array(bankSize).fill(icon).join('');
   }
 

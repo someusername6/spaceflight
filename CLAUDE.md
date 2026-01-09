@@ -179,3 +179,60 @@ export function createMyUI(...): MyUI {
 2. **Always clean up handles** - Call `screenHandle?.destroy()` before creating new ones
 3. **Keep render pure** - No side effects in `render()`, only return HTML string
 4. **Bind after render** - `bind()` is called after every `render()`, handlers are auto-cleared
+
+## Weapon Icon System
+
+Weapon, missile, and ship icons use inline SVGs for CSS styling. Use the render functions in `src/ui/utils/weapon-icon.ts`.
+
+### Why Inline SVGs?
+
+SVGs loaded via `<img>` tags are treated as external images - CSS cannot reach inside them. To style `currentColor` elements via CSS, the SVG must be inline in the DOM.
+
+### File Locations
+
+- **Source SVGs**: `src/assets/icons/{weapons,missiles,ships}/*.svg`
+- **Render API**: `src/ui/utils/weapon-icon.ts` (primary interface)
+- **SVG Loader**: `src/ui/utils/inline-svg.ts` (low-level loader)
+- **Icon Styles**: `src/ui/styles/weapon-icons.css`
+- **Type declarations**: `src/vite-env.d.ts`
+
+### Usage
+
+```typescript
+import { renderWeaponIcon, renderMissileIcon } from '../../utils/weapon-icon';
+
+// Primary weapons
+renderWeaponIcon('redlaser', { size: 'lg', color: 'var(--color-primary)' })
+renderWeaponIcon('autocannon', { size: 'sm', className: 'picker-icon' })
+
+// Missiles
+renderMissileIcon('hornet', { size: 'md', color: 'var(--color-danger)' })
+
+// Size presets: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
+```
+
+### Dual Coloring (Laser Weapons)
+
+Laser weapons have two color zones with separate glow effects:
+
+1. **Fixed color beam** (e.g., `#f00` for red laser) - defined in SVG with internal `<filter>` for glow
+2. **currentColor body** - controlled via CSS `color` property, uses CSS drop-shadow
+
+The `renderWeaponIcon()` function automatically detects lasers and applies the `has-svg-glow` class to disable CSS drop-shadow (preventing double glow).
+
+### SVG Filter ID Convention
+
+Laser SVGs use internal filters for glow effects. Filter IDs must be unique per weapon to avoid collision when multiple icons are on the same page:
+
+- `rl-beam`, `rl-body` - Red laser
+- `bl-beam`, `bl-body` - Blue laser
+- `gl-beam`, `gl-body` - Green laser
+
+### Adding New Icons
+
+1. Add the SVG file to `src/assets/icons/{category}/`
+2. Use `currentColor` for elements that should be CSS-styled
+3. Use fixed colors for elements that should stay constant
+4. If adding internal filters, use a unique prefix (e.g., `xx-beam`, `xx-body`)
+5. The loader will automatically pick it up via Vite's glob imports
+6. For weapons with internal glow, add to `WEAPONS_WITH_SVG_GLOW` in `weapon-icon.ts`

@@ -14,11 +14,7 @@ import { MISSILES } from '../../../data/missiles';
 import { SHIP_CLASSES } from '../../../data/ships';
 import { PRIMARY_WEAPONS } from '../../../data/weapons';
 import { hideTooltip } from '../../common/tooltip';
-import {
-  getMissileIconPath,
-  getWeaponIconPath,
-  iconErrorHandler,
-} from '../../ship/viewer-icons';
+import { renderMissileIcon, renderWeaponIcon } from '../../utils/weapon-icon';
 import {
   activePicker,
   closePopover,
@@ -102,11 +98,10 @@ export function renderPrimaryPickerContent(weapons: GroupedWeapon[]): string {
 
   return weapons
     .map((w) => {
-      const iconPath = getWeaponIconPath(w.weaponType);
       const displayName = PRIMARY_WEAPONS[w.weaponType]?.name ?? w.weaponType;
       return `
         <button class="picker-item" data-weapon-type="${w.weaponType}">
-          <img src="${iconPath}" alt="${w.weaponType}" class="picker-icon" ${iconErrorHandler()} />
+          ${renderWeaponIcon(w.weaponType, { size: 'sm', className: 'picker-icon' })}
           <span class="picker-name">${displayName}</span>
           <span class="picker-stock">×${w.totalCount}</span>
         </button>
@@ -126,14 +121,13 @@ export function renderSecondaryPickerContent(
 
   return weapons
     .map((w) => {
-      const iconPath = getMissileIconPath(w.weaponType);
       const displayName = MISSILES[w.weaponType]?.name ?? w.weaponType;
       const maxCapacity = getMaxMissileCapacity(w.weaponType, bankSize);
       const maxLoadable = Math.min(w.totalCount, maxCapacity);
       return `
         <div class="picker-missile-row" data-weapon-type="${w.weaponType}">
           <div class="picker-missile-info">
-            <img src="${iconPath}" alt="${w.weaponType}" class="picker-icon" ${iconErrorHandler()} />
+            ${renderMissileIcon(w.weaponType, { size: 'sm', className: 'picker-icon' })}
             <span class="picker-name">${displayName}</span>
             <span class="picker-storage">×${w.totalCount}</span>
           </div>

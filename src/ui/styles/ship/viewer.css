@@ -252,12 +252,16 @@
   color: var(--text-dim);
 }
 
+/*
+ * Slot weapon/missile icons
+ * Now rendered as inline SVG via weapon-icon utility.
+ * Color is set via style attribute; sizes are controlled here.
+ */
 .slot-weapon-icon,
 .slot-missile-icon {
+  /* Override weapon-icon-lg default size for slot context */
   width: 78px;
   height: 26px;
-  object-fit: contain;
-  filter: var(--filter-cyan) drop-shadow(0 0 3px var(--color-secondary));
 }
 
 /* Smaller icons for bank size 2 */
@@ -272,16 +276,6 @@
 .schematic-slot.bank-3 .slot-missile-icon {
   width: 52px;
   height: 17px;
-}
-
-/* Color weapon icons based on category */
-.schematic-slot.primary.filled .slot-weapon-icon {
-  filter: var(--filter-amber) drop-shadow(0 0 3px var(--slot-color));
-}
-
-/* Color missile icons based on type */
-.schematic-slot.secondary.filled .slot-missile-icon {
-  filter: var(--filter-red) drop-shadow(0 0 3px var(--slot-color));
 }
 
 /* ========================================
@@ -355,10 +349,12 @@
   justify-content: center;
 }
 
-.ship-icon-svg {
+/*
+ * Ship icon in schematic center.
+ * Now rendered as inline SVG via weapon-icon utility.
+ * Override size preset to fill container.
+ */
+.ship-icon-large .ship-icon.ship-icon-svg {
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  filter: var(--filter-cyan) drop-shadow(0 0 8px var(--color-secondary))
-    drop-shadow(0 0 16px var(--color-secondary-glow));
 }
