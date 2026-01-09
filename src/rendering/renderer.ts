@@ -259,15 +259,20 @@ export function followEntity(
 
   const { camera } = renderer;
 
+  // Use interpolated position/rotation (same as what mesh is rendered at)
+  // This prevents camera-mesh desync that causes visible jitter
+  const shipPos = getInterpolatedPosition(entity) ?? transform.position;
+  const shipRot = getInterpolatedRotation(entity) ?? transform.rotation;
+
   // Calculate camera position behind and above the ship (in ship's local space)
   cameraOffset.set(0, 5, 20);
-  cameraOffset.applyQuaternion(transform.rotation);
-  camera.position.copy(transform.position).add(cameraOffset);
+  cameraOffset.applyQuaternion(shipRot);
+  camera.position.copy(shipPos).add(cameraOffset);
 
   // Make camera inherit ship's orientation exactly
   // This keeps the ship centered during rolls and ensures crosshair
   // accurately represents where shots will land
-  camera.quaternion.copy(transform.rotation);
+  camera.quaternion.copy(shipRot);
 }
 
 /** Gets the Three.js scene */
