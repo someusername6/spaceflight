@@ -154,11 +154,14 @@ export function showWeaponSwapPicker(
 
   submenu.innerHTML = `<div class="popover-content picker-content">${content}</div>`;
 
-  // Position relative to the Change button (to the right of it)
+  // Position below the Change button, left-aligned with its left edge
   const btnRect = buttonElement.getBoundingClientRect();
+  const padding = 8;
+  const gap = 4;
+
   submenu.style.position = 'fixed';
-  submenu.style.left = `${btnRect.right + 8}px`;
-  submenu.style.top = `${btnRect.top}px`;
+  submenu.style.left = `${btnRect.left}px`;
+  submenu.style.top = `${btnRect.bottom + gap}px`;
   submenu.style.zIndex = '1001';
 
   document.body.appendChild(submenu);
@@ -166,15 +169,22 @@ export function showWeaponSwapPicker(
 
   // Adjust position if overflowing
   const submenuRect = submenu.getBoundingClientRect();
-  const padding = 8;
 
-  if (submenuRect.right > window.innerWidth - padding) {
-    submenu.style.left = `${btnRect.left - submenuRect.width - 8}px`;
+  // If submenu goes below viewport, position above the button instead
+  if (submenuRect.bottom > window.innerHeight - padding) {
+    const topAbove = btnRect.top - submenuRect.height - gap;
+    if (topAbove >= padding) {
+      submenu.style.top = `${topAbove}px`;
+    } else {
+      // Neither fits well, default to constrained position
+      submenu.style.top = `${padding}px`;
+    }
   }
 
-  if (submenuRect.bottom > window.innerHeight - padding) {
-    const newTop = window.innerHeight - submenuRect.height - padding;
-    submenu.style.top = `${Math.max(padding, newTop)}px`;
+  // Adjust horizontal if overflowing right edge
+  if (submenuRect.right > window.innerWidth - padding) {
+    const newLeft = window.innerWidth - submenuRect.width - padding;
+    submenu.style.left = `${Math.max(padding, newLeft)}px`;
   }
 
   // Bind swap events for primary weapons

@@ -173,85 +173,6 @@
   text-shadow: 0 0 8px var(--color-danger-glow);
 }
 
-/* Popover ammo/loading section */
-.popover-ammo {
-  background: rgba(0, 0, 0, 0.2);
-  padding: var(--space-3) var(--space-3) var(--space-1-5);
-  margin-bottom: var(--space-2-5);
-}
-
-/* Continuous ammo bar (high capacity) */
-.ammo-bar {
-  height: 8px;
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid var(--border-color);
-  margin-bottom: var(--space-1-5);
-  overflow: hidden;
-}
-
-.ammo-bar-fill {
-  height: 100%;
-  transition: width var(--duration-base) var(--ease-out);
-}
-
-/* Segmented ammo bar (low capacity - missiles/decoys) */
-.ammo-bar.segmented {
-  display: flex;
-  gap: 2px;
-  background: transparent;
-  border: none;
-}
-
-.ammo-segment {
-  flex: 1;
-  height: 100%;
-  border-radius: 1px;
-}
-
-/* Primary popover bar colors */
-.weapon-popover-primary .ammo-bar-fill {
-  background: var(--color-primary);
-  box-shadow: 0 0 8px var(--color-primary-glow);
-}
-
-.weapon-popover-primary .ammo-segment {
-  background: color-mix(in srgb, var(--color-primary) 30%, black);
-}
-
-.weapon-popover-primary .ammo-segment.filled {
-  background: var(--color-primary);
-  box-shadow: 0 0 4px var(--color-primary-glow);
-}
-
-/* Secondary popover bar colors */
-.weapon-popover-secondary .ammo-bar-fill {
-  background: var(--color-danger);
-  box-shadow: 0 0 8px var(--color-danger-glow);
-}
-
-.weapon-popover-secondary .ammo-segment {
-  background: color-mix(in srgb, var(--color-danger) 30%, black);
-}
-
-.weapon-popover-secondary .ammo-segment.filled {
-  background: var(--color-danger);
-  box-shadow: 0 0 4px var(--color-danger-glow);
-}
-
-.ammo-count {
-  font-family: var(--font-ui);
-  font-size: var(--text-sm);
-  font-weight: var(--font-semibold);
-  color: var(--text-primary);
-  text-align: center;
-  margin-bottom: var(--space-2);
-}
-
-.ammo-max {
-  font-weight: var(--font-normal);
-  color: var(--text-dim);
-}
-
 /* Popover controls (load/unload buttons) */
 .popover-controls {
   display: flex;
@@ -289,9 +210,10 @@
 }
 
 .manager-btn:hover:not(:disabled) {
+  background: var(--bg-raised-hover);
   border-color: var(--color-primary);
   color: var(--color-primary);
-  background: rgba(255, 159, 28, 0.15);
+  box-shadow: var(--shadow-glow-primary);
 }
 
 .manager-btn:hover:not(:disabled)::after {
@@ -306,17 +228,6 @@
 .manager-btn:focus-visible {
   outline: 2px solid var(--color-secondary);
   outline-offset: 2px;
-}
-
-/* Secondary popover button hover uses red */
-.weapon-popover-secondary .manager-btn:hover:not(:disabled) {
-  border-color: var(--color-danger);
-  color: var(--color-danger);
-  background: rgba(255, 51, 102, 0.15);
-}
-
-.weapon-popover-secondary .manager-btn:hover:not(:disabled)::after {
-  color: var(--color-danger-dim);
 }
 
 /* Unequip button container */
@@ -382,4 +293,38 @@
   border-color: var(--color-primary);
   color: var(--color-primary);
   box-shadow: var(--shadow-glow-primary);
+}
+
+/* ========================================
+   PICKER CONTENT SIZING & SCROLLBARS
+   ======================================== */
+
+/* Primary picker content - amber scrollbar */
+.weapon-popover-primary .picker-content {
+  max-height: 200px;
+  overflow-y: auto;
+  scrollbar-color: rgba(255, 159, 28, 0.6) var(--scrollbar-track);
+}
+
+.weapon-popover-primary .picker-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 159, 28, 0.6);
+}
+
+.weapon-popover-primary .picker-content::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
+}
+
+/* Secondary/missile picker content - larger height, red scrollbar */
+.weapon-popover-secondary .picker-content {
+  max-height: 280px;
+  overflow-y: auto;
+  scrollbar-color: rgba(255, 51, 102, 0.6) var(--scrollbar-track);
+}
+
+.weapon-popover-secondary .picker-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 51, 102, 0.6);
+}
+
+.weapon-popover-secondary .picker-content::-webkit-scrollbar-thumb:hover {
+  background: var(--color-danger);
 }

@@ -214,6 +214,8 @@ function bindPopoverEvents(
   if (changeBtn) {
     changeBtn.addEventListener('click', (e) => {
       e.stopPropagation();
+      // Pin the parent popover when opening the change submenu
+      pinWeaponPopover();
       const slotEl = getActiveSlotElement();
       if (changeWeaponHandler && slotEl) {
         changeWeaponHandler(
