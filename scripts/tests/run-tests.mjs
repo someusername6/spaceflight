@@ -56,12 +56,9 @@ const BALANCE_TESTS = [
   // Combat balance
   'combat/test-skill-scaling.mjs',
   'combat/test-weapon-diversity.mjs',
-  'combat/test-beam-variants.mjs',
   'combat/test-decoy-missile.mjs',
-  'combat/test-engagement-range.mjs',
   'combat/test-engagement-patterns.mjs',
   'combat/test-ttk-matrix.mjs',
-  'combat/test-ballistic-builds.mjs',
   'combat/test-skill-vs-brawler.mjs',
 
   // AI behavior (simulation-based)

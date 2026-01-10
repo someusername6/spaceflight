@@ -25,12 +25,6 @@ export function missionSystem(world: World, _dt: number): void {
   // Check for player death (defeat)
   const playerCount = countEntities(world, ['playerControlled', 'health']);
   if (playerCount === 0) {
-    // Log early defeat (likely spawn failure) vs normal player death
-    if (world.systemState.gameTime < 1) {
-      console.error(
-        '[Mission] Defeat on first tick - player never spawned. Check mission-launcher logs.',
-      );
-    }
     mission.result = MissionResult.Defeat;
     return;
   }

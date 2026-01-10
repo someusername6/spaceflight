@@ -14,7 +14,9 @@ import {
 } from '../../../input/key-bindings';
 import {
   type FrameRateCap,
+  type PlayerAutoaim,
   setFrameRateCap,
+  setPlayerAutoaim,
 } from '../../../settings/game-settings';
 import {
   createScreen,
@@ -23,6 +25,12 @@ import {
   type ScreenHandle,
 } from '../../framework/screen';
 import { renderControlsTab } from './controls';
+import {
+  cleanupAutoaimPopoverListener,
+  positionAutoaimPopover,
+  renderGameplayTab,
+  setupAutoaimPopoverListener,
+} from './gameplay';
 import {
   cleanupPopoverListener,
   positionFpsPopover,
@@ -36,7 +44,7 @@ export interface SettingsScreenCallbacks {
 }
 
 /** Settings tab types */
-type SettingsTab = 'graphics' | 'controls';
+type SettingsTab = 'graphics' | 'controls' | 'gameplay';
 
 /** Settings UI state */
 interface SettingsState {
@@ -44,6 +52,7 @@ interface SettingsState {
   listeningAction: GameAction | null;
   showResetConfirm: boolean;
   showFpsPopover: boolean;
+  showAutoaimPopover: boolean;
 }
 
 /** Render the reset confirmation view */
@@ -68,13 +77,17 @@ function renderResetConfirmView(): string {
 function renderTabBar(selectedTab: SettingsTab): string {
   return `
     <nav class="settings-tabs" role="tablist" aria-label="Settings categories">
-      <button class="btn ${selectedTab === 'graphics' ? 'btn-primary' : ''}"
-              data-tab="graphics" role="tab" aria-selected="${selectedTab === 'graphics'}">
-        Graphics
+      <button class="btn ${selectedTab === 'gameplay' ? 'btn-primary' : ''}"
+              data-tab="gameplay" role="tab" aria-selected="${selectedTab === 'gameplay'}">
+        Gameplay
       </button>
       <button class="btn ${selectedTab === 'controls' ? 'btn-primary' : ''}"
               data-tab="controls" role="tab" aria-selected="${selectedTab === 'controls'}">
         Controls
+      </button>
+      <button class="btn ${selectedTab === 'graphics' ? 'btn-primary' : ''}"
+              data-tab="graphics" role="tab" aria-selected="${selectedTab === 'graphics'}">
+        Graphics
       </button>
     </nav>
   `;
@@ -82,10 +95,14 @@ function renderTabBar(selectedTab: SettingsTab): string {
 
 /** Render main settings view */
 function renderMainView(state: SettingsState): string {
-  const tabContent =
-    state.selectedTab === 'graphics'
-      ? renderGraphicsTab(state.showFpsPopover)
-      : renderControlsTab(state.listeningAction);
+  let tabContent: string;
+  if (state.selectedTab === 'graphics') {
+    tabContent = renderGraphicsTab(state.showFpsPopover);
+  } else if (state.selectedTab === 'gameplay') {
+    tabContent = renderGameplayTab(state.showAutoaimPopover);
+  } else {
+    tabContent = renderControlsTab(state.listeningAction);
+  }
 
   return `
     <div class="settings-container">
@@ -162,18 +179,39 @@ const SettingsScreenComponent: Screen<SettingsState, SettingsScreenCallbacks> =
       api.on('.settings-picker-item', 'click', (e, el) => {
         e.stopPropagation();
         const fps = el.dataset.fps;
+        const autoaim = el.dataset.autoaim;
         if (fps !== undefined) {
           const value = Number.parseInt(fps, 10) as FrameRateCap;
           setFrameRateCap(value);
           cleanupPopoverListener();
           api.setState({ showFpsPopover: false });
+        } else if (autoaim !== undefined) {
+          const value = Number.parseFloat(autoaim) as PlayerAutoaim;
+          setPlayerAutoaim(value);
+          cleanupAutoaimPopoverListener();
+          api.setState({ showAutoaimPopover: false });
         }
       });
 
-      // Close popover on outside click and position it
+      // Close FPS popover on outside click and position it
       if (state.showFpsPopover) {
         setupPopoverListener(() => api.setState({ showFpsPopover: false }));
         positionFpsPopover();
+      }
+
+      // Autoaim popover trigger (gameplay tab)
+      api.on('#autoaim-trigger', 'click', (e) => {
+        e.stopPropagation();
+        cleanupAutoaimPopoverListener();
+        api.setState({ showAutoaimPopover: !state.showAutoaimPopover });
+      });
+
+      // Close autoaim popover on outside click and position it
+      if (state.showAutoaimPopover) {
+        setupAutoaimPopoverListener(() =>
+          api.setState({ showAutoaimPopover: false }),
+        );
+        positionAutoaimPopover();
       }
 
       // Reset all button - show confirmation (controls tab)
@@ -310,10 +348,11 @@ let screenHandle: ScreenHandle<SettingsState, SettingsScreenCallbacks> | null =
 export function renderSettingsScreen(element: HTMLElement): void {
   // For backwards compatibility, just set innerHTML with initial state
   const initialState: SettingsState = {
-    selectedTab: 'graphics',
+    selectedTab: 'gameplay',
     listeningAction: null,
     showResetConfirm: false,
     showFpsPopover: false,
+    showAutoaimPopover: false,
   };
   element.innerHTML = SettingsScreenComponent.render(initialState, {
     onBack: () => {},
@@ -330,10 +369,11 @@ export function bindSettingsScreen(
   cleanupKeyListener();
 
   const initialState: SettingsState = {
-    selectedTab: 'graphics',
+    selectedTab: 'gameplay',
     listeningAction: null,
     showResetConfirm: false,
     showFpsPopover: false,
+    showAutoaimPopover: false,
   };
 
   screenHandle = createScreen(
@@ -348,6 +388,7 @@ export function bindSettingsScreen(
 export function cleanupSettingsScreen(): void {
   cleanupKeyListener();
   cleanupPopoverListener();
+  cleanupAutoaimPopoverListener();
   screenHandle?.destroy();
   screenHandle = null;
 }

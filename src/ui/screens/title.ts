@@ -177,7 +177,7 @@ function renderMainView(): string {
         </div>
       </div>
       <div class="title-footer">
-        <span class="title-version">v0.1.0</span>
+        <span class="title-version">v${__APP_VERSION__}</span>
       </div>
     </div>
   `;

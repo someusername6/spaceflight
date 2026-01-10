@@ -8,15 +8,34 @@
 /** Available frame rate cap options */
 export type FrameRateCap = 30 | 60 | 120 | 0; // 0 = uncapped
 
+/** Available player autoaim options (degrees) */
+export type PlayerAutoaim = 0 | 0.5 | 1 | 1.5 | 2 | 2.5 | 3;
+
 /** Game settings structure */
 export interface GameSettings {
   frameRateCap: FrameRateCap;
+  playerAutoaim: PlayerAutoaim;
 }
 
 /** Default settings */
 export const DEFAULT_SETTINGS: GameSettings = {
   frameRateCap: 60, // Default to 60fps (balances quality and power usage)
+  playerAutoaim: 1, // Default to 1 degree of autoaim assistance
 };
+
+/** Display names for player autoaim options */
+export const PLAYER_AUTOAIM_OPTIONS: Array<{
+  value: PlayerAutoaim;
+  label: string;
+}> = [
+  { value: 0, label: '0° (Off)' },
+  { value: 0.5, label: '0.5°' },
+  { value: 1, label: '1° (Default)' },
+  { value: 1.5, label: '1.5°' },
+  { value: 2, label: '2°' },
+  { value: 2.5, label: '2.5°' },
+  { value: 3, label: '3°' },
+];
 
 /** Display names for frame rate options */
 export const FRAME_RATE_OPTIONS: Array<{ value: FrameRateCap; label: string }> =
@@ -71,6 +90,21 @@ export function setFrameRateCap(fps: FrameRateCap): void {
 }
 
 /**
+ * Get the current player autoaim bonus in degrees.
+ */
+export function getPlayerAutoaim(): PlayerAutoaim {
+  return currentSettings.playerAutoaim;
+}
+
+/**
+ * Set the player autoaim bonus and persist.
+ */
+export function setPlayerAutoaim(degrees: PlayerAutoaim): void {
+  currentSettings.playerAutoaim = degrees;
+  saveGameSettings();
+}
+
+/**
  * Save current settings to localStorage.
  */
 export function saveGameSettings(): void {
@@ -97,6 +131,21 @@ function isValidFrameRateCap(value: unknown): value is FrameRateCap {
 }
 
 /**
+ * Validate player autoaim value.
+ */
+function isValidPlayerAutoaim(value: unknown): value is PlayerAutoaim {
+  return (
+    value === 0 ||
+    value === 0.5 ||
+    value === 1 ||
+    value === 1.5 ||
+    value === 2 ||
+    value === 2.5 ||
+    value === 3
+  );
+}
+
+/**
  * Load settings from localStorage with validation.
  */
 function loadSettingsFromStorage(): Partial<GameSettings> | null {
@@ -116,6 +165,11 @@ function loadSettingsFromStorage(): Partial<GameSettings> | null {
     // Validate frameRateCap
     if ('frameRateCap' in obj && isValidFrameRateCap(obj.frameRateCap)) {
       validSettings.frameRateCap = obj.frameRateCap;
+    }
+
+    // Validate playerAutoaim
+    if ('playerAutoaim' in obj && isValidPlayerAutoaim(obj.playerAutoaim)) {
+      validSettings.playerAutoaim = obj.playerAutoaim;
     }
 
     return Object.keys(validSettings).length > 0 ? validSettings : null;

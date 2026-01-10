@@ -21,7 +21,7 @@ import {
   getBeamColor,
 } from './beam-helpers';
 import { calculateBankOffset } from './weapon-spawning';
-import { PLAYER_AUTOAIM_BONUS } from './weapons';
+import { getPlayerAutoaimBonus } from './weapons';
 
 // Reusable objects
 const rayOrigin = new THREE.Vector3();
@@ -56,7 +56,7 @@ export function fireContinuousBeam(
   // Apply autoaim if weapon has autoaimFov or isPlayer, and target exists
   const baseAutoaim = weapon.autoaimFov ?? 0;
   const effectiveAutoaim = isPlayer
-    ? baseAutoaim + PLAYER_AUTOAIM_BONUS
+    ? baseAutoaim + getPlayerAutoaimBonus()
     : baseAutoaim;
   if (effectiveAutoaim > 0 && targetEntity !== undefined) {
     const targetTransform = getComponent<Transform>(
