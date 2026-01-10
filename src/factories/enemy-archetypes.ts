@@ -155,4 +155,54 @@ export const ENEMY_ARCHETYPES: Record<string, EnemyShipStats> = {
     secondaryWeapons: [{ name: 'swarm', count: 8, size: 1 }],
     preferredCombatRange: 200,
   }),
+
+  // Fighter with ion cannons - shield disruptor, aggressive
+  stinger: createArchetype('fighter', {
+    playstyle: 'brawler',
+    primaryWeapons: [
+      { name: 'ion', size: 1 },
+      { name: 'ion', size: 1 },
+    ],
+    secondaryWeapons: [
+      { name: 'seeker', count: 4, size: 1 },
+      { name: 'dart', count: 4, size: 1 },
+    ],
+    preferredCombatRange: 500,
+  }),
+
+  // Patrol with torch - close-range heat injector, aggressive
+  fireant: createArchetype('patrol', {
+    playstyle: 'brawler',
+    primaryWeapons: [
+      { name: 'torch', size: 1 },
+      { name: 'torch', size: 1 },
+    ],
+    secondaryWeapons: [{ name: 'rocket', count: 6, size: 1 }],
+    preferredCombatRange: 150,
+  }),
+
+  // Fighter with green lasers - mid-range beam fighter
+  viper: createArchetype('fighter', {
+    playstyle: 'brawler',
+    primaryWeapons: [
+      { name: 'greenLaser', size: 1 },
+      { name: 'greenLaser', size: 1 },
+    ],
+    secondaryWeapons: [
+      { name: 'seeker', count: 4, size: 1 },
+      { name: 'decoy', count: 3, size: 1 },
+    ],
+    preferredCombatRange: 600,
+  }),
+
+  // Scout with cluster missiles - area suppression
+  locust: createArchetype('scout', {
+    playstyle: 'escape',
+    primaryWeapons: [
+      { name: 'pulse', size: 1 },
+      { name: 'pulse', size: 1 },
+    ],
+    secondaryWeapons: [{ name: 'cluster', count: 8, size: 1 }],
+    preferredCombatRange: 500,
+  }),
 };

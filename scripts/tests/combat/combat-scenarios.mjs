@@ -267,4 +267,26 @@ export const SCENARIOS = {
     ],
     startDistance: 1200,
   },
+
+  // === NEW WEAPON COVERAGE TESTS ===
+  'enemy-stinger-1v1': {
+    name: 'Fighter vs Stinger (Scout Ion)',
+    teamA: [{ archetype: 'fighter', profile: 'regular' }],
+    teamB: [{ archetype: 'stinger', profile: 'regular' }],
+  },
+  'enemy-fireant-1v1': {
+    name: 'Fighter vs Fireant (Patrol Torch)',
+    teamA: [{ archetype: 'fighter', profile: 'regular' }],
+    teamB: [{ archetype: 'fireant', profile: 'regular' }],
+  },
+  'enemy-viper-1v1': {
+    name: 'Fighter vs Viper (Fighter Green Laser)',
+    teamA: [{ archetype: 'fighter', profile: 'regular' }],
+    teamB: [{ archetype: 'viper', profile: 'regular' }],
+  },
+  'enemy-locust-1v1': {
+    name: 'Fighter vs Locust (Scout Cluster)',
+    teamA: [{ archetype: 'fighter', profile: 'regular' }],
+    teamB: [{ archetype: 'locust', profile: 'regular' }],
+  },
 };
