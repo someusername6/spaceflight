@@ -15,6 +15,7 @@ import type {
   Contract,
   OwnedShip,
 } from '../../../campaign/types';
+import { showError } from '../../common/notification';
 import {
   renderPrimarySummary,
   renderSecondarySummary,
@@ -245,12 +246,27 @@ export function showSquadSelection(
   state: CampaignState,
   contract: Contract,
 ): Promise<SquadSelectionResult> {
+  // Check if commander pilot exists
+  const commanderPilot = state.pilots.find((p) => p.id === state.commanderId);
+  if (!commanderPilot) {
+    // Commander pilot is dead/missing - this is a corrupted state
+    console.error(
+      `Commander pilot ${state.commanderId} not found in pilots array`,
+    );
+    showError(
+      'No commander assigned! Go to Squadron to assign a new commander.',
+      5000,
+    );
+    return Promise.resolve({ confirmed: false, deployedShipIds: [] });
+  }
+
   // Find commander ship
   const commanderShip = state.ships.find(
     (s) => s.pilot?.id === state.commanderId,
   );
   if (!commanderShip) {
-    // No commander, shouldn't happen but handle gracefully
+    // Commander exists but has no ship assigned
+    showError('Commander has no ship! Go to Squadron to assign a ship.', 5000);
     return Promise.resolve({ confirmed: false, deployedShipIds: [] });
   }
 
