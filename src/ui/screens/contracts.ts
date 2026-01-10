@@ -80,7 +80,7 @@ export function generateContracts(_sector: number): Contract[] {
           delay: [8, 12],
         },
       ],
-      reward: 200,
+      reward: 2000,
     },
     {
       id: 'escort-1',
@@ -115,7 +115,7 @@ export function generateContracts(_sector: number): Contract[] {
           delay: [8, 12],
         },
       ],
-      reward: 350,
+      reward: 3500,
     },
     {
       id: 'assault-1',
@@ -150,7 +150,7 @@ export function generateContracts(_sector: number): Contract[] {
           delay: [8, 12],
         },
       ],
-      reward: 600,
+      reward: 6000,
     },
   ];
 }
