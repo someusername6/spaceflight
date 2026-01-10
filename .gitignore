@@ -24,3 +24,7 @@ npm-debug.log*
 
 # TypeScript cache
 *.tsbuildinfo
+
+# Build artifacts
+cover-image.png
+spaceflight-build.zip
