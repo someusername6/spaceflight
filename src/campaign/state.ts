@@ -199,6 +199,10 @@ export function applyMissionResults(
     const lostShip = state.ships.find((s) => s.id === shipId);
     if (lostShip?.pilot) {
       killedPilotIds.add(lostShip.pilot.id);
+      // Log if commander died - helps diagnose state issues
+      if (lostShip.pilot.id === state.commanderId) {
+        console.warn('[Campaign] Commander pilot killed in mission');
+      }
     }
   }
 

@@ -79,6 +79,14 @@ export function launchMission(
 
   if (playerShip) {
     spawnPlayerFromCampaign(game.world, playerShip, new Vector3(0, 0, 0));
+  } else {
+    // This should never happen - squad selection should prevent it
+    console.error('[Mission] No commander ship found!', {
+      commanderId: campaignState.commanderId,
+      shipCount: campaignState.ships.length,
+      pilotCount: campaignState.pilots.length,
+      deployedShipIds,
+    });
   }
 
   // Spawn deployed wingmen in tight symmetric formation near player
