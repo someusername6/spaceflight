@@ -158,6 +158,17 @@ export function getMissileDisplayName(key: string): string {
   return stats?.name ?? key;
 }
 
+/** Reverse lookup: get missile key from display name (e.g., "Seeker" -> "seeker") */
+export function getMissileKeyFromName(displayName: string): string {
+  for (const [key, stats] of Object.entries(MISSILES)) {
+    if (stats.name === displayName) {
+      return key;
+    }
+  }
+  // Fallback: return as-is (might already be a key)
+  return displayName;
+}
+
 /** Decoy-specific constants */
 export const DECOY_CONSTANTS = {
   speed: 50, // m/s (slow movement)

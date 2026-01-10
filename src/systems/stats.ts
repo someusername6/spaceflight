@@ -19,6 +19,8 @@ import type { ShipIdentity } from '../components/ship-identity';
 import type { PrimaryWeapons, SecondaryWeapons } from '../components/weapons';
 import { getComponent, hasComponent } from '../core/ecs';
 import type { Entity, World } from '../core/types';
+import { getMissileKeyFromName } from '../data/missiles';
+import { getWeaponKeyFromName } from '../data/weapons';
 import { getArchetype } from '../factories/ship';
 
 // Re-export weapon recording functions
@@ -267,11 +269,12 @@ export function handleShipDeath(world: World, entity: Entity): void {
   };
 
   // Capture primary weapons and remaining ammo
+  // Use reverse lookup to get key from display name for proper storage/lookup
   if (primaryWeapons) {
     for (const weapon of primaryWeapons.weapons) {
       if (weapon) {
         salvageRecord.primaryWeapons.push({
-          weaponType: weapon.name,
+          weaponType: getWeaponKeyFromName(weapon.name),
           // Only include ammoRemaining if weapon has finite ammo
           ...(weapon.ammo !== undefined && { ammoRemaining: weapon.ammo }),
         });
@@ -280,11 +283,12 @@ export function handleShipDeath(world: World, entity: Entity): void {
   }
 
   // Capture secondary weapons and remaining count
+  // Use reverse lookup to get key from display name for proper storage/lookup
   if (secondaryWeapons) {
     for (const weapon of secondaryWeapons.weapons) {
       if (weapon) {
         salvageRecord.secondaryWeapons.push({
-          weaponType: weapon.name,
+          weaponType: getMissileKeyFromName(weapon.name),
           count: weapon.count,
           isDecoy: weapon.isDecoy ?? false,
         });

@@ -231,3 +231,14 @@ export function getAmmoDisplayName(key: string): string {
   // Use ammoName if defined (e.g., "Autocannon Rounds"), otherwise weapon name
   return stats.ammoName ?? stats.name;
 }
+
+/** Reverse lookup: get weapon key from display name (e.g., "Pulse" -> "pulse") */
+export function getWeaponKeyFromName(displayName: string): string {
+  for (const [key, stats] of Object.entries(PRIMARY_WEAPONS)) {
+    if (stats.name === displayName) {
+      return key;
+    }
+  }
+  // Fallback: return as-is (might already be a key)
+  return displayName;
+}
