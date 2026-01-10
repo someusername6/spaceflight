@@ -1,8 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <!-- Cluster: Multiple small warheads -->
-  <path d="M8 16 L20 16"/>
-  <rect x="20" y="6" width="24" height="8" rx="2"/>
-  <rect x="20" y="18" width="24" height="8" rx="2"/>
-  <path d="M44 10 L56 10 L64 16 L56 22 L44 22"/>
-  <path d="M64 16 L80 16"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 96 32"><path d="M8 16h12"/><rect width="24" height="8" x="20" y="6" rx="2"/><rect width="24" height="8" x="20" y="18" rx="2"/><path d="M44 10h12l8 6-8 6H44m20-6h16"/></svg>

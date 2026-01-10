@@ -1,5 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <!-- Defender: Tanky shield boat - bulky hexagonal shape with inner detail -->
-  <path d="M32 6 L48 14 L54 32 L48 50 L32 58 L16 50 L10 32 L16 14 Z"/>
-  <path d="M32 16 L40 20 L44 32 L40 44 L32 48 L24 44 L20 32 L24 20 Z"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 64 64"><path d="m32 6 16 8 6 18-6 18-16 8-16-8-6-18 6-18Z"/><path d="m32 16 8 4 4 12-4 12-8 4-8-4-4-12 4-12Z"/></svg>

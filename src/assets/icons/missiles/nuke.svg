@@ -1,18 +1,1 @@
-<svg width="96" height="32" viewBox="0 0 96 32" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <path id="blade" d="M 0,-4.5 
-                        A 4.5,4.5 0 0 1 0,-4.5 
-                        L 0,-14.4 
-                        A 14.4,14.4 0 0 1 12.47,-7.2 
-                        L 3.9,-2.25 
-                        A 4.5,4.5 0 0 0 0,-4.5 Z" />
-  </defs>
-
-  <circle cx="48" cy="16" r="2.7" fill="currentColor" />
-
-  <g fill="currentColor">
-    <use href="#blade" transform="rotate(30, 48, 16) translate(48, 16)" />
-    <use href="#blade" transform="rotate(150, 48, 16) translate(48, 16)" />
-    <use href="#blade" transform="rotate(270, 48, 16) translate(48, 16)" />
-  </g>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="32" viewBox="0 0 96 32"><defs><path id="a" d="M0-4.5v-9.9a14.4 14.4 0 0 1 12.47 7.2L3.9-2.25A4.5 4.5 0 0 0 0-4.5"/></defs><circle cx="48" cy="16" r="2.7" fill="currentColor"/><g fill="currentColor"><use href="#a" transform="rotate(30 -5.856 97.57)"/><use href="#a" transform="rotate(150 21.856 14.43)"/><use href="#a" transform="rotate(-90 32 -16)"/></g></svg>

@@ -1,7 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <!-- Dart: Fast sleek missile -->
-  <path d="M8 16 L16 12 L16 20 L8 16"/>
-  <path d="M16 16 L88 16"/>
-  <path d="M24 12 L24 20"/>
-  <path d="M80 10 L88 16 L80 22"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 96 32"><path d="m8 16 8-4v8zm8 0h72m-64-4v8m56-10 8 6-8 6"/></svg>

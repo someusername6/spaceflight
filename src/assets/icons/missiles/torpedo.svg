@@ -1,8 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <!-- Torpedo: Heavy slow missile -->
-  <ellipse cx="48" cy="16" rx="36" ry="12"/>
-  <path d="M12 16 L20 16"/>
-  <path d="M76 16 L84 16"/>
-  <path d="M84 10 L84 22"/>
-  <path d="M36 10 L36 22 M48 8 L48 24 M60 10 L60 22"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 96 32"><ellipse cx="48" cy="16" rx="36" ry="12"/><path d="M12 16h8m56 0h8m0-6v12M36 10v12M48 8v16m12-14v12"/></svg>

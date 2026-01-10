@@ -1,4 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <!-- Bomber: Wide wingspan for missiles - broad horizontal shape -->
-  <path d="M32 12 L38 20 L58 24 L56 32 L58 40 L38 44 L36 56 L32 52 L28 56 L26 44 L6 40 L8 32 L6 24 L26 20 Z"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 64 64"><path d="m32 12 6 8 20 4-2 8 2 8-20 4-2 12-4-4-4 4-2-12-20-4 2-8-2-8 20-4Z"/></svg>
