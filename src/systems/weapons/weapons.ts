@@ -41,6 +41,9 @@ const tempToTarget = new THREE.Vector3();
 const tempZeroVec = new THREE.Vector3(0, 0, 0);
 const DEG_TO_RAD = Math.PI / 180;
 
+/** Player gets +1 degree autoaim on all weapons */
+export const PLAYER_AUTOAIM_BONUS = 1;
+
 /** Weapon info for firing (avoids per-frame allocations) */
 interface FireableWeapon {
   weapon: PrimaryWeapon;
@@ -309,6 +312,7 @@ export function fireWeaponsByLinkMode(
   gameTime: number,
   aimError?: AimError,
   target?: Entity,
+  isPlayer = false,
 ): void {
   const indices = getWeaponIndicesForCurrentMode(weapons);
   if (indices.length === 0) return;
@@ -359,9 +363,13 @@ export function fireWeaponsByLinkMode(
   for (const { weapon, index } of fireableWeaponsCollector) {
     if (weapon.ammo !== undefined) weapon.ammo--;
 
-    // Calculate autoaim if weapon has autoaimFov and we have a target
+    // Calculate autoaim if weapon has autoaimFov or isPlayer, and we have a target
     let autoaim: AutoaimParams | undefined;
-    if (weapon.autoaimFov && targetTransform) {
+    const baseAutoaim = weapon.autoaimFov ?? 0;
+    const effectiveAutoaim = isPlayer
+      ? baseAutoaim + PLAYER_AUTOAIM_BONUS
+      : baseAutoaim;
+    if (effectiveAutoaim > 0 && targetTransform) {
       const interceptPoint = calculateInterceptPoint(
         transform.position,
         ownerVelocity,
@@ -370,7 +378,7 @@ export function fireWeaponsByLinkMode(
         weapon.projectileSpeed,
       );
       if (interceptPoint) {
-        autoaim = { interceptPoint, fovDegrees: weapon.autoaimFov };
+        autoaim = { interceptPoint, fovDegrees: effectiveAutoaim };
       }
     }
 

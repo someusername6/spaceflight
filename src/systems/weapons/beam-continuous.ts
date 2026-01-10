@@ -21,6 +21,7 @@ import {
   getBeamColor,
 } from './beam-helpers';
 import { calculateBankOffset } from './weapon-spawning';
+import { PLAYER_AUTOAIM_BONUS } from './weapons';
 
 // Reusable objects
 const rayOrigin = new THREE.Vector3();
@@ -39,6 +40,7 @@ export function fireContinuousBeam(
   activeBeams: Map<Entity, ActiveBeam[]>,
   direction: THREE.Vector3,
   targetEntity: Entity | undefined,
+  isPlayer = false,
 ): void {
   const gameTime = world.systemState.gameTime;
   // Calculate beam origin with bank offset
@@ -51,8 +53,12 @@ export function fireContinuousBeam(
   rayOrigin.copy(origin);
   rayDirection.copy(direction);
 
-  // Apply autoaim if weapon has autoaimFov and target exists
-  if (weapon.autoaimFov && targetEntity !== undefined) {
+  // Apply autoaim if weapon has autoaimFov or isPlayer, and target exists
+  const baseAutoaim = weapon.autoaimFov ?? 0;
+  const effectiveAutoaim = isPlayer
+    ? baseAutoaim + PLAYER_AUTOAIM_BONUS
+    : baseAutoaim;
+  if (effectiveAutoaim > 0 && targetEntity !== undefined) {
     const targetTransform = getComponent<Transform>(
       world,
       targetEntity,
@@ -64,7 +70,7 @@ export function fireContinuousBeam(
 
       // Check if target is within autoaim FOV
       const angleToTarget = rayDirection.angleTo(targetDirection);
-      const fovRadians = (weapon.autoaimFov * Math.PI) / 180;
+      const fovRadians = (effectiveAutoaim * Math.PI) / 180;
 
       if (angleToTarget <= fovRadians) {
         // Target is within FOV - correct aim to target

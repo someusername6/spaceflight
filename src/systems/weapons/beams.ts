@@ -133,6 +133,7 @@ export function beamSystem(world: World, dt: number): void {
         beamDirection,
         wasFiring,
         targetEntity,
+        !!player, // isPlayer - gets autoaim bonus
       );
     }
 
@@ -156,6 +157,7 @@ function fireBeamsByLinkMode(
   direction: THREE.Vector3,
   wasFiring: boolean,
   targetEntity: Entity | undefined,
+  isPlayer: boolean,
 ): void {
   // Reset pool and clear collectors (avoid per-frame allocations)
   resetBeamWeaponPool(world);
@@ -188,6 +190,7 @@ function fireBeamsByLinkMode(
     instantBeamCollector,
     wasFiring,
     targetEntity,
+    isPlayer,
   );
 
   // Handle continuous beams (existing logic)
@@ -217,6 +220,7 @@ function fireBeamsByLinkMode(
       activeBeams,
       direction,
       targetEntity,
+      isPlayer,
     );
   }
 }

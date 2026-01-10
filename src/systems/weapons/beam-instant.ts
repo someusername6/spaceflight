@@ -23,6 +23,7 @@ import {
 } from './beam-helpers';
 import { findAllBeamHits } from './beam-raycasting';
 import { calculateBankOffset } from './weapon-spawning';
+import { PLAYER_AUTOAIM_BONUS } from './weapons';
 
 // Reusable objects
 const rayOrigin = new THREE.Vector3();
@@ -44,6 +45,7 @@ export function handleInstantBeams(
   instantBeamCollector: BeamWeaponInfo[],
   wasFiring: boolean,
   targetEntity: Entity | undefined,
+  isPlayer = false,
 ): boolean {
   if (instantBeamCollector.length === 0 || wasFiring) {
     return false;
@@ -103,6 +105,7 @@ export function handleInstantBeams(
       direction,
       gameTime,
       targetEntity,
+      isPlayer,
     );
 
     // Consume ammo
@@ -134,6 +137,7 @@ function fireInstantBeam(
   direction: THREE.Vector3,
   gameTime: number,
   targetEntity: Entity | undefined,
+  isPlayer = false,
 ): void {
   // Calculate beam origin with bank offset
   const origin = calculateBankOffset(
@@ -145,8 +149,12 @@ function fireInstantBeam(
   rayOrigin.copy(origin);
   rayDirection.copy(direction);
 
-  // Apply autoaim if weapon has autoaimFov and target exists
-  if (weapon.autoaimFov && targetEntity !== undefined) {
+  // Apply autoaim if weapon has autoaimFov or isPlayer, and target exists
+  const baseAutoaim = weapon.autoaimFov ?? 0;
+  const effectiveAutoaim = isPlayer
+    ? baseAutoaim + PLAYER_AUTOAIM_BONUS
+    : baseAutoaim;
+  if (effectiveAutoaim > 0 && targetEntity !== undefined) {
     const targetTransform = getComponent<Transform>(
       world,
       targetEntity,
@@ -158,7 +166,7 @@ function fireInstantBeam(
 
       // Check if target is within autoaim FOV
       const angleToTarget = rayDirection.angleTo(targetDirection);
-      const fovRadians = (weapon.autoaimFov * Math.PI) / 180;
+      const fovRadians = (effectiveAutoaim * Math.PI) / 180;
 
       if (angleToTarget <= fovRadians) {
         // Target is within FOV - correct aim to target

@@ -55,6 +55,7 @@ export function handlePlayerPrimaryWeapons(
       gameTime,
       undefined, // No aim error for player
       target,
+      true, // isPlayer - gets autoaim bonus
     );
   }
 }
