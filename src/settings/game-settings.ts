@@ -30,7 +30,7 @@ export const PLAYER_AUTOAIM_OPTIONS: Array<{
 }> = [
   { value: 0, label: '0° (Off)' },
   { value: 0.5, label: '0.5°' },
-  { value: 1, label: '1° (Default)' },
+  { value: 1, label: '1°' },
   { value: 1.5, label: '1.5°' },
   { value: 2, label: '2°' },
   { value: 2.5, label: '2.5°' },
