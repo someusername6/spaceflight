@@ -45,11 +45,11 @@ export type { NavDestination } from '../common/nav-bar';
 /**
  * Generate contracts with wave-based enemy spawning.
  * Waves spawn when previous wave is cleared, creating longer engagements.
- * Alternates firefly (red laser) and dragonfly (pulse) patrol craft for variety.
- * Patrol craft have 160 EHP for extended combat (~3x longer than scouts).
+ * All missions are combat-focused - eliminate all hostile ships.
  */
 export function generateContracts(_sector: number): Contract[] {
   return [
+    // Easy: Intro mission with basic patrol craft
     {
       id: 'patrol-1',
       name: 'Patrol Duty',
@@ -65,11 +65,7 @@ export function generateContracts(_sector: number): Contract[] {
           delay: [8, 12],
         },
         {
-          enemies: [{ archetype: 'dragonfly', skill: 'green', count: 1 }],
-          delay: [8, 12],
-        },
-        {
-          enemies: [{ archetype: 'firefly', skill: 'green', count: 1 }],
+          enemies: [{ archetype: 'firefly', skill: 'green', count: 2 }],
           delay: [8, 12],
         },
         {
@@ -82,70 +78,83 @@ export function generateContracts(_sector: number): Contract[] {
       ],
       reward: 2000,
     },
+    // Medium: Fast autocannon scouts with missiles
     {
-      id: 'escort-1',
-      name: 'Escort Mission',
-      description: 'Defend cargo ships against raider attack.',
+      id: 'wasp-nest',
+      name: 'Wasp Nest',
+      description:
+        'Eliminate scout squadron. Fast ships with ballistic weapons.',
       difficulty: 'medium',
       waves: [
         {
-          enemies: [{ archetype: 'dragonfly', skill: 'rookie', count: 2 }],
+          enemies: [{ archetype: 'wasp', skill: 'rookie', count: 2 }],
           delay: [5, 10],
         },
         {
-          enemies: [{ archetype: 'dragonfly', skill: 'rookie', count: 2 }],
-          delay: [8, 12],
-        },
-        {
-          enemies: [{ archetype: 'dragonfly', skill: 'rookie', count: 1 }],
+          enemies: [{ archetype: 'wasp', skill: 'rookie', count: 2 }],
           delay: [8, 12],
         },
         {
           enemies: [
-            { archetype: 'dragonfly', skill: 'rookie', count: 1 },
-            { archetype: 'firefly', skill: 'rookie', count: 1 },
+            { archetype: 'wasp', skill: 'regular', count: 1 },
+            { archetype: 'hornet', skill: 'rookie', count: 1 },
           ],
           delay: [8, 12],
         },
         {
-          enemies: [
-            { archetype: 'dragonfly', skill: 'rookie', count: 1 },
-            { archetype: 'firefly', skill: 'rookie', count: 1 },
-          ],
+          enemies: [{ archetype: 'hornet', skill: 'regular', count: 2 }],
           delay: [8, 12],
         },
       ],
       reward: 3500,
     },
+    // Hard: Tanky defender with lightning escorts
     {
-      id: 'assault-1',
-      name: 'Strike Mission',
-      description: 'Eliminate enemy patrol. Expect heavy resistance.',
+      id: 'armored-patrol',
+      name: 'Armored Patrol',
+      description: 'Heavy enemy formation. Defender-class with moth escorts.',
       difficulty: 'hard',
       waves: [
         {
-          enemies: [{ archetype: 'dragonfly', skill: 'rookie', count: 2 }],
+          enemies: [{ archetype: 'moth', skill: 'rookie', count: 2 }],
           delay: [5, 10],
         },
         {
-          enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 2 }],
-          delay: [8, 12],
-        },
-        {
-          enemies: [{ archetype: 'dragonfly', skill: 'rookie', count: 2 }],
+          enemies: [{ archetype: 'moth', skill: 'rookie', count: 2 }],
           delay: [8, 12],
         },
         {
           enemies: [
-            { archetype: 'dragonfly', skill: 'rookie', count: 1 },
-            { archetype: 'firefly', skill: 'regular', count: 1 },
+            { archetype: 'beetle', skill: 'regular', count: 1 },
+            { archetype: 'moth', skill: 'rookie', count: 1 },
+          ],
+          delay: [8, 12],
+        },
+      ],
+      reward: 6000,
+    },
+    // Hard: Railgun sniper with fast support
+    {
+      id: 'sniper-ambush',
+      name: 'Sniper Ambush',
+      description: 'Long-range threat. Railgun raider with wasp support.',
+      difficulty: 'hard',
+      waves: [
+        {
+          enemies: [{ archetype: 'wasp', skill: 'rookie', count: 2 }],
+          delay: [5, 10],
+        },
+        {
+          enemies: [
+            { archetype: 'scorpion', skill: 'regular', count: 1 },
+            { archetype: 'wasp', skill: 'rookie', count: 1 },
           ],
           delay: [8, 12],
         },
         {
           enemies: [
-            { archetype: 'dragonfly', skill: 'regular', count: 1 },
-            { archetype: 'firefly', skill: 'regular', count: 1 },
+            { archetype: 'hornet', skill: 'regular', count: 1 },
+            { archetype: 'wasp', skill: 'regular', count: 1 },
           ],
           delay: [8, 12],
         },

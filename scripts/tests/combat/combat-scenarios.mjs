@@ -153,4 +153,118 @@ export const SCENARIOS = {
       { archetype: 'defender', profile: 'regular' },
     ],
   },
+
+  // === ENEMY ARCHETYPE TESTING ===
+  // Test new enemy archetypes against default player configuration (fighter)
+
+  // 1v1 tests - player fighter vs each new enemy archetype
+  'enemy-wasp-1v1': {
+    name: 'Fighter vs Wasp (Scout Autocannon)',
+    teamA: [{ archetype: 'fighter', profile: 'regular' }],
+    teamB: [{ archetype: 'wasp', profile: 'regular' }],
+  },
+  'enemy-hornet-1v1': {
+    name: 'Fighter vs Hornet (Scout Ion Kiter)',
+    teamA: [{ archetype: 'fighter', profile: 'regular' }],
+    teamB: [{ archetype: 'hornet', profile: 'regular' }],
+  },
+  'enemy-mantis-1v1': {
+    name: 'Fighter vs Mantis (Fighter Plasma)',
+    teamA: [{ archetype: 'fighter', profile: 'regular' }],
+    teamB: [{ archetype: 'mantis', profile: 'regular' }],
+  },
+  'enemy-scorpion-1v1': {
+    name: 'Fighter vs Scorpion (Raider Railgun)',
+    teamA: [{ archetype: 'fighter', profile: 'regular' }],
+    teamB: [{ archetype: 'scorpion', profile: 'regular' }],
+    startDistance: 1500, // Start far to test kiting
+  },
+  'enemy-beetle-1v1': {
+    name: 'Fighter vs Beetle (Defender Flak)',
+    teamA: [{ archetype: 'fighter', profile: 'regular' }],
+    teamB: [{ archetype: 'beetle', profile: 'regular' }],
+  },
+  'enemy-moth-1v1': {
+    name: 'Fighter vs Moth (Patrol Lightning)',
+    teamA: [{ archetype: 'fighter', profile: 'regular' }],
+    teamB: [{ archetype: 'moth', profile: 'regular' }],
+  },
+
+  // Mission-style compositions: 4 player fighters vs enemy waves
+  'mission-patrol-wave': {
+    name: 'Mission: 4 Fighters vs 4 Fireflies (Current Easy)',
+    teamA: [
+      { archetype: 'fighter', profile: 'regular' },
+      { archetype: 'fighter', profile: 'regular' },
+      { archetype: 'fighter', profile: 'regular' },
+      { archetype: 'fighter', profile: 'regular' },
+    ],
+    teamB: [
+      { archetype: 'firefly', profile: 'rookie' },
+      { archetype: 'firefly', profile: 'rookie' },
+      { archetype: 'dragonfly', profile: 'rookie' },
+      { archetype: 'dragonfly', profile: 'rookie' },
+    ],
+  },
+  'mission-wasp-swarm': {
+    name: 'Mission: 4 Fighters vs 5 Wasps (Fast Autocannon)',
+    teamA: [
+      { archetype: 'fighter', profile: 'regular' },
+      { archetype: 'fighter', profile: 'regular' },
+      { archetype: 'fighter', profile: 'regular' },
+      { archetype: 'fighter', profile: 'regular' },
+    ],
+    teamB: [
+      { archetype: 'wasp', profile: 'rookie' },
+      { archetype: 'wasp', profile: 'rookie' },
+      { archetype: 'wasp', profile: 'rookie' },
+      { archetype: 'wasp', profile: 'regular' },
+      { archetype: 'wasp', profile: 'regular' },
+    ],
+  },
+  'mission-mixed-tier2': {
+    name: 'Mission: 4 Fighters vs Mixed Tier2 (Mantis+Hornet)',
+    teamA: [
+      { archetype: 'fighter', profile: 'regular' },
+      { archetype: 'fighter', profile: 'regular' },
+      { archetype: 'fighter', profile: 'regular' },
+      { archetype: 'fighter', profile: 'regular' },
+    ],
+    teamB: [
+      { archetype: 'mantis', profile: 'rookie' },
+      { archetype: 'mantis', profile: 'rookie' },
+      { archetype: 'hornet', profile: 'regular' },
+      { archetype: 'hornet', profile: 'regular' },
+    ],
+  },
+  'mission-heavy-assault': {
+    name: 'Mission: 4 Fighters vs Heavy (Beetle+Moths)',
+    teamA: [
+      { archetype: 'fighter', profile: 'regular' },
+      { archetype: 'fighter', profile: 'regular' },
+      { archetype: 'fighter', profile: 'regular' },
+      { archetype: 'fighter', profile: 'regular' },
+    ],
+    teamB: [
+      { archetype: 'beetle', profile: 'regular' },
+      { archetype: 'moth', profile: 'rookie' },
+      { archetype: 'moth', profile: 'rookie' },
+      { archetype: 'moth', profile: 'rookie' },
+    ],
+  },
+  'mission-sniper-ambush': {
+    name: 'Mission: 4 Fighters vs Sniper Ambush (Scorpion+Wasps)',
+    teamA: [
+      { archetype: 'fighter', profile: 'regular' },
+      { archetype: 'fighter', profile: 'regular' },
+      { archetype: 'fighter', profile: 'regular' },
+      { archetype: 'fighter', profile: 'regular' },
+    ],
+    teamB: [
+      { archetype: 'scorpion', profile: 'regular' },
+      { archetype: 'wasp', profile: 'rookie' },
+      { archetype: 'wasp', profile: 'rookie' },
+    ],
+    startDistance: 1200,
+  },
 };
