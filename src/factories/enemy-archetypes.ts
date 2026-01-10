@@ -82,7 +82,7 @@ export const ENEMY_ARCHETYPES: Record<string, EnemyShipStats> = {
       { name: 'autocannon', size: 1 },
       { name: 'autocannon', size: 1 },
     ],
-    secondaryWeapons: [{ name: 'rocket', count: 6, size: 1 }],
+    secondaryWeapons: [{ name: 'rocket', count: 2, size: 1 }],
     preferredCombatRange: 350,
   }),
 
@@ -111,14 +111,14 @@ export const ENEMY_ARCHETYPES: Record<string, EnemyShipStats> = {
     preferredCombatRange: 500,
   }),
 
-  // Raider with railgun - sniper with pulse backup
+  // Raider with quad railguns - dedicated sniper
   scorpion: createArchetype('raider', {
-    playstyle: 'brawler',
+    playstyle: 'kiting',
     primaryWeapons: [
       { name: 'railgun', size: 3 },
-      { name: 'pulse', size: 3 },
-      { name: 'pulse', size: 1 },
-      { name: 'pulse', size: 1 },
+      { name: 'railgun', size: 3 },
+      { name: 'railgun', size: 1 },
+      { name: 'railgun', size: 1 },
     ],
     secondaryWeapons: [
       { name: 'seeker', count: 4, size: 1 },
@@ -177,7 +177,7 @@ export const ENEMY_ARCHETYPES: Record<string, EnemyShipStats> = {
       { name: 'torch', size: 1 },
       { name: 'torch', size: 1 },
     ],
-    secondaryWeapons: [{ name: 'rocket', count: 6, size: 1 }],
+    secondaryWeapons: [{ name: 'rocket', count: 4, size: 1 }],
     preferredCombatRange: 150,
   }),
 

@@ -1,11 +1,10 @@
 /**
  * Equipment Prices - buy/sell prices for ships, weapons, and ammo.
  *
- * Prices are balanced around campaign economy:
- * - Easy contract: ~200 credits + salvage
- * - Medium contract: ~400 credits + salvage
- * - Hard contract: ~600 credits + salvage
- * - Salvage: 0-10% of destroyed ships yield scrap, weapons, ammo
+ * Contract rewards are calculated to cover expected losses + 1000 profit:
+ * - Per lost ship: 1040 (ship 400 + weapons 200 + missiles 240 + pilot 200)
+ * - Per survivor: ~120 consumables used
+ * - Salvage: ~5% of destroyed enemy ship value
  *
  * Weapons are one-time purchases. Ammo/missiles are consumables.
  */

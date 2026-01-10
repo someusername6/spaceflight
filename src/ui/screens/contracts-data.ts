@@ -3,6 +3,17 @@
  *
  * Each contract defines waves of enemies with skill levels and spawn delays.
  * Waves spawn when the previous wave is cleared.
+ *
+ * Balance targets:
+ * - Victory time: 90s+ average
+ * - Survival rate: 20-90%
+ *
+ * Difficulty thresholds (survival rate):
+ * - Easy: 70-90%
+ * - Medium: 40-70%
+ * - Hard: 20-40%
+ *
+ * Reward formula: expected_replacement_cost - expected_salvage + 1000, rounded to 500
  */
 
 import type { Contract } from '../../campaign/types';
@@ -13,7 +24,67 @@ import type { Contract } from '../../campaign/types';
  */
 export function generateContracts(_sector: number): Contract[] {
   return [
-    // === EASY MISSIONS ===
+    // === Easy missions (70-90% survival, 90s+) ===
+    {
+      id: 'armored-patrol',
+      name: 'Armored Patrol',
+      description: 'Heavy enemy formation. Defender-class with moth escorts.',
+      difficulty: 'easy',
+      waves: [
+        {
+          enemies: [{ archetype: 'moth', skill: 'green', count: 2 }],
+          delay: [5, 10],
+        },
+        {
+          enemies: [{ archetype: 'moth', skill: 'green', count: 2 }],
+          delay: [8, 12],
+        },
+        {
+          enemies: [{ archetype: 'beetle', skill: 'green', count: 1 }],
+          delay: [8, 12],
+        },
+        {
+          enemies: [{ archetype: 'moth', skill: 'green', count: 2 }],
+          delay: [8, 12],
+        },
+        {
+          enemies: [{ archetype: 'moth', skill: 'green', count: 2 }],
+          delay: [8, 12],
+        },
+      ],
+      reward: 2000,
+    },
+    {
+      id: 'ion-storm',
+      name: 'Ion Storm',
+      description:
+        'Shield disruptors ahead. Ion cannons suppress shield regen.',
+      difficulty: 'easy',
+      waves: [
+        {
+          enemies: [{ archetype: 'stinger', skill: 'green', count: 2 }],
+          delay: [5, 10],
+        },
+        {
+          enemies: [{ archetype: 'moth', skill: 'green', count: 2 }],
+          delay: [8, 12],
+        },
+        {
+          enemies: [{ archetype: 'stinger', skill: 'green', count: 1 }],
+          delay: [8, 12],
+        },
+        {
+          enemies: [{ archetype: 'stinger', skill: 'green', count: 1 }],
+          delay: [8, 12],
+        },
+        {
+          enemies: [{ archetype: 'stinger', skill: 'rookie', count: 1 }],
+          delay: [8, 12],
+        },
+      ],
+      reward: 1500,
+    },
+
     {
       id: 'patrol-1',
       name: 'Patrol Duty',
@@ -21,11 +92,11 @@ export function generateContracts(_sector: number): Contract[] {
       difficulty: 'easy',
       waves: [
         {
-          enemies: [{ archetype: 'dragonfly', skill: 'green', count: 2 }],
+          enemies: [{ archetype: 'firefly', skill: 'green', count: 2 }],
           delay: [5, 10],
         },
         {
-          enemies: [{ archetype: 'dragonfly', skill: 'green', count: 2 }],
+          enemies: [{ archetype: 'firefly', skill: 'green', count: 2 }],
           delay: [8, 12],
         },
         {
@@ -33,180 +104,120 @@ export function generateContracts(_sector: number): Contract[] {
           delay: [8, 12],
         },
         {
-          enemies: [
-            { archetype: 'dragonfly', skill: 'green', count: 1 },
-            { archetype: 'firefly', skill: 'green', count: 1 },
-          ],
+          enemies: [{ archetype: 'firefly', skill: 'rookie', count: 2 }],
+          delay: [8, 12],
+        },
+        {
+          enemies: [{ archetype: 'firefly', skill: 'rookie', count: 1 }],
           delay: [8, 12],
         },
       ],
-      reward: 2000,
+      reward: 2500,
     },
 
-    // === MEDIUM MISSIONS ===
-    {
-      id: 'wasp-nest',
-      name: 'Wasp Nest',
-      description:
-        'Eliminate scout squadron. Fast ships with ballistic weapons.',
-      difficulty: 'medium',
-      waves: [
-        {
-          enemies: [{ archetype: 'wasp', skill: 'rookie', count: 2 }],
-          delay: [5, 10],
-        },
-        {
-          enemies: [{ archetype: 'wasp', skill: 'rookie', count: 2 }],
-          delay: [8, 12],
-        },
-        {
-          enemies: [
-            { archetype: 'wasp', skill: 'regular', count: 1 },
-            { archetype: 'hornet', skill: 'rookie', count: 1 },
-          ],
-          delay: [8, 12],
-        },
-        {
-          enemies: [{ archetype: 'hornet', skill: 'regular', count: 2 }],
-          delay: [8, 12],
-        },
-      ],
-      reward: 3500,
-    },
-    {
-      id: 'ion-storm',
-      name: 'Ion Storm',
-      description:
-        'Shield disruptors ahead. Ion cannons suppress shield regen.',
-      difficulty: 'medium',
-      waves: [
-        {
-          enemies: [{ archetype: 'stinger', skill: 'rookie', count: 2 }],
-          delay: [5, 10],
-        },
-        {
-          enemies: [{ archetype: 'stinger', skill: 'rookie', count: 2 }],
-          delay: [8, 12],
-        },
-        {
-          enemies: [
-            { archetype: 'stinger', skill: 'regular', count: 1 },
-            { archetype: 'dragonfly', skill: 'rookie', count: 1 },
-          ],
-          delay: [8, 12],
-        },
-      ],
-      reward: 3500,
-    },
-    {
-      id: 'cluster-swarm',
-      name: 'Cluster Swarm',
-      description: 'Missile-heavy scouts. Watch for cluster munitions.',
-      difficulty: 'medium',
-      waves: [
-        {
-          enemies: [{ archetype: 'locust', skill: 'rookie', count: 2 }],
-          delay: [5, 10],
-        },
-        {
-          enemies: [{ archetype: 'locust', skill: 'rookie', count: 2 }],
-          delay: [8, 12],
-        },
-        {
-          enemies: [
-            { archetype: 'locust', skill: 'regular', count: 2 },
-            { archetype: 'wasp', skill: 'rookie', count: 1 },
-          ],
-          delay: [8, 12],
-        },
-      ],
-      reward: 3500,
-    },
-
-    // === HARD MISSIONS ===
-    {
-      id: 'armored-patrol',
-      name: 'Armored Patrol',
-      description: 'Heavy enemy formation. Defender-class with moth escorts.',
-      difficulty: 'hard',
-      waves: [
-        {
-          enemies: [{ archetype: 'moth', skill: 'rookie', count: 2 }],
-          delay: [5, 10],
-        },
-        {
-          enemies: [{ archetype: 'moth', skill: 'rookie', count: 2 }],
-          delay: [8, 12],
-        },
-        {
-          enemies: [
-            { archetype: 'beetle', skill: 'regular', count: 1 },
-            { archetype: 'moth', skill: 'rookie', count: 1 },
-          ],
-          delay: [8, 12],
-        },
-      ],
-      reward: 6000,
-    },
+    // === Medium missions (40-70% survival, 90s+) ===
     {
       id: 'sniper-ambush',
       name: 'Sniper Ambush',
-      description: 'Long-range threat. Railgun raider with wasp support.',
-      difficulty: 'hard',
+      description: 'Long-range threat. Railgun raiders with support.',
+      difficulty: 'medium',
       waves: [
         {
-          enemies: [{ archetype: 'wasp', skill: 'rookie', count: 2 }],
+          enemies: [
+            { archetype: 'dragonfly', skill: 'regular', count: 1 },
+            { archetype: 'scorpion', skill: 'ace', count: 1 },
+          ],
           delay: [5, 10],
         },
         {
-          enemies: [
-            { archetype: 'scorpion', skill: 'regular', count: 1 },
-            { archetype: 'wasp', skill: 'rookie', count: 1 },
-          ],
+          enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 2 }],
           delay: [8, 12],
         },
         {
           enemies: [
-            { archetype: 'hornet', skill: 'regular', count: 1 },
-            { archetype: 'wasp', skill: 'regular', count: 1 },
+            { archetype: 'dragonfly', skill: 'regular', count: 1 },
+            { archetype: 'scorpion', skill: 'ace', count: 1 },
+          ],
+          delay: [8, 12],
+        },
+        {
+          enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 2 }],
+          delay: [8, 12],
+        },
+        {
+          enemies: [
+            { archetype: 'dragonfly', skill: 'regular', count: 1 },
+            { archetype: 'scorpion', skill: 'ace', count: 1 },
           ],
           delay: [8, 12],
         },
       ],
-      reward: 6000,
+      reward: 3500,
     },
     {
       id: 'torch-run',
       name: 'Torch Run',
       description: 'Close-range heat weapons. Fireants overheat your systems.',
-      difficulty: 'hard',
+      difficulty: 'medium',
       waves: [
         {
-          enemies: [{ archetype: 'fireant', skill: 'rookie', count: 2 }],
+          enemies: [{ archetype: 'wasp', skill: 'green', count: 2 }],
           delay: [5, 10],
         },
         {
-          enemies: [{ archetype: 'fireant', skill: 'rookie', count: 2 }],
+          enemies: [{ archetype: 'wasp', skill: 'rookie', count: 2 }],
           delay: [8, 12],
         },
         {
-          enemies: [
-            { archetype: 'fireant', skill: 'regular', count: 2 },
-            { archetype: 'moth', skill: 'rookie', count: 1 },
-          ],
+          enemies: [{ archetype: 'wasp', skill: 'rookie', count: 2 }],
           delay: [8, 12],
         },
         {
-          enemies: [{ archetype: 'fireant', skill: 'regular', count: 2 }],
+          enemies: [{ archetype: 'fireant', skill: 'veteran', count: 2 }],
+          delay: [8, 12],
+        },
+        {
+          enemies: [{ archetype: 'fireant', skill: 'veteran', count: 2 }],
           delay: [8, 12],
         },
       ],
-      reward: 6000,
+      reward: 4000,
+    },
+
+    // === Hard missions (20-40% survival, 90s+) ===
+    {
+      id: 'cluster-swarm',
+      name: 'Cluster Swarm',
+      description: 'Missile-heavy scouts. Watch for cluster munitions.',
+      difficulty: 'hard',
+      waves: [
+        {
+          enemies: [{ archetype: 'locust', skill: 'green', count: 2 }],
+          delay: [5, 10],
+        },
+        {
+          enemies: [{ archetype: 'locust', skill: 'green', count: 2 }],
+          delay: [8, 12],
+        },
+        {
+          enemies: [{ archetype: 'locust', skill: 'rookie', count: 2 }],
+          delay: [8, 12],
+        },
+        {
+          enemies: [{ archetype: 'locust', skill: 'rookie', count: 2 }],
+          delay: [8, 12],
+        },
+        {
+          enemies: [{ archetype: 'locust', skill: 'veteran', count: 3 }],
+          delay: [8, 12],
+        },
+      ],
+      reward: 4500,
     },
     {
       id: 'laser-gauntlet',
       name: 'Laser Gauntlet',
-      description: 'Beam weapons everywhere. Vipers with green lasers.',
+      description: 'Beam weapons everywhere. Lasers cut through shields.',
       difficulty: 'hard',
       waves: [
         {
@@ -214,22 +225,53 @@ export function generateContracts(_sector: number): Contract[] {
           delay: [5, 10],
         },
         {
-          enemies: [{ archetype: 'viper', skill: 'rookie', count: 2 }],
+          enemies: [{ archetype: 'firefly', skill: 'veteran', count: 2 }],
           delay: [8, 12],
         },
         {
-          enemies: [
-            { archetype: 'viper', skill: 'regular', count: 1 },
-            { archetype: 'firefly', skill: 'regular', count: 1 },
-          ],
+          enemies: [{ archetype: 'viper', skill: 'rookie', count: 1 }],
           delay: [8, 12],
         },
         {
-          enemies: [{ archetype: 'viper', skill: 'regular', count: 2 }],
+          enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
+          delay: [8, 12],
+        },
+        {
+          enemies: [{ archetype: 'viper', skill: 'veteran', count: 1 }],
           delay: [8, 12],
         },
       ],
-      reward: 6000,
+      reward: 4000,
+    },
+    {
+      id: 'wasp-nest',
+      name: 'Wasp Nest',
+      description:
+        'Eliminate scout squadron. Fast ships with ballistic weapons.',
+      difficulty: 'hard',
+      waves: [
+        {
+          enemies: [{ archetype: 'wasp', skill: 'green', count: 2 }],
+          delay: [5, 10],
+        },
+        {
+          enemies: [{ archetype: 'wasp', skill: 'green', count: 2 }],
+          delay: [8, 12],
+        },
+        {
+          enemies: [{ archetype: 'wasp', skill: 'rookie', count: 2 }],
+          delay: [8, 12],
+        },
+        {
+          enemies: [{ archetype: 'wasp', skill: 'rookie', count: 2 }],
+          delay: [8, 12],
+        },
+        {
+          enemies: [{ archetype: 'wasp', skill: 'rookie', count: 2 }],
+          delay: [8, 12],
+        },
+      ],
+      reward: 4000,
     },
   ];
 }
