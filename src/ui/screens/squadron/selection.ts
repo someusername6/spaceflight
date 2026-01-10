@@ -249,12 +249,13 @@ export function showSquadSelection(
   // Check if commander pilot exists
   const commanderPilot = state.pilots.find((p) => p.id === state.commanderId);
   if (!commanderPilot) {
-    // Commander pilot is dead/missing - this is a corrupted state
-    console.error(
-      `Commander pilot ${state.commanderId} not found in pilots array`,
-    );
+    // This indicates state corruption - commander death should trigger game over
+    console.error('[Squad] Commander pilot not found - state corrupted', {
+      commanderId: state.commanderId,
+      pilotIds: state.pilots.map((p) => p.id),
+    });
     showError(
-      'No commander assigned! Go to Squadron to assign a new commander.',
+      'Unable to launch mission. Please reload and report this bug.',
       5000,
     );
     return Promise.resolve({ confirmed: false, deployedShipIds: [] });
@@ -265,8 +266,15 @@ export function showSquadSelection(
     (s) => s.pilot?.id === state.commanderId,
   );
   if (!commanderShip) {
-    // Commander exists but has no ship assigned
-    showError('Commander has no ship! Go to Squadron to assign a ship.', 5000);
+    // Commander pilot exists but has no ship - also state corruption
+    console.error('[Squad] Commander has no ship - state corrupted', {
+      commanderId: state.commanderId,
+      shipPilotIds: state.ships.map((s) => s.pilot?.id),
+    });
+    showError(
+      'Unable to launch mission. Please reload and report this bug.',
+      5000,
+    );
     return Promise.resolve({ confirmed: false, deployedShipIds: [] });
   }
 
