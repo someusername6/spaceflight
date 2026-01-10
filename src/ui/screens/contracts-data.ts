@@ -14,6 +14,8 @@
  * - Hard: 20-40%
  *
  * Reward formula: expected_replacement_cost - expected_salvage + 1000, rounded to 500
+ *
+ * Missions are sorted by reward (ascending).
  */
 
 import type { Contract } from '../../campaign/types';
@@ -25,35 +27,6 @@ import type { Contract } from '../../campaign/types';
 export function generateContracts(_sector: number): Contract[] {
   return [
     // === Easy missions (70-90% survival, 90s+) ===
-    {
-      id: 'armored-patrol',
-      name: 'Armored Patrol',
-      description: 'Heavy enemy formation. Defender-class with moth escorts.',
-      difficulty: 'easy',
-      waves: [
-        {
-          enemies: [{ archetype: 'moth', skill: 'green', count: 2 }],
-          delay: [5, 10],
-        },
-        {
-          enemies: [{ archetype: 'moth', skill: 'green', count: 2 }],
-          delay: [8, 12],
-        },
-        {
-          enemies: [{ archetype: 'beetle', skill: 'green', count: 1 }],
-          delay: [8, 12],
-        },
-        {
-          enemies: [{ archetype: 'moth', skill: 'green', count: 2 }],
-          delay: [8, 12],
-        },
-        {
-          enemies: [{ archetype: 'moth', skill: 'green', count: 2 }],
-          delay: [8, 12],
-        },
-      ],
-      reward: 2000,
-    },
     {
       id: 'ion-storm',
       name: 'Ion Storm',
@@ -82,9 +55,37 @@ export function generateContracts(_sector: number): Contract[] {
           delay: [8, 12],
         },
       ],
+      reward: 1000,
+    },
+    {
+      id: 'armored-patrol',
+      name: 'Armored Patrol',
+      description: 'Heavy enemy formation. Defender-class with moth escorts.',
+      difficulty: 'easy',
+      waves: [
+        {
+          enemies: [{ archetype: 'moth', skill: 'green', count: 2 }],
+          delay: [5, 10],
+        },
+        {
+          enemies: [{ archetype: 'moth', skill: 'green', count: 2 }],
+          delay: [8, 12],
+        },
+        {
+          enemies: [{ archetype: 'beetle', skill: 'green', count: 1 }],
+          delay: [8, 12],
+        },
+        {
+          enemies: [{ archetype: 'moth', skill: 'green', count: 2 }],
+          delay: [8, 12],
+        },
+        {
+          enemies: [{ archetype: 'moth', skill: 'green', count: 2 }],
+          delay: [8, 12],
+        },
+      ],
       reward: 1500,
     },
-
     {
       id: 'patrol-1',
       name: 'Patrol Duty',
@@ -112,7 +113,7 @@ export function generateContracts(_sector: number): Contract[] {
           delay: [8, 12],
         },
       ],
-      reward: 2500,
+      reward: 2000,
     },
 
     // === Medium missions (40-70% survival, 90s+) ===
@@ -186,35 +187,6 @@ export function generateContracts(_sector: number): Contract[] {
 
     // === Hard missions (20-40% survival, 90s+) ===
     {
-      id: 'cluster-swarm',
-      name: 'Cluster Swarm',
-      description: 'Missile-heavy scouts. Watch for cluster munitions.',
-      difficulty: 'hard',
-      waves: [
-        {
-          enemies: [{ archetype: 'locust', skill: 'green', count: 2 }],
-          delay: [5, 10],
-        },
-        {
-          enemies: [{ archetype: 'locust', skill: 'green', count: 2 }],
-          delay: [8, 12],
-        },
-        {
-          enemies: [{ archetype: 'locust', skill: 'rookie', count: 2 }],
-          delay: [8, 12],
-        },
-        {
-          enemies: [{ archetype: 'locust', skill: 'rookie', count: 2 }],
-          delay: [8, 12],
-        },
-        {
-          enemies: [{ archetype: 'locust', skill: 'veteran', count: 3 }],
-          delay: [8, 12],
-        },
-      ],
-      reward: 4500,
-    },
-    {
       id: 'laser-gauntlet',
       name: 'Laser Gauntlet',
       description: 'Beam weapons everywhere. Lasers cut through shields.',
@@ -241,7 +213,7 @@ export function generateContracts(_sector: number): Contract[] {
           delay: [8, 12],
         },
       ],
-      reward: 4000,
+      reward: 4500,
     },
     {
       id: 'wasp-nest',
@@ -271,7 +243,36 @@ export function generateContracts(_sector: number): Contract[] {
           delay: [8, 12],
         },
       ],
-      reward: 4000,
+      reward: 4500,
+    },
+    {
+      id: 'cluster-swarm',
+      name: 'Cluster Swarm',
+      description: 'Missile-heavy scouts. Watch for cluster munitions.',
+      difficulty: 'hard',
+      waves: [
+        {
+          enemies: [{ archetype: 'locust', skill: 'green', count: 2 }],
+          delay: [5, 10],
+        },
+        {
+          enemies: [{ archetype: 'locust', skill: 'green', count: 2 }],
+          delay: [8, 12],
+        },
+        {
+          enemies: [{ archetype: 'locust', skill: 'rookie', count: 2 }],
+          delay: [8, 12],
+        },
+        {
+          enemies: [{ archetype: 'locust', skill: 'rookie', count: 2 }],
+          delay: [8, 12],
+        },
+        {
+          enemies: [{ archetype: 'locust', skill: 'veteran', count: 3 }],
+          delay: [8, 12],
+        },
+      ],
+      reward: 5000,
     },
   ];
 }
