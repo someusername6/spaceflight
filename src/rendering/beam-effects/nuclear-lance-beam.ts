@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three';
-import type { NuclearLanceRenderer } from './nuclear-lance-types';
+import type { LanceShot, NuclearLanceRenderer } from './nuclear-lance-types';
 import {
   BEAM_CORE_COLOR,
   BEAM_CORE_WIDTH,
