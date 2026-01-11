@@ -1,5 +1,25 @@
 # Claude Code Rules for This Project
 
+## Game Overview
+
+**Spaceflight** is a space dogfight roguelike. Players command a squadron through procedurally generated sectors, taking contracts (missions) to earn credits and salvage. Combat is real-time 3D with an ECS architecture. The title screen renders a live battle simulation in the background.
+
+Core loop: Squadron management → Contract selection → Combat mission → Rewards → Repeat
+
+Permadeath: If the commander's ship is destroyed, the campaign ends.
+
+## Where to Find Things
+
+| Task | Location |
+|------|----------|
+| Add a weapon | `src/data/weapons.ts` → `src/factories/weapon.ts` |
+| Add a ship | `src/data/ships.ts` → `src/factories/ship.ts` |
+| Add a missile | `src/data/missiles.ts` → `src/factories/missile.ts` |
+| New UI screen | `src/ui/screens/` (use Screen framework) |
+| New system | `src/systems/` → add to `SYSTEM_ORDER` in `src/game.ts` |
+| Campaign flow | `src/campaign/controller.ts` → `src/campaign/handlers/` |
+| Game settings | `src/settings/game-settings.ts` |
+
 ## Status Verification (MANDATORY)
 
 Before claiming any feature is "not implemented" or making status/priority recommendations:
