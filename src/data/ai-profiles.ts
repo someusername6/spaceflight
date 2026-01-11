@@ -254,6 +254,41 @@ export const AI_PROFILES: Record<string, AIProfile> = {
     // Kiting: Excellent range maintenance (reacts to closing enemy)
     fleeDistanceMultiplier: 1.1,
   },
+
+  /**
+   * Elite - Legendary pilot, nearly superhuman accuracy.
+   * Rare hire, extremely dangerous opponent.
+   */
+  elite: {
+    name: 'Elite',
+    // Accuracy: Near-perfect (only difference from ace)
+    aimErrorBase: 0.004, // ~0.23 degrees - near perfect
+    aimErrorDriftSpeed: 0.004, // Rock steady aim
+    aimErrorAngularFactor: 0.03, // Almost immune to target movement
+    beamTrackingSpeed: 4.0, // Near-instant lock
+    // Engagement: Very aggressive
+    engageRange: 800,
+    breakOffRange: 1600,
+    combatRangeMultiplier: 1.3, // Engages 30% farther (precision makes it viable)
+    // Weapon selection: Perfect
+    heatSwitchThreshold: 0.5, // Perfect heat management
+    minFiringAngle: 14, // Very selective but viable for kiting
+    linkedFireHeatThreshold: 0.35, // Can sustain linked fire longer
+    // State transitions: Ice cold - stays in fight, very patient recovery
+    evadeShieldThreshold: 0.12, // Very calm
+    regroupShieldThreshold: 0.05, // Nearly dead before retreating
+    recoverShieldThreshold: 0.3, // Patient
+    evadeCooldown: 7.0,
+    regroupMinTime: 4.0,
+    // Missiles: Instant reactions
+    decoyCooldown: 0.5, // Lightning fast
+    // Burst-disengage: Optimal timing (extremely hard to catch)
+    burstDuration: 1.5,
+    repositionCooldown: 3.0,
+    maxRepositionTime: 3.0,
+    // Kiting: Excellent range maintenance (reacts to closing enemy)
+    fleeDistanceMultiplier: 1.1,
+  },
 };
 
 /** Profile names for type safety */

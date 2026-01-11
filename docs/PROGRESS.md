@@ -30,7 +30,9 @@ Weapons (projectiles, missiles, beams, decoys), shields, AI (states, behaviors, 
 - Percentage of remaining ammo/missiles
 
 **Pilot Hiring:**
-- Skill distribution: 35% rookie/regular, 20% veteran, 8% ace, 2% elite
+- Skill distribution scales by sector (interpolated between endpoints):
+  - Sector 1: 50% rookie, 35% regular, 12% veteran, 2.5% ace, 0.5% elite (avg ~1.7)
+  - Sector 5: 5% rookie, 15% regular, 35% veteran, 30% ace, 15% elite (avg ~3.4)
 - Prices: rookie 75, regular 200, veteran 400, ace 700, elite 1200 credits
 - Pool refreshes (3-5 new recruits) after each mission
 
