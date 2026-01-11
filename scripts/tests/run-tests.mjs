@@ -51,6 +51,7 @@ const QUICK_TESTS = [
   'campaign/test-slot-array.mjs',
   'campaign/test-save-load.mjs',
   'campaign/test-store-ammo.mjs',
+  'campaign/test-store-caps.mjs',
   'campaign/test-resupply-needs.mjs',
   'campaign/test-resupply-ship.mjs',
   'campaign/test-resupply-estimate.mjs',

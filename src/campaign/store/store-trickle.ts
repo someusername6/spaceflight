@@ -11,10 +11,12 @@ import { PRIMARY_WEAPONS } from '../../data/weapons';
 import type { CampaignState } from '../types';
 import {
   AMMO_TRICKLE_REFILLS,
+  getAmmoStockCap,
   getAvailableAmmo,
   getAvailablePrimaries,
   getAvailableSecondaries,
   getAvailableShips,
+  getMissileStockCap,
   getTrickleProbability,
   MISSILE_TRICKLE_LOADS,
 } from './store-catalog';
@@ -69,24 +71,29 @@ export function applyStoreTrickle(state: CampaignState): CampaignState {
     }
   }
 
-  // Missiles: guaranteed trickle based on capacity
+  // Missiles: guaranteed trickle based on capacity (capped)
   for (const { weaponType } of getAvailableSecondaries()) {
     const unlockSector = SECONDARY_UNLOCK_SECTOR[weaponType] ?? 1;
     if (unlockSector <= sector) {
       const capacity = MISSILES[weaponType]?.capacity ?? 10;
       const trickle = Math.floor(MISSILE_TRICKLE_LOADS * capacity);
-      newStock.secondaries[weaponType] =
-        (newStock.secondaries[weaponType] ?? 0) + trickle;
+      const sectorsAvailable = sector - unlockSector;
+      const cap = getMissileStockCap(capacity, sectorsAvailable);
+      const current = newStock.secondaries[weaponType] ?? 0;
+      newStock.secondaries[weaponType] = Math.min(current + trickle, cap);
     }
   }
 
-  // Ammo: guaranteed trickle based on weapon's base ammo
+  // Ammo: guaranteed trickle based on weapon's base ammo (capped)
   for (const { weaponType } of getAvailableAmmo()) {
     const unlockSector = PRIMARY_UNLOCK_SECTOR[weaponType] ?? 1;
     if (unlockSector <= sector) {
       const baseAmmo = PRIMARY_WEAPONS[weaponType]?.ammo ?? 100;
       const trickle = Math.round(AMMO_TRICKLE_REFILLS * baseAmmo);
-      newStock.ammo[weaponType] = (newStock.ammo[weaponType] ?? 0) + trickle;
+      const sectorsAvailable = sector - unlockSector;
+      const cap = getAmmoStockCap(baseAmmo, sectorsAvailable);
+      const current = newStock.ammo[weaponType] ?? 0;
+      newStock.ammo[weaponType] = Math.min(current + trickle, cap);
     }
   }
 

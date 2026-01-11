@@ -61,6 +61,30 @@ trickle = MISSILE_TRICKLE_LOADS × capacity
 trickle = AMMO_TRICKLE_REFILLS × baseAmmo
 ```
 
+### Stock Caps (consumables only)
+
+To prevent infinite accumulation if players don't buy consumables, missiles and ammo have maximum stock limits. Ships and primaries are NOT capped (they're expensive and trickle slowly).
+
+**Missile cap:**
+```
+cap = baseStock + (MISSIONS_PER_SECTOR × tricklePerMission)
+    = (MISSILE_BASE_LOADS × capacity × bonus) + (8 × MISSILE_TRICKLE_LOADS × capacity)
+```
+
+**Ammo cap:**
+```
+cap = baseStock + (MISSIONS_PER_SECTOR × tricklePerMission)
+    = (AMMO_BASE_REFILLS × baseAmmo × bonus) + (8 × AMMO_TRICKLE_REFILLS × baseAmmo)
+```
+
+The cap represents "one sector's worth" of supply - base stock plus 8 missions of trickle. This is generous enough that players won't notice during normal play, but prevents degenerate accumulation in extended sessions.
+
+**Example caps (Sector 1):**
+| Item | Base | Cap | Reasoning |
+|------|------|-----|-----------|
+| Autocannon ammo | 2,400 | 4,800 | 24 reloads, enough for a sector |
+| Seeker missiles | 160 | 288 | 36 loads, generous but bounded |
+
 ## Item Data Reference
 
 ### Missiles
@@ -78,7 +102,7 @@ trickle = AMMO_TRICKLE_REFILLS × baseAmmo
 ### Ammo Weapons
 | Weapon | Base Ammo | Unlock Sector |
 |--------|-----------|---------------|
-| autocannon | 200 | 2 |
+| autocannon | 200 | 1 |
 | flak | 50 | 2 |
 | railgun | 20 | 4 |
 | nuclearLance | 1 | 5 |
@@ -102,8 +126,8 @@ trickle = AMMO_TRICKLE_REFILLS × baseAmmo
 | pulse | 1 |
 | ion | 1 |
 | plasma | 1 |
-| autocannon | 2 |
-| blueLaser | 2 |
+| blueLaser | 1 |
+| autocannon | 1 |
 | greenLaser | 2 |
 | flak | 2 |
 | redLaser | 3 |
@@ -173,6 +197,14 @@ const MISSILE_TRICKLE_LOADS = 2;
 
 // Ammo: guaranteed trickle = REFILLS × baseAmmo
 const AMMO_TRICKLE_REFILLS = 1.5;
+
+// ============ STOCK CAPS (consumables only) ============
+
+// Missions worth of trickle before hitting cap
+const MISSIONS_PER_SECTOR = 8;
+
+// Cap formula: base + (MISSIONS_PER_SECTOR × trickle)
+// Ships and primaries are NOT capped
 ```
 
 ### Simulation Results
@@ -189,15 +221,15 @@ const AMMO_TRICKLE_REFILLS = 1.5;
 
 **Sector 1 (initial):**
 - Ships: 5 each (patrol, scout, fighter)
-- Primaries: 6 each (pulse, ion, plasma)
+- Primaries: 6 each (pulse, ion, plasma, blueLaser, autocannon)
 - Missiles: rocket (240), seeker (160), swarm (400), decoy (120)
-- Ammo: (none in S1)
+- Ammo: autocannon (2400)
 
 **Sector 2 (initial):**
 - S1 ships: 7 each
 - S2 ships: 5 each (interceptor, raider)
 - S1 missiles: ×1.25 bonus
-- Autocannon ammo: 2400
+- Autocannon ammo: 3000 (with 1.25 bonus)
 - Flak ammo: 600
 
 **Trickle probabilities:**

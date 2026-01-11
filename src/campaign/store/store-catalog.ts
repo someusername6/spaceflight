@@ -120,6 +120,60 @@ export const MISSILE_TRICKLE_LOADS = 2;
 /** Multiplied by weapon baseAmmo for per-mission trickle */
 export const AMMO_TRICKLE_REFILLS = 1.5;
 
+// ============ BASE STOCK HELPERS ============
+// Single source of truth for base stock calculations
+
+/** Calculate base missile stock for a given capacity and sectors available */
+export function getMissileBaseStock(
+  capacity: number,
+  sectorsAvailable: number,
+): number {
+  const bonus = 1 + sectorsAvailable * AVAILABILITY_BONUS;
+  return Math.floor(MISSILE_BASE_LOADS * capacity * bonus);
+}
+
+/** Calculate base ammo stock for a given base ammo and sectors available */
+export function getAmmoBaseStock(
+  baseAmmo: number,
+  sectorsAvailable: number,
+): number {
+  const bonus = 1 + sectorsAvailable * AVAILABILITY_BONUS;
+  return Math.floor(AMMO_BASE_REFILLS * baseAmmo * bonus);
+}
+
+// ============ STOCK CAP CONSTANTS (consumables only) ============
+// Prevents infinite accumulation while allowing generous supply
+
+/** Assumed missions per sector for cap calculation */
+const MISSIONS_PER_SECTOR = 8;
+
+/**
+ * Get maximum stock for a missile type.
+ * Cap = base + (missions_per_sector × trickle_per_mission)
+ * This represents "one sector's worth" of supply accumulation.
+ */
+export function getMissileStockCap(
+  capacity: number,
+  sectorsAvailable: number,
+): number {
+  const base = getMissileBaseStock(capacity, sectorsAvailable);
+  const tricklePerMission = Math.floor(MISSILE_TRICKLE_LOADS * capacity);
+  return base + MISSIONS_PER_SECTOR * tricklePerMission;
+}
+
+/**
+ * Get maximum stock for an ammo type.
+ * Cap = base + (missions_per_sector × trickle_per_mission)
+ */
+export function getAmmoStockCap(
+  baseAmmo: number,
+  sectorsAvailable: number,
+): number {
+  const base = getAmmoBaseStock(baseAmmo, sectorsAvailable);
+  const tricklePerMission = Math.round(AMMO_TRICKLE_REFILLS * baseAmmo);
+  return base + MISSIONS_PER_SECTOR * tricklePerMission;
+}
+
 /**
  * Get trickle probability for an item based on its unlock sector.
  * S1: 40%, S2: 35%, S3: 30%, S4: 25%, S5: 20%
@@ -166,10 +220,7 @@ export function generateSectorStock(sector: number): StoreStock {
     if (unlockSector <= sector) {
       const sectorsAvailable = sector - unlockSector;
       const capacity = MISSILES[weaponType]?.capacity ?? 10;
-      const bonus = 1 + sectorsAvailable * AVAILABILITY_BONUS;
-      secondaries[weaponType] = Math.floor(
-        MISSILE_BASE_LOADS * capacity * bonus,
-      );
+      secondaries[weaponType] = getMissileBaseStock(capacity, sectorsAvailable);
     }
   }
 
@@ -180,8 +231,7 @@ export function generateSectorStock(sector: number): StoreStock {
     if (unlockSector <= sector) {
       const sectorsAvailable = sector - unlockSector;
       const baseAmmo = PRIMARY_WEAPONS[weaponType]?.ammo ?? 100;
-      const bonus = 1 + sectorsAvailable * AVAILABILITY_BONUS;
-      ammo[weaponType] = Math.floor(AMMO_BASE_REFILLS * baseAmmo * bonus);
+      ammo[weaponType] = getAmmoBaseStock(baseAmmo, sectorsAvailable);
     }
   }
 
