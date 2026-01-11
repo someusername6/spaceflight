@@ -202,13 +202,28 @@ No unnecessary dependencies observed.
 
 1. ~~**Enable strict TypeScript**~~ - ✅ Already enabled (see 4.2)
 2. ~~**Add integration test for save/load cycle**~~ - ✅ Added `test-save-load.mjs`
-
-### Remaining
-
-3. **Document system execution order** - Currently implicit in game-loop.ts
+3. ~~**Document system execution order**~~ - ✅ Fixed in ARCHITECTURE.md (was outdated, now shows all 17 systems)
 
 ---
 
-## 8. Conclusion
+## 8. Documentation Audit
+
+A comprehensive audit of `docs/` identified outdated and redundant documentation.
+
+**Deleted (outdated values):**
+- `SHIPS.md` - Values didn't match `data/ships.ts` (source of truth)
+- `WEAPONS.md` - Values didn't match `data/weapons.ts` (source of truth)
+- `CAMPAIGN.md` - Outdated unlock tables, redundant with ECONOMY.md
+
+**Updated:**
+- `ARCHITECTURE.md` - Fixed system execution order (added decoySystem, corrected positions)
+- `ECONOMY.md` - Added Campaign Flow section (mission flow, sector transition, permadeath)
+
+**Archived:**
+- `PLAN.md` → `archive/PLAN-original.md` (historical planning document)
+
+---
+
+## 9. Conclusion
 
 This is a well-architected game with professional-quality code. The ECS implementation is exemplary, memory management is careful, and UI patterns are consistent. All critical issues have been addressed - the codebase is in excellent shape for continued development.

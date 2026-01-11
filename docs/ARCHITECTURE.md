@@ -82,19 +82,20 @@ const SYSTEM_ORDER = [
   inputSystem,       // 1. Read player input
   targetingSystem,   // 2. Process target selection
   aiSystem,          // 3. AI decision making
-  aimErrorSystem,    // 4. Update AI aim drift
-  weaponSystem,      // 5. Handle firing
-  beamSystem,        // 6. Handle beam damage
-  physicsSystem,     // 7. Apply movement
+  aimErrorSystem,    // 4. Update aim drift
+  weaponSystem,      // 5. Handle firing (spawn projectiles/missiles)
+  physicsSystem,     // 6. Apply movement (rotation before beams)
+  beamSystem,        // 7. Handle beam damage (uses current transform)
   projectileSystem,  // 8. Move projectiles
   missileSystem,     // 9. Move missiles with tracking
-  collisionSystem,   // 10. Detect collisions
-  damageSystem,      // 11. Apply damage
-  shieldSystem,      // 12. Regenerate shields
-  heatSystem,        // 13. Cool heat
-  cleanupSystem,     // 14. Remove dead entities, spawn explosions
-  explosionSystem,   // 15. Update explosion effects
-  missionSystem,     // 16. Check win/lose
+  decoySystem,       // 10. Move decoys, destroy missiles on contact
+  collisionSystem,   // 11. Detect collisions
+  damageSystem,      // 12. Apply damage
+  shieldSystem,      // 13. Regenerate shields
+  heatSystem,        // 14. Cool heat
+  cleanupSystem,     // 15. Remove dead entities, spawn explosions
+  explosionSystem,   // 16. Update explosion effects
+  missionSystem,     // 17. Check win/lose
 ];
 ```
 

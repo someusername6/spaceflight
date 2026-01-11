@@ -410,3 +410,33 @@ Where:
 **Calculation Method:**
 Run `npx tsx scripts/tests/campaign/calculate-rewards.mjs [sector]` to compute
 recommended rewards based on simulation data (30 runs per mission).
+
+---
+
+## Campaign Flow
+
+### Mission Flow
+
+Each mission follows this sequence:
+
+1. **Squadron** - Manage pilots, ships, equipment
+2. **Contracts** - View available missions, select one
+3. **Squad Selection** - Choose which ships to deploy
+4. **Launch** - Confirm loadout
+5. **Mission** - Play the combat mission
+6. **Results** - Show kills, salvage, rewards
+7. **Return to Squadron**
+
+### Sector Transition
+
+Players can advance to the next sector at any time via the "Skip Ahead" button. There is no minimum contract requirement.
+
+Each sector increases difficulty and unlocks new equipment in the store.
+
+### Permadeath
+
+**Single Player:**
+- Commander ship destroyed = Campaign Over
+- Show final stats, offer new run
+
+Wingmen can die and be replaced. Only the commander's death ends the campaign.
