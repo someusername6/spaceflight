@@ -9,302 +9,47 @@ Before claiming any feature is "not implemented" or making status/priority recom
 3. **CROSS-REFERENCE** with `docs/PROGRESS.md`
 4. **CITE EVIDENCE** - make claims with file:line references
 
-**Never rely on:**
-- Conversation summaries alone
-- Planning documents (PLAN.md describes intent, not reality)
-- Memory of what was "just implemented"
+**Never rely on:** conversation summaries, planning documents, or memory of what was "just implemented".
 
-**For comprehensive status reviews:** Use the Explore agent to thoroughly search before making any claims.
-
-## Progress Tracking
-
-After completing any feature:
-1. Update `docs/PROGRESS.md` with the file:line reference
-2. Mark the checkbox as complete
-
-Before starting work on a "missing" feature:
-1. Check `docs/PROGRESS.md` first
-2. Search the codebase to verify it's actually missing
-3. Only then proceed
+After completing any feature, update `docs/PROGRESS.md` with file:line references.
 
 ## Code Quality Rules
-
-(From PLAN.md - repeated here for visibility)
 
 - **Max 400 lines per file** - Split if larger
 - **Components are interfaces** - No methods, no classes
 - **Systems are pure functions** - `(world: World, dt: number) => void`
-- **No `Math.random()`** - Use seeded PRNG
+- **No `Math.random()`** - Use seeded PRNG from `src/core/prng.ts`
 - **No `Date.now()` in game logic** - Fixed timestep only
 
 ## Formatting Rules (MANDATORY)
 
-This project uses Biome for formatting and linting. A pre-commit hook enforces these rules.
+This project uses Biome for formatting. Run `npm run lint` before committing.
 
-**Never compress code to fit line limits.** If a file approaches 400 lines:
-1. Split the file into logical modules
-2. Do NOT put multiple statements on one line
-3. Do NOT remove blank lines or compress formatting
-4. Do NOT remove comments or documentation to reduce line count
+**STOP SIGNAL:** If a file approaches 400 lines, **STOP**. The only correct response is to split into modules. Never:
+- Compress multiple statements onto one line
+- Remove blank lines or comments to reduce line count
+- Remove functionality to fit the limit
 
-**STOP SIGNAL:** If a pre-commit hook fails due to file size, or if you are about to edit code solely to reduce line count, STOP. The only correct response is to split into modules. Re-read this section before proceeding.
+**Correct response:** Identify logically separable code and extract to new module(s).
 
-**Wrong responses to "file too long":**
-- Merging comment lines or shortening documentation
-- Removing console.log/output statements
-- Removing blank lines between functions
-- Removing tests or functionality
-- Any edit whose primary purpose is "make file shorter"
+## UI Screen Pattern
 
-**Correct response:**
-- Identify logically separable code (utilities, constants, types, sub-tests)
-- Create new module file(s) for that code
-- Import from the new module(s)
+All UI screens must use the Screen framework in `src/ui/framework/screen.ts`.
 
-**Correct formatting:**
-```typescript
-if (condition) {
-  doSomething();
-  doSomethingElse();
-}
-```
-
-**Wrong (compressed):**
-```typescript
-if (condition) { doSomething(); doSomethingElse(); }
-```
-
-**Commands:**
-- `npm run format` - Auto-format code
-- `npm run lint` - Check for lint errors
-- `npm run lint:fix` - Fix lint errors
-- `npm run check-size` - Verify file size limits
-
-**Before committing:** Run `npm run lint` to ensure code passes checks.
-
-## UI Screen Pattern (MANDATORY)
-
-All UI screens must use the Screen framework in `src/ui/framework/screen.ts`. This provides:
-- Automatic event delegation (one listener per event type)
-- Automatic cleanup on re-render and destroy
-- Type-safe state management with `setState()`
-
-### Creating a Screen
-
-```typescript
-import { createScreen, type Screen, type ScreenAPI, type ScreenHandle } from '../framework/screen';
-
-interface MyState {
-  selectedItem: string | null;
-}
-
-interface MyProps {
-  data: SomeData;
-  onAction: () => void;
-}
-
-const MyScreenComponent: Screen<MyState, MyProps> = {
-  render(state, props) {
-    return `<div>...</div>`;  // HTML string
-  },
-
-  bind(api: ScreenAPI<MyState>, props: MyProps) {
-    api.on('#btn-action', 'click', () => {
-      props.onAction();
-    });
-
-    api.on('.item', 'click', (_e, el) => {
-      api.setState({ selectedItem: el.dataset.id ?? null });
-    });
-  },
-};
-
-// Create the screen
-const handle = createScreen(MyScreenComponent, element, initialState, props);
-```
-
-### Event Binding Methods
-
-- `api.on(selector, event, handler)` - Event delegation (matches via closest())
-- `api.onRoot(event, handler)` - Direct listener on root element
-- `api.onGlobal(event, handler)` - Listener on document (auto-removed on destroy)
-
-### State Updates
-
-- `api.setState(partial)` - Merge partial state, triggers re-render
-- `api.getState()` - Get current state
-
-### Screen Handle
-
-The `createScreen()` function returns a handle for external control:
-- `handle.setState(partial)` - Update state from outside
-- `handle.replaceState(newState)` - Replace entire state
-- `handle.setProps(newProps)` - Update props and re-render
-- `handle.destroy()` - Cleanup all listeners
-
-### Modal Pattern
-
-For modal dialogs, use `showModal()`:
-
-```typescript
-import { showModal, type ModalProps } from '../framework/screen';
-
-interface MyModalProps extends ModalProps<ResultType> {
-  // Additional props
-}
-
-const result = await showModal(MyModalScreen, initialState, props);
-```
-
-Call `props.onClose(result)` to resolve the promise and close the modal.
-
-### Legacy UI Interface
-
-When migrating screens, preserve the existing public interface by returning a legacy UI object:
-
-```typescript
-export function createMyUI(...): MyUI {
-  screenHandle = createScreen(...);
-
-  return {
-    element,
-    // ... other legacy properties
-  };
-}
-```
-
-### Key Rules
-
+**Key Rules:**
 1. **Never use raw `addEventListener`** - Use `api.on()`, `api.onRoot()`, or `api.onGlobal()`
 2. **Always clean up handles** - Call `screenHandle?.destroy()` before creating new ones
 3. **Keep render pure** - No side effects in `render()`, only return HTML string
 4. **Bind after render** - `bind()` is called after every `render()`, handlers are auto-cleared
 
-## Weapon Icon System
+See `src/ui/framework/screen.ts` for the full API.
 
-Weapon, missile, and ship icons use inline SVGs for CSS styling. Use the render functions in `src/ui/utils/weapon-icon.ts`.
+## Pattern References
 
-### Why Inline SVGs?
+When working in these areas, read the source for patterns:
 
-SVGs loaded via `<img>` tags are treated as external images - CSS cannot reach inside them. To style `currentColor` elements via CSS, the SVG must be inline in the DOM.
-
-### File Locations
-
-- **Source SVGs**: `src/assets/icons/{weapons,missiles,ships}/*.svg`
-- **Render API**: `src/ui/utils/weapon-icon.ts` (primary interface)
-- **SVG Loader**: `src/ui/utils/inline-svg.ts` (low-level loader)
-- **Icon Styles**: `src/ui/styles/weapon-icons.css`
-- **Type declarations**: `src/vite-env.d.ts`
-
-### Usage
-
-```typescript
-import { renderWeaponIcon, renderMissileIcon } from '../../utils/weapon-icon';
-
-// Primary weapons
-renderWeaponIcon('redlaser', { size: 'lg', color: 'var(--color-primary)' })
-renderWeaponIcon('autocannon', { size: 'sm', className: 'picker-icon' })
-
-// Missiles
-renderMissileIcon('seeker', { size: 'md', color: 'var(--color-danger)' })
-
-// Size presets: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
-```
-
-### Dual Coloring (Laser Weapons)
-
-Laser weapons have two color zones with separate glow effects:
-
-1. **Fixed color beam** (e.g., `#f00` for red laser) - defined in SVG with internal `<filter>` for glow
-2. **currentColor body** - controlled via CSS `color` property, uses CSS drop-shadow
-
-The `renderWeaponIcon()` function automatically detects lasers and applies the `has-svg-glow` class to disable CSS drop-shadow (preventing double glow).
-
-### SVG Filter ID Convention
-
-Beam weapons with internal filters for glow effects. Filter IDs must be unique per weapon to avoid collision when multiple icons are on the same page:
-
-- `rl-beam`, `rl-body` - Red laser
-- `bl-beam`, `bl-body` - Blue laser
-- `gl-beam`, `gl-body` - Green laser
-- `nl-beam`, `nl-body` - Nuclear lance
-
-### Adding New Icons
-
-1. Add the SVG file to `src/assets/icons/{category}/`
-2. Use `currentColor` for elements that should be CSS-styled
-3. Use fixed colors for elements that should stay constant
-4. If adding internal filters, use a unique prefix (e.g., `xx-beam`, `xx-body`)
-5. The loader will automatically pick it up via Vite's glob imports
-6. For weapons with internal glow, add to `WEAPONS_WITH_SVG_GLOW` in `weapon-icon.ts`
-
-## Campaign Handler Pattern
-
-The campaign controller uses a consistent handler organization pattern. The controller itself is a thin orchestrator (~120 lines) that wires together handlers from the `handlers/` directory.
-
-### Directory Structure
-
-```
-src/campaign/
-├── controller.ts          # Thin orchestrator - initializes and wires handlers
-├── controller-types.ts    # CampaignController interface
-├── handlers/
-│   ├── menu-handlers.ts   # Title screen, settings screen setup
-│   ├── campaign-handlers.ts # Squadron, store, contracts screen setup
-│   ├── mission-handlers.ts  # Results, game-over screen setup
-│   └── pause-handler.ts   # Escape key, pause menu handling
-└── mission/
-    └── ...                 # Mission execution (unchanged)
-```
-
-### Handler Responsibilities
-
-Handlers are grouped by **game phase**, not by technical function:
-
-- **menu-handlers.ts**: Pre-gameplay screens (title, settings)
-- **campaign-handlers.ts**: Main gameplay loop screens (squadron, store, contracts)
-- **mission-handlers.ts**: Post-mission screens (results, game-over)
-- **pause-handler.ts**: Cross-cutting pause functionality (escape key, pause menu)
-
-### Handler Function Pattern
-
-Each setup function follows this signature pattern:
-
-```typescript
-export function setup[Screen](
-  controller: CampaignController,
-  element: HTMLElement,
-  ...callbacks
-): void
-```
-
-Handlers:
-1. Receive the controller for state access
-2. Receive the DOM element to render into
-3. Receive callbacks for navigation/transitions (wired by controller)
-4. Call UI creation functions with navigation handlers
-
-### Controller Wiring
-
-The controller creates closure callbacks that wire handlers together:
-
-```typescript
-// In controller.ts
-const setupContracts = (ctrl: CampaignController) =>
-  setupContractsScreen(ctrl);
-
-const setupSettings = (ctrl: CampaignController) => {
-  setupSettingsScreen(ctrl, onStartGameplay, reSetupSquadron);
-};
-
-// Pass callbacks to handler
-setupSquadronScreen(controller, squadronElement, setupContracts);
-```
-
-### Key Principles
-
-1. **Controller is thin** - Only initialization and callback wiring (~120 lines max)
-2. **Handlers are self-contained** - All screen setup logic in handlers
-3. **Group by phase** - Menu → Campaign → Mission, not by technical concern
-4. **Callbacks for navigation** - Handlers receive callbacks, don't import each other (except within same phase)
-5. **Single responsibility** - Each handler file handles related screens only
+- **Screen framework**: `src/ui/framework/screen.ts`
+- **Weapon/missile icons**: `src/ui/utils/weapon-icon.ts`
+- **Campaign controller**: `src/campaign/controller.ts` and `src/campaign/handlers/`
+- **ECS patterns**: `src/core/ecs.ts`
+- **State mutations**: `src/campaign/loadout.ts` (immutable update pattern)
