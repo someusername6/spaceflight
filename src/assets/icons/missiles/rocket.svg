@@ -1,1 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 96 32"><path d="M8 16h16m0-6v12h48l16-6-16-6zm8 0v12"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Rocket: Simple dumbfire missile -->
+  <path d="M8 16 L24 16"/>
+  <path d="M24 10 L24 22 L72 22 L88 16 L72 10 L24 10"/>
+  <path d="M32 10 L32 22"/>
+</svg>

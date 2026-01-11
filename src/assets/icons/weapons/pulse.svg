@@ -1,1 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 96 32"><path d="M8 8v16l12-8Zm20 8h12m12 0h12m12 0h12"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Pulse: Rapid fire energy bolts -->
+  <path d="M8 16 L20 16"/>
+  <path d="M26 16 L38 16"/>
+  <path d="M44 16 L56 16"/>
+  <path d="M62 16 L74 16"/>
+  <path d="M80 16 L88 12 L88 20 L80 16"/>
+</svg>

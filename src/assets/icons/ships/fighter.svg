@@ -1,1 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 64 64"><path d="m32 6 4 14 20 16-8 2-4 16-12-8-12 8-4-16-8-2 20-16Z"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Fighter: Classic balanced shape - swept wings -->
+  <path d="M32 6 L36 20 L56 36 L48 38 L44 54 L32 46 L20 54 L16 38 L8 36 L28 20 Z"/>
+</svg>

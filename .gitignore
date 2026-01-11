@@ -28,3 +28,4 @@ npm-debug.log*
 # Build artifacts
 cover-image.png
 spaceflight-build.zip
+spaceflight-*.zip

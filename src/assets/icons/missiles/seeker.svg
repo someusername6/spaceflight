@@ -1,1 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 96 32"><path d="M8 16h12m0-6v12h40V10z"/><circle cx="76" cy="16" r="10"/><path d="m72 12 8 8m-8 0 8-8"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Seeker: Homing missile with sensor dome -->
+  <path d="M8 16 L20 16"/>
+  <path d="M20 10 L20 22 L60 22 L60 10 L20 10"/>
+  <circle cx="76" cy="16" r="10"/>
+  <path d="M72 12 L80 20 M72 20 L80 12"/>
+</svg>
