@@ -237,3 +237,74 @@ Beam weapons with internal filters for glow effects. Filter IDs must be unique p
 4. If adding internal filters, use a unique prefix (e.g., `xx-beam`, `xx-body`)
 5. The loader will automatically pick it up via Vite's glob imports
 6. For weapons with internal glow, add to `WEAPONS_WITH_SVG_GLOW` in `weapon-icon.ts`
+
+## Campaign Handler Pattern
+
+The campaign controller uses a consistent handler organization pattern. The controller itself is a thin orchestrator (~120 lines) that wires together handlers from the `handlers/` directory.
+
+### Directory Structure
+
+```
+src/campaign/
+├── controller.ts          # Thin orchestrator - initializes and wires handlers
+├── controller-types.ts    # CampaignController interface
+├── handlers/
+│   ├── menu-handlers.ts   # Title screen, settings screen setup
+│   ├── campaign-handlers.ts # Squadron, store, contracts screen setup
+│   ├── mission-handlers.ts  # Results, game-over screen setup
+│   └── pause-handler.ts   # Escape key, pause menu handling
+└── mission/
+    └── ...                 # Mission execution (unchanged)
+```
+
+### Handler Responsibilities
+
+Handlers are grouped by **game phase**, not by technical function:
+
+- **menu-handlers.ts**: Pre-gameplay screens (title, settings)
+- **campaign-handlers.ts**: Main gameplay loop screens (squadron, store, contracts)
+- **mission-handlers.ts**: Post-mission screens (results, game-over)
+- **pause-handler.ts**: Cross-cutting pause functionality (escape key, pause menu)
+
+### Handler Function Pattern
+
+Each setup function follows this signature pattern:
+
+```typescript
+export function setup[Screen](
+  controller: CampaignController,
+  element: HTMLElement,
+  ...callbacks
+): void
+```
+
+Handlers:
+1. Receive the controller for state access
+2. Receive the DOM element to render into
+3. Receive callbacks for navigation/transitions (wired by controller)
+4. Call UI creation functions with navigation handlers
+
+### Controller Wiring
+
+The controller creates closure callbacks that wire handlers together:
+
+```typescript
+// In controller.ts
+const setupContracts = (ctrl: CampaignController) =>
+  setupContractsScreen(ctrl);
+
+const setupSettings = (ctrl: CampaignController) => {
+  setupSettingsScreen(ctrl, onStartGameplay, reSetupSquadron);
+};
+
+// Pass callbacks to handler
+setupSquadronScreen(controller, squadronElement, setupContracts);
+```
+
+### Key Principles
+
+1. **Controller is thin** - Only initialization and callback wiring (~120 lines max)
+2. **Handlers are self-contained** - All screen setup logic in handlers
+3. **Group by phase** - Menu → Campaign → Mission, not by technical concern
+4. **Callbacks for navigation** - Handlers receive callbacks, don't import each other (except within same phase)
+5. **Single responsibility** - Each handler file handles related screens only

@@ -15,9 +15,9 @@ import {
 import { finalizeMatchStats } from '../../systems/stats';
 import { endMission, updateCampaignState } from '../../ui/common/screens';
 import type { CampaignController } from '../controller-types';
+import { showGameOver, showResults } from '../handlers/mission-handlers';
 import { refreshRecruits } from '../recruits';
 import { applySalvage, calculateSalvage } from '../salvage';
-import { showGameOver, showResults } from '../screen-handlers';
 import { extractAmmoFromWorld } from '../ship-spawning';
 import { applyAmmoUsage, applyMissionResults, isGameOver } from '../state';
 import type { Contract } from '../types';

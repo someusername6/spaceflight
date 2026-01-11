@@ -1,0 +1,198 @@
+/**
+ * Campaign Handlers - Squadron, store, and contracts screen setup.
+ *
+ * Handles:
+ * - Squadron screen setup and navigation
+ * - Store screen setup and navigation
+ * - Contracts screen setup, navigation, and mission launching
+ */
+
+import type { NavDestination } from '../../ui/common/nav-bar';
+import {
+  getScreenElement,
+  goToContracts,
+  goToSquadron,
+  goToStore,
+  Screen,
+  startMission,
+  updateCampaignState,
+} from '../../ui/common/screens';
+import { createContractsUI } from '../../ui/screens/contracts';
+import {
+  createSquadronUI,
+  type ListSelection,
+} from '../../ui/screens/squadron';
+import { showSquadSelection } from '../../ui/screens/squadron/selection';
+import { createStoreUI } from '../../ui/screens/store/store';
+import type { CampaignController } from '../controller-types';
+import { launchMission } from '../mission/mission-launcher';
+import { advanceSector } from '../state';
+import type { Contract } from '../types';
+
+/**
+ * Setup squadron screen.
+ *
+ * @param controller - Campaign controller instance
+ * @param squadronElement - DOM element for squadron screen
+ * @param setupContractsScreen - Callback to setup contracts screen
+ * @param initialSelection - Optional initial list selection state
+ */
+export function setupSquadronScreen(
+  controller: CampaignController,
+  squadronElement: HTMLElement,
+  setupContractsScreen: (controller: CampaignController) => void,
+  initialSelection?: ListSelection,
+): void {
+  const { screenManager } = controller;
+
+  // Navigation handler for all screens
+  const onNavigate = (destination: NavDestination) => {
+    switch (destination) {
+      case 'squadron':
+        // Already on squadron, no-op
+        break;
+      case 'store': {
+        goToStore(screenManager);
+        const storeElement = getScreenElement(screenManager, Screen.STORE);
+        setupStoreScreen(controller, storeElement, setupContractsScreen);
+        break;
+      }
+      case 'contracts':
+        goToContracts(screenManager);
+        setupContractsScreen(controller);
+        break;
+    }
+  };
+
+  // State update handler
+  const onStateUpdate = (newState: typeof screenManager.campaignState) => {
+    updateCampaignState(screenManager, newState);
+  };
+
+  createSquadronUI(
+    squadronElement,
+    screenManager.campaignState,
+    onNavigate,
+    onStateUpdate,
+    initialSelection,
+  );
+}
+
+/**
+ * Setup store screen.
+ *
+ * @param controller - Campaign controller instance
+ * @param storeElement - DOM element for store screen
+ * @param setupContractsScreen - Callback to setup contracts screen
+ */
+export function setupStoreScreen(
+  controller: CampaignController,
+  storeElement: HTMLElement,
+  setupContractsScreen: (controller: CampaignController) => void,
+): void {
+  const { screenManager } = controller;
+
+  // Navigation handler for all screens
+  const onNavigate = (destination: NavDestination) => {
+    switch (destination) {
+      case 'squadron': {
+        goToSquadron(screenManager);
+        const squadronElement = getScreenElement(
+          screenManager,
+          Screen.SQUADRON,
+        );
+        setupSquadronScreen(controller, squadronElement, setupContractsScreen);
+        break;
+      }
+      case 'store':
+        // Already on store, no-op
+        break;
+      case 'contracts':
+        goToContracts(screenManager);
+        setupContractsScreen(controller);
+        break;
+    }
+  };
+
+  // State update handler
+  const onStateUpdate = (newState: typeof screenManager.campaignState) => {
+    updateCampaignState(screenManager, newState);
+  };
+
+  createStoreUI(
+    storeElement,
+    screenManager.campaignState,
+    onNavigate,
+    onStateUpdate,
+  );
+}
+
+/**
+ * Setup contracts screen with callbacks.
+ *
+ * @param controller - Campaign controller instance
+ */
+export function setupContractsScreen(controller: CampaignController): void {
+  const { screenManager } = controller;
+  const contractsElement = getScreenElement(screenManager, Screen.CONTRACTS);
+
+  // Create wrapper for recursive setup call
+  const setupContracts = (ctrl: CampaignController) =>
+    setupContractsScreen(ctrl);
+
+  createContractsUI(
+    contractsElement,
+    screenManager.campaignState,
+    (destination) => {
+      // Navigation handler for contracts screen
+      switch (destination) {
+        case 'squadron': {
+          goToSquadron(screenManager);
+          const squadronElement = getScreenElement(
+            screenManager,
+            Screen.SQUADRON,
+          );
+          setupSquadronScreen(controller, squadronElement, setupContracts);
+          break;
+        }
+        case 'store': {
+          goToStore(screenManager);
+          const storeElement = getScreenElement(screenManager, Screen.STORE);
+          setupStoreScreen(controller, storeElement, setupContracts);
+          break;
+        }
+        case 'contracts':
+          // Already on contracts, no-op
+          break;
+      }
+    },
+    async (contract: Contract) => {
+      // Show squad selection modal
+      const result = await showSquadSelection(
+        screenManager.campaignState,
+        contract,
+      );
+
+      if (!result.confirmed) {
+        // User cancelled, stay on contracts screen
+        return;
+      }
+
+      // Start mission with selected ships
+      startMission(screenManager, contract);
+      launchMission(
+        controller,
+        contract,
+        result.deployedShipIds,
+        setupContracts,
+      );
+    },
+    () => {
+      // Advance to next sector
+      const newState = advanceSector(screenManager.campaignState);
+      updateCampaignState(screenManager, newState);
+      // Refresh contracts screen with new sector's missions
+      setupContractsScreen(controller);
+    },
+  );
+}

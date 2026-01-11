@@ -1,48 +1,40 @@
 /**
- * Campaign controller - orchestrates campaign flow, screen transitions,
- * and mission spawning.
+ * Campaign Controller - Thin orchestrator for campaign flow.
+ *
+ * This module:
+ * - Initializes the campaign and screen manager
+ * - Wires together screen handlers with proper callbacks
+ * - Delegates all screen setup to handlers/ modules
+ *
+ * Handler Organization:
+ * - handlers/menu-handlers.ts: Title screen, settings screen
+ * - handlers/campaign-handlers.ts: Squadron, store, contracts screens
+ * - handlers/mission-handlers.ts: Results, game-over screens
+ * - handlers/pause-handler.ts: Escape key, pause menu
  */
 
-import { pauseGame, resumeGame, stopGame } from '../game';
 import { initKeyBindings } from '../input/key-bindings';
 import { initGameSettings } from '../settings/game-settings';
 import { initInput } from '../systems/input';
 import {
   createScreenManager,
   getScreenElement,
-  goBackFromSettings,
-  goToSettings,
   goToSquadron,
-  goToStore,
   goToTitle,
   Screen,
-  setCurrentSaveSlot,
-  startMission,
-  updateCampaignState,
 } from '../ui/common/screens';
-import { createContractsUI } from '../ui/screens/contracts';
-import { showPauseMenu } from '../ui/screens/pause-menu';
-import {
-  bindSettingsScreen,
-  cleanupSettingsScreen,
-  renderSettingsScreen,
-  storeBattleCanvas,
-} from '../ui/screens/settings';
-import { showSquadSelection } from '../ui/screens/squadron/selection';
-import {
-  bindTitleScreen,
-  cleanupTitleScreen,
-  getBattleSimulationCanvas,
-  hasBattleSimulation,
-  renderTitleScreen,
-  resetTitleScreen,
-} from '../ui/screens/title';
+import { cleanupTitleScreen } from '../ui/screens/title';
 import type { CampaignController } from './controller-types';
-import { launchMission } from './mission/mission-launcher';
-import { disposeMissionRenderers } from './mission/mission-renderer';
-import { setupSquadronScreen, setupStoreScreen } from './screen-handlers';
-import { advanceSector, createNewCampaign } from './state';
-import type { CampaignState, Contract } from './types';
+import {
+  setupContractsScreen,
+  setupSquadronScreen,
+} from './handlers/campaign-handlers';
+import {
+  setupSettingsScreen,
+  setupTitleScreen,
+} from './handlers/menu-handlers';
+import { setupEscapeHandler } from './handlers/pause-handler';
+import { createNewCampaign } from './state';
 
 export type { CampaignController } from './controller-types';
 
@@ -70,8 +62,9 @@ export function startCampaign(container: HTMLElement): CampaignController {
     pausedMissionForSettings: false,
   };
 
-  // Setup title screen
-  setupTitleScreen(controller);
+  // Setup title screen with gameplay transition callback
+  const onStartGameplay = () => startCampaignGameplay(controller);
+  setupTitleScreen(controller, onStartGameplay);
 
   // Show title screen initially
   goToTitle(screenManager);
@@ -81,99 +74,6 @@ export function startCampaign(container: HTMLElement): CampaignController {
   return controller;
 }
 
-/** Setup title screen with callbacks */
-function setupTitleScreen(controller: CampaignController): void {
-  const { screenManager } = controller;
-  const titleElement = getScreenElement(screenManager, Screen.TITLE);
-
-  renderTitleScreen(titleElement);
-  bindTitleScreen(titleElement, {
-    onNewGame: () => {
-      // Create fresh campaign state
-      const newState = createNewCampaign();
-      updateCampaignState(screenManager, newState);
-      setCurrentSaveSlot(screenManager, null);
-
-      // Transition to squadron
-      startCampaignGameplay(controller);
-    },
-    onContinue: (state: CampaignState, slot: number) => {
-      // Use loaded campaign state
-      updateCampaignState(screenManager, state);
-      setCurrentSaveSlot(screenManager, slot);
-
-      // Transition to squadron
-      startCampaignGameplay(controller);
-    },
-    onSettings: () => {
-      goToSettings(screenManager);
-      setupSettingsScreen(controller);
-    },
-  });
-}
-
-/** Setup settings screen with callbacks */
-function setupSettingsScreen(controller: CampaignController): void {
-  const { screenManager } = controller;
-  const settingsElement = getScreenElement(screenManager, Screen.SETTINGS);
-  const comingFromTitle = screenManager.previousScreen === Screen.TITLE;
-
-  renderSettingsScreen(settingsElement);
-  bindSettingsScreen(settingsElement, {
-    onBack: () => {
-      // Transfer canvas back to title if needed
-      if (comingFromTitle && hasBattleSimulation()) {
-        const canvas = getBattleSimulationCanvas();
-        const titleBg = document.getElementById('title-battle-bg');
-        if (canvas && titleBg) {
-          titleBg.appendChild(canvas);
-        }
-      }
-
-      cleanupSettingsScreen();
-      goBackFromSettings(screenManager);
-
-      // Resume game if we came from a paused mission
-      if (controller.pausedMissionForSettings && controller.game) {
-        controller.pausedMissionForSettings = false;
-        resumeGame(controller.game);
-        return; // Mission screen doesn't need re-setup
-      }
-
-      // Re-setup the screen we're returning to
-      const currentScreen = screenManager.currentScreen;
-      if (currentScreen === Screen.TITLE) {
-        setupTitleScreen(controller);
-      } else if (currentScreen === Screen.SQUADRON) {
-        const squadronElement = getScreenElement(
-          screenManager,
-          Screen.SQUADRON,
-        );
-        setupSquadronScreen(controller, squadronElement, () =>
-          setupContractsScreen(controller),
-        );
-      }
-    },
-  });
-
-  // Transfer battle simulation to settings background AFTER bind (which re-renders)
-  if (comingFromTitle && hasBattleSimulation()) {
-    const canvas = getBattleSimulationCanvas();
-    const settingsScreen = settingsElement.querySelector('.settings-screen');
-    const settingsBg = settingsElement.querySelector('#settings-battle-bg');
-
-    if (canvas && settingsScreen && settingsBg) {
-      settingsBg.appendChild(canvas);
-      settingsScreen.classList.add('with-battle-bg');
-      // Store canvas reference so settings screen can re-attach after tab switches
-      storeBattleCanvas(canvas);
-    }
-  }
-}
-
-/** Global escape key handler reference for cleanup */
-let escapeHandler: ((e: KeyboardEvent) => void) | null = null;
-
 /** Start gameplay (from new game or continue) */
 function startCampaignGameplay(controller: CampaignController): void {
   const { screenManager } = controller;
@@ -181,205 +81,38 @@ function startCampaignGameplay(controller: CampaignController): void {
   // Stop title screen battle simulation (it was running in the background)
   cleanupTitleScreen();
 
+  // Create setup callbacks for handler wiring
+  const setupContracts = (ctrl: CampaignController) =>
+    setupContractsScreen(ctrl);
+
+  // Create settings screen setup with squadron re-setup capability
+  const setupSettings = (ctrl: CampaignController) => {
+    const onStartGameplay = () => startCampaignGameplay(ctrl);
+    const reSetupSquadron = (c: CampaignController) => {
+      const squadronEl = getScreenElement(c.screenManager, Screen.SQUADRON);
+      setupSquadronScreen(c, squadronEl, setupContracts);
+    };
+    setupSettingsScreen(ctrl, onStartGameplay, reSetupSquadron);
+  };
+
+  // Create title screen setup for quit handler
+  const setupTitle = (ctrl: CampaignController) => {
+    const onStartGameplay = () => startCampaignGameplay(ctrl);
+    setupTitleScreen(ctrl, onStartGameplay);
+  };
+
   // Setup squadron screen
   const squadronElement = getScreenElement(screenManager, Screen.SQUADRON);
-  setupSquadronScreen(controller, squadronElement, () =>
-    setupContractsScreen(controller),
-  );
+  setupSquadronScreen(controller, squadronElement, setupContracts);
 
   // Show squadron
   goToSquadron(screenManager);
 
   // Setup global escape key handler for pause menu
-  setupEscapeHandler(controller);
+  setupEscapeHandler(controller, setupSettings, setupTitle);
 
   const { campaignState } = screenManager;
   console.log('Campaign gameplay started');
   console.log(`Credits: ${campaignState.credits}`);
   console.log(`Ships: ${campaignState.ships.length}`);
-}
-
-/** Setup global escape key handler for pause menu */
-function setupEscapeHandler(controller: CampaignController): void {
-  // Remove any existing handler
-  cleanupEscapeHandler();
-
-  escapeHandler = async (e: KeyboardEvent) => {
-    const { screenManager } = controller;
-
-    // Handle escape on campaign screens and during missions
-    const pauseableScreens = [
-      Screen.SQUADRON,
-      Screen.STORE,
-      Screen.CONTRACTS,
-      Screen.RESULTS,
-      Screen.MISSION,
-    ];
-
-    if (
-      e.code === 'Escape' &&
-      pauseableScreens.includes(screenManager.currentScreen)
-    ) {
-      e.preventDefault();
-
-      const inMission = screenManager.currentScreen === Screen.MISSION;
-
-      // Pause game during mission
-      if (inMission && controller.game) {
-        pauseGame(controller.game);
-      }
-
-      // Can save on pre-mission screens, not during results or mission
-      const canSave =
-        !inMission && screenManager.currentScreen !== Screen.RESULTS;
-      await handlePauseMenu(controller, canSave, inMission);
-
-      // Resume game if still in mission (not quit)
-      if (
-        inMission &&
-        controller.game &&
-        screenManager.currentScreen === Screen.MISSION
-      ) {
-        resumeGame(controller.game);
-      }
-    }
-  };
-
-  document.addEventListener('keydown', escapeHandler);
-}
-
-/** Cleanup global escape key handler */
-function cleanupEscapeHandler(): void {
-  if (escapeHandler) {
-    document.removeEventListener('keydown', escapeHandler);
-    escapeHandler = null;
-  }
-}
-
-/** Handle pause menu from campaign screens */
-export async function handlePauseMenu(
-  controller: CampaignController,
-  canSave: boolean,
-  inMission = false,
-): Promise<void> {
-  const { screenManager } = controller;
-
-  const result = await showPauseMenu(screenManager.campaignState, canSave);
-
-  switch (result.action) {
-    case 'resume':
-      // Just close the menu, nothing to do
-      break;
-
-    case 'save':
-      if (result.saveSlot) {
-        setCurrentSaveSlot(screenManager, result.saveSlot);
-        console.log(`Game saved to slot ${result.saveSlot}`);
-      }
-      break;
-
-    case 'settings':
-      // Track if we're going to settings from a paused mission
-      if (inMission) {
-        controller.pausedMissionForSettings = true;
-      }
-      goToSettings(screenManager);
-      setupSettingsScreen(controller);
-      break;
-
-    case 'quit':
-      // Reset paused mission tracking
-      controller.pausedMissionForSettings = false;
-
-      // If in mission, stop the game and clean up mission resources
-      if (inMission && controller.game) {
-        stopGame(controller.game);
-        controller.game = null;
-
-        // Dispose renderer resources (WebGL context, etc.)
-        if (controller.missionRenderers) {
-          disposeMissionRenderers(controller.missionRenderers);
-          controller.missionRenderers = null;
-        }
-
-        // Clear mission container
-        if (controller.missionContainer) {
-          controller.missionContainer.innerHTML = '';
-        }
-      }
-
-      // Cleanup handlers and return to title
-      cleanupEscapeHandler();
-      cleanupTitleScreen();
-      resetTitleScreen();
-      goToTitle(screenManager);
-      setupTitleScreen(controller);
-      break;
-  }
-}
-
-/** Setup contracts screen with callbacks */
-function setupContractsScreen(controller: CampaignController): void {
-  const { screenManager } = controller;
-  const contractsElement = getScreenElement(screenManager, Screen.CONTRACTS);
-
-  // Create wrapper for recursive setup call
-  const setupContracts = (ctrl: CampaignController) =>
-    setupContractsScreen(ctrl);
-
-  createContractsUI(
-    contractsElement,
-    screenManager.campaignState,
-    (destination) => {
-      // Navigation handler for contracts screen
-      switch (destination) {
-        case 'squadron': {
-          goToSquadron(screenManager);
-          const squadronElement = getScreenElement(
-            screenManager,
-            Screen.SQUADRON,
-          );
-          setupSquadronScreen(controller, squadronElement, setupContracts);
-          break;
-        }
-        case 'store': {
-          goToStore(screenManager);
-          const storeElement = getScreenElement(screenManager, Screen.STORE);
-          setupStoreScreen(controller, storeElement, setupContracts);
-          break;
-        }
-        case 'contracts':
-          // Already on contracts, no-op
-          break;
-      }
-    },
-    async (contract: Contract) => {
-      // Show squad selection modal
-      const result = await showSquadSelection(
-        screenManager.campaignState,
-        contract,
-      );
-
-      if (!result.confirmed) {
-        // User cancelled, stay on contracts screen
-        return;
-      }
-
-      // Start mission with selected ships
-      startMission(screenManager, contract);
-      launchMission(
-        controller,
-        contract,
-        result.deployedShipIds,
-        setupContracts,
-      );
-    },
-    () => {
-      // Advance to next sector
-      const newState = advanceSector(screenManager.campaignState);
-      updateCampaignState(screenManager, newState);
-      // Refresh contracts screen with new sector's missions
-      setupContractsScreen(controller);
-    },
-  );
 }
