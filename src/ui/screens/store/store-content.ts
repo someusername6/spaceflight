@@ -35,7 +35,6 @@ export function renderStoreContent(
   const items = getCategoryItems(
     selectedCategory,
     campaignState.storeStock,
-    campaignState.currentSector,
     campaignState.storedScrap,
   );
   const isScrap = selectedCategory === 'scrap';

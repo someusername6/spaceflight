@@ -26,12 +26,17 @@ export {
 
 // Re-export catalog functions
 export {
+  AMMO_TRICKLE_REFILLS,
   createInitialStoreStock,
+  generateSectorStock,
   getAvailableAmmo,
   getAvailablePrimaries,
   getAvailableSecondaries,
   getAvailableShips,
   getScrapTypes,
+  // Trickle constants and functions
+  getTrickleProbability,
+  MISSILE_TRICKLE_LOADS,
 } from './store-catalog';
 
 /** Counter for deterministic ID generation */

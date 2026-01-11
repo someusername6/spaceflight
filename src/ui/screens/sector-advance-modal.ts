@@ -68,8 +68,9 @@ const SectorAdvanceModalScreen: Screen<AdvanceModalState, AdvanceModalProps> = {
             ${isEndless ? '<div class="advance-endless-note">Endless mode - no further sectors</div>' : ''}
           </div>
 
-          <div class="advance-caution">
+          <div class="advance-notes">
             Higher sectors have tougher enemies and better rewards.
+            The store will restock with new equipment.
             ${currentSector < MAX_SECTOR - 1 ? 'You can always advance again later.' : ''}
           </div>
 

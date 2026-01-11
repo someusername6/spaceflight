@@ -5,8 +5,9 @@
 import { createPRNG, random } from '../core/prng';
 import { getArchetype } from '../factories/ship';
 import { generateInitialRecruits } from './recruits';
-import { createInitialStoreStock } from './store/store';
+import { createInitialStoreStock, generateSectorStock } from './store/store';
 import { getMaxMissileCapacity } from './store/store-ammo';
+import { applyStoreTrickle } from './store/store-trickle';
 import type {
   CampaignState,
   EquippedPrimary,
@@ -241,7 +242,8 @@ export function applyMissionResults(
       ? [...state.completedContracts, completedContractId]
       : state.completedContracts;
 
-  return {
+  // Apply mission results first
+  const afterMission: CampaignState = {
     ...state,
     credits: state.credits + (victory ? creditsEarned : 0),
     ships: survivingShips,
@@ -252,6 +254,9 @@ export function applyMissionResults(
       : state.sectorMissionsCompleted,
     completedContracts,
   };
+
+  // Apply store trickle (resupply shipment arrives after each mission)
+  return applyStoreTrickle(afterMission);
 }
 
 /** Check if game is over (commander's ship destroyed) */
@@ -259,17 +264,22 @@ export function isGameOver(state: CampaignState): boolean {
   return !isCommanderAssigned(state);
 }
 
-/** Advance to the next sector (resets sector mission count) */
+/** Advance to the next sector (resets sector mission count, restocks store) */
 export function advanceSector(state: CampaignState): CampaignState {
   if (state.currentSector >= MAX_SECTOR) {
     return state; // Already at max sector
   }
+  const newSector = state.currentSector + 1;
   return {
     ...state,
-    currentSector: state.currentSector + 1,
+    currentSector: newSector,
     sectorMissionsCompleted: 0,
+    storeStock: generateSectorStock(newSector),
   };
 }
+
+// Re-export applyStoreTrickle for external use
+export { applyStoreTrickle } from './store/store-trickle';
 
 /** Apply extracted ammo from mission back to campaign state */
 export function applyAmmoUsage(

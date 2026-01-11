@@ -13,6 +13,11 @@ import {
 import { SHIP_CLASSES } from '../../data/ships';
 import { PRIMARY_WEAPONS } from '../../data/weapons';
 import type { StoreStock } from '../types';
+import {
+  PRIMARY_UNLOCK_SECTOR,
+  SECONDARY_UNLOCK_SECTOR,
+  SHIP_UNLOCK_SECTOR,
+} from './store-unlocks';
 
 /** Get list of available ships for purchase (derived from SHIP_CLASSES) */
 export function getAvailableShips(): Array<{
@@ -80,23 +85,110 @@ export function getScrapTypes(): Array<{
     .filter((item) => item.sellPrice > 0);
 }
 
-/** Default stock for all items (high value for testing) */
-const DEFAULT_STOCK = 10000;
+// ============ BASE STOCK CONSTANTS (on sector entry) ============
+// Validated via scripts/simulations/stock-balance.mjs
 
-/** Create initial store stock with default quantities */
+/** Ships per type on sector entry */
+const SHIP_BASE = 5;
+/** Extra ships per sector the item has been available */
+const SHIP_SECTOR_BONUS = 2;
+
+/** Primaries per type on sector entry */
+const PRIMARY_BASE = 6;
+/** Extra primaries per sector the item has been available */
+const PRIMARY_SECTOR_BONUS = 1;
+
+/** Multiplied by missile capacity for base stock */
+const MISSILE_BASE_LOADS = 20;
+
+/** Multiplied by weapon baseAmmo for base stock */
+const AMMO_BASE_REFILLS = 12;
+
+/** Bonus multiplier per sector item has been available (+25% per sector) */
+const AVAILABILITY_BONUS = 0.25;
+
+// ============ TRICKLE CONSTANTS (per mission) ============
+
+/** Base probability for S1 items to restock (+1) per mission */
+export const TRICKLE_PROB_BASE = 0.4;
+/** Probability decay per unlock sector (-5% per tier) */
+export const TRICKLE_PROB_DECAY = 0.05;
+
+/** Multiplied by missile capacity for per-mission trickle */
+export const MISSILE_TRICKLE_LOADS = 2;
+
+/** Multiplied by weapon baseAmmo for per-mission trickle */
+export const AMMO_TRICKLE_REFILLS = 1.5;
+
+/**
+ * Get trickle probability for an item based on its unlock sector.
+ * S1: 40%, S2: 35%, S3: 30%, S4: 25%, S5: 20%
+ */
+export function getTrickleProbability(unlockSector: number): number {
+  return Math.max(
+    0.05,
+    TRICKLE_PROB_BASE - (unlockSector - 1) * TRICKLE_PROB_DECAY,
+  );
+}
+
+/**
+ * Generate store stock for a specific sector.
+ * Only items unlocked at or before this sector are stocked.
+ * Ships/primaries use flat base + sector bonus.
+ * Missiles/ammo are capacity-scaled for balanced consumption.
+ */
+export function generateSectorStock(sector: number): StoreStock {
+  // Ships: base + sector bonus for established items
+  const ships: Record<string, number> = {};
+  for (const { shipClass } of getAvailableShips()) {
+    const unlockSector = SHIP_UNLOCK_SECTOR[shipClass] ?? 1;
+    if (unlockSector <= sector) {
+      const sectorsAvailable = sector - unlockSector;
+      ships[shipClass] = SHIP_BASE + sectorsAvailable * SHIP_SECTOR_BONUS;
+    }
+  }
+
+  // Primary weapons: base + sector bonus for established items
+  const primaries: Record<string, number> = {};
+  for (const { weaponType } of getAvailablePrimaries()) {
+    const unlockSector = PRIMARY_UNLOCK_SECTOR[weaponType] ?? 1;
+    if (unlockSector <= sector) {
+      const sectorsAvailable = sector - unlockSector;
+      primaries[weaponType] =
+        PRIMARY_BASE + sectorsAvailable * PRIMARY_SECTOR_BONUS;
+    }
+  }
+
+  // Secondary weapons (missiles): capacity-scaled
+  const secondaries: Record<string, number> = {};
+  for (const { weaponType } of getAvailableSecondaries()) {
+    const unlockSector = SECONDARY_UNLOCK_SECTOR[weaponType] ?? 1;
+    if (unlockSector <= sector) {
+      const sectorsAvailable = sector - unlockSector;
+      const capacity = MISSILES[weaponType]?.capacity ?? 10;
+      const bonus = 1 + sectorsAvailable * AVAILABILITY_BONUS;
+      secondaries[weaponType] = Math.floor(
+        MISSILE_BASE_LOADS * capacity * bonus,
+      );
+    }
+  }
+
+  // Ammo: consumption-scaled based on weapon's base ammo
+  const ammo: Record<string, number> = {};
+  for (const { weaponType } of getAvailableAmmo()) {
+    const unlockSector = PRIMARY_UNLOCK_SECTOR[weaponType] ?? 1;
+    if (unlockSector <= sector) {
+      const sectorsAvailable = sector - unlockSector;
+      const baseAmmo = PRIMARY_WEAPONS[weaponType]?.ammo ?? 100;
+      const bonus = 1 + sectorsAvailable * AVAILABILITY_BONUS;
+      ammo[weaponType] = Math.floor(AMMO_BASE_REFILLS * baseAmmo * bonus);
+    }
+  }
+
+  return { ships, primaries, secondaries, ammo };
+}
+
+/** Create initial store stock (sector 1) */
 export function createInitialStoreStock(): StoreStock {
-  return {
-    ships: Object.fromEntries(
-      getAvailableShips().map((h) => [h.shipClass, DEFAULT_STOCK]),
-    ),
-    primaries: Object.fromEntries(
-      getAvailablePrimaries().map((w) => [w.weaponType, DEFAULT_STOCK]),
-    ),
-    secondaries: Object.fromEntries(
-      getAvailableSecondaries().map((w) => [w.weaponType, DEFAULT_STOCK]),
-    ),
-    ammo: Object.fromEntries(
-      getAvailableAmmo().map((a) => [a.weaponType, DEFAULT_STOCK]),
-    ),
-  };
+  return generateSectorStock(1);
 }

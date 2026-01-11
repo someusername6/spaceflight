@@ -9,12 +9,6 @@ import {
   getAvailableShips,
   getScrapTypes,
 } from '../../../campaign/store/store';
-import {
-  isAmmoUnlocked,
-  isPrimaryUnlocked,
-  isSecondaryUnlocked,
-  isShipUnlocked,
-} from '../../../campaign/store/store-unlocks';
 import type { CampaignState, StoreStock } from '../../../campaign/types';
 import { MISSILES } from '../../../data/missiles';
 import {
@@ -45,28 +39,22 @@ export type StoreCategory =
 
 /**
  * Get items for current category.
- * Most categories filter by store stock > 0 and sector unlock.
+ * Items are filtered by store stock > 0 only (stock is sector-aware).
  * Scrap is special: items come from player storage (storedScrap).
  *
  * @param category - The store category to get items for
  * @param storeStock - Current store stock quantities
- * @param currentSector - Player's current sector (for unlock filtering)
  * @param storedScrap - Player's stored scrap (for scrap category)
  */
 export function getCategoryItems(
   category: StoreCategory,
   storeStock: StoreStock,
-  currentSector: number,
   storedScrap?: Record<string, number>,
 ): Array<{ id: string; name: string; stock: number }> {
   switch (category) {
     case 'ships':
       return getAvailableShips()
-        .filter(
-          ({ shipClass }) =>
-            (storeStock.ships[shipClass] ?? 0) > 0 &&
-            isShipUnlocked(shipClass, currentSector),
-        )
+        .filter(({ shipClass }) => (storeStock.ships[shipClass] ?? 0) > 0)
         .map(({ shipClass }) => ({
           id: shipClass,
           name: shipClass.charAt(0).toUpperCase() + shipClass.slice(1),
@@ -74,11 +62,7 @@ export function getCategoryItems(
         }));
     case 'primaries':
       return getAvailablePrimaries()
-        .filter(
-          ({ weaponType }) =>
-            (storeStock.primaries[weaponType] ?? 0) > 0 &&
-            isPrimaryUnlocked(weaponType, currentSector),
-        )
+        .filter(({ weaponType }) => (storeStock.primaries[weaponType] ?? 0) > 0)
         .map(({ weaponType }) => {
           const weapon = PRIMARY_WEAPONS[weaponType];
           return {
@@ -90,9 +74,7 @@ export function getCategoryItems(
     case 'secondaries':
       return getAvailableSecondaries()
         .filter(
-          ({ weaponType }) =>
-            (storeStock.secondaries[weaponType] ?? 0) > 0 &&
-            isSecondaryUnlocked(weaponType, currentSector),
+          ({ weaponType }) => (storeStock.secondaries[weaponType] ?? 0) > 0,
         )
         .map(({ weaponType }) => ({
           id: weaponType,
@@ -101,11 +83,7 @@ export function getCategoryItems(
         }));
     case 'ammo':
       return getAvailableAmmo()
-        .filter(
-          ({ weaponType }) =>
-            (storeStock.ammo[weaponType] ?? 0) > 0 &&
-            isAmmoUnlocked(weaponType, currentSector),
-        )
+        .filter(({ weaponType }) => (storeStock.ammo[weaponType] ?? 0) > 0)
         .map(({ weaponType }) => {
           const weapon = PRIMARY_WEAPONS[weaponType];
           return {
@@ -116,7 +94,6 @@ export function getCategoryItems(
         });
     case 'scrap':
       // Scrap items come from player storage, not store stock
-      // Show all types that the player has (no sector restriction)
       return getScrapTypes()
         .filter(({ shipClass }) => (storedScrap?.[shipClass] ?? 0) > 0)
         .map(({ shipClass }) => ({
@@ -148,29 +125,21 @@ export function getItemPrice(
   }
 }
 
-/** Check if a category has any unlocked items in store stock */
+/** Check if a category has any items in store stock */
 function hasStoreStock(state: CampaignState, category: StoreCategory): boolean {
-  const sector = state.currentSector;
   switch (category) {
     case 'ships':
-      return Object.entries(state.storeStock.ships).some(
-        ([shipClass, count]) => count > 0 && isShipUnlocked(shipClass, sector),
-      );
+      return Object.values(state.storeStock.ships).some((count) => count > 0);
     case 'primaries':
-      return Object.entries(state.storeStock.primaries).some(
-        ([weaponType, count]) =>
-          count > 0 && isPrimaryUnlocked(weaponType, sector),
+      return Object.values(state.storeStock.primaries).some(
+        (count) => count > 0,
       );
     case 'secondaries':
-      return Object.entries(state.storeStock.secondaries).some(
-        ([weaponType, count]) =>
-          count > 0 && isSecondaryUnlocked(weaponType, sector),
+      return Object.values(state.storeStock.secondaries).some(
+        (count) => count > 0,
       );
     case 'ammo':
-      return Object.entries(state.storeStock.ammo).some(
-        ([weaponType, count]) =>
-          count > 0 && isAmmoUnlocked(weaponType, sector),
-      );
+      return Object.values(state.storeStock.ammo).some((count) => count > 0);
     case 'scrap':
       // Scrap has no store stock, only player storage
       return false;

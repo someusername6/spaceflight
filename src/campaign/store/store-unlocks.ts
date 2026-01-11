@@ -1,8 +1,8 @@
 /**
- * Store Unlock Tiers - defines which items are available at each sector.
+ * Store Stock Tiers - defines which items appear in store at each sector.
  *
- * Items unlock progressively as players advance through sectors.
- * Once unlocked, items remain available in all future sectors.
+ * The store restocks at the start of each sector with items appropriate
+ * for that sector. Items from earlier sectors have higher stock quantities.
  *
  * Sector 1 (Frontier): Basic starter gear
  * Sector 2 (Contested Zone): Mid-tier upgrades
@@ -11,7 +11,7 @@
  * Sector 5 (Endless): Everything available
  */
 
-/** Sector at which each ship class unlocks */
+/** Sector at which each ship class first appears in store */
 export const SHIP_UNLOCK_SECTOR: Record<string, number> = {
   // Sector 1: Basic ships
   patrol: 1,
@@ -31,7 +31,7 @@ export const SHIP_UNLOCK_SECTOR: Record<string, number> = {
   defender: 4,
 };
 
-/** Sector at which each primary weapon unlocks */
+/** Sector at which each primary weapon first appears in store */
 export const PRIMARY_UNLOCK_SECTOR: Record<string, number> = {
   // Sector 1: Basic energy weapons
   pulse: 1,
@@ -56,7 +56,7 @@ export const PRIMARY_UNLOCK_SECTOR: Record<string, number> = {
   nuclearLance: 5,
 };
 
-/** Sector at which each secondary weapon unlocks */
+/** Sector at which each secondary weapon first appears in store */
 export const SECONDARY_UNLOCK_SECTOR: Record<string, number> = {
   // Sector 1: Basic missiles and countermeasures
   rocket: 1,
@@ -74,62 +74,3 @@ export const SECONDARY_UNLOCK_SECTOR: Record<string, number> = {
   // Sector 4: Elite ordnance
   nuke: 4,
 };
-
-/**
- * Check if a ship class is unlocked at the given sector.
- */
-export function isShipUnlocked(shipClass: string, sector: number): boolean {
-  const unlockSector = SHIP_UNLOCK_SECTOR[shipClass];
-  // If not defined, assume always available (safety fallback)
-  if (unlockSector === undefined) return true;
-  return sector >= unlockSector;
-}
-
-/**
- * Check if a primary weapon is unlocked at the given sector.
- */
-export function isPrimaryUnlocked(weaponType: string, sector: number): boolean {
-  const unlockSector = PRIMARY_UNLOCK_SECTOR[weaponType];
-  if (unlockSector === undefined) return true;
-  return sector >= unlockSector;
-}
-
-/**
- * Check if a secondary weapon is unlocked at the given sector.
- */
-export function isSecondaryUnlocked(
-  weaponType: string,
-  sector: number,
-): boolean {
-  const unlockSector = SECONDARY_UNLOCK_SECTOR[weaponType];
-  if (unlockSector === undefined) return true;
-  return sector >= unlockSector;
-}
-
-/**
- * Check if ammo for a weapon is unlocked at the given sector.
- * Ammo unlocks when the weapon unlocks.
- */
-export function isAmmoUnlocked(weaponType: string, sector: number): boolean {
-  return isPrimaryUnlocked(weaponType, sector);
-}
-
-/**
- * Get the unlock sector for display purposes.
- * Returns 0 if item is not in the unlock table.
- */
-export function getUnlockSector(
-  category: 'ships' | 'primaries' | 'secondaries' | 'ammo',
-  id: string,
-): number {
-  switch (category) {
-    case 'ships':
-      return SHIP_UNLOCK_SECTOR[id] ?? 0;
-    case 'primaries':
-      return PRIMARY_UNLOCK_SECTOR[id] ?? 0;
-    case 'secondaries':
-      return SECONDARY_UNLOCK_SECTOR[id] ?? 0;
-    case 'ammo':
-      return PRIMARY_UNLOCK_SECTOR[id] ?? 0;
-  }
-}

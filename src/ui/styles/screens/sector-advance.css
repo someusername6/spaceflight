@@ -115,7 +115,7 @@
   border-top: 1px solid var(--border-color);
 }
 
-.advance-caution {
+.advance-notes {
   font-family: var(--font-ui);
   font-size: var(--text-sm);
   color: var(--text-secondary);
