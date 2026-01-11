@@ -7,8 +7,11 @@ import { getArchetype } from '../factories/ship';
 import { generateCampaignId } from './id-generator';
 import { generateInitialRecruits } from './recruits';
 import { createSlotArray, mapSlots } from './slot-array';
-import { createInitialStoreStock, generateSectorStock } from './store/store';
 import { getMaxMissileCapacity } from './store/store-ammo';
+import {
+  createInitialStoreStock,
+  generateSectorStock,
+} from './store/store-catalog';
 import { applyStoreTrickle } from './store/store-trickle';
 import type {
   CampaignState,
@@ -277,9 +280,6 @@ export function advanceSector(state: CampaignState): CampaignState {
     storeStock: generateSectorStock(newSector),
   };
 }
-
-// Re-export applyStoreTrickle for external use
-export { applyStoreTrickle } from './store/store-trickle';
 
 /** Apply extracted ammo from mission back to campaign state */
 export function applyAmmoUsage(

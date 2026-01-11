@@ -24,7 +24,7 @@ import {
 import type { Entity, World } from '../../core/types';
 import { dealDamage } from '../damage';
 import { recordDamage, recordShotHit } from '../stats';
-import { spawnShrapnel } from './weapon-spawning';
+import { spawnShrapnel } from './shrapnel';
 
 /** Queue a hit effect via world state (consumed by rendering layer) */
 function queueHitEffect(

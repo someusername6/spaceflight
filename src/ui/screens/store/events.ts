@@ -3,16 +3,15 @@
  */
 
 import {
-  buyAmmo,
   buyPrimaryWeapon,
   buySecondaryWeapon,
   buyShip,
-  sellAmmo,
   sellPrimaryWeapon,
   sellScrap,
   sellSecondaryWeapon,
   sellShip,
 } from '../../../campaign/store/store';
+import { buyAmmo, sellAmmo } from '../../../campaign/store/store-ammo';
 import type { CampaignState } from '../../../campaign/types';
 import { getStorageIndex, type StoreCategory } from './render';
 

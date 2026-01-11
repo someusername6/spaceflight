@@ -16,30 +16,6 @@ import { generateCampaignId } from '../id-generator';
 import { mergeSecondaryIntoStorage } from '../ship-utils';
 import type { CampaignState, StoredShip, StoredWeapon } from '../types';
 
-// Re-export ammo functions
-export {
-  buyAmmo,
-  getMaxAmmoCapacity,
-  loadAmmoToWeapon,
-  sellAmmo,
-  unloadAmmoFromWeapon,
-} from './store-ammo';
-
-// Re-export catalog functions
-export {
-  AMMO_TRICKLE_REFILLS,
-  createInitialStoreStock,
-  generateSectorStock,
-  getAvailableAmmo,
-  getAvailablePrimaries,
-  getAvailableSecondaries,
-  getAvailableShips,
-  getScrapTypes,
-  // Trickle constants and functions
-  getTrickleProbability,
-  MISSILE_TRICKLE_LOADS,
-} from './store-catalog';
-
 // ============ Ship Buy/Sell ============
 
 /** Buy a ship (add to storage) */

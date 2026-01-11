@@ -31,9 +31,6 @@ import {
   recordShotFired,
 } from '../stats';
 
-// Re-export for backward compatibility
-export { spawnShrapnel } from './shrapnel';
-
 /** Spawn offsets from ship center */
 const PROJECTILE_SPAWN_OFFSET = 3;
 const MISSILE_SPAWN_OFFSET = 4; // Owner collision ignored for first 20m of travel
