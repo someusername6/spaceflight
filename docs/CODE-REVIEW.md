@@ -198,13 +198,13 @@ No unnecessary dependencies observed.
 
 ## 7. Recommendations
 
-### Short-term
+### Completed
 
-1. **Enable strict TypeScript** - Incremental migration to catch null issues
+1. ~~**Enable strict TypeScript**~~ - ✅ Already enabled (see 4.2)
+2. ~~**Add integration test for save/load cycle**~~ - ✅ Added `test-save-load.mjs`
 
-### Long-term
+### Remaining
 
-2. **Add integration test for save/load cycle** - Would have caught the SlotArray bug earlier
 3. **Document system execution order** - Currently implicit in game-loop.ts
 
 ---
