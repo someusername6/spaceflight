@@ -8,10 +8,15 @@
  */
 
 import { computeMaxIdFromState } from './id-generator';
-import type { CampaignState } from './types';
+import { slotArrayFromJSON } from './slot-array';
+import type {
+  CampaignState,
+  EquippedPrimary,
+  EquippedSecondary,
+} from './types';
 
 /** Current save format version - increment when CampaignState changes */
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 
 /** Number of available save slots */
 export const MAX_SAVE_SLOTS = 3;
@@ -106,7 +111,61 @@ function migrateState(
     }
   }
 
+  // v3 -> v4: SlotArray serialization fix
+  // v3 saves have corrupted weapon data (SlotArray WeakMap didn't serialize).
+  // The weapon arrays are just { slotCount: N } objects with no actual data.
+  // We reset weapons to empty slots - player will need to re-equip.
+  if (fromVersion < 4) {
+    console.log(
+      '[Save Migration] v3->v4: Fixing corrupted SlotArray weapon data',
+    );
+    for (const ship of migrated.ships) {
+      // Check if weapon data is corrupted (raw object instead of array)
+      const primary = ship.primaryWeapons as unknown;
+      const secondary = ship.secondaryWeapons as unknown;
+
+      if (!Array.isArray(primary)) {
+        const slotCount = (primary as { slotCount?: number })?.slotCount ?? 2;
+        console.log(
+          `[Save Migration] Ship ${ship.id}: Resetting ${slotCount} primary slots`,
+        );
+        (ship as unknown as Record<string, unknown>).primaryWeapons =
+          Array(slotCount).fill(null);
+      }
+
+      if (!Array.isArray(secondary)) {
+        const slotCount = (secondary as { slotCount?: number })?.slotCount ?? 2;
+        console.log(
+          `[Save Migration] Ship ${ship.id}: Resetting ${slotCount} secondary slots`,
+        );
+        (ship as unknown as Record<string, unknown>).secondaryWeapons =
+          Array(slotCount).fill(null);
+      }
+    }
+  }
+
   return migrated;
+}
+
+/**
+ * Reconstitute SlotArrays from loaded JSON.
+ * JSON.parse creates plain arrays - we need to wrap them in proper SlotArrays.
+ * @param state - The loaded campaign state with raw arrays
+ * @returns Campaign state with proper SlotArray instances
+ */
+function reconstituteSave(state: CampaignState): CampaignState {
+  return {
+    ...state,
+    ships: state.ships.map((ship) => ({
+      ...ship,
+      primaryWeapons: slotArrayFromJSON<EquippedPrimary>(
+        ship.primaryWeapons as unknown as (EquippedPrimary | null)[],
+      ),
+      secondaryWeapons: slotArrayFromJSON<EquippedSecondary>(
+        ship.secondaryWeapons as unknown as (EquippedSecondary | null)[],
+      ),
+    })),
+  };
 }
 
 /** Get localStorage key for a save slot */
@@ -179,6 +238,9 @@ export function loadGame(slot: number): CampaignState | null {
       );
       state = migrateState(state, parsed.version);
     }
+
+    // Reconstitute SlotArrays from raw JSON arrays
+    state = reconstituteSave(state);
 
     return state;
   } catch (error) {

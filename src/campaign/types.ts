@@ -40,9 +40,8 @@ export interface EquippedSecondary {
 /**
  * A ship owned by the player's squadron (active, with pilot assigned).
  *
- * IMPORTANT: SlotArray fields use WeakMap-based storage that doesn't survive
- * JSON serialization. When loading saves, use slotArrayFromJSON() to recreate
- * these fields from the raw arrays in the save data.
+ * Note: SlotArray fields serialize via toJSON() and are reconstituted
+ * automatically by the save system's reconstituteSave() function.
  */
 export interface OwnedShip {
   id: string;

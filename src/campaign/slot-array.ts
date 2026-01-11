@@ -35,6 +35,8 @@ export interface SlotArray<T> {
   readonly slotCount: number;
   /** @internal Type-level only, never accessed at runtime */
   readonly __type?: T;
+  /** @internal Custom JSON serialization for save system */
+  toJSON(): (T | null)[];
 }
 
 /** Internal storage - maps SlotArray to its underlying data */
@@ -45,11 +47,16 @@ const storage = new WeakMap<SlotArray<unknown>, readonly (unknown | null)[]>();
  * The input array is copied - mutations won't affect the SlotArray.
  */
 export function createSlotArray<T>(slots: (T | null)[]): SlotArray<T> {
+  const data = Object.freeze([...slots]);
   const arr: SlotArray<T> = {
     [slotArrayBrand]: true,
     slotCount: slots.length,
+    // Custom JSON serialization - returns raw array for save system
+    toJSON(): (T | null)[] {
+      return [...data];
+    },
   };
-  storage.set(arr, Object.freeze([...slots]));
+  storage.set(arr, data);
   return arr;
 }
 
