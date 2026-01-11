@@ -24,7 +24,10 @@ import {
 } from '../../../src/core/prng.ts';
 import { Faction } from '../../../src/core/types.ts';
 import { createAIShip } from '../../../src/factories/ship.ts';
-import { generateContracts } from '../../../src/ui/screens/contracts-data.ts';
+import {
+  getAllMissions,
+  getMissionsForSector,
+} from '../../../src/ui/screens/contracts-data.ts';
 import {
   initCombatStats,
   SYSTEMS,
@@ -309,6 +312,8 @@ function runMissionBatch(contract, runs = 30) {
   return {
     id: contract.id,
     name: contract.name,
+    sector: contract.sector,
+    tier: contract.tier,
     difficulty: contract.difficulty,
     survivalRate,
     avgTime,
@@ -320,15 +325,19 @@ function runMissionBatch(contract, runs = 30) {
 }
 
 /**
- * Run all missions
+ * Run all missions or missions for a specific sector
  */
-function runAllMissions(runs = 30) {
-  const contracts = generateContracts(1);
+function runAllMissions(runs = 30, sector = null) {
+  const contracts = sector ? getMissionsForSector(sector) : getAllMissions();
 
-  console.log('='.repeat(60));
+  console.log('='.repeat(75));
   console.log('MISSION BALANCE SIMULATION (Wave-Based)');
-  console.log(`Running ${contracts.length} missions with ${runs} runs each`);
-  console.log('='.repeat(60));
+  console.log(
+    sector
+      ? `Running ${contracts.length} missions from Sector ${sector} with ${runs} runs each`
+      : `Running ALL ${contracts.length} missions with ${runs} runs each`,
+  );
+  console.log('='.repeat(75));
 
   const results = [];
   for (const contract of contracts) {
@@ -336,19 +345,25 @@ function runAllMissions(runs = 30) {
   }
 
   // Summary table
-  console.log(`\n${'='.repeat(60)}`);
+  console.log(`\n${'='.repeat(75)}`);
   console.log('SUMMARY');
-  console.log('='.repeat(60));
-  console.log('Mission              | Diff   | Survival | Time   | Status');
-  console.log('-'.repeat(60));
+  console.log('='.repeat(75));
+  console.log(
+    'Mission              | Sec | Tier | Diff   | Survival | Time   | Status',
+  );
+  console.log('-'.repeat(75));
 
   for (const r of results) {
     const name = r.name.padEnd(20).slice(0, 20);
+    const sec = `${r.sector}`.padStart(3);
+    const tier = (r.tier || '').padEnd(4);
     const diff = r.difficulty.padEnd(6);
     const survival = `${r.survivalRate.toFixed(0)}%`.padStart(8);
     const time = `${r.avgTime.toFixed(0)}s`.padStart(6);
     const status = r.survivalOk && r.timeOk ? '✓ OK' : '✗ FAIL';
-    console.log(`${name} | ${diff} | ${survival} | ${time} | ${status}`);
+    console.log(
+      `${name} | ${sec} | ${tier} | ${diff} | ${survival} | ${time} | ${status}`,
+    );
   }
 
   return results;
@@ -359,12 +374,14 @@ const args = process.argv.slice(2);
 const missionArg = args[0];
 const runsArg = parseInt(args[1], 10) || 30;
 
-const contracts = generateContracts(1);
+const contracts = getAllMissions();
 
 if (missionArg === 'list') {
   console.log('Available missions:');
   for (const c of contracts) {
-    console.log(`  ${c.id}: ${c.name} (${c.difficulty})`);
+    console.log(
+      `  ${c.id}: ${c.name} [S${c.sector}/${c.tier}] (${c.difficulty})`,
+    );
   }
 } else if (missionArg && missionArg !== 'all') {
   const contract = contracts.find((c) => c.id === missionArg);

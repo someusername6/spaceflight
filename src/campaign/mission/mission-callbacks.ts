@@ -75,6 +75,7 @@ export function createMissionEndExecutor(
       baseReward,
       shipsLost,
       hullDamage,
+      missionEndState.victory ? contract.id : undefined,
     );
 
     // Apply ammo usage to campaign state (persist remaining ammo)

@@ -206,7 +206,7 @@ renderWeaponIcon('redlaser', { size: 'lg', color: 'var(--color-primary)' })
 renderWeaponIcon('autocannon', { size: 'sm', className: 'picker-icon' })
 
 // Missiles
-renderMissileIcon('hornet', { size: 'md', color: 'var(--color-danger)' })
+renderMissileIcon('seeker', { size: 'md', color: 'var(--color-danger)' })
 
 // Size presets: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
 ```

@@ -132,6 +132,7 @@ const ContractsScreenComponent: Screen<ContractsState, ContractsProps> = {
       activeTab: 'contracts',
       credits: campaignState.credits,
       sector: campaignState.currentSector,
+      sectorMissionsCompleted: campaignState.sectorMissionsCompleted,
       onNavigate,
     });
 
@@ -209,7 +210,11 @@ export function createContractsUI(
   // Clean up previous handle
   screenHandle?.destroy();
 
-  const contracts = generateContracts(state.currentSector);
+  const contracts = generateContracts(
+    state.currentSector,
+    4,
+    state.completedContracts,
+  );
   const initialState: ContractsState = { selectedContractId: null };
   const props: ContractsProps = {
     campaignState: state,
@@ -239,7 +244,11 @@ export function createContractsUI(
 /** Update contracts UI */
 export function updateContractsUI(ui: ContractsUI, state: CampaignState): void {
   ui.state = state;
-  ui.contracts = generateContracts(state.currentSector);
+  ui.contracts = generateContracts(
+    state.currentSector,
+    4,
+    state.completedContracts,
+  );
 
   if (screenHandle) {
     screenHandle.setProps({

@@ -205,4 +205,105 @@ export const ENEMY_ARCHETYPES: Record<string, EnemyShipStats> = {
     secondaryWeapons: [{ name: 'cluster', count: 8, size: 1 }],
     preferredCombatRange: 500,
   }),
+
+  // ============================================================================
+  // ELITE ARCHETYPES (Sectors 4-5)
+  // ============================================================================
+
+  // Striker with railguns - heavy assault, high damage output
+  titan: createArchetype('striker', {
+    playstyle: 'brawler',
+    primaryWeapons: [
+      { name: 'railgun', size: 2 },
+      { name: 'railgun', size: 2 },
+      { name: 'plasma', size: 2 },
+      { name: 'plasma', size: 1 },
+      { name: 'plasma', size: 1 },
+    ],
+    secondaryWeapons: [{ name: 'torpedo', count: 4, size: 1 }],
+    preferredCombatRange: 500,
+  }),
+
+  // Defender with nukes - tanky missile platform
+  juggernaut: createArchetype('defender', {
+    playstyle: 'brawler',
+    primaryWeapons: [
+      { name: 'redLaser', size: 2 },
+      { name: 'redLaser', size: 2 },
+    ],
+    secondaryWeapons: [
+      { name: 'nuke', count: 2, size: 2 },
+      { name: 'torpedo', count: 4, size: 2 },
+      { name: 'seeker', count: 6, size: 1 },
+      { name: 'decoy', count: 4, size: 1 },
+      { name: 'decoy', count: 4, size: 1 },
+    ],
+    preferredCombatRange: 450,
+  }),
+
+  // Sentinel with nuclear lance - long-range devastator
+  wraith: createArchetype('sentinel', {
+    playstyle: 'kiting',
+    primaryWeapons: [
+      { name: 'nuclearLance', size: 3 },
+      { name: 'railgun', size: 2 },
+      { name: 'railgun', size: 2 },
+    ],
+    secondaryWeapons: [
+      { name: 'torpedo', count: 4, size: 2 },
+      { name: 'seeker', count: 6, size: 2 },
+      { name: 'decoy', count: 4, size: 1 },
+    ],
+    preferredCombatRange: 700,
+    fleeDistance: 500,
+  }),
+
+  // Bomber with heavy ordnance - slow but devastating
+  behemoth: createArchetype('bomber', {
+    playstyle: 'brawler',
+    primaryWeapons: [{ name: 'torch', size: 2 }],
+    secondaryWeapons: [
+      { name: 'nuke', count: 2, size: 2 },
+      { name: 'torpedo', count: 4, size: 2 },
+      { name: 'torpedo', count: 4, size: 2 },
+      { name: 'seeker', count: 4, size: 1 },
+      { name: 'seeker', count: 4, size: 1 },
+      { name: 'decoy', count: 4, size: 1 },
+      { name: 'decoy', count: 4, size: 1 },
+    ],
+    preferredCombatRange: 400,
+  }),
+
+  // Interceptor with green lasers - fast elite dogfighter
+  phantom: createArchetype('interceptor', {
+    playstyle: 'brawler',
+    primaryWeapons: [
+      { name: 'greenLaser', size: 2 },
+      { name: 'greenLaser', size: 2 },
+    ],
+    secondaryWeapons: [
+      { name: 'dart', count: 6, size: 1 },
+      { name: 'seeker', count: 4, size: 2 },
+      { name: 'decoy', count: 4, size: 1 },
+    ],
+    preferredCombatRange: 500,
+  }),
+
+  // Raider with quad railguns + seekers - elite sniper
+  specter: createArchetype('raider', {
+    playstyle: 'kiting',
+    primaryWeapons: [
+      { name: 'railgun', size: 3 },
+      { name: 'railgun', size: 3 },
+      { name: 'railgun', size: 1 },
+      { name: 'railgun', size: 1 },
+    ],
+    secondaryWeapons: [
+      { name: 'torpedo', count: 2, size: 1 },
+      { name: 'seeker', count: 6, size: 1 },
+      { name: 'decoy', count: 4, size: 1 },
+    ],
+    preferredCombatRange: 650,
+    fleeDistance: 450,
+  }),
 };

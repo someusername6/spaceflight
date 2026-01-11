@@ -14,6 +14,7 @@ import type {
   OwnedShip,
   Pilot,
 } from './types';
+import { MAX_SECTOR, MISSIONS_PER_SECTOR } from './types';
 
 /** Counter for deterministic ID generation */
 let idCounter = 0;
@@ -118,6 +119,7 @@ export function createNewCampaign(): CampaignState {
     storeStock: createInitialStoreStock(),
     availableRecruits, // Pilots available for hire
     currentSector: 1,
+    sectorMissionsCompleted: 0,
     completedContracts: [],
     missionCount: 0,
   };
@@ -187,6 +189,7 @@ export function applyMissionResults(
   creditsEarned: number,
   shipsLost: string[],
   hullDamage: Map<string, number>,
+  completedContractId?: string,
 ): CampaignState {
   // Get pilot IDs from ships that flew the mission
   const pilotIdsInMission = new Set(
@@ -231,18 +234,49 @@ export function applyMissionResults(
       };
     });
 
+  // Track completed contracts (don't add duplicates)
+  const completedContracts =
+    completedContractId &&
+    !state.completedContracts.includes(completedContractId)
+      ? [...state.completedContracts, completedContractId]
+      : state.completedContracts;
+
   return {
     ...state,
     credits: state.credits + (victory ? creditsEarned : 0),
     ships: survivingShips,
     pilots: updatedPilots,
     missionCount: state.missionCount + 1,
+    sectorMissionsCompleted: victory
+      ? state.sectorMissionsCompleted + 1
+      : state.sectorMissionsCompleted,
+    completedContracts,
   };
 }
 
 /** Check if game is over (commander's ship destroyed) */
 export function isGameOver(state: CampaignState): boolean {
   return !isCommanderAssigned(state);
+}
+
+/** Check if player can advance to the next sector */
+export function canAdvanceSector(state: CampaignState): boolean {
+  return (
+    state.currentSector < MAX_SECTOR &&
+    state.sectorMissionsCompleted >= MISSIONS_PER_SECTOR
+  );
+}
+
+/** Advance to the next sector (resets sector mission count) */
+export function advanceSector(state: CampaignState): CampaignState {
+  if (state.currentSector >= MAX_SECTOR) {
+    return state; // Already at max sector
+  }
+  return {
+    ...state,
+    currentSector: state.currentSector + 1,
+    sectorMissionsCompleted: 0,
+  };
 }
 
 /** Apply extracted ammo from mission back to campaign state */

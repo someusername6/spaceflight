@@ -1,278 +1,101 @@
 /**
- * Contract/Mission Definitions - Wave-based enemy compositions.
+ * Contract/Mission Data - Helper functions for mission access.
  *
- * Each contract defines waves of enemies with skill levels and spawn delays.
- * Waves spawn when the previous wave is cleared.
+ * Mission definitions are split by sector in ./missions/ directory.
  *
- * Balance targets:
- * - Victory time: 90s+ average
- * - Survival rate: 20-90%
+ * Balance targets by DIFFICULTY (vs sector-specific loadout, 90s+ avg time):
+ * - Easy: 60-80% win rate
+ * - Medium: 40-60% win rate
+ * - Hard: 20-40% win rate
  *
- * Difficulty thresholds (survival rate):
- * - Easy: 70-90%
- * - Medium: 40-70%
- * - Hard: 20-40%
- *
- * Reward formula: expected_replacement_cost - expected_salvage + 1000, rounded to 500
- *
- * Missions are sorted by reward (ascending).
+ * Each sector has all three difficulties. "Tier" (low/mid/high) determines
+ * reward amount, not difficulty. See ECONOMY.md for sector test loadouts.
  */
 
-import type { Contract } from '../../campaign/types';
+import type { Contract, MissionTier } from '../../campaign/types';
+import { createPRNG, shuffle } from '../../core/prng';
+import { ALL_MISSIONS } from './missions';
 
 /**
- * Generate contracts with wave-based enemy spawning.
- * All missions are combat-focused - eliminate all hostile ships.
+ * Get all missions for a specific sector.
  */
-export function generateContracts(_sector: number): Contract[] {
-  return [
-    // === Easy missions (70-90% survival, 90s+) ===
-    {
-      id: 'ion-storm',
-      name: 'Ion Storm',
-      description:
-        'Shield disruptors ahead. Ion cannons suppress shield regen.',
-      difficulty: 'easy',
-      waves: [
-        {
-          enemies: [{ archetype: 'stinger', skill: 'green', count: 2 }],
-          delay: [5, 10],
-        },
-        {
-          enemies: [{ archetype: 'moth', skill: 'green', count: 2 }],
-          delay: [8, 12],
-        },
-        {
-          enemies: [{ archetype: 'stinger', skill: 'green', count: 1 }],
-          delay: [8, 12],
-        },
-        {
-          enemies: [{ archetype: 'stinger', skill: 'green', count: 1 }],
-          delay: [8, 12],
-        },
-        {
-          enemies: [{ archetype: 'stinger', skill: 'rookie', count: 1 }],
-          delay: [8, 12],
-        },
-      ],
-      reward: 1000,
-    },
-    {
-      id: 'armored-patrol',
-      name: 'Armored Patrol',
-      description: 'Heavy enemy formation. Defender-class with moth escorts.',
-      difficulty: 'easy',
-      waves: [
-        {
-          enemies: [{ archetype: 'moth', skill: 'green', count: 2 }],
-          delay: [5, 10],
-        },
-        {
-          enemies: [{ archetype: 'moth', skill: 'green', count: 2 }],
-          delay: [8, 12],
-        },
-        {
-          enemies: [{ archetype: 'beetle', skill: 'green', count: 1 }],
-          delay: [8, 12],
-        },
-        {
-          enemies: [{ archetype: 'moth', skill: 'green', count: 2 }],
-          delay: [8, 12],
-        },
-        {
-          enemies: [{ archetype: 'moth', skill: 'green', count: 2 }],
-          delay: [8, 12],
-        },
-      ],
-      reward: 1500,
-    },
-    {
-      id: 'patrol-1',
-      name: 'Patrol Duty',
-      description: 'Clear hostiles from the shipping lanes.',
-      difficulty: 'easy',
-      waves: [
-        {
-          enemies: [{ archetype: 'firefly', skill: 'green', count: 2 }],
-          delay: [5, 10],
-        },
-        {
-          enemies: [{ archetype: 'firefly', skill: 'green', count: 2 }],
-          delay: [8, 12],
-        },
-        {
-          enemies: [{ archetype: 'firefly', skill: 'green', count: 2 }],
-          delay: [8, 12],
-        },
-        {
-          enemies: [{ archetype: 'firefly', skill: 'rookie', count: 2 }],
-          delay: [8, 12],
-        },
-        {
-          enemies: [{ archetype: 'firefly', skill: 'rookie', count: 1 }],
-          delay: [8, 12],
-        },
-      ],
-      reward: 2000,
-    },
+export function getMissionsForSector(sector: number): Contract[] {
+  return ALL_MISSIONS.filter((m) => m.sector === sector);
+}
 
-    // === Medium missions (40-70% survival, 90s+) ===
-    {
-      id: 'sniper-ambush',
-      name: 'Sniper Ambush',
-      description: 'Long-range threat. Railgun raiders with support.',
-      difficulty: 'medium',
-      waves: [
-        {
-          enemies: [
-            { archetype: 'dragonfly', skill: 'regular', count: 1 },
-            { archetype: 'scorpion', skill: 'ace', count: 1 },
-          ],
-          delay: [5, 10],
-        },
-        {
-          enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 2 }],
-          delay: [8, 12],
-        },
-        {
-          enemies: [
-            { archetype: 'dragonfly', skill: 'regular', count: 1 },
-            { archetype: 'scorpion', skill: 'ace', count: 1 },
-          ],
-          delay: [8, 12],
-        },
-        {
-          enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 2 }],
-          delay: [8, 12],
-        },
-        {
-          enemies: [
-            { archetype: 'dragonfly', skill: 'regular', count: 1 },
-            { archetype: 'scorpion', skill: 'ace', count: 1 },
-          ],
-          delay: [8, 12],
-        },
-      ],
-      reward: 3500,
-    },
-    {
-      id: 'torch-run',
-      name: 'Torch Run',
-      description: 'Close-range heat weapons. Fireants overheat your systems.',
-      difficulty: 'medium',
-      waves: [
-        {
-          enemies: [{ archetype: 'wasp', skill: 'green', count: 2 }],
-          delay: [5, 10],
-        },
-        {
-          enemies: [{ archetype: 'wasp', skill: 'rookie', count: 2 }],
-          delay: [8, 12],
-        },
-        {
-          enemies: [{ archetype: 'wasp', skill: 'rookie', count: 2 }],
-          delay: [8, 12],
-        },
-        {
-          enemies: [{ archetype: 'fireant', skill: 'veteran', count: 2 }],
-          delay: [8, 12],
-        },
-        {
-          enemies: [{ archetype: 'fireant', skill: 'veteran', count: 2 }],
-          delay: [8, 12],
-        },
-      ],
-      reward: 4000,
-    },
+/**
+ * Get missions filtered by sector and optionally by tier.
+ */
+export function getMissions(sector: number, tier?: MissionTier): Contract[] {
+  return ALL_MISSIONS.filter(
+    (m) => m.sector === sector && (tier === undefined || m.tier === tier),
+  );
+}
 
-    // === Hard missions (20-40% survival, 90s+) ===
-    {
-      id: 'laser-gauntlet',
-      name: 'Laser Gauntlet',
-      description: 'Beam weapons everywhere. Lasers cut through shields.',
-      difficulty: 'hard',
-      waves: [
-        {
-          enemies: [{ archetype: 'firefly', skill: 'rookie', count: 2 }],
-          delay: [5, 10],
-        },
-        {
-          enemies: [{ archetype: 'firefly', skill: 'veteran', count: 2 }],
-          delay: [8, 12],
-        },
-        {
-          enemies: [{ archetype: 'viper', skill: 'rookie', count: 1 }],
-          delay: [8, 12],
-        },
-        {
-          enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
-          delay: [8, 12],
-        },
-        {
-          enemies: [{ archetype: 'viper', skill: 'veteran', count: 1 }],
-          delay: [8, 12],
-        },
-      ],
-      reward: 4500,
-    },
-    {
-      id: 'wasp-nest',
-      name: 'Wasp Nest',
-      description:
-        'Eliminate scout squadron. Fast ships with ballistic weapons.',
-      difficulty: 'hard',
-      waves: [
-        {
-          enemies: [{ archetype: 'wasp', skill: 'green', count: 2 }],
-          delay: [5, 10],
-        },
-        {
-          enemies: [{ archetype: 'wasp', skill: 'green', count: 2 }],
-          delay: [8, 12],
-        },
-        {
-          enemies: [{ archetype: 'wasp', skill: 'rookie', count: 2 }],
-          delay: [8, 12],
-        },
-        {
-          enemies: [{ archetype: 'wasp', skill: 'rookie', count: 2 }],
-          delay: [8, 12],
-        },
-        {
-          enemies: [{ archetype: 'wasp', skill: 'rookie', count: 2 }],
-          delay: [8, 12],
-        },
-      ],
-      reward: 4500,
-    },
-    {
-      id: 'cluster-swarm',
-      name: 'Cluster Swarm',
-      description: 'Missile-heavy scouts. Watch for cluster munitions.',
-      difficulty: 'hard',
-      waves: [
-        {
-          enemies: [{ archetype: 'locust', skill: 'green', count: 2 }],
-          delay: [5, 10],
-        },
-        {
-          enemies: [{ archetype: 'locust', skill: 'green', count: 2 }],
-          delay: [8, 12],
-        },
-        {
-          enemies: [{ archetype: 'locust', skill: 'rookie', count: 2 }],
-          delay: [8, 12],
-        },
-        {
-          enemies: [{ archetype: 'locust', skill: 'rookie', count: 2 }],
-          delay: [8, 12],
-        },
-        {
-          enemies: [{ archetype: 'locust', skill: 'veteran', count: 3 }],
-          delay: [8, 12],
-        },
-      ],
-      reward: 5000,
-    },
-  ];
+/**
+ * Generate contracts for the contracts screen.
+ * Returns a selection of missions from the current sector, mixing tiers.
+ *
+ * @param sector - Current campaign sector (1-5)
+ * @param count - Number of contracts to show (default 4)
+ * @param completedIds - IDs of already completed missions to exclude
+ */
+export function generateContracts(
+  sector: number,
+  count = 4,
+  completedIds: string[] = [],
+): Contract[] {
+  // Get all missions for this sector that haven't been completed
+  const available = getMissionsForSector(sector).filter(
+    (m) => !completedIds.includes(m.id),
+  );
+
+  if (available.length === 0) {
+    // All missions completed - allow replaying any mission from this sector
+    return getMissionsForSector(sector).slice(0, count);
+  }
+
+  // Use seeded PRNG for variety (seed with current time for different selections)
+  const prng = createPRNG(Date.now());
+
+  // Try to get a mix of tiers
+  const lowTier = available.filter((m) => m.tier === 'low');
+  const midTier = available.filter((m) => m.tier === 'mid');
+  const highTier = available.filter((m) => m.tier === 'high');
+
+  const selected: Contract[] = [];
+
+  // Pick 1-2 from each tier if available, prioritizing variety
+  const pickFrom = (arr: Contract[], max: number) => {
+    const shuffled = shuffle(prng, [...arr]);
+    return shuffled.slice(0, max);
+  };
+
+  // Aim for 2 low, 1 mid, 1 high (or adjust based on availability)
+  selected.push(...pickFrom(lowTier, 2));
+  selected.push(...pickFrom(midTier, 1));
+  selected.push(...pickFrom(highTier, 1));
+
+  // If we don't have enough, fill from any tier
+  if (selected.length < count) {
+    const remaining = available.filter((m) => !selected.includes(m));
+    selected.push(...pickFrom(remaining, count - selected.length));
+  }
+
+  // Sort by reward (ascending)
+  return selected.sort((a, b) => a.reward - b.reward).slice(0, count);
+}
+
+/**
+ * Get total mission count for a sector.
+ */
+export function getMissionCount(sector: number): number {
+  return getMissionsForSector(sector).length;
+}
+
+/**
+ * Get all defined missions (for testing/debugging).
+ */
+export function getAllMissions(): Contract[] {
+  return [...ALL_MISSIONS];
 }

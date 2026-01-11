@@ -55,12 +55,19 @@ export interface StoredShip {
   hullDamage: number;
 }
 
+/** Mission tier within a sector (risk/reward level) */
+export type MissionTier = 'low' | 'mid' | 'high';
+
 /** A contract (mission) available to accept */
 export interface Contract {
   id: string;
   name: string;
   description: string;
   difficulty: 'easy' | 'medium' | 'hard';
+  /** Sector this mission belongs to (1-5) */
+  sector: number;
+  /** Risk/reward tier within the sector */
+  tier: MissionTier;
   /** Waves of enemies - each wave spawns when the previous is cleared */
   waves: ContractWave[];
   reward: number; // credits
@@ -92,6 +99,35 @@ export interface StoreStock {
   ammo: Record<string, number>; // weaponType -> count (rounds)
 }
 
+/** Sector names for display */
+export const SECTOR_NAMES: Record<number, string> = {
+  1: 'Frontier',
+  2: 'Contested Zone',
+  3: 'Warzone',
+  4: 'Core Systems',
+  5: 'Endless',
+};
+
+/** Missions required to advance to next sector */
+export const MISSIONS_PER_SECTOR = 8;
+
+/** Maximum sector (5 = endless mode) */
+export const MAX_SECTOR = 5;
+
+/** Maximum ships deployable per sector */
+export const SECTOR_DEPLOYMENT_LIMITS: Record<number, number> = {
+  1: 4,
+  2: 4,
+  3: 4,
+  4: 5,
+  5: 6,
+};
+
+/** Get deployment limit for a sector (defaults to 4 for unknown sectors) */
+export function getDeploymentLimit(sector: number): number {
+  return SECTOR_DEPLOYMENT_LIMITS[sector] ?? 4;
+}
+
 /** Full campaign state */
 export interface CampaignState {
   credits: number;
@@ -105,6 +141,8 @@ export interface CampaignState {
   storeStock: StoreStock; // store inventory (finite stock)
   availableRecruits: HireablePilot[]; // pilots available for hire
   currentSector: number;
+  /** Missions completed in current sector (resets on sector advance) */
+  sectorMissionsCompleted: number;
   completedContracts: string[];
   missionCount: number;
 }

@@ -10,7 +10,7 @@ Weapons (projectiles, missiles, beams, decoys), shields, AI (states, behaviors, 
 
 ### Phase 4: Campaign Loop ✅
 - **4.1 Minimal Loop**: Screen state machine, hangar/contracts/results UI, campaign controller
-- **4.2 Mission Pacing**: Wave-based spawning, wingman threat prioritization, balance targets (Easy 85%, Medium 65%, Hard 45% win rates)
+- **4.2 Mission Pacing**: Wave-based spawning, wingman threat prioritization, balance targets (Easy 60-80%, Medium 40-60%, Hard 20-40% win rates, 90s+ avg time)
 - **4.3 QoL**: Auto-targeting, match speed, target camera, lead indicator smoothing, decoys targetable
 - **4.4 Combat Stats**: Per-ship/weapon stats, kill/assist attribution, debrief UI
 - **4.5 Campaign Economy**: Equipment inventory, loadout customization, store, item-based salvage, pilot hiring, squad selection
@@ -60,5 +60,30 @@ Weapons (projectiles, missiles, beams, decoys), shields, AI (states, behaviors, 
 - **Pause Menu**: Modal accessible from campaign screens via Escape key (`src/ui/screens/pause-menu.ts`)
 - **Key Bindings**: Configurable controls stored in localStorage (`src/input/key-bindings.ts`)
 
-### 5.2 Remaining (Planned)
-Procedural contracts, campaign progression, ship repairs, more ship classes, sound/music.
+### 5.2 Sector Progression ✅
+- **Sector System**: 5 sectors with progressive difficulty (`src/campaign/types.ts:18-24`)
+- **Sector Advancement**: Complete 8 missions per sector to advance (`src/ui/screens/sector-complete.ts`)
+- **Store Progression**: Items unlock by sector tier (`src/campaign/store/store-unlocks.ts`)
+  - Sector 1: Basic ships (patrol, scout, fighter), basic weapons (pulse, ion, plasma), basic missiles
+  - Sector 2: Mid-tier (interceptor, raider, autocannon, blue/green laser, dart, cluster)
+  - Sector 3: Advanced (bomber, sentinel, red laser, lightning, torch, torpedo)
+  - Sector 4: Elite (striker, defender, railgun, nuke)
+  - Sector 5: Ultimate (nuclear lance)
+
+### 5.3 Mission Content ✅
+- **41 Total Missions** across all 5 sectors (`src/ui/screens/missions/`)
+  - Sector 1: 9 missions (Frontier - Green/Rookie/Regular enemies, 2,500-4,600 cr)
+  - Sector 2: 8 missions (Contested Zone - Rookie/Regular/Veteran enemies, 3,200-5,800 cr)
+  - Sector 3: 8 missions (Warzone - Regular/Veteran/Ace enemies, 4,200-6,650 cr)
+  - Sector 4: 8 missions (Core Systems - Veteran/Ace enemies, 5,900-9,550 cr)
+  - Sector 5: 8 missions (Endless - Ace enemies, 8,350-13,050 cr)
+- **Elite Archetypes** for late-game (`src/factories/enemy-archetypes.ts`)
+  - titan: Striker with railguns
+  - juggernaut: Defender with nukes
+  - wraith: Sentinel with nuclear lance
+  - behemoth: Bomber with heavy ordnance
+  - phantom: Interceptor elite dogfighter
+  - specter: Elite sniper raider
+
+### 5.4 Remaining (Planned)
+Procedural contracts, ship repairs, more ship classes, sound/music.

@@ -10,10 +10,11 @@ import {
   needsPrimaryAttention,
   needsSecondaryAttention,
 } from '../../../campaign/resupply/resupply-constrained';
-import type {
-  CampaignState,
-  Contract,
-  OwnedShip,
+import {
+  type CampaignState,
+  type Contract,
+  getDeploymentLimit,
+  type OwnedShip,
 } from '../../../campaign/types';
 import { showError } from '../../common/notification';
 import {
@@ -27,9 +28,6 @@ import {
   type ScreenAPI,
   showModal,
 } from '../../framework/screen';
-
-/** Maximum ships that can be deployed */
-const MAX_DEPLOYMENT = 4;
 
 /** Result of squad selection */
 export interface SquadSelectionResult {
@@ -96,6 +94,7 @@ const SquadSelectionScreen: Screen<SquadState, SquadProps> = {
     const { campaignState, contract, commanderShipId } = props;
     const selectedSet = new Set(state.selectedIds);
     const selectedCount = selectedSet.size;
+    const maxDeployment = getDeploymentLimit(campaignState.currentSector);
 
     // Get ships with pilots (can deploy), commander first
     const deployableShips = campaignState.ships
@@ -116,7 +115,7 @@ const SquadSelectionScreen: Screen<SquadState, SquadProps> = {
       .join('');
 
     // Build capacity bar segments
-    const capacitySegments = Array.from({ length: MAX_DEPLOYMENT }, (_, i) => {
+    const capacitySegments = Array.from({ length: maxDeployment }, (_, i) => {
       const filled = i < selectedCount;
       return `<div class="capacity-segment${filled ? ' filled' : ''}"></div>`;
     }).join('');
@@ -136,10 +135,10 @@ const SquadSelectionScreen: Screen<SquadState, SquadProps> = {
 
           <footer class="squad-footer">
             <div class="squad-capacity">
-              <div class="capacity-bar" role="meter" aria-valuenow="${selectedCount}" aria-valuemin="0" aria-valuemax="${MAX_DEPLOYMENT}">
+              <div class="capacity-bar" role="meter" aria-valuenow="${selectedCount}" aria-valuemin="0" aria-valuemax="${maxDeployment}">
                 ${capacitySegments}
               </div>
-              <div class="capacity-label"><span class="capacity-current">${selectedCount}</span>/${MAX_DEPLOYMENT} ships</div>
+              <div class="capacity-label"><span class="capacity-current">${selectedCount}</span>/${maxDeployment} ships</div>
             </div>
             <div class="squad-footer-actions">
               <button class="btn btn-large" id="btn-squad-cancel">Cancel</button>
@@ -159,8 +158,9 @@ const SquadSelectionScreen: Screen<SquadState, SquadProps> = {
   },
 
   bind(api: ScreenAPI<SquadState>, props: SquadProps) {
-    const { commanderShipId, onComplete } = props;
+    const { campaignState, commanderShipId, onComplete } = props;
     const root = api.getRoot();
+    const maxDeployment = getDeploymentLimit(campaignState.currentSector);
 
     // Ship card clicks - direct DOM manipulation for smooth toggling
     api.on('.squad-card', 'click', (_e, el) => {
@@ -175,7 +175,7 @@ const SquadSelectionScreen: Screen<SquadState, SquadProps> = {
       const wasSelected = selectedSet.has(shipId);
 
       // Check if we can add more
-      if (!wasSelected && selectedSet.size >= MAX_DEPLOYMENT) return;
+      if (!wasSelected && selectedSet.size >= maxDeployment) return;
 
       // Toggle selection
       if (wasSelected) {
@@ -278,16 +278,17 @@ export function showSquadSelection(
     return Promise.resolve({ confirmed: false, deployedShipIds: [] });
   }
 
-  // Initialize selection: all ships with pilots, up to MAX_DEPLOYMENT
+  // Initialize selection: all ships with pilots, up to sector deployment limit
+  const maxDeployment = getDeploymentLimit(state.currentSector);
   const initialSelectedIds = state.ships
     .filter((s) => s.pilot !== null)
-    .slice(0, MAX_DEPLOYMENT)
+    .slice(0, maxDeployment)
     .map((s) => s.id);
 
   // Ensure commander is in selection
   if (!initialSelectedIds.includes(commanderShip.id)) {
     initialSelectedIds.unshift(commanderShip.id);
-    if (initialSelectedIds.length > MAX_DEPLOYMENT) {
+    if (initialSelectedIds.length > maxDeployment) {
       initialSelectedIds.pop();
     }
   }

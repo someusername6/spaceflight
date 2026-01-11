@@ -1,0 +1,189 @@
+/**
+ * Sector Complete Screen Styles - Sector advancement celebration
+ */
+
+/* ========================================
+   SECTOR COMPLETE SCREEN
+   ======================================== */
+
+.sector-complete-screen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 40, 20, 0.3) 0%,
+    rgba(0, 0, 0, 0.9) 100%
+  );
+}
+
+.sector-complete-content {
+  text-align: center;
+  max-width: 600px;
+  padding: var(--space-10);
+  animation: fadeSlideIn var(--duration-slower) var(--ease-out);
+}
+
+/* Header section */
+.sector-complete-header {
+  margin-bottom: var(--space-10);
+}
+
+.sector-complete-badge {
+  display: inline-block;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--color-success);
+  letter-spacing: var(--tracking-ultra);
+  padding: var(--space-2) var(--space-5);
+  border: 1px solid var(--color-success);
+  background: rgba(0, 255, 128, 0.1);
+  margin-bottom: var(--space-4);
+  animation: pulseBorder 2s ease-in-out infinite;
+}
+
+@keyframes pulseBorder {
+  0%,
+  100% {
+    border-color: var(--color-success);
+    box-shadow: 0 0 10px rgba(0, 255, 128, 0.2);
+  }
+  50% {
+    border-color: var(--color-success-bright);
+    box-shadow: 0 0 20px rgba(0, 255, 128, 0.4);
+  }
+}
+
+.sector-complete-title {
+  font-family: var(--font-display);
+  font-size: var(--text-5xl);
+  font-weight: var(--font-bold);
+  color: var(--color-success);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-ultra);
+  text-shadow:
+    0 0 30px var(--color-success-glow),
+    0 0 60px var(--color-success-glow);
+  margin: 0 0 var(--space-3) 0;
+}
+
+.sector-complete-subtitle {
+  font-family: var(--font-ui);
+  font-size: var(--text-lg);
+  color: var(--text-secondary);
+  letter-spacing: var(--tracking-widest);
+  text-transform: uppercase;
+}
+
+/* Stats section */
+.sector-complete-stats {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-6);
+  margin-bottom: var(--space-10);
+  animation: fadeSlideIn var(--duration-slower) var(--ease-out);
+  animation-delay: calc(var(--stagger-delay) * 2);
+  animation-fill-mode: both;
+}
+
+.sector-stat {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-5) var(--space-7);
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--border-color);
+  min-width: 140px;
+}
+
+.sector-stat-label {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  margin-bottom: var(--space-2);
+}
+
+.sector-stat-value {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  color: var(--text-primary);
+}
+
+/* Next sector preview */
+.sector-complete-next {
+  margin-bottom: var(--space-10);
+  padding: var(--space-7);
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border-color);
+  animation: fadeSlideIn var(--duration-slower) var(--ease-out);
+  animation-delay: calc(var(--stagger-delay) * 4);
+  animation-fill-mode: both;
+}
+
+.next-sector-label {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  letter-spacing: var(--tracking-widest);
+  text-transform: uppercase;
+  margin-bottom: var(--space-3);
+}
+
+.next-sector-name {
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  font-weight: var(--font-semibold);
+  color: var(--color-primary);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  margin-bottom: var(--space-3);
+}
+
+.next-sector-name.endless {
+  color: var(--color-warning);
+  text-shadow: 0 0 20px var(--color-warning-glow);
+}
+
+.next-sector-desc {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  letter-spacing: var(--tracking-wide);
+}
+
+/* Actions */
+.sector-complete-actions {
+  animation: fadeSlideIn var(--duration-slower) var(--ease-out);
+  animation-delay: calc(var(--stagger-delay) * 6);
+  animation-fill-mode: both;
+}
+
+.sector-complete-actions .btn {
+  min-width: 280px;
+}
+
+/* ========================================
+   RESPONSIVE - SECTOR COMPLETE
+   ======================================== */
+
+@media (max-width: 700px) {
+  .sector-complete-title {
+    font-size: 2rem;
+    letter-spacing: 0.1em;
+  }
+
+  .sector-complete-stats {
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .sector-stat {
+    min-width: auto;
+  }
+
+  .next-sector-name {
+    font-size: var(--text-2xl);
+  }
+}

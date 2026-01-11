@@ -22,6 +22,7 @@ export enum Screen {
   CONTRACTS = 'contracts',
   MISSION = 'mission',
   RESULTS = 'results',
+  SECTOR_COMPLETE = 'sector_complete',
   GAME_OVER = 'game_over',
   SETTINGS = 'settings',
 }
@@ -41,6 +42,7 @@ export interface ScreenManager {
   storeElement: HTMLElement | null;
   contractsElement: HTMLElement | null;
   resultsElement: HTMLElement | null;
+  sectorCompleteElement: HTMLElement | null;
   gameOverElement: HTMLElement | null;
   settingsElement: HTMLElement | null;
   missionContainer: HTMLElement | null;
@@ -70,6 +72,7 @@ export function createScreenManager(
     storeElement: null,
     contractsElement: null,
     resultsElement: null,
+    sectorCompleteElement: null,
     gameOverElement: null,
     settingsElement: null,
     missionContainer: null,
@@ -164,6 +167,11 @@ export function endMission(manager: ScreenManager, victory: boolean): void {
 /** Transition to game over screen */
 export function goToGameOver(manager: ScreenManager): void {
   showScreen(manager, Screen.GAME_OVER);
+}
+
+/** Transition to sector complete screen */
+export function goToSectorComplete(manager: ScreenManager): void {
+  showScreen(manager, Screen.SECTOR_COMPLETE);
 }
 
 /** Get the element for a screen (for UI rendering) */

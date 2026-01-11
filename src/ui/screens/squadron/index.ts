@@ -99,6 +99,7 @@ function renderSquadronContent(
     activeTab: 'squadron',
     credits: campaignState.credits,
     sector: campaignState.currentSector,
+    sectorMissionsCompleted: campaignState.sectorMissionsCompleted,
     onNavigate,
   });
 
