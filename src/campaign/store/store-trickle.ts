@@ -5,7 +5,7 @@
  * Missiles and ammo have guaranteed trickle based on capacity/consumption.
  */
 
-import { createPRNG, random } from '../../core/prng';
+import { createDerivedPRNG, random } from '../../core/prng';
 import { MISSILES } from '../../data/missiles';
 import { PRIMARY_WEAPONS } from '../../data/weapons';
 import type { CampaignState } from '../types';
@@ -28,11 +28,15 @@ import {
  * Apply store trickle after a mission.
  * Ships and primaries have a random chance to restock (+1).
  * Missiles and ammo have guaranteed trickle based on capacity/consumption.
- * Uses seeded PRNG based on missionCount for determinism.
+ * Uses derived PRNG from campaign seed for determinism (prevents save scumming).
  */
 export function applyStoreTrickle(state: CampaignState): CampaignState {
-  // Seed PRNG based on mission count for deterministic results
-  const rng = createPRNG(state.missionCount * 7919 + 13337);
+  // Derive PRNG from campaign seed + mission count for deterministic results
+  const rng = createDerivedPRNG(
+    state.seed,
+    'store-trickle',
+    state.missionCount,
+  );
   const sector = state.currentSector;
 
   const newStock = {

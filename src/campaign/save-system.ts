@@ -10,7 +10,7 @@
 import type { CampaignState } from './types';
 
 /** Current save format version - increment when CampaignState changes */
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 
 /** Number of available save slots */
 export const MAX_SAVE_SLOTS = 3;
@@ -55,6 +55,7 @@ function isValidSaveData(data: unknown): data is SaveData {
 
 /**
  * Validate that CampaignState has minimum required fields.
+ * Note: seed is validated separately since v1 saves may not have it.
  * @param state - Campaign state to validate
  * @returns true if state has required fields
  */
@@ -67,6 +68,34 @@ function isValidCampaignState(state: unknown): state is CampaignState {
     Array.isArray(obj.ships) &&
     Array.isArray(obj.pilots)
   );
+}
+
+/**
+ * Migrate save data from older versions.
+ * @param state - The campaign state to migrate
+ * @param fromVersion - The version of the save data
+ * @returns Migrated campaign state
+ */
+function migrateState(
+  state: CampaignState,
+  fromVersion: number,
+): CampaignState {
+  const migrated = { ...state };
+
+  // v1 -> v2: Add seed field for deterministic PRNG
+  if (fromVersion < 2) {
+    if (typeof migrated.seed !== 'number') {
+      // Generate a deterministic seed from existing state fields
+      // This ensures the same v1 save always migrates to the same seed
+      const missionFactor = (migrated.missionCount ?? 0) * 12345;
+      const creditsFactor = (migrated.credits ?? 0) * 31;
+      const sectorFactor = (migrated.currentSector ?? 1) * 7919;
+      migrated.seed = (missionFactor + creditsFactor + sectorFactor) >>> 0;
+      console.log(`[Save Migration] v1->v2: Added seed ${migrated.seed}`);
+    }
+  }
+
+  return migrated;
 }
 
 /** Get localStorage key for a save slot */
@@ -131,16 +160,16 @@ export function loadGame(slot: number): CampaignState | null {
       return null;
     }
 
-    // Version check - future migrations would go here
-    if (parsed.version !== SAVE_VERSION) {
-      console.warn(
-        `Save version mismatch: expected ${SAVE_VERSION}, got ${parsed.version}`,
+    // Apply migrations if save is from older version
+    let state = parsed.state;
+    if (parsed.version < SAVE_VERSION) {
+      console.log(
+        `[Save] Migrating save from v${parsed.version} to v${SAVE_VERSION}`,
       );
-      // Future: implement migration functions
-      // For now, accept older saves as-is
+      state = migrateState(state, parsed.version);
     }
 
-    return parsed.state;
+    return state;
   } catch (error) {
     console.error(`Failed to load game from slot ${slot}:`, error);
     return null;

@@ -2,7 +2,7 @@
  * Campaign state management - create, save, load campaign state.
  */
 
-import { createPRNG, random } from '../core/prng';
+import { createDerivedPRNG, random } from '../core/prng';
 import { getArchetype } from '../factories/ship';
 import { generateInitialRecruits } from './recruits';
 import { createInitialStoreStock, generateSectorStock } from './store/store';
@@ -89,6 +89,9 @@ function createStartingPilots(): Pilot[] {
 
 /** Create a new campaign with default starting state */
 export function createNewCampaign(): CampaignState {
+  // Generate master seed for this campaign run (different each time)
+  const seed = Date.now() >>> 0;
+
   // Create all pilots (commander + wingmen)
   const commander = createCommander();
   const wingmanPilots = createStartingPilots();
@@ -100,14 +103,14 @@ export function createNewCampaign(): CampaignState {
   const wingman2 = createShipFromArchetype('fighter', wingmanPilots[1]);
   const wingman3 = createShipFromArchetype('fighter', wingmanPilots[2]);
 
-  // Generate initial recruits (4 pilots available for hire)
-  // Use fixed seed for deterministic recruit generation
-  const recruitRng = createPRNG(42);
+  // Generate initial recruits using derived PRNG (missionCount=0 at start)
+  const recruitRng = createDerivedPRNG(seed, 'recruits', 0);
   const availableRecruits = generateInitialRecruits(allPilots, () =>
     random(recruitRng),
   );
 
   return {
+    seed,
     credits: 1000,
     commanderId: commander.id,
     ships: [commanderShip, wingman1, wingman2, wingman3],

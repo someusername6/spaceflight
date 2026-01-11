@@ -2,7 +2,7 @@
  * Mission Callbacks - game loop callbacks for mission execution.
  */
 
-import { random } from '../../core/prng';
+import { createDerivedPRNG, random } from '../../core/prng';
 import type { World } from '../../core/types';
 import {
   countLivingEnemyShips,
@@ -82,15 +82,25 @@ export function createMissionEndExecutor(
     // Calculate and apply item-based salvage from all destroyed ships
     let salvageResult: ReturnType<typeof calculateSalvage> | null = null;
     if (matchStats && matchStats.salvageableShips.length > 0) {
-      // Use seeded PRNG for deterministic salvage
-      const rng = () => random(game.world.prng);
-      salvageResult = calculateSalvage(matchStats.salvageableShips, rng);
+      // Use derived PRNG for deterministic salvage (prevents save scumming)
+      const salvageRng = createDerivedPRNG(
+        newState.seed,
+        'salvage',
+        newState.missionCount,
+      );
+      salvageResult = calculateSalvage(matchStats.salvageableShips, () =>
+        random(salvageRng),
+      );
       newState = applySalvage(newState, salvageResult);
     }
 
-    // Refresh available recruits after each mission
-    const recruitRng = () => random(game.world.prng);
-    newState = refreshRecruits(newState, recruitRng);
+    // Refresh available recruits after each mission (derived PRNG for determinism)
+    const recruitRng = createDerivedPRNG(
+      newState.seed,
+      'recruits',
+      newState.missionCount,
+    );
+    newState = refreshRecruits(newState, () => random(recruitRng));
 
     // Update campaign state
     updateCampaignState(screenManager, newState);

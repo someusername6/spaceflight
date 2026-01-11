@@ -38,7 +38,7 @@ import {
 // Configuration
 // ============================================================================
 
-const SECTOR = parseInt(process.argv[2]) || 1;
+const SECTOR = parseInt(process.argv[2], 10) || 1;
 const MAX_SIMULATION_TIME = 300;
 const MAX_TICKS = MAX_SIMULATION_TIME * TICK_RATE;
 const RUNS_PER_MISSION = 30;
@@ -215,7 +215,7 @@ console.log('─'.repeat(90));
 const results = [];
 for (const mission of missions) {
   process.stdout.write(
-    `Testing ${mission.name.substring(0, 18)}...`.padEnd(30) + '\r',
+    `${`Testing ${mission.name.substring(0, 18)}...`.padEnd(30)}\r`,
   );
   const result = runMissionTests(mission);
   const target = BALANCE_TARGETS[mission.difficulty];

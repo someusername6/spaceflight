@@ -46,7 +46,7 @@ import {
 // Configuration
 // ============================================================================
 
-const SECTOR = process.argv[2] ? parseInt(process.argv[2]) : null;
+const SECTOR = process.argv[2] ? parseInt(process.argv[2], 10) : null;
 const MAX_SIMULATION_TIME = 300;
 const MAX_TICKS = MAX_SIMULATION_TIME * TICK_RATE;
 const RUNS_PER_MISSION = 30;
@@ -328,7 +328,7 @@ async function main() {
 
     for (const mission of missions) {
       process.stdout.write(
-        `Testing ${mission.name.substring(0, 16)}...`.padEnd(28) + '\r',
+        `${`Testing ${mission.name.substring(0, 16)}...`.padEnd(28)}\r`,
       );
 
       const result = runMissionRewardCalc(mission, sector);
@@ -353,7 +353,7 @@ async function main() {
     }
   }
 
-  console.log('\n' + '='.repeat(110));
+  console.log(`\n${'='.repeat(110)}`);
   console.log('LEGEND:');
   console.log('  Lost     = Average ships lost per mission (all runs)');
   console.log(

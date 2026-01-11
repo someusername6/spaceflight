@@ -19,7 +19,8 @@ import { PLAYER_MODES, runScenario } from './mission-sim.mjs';
 // Mission Definitions - imported from src/ui/contracts.ts
 // ============================================================================
 
-const contracts = generateContracts(1);
+// Use fixed seed for test determinism
+const contracts = generateContracts(1, 12345, 0);
 
 // Map contract difficulty to mission key
 const difficultyToKey = { easy: 'easy', medium: 'medium', hard: 'hard' };

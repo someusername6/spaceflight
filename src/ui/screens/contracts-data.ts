@@ -13,7 +13,7 @@
  */
 
 import type { Contract, MissionTier } from '../../campaign/types';
-import { createPRNG, shuffle } from '../../core/prng';
+import { createDerivedPRNG, shuffle } from '../../core/prng';
 import { ALL_MISSIONS } from './missions';
 
 /**
@@ -37,11 +37,15 @@ export function getMissions(sector: number, tier?: MissionTier): Contract[] {
  * Returns a selection of missions from the current sector, mixing tiers.
  *
  * @param sector - Current campaign sector (1-5)
+ * @param seed - Campaign seed for deterministic selection
+ * @param sectorMissionsCompleted - Missions completed in current sector (for variation)
  * @param count - Number of contracts to show (default 4)
  * @param completedIds - IDs of already completed missions to exclude
  */
 export function generateContracts(
   sector: number,
+  seed: number,
+  sectorMissionsCompleted: number,
   count = 4,
   completedIds: string[] = [],
 ): Contract[] {
@@ -55,8 +59,13 @@ export function generateContracts(
     return getMissionsForSector(sector).slice(0, count);
   }
 
-  // Use seeded PRNG for variety (seed with current time for different selections)
-  const prng = createPRNG(Date.now());
+  // Use derived PRNG for deterministic selection (prevents save scumming)
+  const prng = createDerivedPRNG(
+    seed,
+    'contracts',
+    sector,
+    sectorMissionsCompleted,
+  );
 
   // Try to get a mix of tiers
   const lowTier = available.filter((m) => m.tier === 'low');

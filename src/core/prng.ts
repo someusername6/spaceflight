@@ -85,3 +85,34 @@ export function randomUnitVector(state: PRNGState): {
   const length = Math.sqrt(lengthSq);
   return { x: x / length, y: y / length, z: z / length };
 }
+
+/**
+ * Derive a deterministic seed from a master seed and context parts.
+ * Same inputs always produce same output (pure function).
+ * Used for save-scum-proof randomness: derive(seed, 'store', sector) always
+ * gives the same result for the same campaign state.
+ */
+export function deriveKey(
+  masterSeed: number,
+  ...parts: (string | number)[]
+): number {
+  let hash = masterSeed >>> 0;
+  for (const part of parts) {
+    const str = String(part);
+    for (let i = 0; i < str.length; i++) {
+      hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0;
+    }
+  }
+  return hash >>> 0;
+}
+
+/**
+ * Create a PRNG with a seed derived from master seed + context.
+ * Example: createDerivedPRNG(campaignSeed, 'store', sectorNumber)
+ */
+export function createDerivedPRNG(
+  masterSeed: number,
+  ...parts: (string | number)[]
+): PRNGState {
+  return createPRNG(deriveKey(masterSeed, ...parts));
+}

@@ -12,6 +12,7 @@ import type { Health } from '../components/health';
 import { isDead } from '../components/health';
 import type { Transform } from '../components/transform';
 import { getComponent, isShip, queryEntities } from '../core/ecs';
+import { createPRNG, random } from '../core/prng';
 import type { Entity, World } from '../core/types';
 import { createAIShip } from '../factories/ship';
 import { createGame, type Game, startGame, stopGame } from '../game';
@@ -95,6 +96,8 @@ export interface BattleSimulation {
   container: HTMLElement;
   renderer: ReturnType<typeof createRenderer>;
   camera: BattleCamera;
+  /** PRNG for spawn randomness (ephemeral, intentionally non-deterministic) */
+  spawnRng: ReturnType<typeof createPRNG>;
   /** Camera state for following ships */
   smoothedCamera: SmoothedCamera;
   /** Last render time for frame delta calculation */
@@ -114,14 +117,15 @@ export interface BattleSimulation {
 
 /** Spawn a ship for a team at a random position */
 function spawnTeamShip(
-  world: World,
+  sim: BattleSimulation,
   team: TeamConfig,
   faction: Faction,
   spawnRadius: number,
 ): Entity {
-  // Random position on sphere surface
-  const theta = Math.random() * Math.PI * 2;
-  const phi = Math.acos(2 * Math.random() - 1);
+  const { spawnRng, game } = sim;
+  // Random position on sphere surface using seeded PRNG
+  const theta = random(spawnRng) * Math.PI * 2;
+  const phi = Math.acos(2 * random(spawnRng) - 1);
   const position = new THREE.Vector3(
     spawnRadius * Math.sin(phi) * Math.cos(theta),
     spawnRadius * Math.sin(phi) * Math.sin(theta),
@@ -136,7 +140,7 @@ function spawnTeamShip(
   );
 
   return createAIShip(
-    world,
+    game.world,
     team.archetype,
     faction,
     position,
@@ -148,17 +152,16 @@ function spawnTeamShip(
 
 /** Spawn initial ships for both teams */
 function spawnInitialShips(sim: BattleSimulation): void {
-  const { game, config } = sim;
-  const world = game.world;
+  const { config } = sim;
 
   // Team A spawns on one hemisphere (positive Z)
   for (let i = 0; i < config.teamA.count; i++) {
-    spawnTeamShip(world, config.teamA, Faction.Player, config.spawnRadius);
+    spawnTeamShip(sim, config.teamA, Faction.Player, config.spawnRadius);
   }
 
   // Team B spawns on opposite hemisphere (negative Z)
   for (let i = 0; i < config.teamB.count; i++) {
-    spawnTeamShip(world, config.teamB, Faction.Enemy, config.spawnRadius);
+    spawnTeamShip(sim, config.teamB, Faction.Enemy, config.spawnRadius);
   }
 }
 
@@ -185,19 +188,18 @@ function countLivingByFaction(world: World, faction: Faction): number {
 /** Check and respawn ships as needed */
 function checkRespawns(sim: BattleSimulation): void {
   const { game, config } = sim;
-  const world = game.world;
 
-  const teamACount = countLivingByFaction(world, Faction.Player);
-  const teamBCount = countLivingByFaction(world, Faction.Enemy);
+  const teamACount = countLivingByFaction(game.world, Faction.Player);
+  const teamBCount = countLivingByFaction(game.world, Faction.Enemy);
 
   // Respawn team A ships
   for (let i = teamACount; i < config.teamA.count; i++) {
-    spawnTeamShip(world, config.teamA, Faction.Player, config.spawnRadius);
+    spawnTeamShip(sim, config.teamA, Faction.Player, config.spawnRadius);
   }
 
   // Respawn team B ships
   for (let i = teamBCount; i < config.teamB.count; i++) {
-    spawnTeamShip(world, config.teamB, Faction.Enemy, config.spawnRadius);
+    spawnTeamShip(sim, config.teamB, Faction.Enemy, config.spawnRadius);
   }
 }
 
@@ -206,7 +208,10 @@ export function createBattleSimulation(
   container: HTMLElement,
   config: BattleConfig,
 ): BattleSimulation {
-  const seed = config.seed ?? Math.floor(Math.random() * 100000);
+  // Create ephemeral PRNG for spawn randomness (intentionally non-deterministic)
+  // Title screen variation is desirable, but we use consistent PRNG methodology
+  const spawnRng = createPRNG(Date.now() ^ (performance.now() * 1000));
+  const seed = config.seed ?? Math.floor(random(spawnRng) * 100000);
   const game = createGame(seed);
   const renderer = createRenderer(container, seed);
   const scene = getScene(renderer);
@@ -217,6 +222,7 @@ export function createBattleSimulation(
     container,
     renderer,
     camera: createBattleCamera(8),
+    spawnRng,
     smoothedCamera: {
       position: new THREE.Vector3(),
       rotation: new THREE.Quaternion(),

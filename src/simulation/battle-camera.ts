@@ -9,6 +9,7 @@ import { Faction } from '../components/faction';
 import type { Health } from '../components/health';
 import { isDead } from '../components/health';
 import { getComponent, isShip, queryEntities } from '../core/ecs';
+import { createPRNG, type PRNGState, random, randomInt } from '../core/prng';
 import type { Entity, World } from '../core/types';
 
 /** Camera controller state */
@@ -19,6 +20,8 @@ export interface BattleCamera {
   timeSinceSwitch: number;
   /** Minimum time between automatic switches */
   switchInterval: number;
+  /** PRNG for camera switching (ephemeral, intentionally non-deterministic) */
+  rng: PRNGState;
 }
 
 /** Create a new battle camera controller */
@@ -27,6 +30,8 @@ export function createBattleCamera(switchInterval = 8): BattleCamera {
     followedEntity: null,
     timeSinceSwitch: 0,
     switchInterval,
+    // Ephemeral PRNG for camera switching - variation is intentional
+    rng: createPRNG(Date.now() ^ (performance.now() * 1000)),
   };
 }
 
@@ -90,7 +95,7 @@ export function updateBattleCamera(
 
   if (needsSwitch) {
     // Alternate between factions for variety
-    const shouldFollowTeamA = Math.random() < 0.5;
+    const shouldFollowTeamA = random(camera.rng) < 0.5;
     const preferredFaction = shouldFollowTeamA ? Faction.Player : Faction.Enemy;
 
     let candidates = getLivingShips(world, preferredFaction);
@@ -104,13 +109,11 @@ export function updateBattleCamera(
       let newTarget: Entity;
       if (candidates.length > 1 && camera.followedEntity !== null) {
         const filtered = candidates.filter((e) => e !== camera.followedEntity);
-        newTarget = filtered[
-          Math.floor(Math.random() * filtered.length)
-        ] as Entity;
+        const idx = randomInt(camera.rng, 0, filtered.length - 1);
+        newTarget = filtered[idx] as Entity;
       } else {
-        newTarget = candidates[
-          Math.floor(Math.random() * candidates.length)
-        ] as Entity;
+        const idx = randomInt(camera.rng, 0, candidates.length - 1);
+        newTarget = candidates[idx] as Entity;
       }
 
       camera.followedEntity = newTarget;

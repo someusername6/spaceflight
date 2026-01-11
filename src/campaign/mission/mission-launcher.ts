@@ -3,6 +3,7 @@
  */
 
 import { Vector3 } from 'three';
+import { deriveKey } from '../../core/prng';
 import { createGame, startGame } from '../../game';
 import { initMatchStats } from '../../systems/stats';
 import { setMissionContainer } from '../../ui/common/screens';
@@ -13,7 +14,6 @@ import {
 } from '../ship-spawning';
 import { getCommanderShip, getWingmanShips } from '../state';
 import type { Contract } from '../types';
-import { getGameSeed } from '../utils';
 import {
   createMissionEndCallback,
   createMissionEndExecutor,
@@ -58,8 +58,14 @@ export function launchMission(
   // Clear any previous mission content
   controller.missionContainer.innerHTML = '';
 
-  // Create game with seed
-  const seed = getGameSeed();
+  // Create game with deterministic seed derived from campaign state
+  // This ensures same mission count = same combat randomness (prevents save scumming)
+  const { campaignState } = screenManager;
+  const seed = deriveKey(
+    campaignState.seed,
+    'mission',
+    campaignState.missionCount,
+  );
   const game = createGame(seed);
   controller.game = game;
 
@@ -69,7 +75,6 @@ export function launchMission(
 
   // Spawn player and wingmen from campaign state (uses campaign loadout/ammo)
   // Only spawn ships that were selected for deployment
-  const { campaignState } = screenManager;
   const playerShip = getCommanderShip(campaignState);
   const allWingmen = getWingmanShips(campaignState);
   const deployedIdSet = new Set(deployedShipIds);

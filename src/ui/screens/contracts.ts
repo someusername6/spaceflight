@@ -239,6 +239,8 @@ export function createContractsUI(
 
   const contracts = generateContracts(
     state.currentSector,
+    state.seed,
+    state.sectorMissionsCompleted,
     4,
     state.completedContracts,
   );
@@ -275,6 +277,8 @@ export function updateContractsUI(ui: ContractsUI, state: CampaignState): void {
   ui.state = state;
   ui.contracts = generateContracts(
     state.currentSector,
+    state.seed,
+    state.sectorMissionsCompleted,
     4,
     state.completedContracts,
   );

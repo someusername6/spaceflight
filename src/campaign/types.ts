@@ -125,6 +125,8 @@ export function getDeploymentLimit(sector: number): number {
 
 /** Full campaign state */
 export interface CampaignState {
+  /** Master seed for deterministic randomness (set at campaign creation) */
+  seed: number;
   credits: number;
   commanderId: string; // ID of the commander pilot (player)
   ships: OwnedShip[];
