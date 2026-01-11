@@ -5,6 +5,7 @@
  * equipping/unequipping weapons.
  */
 
+import { slotArrayToJSON } from '../../campaign/slot-array';
 import type {
   CampaignState,
   EquippedPrimary,
@@ -99,7 +100,7 @@ function renderSchematicDiagram(ship: OwnedShip): string {
   const primaryRows = renderHardpointRows(
     stats.primaryHardpoints,
     stats.primaryBanks,
-    ship.primaryWeapons,
+    slotArrayToJSON(ship.primaryWeapons),
     ship.id,
     'primary',
   );
@@ -107,7 +108,7 @@ function renderSchematicDiagram(ship: OwnedShip): string {
   const secondaryRows = renderHardpointRows(
     stats.secondaryHardpoints,
     stats.secondaryBanks,
-    ship.secondaryWeapons,
+    slotArrayToJSON(ship.secondaryWeapons),
     ship.id,
     'secondary',
   );

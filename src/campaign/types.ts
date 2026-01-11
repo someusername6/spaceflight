@@ -3,6 +3,7 @@
  */
 
 import type { ProfileName } from '../data/ai-profiles';
+import type { SlotArray } from './slot-array';
 
 /** Skill level for pilots */
 export type SkillLevel = ProfileName;
@@ -36,14 +37,20 @@ export interface EquippedSecondary {
   maxCount: number; // for resupply reference
 }
 
-/** A ship owned by the player's squadron (active, with pilot assigned) */
+/**
+ * A ship owned by the player's squadron (active, with pilot assigned).
+ *
+ * IMPORTANT: SlotArray fields use WeakMap-based storage that doesn't survive
+ * JSON serialization. When loading saves, use slotArrayFromJSON() to recreate
+ * these fields from the raw arrays in the save data.
+ */
 export interface OwnedShip {
   id: string;
   shipClass: string; // 'interceptor', 'striker', etc. (from SHIP_CLASSES)
-  /** Fixed-length array matching ship's primaryBanks. null = empty slot. */
-  primaryWeapons: (EquippedPrimary | null)[];
-  /** Fixed-length array matching ship's secondaryBanks. null = empty slot. */
-  secondaryWeapons: (EquippedSecondary | null)[];
+  /** Opaque slot array - use slot-array helpers for access */
+  primaryWeapons: SlotArray<EquippedPrimary>;
+  /** Opaque slot array - use slot-array helpers for access */
+  secondaryWeapons: SlotArray<EquippedSecondary>;
   pilot: Pilot | null; // null = unassigned (ship in reserve)
 }
 

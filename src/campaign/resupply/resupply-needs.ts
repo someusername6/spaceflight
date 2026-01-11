@@ -4,6 +4,7 @@
 
 import { getMissileDisplayName } from '../../data/missiles';
 import { getWeaponDisplayName } from '../../data/weapons';
+import { countEmpty, forEachSlot, someSlot } from '../slot-array';
 import { getMaxAmmoCapacity } from '../store/store-ammo';
 import type { EquippedPrimary, OwnedShip } from '../types';
 
@@ -19,39 +20,44 @@ export function needsAttention(ship: OwnedShip): boolean {
 
 /** Check if primary weapons need attention (empty slots or low ammo) */
 export function needsPrimaryAttention(ship: OwnedShip): boolean {
-  for (const primary of ship.primaryWeapons) {
-    if (primary === null) return true;
-    if (primary.currentAmmo !== undefined) {
-      const maxAmmo = getMaxPrimaryAmmo(primary);
-      if (primary.currentAmmo < maxAmmo) return true;
-    }
-  }
-  return false;
+  // Check for empty slots
+  if (countEmpty(ship.primaryWeapons) > 0) return true;
+
+  // Check for low ammo
+  return someSlot(ship.primaryWeapons, (primary) => {
+    if (primary.currentAmmo === undefined) return false;
+    const maxAmmo = getMaxPrimaryAmmo(primary);
+    return primary.currentAmmo < maxAmmo;
+  });
 }
 
 /** Check if secondary weapons need attention (empty slots or low missiles) */
 export function needsSecondaryAttention(ship: OwnedShip): boolean {
-  for (const secondary of ship.secondaryWeapons) {
-    if (secondary === null) return true;
-    if (secondary.count < secondary.maxCount) return true;
-  }
-  return false;
+  // Check for empty slots
+  if (countEmpty(ship.secondaryWeapons) > 0) return true;
+
+  // Check for low missiles
+  return someSlot(
+    ship.secondaryWeapons,
+    (secondary) => secondary.count < secondary.maxCount,
+  );
 }
 
 /** Check if a ship needs ammo or missile resupply (not empty slots) */
 export function needsAmmoResupply(ship: OwnedShip): boolean {
-  for (const primary of ship.primaryWeapons) {
-    if (primary === null || primary.currentAmmo === undefined) continue;
+  // Check primaries for low ammo
+  const needsPrimaryAmmo = someSlot(ship.primaryWeapons, (primary) => {
+    if (primary.currentAmmo === undefined) return false;
     const maxAmmo = getMaxPrimaryAmmo(primary);
-    if (primary.currentAmmo < maxAmmo) return true;
-  }
+    return primary.currentAmmo < maxAmmo;
+  });
+  if (needsPrimaryAmmo) return true;
 
-  for (const secondary of ship.secondaryWeapons) {
-    if (secondary === null) continue;
-    if (secondary.count < secondary.maxCount) return true;
-  }
-
-  return false;
+  // Check secondaries for low missiles
+  return someSlot(
+    ship.secondaryWeapons,
+    (secondary) => secondary.count < secondary.maxCount,
+  );
 }
 
 /** @deprecated Use needsAttention for warnings, needsAmmoResupply for resupply button */
@@ -64,7 +70,7 @@ export function getAttentionReasons(ship: OwnedShip): string[] {
   const reasons: string[] = [];
 
   // Check for empty primary slots
-  const emptyPrimary = ship.primaryWeapons.filter((p) => p === null).length;
+  const emptyPrimary = countEmpty(ship.primaryWeapons);
   if (emptyPrimary > 0) {
     reasons.push(
       `${emptyPrimary} empty primary slot${emptyPrimary > 1 ? 's' : ''}`,
@@ -72,7 +78,7 @@ export function getAttentionReasons(ship: OwnedShip): string[] {
   }
 
   // Check for empty secondary slots
-  const emptySecondary = ship.secondaryWeapons.filter((s) => s === null).length;
+  const emptySecondary = countEmpty(ship.secondaryWeapons);
   if (emptySecondary > 0) {
     reasons.push(
       `${emptySecondary} empty secondary slot${emptySecondary > 1 ? 's' : ''}`,
@@ -81,28 +87,27 @@ export function getAttentionReasons(ship: OwnedShip): string[] {
 
   // Check for low ammo on each weapon type
   const lowAmmo: string[] = [];
-  for (const primary of ship.primaryWeapons) {
-    if (primary === null || primary.currentAmmo === undefined) continue;
+  forEachSlot(ship.primaryWeapons, (primary) => {
+    if (primary.currentAmmo === undefined) return;
     const maxAmmo = getMaxPrimaryAmmo(primary);
     if (primary.currentAmmo < maxAmmo) {
       const pct = Math.round((primary.currentAmmo / maxAmmo) * 100);
       lowAmmo.push(`${getWeaponDisplayName(primary.weaponType)} (${pct}%)`);
     }
-  }
+  });
   if (lowAmmo.length > 0) {
     reasons.push(`Low ammo: ${lowAmmo.join(', ')}`);
   }
 
   // Check for low missiles on each weapon type
   const lowMissiles: string[] = [];
-  for (const secondary of ship.secondaryWeapons) {
-    if (secondary === null) continue;
+  forEachSlot(ship.secondaryWeapons, (secondary) => {
     if (secondary.count < secondary.maxCount) {
       lowMissiles.push(
         `${getMissileDisplayName(secondary.weaponType)} (${secondary.count}/${secondary.maxCount})`,
       );
     }
-  }
+  });
   if (lowMissiles.length > 0) {
     reasons.push(`Low missiles: ${lowMissiles.join(', ')}`);
   }
@@ -122,8 +127,8 @@ export function getShipResupplyNeeds(ship: OwnedShip): ShipResupplyNeeds {
   const missiles = new Map<string, number>();
   let totalNeeded = 0;
 
-  for (const primary of ship.primaryWeapons) {
-    if (primary === null || primary.currentAmmo === undefined) continue;
+  forEachSlot(ship.primaryWeapons, (primary) => {
+    if (primary.currentAmmo === undefined) return;
     const maxAmmo = getMaxPrimaryAmmo(primary);
     const needed = Math.max(0, maxAmmo - primary.currentAmmo);
     if (needed > 0) {
@@ -133,10 +138,9 @@ export function getShipResupplyNeeds(ship: OwnedShip): ShipResupplyNeeds {
       );
       totalNeeded += needed;
     }
-  }
+  });
 
-  for (const secondary of ship.secondaryWeapons) {
-    if (secondary === null) continue;
+  forEachSlot(ship.secondaryWeapons, (secondary) => {
     const needed = Math.max(0, secondary.maxCount - secondary.count);
     if (needed > 0) {
       missiles.set(
@@ -145,7 +149,7 @@ export function getShipResupplyNeeds(ship: OwnedShip): ShipResupplyNeeds {
       );
       totalNeeded += needed;
     }
-  }
+  });
 
   return { ammo, missiles, totalNeeded };
 }

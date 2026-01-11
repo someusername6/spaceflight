@@ -3,6 +3,7 @@
  */
 
 import assert from 'node:assert';
+import { createSlotArray, getSlot } from '../../../src/campaign/slot-array.ts';
 import {
   buyAmmo,
   getMaxAmmoCapacity,
@@ -28,8 +29,10 @@ function createTestState(
       {
         id: 'ship1',
         shipClass: 'interceptor',
-        primaryWeapons: [{ weaponType, bankSize, currentAmmo }],
-        secondaryWeapons: [],
+        primaryWeapons: createSlotArray([
+          { weaponType, bankSize, currentAmmo },
+        ]),
+        secondaryWeapons: createSlotArray([]),
         pilot: null,
         hullDamage: 0,
         isPlayerShip: true,
@@ -155,7 +158,7 @@ console.log('\nTesting loadAmmoToWeapon capacity limits...');
   // Try to load more than capacity
   state = loadAmmoToWeapon(state, 'ship1', 0, 500);
 
-  const weapon = state.ships[0].primaryWeapons[0];
+  const weapon = getSlot(state.ships[0].primaryWeapons, 0);
   assert.strictEqual(
     weapon.currentAmmo,
     maxCap,
@@ -181,7 +184,7 @@ console.log('\nTesting loadAmmoToWeapon with bank size 2...');
 
   state = loadAmmoToWeapon(state, 'ship1', 0, 1000);
 
-  const weapon = state.ships[0].primaryWeapons[0];
+  const weapon = getSlot(state.ships[0].primaryWeapons, 0);
   assert.strictEqual(
     weapon.currentAmmo,
     maxCap,
@@ -218,7 +221,7 @@ console.log('\nTesting loadAmmoToWeapon partial fill...');
 
   state = loadAmmoToWeapon(state, 'ship1', 0, 100);
 
-  const weapon = state.ships[0].primaryWeapons[0];
+  const weapon = getSlot(state.ships[0].primaryWeapons, 0);
   assert.strictEqual(weapon.currentAmmo, maxCap, 'Filled to capacity');
   assert.strictEqual(state.storedAmmo[0].count, 50, 'Only took what fits');
 
@@ -232,7 +235,7 @@ console.log('\nTesting unloadAmmoFromWeapon...');
 
   state = unloadAmmoFromWeapon(state, 'ship1', 0, 30);
 
-  const weapon = state.ships[0].primaryWeapons[0];
+  const weapon = getSlot(state.ships[0].primaryWeapons, 0);
   assert.strictEqual(weapon.currentAmmo, 70, 'Ammo reduced');
   assert.strictEqual(state.storedAmmo.length, 1, 'Ammo added to storage');
   assert.strictEqual(

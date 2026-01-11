@@ -2,6 +2,7 @@
  * Ship Card Component - Compact ship cards for the flight list
  */
 
+import { countOccupied } from '../../campaign/slot-array';
 import type { OwnedShip } from '../../campaign/types';
 import { SHIP_CLASSES } from '../../data/ships';
 import { getShipAbbrev, getShipIconPath, iconErrorHandler } from './viewer';
@@ -26,10 +27,8 @@ export function renderShipCard(
   const totalSecondary = stats?.secondaryBanks.length ?? 0;
 
   // Equipped weapon counts (count non-null slots)
-  const equippedPrimary = ship.primaryWeapons.filter((w) => w !== null).length;
-  const equippedSecondary = ship.secondaryWeapons.filter(
-    (w) => w !== null,
-  ).length;
+  const equippedPrimary = countOccupied(ship.primaryWeapons);
+  const equippedSecondary = countOccupied(ship.secondaryWeapons);
 
   // Warning states for unarmed slots
   const primaryUnarmed = equippedPrimary === 0 && totalPrimary > 0;

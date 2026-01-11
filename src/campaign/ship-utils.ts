@@ -3,6 +3,13 @@
  */
 
 import { SHIP_CLASSES } from '../data/ships';
+import {
+  emptySlotArray,
+  forEachSlot,
+  getOccupiedWeapons,
+  type SlotArray,
+  setSlot,
+} from './slot-array';
 import type {
   EquippedPrimary,
   EquippedSecondary,
@@ -11,18 +18,18 @@ import type {
   StoredWeapon,
 } from './types';
 
-/** Create empty weapon slot arrays for a ship class (null-filled) */
+/** Create empty weapon slot arrays for a ship class */
 export function createEmptyWeaponSlots(shipClass: string): {
-  primaryWeapons: (EquippedPrimary | null)[];
-  secondaryWeapons: (EquippedSecondary | null)[];
+  primaryWeapons: SlotArray<EquippedPrimary>;
+  secondaryWeapons: SlotArray<EquippedSecondary>;
 } {
   const stats = SHIP_CLASSES[shipClass.toLowerCase()];
   const primaryCount = stats?.primaryBanks.length ?? 0;
   const secondaryCount = stats?.secondaryBanks.length ?? 0;
 
   return {
-    primaryWeapons: Array(primaryCount).fill(null),
-    secondaryWeapons: Array(secondaryCount).fill(null),
+    primaryWeapons: emptySlotArray<EquippedPrimary>(primaryCount),
+    secondaryWeapons: emptySlotArray<EquippedSecondary>(secondaryCount),
   };
 }
 
@@ -38,12 +45,10 @@ export function cloneShipWithPrimary(
   weaponIndex: number,
   newWeapon: EquippedPrimary,
 ): OwnedShip {
-  const newPrimaries = [...ship.primaryWeapons];
-  newPrimaries[weaponIndex] = newWeapon;
   return {
     id: ship.id,
     shipClass: ship.shipClass,
-    primaryWeapons: newPrimaries,
+    primaryWeapons: setSlot(ship.primaryWeapons, weaponIndex, newWeapon),
     secondaryWeapons: ship.secondaryWeapons,
     pilot: ship.pilot,
   };
@@ -55,13 +60,11 @@ export function cloneShipWithSecondary(
   weaponIndex: number,
   newWeapon: EquippedSecondary,
 ): OwnedShip {
-  const newSecondaries = [...ship.secondaryWeapons];
-  newSecondaries[weaponIndex] = newWeapon;
   return {
     id: ship.id,
     shipClass: ship.shipClass,
     primaryWeapons: ship.primaryWeapons,
-    secondaryWeapons: newSecondaries,
+    secondaryWeapons: setSlot(ship.secondaryWeapons, weaponIndex, newWeapon),
     pilot: ship.pilot,
   };
 }
@@ -130,38 +133,33 @@ export function transferShipWeaponsToStorage(
   currentStoredAmmo: StoredAmmo[],
 ): WeaponTransferResult {
   // Move primary weapons to storage (discrete items, don't stack)
-  // Filter out null slots
-  const primaryWeapons: StoredWeapon[] = ship.primaryWeapons
-    .filter((w): w is EquippedPrimary => w !== null)
-    .map((w) => ({
-      weaponType: w.weaponType,
-      category: 'primary' as const,
-      count: 1,
-    }));
+  const primaryWeapons: StoredWeapon[] = getOccupiedWeapons(
+    ship.primaryWeapons,
+  ).map((w) => ({
+    weaponType: w.weaponType,
+    category: 'primary' as const,
+    count: 1,
+  }));
 
   // Merge secondary weapons into storage (stack with existing)
-  // Filter out null slots
   let storedWeapons = [...currentStoredWeapons, ...primaryWeapons];
-  for (const secondary of ship.secondaryWeapons) {
-    if (secondary === null) continue;
+  forEachSlot(ship.secondaryWeapons, (secondary) => {
     storedWeapons = mergeSecondaryIntoStorage(
       storedWeapons,
       secondary.weaponType,
       secondary.count,
     );
-  }
+  });
 
   // Transfer ammo from ballistic weapons to storage
-  // Filter out null slots
   let storedAmmo = currentStoredAmmo;
-  for (const primary of ship.primaryWeapons) {
-    if (primary === null) continue;
+  forEachSlot(ship.primaryWeapons, (primary) => {
     storedAmmo = mergeAmmoIntoStorage(
       storedAmmo,
       primary.weaponType,
       primary.currentAmmo ?? 0,
     );
-  }
+  });
 
   return { storedWeapons, storedAmmo };
 }

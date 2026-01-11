@@ -6,6 +6,7 @@
 
 import { weaponUsesAmmo } from '../data/prices';
 import { mergeAmmoIntoStorage, mergeSecondaryIntoStorage } from './ship-utils';
+import { clearSlot, getSlot, setSlot } from './slot-array';
 import { getMaxAmmoCapacity, getMaxMissileCapacity } from './store/store-ammo';
 import type {
   CampaignState,
@@ -30,11 +31,11 @@ export function unequipPrimary(
   slotIndex: number,
 ): CampaignState {
   const ship = state.ships.find((s) => s.id === shipId);
-  if (!ship || slotIndex < 0 || slotIndex >= ship.primaryWeapons.length) {
+  if (!ship || slotIndex < 0 || slotIndex >= ship.primaryWeapons.slotCount) {
     return state;
   }
 
-  const weapon = ship.primaryWeapons[slotIndex];
+  const weapon = getSlot(ship.primaryWeapons, slotIndex);
   if (!weapon) return state; // Slot already empty
 
   // Add weapon to storage
@@ -44,10 +45,8 @@ export function unequipPrimary(
     count: 1,
   };
 
-  // Set slot to null (preserves array length and slot positions)
-  const updatedWeapons = ship.primaryWeapons.map((w, i) =>
-    i === slotIndex ? null : w,
-  );
+  // Clear the slot (preserves array length and slot positions)
+  const updatedWeapons = clearSlot(ship.primaryWeapons, slotIndex);
 
   // Transfer ammo to storage if weapon had any
   const newStoredAmmo = mergeAmmoIntoStorage(
@@ -73,17 +72,15 @@ export function unequipSecondary(
   slotIndex: number,
 ): CampaignState {
   const ship = state.ships.find((s) => s.id === shipId);
-  if (!ship || slotIndex < 0 || slotIndex >= ship.secondaryWeapons.length) {
+  if (!ship || slotIndex < 0 || slotIndex >= ship.secondaryWeapons.slotCount) {
     return state;
   }
 
-  const weapon = ship.secondaryWeapons[slotIndex];
+  const weapon = getSlot(ship.secondaryWeapons, slotIndex);
   if (!weapon) return state; // Slot already empty
 
-  // Set slot to null (preserves array length and slot positions)
-  const updatedWeapons = ship.secondaryWeapons.map((w, i) =>
-    i === slotIndex ? null : w,
-  );
+  // Clear the slot (preserves array length and slot positions)
+  const updatedWeapons = clearSlot(ship.secondaryWeapons, slotIndex);
 
   // Merge into existing storage stack or create new entry
   const newStoredWeapons = mergeSecondaryIntoStorage(
@@ -116,10 +113,10 @@ export function equipPrimary(
   }
 
   // Validate slot index and ensure slot is empty
-  if (slotIndex < 0 || slotIndex >= ship.primaryWeapons.length) {
+  if (slotIndex < 0 || slotIndex >= ship.primaryWeapons.slotCount) {
     return state;
   }
-  if (ship.primaryWeapons[slotIndex] !== null) {
+  if (getSlot(ship.primaryWeapons, slotIndex) !== undefined) {
     return state; // Slot already occupied
   }
 
@@ -162,9 +159,7 @@ export function equipPrimary(
     : { weaponType: stored.weaponType, bankSize };
 
   // Assign to specific slot
-  const updatedWeapons = ship.primaryWeapons.map((w, i) =>
-    i === slotIndex ? equipped : w,
-  );
+  const updatedWeapons = setSlot(ship.primaryWeapons, slotIndex, equipped);
 
   // Remove weapon from storage
   const updatedStorage = state.storedWeapons.filter(
@@ -197,10 +192,10 @@ export function equipSecondary(
   }
 
   // Validate slot index and ensure slot is empty
-  if (slotIndex < 0 || slotIndex >= ship.secondaryWeapons.length) {
+  if (slotIndex < 0 || slotIndex >= ship.secondaryWeapons.slotCount) {
     return state;
   }
-  if (ship.secondaryWeapons[slotIndex] !== null) {
+  if (getSlot(ship.secondaryWeapons, slotIndex) !== undefined) {
     return state; // Slot already occupied
   }
 
@@ -223,9 +218,7 @@ export function equipSecondary(
   };
 
   // Assign to specific slot
-  const updatedWeapons = ship.secondaryWeapons.map((w, i) =>
-    i === slotIndex ? equipped : w,
-  );
+  const updatedWeapons = setSlot(ship.secondaryWeapons, slotIndex, equipped);
 
   // Update storage - remove if empty, reduce count if remainder
   let updatedStorage: StoredWeapon[];

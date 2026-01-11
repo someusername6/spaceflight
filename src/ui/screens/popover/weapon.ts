@@ -5,6 +5,7 @@
  */
 
 import { unequipPrimary, unequipSecondary } from '../../../campaign/loadout';
+import { getSlot } from '../../../campaign/slot-array';
 import {
   loadAmmoToWeapon,
   loadMissilesToWeapon,
@@ -153,7 +154,9 @@ function bindPopoverEvents(
         // Check if we unloaded all missiles - auto-unequip
         if (slotType === 'secondary') {
           const ship = newState.ships.find((s) => s.id === shipId);
-          const weapon = ship?.secondaryWeapons[slotIndex];
+          const weapon = ship
+            ? getSlot(ship.secondaryWeapons, slotIndex)
+            : undefined;
           if (weapon && weapon.count === 0) {
             newState = unequipSecondary(newState, shipId, slotIndex);
             onStateUpdate(newState);
@@ -170,8 +173,8 @@ function bindPopoverEvents(
         if (ship && activePicker) {
           const weapon =
             slotType === 'primary'
-              ? ship.primaryWeapons[slotIndex]
-              : ship.secondaryWeapons[slotIndex];
+              ? getSlot(ship.primaryWeapons, slotIndex)
+              : getSlot(ship.secondaryWeapons, slotIndex);
           if (weapon) {
             const content =
               slotType === 'primary'

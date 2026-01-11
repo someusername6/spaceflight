@@ -45,6 +45,7 @@ const QUICK_TESTS = [
   'ai/test-aim-error-angular.mjs',
 
   // Campaign logic tests
+  'campaign/test-slot-array.mjs',
   'campaign/test-store-ammo.mjs',
   'campaign/test-resupply-needs.mjs',
   'campaign/test-resupply-ship.mjs',

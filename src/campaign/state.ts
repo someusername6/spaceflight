@@ -6,6 +6,7 @@ import { createDerivedPRNG, random } from '../core/prng';
 import { getArchetype } from '../factories/ship';
 import { generateCampaignId } from './id-generator';
 import { generateInitialRecruits } from './recruits';
+import { createSlotArray, mapSlots } from './slot-array';
 import { createInitialStoreStock, generateSectorStock } from './store/store';
 import { getMaxMissileCapacity } from './store/store-ammo';
 import { applyStoreTrickle } from './store/store-trickle';
@@ -46,8 +47,8 @@ export function createShipFromArchetype(
   return {
     id,
     shipClass: stats.shipClassName, // Use the underlying ship class
-    primaryWeapons,
-    secondaryWeapons,
+    primaryWeapons: createSlotArray(primaryWeapons),
+    secondaryWeapons: createSlotArray(secondaryWeapons),
     pilot,
   };
 }
@@ -289,25 +290,24 @@ export function applyAmmoUsage(
     const extracted = ammoByShipId.get(ship.id);
     if (!extracted) return ship;
 
-    // Update primary weapon ammo (skip null slots)
-    const updatedPrimaries = ship.primaryWeapons.map((primary, index) => {
-      if (primary === null) return null;
+    // Update primary weapon ammo (mapSlots skips null slots automatically)
+    const updatedPrimaries = mapSlots(ship.primaryWeapons, (primary, index) => {
       const remaining = extracted.primaryAmmo.get(index);
-      if (remaining !== undefined) {
-        return { ...primary, currentAmmo: remaining };
-      }
-      return primary;
+      return remaining !== undefined
+        ? { ...primary, currentAmmo: remaining }
+        : primary;
     });
 
-    // Update secondary weapon ammo (skip null slots)
-    const updatedSecondaries = ship.secondaryWeapons.map((secondary, index) => {
-      if (secondary === null) return null;
-      const remaining = extracted.secondaryAmmo.get(index);
-      if (remaining !== undefined) {
-        return { ...secondary, count: remaining };
-      }
-      return secondary;
-    });
+    // Update secondary weapon ammo (mapSlots skips null slots automatically)
+    const updatedSecondaries = mapSlots(
+      ship.secondaryWeapons,
+      (secondary, index) => {
+        const remaining = extracted.secondaryAmmo.get(index);
+        return remaining !== undefined
+          ? { ...secondary, count: remaining }
+          : secondary;
+      },
+    );
 
     return {
       ...ship,

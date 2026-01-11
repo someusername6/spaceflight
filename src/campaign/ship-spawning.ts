@@ -38,12 +38,8 @@ import {
   createPrimaryWeaponsFromCampaign,
   createSecondaryWeaponsFromCampaign,
 } from './campaign-weapons';
+import { getOccupiedWeapons } from './slot-array';
 import type { OwnedShip } from './types';
-
-/** Filter null slots from weapon arrays for ECS conversion */
-function filterNullWeapons<T>(weapons: (T | null)[]): T[] {
-  return weapons.filter((w): w is T => w !== null);
-}
 
 /** Spawn player ship from campaign state */
 export function spawnPlayerFromCampaign(
@@ -108,8 +104,8 @@ export function spawnPlayerFromCampaign(
   addComponent(world, entity, createHeat(stats.maxHeat, stats.coolingRate));
 
   // Use campaign loadout instead of archetype defaults (filter out empty slots)
-  const primaries = filterNullWeapons(ship.primaryWeapons);
-  const secondaries = filterNullWeapons(ship.secondaryWeapons);
+  const primaries = getOccupiedWeapons(ship.primaryWeapons);
+  const secondaries = getOccupiedWeapons(ship.secondaryWeapons);
 
   addComponent(world, entity, createPrimaryWeaponsFromCampaign(primaries));
 
@@ -208,8 +204,8 @@ export function spawnWingmanFromCampaign(
   addComponent(world, entity, createHeat(stats.maxHeat, stats.coolingRate));
 
   // Use campaign loadout (filter out empty slots)
-  const primaries = filterNullWeapons(ship.primaryWeapons);
-  const secondaries = filterNullWeapons(ship.secondaryWeapons);
+  const primaries = getOccupiedWeapons(ship.primaryWeapons);
+  const secondaries = getOccupiedWeapons(ship.secondaryWeapons);
 
   addComponent(world, entity, createPrimaryWeaponsFromCampaign(primaries));
 

@@ -4,6 +4,7 @@
 
 import assert from 'node:assert';
 import { resupplyShipConstrained } from '../../../src/campaign/resupply/resupply-constrained.ts';
+import { createSlotArray, getSlot } from '../../../src/campaign/slot-array.ts';
 import { getMaxAmmoCapacity } from '../../../src/campaign/store/store-ammo.ts';
 
 /** Create a test campaign state */
@@ -26,17 +27,17 @@ function createTestState(options = {}) {
       {
         id: 'ship1',
         shipClass: 'firefly',
-        primaryWeapons: [
+        primaryWeapons: createSlotArray([
           { weaponType: 'autocannon', bankSize: 1, currentAmmo },
-        ],
-        secondaryWeapons: [
+        ]),
+        secondaryWeapons: createSlotArray([
           {
             weaponType: 'heatseeking',
             bankSize: 1,
             count: missileCount,
             maxCount: maxMissiles,
           },
-        ],
+        ]),
         pilot: { id: 'commander1', name: 'Commander' },
         hullDamage: 0,
         isPlayerShip: true,
@@ -90,7 +91,7 @@ console.log('Testing resupplyShipConstrained storage priority...');
 
   const ship = result.state.ships.find((s) => s.id === 'ship1');
   assert.strictEqual(
-    ship.primaryWeapons[0].currentAmmo,
+    getSlot(ship.primaryWeapons, 0).currentAmmo,
     maxAmmo,
     'Ship ammo is full',
   );
@@ -164,10 +165,12 @@ console.log('\nTesting resupplyShipConstrained missile storage priority...');
       {
         id: 'ship1',
         shipClass: 'firefly',
-        primaryWeapons: [{ weaponType: 'plasma', bankSize: 1 }],
-        secondaryWeapons: [
+        primaryWeapons: createSlotArray([
+          { weaponType: 'plasma', bankSize: 1 },
+        ]),
+        secondaryWeapons: createSlotArray([
           { weaponType: 'heatseeking', bankSize: 1, count: 2, maxCount: 4 },
-        ],
+        ]),
         pilot: { id: 'commander1', name: 'Commander' },
         hullDamage: 0,
       },
@@ -205,7 +208,7 @@ console.log('\nTesting resupplyShipConstrained missile storage priority...');
 
   const ship = result.state.ships.find((s) => s.id === 'ship1');
   assert.strictEqual(
-    ship.secondaryWeapons[0].count,
+    getSlot(ship.secondaryWeapons, 0).count,
     4,
     'Ship missiles are full',
   );

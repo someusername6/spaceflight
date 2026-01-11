@@ -11,6 +11,7 @@ import {
   unequipPrimary,
   unequipSecondary,
 } from '../../../campaign/loadout';
+import { getSlot } from '../../../campaign/slot-array';
 import { getMaxMissileCapacity } from '../../../campaign/store/store-ammo';
 import type { CampaignState, EquippedSecondary } from '../../../campaign/types';
 import { MISSILES } from '../../../data/missiles';
@@ -122,8 +123,8 @@ export function showWeaponSwapPicker(
 
   const currentWeapon =
     slotType === 'primary'
-      ? ship.primaryWeapons[slotIndex]
-      : ship.secondaryWeapons[slotIndex];
+      ? getSlot(ship.primaryWeapons, slotIndex)
+      : getSlot(ship.secondaryWeapons, slotIndex);
 
   if (!currentWeapon) return;
 

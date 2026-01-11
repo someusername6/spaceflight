@@ -2,6 +2,7 @@
  * Shared ship list item rendering - used by squadron list and squad selection.
  */
 
+import { countOccupied, forEachSlot } from '../../campaign/slot-array';
 import { getMaxAmmoCapacity } from '../../campaign/store/store-ammo';
 import type { OwnedShip } from '../../campaign/types';
 import { SHIP_CLASSES } from '../../data/ships';
@@ -22,33 +23,31 @@ function renderBankIndicator(size: number, cssClass: string): string {
 /** Render primary weapons summary for a ship (HTML with colored indicators) */
 export function renderPrimarySummary(ship: OwnedShip): string {
   const parts: string[] = [];
-  for (const primary of ship.primaryWeapons) {
-    if (primary) {
-      const indicator = renderBankIndicator(primary.bankSize, 'primary');
-      const name = capitalize(primary.weaponType);
-      if (primary.currentAmmo !== undefined) {
-        const max = getMaxAmmoCapacity(primary.weaponType, primary.bankSize);
-        parts.push(`${indicator} ${name} (${primary.currentAmmo}/${max})`);
-      } else {
-        parts.push(`${indicator} ${name}`);
-      }
+  forEachSlot(ship.primaryWeapons, (primary) => {
+    const indicator = renderBankIndicator(primary.bankSize, 'primary');
+    const name = capitalize(primary.weaponType);
+    if (primary.currentAmmo !== undefined) {
+      const max = getMaxAmmoCapacity(primary.weaponType, primary.bankSize);
+      parts.push(`${indicator} ${name} (${primary.currentAmmo}/${max})`);
+    } else {
+      parts.push(`${indicator} ${name}`);
     }
-  }
+  });
   return parts.length > 0 ? parts.join(', ') : 'No primary';
 }
 
 /** Render secondary weapons summary for a ship (HTML with colored indicators) */
 export function renderSecondarySummary(ship: OwnedShip): string {
   const parts: string[] = [];
-  for (const secondary of ship.secondaryWeapons) {
-    if (secondary && secondary.count > 0) {
+  forEachSlot(ship.secondaryWeapons, (secondary) => {
+    if (secondary.count > 0) {
       const indicator = renderBankIndicator(secondary.bankSize, 'secondary');
       const name = capitalize(secondary.weaponType);
       parts.push(
         `${indicator} ${name} (${secondary.count}/${secondary.maxCount})`,
       );
     }
-  }
+  });
   return parts.length > 0 ? parts.join(', ') : 'No secondary';
 }
 
@@ -170,10 +169,8 @@ export function getWeaponStatus(ship: OwnedShip): {
   const stats = SHIP_CLASSES[ship.shipClass];
   const totalPrimary = stats?.primaryBanks.length ?? 0;
   const totalSecondary = stats?.secondaryBanks.length ?? 0;
-  const equippedPrimary = ship.primaryWeapons.filter((w) => w !== null).length;
-  const equippedSecondary = ship.secondaryWeapons.filter(
-    (w) => w !== null,
-  ).length;
+  const equippedPrimary = countOccupied(ship.primaryWeapons);
+  const equippedSecondary = countOccupied(ship.secondaryWeapons);
 
   return {
     primary: `${equippedPrimary}/${totalPrimary}`,

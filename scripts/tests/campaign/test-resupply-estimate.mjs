@@ -9,6 +9,7 @@ import {
   getAttentionReasons,
   resupplyAllShipsConstrained,
 } from '../../../src/campaign/resupply/resupply-constrained.ts';
+import { createSlotArray, getSlot } from '../../../src/campaign/slot-array.ts';
 import { getMaxAmmoCapacity } from '../../../src/campaign/store/store-ammo.ts';
 
 /** Create a test campaign state */
@@ -31,17 +32,17 @@ function createTestState(options = {}) {
       {
         id: 'ship1',
         shipClass: 'firefly',
-        primaryWeapons: [
+        primaryWeapons: createSlotArray([
           { weaponType: 'autocannon', bankSize: 1, currentAmmo },
-        ],
-        secondaryWeapons: [
+        ]),
+        secondaryWeapons: createSlotArray([
           {
             weaponType: 'heatseeking',
             bankSize: 1,
             count: missileCount,
             maxCount: maxMissiles,
           },
-        ],
+        ]),
         pilot: { id: 'commander1', name: 'Commander' },
         hullDamage: 0,
         isPlayerShip: true,
@@ -79,20 +80,20 @@ console.log('Testing resupplyAllShipsConstrained commander priority...');
       {
         id: 'ship2',
         shipClass: 'firefly',
-        primaryWeapons: [
+        primaryWeapons: createSlotArray([
           { weaponType: 'autocannon', bankSize: 1, currentAmmo: 0 },
-        ],
-        secondaryWeapons: [],
+        ]),
+        secondaryWeapons: createSlotArray([]),
         pilot: { id: 'pilot2', name: 'Wingman' },
         hullDamage: 0,
       },
       {
         id: 'ship1',
         shipClass: 'firefly',
-        primaryWeapons: [
+        primaryWeapons: createSlotArray([
           { weaponType: 'autocannon', bankSize: 1, currentAmmo: 0 },
-        ],
-        secondaryWeapons: [],
+        ]),
+        secondaryWeapons: createSlotArray([]),
         pilot: { id: 'commander1', name: 'Commander' },
         hullDamage: 0,
       },
@@ -118,14 +119,14 @@ console.log('Testing resupplyAllShipsConstrained commander priority...');
   );
   const maxAmmo = getMaxAmmoCapacity('autocannon', 1);
   assert.strictEqual(
-    commanderShip.primaryWeapons[0].currentAmmo,
+    getSlot(commanderShip.primaryWeapons, 0).currentAmmo,
     maxAmmo,
     'Commander ship fully supplied',
   );
 
   const wingmanShip = result.state.ships.find((s) => s.pilot?.id === 'pilot2');
   assert.strictEqual(
-    wingmanShip.primaryWeapons[0].currentAmmo,
+    getSlot(wingmanShip.primaryWeapons, 0).currentAmmo,
     100,
     'Wingman got remaining stock',
   );
@@ -219,19 +220,19 @@ console.log('\nTesting estimateAllShipsResupplyCost...');
       {
         id: 'ship1',
         shipClass: 'firefly',
-        primaryWeapons: [
+        primaryWeapons: createSlotArray([
           { weaponType: 'autocannon', bankSize: 1, currentAmmo: 100 },
-        ],
-        secondaryWeapons: [],
+        ]),
+        secondaryWeapons: createSlotArray([]),
         pilot: { id: 'commander1', name: 'Commander' },
       },
       {
         id: 'ship2',
         shipClass: 'firefly',
-        primaryWeapons: [
+        primaryWeapons: createSlotArray([
           { weaponType: 'autocannon', bankSize: 1, currentAmmo: 150 },
-        ],
-        secondaryWeapons: [],
+        ]),
+        secondaryWeapons: createSlotArray([]),
         pilot: { id: 'pilot2', name: 'Wingman' },
       },
     ],
@@ -272,8 +273,13 @@ console.log('\nTesting getAttentionReasons...');
   // Ship with empty primary slot
   const emptyPrimaryShip = {
     id: 'ship1',
-    primaryWeapons: [null, { weaponType: 'plasma', bankSize: 1 }],
-    secondaryWeapons: [{ weaponType: 'heatseeking', count: 4, maxCount: 4 }],
+    primaryWeapons: createSlotArray([
+      null,
+      { weaponType: 'plasma', bankSize: 1 },
+    ]),
+    secondaryWeapons: createSlotArray([
+      { weaponType: 'heatseeking', count: 4, maxCount: 4 },
+    ]),
   };
   const emptyPrimaryReasons = getAttentionReasons(emptyPrimaryShip);
   assert.ok(
@@ -284,10 +290,12 @@ console.log('\nTesting getAttentionReasons...');
   // Ship with low ammo
   const lowAmmoShip = {
     id: 'ship2',
-    primaryWeapons: [
+    primaryWeapons: createSlotArray([
       { weaponType: 'autocannon', bankSize: 1, currentAmmo: 50 },
-    ],
-    secondaryWeapons: [{ weaponType: 'heatseeking', count: 4, maxCount: 4 }],
+    ]),
+    secondaryWeapons: createSlotArray([
+      { weaponType: 'heatseeking', count: 4, maxCount: 4 },
+    ]),
   };
   const lowAmmoReasons = getAttentionReasons(lowAmmoShip);
   assert.ok(
@@ -298,8 +306,10 @@ console.log('\nTesting getAttentionReasons...');
   // Ship with low missiles
   const lowMissilesShip = {
     id: 'ship3',
-    primaryWeapons: [{ weaponType: 'plasma', bankSize: 1 }],
-    secondaryWeapons: [{ weaponType: 'heatseeking', count: 1, maxCount: 4 }],
+    primaryWeapons: createSlotArray([{ weaponType: 'plasma', bankSize: 1 }]),
+    secondaryWeapons: createSlotArray([
+      { weaponType: 'heatseeking', count: 1, maxCount: 4 },
+    ]),
   };
   const lowMissilesReasons = getAttentionReasons(lowMissilesShip);
   assert.ok(
@@ -310,10 +320,12 @@ console.log('\nTesting getAttentionReasons...');
   // Fully equipped ship - no reasons
   const fullShip = {
     id: 'ship4',
-    primaryWeapons: [
+    primaryWeapons: createSlotArray([
       { weaponType: 'autocannon', bankSize: 1, currentAmmo: 200 },
-    ],
-    secondaryWeapons: [{ weaponType: 'heatseeking', count: 4, maxCount: 4 }],
+    ]),
+    secondaryWeapons: createSlotArray([
+      { weaponType: 'heatseeking', count: 4, maxCount: 4 },
+    ]),
   };
   const fullReasons = getAttentionReasons(fullShip);
   assert.strictEqual(fullReasons.length, 0, 'No reasons for full ship');

@@ -5,6 +5,7 @@
 import { getMissileDisplayName } from '../../data/missiles';
 import { getAmmoPrice, getSecondaryPrice } from '../../data/prices';
 import { getAmmoDisplayName } from '../../data/weapons';
+import { mapSlots } from '../slot-array';
 import type { CampaignState, StoredAmmo, StoredWeapon } from '../types';
 import { getMaxPrimaryAmmo, getShipResupplyNeeds } from './resupply-needs';
 
@@ -246,8 +247,8 @@ export function resupplyShipConstrained(
   }
 
   // Apply ammo/missiles to ship
-  const newPrimaries = ship.primaryWeapons.map((primary) => {
-    if (primary === null || primary.currentAmmo === undefined) return primary;
+  const newPrimaries = mapSlots(ship.primaryWeapons, (primary) => {
+    if (primary.currentAmmo === undefined) return primary;
     const toAdd = ammoToAdd.get(primary.weaponType) ?? 0;
     if (toAdd === 0) return primary;
 
@@ -258,8 +259,7 @@ export function resupplyShipConstrained(
     return { ...primary, currentAmmo: primary.currentAmmo + actualAdd };
   });
 
-  const newSecondaries = ship.secondaryWeapons.map((secondary) => {
-    if (secondary === null) return secondary;
+  const newSecondaries = mapSlots(ship.secondaryWeapons, (secondary) => {
     const toAdd = missilesToAdd.get(secondary.weaponType) ?? 0;
     if (toAdd === 0) return secondary;
 

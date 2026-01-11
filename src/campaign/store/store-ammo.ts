@@ -5,6 +5,7 @@
 import { getAmmoPrice } from '../../data/prices';
 import { PRIMARY_WEAPONS } from '../../data/weapons';
 import { cloneShipWithPrimary, mergeAmmoIntoStorage } from '../ship-utils';
+import { getSlot } from '../slot-array';
 import type { CampaignState, EquippedPrimary } from '../types';
 
 // Re-export missile functions for backward compatibility
@@ -115,7 +116,7 @@ export function loadAmmoToWeapon(
   const ship = state.ships[shipIndex];
   if (!ship) return state;
 
-  const weapon = ship.primaryWeapons[weaponIndex];
+  const weapon = getSlot(ship.primaryWeapons, weaponIndex);
   if (!weapon || weapon.currentAmmo === undefined) return state;
 
   // Calculate max capacity and how much we can load
@@ -178,7 +179,7 @@ export function unloadAmmoFromWeapon(
   const ship = state.ships[shipIndex];
   if (!ship) return state;
 
-  const weapon = ship.primaryWeapons[weaponIndex];
+  const weapon = getSlot(ship.primaryWeapons, weaponIndex);
   if (!weapon || weapon.currentAmmo === undefined) return state;
 
   const toUnload = Math.min(count, weapon.currentAmmo);

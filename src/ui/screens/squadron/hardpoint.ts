@@ -6,6 +6,7 @@
  * up on each bind call to prevent stale closures.
  */
 
+import { getSlot } from '../../../campaign/slot-array';
 import type { CampaignState } from '../../../campaign/types';
 import type { ScreenAPI } from '../../framework/screen';
 import {
@@ -90,8 +91,8 @@ export function bindHardpointEvents(
       // Filled slot: unified popover (hover to preview, click to pin)
       const weapon =
         slotType === 'primary'
-          ? ship.primaryWeapons[slotIndex]
-          : ship.secondaryWeapons[slotIndex];
+          ? getSlot(ship.primaryWeapons, slotIndex)
+          : getSlot(ship.secondaryWeapons, slotIndex);
       if (!weapon) return;
 
       // Hover: show popover preview

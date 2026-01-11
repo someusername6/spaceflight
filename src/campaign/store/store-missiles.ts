@@ -7,6 +7,7 @@ import {
   cloneShipWithSecondary,
   mergeSecondaryIntoStorage,
 } from '../ship-utils';
+import { getSlot } from '../slot-array';
 import type { CampaignState, EquippedSecondary, StoredWeapon } from '../types';
 
 /** Get max missile capacity for a secondary weapon (capacity × bankSize) */
@@ -32,7 +33,7 @@ export function loadMissilesToWeapon(
   const ship = state.ships[shipIndex];
   if (!ship) return state;
 
-  const weapon = ship.secondaryWeapons[weaponIndex];
+  const weapon = getSlot(ship.secondaryWeapons, weaponIndex);
   if (!weapon) return state;
 
   // Calculate space available
@@ -96,7 +97,7 @@ export function unloadMissilesFromWeapon(
   const ship = state.ships[shipIndex];
   if (!ship) return state;
 
-  const weapon = ship.secondaryWeapons[weaponIndex];
+  const weapon = getSlot(ship.secondaryWeapons, weaponIndex);
   if (!weapon) return state;
 
   const toUnload = Math.min(count, weapon.count);
