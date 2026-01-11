@@ -139,7 +139,8 @@ export function updateAlliedDisplay(
   display.container.classList.toggle('has-allies', hasAllies);
 
   for (let i = 0; i < display.allyElements.length; i++) {
-    const el = display.allyElements[i] as AllyElement;
+    const el = display.allyElements[i];
+    if (!el) continue;
     const ally = allies[i];
 
     if (ally) {

@@ -56,7 +56,7 @@ function updateSlotAmmoBar(
   const slot = getActiveSlotElement();
   if (!slot) return;
 
-  const ammoBar = slot.querySelector('.slot-ammo-bar') as HTMLElement;
+  const ammoBar = slot.querySelector<HTMLElement>('.slot-ammo-bar');
   if (!ammoBar) return;
 
   const { current, max } = getWeaponAmmoInfo(weapon, slotType);
@@ -67,7 +67,7 @@ function updateSlotAmmoBar(
       seg.classList.toggle('filled', i < current);
     });
   } else {
-    const fillBar = ammoBar.querySelector('.slot-ammo-fill') as HTMLElement;
+    const fillBar = ammoBar.querySelector<HTMLElement>('.slot-ammo-fill');
     if (fillBar) {
       const fillPercent = max > 0 ? Math.round((current / max) * 100) : 0;
       fillBar.style.width = `${fillPercent}%`;
@@ -105,10 +105,10 @@ function bindPopoverEvents(
   onRerender: () => void,
 ): void {
   // Ammo/missile control buttons
-  popover.querySelectorAll('.manager-btn').forEach((btn) => {
+  popover.querySelectorAll<HTMLElement>('.manager-btn').forEach((btn) => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      const action = (e.currentTarget as HTMLElement).dataset.action;
+      const action = btn.dataset.action;
       if (!action) return;
 
       let newState = state;
@@ -213,7 +213,7 @@ function bindPopoverEvents(
   });
 
   // Change weapon button
-  const changeBtn = popover.querySelector('.btn-change-weapon');
+  const changeBtn = popover.querySelector<HTMLElement>('.btn-change-weapon');
   if (changeBtn) {
     changeBtn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -222,7 +222,7 @@ function bindPopoverEvents(
       const slotEl = getActiveSlotElement();
       if (changeWeaponHandler && slotEl) {
         changeWeaponHandler(
-          e.currentTarget as HTMLElement,
+          changeBtn,
           slotEl,
           state,
           shipId,

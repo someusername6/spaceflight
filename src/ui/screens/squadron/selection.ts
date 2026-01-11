@@ -215,9 +215,8 @@ const SquadSelectionScreen: Screen<SquadState, SquadProps> = {
         capacityBar.setAttribute('aria-valuenow', String(newCount));
 
       // Update launch button
-      const launchBtn = root.querySelector(
-        '#btn-squad-launch',
-      ) as HTMLButtonElement | null;
+      const launchBtn =
+        root.querySelector<HTMLButtonElement>('#btn-squad-launch');
       if (launchBtn) launchBtn.disabled = newCount === 0;
     });
 

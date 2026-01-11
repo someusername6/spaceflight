@@ -173,14 +173,14 @@ export function createHUD(parent: HTMLElement): HUD {
 
   // Cache segment elements (convert NodeList to array)
   const shieldSegments = Array.from(
-    container.querySelectorAll('.shield-bar .segment'),
-  ) as HTMLElement[];
+    container.querySelectorAll<HTMLElement>('.shield-bar .segment'),
+  );
   const hullSegments = Array.from(
-    container.querySelectorAll('.hull-bar .segment'),
-  ) as HTMLElement[];
+    container.querySelectorAll<HTMLElement>('.hull-bar .segment'),
+  );
   const heatSegments = Array.from(
-    container.querySelectorAll('.heat-bar .segment'),
-  ) as HTMLElement[];
+    container.querySelectorAll<HTMLElement>('.heat-bar .segment'),
+  );
 
   // Cleanup function
   const dispose = () => {
@@ -346,6 +346,7 @@ function updateSegmentedBar(segments: HTMLElement[], percentage: number): void {
   const filledCount = Math.round(percentage / SEGMENT_COUNT);
   // Use for loop instead of .forEach() to avoid per-call callback allocation
   for (let i = 0; i < segments.length; i++) {
-    (segments[i] as HTMLElement).classList.toggle('filled', i < filledCount);
+    const segment = segments[i];
+    if (segment) segment.classList.toggle('filled', i < filledCount);
   }
 }

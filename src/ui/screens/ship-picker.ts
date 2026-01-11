@@ -191,15 +191,15 @@ export function showShipPicker(
   picker.style.top = `${top}px`;
 
   // Bind events
-  picker.querySelectorAll('[data-action]').forEach((btn) => {
+  picker.querySelectorAll<HTMLElement>('[data-action]').forEach((btn) => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      const action = (e.currentTarget as HTMLElement).dataset.action;
+      const action = btn.dataset.action;
       let newState = state;
 
       switch (action) {
         case 'swap-to-ship': {
-          const shipId = (e.currentTarget as HTMLElement).dataset.shipId;
+          const shipId = btn.dataset.shipId;
           if (shipId) {
             newState = swapPilotToShip(state, pilotId, shipId);
           }
@@ -207,7 +207,7 @@ export function showShipPicker(
         }
         case 'swap-to-stored-ship': {
           const storedShipIndex = parseInt(
-            (e.currentTarget as HTMLElement).dataset.storedShipIndex ?? '-1',
+            btn.dataset.storedShipIndex ?? '-1',
             10,
           );
           if (storedShipIndex >= 0) {

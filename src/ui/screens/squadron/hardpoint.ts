@@ -75,8 +75,7 @@ export function bindHardpointEvents(
   // Helper to trigger re-render
   const rerender = () => api.setState({});
 
-  element.querySelectorAll('.schematic-slot').forEach((slot) => {
-    const el = slot as HTMLElement;
+  element.querySelectorAll<HTMLElement>('.schematic-slot').forEach((el) => {
     const slotType = el.dataset.type as 'primary' | 'secondary';
     const shipId = el.dataset.ship;
     const slotIndex = Number.parseInt(el.dataset.index ?? '0', 10);

@@ -266,7 +266,7 @@ export function bindSquadronEvents(
   // Weapon badge tooltip positioning (fixed positioning needs JS)
   const TOOLTIP_OFFSET = 12; // Matches --space-3
   api.on('.weapon-badge', 'mouseenter', (_e, el) => {
-    const tooltip = el.querySelector('.weapon-tooltip') as HTMLElement | null;
+    const tooltip = el.querySelector<HTMLElement>('.weapon-tooltip');
     if (!tooltip) return;
 
     const rect = el.getBoundingClientRect();

@@ -184,11 +184,10 @@ export function showWeaponSwapPicker(
 
   // Bind swap events for primary weapons
   if (slotType === 'primary') {
-    submenu.querySelectorAll('.picker-item').forEach((item) => {
+    submenu.querySelectorAll<HTMLElement>('.picker-item').forEach((item) => {
       item.addEventListener('click', (e) => {
         e.stopPropagation();
-        const target = e.currentTarget as HTMLElement;
-        const weaponType = target.dataset.weaponType;
+        const weaponType = item.dataset.weaponType;
         if (!weaponType) return;
 
         const storageIndex = findWeaponIndex(state, weaponType);
@@ -213,13 +212,12 @@ export function showWeaponSwapPicker(
     });
   } else {
     // Bind quantity buttons for secondary weapons
-    submenu.querySelectorAll('.picker-qty-btn').forEach((btn) => {
+    submenu.querySelectorAll<HTMLElement>('.picker-qty-btn').forEach((btn) => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        const target = e.currentTarget as HTMLElement;
-        const action = target.dataset.action;
-        const row = target.closest('.picker-missile-row');
-        const valueEl = row?.querySelector('.picker-qty-value') as HTMLElement;
+        const action = btn.dataset.action;
+        const row = btn.closest<HTMLElement>('.picker-missile-row');
+        const valueEl = row?.querySelector<HTMLElement>('.picker-qty-value');
         if (!valueEl) return;
 
         const max = Number.parseInt(valueEl.dataset.max ?? '1', 10);
@@ -235,41 +233,41 @@ export function showWeaponSwapPicker(
     });
 
     // Bind equip buttons for secondary weapons
-    submenu.querySelectorAll('.picker-equip-btn').forEach((btn) => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const row = (e.currentTarget as HTMLElement).closest(
-          '.picker-missile-row',
-        );
-        if (!row) return;
+    submenu
+      .querySelectorAll<HTMLElement>('.picker-equip-btn')
+      .forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const row = btn.closest<HTMLElement>('.picker-missile-row');
+          if (!row) return;
 
-        const weaponType = (row as HTMLElement).dataset.weaponType;
-        const valueEl = row.querySelector('.picker-qty-value');
-        const count = Number.parseInt(valueEl?.textContent ?? '1', 10);
+          const weaponType = row.dataset.weaponType;
+          const valueEl = row.querySelector('.picker-qty-value');
+          const count = Number.parseInt(valueEl?.textContent ?? '1', 10);
 
-        if (!weaponType) return;
+          if (!weaponType) return;
 
-        const storageIndex = findWeaponIndex(state, weaponType);
-        if (storageIndex < 0) return;
+          const storageIndex = findWeaponIndex(state, weaponType);
+          if (storageIndex < 0) return;
 
-        // Unequip current, then equip new
-        let newState = unequipSecondary(state, shipId, slotIndex);
-        newState = equipSecondary(
-          newState,
-          shipId,
-          storageIndex,
-          slotIndex,
-          bankSize,
-          count,
-        );
+          // Unequip current, then equip new
+          let newState = unequipSecondary(state, shipId, slotIndex);
+          newState = equipSecondary(
+            newState,
+            shipId,
+            storageIndex,
+            slotIndex,
+            bankSize,
+            count,
+          );
 
-        if (newState !== state) {
-          onStateUpdate(newState);
-        }
-        closePopover();
-        onRerender();
+          if (newState !== state) {
+            onStateUpdate(newState);
+          }
+          closePopover();
+          onRerender();
+        });
       });
-    });
   }
 
   // Close submenu on click outside (but not the parent popover)

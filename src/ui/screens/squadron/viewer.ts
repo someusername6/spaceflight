@@ -103,15 +103,15 @@ export function bindViewerTabs(
 
   const listeners: TrackedListener[] = [];
 
-  container.querySelectorAll('.viewer-tab').forEach((tabEl) => {
+  container.querySelectorAll<HTMLElement>('.viewer-tab').forEach((tabEl) => {
     const handler = () => {
-      const tabType = (tabEl as HTMLElement).dataset.tab as ViewerTab;
+      const tabType = tabEl.dataset.tab as ViewerTab;
       if (tabType) {
         onTabChange(tabType);
       }
     };
     tabEl.addEventListener('click', handler);
-    listeners.push({ el: tabEl as HTMLElement, event: 'click', handler });
+    listeners.push({ el: tabEl, event: 'click', handler });
   });
 
   // Store cleanup function for next call

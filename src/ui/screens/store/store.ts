@@ -77,9 +77,9 @@ const StoreScreenComponent: Screen<StoreState, StoreProps> = {
     // Bind navigation bar
     // Note: bindNavBar uses addEventListener directly, so we query for this
     // screen's element to avoid finding hidden screens' nav bars
-    const screenEl = document.querySelector('#screen-store');
+    const screenEl = document.querySelector<HTMLElement>('#screen-store');
     if (screenEl) {
-      bindNavBar(screenEl as HTMLElement, onNavigate);
+      bindNavBar(screenEl, onNavigate);
     }
 
     // Category buttons

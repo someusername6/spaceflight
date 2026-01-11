@@ -92,9 +92,9 @@ export function bindNavBar(
   onNavigate: (destination: NavDestination) => void,
   onPause?: () => void,
 ): void {
-  container.querySelectorAll('.nav-tab').forEach((tab) => {
+  container.querySelectorAll<HTMLElement>('.nav-tab').forEach((tab) => {
     tab.addEventListener('click', () => {
-      const dest = (tab as HTMLElement).dataset.nav as NavDestination;
+      const dest = tab.dataset.nav as NavDestination;
       if (dest) {
         onNavigate(dest);
       }

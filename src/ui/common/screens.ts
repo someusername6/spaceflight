@@ -83,7 +83,7 @@ function getOrCreateScreen(
   screen: Screen,
 ): HTMLElement {
   const id = `screen-${screen}`;
-  let element = manager.container.querySelector(`#${id}`) as HTMLElement | null;
+  let element = manager.container.querySelector<HTMLElement>(`#${id}`);
 
   if (!element) {
     element = document.createElement('div');
@@ -98,9 +98,10 @@ function getOrCreateScreen(
 
 /** Hide all screens */
 function hideAllScreens(manager: ScreenManager): void {
-  const screens = manager.container.querySelectorAll('.game-screen');
+  const screens =
+    manager.container.querySelectorAll<HTMLElement>('.game-screen');
   screens.forEach((el) => {
-    (el as HTMLElement).style.display = 'none';
+    el.style.display = 'none';
   });
 
   // Also hide mission container if it exists

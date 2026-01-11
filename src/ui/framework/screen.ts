@@ -100,6 +100,7 @@ export function createScreen<S, P>(
 
         // Create delegation listener for this event type
         const listener = (e: Event) => {
+          // e.target is EventTarget|null; assertion needed (no generic available)
           const target = e.target as HTMLElement | null;
           if (!target) return;
 
@@ -107,9 +108,9 @@ export function createScreen<S, P>(
           if (!handlers) return;
 
           for (const [sel, h] of handlers) {
-            const matched = target.closest(sel);
+            const matched = target.closest<HTMLElement>(sel);
             if (matched && element.contains(matched)) {
-              h(e, matched as HTMLElement);
+              h(e, matched);
             }
           }
         };
