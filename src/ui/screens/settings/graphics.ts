@@ -57,43 +57,6 @@ export function renderGraphicsTab(showFpsPopover: boolean): string {
   `;
 }
 
-/** Active popover outside click listener */
-let activePopoverListener: ((e: MouseEvent) => void) | null = null;
-
-/** Setup outside click listener for popover */
-export function setupPopoverListener(onClose: () => void): void {
-  cleanupPopoverListener();
-
-  activePopoverListener = (e: MouseEvent) => {
-    const popover = document.getElementById('fps-popover');
-    const trigger = document.getElementById('fps-cap-trigger');
-    if (
-      popover &&
-      trigger &&
-      !popover.contains(e.target as Node) &&
-      !trigger.contains(e.target as Node)
-    ) {
-      cleanupPopoverListener();
-      onClose();
-    }
-  };
-
-  // Delay to avoid catching the opening click
-  setTimeout(() => {
-    if (activePopoverListener) {
-      document.addEventListener('click', activePopoverListener);
-    }
-  }, 0);
-}
-
-/** Cleanup popover outside click listener */
-export function cleanupPopoverListener(): void {
-  if (activePopoverListener) {
-    document.removeEventListener('click', activePopoverListener);
-    activePopoverListener = null;
-  }
-}
-
 /** Position the FPS popover below its trigger */
 export function positionFpsPopover(): void {
   const trigger = document.getElementById('fps-cap-trigger');

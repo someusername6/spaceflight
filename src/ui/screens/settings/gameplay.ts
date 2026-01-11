@@ -57,43 +57,6 @@ export function renderGameplayTab(showAutoaimPopover: boolean): string {
   `;
 }
 
-/** Active popover outside click listener */
-let activeAutoaimPopoverListener: ((e: MouseEvent) => void) | null = null;
-
-/** Setup outside click listener for autoaim popover */
-export function setupAutoaimPopoverListener(onClose: () => void): void {
-  cleanupAutoaimPopoverListener();
-
-  activeAutoaimPopoverListener = (e: MouseEvent) => {
-    const popover = document.getElementById('autoaim-popover');
-    const trigger = document.getElementById('autoaim-trigger');
-    if (
-      popover &&
-      trigger &&
-      !popover.contains(e.target as Node) &&
-      !trigger.contains(e.target as Node)
-    ) {
-      cleanupAutoaimPopoverListener();
-      onClose();
-    }
-  };
-
-  // Delay to avoid catching the opening click
-  setTimeout(() => {
-    if (activeAutoaimPopoverListener) {
-      document.addEventListener('click', activeAutoaimPopoverListener);
-    }
-  }, 0);
-}
-
-/** Cleanup autoaim popover outside click listener */
-export function cleanupAutoaimPopoverListener(): void {
-  if (activeAutoaimPopoverListener) {
-    document.removeEventListener('click', activeAutoaimPopoverListener);
-    activeAutoaimPopoverListener = null;
-  }
-}
-
 /** Position the autoaim popover below its trigger */
 export function positionAutoaimPopover(): void {
   const trigger = document.getElementById('autoaim-trigger');

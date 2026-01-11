@@ -24,109 +24,47 @@ import {
   type ScreenAPI,
   type ScreenHandle,
 } from '../../framework/screen';
-import { renderControlsTab } from './controls';
+import { positionAutoaimPopover } from './gameplay';
+import { positionFpsPopover } from './graphics';
 import {
-  cleanupAutoaimPopoverListener,
-  positionAutoaimPopover,
-  renderGameplayTab,
-  setupAutoaimPopoverListener,
-} from './gameplay';
-import {
-  cleanupPopoverListener,
-  positionFpsPopover,
-  renderGraphicsTab,
-  setupPopoverListener,
-} from './graphics';
+  renderMainView,
+  renderResetConfirmView,
+  type SettingsState,
+  type SettingsTab,
+} from './settings-render';
 
 /** Settings screen callbacks */
 export interface SettingsScreenCallbacks {
   onBack: () => void;
 }
 
-/** Settings tab types */
-type SettingsTab = 'graphics' | 'controls' | 'gameplay';
-
-/** Settings UI state */
-interface SettingsState {
-  selectedTab: SettingsTab;
-  listeningAction: GameAction | null;
-  showResetConfirm: boolean;
-  showFpsPopover: boolean;
-  showAutoaimPopover: boolean;
-}
-
-/** Render the reset confirmation view */
-function renderResetConfirmView(): string {
-  return `
-    <div class="settings-confirm-view">
-      <div class="settings-confirm-content">
-        <div class="settings-confirm-title">Reset All Bindings?</div>
-        <div class="settings-confirm-message">
-          This will restore all key bindings to their default values.
-        </div>
-        <div class="settings-confirm-buttons">
-          <button class="btn btn-large" id="btn-reset-cancel">Cancel</button>
-          <button class="btn btn-large btn-warning" id="btn-reset-confirm">Reset All</button>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-/** Render the tab bar */
-function renderTabBar(selectedTab: SettingsTab): string {
-  return `
-    <nav class="settings-tabs" role="tablist" aria-label="Settings categories">
-      <button class="btn ${selectedTab === 'gameplay' ? 'btn-primary' : ''}"
-              data-tab="gameplay" role="tab" aria-selected="${selectedTab === 'gameplay'}">
-        Gameplay
-      </button>
-      <button class="btn ${selectedTab === 'controls' ? 'btn-primary' : ''}"
-              data-tab="controls" role="tab" aria-selected="${selectedTab === 'controls'}">
-        Controls
-      </button>
-      <button class="btn ${selectedTab === 'graphics' ? 'btn-primary' : ''}"
-              data-tab="graphics" role="tab" aria-selected="${selectedTab === 'graphics'}">
-        Graphics
-      </button>
-    </nav>
-  `;
-}
-
-/** Render main settings view */
-function renderMainView(state: SettingsState): string {
-  let tabContent: string;
-  if (state.selectedTab === 'graphics') {
-    tabContent = renderGraphicsTab(state.showFpsPopover);
-  } else if (state.selectedTab === 'gameplay') {
-    tabContent = renderGameplayTab(state.showAutoaimPopover);
-  } else {
-    tabContent = renderControlsTab(state.listeningAction);
-  }
-
-  return `
-    <div class="settings-container">
-      <header class="panel-header">
-        <h2>Settings</h2>
-      </header>
-
-      ${renderTabBar(state.selectedTab)}
-
-      <div class="settings-content">
-        ${tabContent}
-      </div>
-
-      <footer class="settings-footer">
-        <button class="btn btn-large" id="btn-settings-back">
-          Back
-        </button>
-      </footer>
-    </div>
-  `;
-}
-
-/** Active key listener cleanup (stored outside state for capture phase handling) */
+/**
+ * Active key listener for rebinding controls.
+ * Note: Cannot use api.onGlobal() because it doesn't support capture phase,
+ * which is required to intercept key events before other handlers process them.
+ */
 let activeKeyListener: ((e: KeyboardEvent) => void) | null = null;
+
+/** Register an outside-click handler that closes a popover when clicking outside */
+function registerOutsideClickHandler(
+  api: ScreenAPI<SettingsState>,
+  popoverId: string,
+  triggerId: string,
+  stateKey: 'showFpsPopover' | 'showAutoaimPopover',
+): void {
+  api.onGlobal('click', (e) => {
+    const popover = document.getElementById(popoverId);
+    const trigger = document.getElementById(triggerId);
+    if (
+      popover &&
+      trigger &&
+      !popover.contains(e.target as Node) &&
+      !trigger.contains(e.target as Node)
+    ) {
+      api.setState({ [stateKey]: false });
+    }
+  });
+}
 
 /** Settings screen component */
 const SettingsScreenComponent: Screen<SettingsState, SettingsScreenCallbacks> =
@@ -171,7 +109,6 @@ const SettingsScreenComponent: Screen<SettingsState, SettingsScreenCallbacks> =
       // Frame rate cap popover trigger (graphics tab)
       api.on('#fps-cap-trigger', 'click', (e) => {
         e.stopPropagation();
-        cleanupPopoverListener();
         api.setState({ showFpsPopover: !state.showFpsPopover });
       });
 
@@ -183,33 +120,38 @@ const SettingsScreenComponent: Screen<SettingsState, SettingsScreenCallbacks> =
         if (fps !== undefined) {
           const value = Number.parseInt(fps, 10) as FrameRateCap;
           setFrameRateCap(value);
-          cleanupPopoverListener();
           api.setState({ showFpsPopover: false });
         } else if (autoaim !== undefined) {
           const value = Number.parseFloat(autoaim) as PlayerAutoaim;
           setPlayerAutoaim(value);
-          cleanupAutoaimPopoverListener();
           api.setState({ showAutoaimPopover: false });
         }
       });
 
       // Close FPS popover on outside click and position it
       if (state.showFpsPopover) {
-        setupPopoverListener(() => api.setState({ showFpsPopover: false }));
+        registerOutsideClickHandler(
+          api,
+          'fps-popover',
+          'fps-cap-trigger',
+          'showFpsPopover',
+        );
         positionFpsPopover();
       }
 
       // Autoaim popover trigger (gameplay tab)
       api.on('#autoaim-trigger', 'click', (e) => {
         e.stopPropagation();
-        cleanupAutoaimPopoverListener();
         api.setState({ showAutoaimPopover: !state.showAutoaimPopover });
       });
 
       // Close autoaim popover on outside click and position it
       if (state.showAutoaimPopover) {
-        setupAutoaimPopoverListener(() =>
-          api.setState({ showAutoaimPopover: false }),
+        registerOutsideClickHandler(
+          api,
+          'autoaim-popover',
+          'autoaim-trigger',
+          'showAutoaimPopover',
         );
         positionAutoaimPopover();
       }
@@ -387,8 +329,6 @@ export function bindSettingsScreen(
 /** Cleanup settings screen (cancel any listening and reset state) */
 export function cleanupSettingsScreen(): void {
   cleanupKeyListener();
-  cleanupPopoverListener();
-  cleanupAutoaimPopoverListener();
   screenHandle?.destroy();
   screenHandle = null;
 }
