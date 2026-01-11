@@ -33,14 +33,14 @@ export const SHIP_UNLOCK_SECTOR: Record<string, number> = {
 
 /** Sector at which each primary weapon first appears in store */
 export const PRIMARY_UNLOCK_SECTOR: Record<string, number> = {
-  // Sector 1: Basic energy weapons
+  // Sector 1: Starter weapons (one from each category)
   pulse: 1,
   ion: 1,
   plasma: 1,
+  blueLaser: 1, // Beam: long-range sniper
+  autocannon: 1, // Ballistic: close-range brawler
 
   // Sector 2: Mid-tier weapons
-  autocannon: 2,
-  blueLaser: 2,
   greenLaser: 2,
   flak: 2,
 
