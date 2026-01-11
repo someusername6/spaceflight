@@ -8,41 +8,31 @@
 
 ## Executive Summary
 
-The codebase demonstrates **production-quality architecture** with excellent adherence to ECS principles, consistent patterns, and proper memory management. One **critical serialization bug** was discovered that will cause crashes when loading saved games.
+The codebase demonstrates **production-quality architecture** with excellent adherence to ECS principles, consistent patterns, and proper memory management. A critical serialization bug was discovered and fixed (see 1.1).
 
 ### Priority Matrix
 
-| Priority | Issue | Location | Impact |
+| Priority | Issue | Location | Status |
 |----------|-------|----------|--------|
-| **CRITICAL** | SlotArray serialization bug | `slot-array.ts` | Saved games crash on load |
-| Medium | Missing TypeScript strict mode | `tsconfig.json` | Reduced type safety |
-| Low | Inconsistent test organization | `scripts/` | Developer friction |
+| ~~CRITICAL~~ | ~~SlotArray serialization bug~~ | `slot-array.ts` | ✅ Fixed |
+| Medium | Missing TypeScript strict mode | `tsconfig.json` | Open |
+| Low | Inconsistent test organization | `scripts/` | Open |
 
 ---
 
 ## 1. Critical Issues
 
-### 1.1 SlotArray WeakMap Serialization Bug
+### 1.1 SlotArray WeakMap Serialization Bug - ✅ FIXED
 
-**Location:** `src/campaign/slot-array.ts:41`
+**Location:** `src/campaign/slot-array.ts`, `src/campaign/save-system.ts`
 
-**Problem:** The `SlotArray` type uses a WeakMap to store slot metadata, but WeakMaps cannot survive JSON serialization. When a game is saved and loaded:
+**Problem:** The `SlotArray` type used WeakMap storage that didn't survive JSON serialization.
 
-1. `JSON.stringify()` serializes the array but loses WeakMap data
-2. `slotArrayFromJSON()` exists at line 49 but is **never called** in save-system.ts
-3. Accessing weapon slots on a loaded game will crash
-
-**Evidence:**
-```typescript
-// slot-array.ts:14-16
-const slotArrayMeta = new WeakMap<SlotArray<unknown>, SlotArrayMeta>();
-
-// save-system.ts - slotArrayFromJSON() is NOT called during load
-```
-
-**Fix Required:**
-1. In `save-system.ts`, call `slotArrayFromJSON()` when deserializing ships
-2. Ensure all SlotArray fields are properly reconstituted after load
+**Fix (commit 61a5e8b):**
+1. Added `toJSON()` method to SlotArray for automatic serialization
+2. Added `reconstituteSave()` function in save-system.ts to recreate SlotArrays on load
+3. Added v3→v4 migration to handle any corrupted saves from before the fix
+4. SAVE_VERSION incremented to 4
 
 ---
 
@@ -201,22 +191,18 @@ No unnecessary dependencies observed.
 
 ## 7. Recommendations
 
-### Immediate (Critical)
-
-1. **Fix SlotArray serialization** - Add `slotArrayFromJSON()` calls in save-system.ts load path
-
 ### Short-term
 
-2. **Enable strict TypeScript** - Incremental migration to catch null issues
-3. **Standardize test runner** - Pick one pattern for all tests
+1. **Enable strict TypeScript** - Incremental migration to catch null issues
+2. **Standardize test runner** - Pick one pattern for all tests
 
 ### Long-term
 
-4. **Add integration test for save/load cycle** - Would have caught the SlotArray bug
-5. **Document system execution order** - Currently implicit in game-loop.ts
+3. **Add integration test for save/load cycle** - Would have caught the SlotArray bug earlier
+4. **Document system execution order** - Currently implicit in game-loop.ts
 
 ---
 
 ## 8. Conclusion
 
-This is a well-architected game with professional-quality code. The ECS implementation is exemplary, memory management is careful, and UI patterns are consistent. The critical SlotArray bug should be fixed immediately, but otherwise the codebase is in excellent shape for continued development.
+This is a well-architected game with professional-quality code. The ECS implementation is exemplary, memory management is careful, and UI patterns are consistent. All critical issues have been addressed - the codebase is in excellent shape for continued development.
