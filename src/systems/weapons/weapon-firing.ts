@@ -134,6 +134,7 @@ export function fireWeaponsByLinkMode(
       index,
       totalBanks,
       autoaim,
+      target, // Pass target for tracking projectiles (gyrojet)
     );
   }
 }

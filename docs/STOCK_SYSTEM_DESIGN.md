@@ -105,6 +105,7 @@ The cap represents "one sector's worth" of supply - base stock plus 8 missions o
 | autocannon | 200 | 1 |
 | slugCannon | 40 | 2 |
 | flak | 50 | 2 |
+| gyrojet | 30 | 3 |
 | railgun | 20 | 4 |
 | nuclearLance | 1 | 5 |
 
@@ -135,6 +136,7 @@ The cap represents "one sector's worth" of supply - base stock plus 8 missions o
 | redLaser | 3 |
 | lightning | 3 |
 | torch | 3 |
+| gyrojet | 3 |
 | railgun | 4 |
 | nuclearLance | 5 |
 

@@ -155,15 +155,82 @@ describe('Nuclear Lance Weapon', () => {
 });
 
 // ============================================================
+// Gyrojet Weapon
+// ============================================================
+
+describe('Gyrojet Weapon', () => {
+  it('Gyrojet weapon exists', () => {
+    assert.ok(WEAPON_DEFS.gyrojet, 'Gyrojet should exist');
+  });
+
+  it('Gyrojet has correct category', () => {
+    assert.ok(
+      WEAPON_DEFS.gyrojet.category === 'ballistic',
+      'Gyrojet should be ballistic category',
+    );
+  });
+
+  it('Gyrojet has acceleration properties', () => {
+    assert.ok(
+      WEAPON_DEFS.gyrojet.initialSpeed === 200,
+      'Gyrojet initial speed should be 200',
+    );
+    assert.ok(
+      WEAPON_DEFS.gyrojet.projectileSpeed === 1200,
+      'Gyrojet max speed should be 1200',
+    );
+    assert.ok(
+      WEAPON_DEFS.gyrojet.acceleration === 400,
+      'Gyrojet acceleration should be 400',
+    );
+  });
+
+  it('Gyrojet has tracking properties', () => {
+    assert.ok(
+      WEAPON_DEFS.gyrojet.trackingRate === 2,
+      'Gyrojet tracking rate should be 2°/s',
+    );
+    assert.ok(
+      WEAPON_DEFS.gyrojet.trackingCone === 30,
+      'Gyrojet tracking cone should be 30°',
+    );
+  });
+
+  it('Gyrojet has speed-based damage scaling', () => {
+    assert.ok(
+      WEAPON_DEFS.gyrojet.speedDamageScale === true,
+      'Gyrojet should have speed damage scaling',
+    );
+  });
+
+  it('Gyrojet has correct stats', () => {
+    assert.ok(
+      WEAPON_DEFS.gyrojet.range === 1500,
+      'Gyrojet range should be 1500m',
+    );
+    assert.ok(
+      WEAPON_DEFS.gyrojet.damage === 50,
+      'Gyrojet damage at max speed should be 50',
+    );
+    assert.ok(WEAPON_DEFS.gyrojet.ammo === 30, 'Gyrojet should have 30 ammo');
+  });
+
+  it('Gyrojet has 2 shots per second fire rate', () => {
+    const fireRate = 1 / WEAPON_DEFS.gyrojet.fireRate;
+    assertApprox(fireRate, 2, 0.1, 'Gyrojet fire rate');
+  });
+});
+
+// ============================================================
 // Weapon Count Validation
 // ============================================================
 
 describe('Weapon Count Validation', () => {
-  it('All 13 primary weapon types defined', () => {
+  it('All 14 primary weapon types defined', () => {
     const weapons = Object.keys(WEAPON_DEFS);
     assert.ok(
-      weapons.length === 13,
-      `Should have 13 weapons, got ${weapons.length}`,
+      weapons.length === 14,
+      `Should have 14 weapons, got ${weapons.length}`,
     );
   });
 

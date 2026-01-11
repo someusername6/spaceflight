@@ -62,6 +62,7 @@ All missions should average 90-180s victory time.
 | Blue Laser | 180 | 90 | Beam |
 | Green Laser | 200 | 100 | Beam |
 | Flak | 200 | 100 | Ballistic |
+| Gyrojet | 160 | 80 | Ballistic |
 | Lightning | 220 | 110 | Beam |
 | Slug Cannon | 220 | 110 | Ballistic |
 | Red Laser | 250 | 125 | Beam |
@@ -87,6 +88,7 @@ All missions should average 90-180s victory time.
 | Autocannon | 0.1 |
 | Slug Cannon | 1 |
 | Flak | 2 |
+| Gyrojet | 3 |
 | Railgun | 5 |
 | Nuclear Lance | 50 |
 

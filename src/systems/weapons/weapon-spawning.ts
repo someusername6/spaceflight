@@ -13,6 +13,7 @@ import { createFaction } from '../../components/faction';
 import { createHealth } from '../../components/health';
 import { createMissile, type MissileType } from '../../components/missile';
 import type {
+  CreateProjectileOptions,
   ProjectileCategory,
   WeaponName,
 } from '../../components/projectile';
@@ -91,126 +92,73 @@ export function calculateBankOffset(
   return spawnPos;
 }
 
-/** Spawn a projectile entity */
-export function spawnProjectile(
-  world: World,
-  owner: Entity,
-  ownerTransform: Transform,
-  weapon: {
-    name: string;
-    damage: number;
-    projectileSpeed: number;
-    range: number;
-    category?: string; // WeaponCategory includes 'beam' but we filter that out
-    flakRadius?: number;
-    shrapnelCount?: number;
-    shieldDamageMultiplier?: number;
-    ionize?: boolean;
-  },
-  ownerFaction: FactionComponent | undefined,
-  bankIndex = 0,
-  totalBanks = 1,
-): void {
-  const forward = getForward(ownerTransform);
-  const pos = calculateBankOffset(
-    ownerTransform,
-    bankIndex,
-    totalBanks,
-    PROJECTILE_SPAWN_OFFSET,
-  );
-
-  const projectile = createEntity(world);
-  const category: ProjectileCategory =
-    weapon.category === 'ballistic' ? 'ballistic' : 'energy';
-
-  addComponent(world, projectile, createTransform(pos.x, pos.y, pos.z));
-  addComponent(
-    world,
-    projectile,
-    createProjectile(
-      owner,
-      weapon.damage,
-      weapon.projectileSpeed,
-      weapon.range,
-      forward,
-      category,
-      weapon.name as WeaponName,
-      weapon.flakRadius,
-      weapon.shrapnelCount,
-      weapon.shieldDamageMultiplier,
-      weapon.ionize,
-    ),
-  );
-  addComponent(world, projectile, createCollision(PROJECTILE_RADIUS));
-
-  // Projectiles inherit owner's faction
-  if (ownerFaction) {
-    addComponent(world, projectile, createFaction(ownerFaction.faction));
-  }
-
-  // Track per-ship stats
-  recordShotFired(world, owner, weapon.name);
-
-  // Track aggregate stats if enabled (for balance analysis)
-  if (world.systemState.combatStats) {
-    const stats = world.systemState.combatStats;
-    stats.shotsFired[weapon.name] = (stats.shotsFired[weapon.name] || 0) + 1;
-  }
+/** Weapon info for projectile spawning */
+export interface ProjectileWeaponInfo {
+  name: string;
+  damage: number;
+  projectileSpeed: number;
+  range: number;
+  category?: string; // WeaponCategory includes 'beam' but we filter that out
+  flakRadius?: number;
+  shrapnelCount?: number;
+  shieldDamageMultiplier?: number;
+  ionize?: boolean;
+  // Gyrojet-style fields
+  initialSpeed?: number;
+  acceleration?: number;
+  trackingRate?: number;
+  trackingCone?: number;
+  speedDamageScale?: boolean;
+  autoaimFov?: number;
 }
 
-/** Spawn a projectile with aim error and optional autoaim correction */
-export function spawnProjectileWithAimError(
-  world: World,
-  owner: Entity,
-  ownerTransform: Transform,
-  weapon: {
-    name: string;
-    damage: number;
-    projectileSpeed: number;
-    range: number;
-    category?: string;
-    flakRadius?: number;
-    shrapnelCount?: number;
-    autoaimFov?: number;
-    shieldDamageMultiplier?: number;
-    ionize?: boolean;
-  },
-  ownerFaction: FactionComponent | undefined,
-  aimError: AimError | undefined,
-  bankIndex = 0,
-  totalBanks = 1,
-  autoaim?: AutoaimParams,
-): void {
-  const forward = getForward(ownerTransform);
-  const pos = calculateBankOffset(
-    ownerTransform,
-    bankIndex,
-    totalBanks,
-    PROJECTILE_SPAWN_OFFSET,
-  );
-
-  // Apply aim error if present, otherwise use forward direction
-  let direction = aimError ? applyAimError(forward, aimError) : forward;
-
-  // Apply autoaim correction if within cone
-  if (autoaim && autoaim.fovDegrees > 0) {
-    // Calculate direction to intercept point
-    toIntercept.copy(autoaim.interceptPoint).sub(pos).normalize();
-
-    // Check if current aim is within autoaim cone of intercept
-    const dot = direction.dot(toIntercept);
-    const angleRad = Math.acos(Math.max(-1, Math.min(1, dot)));
-    const angleDeg = angleRad * (180 / Math.PI);
-
-    if (angleDeg <= autoaim.fovDegrees) {
-      // Within cone - correct to intercept point
-      direction = toIntercept;
+/** Build gyrojet-style options if weapon uses them */
+function buildGyrojetOptions(
+  weapon: ProjectileWeaponInfo,
+  target?: Entity,
+): CreateProjectileOptions | undefined {
+  if (
+    weapon.acceleration === undefined &&
+    weapon.trackingRate === undefined &&
+    !weapon.speedDamageScale
+  ) {
+    return undefined;
+  }
+  const options: CreateProjectileOptions = {};
+  if (weapon.acceleration !== undefined) {
+    options.acceleration = weapon.acceleration;
+    options.maxSpeed = weapon.projectileSpeed;
+  }
+  if (weapon.trackingRate !== undefined) {
+    options.trackingRate = weapon.trackingRate;
+    if (weapon.trackingCone !== undefined) {
+      options.trackingCone = weapon.trackingCone;
+    }
+    if (target !== undefined) {
+      options.trackingTarget = target;
     }
   }
+  if (weapon.speedDamageScale) {
+    options.speedDamageScale = weapon.speedDamageScale;
+  }
+  return options;
+}
 
+/** Create and add projectile entity with all components */
+function createProjectileEntity(
+  world: World,
+  owner: Entity,
+  pos: THREE.Vector3,
+  direction: THREE.Vector3,
+  weapon: ProjectileWeaponInfo,
+  ownerFaction: FactionComponent | undefined,
+  target?: Entity,
+): void {
   const projectile = createEntity(world);
   const category: ProjectileCategory =
     weapon.category === 'ballistic' ? 'ballistic' : 'energy';
+  const startSpeed = weapon.initialSpeed ?? weapon.projectileSpeed;
+  const options = buildGyrojetOptions(weapon, target);
 
   addComponent(world, projectile, createTransform(pos.x, pos.y, pos.z));
   addComponent(
@@ -219,7 +167,7 @@ export function spawnProjectileWithAimError(
     createProjectile(
       owner,
       weapon.damage,
-      weapon.projectileSpeed,
+      startSpeed,
       weapon.range,
       direction,
       category,
@@ -228,23 +176,95 @@ export function spawnProjectileWithAimError(
       weapon.shrapnelCount,
       weapon.shieldDamageMultiplier,
       weapon.ionize,
+      options,
     ),
   );
   addComponent(world, projectile, createCollision(PROJECTILE_RADIUS));
 
-  // Projectiles inherit owner's faction
   if (ownerFaction) {
     addComponent(world, projectile, createFaction(ownerFaction.faction));
   }
 
-  // Track per-ship stats
   recordShotFired(world, owner, weapon.name);
-
-  // Track aggregate stats if enabled (for balance analysis)
   if (world.systemState.combatStats) {
     const stats = world.systemState.combatStats;
     stats.shotsFired[weapon.name] = (stats.shotsFired[weapon.name] || 0) + 1;
   }
+}
+
+/** Spawn a projectile entity */
+export function spawnProjectile(
+  world: World,
+  owner: Entity,
+  ownerTransform: Transform,
+  weapon: ProjectileWeaponInfo,
+  ownerFaction: FactionComponent | undefined,
+  bankIndex = 0,
+  totalBanks = 1,
+  target?: Entity,
+): void {
+  const forward = getForward(ownerTransform);
+  const pos = calculateBankOffset(
+    ownerTransform,
+    bankIndex,
+    totalBanks,
+    PROJECTILE_SPAWN_OFFSET,
+  );
+  createProjectileEntity(
+    world,
+    owner,
+    pos,
+    forward,
+    weapon,
+    ownerFaction,
+    target,
+  );
+}
+
+/** Spawn a projectile with aim error and optional autoaim correction */
+export function spawnProjectileWithAimError(
+  world: World,
+  owner: Entity,
+  ownerTransform: Transform,
+  weapon: ProjectileWeaponInfo,
+  ownerFaction: FactionComponent | undefined,
+  aimError: AimError | undefined,
+  bankIndex = 0,
+  totalBanks = 1,
+  autoaim?: AutoaimParams,
+  target?: Entity,
+): void {
+  const forward = getForward(ownerTransform);
+  const pos = calculateBankOffset(
+    ownerTransform,
+    bankIndex,
+    totalBanks,
+    PROJECTILE_SPAWN_OFFSET,
+  );
+
+  // Apply aim error if present
+  let direction = aimError ? applyAimError(forward, aimError) : forward;
+
+  // Apply autoaim correction if within cone
+  if (autoaim && autoaim.fovDegrees > 0) {
+    toIntercept.copy(autoaim.interceptPoint).sub(pos).normalize();
+    const dot = direction.dot(toIntercept);
+    const angleRad = Math.acos(Math.max(-1, Math.min(1, dot)));
+    const angleDeg = angleRad * (180 / Math.PI);
+    if (angleDeg <= autoaim.fovDegrees) {
+      direction = toIntercept;
+    }
+  }
+
+  createProjectileEntity(
+    world,
+    owner,
+    pos,
+    direction,
+    weapon,
+    ownerFaction,
+    target,
+  );
 }
 
 /** Spawn a missile entity */

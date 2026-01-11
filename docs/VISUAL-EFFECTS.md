@@ -28,12 +28,14 @@ This document describes all weapon-related visual effects (VFX) in the game, inc
 
 ### Ballistic Weapons (Finite Ammo)
 
-| Weapon | Bolt Shape | Bolt Size | Trail Length | Player Color | Enemy Color |
-|--------|-----------|-----------|--------------|--------------|-------------|
-| **Autocannon** | Cylinder | 0.25 | 4 points | Yellow-gold RGB(1.0, 0.85, 0.3) | Orange RGB(1.0, 0.6, 0.2) |
-| **Railgun** | Cylinder | 0.2 | 14 points | White RGB(1.0, 1.0, 1.0) | Blue-white RGB(0.9, 0.9, 1.0) |
-| **Flak** | Sphere | 0.4 | 6 points | Red RGB(1.0, 0.2, 0.2) | Red-orange RGB(1.0, 0.3, 0.1) |
-| **Shrapnel** | Cylinder | 0.15 | 3 points | Yellow RGB(1.0, 0.9, 0.3) | Orange-yellow RGB(1.0, 0.7, 0.2) |
+| Weapon | Bolt Shape | Bolt Size | Length | Color | Notes |
+|--------|-----------|-----------|--------|-------|-------|
+| **Autocannon** | Cylinder | 0.25 | 15 | Yellow-gold RGB(1.0, 0.85, 0.3) | Rapid fire streaks |
+| **Slug Cannon** | Cylinder | 0.35 | 40 | Silver-blue RGB(0.8, 0.9, 1.0) | Long heavy rounds |
+| **Gyrojet** | Capsule | 0.4 | 30 | Orange RGB(1.0, 0.5, 0.1) | Accelerating rockets with tracking |
+| **Railgun** | Cylinder | 0.5 | 100 | White RGB(1.0, 1.0, 1.0) | Piercing high-velocity |
+| **Flak** | Sphere | 0.4 | - | Red RGB(1.0, 0.2, 0.2) | Explodes into shrapnel |
+| **Shrapnel** | Cylinder | 0.25 | 15 | Yellow RGB(1.0, 0.9, 0.3) | Flak fragments |
 
 ### Beam Weapons (Continuous)
 
@@ -79,6 +81,8 @@ Each projectile type has distinct visual characteristics:
 | Pulse | Small cyan rapid-fire bolts, short trails |
 | Ion | Blue-purple electric orbs |
 | Autocannon | Tiny yellow streaks, short trails |
+| Slug Cannon | Silver-blue heavy rounds, long trails |
+| Gyrojet | Orange capsules that accelerate and gently track targets |
 | Railgun | White piercing rounds, very long trails |
 | Flak | Red spheres before explosion |
 | Shrapnel | Tiny yellow fragments, minimal trails |
@@ -107,12 +111,17 @@ When a projectile spawns, a brief flash appears at the weapon muzzle:
 - **Animation:** Scale 1.0 → 3.0, Opacity 1.0 → 0.0
 - **Blending:** Additive
 
-**Colors by Faction:**
-| Faction | Flash Color |
-|---------|-------------|
-| Player | Green RGB(0.2, 1.0, 0.3) |
-| Enemy | Orange RGB(1.0, 0.4, 0.1) |
-| Neutral | Yellow RGB(1.0, 1.0, 0.3) |
+**Colors by Weapon:**
+| Weapon | Flash Color |
+|--------|-------------|
+| Plasma | Green RGB(0, 1.0, 0) |
+| Pulse | Cyan RGB(0.3, 0.9, 1.0) |
+| Ion | Blue-purple RGB(0.4, 0.5, 1.0) |
+| Autocannon | Orange RGB(1.0, 0.6, 0.2) |
+| Slug Cannon | Blue-white RGB(0.9, 0.95, 1.0) |
+| Gyrojet | Orange-red RGB(1.0, 0.4, 0.1) |
+| Railgun | White RGB(1.0, 1.0, 1.0) |
+| Flak | Orange RGB(1.0, 0.5, 0.2) |
 
 ### Beam Muzzle Glow
 

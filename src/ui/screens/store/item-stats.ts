@@ -159,8 +159,26 @@ export function renderPrimaryStats(weaponType: string): string {
       : '';
 
   // Projectile speed (only for non-beam weapons)
-  const speedText =
-    stats.projectileSpeed > 0 ? `${stats.projectileSpeed} m/s` : '';
+  // For accelerating projectiles, show "initial → max" format
+  let speedText = '';
+  if (stats.projectileSpeed > 0) {
+    if (stats.initialSpeed !== undefined && stats.acceleration !== undefined) {
+      speedText = `${stats.initialSpeed}&nbsp;→&nbsp;${stats.projectileSpeed}&nbsp;m/s`;
+    } else {
+      speedText = `${stats.projectileSpeed} m/s`;
+    }
+  }
+
+  // Tracking stats (for gyrojet-style weapons)
+  const trackingText =
+    stats.trackingRate !== undefined && stats.trackingCone !== undefined
+      ? `${stats.trackingRate}°/s (${stats.trackingCone}° cone)`
+      : '';
+
+  // Speed-damage scaling note
+  const speedDamageNote = stats.speedDamageScale
+    ? 'Damage scales with speed'
+    : '';
 
   return `
     <div class="item-stats">
@@ -168,8 +186,10 @@ export function renderPrimaryStats(weaponType: string): string {
       <div class="stat-row"><span>${damageLabel}</span><span>${damageText}</span></div>
       ${shieldDamageText ? `<div class="stat-row"><span>Shield damage</span><span>${shieldDamageText}</span></div>` : ''}
       ${hullDamageText ? `<div class="stat-row"><span>Hull damage</span><span>${hullDamageText}</span></div>` : ''}
+      ${speedDamageNote ? `<div class="stat-row stat-note"><span>${speedDamageNote}</span></div>` : ''}
       <div class="stat-row"><span>Range</span><span>${stats.range} m</span></div>
       ${speedText ? `<div class="stat-row"><span>Speed</span><span>${speedText}</span></div>` : ''}
+      ${trackingText ? `<div class="stat-row"><span>Tracking</span><span>${trackingText}</span></div>` : ''}
       <div class="stat-row"><span>Fire rate</span><span>${fireRateText}</span></div>
       <div class="stat-row"><span>${heatLabel}</span><span>${stats.heatPerShot}</span></div>
       ${flakStats}

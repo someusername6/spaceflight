@@ -49,6 +49,7 @@ export const PRIMARY_UNLOCK_SECTOR: Record<string, number> = {
   redLaser: 3,
   lightning: 3,
   torch: 3,
+  gyrojet: 3, // Accelerating rockets with gentle tracking
 
   // Sector 4: Elite weapons
   railgun: 4,

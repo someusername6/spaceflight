@@ -13,6 +13,8 @@ export type WeaponName =
   | 'Pulse'
   | 'Ion'
   | 'Autocannon'
+  | 'Slug Cannon'
+  | 'Gyrojet'
   | 'Railgun'
   | 'Flak'
   | 'Shrapnel'
@@ -36,6 +38,36 @@ export interface Projectile extends ComponentBase {
   shieldDamageMultiplier?: number;
   /** Ion effect - ionizes target shields, doubling regen delay for 8 seconds */
   ionize?: boolean;
+  // === Gyrojet-style accelerating projectiles ===
+  /** Acceleration rate in m/s² (if set, projectile accelerates over time) */
+  acceleration?: number;
+  /** Maximum speed for accelerating projectiles */
+  maxSpeed?: number;
+  /** Tracking turn rate in degrees/sec (gentle in-flight tracking) */
+  trackingRate?: number;
+  /** Tracking cone in degrees - only tracks if target is within this angle */
+  trackingCone?: number;
+  /** If true, damage scales with speed ratio (speed/maxSpeed) */
+  speedDamageScale?: boolean;
+  /** Base damage at max speed (for speed-scaled projectiles) */
+  baseDamage?: number;
+  /** Target entity for in-flight tracking (undefined = no target/target died) */
+  trackingTarget?: Entity | undefined;
+}
+
+/** Extended options for projectile creation */
+export interface CreateProjectileOptions {
+  flakRadius?: number;
+  shrapnelCount?: number;
+  shieldDamageMultiplier?: number;
+  ionize?: boolean;
+  // Gyrojet-style options
+  acceleration?: number;
+  maxSpeed?: number;
+  trackingRate?: number;
+  trackingCone?: number;
+  speedDamageScale?: boolean;
+  trackingTarget?: Entity;
 }
 
 /** Creates a Projectile component */
@@ -51,6 +83,7 @@ export function createProjectile(
   shrapnelCount?: number,
   shieldDamageMultiplier?: number,
   ionize?: boolean,
+  options?: CreateProjectileOptions,
 ): Projectile {
   const projectile: Projectile = {
     type: 'projectile',
@@ -63,11 +96,40 @@ export function createProjectile(
     category,
     weaponName,
   };
+  // Legacy parameters (for backwards compatibility)
   if (flakRadius !== undefined) projectile.flakRadius = flakRadius;
   if (shrapnelCount !== undefined) projectile.shrapnelCount = shrapnelCount;
   if (shieldDamageMultiplier !== undefined)
     projectile.shieldDamageMultiplier = shieldDamageMultiplier;
   if (ionize !== undefined) projectile.ionize = ionize;
+
+  // Extended options (for gyrojet and future weapons)
+  if (options) {
+    // Override legacy params if also in options
+    if (options.flakRadius !== undefined)
+      projectile.flakRadius = options.flakRadius;
+    if (options.shrapnelCount !== undefined)
+      projectile.shrapnelCount = options.shrapnelCount;
+    if (options.shieldDamageMultiplier !== undefined)
+      projectile.shieldDamageMultiplier = options.shieldDamageMultiplier;
+    if (options.ionize !== undefined) projectile.ionize = options.ionize;
+
+    // Gyrojet-specific fields
+    if (options.acceleration !== undefined)
+      projectile.acceleration = options.acceleration;
+    if (options.maxSpeed !== undefined) projectile.maxSpeed = options.maxSpeed;
+    if (options.trackingRate !== undefined)
+      projectile.trackingRate = options.trackingRate;
+    if (options.trackingCone !== undefined)
+      projectile.trackingCone = options.trackingCone;
+    if (options.speedDamageScale !== undefined) {
+      projectile.speedDamageScale = options.speedDamageScale;
+      projectile.baseDamage = damage; // Store base damage for speed scaling
+    }
+    if (options.trackingTarget !== undefined)
+      projectile.trackingTarget = options.trackingTarget;
+  }
+
   return projectile;
 }
 

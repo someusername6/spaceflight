@@ -70,7 +70,7 @@ Weapons (projectiles, missiles, beams, decoys), shields, AI (states, behaviors, 
 - **Store Progression**: Items unlock by sector tier (`src/campaign/store/store-unlocks.ts`)
   - Sector 1: Basic ships (patrol, scout, fighter), basic weapons (pulse, ion, plasma), basic missiles
   - Sector 2: Mid-tier (interceptor, raider, autocannon, blue/green laser, dart, cluster)
-  - Sector 3: Advanced (bomber, sentinel, red laser, lightning, torch, torpedo)
+  - Sector 3: Advanced (bomber, sentinel, red laser, lightning, torch, gyrojet, torpedo)
   - Sector 4: Elite (striker, defender, railgun, nuke)
   - Sector 5: Ultimate (nuclear lance)
 

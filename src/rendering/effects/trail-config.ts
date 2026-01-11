@@ -76,6 +76,12 @@ const WEAPON_VISUALS: Record<string, WeaponVisualConfig> = {
     length: 15,
     boltShape: 'cylinder',
   },
+  Gyrojet: {
+    color: new THREE.Color(1.0, 0.5, 0.1), // Orange-yellow (rocket exhaust)
+    radius: 0.4,
+    length: 30,
+    boltShape: 'capsule', // Rocket-like capsule shape
+  },
 };
 
 /** Default visual config for unknown weapons */

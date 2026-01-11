@@ -16,6 +16,7 @@ import type { Shields } from '../../components/shields';
 import { ionizeShields } from '../../components/shields';
 import type { Transform } from '../../components/transform';
 import {
+  entityExists,
   getComponent,
   hasComponent,
   queryEntities,
@@ -40,8 +41,10 @@ function queueHitEffect(
   });
 }
 
-// Reusable vector for distance checks
+// Reusable vectors
 const distanceVec = new THREE.Vector3();
+const toTarget = new THREE.Vector3();
+const desiredDirection = new THREE.Vector3();
 
 /** Projectile system - movement and collision handling */
 export function projectileSystem(world: World, dt: number): void {
@@ -60,6 +63,76 @@ export function projectileSystem(world: World, dt: number): void {
       entity,
       'transform',
     ) as Transform;
+
+    // === Gyrojet-style acceleration ===
+    if (
+      projectile.acceleration !== undefined &&
+      projectile.maxSpeed !== undefined
+    ) {
+      // Accelerate toward max speed
+      projectile.speed = Math.min(
+        projectile.speed + projectile.acceleration * dt,
+        projectile.maxSpeed,
+      );
+    }
+
+    // === Speed-based damage scaling ===
+    if (
+      projectile.speedDamageScale &&
+      projectile.baseDamage !== undefined &&
+      projectile.maxSpeed !== undefined
+    ) {
+      const speedRatio = projectile.speed / projectile.maxSpeed;
+      projectile.damage = projectile.baseDamage * speedRatio;
+    }
+
+    // === Gentle in-flight tracking (Gyrojet-style) ===
+    if (
+      projectile.trackingRate !== undefined &&
+      projectile.trackingCone !== undefined &&
+      projectile.trackingTarget !== undefined
+    ) {
+      // Check if target still exists
+      if (!entityExists(world, projectile.trackingTarget)) {
+        // Target died - stop tracking
+        projectile.trackingTarget = undefined;
+      } else {
+        const targetTransform = getComponent<Transform>(
+          world,
+          projectile.trackingTarget,
+          'transform',
+        );
+        if (targetTransform) {
+          // Calculate direction to target
+          toTarget
+            .copy(targetTransform.position)
+            .sub(transform.position)
+            .normalize();
+
+          // Check if target is within tracking cone
+          const dot = projectile.direction.dot(toTarget);
+          const angleRad = Math.acos(Math.max(-1, Math.min(1, dot)));
+          const angleDeg = angleRad * (180 / Math.PI);
+
+          if (angleDeg <= projectile.trackingCone) {
+            // Target is within cone - apply gentle tracking
+            const maxTurnRad = ((projectile.trackingRate * Math.PI) / 180) * dt;
+
+            // Interpolate direction toward target
+            if (angleRad > 0.001) {
+              // How much we can turn this frame
+              const turnAmount = Math.min(maxTurnRad / angleRad, 1);
+              desiredDirection.lerpVectors(
+                projectile.direction,
+                toTarget,
+                turnAmount,
+              );
+              projectile.direction.copy(desiredDirection).normalize();
+            }
+          }
+        }
+      }
+    }
 
     // Move projectile
     const distance = projectile.speed * dt;

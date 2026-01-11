@@ -62,6 +62,26 @@ export interface WeaponStats {
    * Uses fireRate as cooldown between shots.
    */
   isInstantBeam?: boolean;
+  // === Gyrojet-style accelerating projectiles ===
+  /**
+   * Initial projectile speed (m/s). If set, projectileSpeed becomes max speed.
+   * Projectile accelerates from initialSpeed to projectileSpeed.
+   */
+  initialSpeed?: number;
+  /** Acceleration rate in m/s² for accelerating projectiles */
+  acceleration?: number;
+  /**
+   * Tracking turn rate in degrees/sec. Enables gentle in-flight tracking
+   * toward current target (forgiving but not auto-aim).
+   */
+  trackingRate?: number;
+  /** Tracking cone in degrees - projectile only tracks if target within cone */
+  trackingCone?: number;
+  /**
+   * If true, damage scales with projectile speed (damage × speed/maxSpeed).
+   * Lower damage up close, full damage at range when projectile is fastest.
+   */
+  speedDamageScale?: boolean;
 }
 
 /**
@@ -147,6 +167,23 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
     ammoName: 'Flak Shells',
     flakRadius: 100, // Was 80, larger AoE for area denial
     shrapnelCount: 8,
+  },
+  gyrojet: {
+    name: 'Gyrojet',
+    listName: 'Gyrojet',
+    category: 'ballistic',
+    heatPerShot: 5,
+    projectileSpeed: 1200, // Max speed (accelerates from 200 → 1200)
+    initialSpeed: 200, // Slow start, accelerates to max
+    acceleration: 400, // 400 m/s² - reaches max in 2.5 seconds
+    fireRate: 0.5, // 500ms (2 shots/sec)
+    range: 1500, // Long range to benefit from acceleration
+    damage: 50, // Damage at max speed; scales with speed
+    ammo: 30,
+    ammoName: 'Gyrojet Rockets',
+    trackingRate: 2, // 2°/sec gentle tracking
+    trackingCone: 30, // Only tracks if target within 30° cone
+    speedDamageScale: true, // Damage = baseDamage × (speed/maxSpeed)
   },
 
   // === BEAM WEAPONS (continuous, damage per second) ===
