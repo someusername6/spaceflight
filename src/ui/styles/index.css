@@ -93,7 +93,6 @@
 @import "./screens/rewards.css";
 @import "./screens/salvage.css";
 @import "./screens/game-over.css";
-@import "./screens/sector-complete.css";
 
 /* Squad selection modal */
 @import "./screens/squad-selection/index.css";
@@ -107,3 +106,6 @@
 
 /* Pause menu modal */
 @import "./screens/pause-menu.css";
+
+/* Sector advance modal */
+@import "./screens/sector-advance.css";

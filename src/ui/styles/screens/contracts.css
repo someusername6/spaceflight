@@ -261,6 +261,16 @@
   color: var(--color-danger);
 }
 
+/* ========================================
+   ADVANCE SECTOR BUTTON
+   ======================================== */
+
+.contracts-advance-btn {
+  margin-top: var(--space-3);
+  width: 100%;
+  justify-content: center;
+}
+
 @media (max-width: 850px) {
   .contracts-layout {
     grid-template-columns: 1fr;

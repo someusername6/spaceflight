@@ -108,9 +108,6 @@ export const SECTOR_NAMES: Record<number, string> = {
   5: 'Endless',
 };
 
-/** Missions required to advance to next sector */
-export const MISSIONS_PER_SECTOR = 8;
-
 /** Maximum sector (5 = endless mode) */
 export const MAX_SECTOR = 5;
 

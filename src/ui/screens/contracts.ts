@@ -3,7 +3,11 @@
  */
 
 import { isCommanderAssigned } from '../../campaign/state';
-import type { CampaignState, Contract } from '../../campaign/types';
+import {
+  type CampaignState,
+  type Contract,
+  MAX_SECTOR,
+} from '../../campaign/types';
 import {
   bindNavBar,
   type NavDestination,
@@ -16,6 +20,7 @@ import {
   type ScreenHandle,
 } from '../framework/screen';
 import { generateContracts } from './contracts-data';
+import { showSectorAdvanceModal } from './sector-advance-modal';
 
 /** Contracts screen state */
 interface ContractsState {
@@ -28,6 +33,7 @@ interface ContractsProps {
   contracts: Contract[];
   onNavigate: (destination: NavDestination) => void;
   onAccept: (contract: Contract) => void;
+  onAdvanceSector: () => void;
 }
 
 /** Legacy UI interface for backwards compatibility */
@@ -38,6 +44,7 @@ export interface ContractsUI {
   selectedContractId: string | null;
   onNavigate: (destination: NavDestination) => void;
   onAccept: (contract: Contract) => void;
+  onAdvanceSector: () => void;
 }
 
 // Re-export types and functions for external use
@@ -127,12 +134,13 @@ function renderContractDetail(contract: Contract, canLaunch: boolean): string {
 const ContractsScreenComponent: Screen<ContractsState, ContractsProps> = {
   render(state, props) {
     const { campaignState, contracts, onNavigate } = props;
+    const currentSector = campaignState.currentSector;
+    const canAdvance = currentSector < MAX_SECTOR;
 
     const navBar = renderNavBar({
       activeTab: 'contracts',
       credits: campaignState.credits,
-      sector: campaignState.currentSector,
-      sectorMissionsCompleted: campaignState.sectorMissionsCompleted,
+      sector: currentSector,
       onNavigate,
     });
 
@@ -142,6 +150,13 @@ const ContractsScreenComponent: Screen<ContractsState, ContractsProps> = {
 
     const canLaunch = isCommanderAssigned(campaignState);
 
+    // Advance sector button (only show if not at max sector)
+    const advanceButton = canAdvance
+      ? `<button class="btn btn-secondary contracts-advance-btn" id="btn-advance-sector">
+           Advance to Sector ${currentSector + 1} →
+         </button>`
+      : '';
+
     return `
       <div class="campaign-page">
         ${navBar}
@@ -149,6 +164,7 @@ const ContractsScreenComponent: Screen<ContractsState, ContractsProps> = {
           <div class="contracts-layout">
             <aside class="contracts-list-panel" role="listbox" aria-label="Available contracts">
               ${contracts.map((c) => renderContractListItem(c, c.id === state.selectedContractId)).join('')}
+              ${advanceButton}
             </aside>
             <section class="contracts-detail-panel" aria-label="Contract details">
               ${selectedContract ? renderContractDetail(selectedContract, canLaunch) : '<div class="empty-state-panel" role="status">Select a contract to view details</div>'}
@@ -160,7 +176,8 @@ const ContractsScreenComponent: Screen<ContractsState, ContractsProps> = {
   },
 
   bind(api: ScreenAPI<ContractsState>, props: ContractsProps) {
-    const { contracts, onNavigate, onAccept } = props;
+    const { contracts, onNavigate, onAccept, onAdvanceSector } = props;
+    const currentSector = props.campaignState.currentSector;
 
     // Bind navigation bar
     bindNavBar(api.getRoot(), onNavigate);
@@ -194,6 +211,15 @@ const ContractsScreenComponent: Screen<ContractsState, ContractsProps> = {
     api.on('.btn-goto-squadron', 'click', () => {
       onNavigate('squadron');
     });
+
+    // Advance sector button - show confirmation modal
+    api.on('#btn-advance-sector', 'click', () => {
+      showSectorAdvanceModal(currentSector).then((result) => {
+        if (result.confirmed) {
+          onAdvanceSector();
+        }
+      });
+    });
   },
 };
 
@@ -206,6 +232,7 @@ export function createContractsUI(
   state: CampaignState,
   onNavigate: (destination: NavDestination) => void,
   onAccept: (contract: Contract) => void,
+  onAdvanceSector: () => void,
 ): ContractsUI {
   // Clean up previous handle
   screenHandle?.destroy();
@@ -221,6 +248,7 @@ export function createContractsUI(
     contracts,
     onNavigate,
     onAccept,
+    onAdvanceSector,
   };
 
   screenHandle = createScreen(
@@ -238,6 +266,7 @@ export function createContractsUI(
     selectedContractId: null,
     onNavigate,
     onAccept,
+    onAdvanceSector,
   };
 }
 
@@ -256,6 +285,7 @@ export function updateContractsUI(ui: ContractsUI, state: CampaignState): void {
       contracts: ui.contracts,
       onNavigate: ui.onNavigate,
       onAccept: ui.onAccept,
+      onAdvanceSector: ui.onAdvanceSector,
     });
   }
 }

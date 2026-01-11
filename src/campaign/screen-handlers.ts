@@ -10,22 +10,17 @@ import {
   getScreenElement,
   goToContracts,
   goToGameOver,
-  goToSectorComplete,
   goToSquadron,
   goToStore,
   Screen,
   updateCampaignState,
 } from '../ui/common/screens';
 import { createGameOverUI, createResultsUI } from '../ui/screens/results';
-import {
-  createSectorCompleteUI,
-  shouldShowSectorComplete,
-} from '../ui/screens/sector-complete';
 import { createSquadronUI, type ListSelection } from '../ui/screens/squadron';
 import { createStoreUI } from '../ui/screens/store/store';
 import type { CampaignController } from './controller';
 import type { SalvageResult } from './salvage';
-import { advanceSector, createNewCampaign } from './state';
+import { createNewCampaign } from './state';
 import type { Contract } from './types';
 
 /** Setup squadron screen */
@@ -131,62 +126,14 @@ export function showResults(
     contract,
     screenManager.campaignState,
     () => {
-      // Check if sector advancement is available
-      const state = screenManager.campaignState;
-      if (
-        victory &&
-        shouldShowSectorComplete(
-          state.sectorMissionsCompleted,
-          state.currentSector,
-        )
-      ) {
-        // Show sector complete screen
-        showSectorComplete(controller, setupContractsScreen);
-      } else {
-        // Return to squadron screen
-        goToSquadron(screenManager);
-        const squadronElement = getScreenElement(
-          screenManager,
-          Screen.SQUADRON,
-        );
-        setupSquadronScreen(controller, squadronElement, setupContractsScreen);
-      }
-    },
-    world,
-    salvage,
-  );
-}
-
-/** Show sector complete screen */
-export function showSectorComplete(
-  controller: CampaignController,
-  setupContractsScreen: (controller: CampaignController) => void,
-): void {
-  const { screenManager } = controller;
-  const state = screenManager.campaignState;
-  const sectorCompleteElement = getScreenElement(
-    screenManager,
-    Screen.SECTOR_COMPLETE,
-  );
-
-  createSectorCompleteUI(
-    sectorCompleteElement,
-    state.currentSector,
-    state.missionCount,
-    state.credits,
-    () => {
-      // Advance to next sector
-      const newState = advanceSector(state);
-      updateCampaignState(screenManager, newState);
-
-      // Go to squadron screen
+      // Return to squadron screen (sector advancement is now manual via contracts)
       goToSquadron(screenManager);
       const squadronElement = getScreenElement(screenManager, Screen.SQUADRON);
       setupSquadronScreen(controller, squadronElement, setupContractsScreen);
     },
+    world,
+    salvage,
   );
-
-  goToSectorComplete(screenManager);
 }
 
 /** Show game over screen */

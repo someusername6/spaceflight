@@ -41,7 +41,7 @@ import type { CampaignController } from './controller-types';
 import { launchMission } from './mission/mission-launcher';
 import { disposeMissionRenderers } from './mission/mission-renderer';
 import { setupSquadronScreen, setupStoreScreen } from './screen-handlers';
-import { createNewCampaign } from './state';
+import { advanceSector, createNewCampaign } from './state';
 import type { CampaignState, Contract } from './types';
 
 export type { CampaignController } from './controller-types';
@@ -373,6 +373,13 @@ function setupContractsScreen(controller: CampaignController): void {
         result.deployedShipIds,
         setupContracts,
       );
+    },
+    () => {
+      // Advance to next sector
+      const newState = advanceSector(screenManager.campaignState);
+      updateCampaignState(screenManager, newState);
+      // Refresh contracts screen with new sector's missions
+      setupContractsScreen(controller);
     },
   );
 }

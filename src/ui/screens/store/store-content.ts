@@ -77,7 +77,6 @@ export function renderStoreContent(
     activeTab: 'store',
     credits: campaignState.credits,
     sector: campaignState.currentSector,
-    sectorMissionsCompleted: campaignState.sectorMissionsCompleted,
     onNavigate,
   });
 

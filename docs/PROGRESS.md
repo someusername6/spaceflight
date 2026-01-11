@@ -64,7 +64,9 @@ Weapons (projectiles, missiles, beams, decoys), shields, AI (states, behaviors, 
 
 ### 5.2 Sector Progression ✅
 - **Sector System**: 5 sectors with progressive difficulty (`src/campaign/types.ts:18-24`)
-- **Sector Advancement**: Complete 8 missions per sector to advance (`src/ui/screens/sector-complete.ts`)
+- **Sector Advancement**: Manual via "Advance to Sector X" button on contracts screen (`src/ui/screens/contracts.ts`)
+  - Confirmation modal shows target sector and enemy skill levels (`src/ui/screens/sector-advance-modal.ts`)
+  - Players can skip ahead at any time (risk/reward tradeoff)
 - **Store Progression**: Items unlock by sector tier (`src/campaign/store/store-unlocks.ts`)
   - Sector 1: Basic ships (patrol, scout, fighter), basic weapons (pulse, ion, plasma), basic missiles
   - Sector 2: Mid-tier (interceptor, raider, autocannon, blue/green laser, dart, cluster)

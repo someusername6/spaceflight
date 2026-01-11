@@ -4,11 +4,7 @@
  * Provides consistent top-level navigation with sector/credits display.
  */
 
-import {
-  MAX_SECTOR,
-  MISSIONS_PER_SECTOR,
-  SECTOR_NAMES,
-} from '../../campaign/types';
+import { MAX_SECTOR } from '../../campaign/types';
 
 /** Navigation destinations */
 export type NavDestination = 'squadron' | 'store' | 'contracts';
@@ -18,28 +14,20 @@ export interface NavBarProps {
   activeTab: NavDestination;
   credits: number;
   sector: number;
-  sectorMissionsCompleted?: number;
   onNavigate: (destination: NavDestination) => void;
   onPause?: () => void;
 }
 
 /** Render the status display (sector + credits) - integrated into nav bar */
-function renderStatusDisplay(
-  credits: number,
-  sector: number,
-  sectorMissionsCompleted = 0,
-): string {
-  const sectorName = SECTOR_NAMES[sector] || `Sector ${sector}`;
+function renderStatusDisplay(credits: number, sector: number): string {
   const isEndless = sector >= MAX_SECTOR;
-  const progress = isEndless
-    ? ''
-    : ` (${sectorMissionsCompleted}/${MISSIONS_PER_SECTOR})`;
+  const sectorDisplay = isEndless ? '∞' : sector.toString();
 
   return `
     <div class="nav-status" role="status" aria-label="Player status">
-      <div class="nav-status-item" aria-label="Current sector: ${sectorName}">
-        <span class="nav-status-label">SECTOR ${sector}</span>
-        <span class="nav-status-value nav-sector-name">${sectorName}${progress}</span>
+      <div class="nav-status-item" aria-label="Current sector: ${sector}">
+        <span class="nav-status-label">SECTOR</span>
+        <span class="nav-status-value nav-sector-name">${sectorDisplay}</span>
       </div>
       <div class="nav-status-item" aria-label="Credits: ${credits.toLocaleString()}">
         <span class="nav-status-label">CREDITS</span>
@@ -51,8 +39,7 @@ function renderStatusDisplay(
 
 /** Render the navigation bar HTML with integrated status display */
 export function renderNavBar(props: NavBarProps): string {
-  const { activeTab, credits, sector, sectorMissionsCompleted, onPause } =
-    props;
+  const { activeTab, credits, sector, onPause } = props;
 
   const tabs: { id: NavDestination; label: string; icon: string }[] = [
     { id: 'squadron', label: 'SQUADRON', icon: '◈' },
@@ -78,11 +65,7 @@ export function renderNavBar(props: NavBarProps): string {
     )
     .join('');
 
-  const statusHtml = renderStatusDisplay(
-    credits,
-    sector,
-    sectorMissionsCompleted,
-  );
+  const statusHtml = renderStatusDisplay(credits, sector);
 
   // Pause button (only shown if onPause callback is provided)
   const pauseButton = onPause

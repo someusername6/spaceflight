@@ -14,7 +14,7 @@ import type {
   OwnedShip,
   Pilot,
 } from './types';
-import { MAX_SECTOR, MISSIONS_PER_SECTOR } from './types';
+import { MAX_SECTOR } from './types';
 
 /** Counter for deterministic ID generation */
 let idCounter = 0;
@@ -257,14 +257,6 @@ export function applyMissionResults(
 /** Check if game is over (commander's ship destroyed) */
 export function isGameOver(state: CampaignState): boolean {
   return !isCommanderAssigned(state);
-}
-
-/** Check if player can advance to the next sector */
-export function canAdvanceSector(state: CampaignState): boolean {
-  return (
-    state.currentSector < MAX_SECTOR &&
-    state.sectorMissionsCompleted >= MISSIONS_PER_SECTOR
-  );
 }
 
 /** Advance to the next sector (resets sector mission count) */
