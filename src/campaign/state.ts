@@ -184,7 +184,15 @@ export function isCommanderAssigned(state: CampaignState): boolean {
   return state.ships.some((s) => s.pilot?.id === state.commanderId);
 }
 
-/** Apply mission results to campaign state */
+/**
+ * Apply mission results to campaign state.
+ *
+ * Processes ship losses, pilot deaths, credit rewards, and store restocking.
+ * This function always returns a valid state, even if the commander died.
+ *
+ * IMPORTANT: Caller must check `isGameOver(result)` after calling this function
+ * to handle commander death appropriately (show game-over screen, etc.).
+ */
 export function applyMissionResults(
   state: CampaignState,
   victory: boolean,
@@ -203,9 +211,9 @@ export function applyMissionResults(
     const lostShip = state.ships.find((s) => s.id === shipId);
     if (lostShip?.pilot) {
       killedPilotIds.add(lostShip.pilot.id);
-      // Log if commander died - helps diagnose state issues
+      // Log commander death for debugging (caller handles game-over via isGameOver)
       if (lostShip.pilot.id === state.commanderId) {
-        console.warn('[Campaign] Commander pilot killed in mission');
+        console.log('[Campaign] Commander killed - game over state');
       }
     }
   }
