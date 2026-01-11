@@ -6,7 +6,7 @@ import { getMissileDisplayName } from '../../data/missiles';
 import { getAmmoPrice, getSecondaryPrice } from '../../data/prices';
 import { getAmmoDisplayName } from '../../data/weapons';
 import { mapSlots } from '../slot-array';
-import type { CampaignState, StoredAmmo, StoredWeapon } from '../types';
+import type { CampaignState } from '../types';
 import { getMaxPrimaryAmmo, getShipResupplyNeeds } from './resupply-needs';
 
 /** Result of a constrained resupply operation */
@@ -21,53 +21,24 @@ export interface ResupplyResult {
   messages: string[];
 }
 
-/** Helper to consume ammo from player storage */
-function consumeFromStorage(
-  storedAmmo: StoredAmmo[],
-  weaponType: string,
+/** Generic helper to consume items from storage arrays */
+function consumeFromStorage<T extends { count: number }>(
+  items: T[],
+  matcher: (item: T) => boolean,
   amount: number,
-): { newStorage: StoredAmmo[]; consumed: number } {
-  const index = storedAmmo.findIndex((a) => a.weaponType === weaponType);
+): { newStorage: T[]; consumed: number } {
+  const index = items.findIndex(matcher);
   if (index < 0 || amount <= 0) {
-    return { newStorage: storedAmmo, consumed: 0 };
+    return { newStorage: items, consumed: 0 };
   }
 
-  const stored = storedAmmo[index];
-  if (!stored) return { newStorage: storedAmmo, consumed: 0 };
+  const stored = items[index];
+  if (!stored) return { newStorage: items, consumed: 0 };
 
   const consumed = Math.min(amount, stored.count);
   const remaining = stored.count - consumed;
 
-  const newStorage = [...storedAmmo];
-  if (remaining <= 0) {
-    newStorage.splice(index, 1);
-  } else {
-    newStorage[index] = { weaponType, count: remaining };
-  }
-
-  return { newStorage, consumed };
-}
-
-/** Helper to consume missiles from stored weapons */
-function consumeMissilesFromStorage(
-  storedWeapons: StoredWeapon[],
-  weaponType: string,
-  amount: number,
-): { newStorage: StoredWeapon[]; consumed: number } {
-  const index = storedWeapons.findIndex(
-    (w) => w.weaponType === weaponType && w.category === 'secondary',
-  );
-  if (index < 0 || amount <= 0) {
-    return { newStorage: storedWeapons, consumed: 0 };
-  }
-
-  const stored = storedWeapons[index];
-  if (!stored) return { newStorage: storedWeapons, consumed: 0 };
-
-  const consumed = Math.min(amount, stored.count);
-  const remaining = stored.count - consumed;
-
-  const newStorage = [...storedWeapons];
+  const newStorage = [...items];
   if (remaining <= 0) {
     newStorage.splice(index, 1);
   } else {
@@ -160,7 +131,7 @@ export function resupplyShipConstrained(
     // First: use storage
     const storageResult = consumeFromStorage(
       newStoredAmmo,
-      weaponType,
+      (a) => a.weaponType === weaponType,
       remaining,
     );
     newStoredAmmo = storageResult.newStorage;
@@ -205,9 +176,9 @@ export function resupplyShipConstrained(
     let remaining = needed;
 
     // First: use stored missiles
-    const storageResult = consumeMissilesFromStorage(
+    const storageResult = consumeFromStorage(
       newStoredWeapons,
-      weaponType,
+      (w) => w.weaponType === weaponType && w.category === 'secondary',
       remaining,
     );
     newStoredWeapons = storageResult.newStorage;
