@@ -18,7 +18,8 @@ export const SECTOR_5_MISSIONS: Contract[] = [
   {
     id: 's5-lance-battery',
     name: 'Lance Battery',
-    description: 'Nuclear lance emplacements. Long-range devastation.',
+    description:
+      'Destroy ace formation. Phantoms, Dragonflies, and Fireflies - all elite.',
     difficulty: 'easy',
     sector: 5,
     tier: 'low',
@@ -45,7 +46,8 @@ export const SECTOR_5_MISSIONS: Contract[] = [
   {
     id: 's5-no-mans-land',
     name: "No Man's Land",
-    description: 'Beyond the frontier. Only the elite survive here.',
+    description:
+      'Survive beyond the frontier. Ace Phantoms, Dragonflies, and Fireflies.',
     difficulty: 'easy',
     sector: 5,
     tier: 'low',
@@ -72,7 +74,8 @@ export const SECTOR_5_MISSIONS: Contract[] = [
   {
     id: 's5-meat-grinder',
     name: 'Meat Grinder',
-    description: 'Endless waves. Fight until you drop.',
+    description:
+      'Survive the grinder. Four waves of Ace Phantoms and Dragonflies.',
     difficulty: 'easy',
     sector: 5,
     tier: 'low',
@@ -101,7 +104,8 @@ export const SECTOR_5_MISSIONS: Contract[] = [
   {
     id: 's5-iron-wall',
     name: 'Iron Wall',
-    description: 'Defender-class fortress. Juggernauts en masse.',
+    description:
+      'Break the iron wall. Heavy Phantoms, Dragonflies, and Fireflies.',
     difficulty: 'medium',
     sector: 5,
     tier: 'mid',
@@ -128,7 +132,7 @@ export const SECTOR_5_MISSIONS: Contract[] = [
   {
     id: 's5-bomber-wing',
     name: 'Bomber Wing',
-    description: 'Behemoths with nuclear payloads. Stop them.',
+    description: 'Destroy bomber wing. Phantoms and Dragonflies in force.',
     difficulty: 'medium',
     sector: 5,
     tier: 'mid',
@@ -155,7 +159,8 @@ export const SECTOR_5_MISSIONS: Contract[] = [
   {
     id: 's5-elite-guard',
     name: 'Elite Guard',
-    description: 'The best of the best. No quarter given.',
+    description:
+      'Face the elite guard. Ace Phantoms, Dragonflies, and Fireflies.',
     difficulty: 'medium',
     sector: 5,
     tier: 'mid',
@@ -184,7 +189,7 @@ export const SECTOR_5_MISSIONS: Contract[] = [
   {
     id: 's5-final-stand',
     name: 'Final Stand',
-    description: 'This is it. Win or die trying.',
+    description: 'Make your final stand. Five waves of Ace-level fighters.',
     difficulty: 'hard',
     sector: 5,
     tier: 'high',
@@ -215,7 +220,7 @@ export const SECTOR_5_MISSIONS: Contract[] = [
   {
     id: 's5-apocalypse',
     name: 'Apocalypse',
-    description: 'Everything they have. Nukes, lances, elites.',
+    description: 'Face the apocalypse. Maximum enemy force across four waves.',
     difficulty: 'hard',
     sector: 5,
     tier: 'high',

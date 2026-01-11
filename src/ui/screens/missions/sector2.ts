@@ -19,7 +19,7 @@ export const SECTOR_2_MISSIONS: Contract[] = [
     id: 's2-fuel-depot',
     name: 'Fuel Depot',
     description:
-      'Secure the refueling station. Light but persistent resistance.',
+      'Clear the sector. Dragonflies, Moths, and Stingers across four waves.',
     difficulty: 'easy',
     sector: 2,
     tier: 'low',
@@ -45,8 +45,9 @@ export const SECTOR_2_MISSIONS: Contract[] = [
   },
   {
     id: 's2-convoy-escort',
-    name: 'Convoy Defense',
-    description: 'Protect supply convoy from raider interception.',
+    name: 'Raider Intercept',
+    description:
+      'Intercept raider force. Moths and Wasps with Stinger support.',
     difficulty: 'easy',
     sector: 2,
     tier: 'low',
@@ -73,7 +74,7 @@ export const SECTOR_2_MISSIONS: Contract[] = [
   {
     id: 's2-border-skirmish',
     name: 'Border Skirmish',
-    description: 'Contested territory. Expect organized resistance.',
+    description: 'Engage in contested space. Fireflies, Moths, and Stingers.',
     difficulty: 'easy',
     sector: 2,
     tier: 'low',
@@ -102,7 +103,8 @@ export const SECTOR_2_MISSIONS: Contract[] = [
   {
     id: 's2-sniper-ambush',
     name: 'Sniper Ambush',
-    description: 'Long-range threat. Railgun raiders with support.',
+    description:
+      'Eliminate sniper force. Ace Scorpions with Dragonfly escorts.',
     difficulty: 'medium',
     sector: 2,
     tier: 'mid',
@@ -143,7 +145,7 @@ export const SECTOR_2_MISSIONS: Contract[] = [
     id: 's2-comm-relay',
     name: 'Comm Relay',
     description:
-      'Secure the communications array. Enemy reinforcements inbound.',
+      'Destroy reinforced patrol. Veteran Moths and Fireflies in numbers.',
     difficulty: 'medium',
     sector: 2,
     tier: 'mid',
@@ -172,7 +174,8 @@ export const SECTOR_2_MISSIONS: Contract[] = [
   {
     id: 's2-torch-run',
     name: 'Torch Run',
-    description: 'Close-range heat weapons. Fireants overheat your systems.',
+    description:
+      'Survive the heat. Fireflies and Vipers closing fast with flamers.',
     difficulty: 'hard',
     sector: 2,
     tier: 'high',
@@ -199,7 +202,8 @@ export const SECTOR_2_MISSIONS: Contract[] = [
   {
     id: 's2-laser-gauntlet',
     name: 'Laser Gauntlet',
-    description: 'Beam weapons everywhere. Lasers cut through shields.',
+    description:
+      'Face the beam gauntlet. Veteran Fireflies and Vipers with lasers.',
     difficulty: 'hard',
     sector: 2,
     tier: 'high',
@@ -226,7 +230,7 @@ export const SECTOR_2_MISSIONS: Contract[] = [
   {
     id: 's2-wasp-nest',
     name: 'Wasp Nest',
-    description: 'Eliminate scout squadron. Fast ships with ballistic weapons.',
+    description: 'Destroy Wasp squadron. Fast interceptors with autocannons.',
     difficulty: 'hard',
     sector: 2,
     tier: 'high',

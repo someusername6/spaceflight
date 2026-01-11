@@ -18,7 +18,8 @@ export const SECTOR_4_MISSIONS: Contract[] = [
   {
     id: 's4-titan-patrol',
     name: 'Titan Patrol',
-    description: 'Striker-class assault group. Heavy armor ahead.',
+    description:
+      'Destroy assault group. Phantoms, Dragonflies, and Fireflies - all veteran.',
     difficulty: 'easy',
     sector: 4,
     tier: 'low',
@@ -45,7 +46,8 @@ export const SECTOR_4_MISSIONS: Contract[] = [
   {
     id: 's4-perimeter-breach',
     name: 'Perimeter Breach',
-    description: 'Core defenses compromised. Heavy response inbound.',
+    description:
+      'Engage response force. Phantoms with Firefly and Dragonfly support.',
     difficulty: 'easy',
     sector: 4,
     tier: 'low',
@@ -72,7 +74,8 @@ export const SECTOR_4_MISSIONS: Contract[] = [
   {
     id: 's4-garrison-duty',
     name: 'Garrison Duty',
-    description: 'Defend the station. Waves of attackers incoming.',
+    description:
+      'Destroy incoming hostiles. Wasps, Dragonflies, and Fireflies - some Aces.',
     difficulty: 'easy',
     sector: 4,
     tier: 'low',
@@ -101,7 +104,8 @@ export const SECTOR_4_MISSIONS: Contract[] = [
   {
     id: 's4-nuke-convoy',
     name: 'Nuke Convoy',
-    description: 'Intercept nuclear ordnance transport. Juggernauts present.',
+    description:
+      'Destroy elite strike force. Phantoms with Ace Fireflies and veteran Dragonflies.',
     difficulty: 'medium',
     sector: 4,
     tier: 'mid',
@@ -128,7 +132,8 @@ export const SECTOR_4_MISSIONS: Contract[] = [
   {
     id: 's4-ace-squadron',
     name: 'Ace Squadron',
-    description: 'Elite pilots. Their kill counts are legendary.',
+    description:
+      'Face elite pilots. Phantoms, Wasps, and Dragonflies with Ace skill.',
     difficulty: 'medium',
     sector: 4,
     tier: 'mid',
@@ -155,7 +160,8 @@ export const SECTOR_4_MISSIONS: Contract[] = [
   {
     id: 's4-specter-hunt',
     name: 'Specter Hunt',
-    description: 'Elite snipers. They see you before you see them.',
+    description:
+      'Hunt Specters. Elite railgun snipers with Dragonfly and Phantom escort.',
     difficulty: 'medium',
     sector: 4,
     tier: 'mid',
@@ -184,7 +190,8 @@ export const SECTOR_4_MISSIONS: Contract[] = [
   {
     id: 's4-capital-defense',
     name: 'Capital Defense',
-    description: 'All-out assault on sector capital. Everything they have.',
+    description:
+      'Destroy ace squadron. Phantoms and Dragonflies at maximum skill.',
     difficulty: 'hard',
     sector: 4,
     tier: 'high',
@@ -207,7 +214,8 @@ export const SECTOR_4_MISSIONS: Contract[] = [
   {
     id: 's4-warlord',
     name: 'Warlord',
-    description: 'Enemy commander. Kill the head, the body dies.',
+    description:
+      'Eliminate the warlord. Ace Phantoms and Dragonflies - no mercy.',
     difficulty: 'hard',
     sector: 4,
     tier: 'high',

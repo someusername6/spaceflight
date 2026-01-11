@@ -18,7 +18,8 @@ export const SECTOR_1_MISSIONS: Contract[] = [
   {
     id: 's1-ion-storm',
     name: 'Ion Storm',
-    description: 'Shield disruptors ahead. Ion cannons suppress shield regen.',
+    description:
+      'Eliminate hostile patrol. Stingers with ion cannons disrupt shields.',
     difficulty: 'easy',
     sector: 1,
     tier: 'low',
@@ -49,7 +50,8 @@ export const SECTOR_1_MISSIONS: Contract[] = [
   {
     id: 's1-first-contact',
     name: 'First Contact',
-    description: 'Hostile scouts detected. Neutralize before they report.',
+    description:
+      'Destroy scout formation. Rookie Moths and Fireflies - good warmup.',
     difficulty: 'easy',
     sector: 1,
     tier: 'low',
@@ -80,7 +82,8 @@ export const SECTOR_1_MISSIONS: Contract[] = [
   {
     id: 's1-armored-patrol',
     name: 'Armored Patrol',
-    description: 'Heavy enemy formation. Defender-class with moth escorts.',
+    description:
+      'Intercept enemy patrol. Moth escorts screening an armored Beetle.',
     difficulty: 'easy',
     sector: 1,
     tier: 'low',
@@ -112,7 +115,7 @@ export const SECTOR_1_MISSIONS: Contract[] = [
   {
     id: 's1-patrol-duty',
     name: 'Patrol Duty',
-    description: 'Clear hostiles from the shipping lanes.',
+    description: 'Clear the sector. Multiple waves of laser-armed Fireflies.',
     difficulty: 'medium',
     sector: 1,
     tier: 'mid',
@@ -139,7 +142,8 @@ export const SECTOR_1_MISSIONS: Contract[] = [
   {
     id: 's1-supply-raid',
     name: 'Supply Raid',
-    description: 'Intercept enemy supply run. Mixed composition.',
+    description:
+      'Intercept enemy squadron. Moths and Stingers - watch for ion disruption.',
     difficulty: 'medium',
     sector: 1,
     tier: 'mid',
@@ -166,7 +170,8 @@ export const SECTOR_1_MISSIONS: Contract[] = [
   {
     id: 's1-debris-field',
     name: 'Debris Field',
-    description: 'Salvage operation gone hostile. Scattered contacts.',
+    description:
+      'Eliminate scattered hostiles. Mixed Moths, Stingers, and Fireflies.',
     difficulty: 'medium',
     sector: 1,
     tier: 'mid',
@@ -195,7 +200,8 @@ export const SECTOR_1_MISSIONS: Contract[] = [
   {
     id: 's1-mining-claim',
     name: 'Mining Claim',
-    description: 'Disputed mining territory. Defend against claim jumpers.',
+    description:
+      'Destroy raider force. Moths and Fireflies with a Beetle in final wave.',
     difficulty: 'hard',
     sector: 1,
     tier: 'high',
@@ -225,7 +231,7 @@ export const SECTOR_1_MISSIONS: Contract[] = [
   {
     id: 's1-pirate-outpost',
     name: 'Pirate Outpost',
-    description: 'Pirate nest. Expect ambush tactics and heavy weapons.',
+    description: 'Clear pirate squadron. Heavy waves of Moths and Fireflies.',
     difficulty: 'hard',
     sector: 1,
     tier: 'high',
@@ -252,7 +258,8 @@ export const SECTOR_1_MISSIONS: Contract[] = [
   {
     id: 's1-raider-hunt',
     name: 'Raider Hunt',
-    description: 'Track down raider squadron. Multiple engagement ranges.',
+    description:
+      'Hunt raider squadron. Stingers, Fireflies, and Moths across four waves.',
     difficulty: 'hard',
     sector: 1,
     tier: 'high',

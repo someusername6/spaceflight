@@ -18,7 +18,8 @@ export const SECTOR_3_MISSIONS: Contract[] = [
   {
     id: 's3-forward-base',
     name: 'Forward Base',
-    description: 'Enemy staging area. Heavy defenses expected.',
+    description:
+      'Destroy enemy formation. Veteran Fireflies and Dragonflies in five waves.',
     difficulty: 'easy',
     sector: 3,
     tier: 'low',
@@ -49,7 +50,8 @@ export const SECTOR_3_MISSIONS: Contract[] = [
   {
     id: 's3-cluster-swarm',
     name: 'Cluster Swarm',
-    description: 'Missile-heavy scouts. Watch for cluster munitions.',
+    description:
+      'Destroy Locust squadron. Cluster missiles incoming - watch your spacing.',
     difficulty: 'easy',
     sector: 3,
     tier: 'low',
@@ -76,7 +78,7 @@ export const SECTOR_3_MISSIONS: Contract[] = [
   {
     id: 's3-interceptor-wing',
     name: 'Interceptor Wing',
-    description: 'Fast attack force. Phantom interceptors inbound.',
+    description: 'Engage fast attack wing. Phantoms, Dragonflies, and Wasps.',
     difficulty: 'easy',
     sector: 3,
     tier: 'low',
@@ -105,7 +107,8 @@ export const SECTOR_3_MISSIONS: Contract[] = [
   {
     id: 's3-railgun-nest',
     name: 'Railgun Nest',
-    description: 'Fortified sniper position. Approach with caution.',
+    description:
+      'Eliminate sniper threat. Scorpions with Dragonfly and Firefly support.',
     difficulty: 'medium',
     sector: 3,
     tier: 'mid',
@@ -132,7 +135,8 @@ export const SECTOR_3_MISSIONS: Contract[] = [
   {
     id: 's3-supply-interdiction',
     name: 'Supply Interdiction',
-    description: 'Cut enemy supply lines. Bombers with escort.',
+    description:
+      'Destroy enemy force. Heavy waves of veteran Fireflies and Dragonflies.',
     difficulty: 'medium',
     sector: 3,
     tier: 'mid',
@@ -163,7 +167,8 @@ export const SECTOR_3_MISSIONS: Contract[] = [
   {
     id: 's3-elite-patrol',
     name: 'Elite Patrol',
-    description: "Veteran squadron. These pilots know what they're doing.",
+    description:
+      'Face veteran squadron. Wasps and Dragonflies with skilled pilots.',
     difficulty: 'medium',
     sector: 3,
     tier: 'mid',
@@ -192,7 +197,8 @@ export const SECTOR_3_MISSIONS: Contract[] = [
   {
     id: 's3-command-ship',
     name: 'Command Ship',
-    description: 'Take out the enemy commander. Heavy escort present.',
+    description:
+      'Destroy enemy squadron. Fireflies, Dragonflies, and Phantoms in force.',
     difficulty: 'hard',
     sector: 3,
     tier: 'high',
@@ -223,7 +229,8 @@ export const SECTOR_3_MISSIONS: Contract[] = [
   {
     id: 's3-heavy-assault',
     name: 'Heavy Assault',
-    description: 'Full-scale attack. Titans and juggernauts incoming.',
+    description:
+      'Destroy assault force. Phantoms and a Titan with Ace Dragonfly escorts.',
     difficulty: 'hard',
     sector: 3,
     tier: 'high',
