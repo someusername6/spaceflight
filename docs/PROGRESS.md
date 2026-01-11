@@ -90,4 +90,4 @@ Weapons (projectiles, missiles, beams, decoys), shields, AI (states, behaviors, 
   - specter: Elite sniper raider
 
 ### 5.4 Remaining (Planned)
-Procedural contracts, ship repairs, more ship classes, sound/music.
+Procedural contracts, more ship classes, sound/music.

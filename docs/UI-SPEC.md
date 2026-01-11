@@ -307,7 +307,7 @@ When viewing scrap in the Store, the detail panel shows sell options and hull co
 - **Convert Button**: Full width, green color, shows scrap required + fee
 - **Conversion Fee**: 5% of hull buy price (varies by ship class)
 - **Scrap Required**: 100 scrap of matching ship type
-- **Result**: Fully repaired hull added to storage
+- **Result**: New hull added to storage
 
 ### States
 - **Can't Afford** - Buy button disabled, price shown in different color

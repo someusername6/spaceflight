@@ -63,7 +63,6 @@ export function buyShip(
   const newShip: StoredShip = {
     id: generateId(),
     shipClass,
-    hullDamage: 0,
   };
 
   return {
@@ -333,11 +332,10 @@ export function convertScrapToShip(
     newStoredScrap[shipClass] = remaining;
   }
 
-  // Create new fully repaired ship
+  // Create new ship
   const newShip: StoredShip = {
     id: generateId(),
     shipClass,
-    hullDamage: 0,
   };
 
   return {

@@ -76,7 +76,6 @@ When accepting a contract:
 2. **Weapons** - 200-2000 credits
 3. **Ammo/Missiles** - 10-100 credits per unit
 4. **Pilots** - 500-1500 credits to hire
-5. **Repairs** - 5 credits per hull point
 
 ### Pricing Reference
 

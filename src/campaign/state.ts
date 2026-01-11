@@ -55,7 +55,6 @@ export function createShipFromArchetype(
     primaryWeapons,
     secondaryWeapons,
     pilot,
-    hullDamage: 0,
   };
 }
 
@@ -172,24 +171,12 @@ export function isCommanderAssigned(state: CampaignState): boolean {
   return state.ships.some((s) => s.pilot?.id === state.commanderId);
 }
 
-/** Get ships that need repairs (hull damage > 0) */
-export function getShipsNeedingRepair(state: CampaignState): OwnedShip[] {
-  return state.ships.filter((s) => s.hullDamage > 0);
-}
-
-/** Calculate repair cost for a ship */
-export function calculateRepairCost(ship: OwnedShip): number {
-  // Placeholder: 10 credits per point of damage
-  return ship.hullDamage * 10;
-}
-
 /** Apply mission results to campaign state */
 export function applyMissionResults(
   state: CampaignState,
   victory: boolean,
   creditsEarned: number,
   shipsLost: string[],
-  hullDamage: Map<string, number>,
   completedContractId?: string,
 ): CampaignState {
   // Get pilot IDs from ships that flew the mission
@@ -212,14 +199,6 @@ export function applyMissionResults(
 
   // Remove destroyed ships
   const survivingShips = state.ships.filter((s) => !shipsLost.includes(s.id));
-
-  // Apply hull damage to surviving ships
-  for (const ship of survivingShips) {
-    const damage = hullDamage.get(ship.id);
-    if (damage !== undefined) {
-      ship.hullDamage += damage;
-    }
-  }
 
   // Update pilot career stats for survivors, remove KIA pilots
   const updatedPilots = state.pilots

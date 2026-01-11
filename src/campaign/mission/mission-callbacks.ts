@@ -64,7 +64,6 @@ export function createMissionEndExecutor(
         }
       }
     }
-    const hullDamage = new Map<string, number>();
 
     // Base reward (victory only) - salvage is now items, not credits
     const baseReward = missionEndState.victory ? contract.reward : 0;
@@ -74,7 +73,6 @@ export function createMissionEndExecutor(
       missionEndState.victory,
       baseReward,
       shipsLost,
-      hullDamage,
       missionEndState.victory ? contract.id : undefined,
     );
 

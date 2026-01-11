@@ -90,9 +90,7 @@ export function spawnPlayerFromCampaign(
     setInitialVelocity(physics, shipRotation, INITIAL_SPAWN_SPEED);
   }
 
-  const maxHull = stats.hull;
-  const currentHull = maxHull - ship.hullDamage;
-  addComponent(world, entity, createHealth(maxHull, currentHull));
+  addComponent(world, entity, createHealth(stats.hull, stats.hull));
   addComponent(
     world,
     entity,
@@ -175,9 +173,7 @@ export function spawnWingmanFromCampaign(
     setInitialVelocity(physics, shipRotation, INITIAL_SPAWN_SPEED);
   }
 
-  const maxHull = stats.hull;
-  const currentHull = maxHull - ship.hullDamage;
-  addComponent(world, entity, createHealth(maxHull, currentHull));
+  addComponent(world, entity, createHealth(stats.hull, stats.hull));
   addComponent(
     world,
     entity,

@@ -32,14 +32,12 @@ export function swapPilotToStoredShip(
     primaryWeapons, // Null-filled array matching bank count
     secondaryWeapons, // Null-filled array matching bank count
     pilot: ship.pilot,
-    hullDamage: storedShip.hullDamage,
   };
 
   // Old ship becomes a stored ship (weapons go to storage)
   const oldStoredShip: StoredShip = {
     id: ship.id,
     shipClass: ship.shipClass,
-    hullDamage: ship.hullDamage,
   };
 
   // Transfer all weapons and ammo from old ship to storage
@@ -91,7 +89,6 @@ export function assignPilotToStoredShip(
     primaryWeapons, // Null-filled array matching bank count
     secondaryWeapons, // Null-filled array matching bank count
     pilot,
-    hullDamage: storedShip.hullDamage,
   };
 
   return {
@@ -154,7 +151,6 @@ export function swapPilotToShip(
   const oldStoredShip: StoredShip = {
     id: currentShip.id,
     shipClass: currentShip.shipClass,
-    hullDamage: currentShip.hullDamage,
   };
 
   // Transfer all weapons and ammo from old ship to storage
@@ -192,7 +188,6 @@ export function unassignPilot(
   const storedShip: StoredShip = {
     id: ship.id,
     shipClass: ship.shipClass,
-    hullDamage: ship.hullDamage,
   };
 
   // Transfer all weapons and ammo to storage

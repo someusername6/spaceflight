@@ -45,14 +45,12 @@ export interface OwnedShip {
   /** Fixed-length array matching ship's secondaryBanks. null = empty slot. */
   secondaryWeapons: (EquippedSecondary | null)[];
   pilot: Pilot | null; // null = unassigned (ship in reserve)
-  hullDamage: number; // 0 = full health, positive = damage taken
 }
 
 /** A ship in storage (no pilot, no weapons equipped) */
 export interface StoredShip {
   id: string;
   shipClass: string; // 'interceptor', 'striker', etc.
-  hullDamage: number;
 }
 
 /** Mission tier within a sector (risk/reward level) */
@@ -162,7 +160,6 @@ export interface MissionOutcome {
   victory: boolean;
   creditsEarned: number;
   shipsLost: string[]; // IDs of ships that were destroyed
-  hullDamage: Map<string, number>; // shipId -> damage taken
   ammoUsed: Map<string, Map<string, number>>; // shipId -> weaponType -> count
 }
 
