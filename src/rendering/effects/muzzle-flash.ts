@@ -22,6 +22,7 @@ const WEAPON_FLASH_COLORS: Record<string, THREE.Color> = {
   Ion: new THREE.Color(0.4, 0.5, 1.0), // Blue-purple
   // Ballistic weapons - explosion-colored (orange/yellow)
   Autocannon: new THREE.Color(1.0, 0.6, 0.2), // Orange
+  'Slug Cannon': new THREE.Color(0.9, 0.95, 1.0), // Blue-white (like railgun but cooler)
   Railgun: new THREE.Color(1.0, 1.0, 1.0), // White
   Flak: new THREE.Color(1.0, 0.5, 0.2), // Orange
   Shrapnel: new THREE.Color(1.0, 0.6, 0.2), // Orange

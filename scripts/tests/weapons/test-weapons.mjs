@@ -159,11 +159,11 @@ describe('Nuclear Lance Weapon', () => {
 // ============================================================
 
 describe('Weapon Count Validation', () => {
-  it('All 12 primary weapon types defined', () => {
+  it('All 13 primary weapon types defined', () => {
     const weapons = Object.keys(WEAPON_DEFS);
     assert.ok(
-      weapons.length === 12,
-      `Should have 12 weapons, got ${weapons.length}`,
+      weapons.length === 13,
+      `Should have 13 weapons, got ${weapons.length}`,
     );
   });
 

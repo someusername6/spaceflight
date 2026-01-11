@@ -43,6 +43,7 @@ export const PRIMARY_UNLOCK_SECTOR: Record<string, number> = {
   // Sector 2: Mid-tier weapons
   greenLaser: 2,
   flak: 2,
+  slugCannon: 2,
 
   // Sector 3: Advanced weapons
   redLaser: 3,

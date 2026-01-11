@@ -53,6 +53,12 @@ const WEAPON_VISUALS: Record<string, WeaponVisualConfig> = {
     length: 15,
     boltShape: 'cylinder',
   },
+  'Slug Cannon': {
+    color: new THREE.Color(0.8, 0.9, 1.0), // Silver-blue-white
+    radius: 0.35,
+    length: 40,
+    boltShape: 'cylinder',
+  },
   Railgun: {
     color: new THREE.Color(1.0, 1.0, 1.0), // Pure white
     radius: 0.5,

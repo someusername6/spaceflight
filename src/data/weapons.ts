@@ -112,6 +112,17 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
     ammo: 200,
     ammoName: 'Autocannon Rounds',
   },
+  slugCannon: {
+    name: 'Slug Cannon',
+    category: 'ballistic',
+    heatPerShot: 6,
+    projectileSpeed: 1000,
+    fireRate: 0.4, // 400ms (2.5 shots/sec)
+    range: 1000,
+    damage: 45,
+    ammo: 40,
+    ammoName: 'Slug Cannon Rounds',
+  },
   railgun: {
     name: 'Railgun',
     category: 'ballistic',

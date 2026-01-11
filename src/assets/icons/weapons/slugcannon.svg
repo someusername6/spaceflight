@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Slug Cannon: Thick single barrel with two acceleration coils -->
+  <rect x="8" y="11" width="16" height="10" rx="2"/>
+  <path d="M24 13 L88 13"/>
+  <path d="M24 19 L88 19"/>
+  <rect x="40" y="9" width="6" height="14"/>
+  <rect x="60" y="9" width="6" height="14"/>
+</svg>
