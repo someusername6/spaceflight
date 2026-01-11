@@ -1,7 +1,12 @@
 /**
  * Shared test utilities for all test files.
+ *
+ * Uses Node.js built-in test runner (node:test) and assertions (node:assert).
+ * Re-exports commonly used test functions for convenience.
  */
 
+import assert from 'node:assert';
+import { describe, it, test } from 'node:test';
 import * as THREE from 'three';
 import { createFaction } from '../../../src/components/faction.ts';
 import { createHealth } from '../../../src/components/health.ts';
@@ -19,46 +24,44 @@ import {
 } from '../../../src/systems/collision.ts';
 import { missileSystem } from '../../../src/systems/weapons/missiles.ts';
 
-// Test state
-let passed = 0;
-let failed = 0;
+// ============================================================
+// Custom Assertions
+// ============================================================
 
-/** Run a test with error handling */
-export function test(name, fn) {
-  try {
-    fn();
-    console.log(`✓ ${name}`);
-    passed++;
-  } catch (e) {
-    console.log(`✗ ${name}: ${e.message}`);
-    failed++;
-  }
-}
-
-/** Assert a condition */
-export function assert(condition, message) {
-  if (!condition) throw new Error(message || 'Assertion failed');
-}
-
-/** Assert approximate equality for floats */
+/**
+ * Assert approximate equality for floating point numbers.
+ * @param {number} actual - Actual value
+ * @param {number} expected - Expected value
+ * @param {number} tolerance - Acceptable difference (default 0.001)
+ * @param {string} message - Optional error message
+ */
 export function assertApprox(actual, expected, tolerance = 0.001, message) {
   if (Math.abs(actual - expected) > tolerance) {
-    throw new Error(message || `Expected ${expected}, got ${actual}`);
+    throw new Error(
+      message ||
+        `Expected ~${expected}, got ${actual} (tolerance: ${tolerance})`,
+    );
   }
 }
 
-/** Print test summary and exit with appropriate code */
-export function summarize() {
-  console.log('');
-  console.log(`Tests: ${passed} passed, ${failed} failed`);
-  process.exit(failed > 0 ? 1 : 0);
+/**
+ * Assert that a value is within a range.
+ * @param {number} actual - Actual value
+ * @param {number} min - Minimum expected
+ * @param {number} max - Maximum expected
+ * @param {string} message - Optional error message
+ */
+export function assertInRange(actual, min, max, message) {
+  if (actual < min || actual > max) {
+    throw new Error(
+      message || `Expected ${actual} to be in range [${min}, ${max}]`,
+    );
+  }
 }
 
-/** Reset test counters (for running multiple test suites) */
-export function resetCounters() {
-  passed = 0;
-  failed = 0;
-}
+// ============================================================
+// Test World Helpers
+// ============================================================
 
 /** Create a test world with combat stats initialized */
 export function createTestWorld(seed = 0) {
@@ -132,6 +135,15 @@ export function runFrame(
   processRemovals(world);
 }
 
-// Re-export commonly used items
-export { Faction } from '../../../src/components/faction.ts';
+// ============================================================
+// Re-exports
+// ============================================================
+
+// Node.js test runner
+export { assert, describe, it, test };
+
+// Three.js for vector operations
 export { THREE };
+
+// Faction enum
+export { Faction } from '../../../src/components/faction.ts';

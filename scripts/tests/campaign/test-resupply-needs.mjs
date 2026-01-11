@@ -3,6 +3,7 @@
  */
 
 import assert from 'node:assert';
+import { describe, it } from 'node:test';
 import {
   getShipResupplyNeeds,
   needsAmmoResupply,
@@ -12,186 +13,199 @@ import {
 import { createSlotArray } from '../../../src/campaign/slot-array.ts';
 import { getMaxAmmoCapacity } from '../../../src/campaign/store/store-ammo.ts';
 
-console.log('=== Resupply Needs Tests ===\n');
+describe('Resupply Needs', () => {
+  describe('needsResupply', () => {
+    it('returns false for full ship', () => {
+      const fullShip = {
+        id: 'ship1',
+        primaryWeapons: createSlotArray([
+          { weaponType: 'autocannon', bankSize: 1, currentAmmo: 200 },
+        ]),
+        secondaryWeapons: createSlotArray([
+          { weaponType: 'heatseeking', bankSize: 1, count: 4, maxCount: 4 },
+        ]),
+      };
+      assert.strictEqual(
+        needsResupply(fullShip),
+        false,
+        'Full ship does not need resupply',
+      );
+    });
 
-// Test: needsResupply detects low ammo
-console.log('Testing needsResupply...');
-{
-  const fullShip = {
-    id: 'ship1',
-    primaryWeapons: createSlotArray([
-      { weaponType: 'autocannon', bankSize: 1, currentAmmo: 200 },
-    ]),
-    secondaryWeapons: createSlotArray([
-      { weaponType: 'heatseeking', bankSize: 1, count: 4, maxCount: 4 },
-    ]),
-  };
-  assert.strictEqual(
-    needsResupply(fullShip),
-    false,
-    'Full ship does not need resupply',
-  );
+    it('returns true for low ammo ship', () => {
+      const lowAmmoShip = {
+        id: 'ship2',
+        primaryWeapons: createSlotArray([
+          { weaponType: 'autocannon', bankSize: 1, currentAmmo: 50 },
+        ]),
+        secondaryWeapons: createSlotArray([
+          { weaponType: 'heatseeking', bankSize: 1, count: 4, maxCount: 4 },
+        ]),
+      };
+      assert.strictEqual(
+        needsResupply(lowAmmoShip),
+        true,
+        'Low ammo ship needs resupply',
+      );
+    });
 
-  const lowAmmoShip = {
-    id: 'ship2',
-    primaryWeapons: createSlotArray([
-      { weaponType: 'autocannon', bankSize: 1, currentAmmo: 50 },
-    ]),
-    secondaryWeapons: createSlotArray([
-      { weaponType: 'heatseeking', bankSize: 1, count: 4, maxCount: 4 },
-    ]),
-  };
-  assert.strictEqual(
-    needsResupply(lowAmmoShip),
-    true,
-    'Low ammo ship needs resupply',
-  );
+    it('returns true for low missiles ship', () => {
+      const lowMissilesShip = {
+        id: 'ship3',
+        primaryWeapons: createSlotArray([
+          { weaponType: 'plasma', bankSize: 1 },
+        ]),
+        secondaryWeapons: createSlotArray([
+          { weaponType: 'heatseeking', bankSize: 1, count: 2, maxCount: 4 },
+        ]),
+      };
+      assert.strictEqual(
+        needsResupply(lowMissilesShip),
+        true,
+        'Low missiles ship needs resupply',
+      );
+    });
 
-  const lowMissilesShip = {
-    id: 'ship3',
-    primaryWeapons: createSlotArray([{ weaponType: 'plasma', bankSize: 1 }]),
-    secondaryWeapons: createSlotArray([
-      { weaponType: 'heatseeking', bankSize: 1, count: 2, maxCount: 4 },
-    ]),
-  };
-  assert.strictEqual(
-    needsResupply(lowMissilesShip),
-    true,
-    'Low missiles ship needs resupply',
-  );
+    it('returns true for empty primary slot', () => {
+      const emptyPrimaryShip = {
+        id: 'ship4',
+        primaryWeapons: createSlotArray([
+          null,
+          { weaponType: 'plasma', bankSize: 1 },
+        ]),
+        secondaryWeapons: createSlotArray([
+          { weaponType: 'heatseeking', bankSize: 1, count: 4, maxCount: 4 },
+        ]),
+      };
+      assert.strictEqual(
+        needsResupply(emptyPrimaryShip),
+        true,
+        'Empty primary slot needs attention',
+      );
+    });
 
-  const emptyPrimaryShip = {
-    id: 'ship4',
-    primaryWeapons: createSlotArray([
-      null,
-      { weaponType: 'plasma', bankSize: 1 },
-    ]),
-    secondaryWeapons: createSlotArray([
-      { weaponType: 'heatseeking', bankSize: 1, count: 4, maxCount: 4 },
-    ]),
-  };
-  assert.strictEqual(
-    needsResupply(emptyPrimaryShip),
-    true,
-    'Empty primary slot needs attention',
-  );
+    it('returns true for empty secondary slot', () => {
+      const emptySecondaryShip = {
+        id: 'ship5',
+        primaryWeapons: createSlotArray([
+          { weaponType: 'plasma', bankSize: 1 },
+        ]),
+        secondaryWeapons: createSlotArray([null]),
+      };
+      assert.strictEqual(
+        needsResupply(emptySecondaryShip),
+        true,
+        'Empty secondary slot needs attention',
+      );
+    });
+  });
 
-  const emptySecondaryShip = {
-    id: 'ship5',
-    primaryWeapons: createSlotArray([{ weaponType: 'plasma', bankSize: 1 }]),
-    secondaryWeapons: createSlotArray([null]),
-  };
-  assert.strictEqual(
-    needsResupply(emptySecondaryShip),
-    true,
-    'Empty secondary slot needs attention',
-  );
+  describe('needsAmmoResupply (excludes empty slots)', () => {
+    it('returns false for empty slot with full ammo', () => {
+      const emptySlotFullAmmo = {
+        id: 'ship1',
+        primaryWeapons: createSlotArray([
+          null,
+          { weaponType: 'autocannon', bankSize: 1, currentAmmo: 200 },
+        ]),
+        secondaryWeapons: createSlotArray([
+          { weaponType: 'heatseeking', bankSize: 1, count: 4, maxCount: 4 },
+        ]),
+      };
+      assert.strictEqual(
+        needsAmmoResupply(emptySlotFullAmmo),
+        false,
+        'Empty slot with full ammo does NOT need ammo resupply',
+      );
+    });
 
-  console.log('  - Full ship detection: PASS');
-  console.log('  - Low ammo detection: PASS');
-  console.log('  - Low missiles detection: PASS');
-  console.log('  - Empty primary slot detection: PASS');
-  console.log('  - Empty secondary slot detection: PASS');
-}
+    it('returns true for needsAttention with empty slot', () => {
+      const emptySlotFullAmmo = {
+        id: 'ship1',
+        primaryWeapons: createSlotArray([
+          null,
+          { weaponType: 'autocannon', bankSize: 1, currentAmmo: 200 },
+        ]),
+        secondaryWeapons: createSlotArray([
+          { weaponType: 'heatseeking', bankSize: 1, count: 4, maxCount: 4 },
+        ]),
+      };
+      assert.strictEqual(
+        needsAttention(emptySlotFullAmmo),
+        true,
+        'Empty slot DOES need attention (warning icon)',
+      );
+    });
 
-// Test: needsAmmoResupply only detects ammo/missile needs, not empty slots
-console.log('\nTesting needsAmmoResupply (excludes empty slots)...');
-{
-  const emptySlotFullAmmo = {
-    id: 'ship1',
-    primaryWeapons: createSlotArray([
-      null,
-      { weaponType: 'autocannon', bankSize: 1, currentAmmo: 200 },
-    ]),
-    secondaryWeapons: createSlotArray([
-      { weaponType: 'heatseeking', bankSize: 1, count: 4, maxCount: 4 },
-    ]),
-  };
-  assert.strictEqual(
-    needsAmmoResupply(emptySlotFullAmmo),
-    false,
-    'Empty slot with full ammo does NOT need ammo resupply',
-  );
-  assert.strictEqual(
-    needsAttention(emptySlotFullAmmo),
-    true,
-    'Empty slot DOES need attention (warning icon)',
-  );
+    it('returns true for low ammo', () => {
+      const lowAmmo = {
+        id: 'ship2',
+        primaryWeapons: createSlotArray([
+          { weaponType: 'autocannon', bankSize: 1, currentAmmo: 50 },
+        ]),
+        secondaryWeapons: createSlotArray([
+          { weaponType: 'heatseeking', bankSize: 1, count: 4, maxCount: 4 },
+        ]),
+      };
+      assert.strictEqual(
+        needsAmmoResupply(lowAmmo),
+        true,
+        'Low ammo needs ammo resupply',
+      );
+    });
 
-  const lowAmmo = {
-    id: 'ship2',
-    primaryWeapons: createSlotArray([
-      { weaponType: 'autocannon', bankSize: 1, currentAmmo: 50 },
-    ]),
-    secondaryWeapons: createSlotArray([
-      { weaponType: 'heatseeking', bankSize: 1, count: 4, maxCount: 4 },
-    ]),
-  };
-  assert.strictEqual(
-    needsAmmoResupply(lowAmmo),
-    true,
-    'Low ammo needs ammo resupply',
-  );
+    it('returns false for fully equipped ship', () => {
+      const fullyEquipped = {
+        id: 'ship3',
+        primaryWeapons: createSlotArray([
+          { weaponType: 'autocannon', bankSize: 1, currentAmmo: 200 },
+        ]),
+        secondaryWeapons: createSlotArray([
+          { weaponType: 'heatseeking', bankSize: 1, count: 4, maxCount: 4 },
+        ]),
+      };
+      assert.strictEqual(
+        needsAmmoResupply(fullyEquipped),
+        false,
+        'Fully equipped ship does NOT need ammo resupply',
+      );
+      assert.strictEqual(
+        needsAttention(fullyEquipped),
+        false,
+        'Fully equipped ship does NOT need attention',
+      );
+    });
+  });
 
-  const fullyEquipped = {
-    id: 'ship3',
-    primaryWeapons: createSlotArray([
-      { weaponType: 'autocannon', bankSize: 1, currentAmmo: 200 },
-    ]),
-    secondaryWeapons: createSlotArray([
-      { weaponType: 'heatseeking', bankSize: 1, count: 4, maxCount: 4 },
-    ]),
-  };
-  assert.strictEqual(
-    needsAmmoResupply(fullyEquipped),
-    false,
-    'Fully equipped ship does NOT need ammo resupply',
-  );
-  assert.strictEqual(
-    needsAttention(fullyEquipped),
-    false,
-    'Fully equipped ship does NOT need attention',
-  );
+  describe('getShipResupplyNeeds', () => {
+    it('calculates ammo and missile needs correctly', () => {
+      const ship = {
+        id: 'ship1',
+        primaryWeapons: createSlotArray([
+          { weaponType: 'autocannon', bankSize: 1, currentAmmo: 50 },
+        ]),
+        secondaryWeapons: createSlotArray([
+          { weaponType: 'heatseeking', bankSize: 1, count: 2, maxCount: 4 },
+        ]),
+      };
+      const needs = getShipResupplyNeeds(ship);
 
-  console.log('  - Empty slot full ammo: no ammo resupply needed: PASS');
-  console.log('  - Empty slot full ammo: attention needed: PASS');
-  console.log('  - Low ammo: ammo resupply needed: PASS');
-  console.log('  - Fully equipped: nothing needed: PASS');
-}
-
-// Test: getShipResupplyNeeds calculates correctly
-console.log('\nTesting getShipResupplyNeeds...');
-{
-  const ship = {
-    id: 'ship1',
-    primaryWeapons: createSlotArray([
-      { weaponType: 'autocannon', bankSize: 1, currentAmmo: 50 },
-    ]),
-    secondaryWeapons: createSlotArray([
-      { weaponType: 'heatseeking', bankSize: 1, count: 2, maxCount: 4 },
-    ]),
-  };
-  const needs = getShipResupplyNeeds(ship);
-
-  const maxAmmo = getMaxAmmoCapacity('autocannon', 1);
-  assert.strictEqual(
-    needs.ammo.get('autocannon'),
-    maxAmmo - 50,
-    'Correct ammo needed',
-  );
-  assert.strictEqual(
-    needs.missiles.get('heatseeking'),
-    2,
-    'Correct missiles needed',
-  );
-  assert.strictEqual(
-    needs.totalNeeded,
-    maxAmmo - 50 + 2,
-    'Total needed is correct',
-  );
-
-  console.log('  - Ammo needs calculation: PASS');
-  console.log('  - Missile needs calculation: PASS');
-}
-
-console.log('\n=== All Resupply Needs Tests Passed ===');
+      const maxAmmo = getMaxAmmoCapacity('autocannon', 1);
+      assert.strictEqual(
+        needs.ammo.get('autocannon'),
+        maxAmmo - 50,
+        'Correct ammo needed',
+      );
+      assert.strictEqual(
+        needs.missiles.get('heatseeking'),
+        2,
+        'Correct missiles needed',
+      );
+      assert.strictEqual(
+        needs.totalNeeded,
+        maxAmmo - 50 + 2,
+        'Total needed is correct',
+      );
+    });
+  });
+});

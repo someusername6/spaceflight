@@ -12,6 +12,8 @@
  * - All: 90-180s average victory time
  */
 
+import assert from 'node:assert';
+import { describe, it } from 'node:test';
 import { Quaternion, Vector3 } from 'three';
 import {
   createWorld,
@@ -180,77 +182,90 @@ function runMissionTests(mission) {
 }
 
 // ============================================================================
-// Main
+// Tests
 // ============================================================================
 
-const missions = getMissionsForSector(SECTOR);
-if (missions.length === 0) {
-  console.log(`No missions found for sector ${SECTOR}`);
-  process.exit(1);
-}
+describe(`Sector ${SECTOR} Balance`, () => {
+  const missions = getMissionsForSector(SECTOR);
 
-const loadoutDesc = getLoadoutDescription(SECTOR);
+  it('has missions to test', () => {
+    assert.ok(missions.length > 0, `No missions found for sector ${SECTOR}`);
+  });
 
-console.log('='.repeat(90));
-console.log(
-  `SECTOR ${SECTOR} BALANCE TEST (${missions.length} missions, ${RUNS_PER_MISSION} runs each)`,
-);
-console.log(`Loadout: ${loadoutDesc}`);
-console.log(
-  `Targets: Easy 60-80%, Medium 40-60%, Hard 20-40%, all 90-180s avg time`,
-);
-console.log('='.repeat(90));
-console.log(
-  'Mission'.padEnd(22) +
-    'Diff'.padEnd(8) +
-    'WinRate'.padEnd(9) +
-    'Target'.padEnd(11) +
-    'Status'.padEnd(12) +
-    'Time'.padEnd(8) +
-    'Surv'.padEnd(6) +
-    'T/O',
-);
-console.log('─'.repeat(90));
+  it('all missions meet balance targets', () => {
+    if (missions.length === 0) {
+      return; // Skip if no missions
+    }
 
-const results = [];
-for (const mission of missions) {
-  process.stdout.write(
-    `${`Testing ${mission.name.substring(0, 18)}...`.padEnd(30)}\r`,
-  );
-  const result = runMissionTests(mission);
-  const target = BALANCE_TARGETS[mission.difficulty];
+    const loadoutDesc = getLoadoutDescription(SECTOR);
 
-  let status = 'OK';
-  if (result.winRate < target.min) status = 'TOO HARD';
-  else if (result.winRate > target.max) status = 'TOO EASY';
-  else if (result.avgTime < MIN_AVG_TIME && result.winRate > 0)
-    status = 'TOO SHORT';
-  else if (result.avgTime > MAX_AVG_TIME && result.winRate > 0)
-    status = 'TOO LONG';
+    console.log('='.repeat(90));
+    console.log(
+      `SECTOR ${SECTOR} BALANCE TEST (${missions.length} missions, ${RUNS_PER_MISSION} runs each)`,
+    );
+    console.log(`Loadout: ${loadoutDesc}`);
+    console.log(
+      `Targets: Easy 60-80%, Medium 40-60%, Hard 20-40%, all 90-180s avg time`,
+    );
+    console.log('='.repeat(90));
+    console.log(
+      'Mission'.padEnd(22) +
+        'Diff'.padEnd(8) +
+        'WinRate'.padEnd(9) +
+        'Target'.padEnd(11) +
+        'Status'.padEnd(12) +
+        'Time'.padEnd(8) +
+        'Surv'.padEnd(6) +
+        'T/O',
+    );
+    console.log('-'.repeat(90));
 
-  results.push({ ...result, mission, target, status });
+    const results = [];
+    for (const mission of missions) {
+      process.stdout.write(
+        `${`Testing ${mission.name.substring(0, 18)}...`.padEnd(30)}\r`,
+      );
+      const result = runMissionTests(mission);
+      const target = BALANCE_TARGETS[mission.difficulty];
 
-  console.log(
-    mission.name.substring(0, 21).padEnd(22) +
-      mission.difficulty.padEnd(8) +
-      `${result.winRate.toFixed(0)}%`.padEnd(9) +
-      `${target.min}-${target.max}%`.padEnd(11) +
-      status.padEnd(12) +
-      `${result.avgTime.toFixed(0)}s`.padEnd(8) +
-      `${result.avgSurvivors.toFixed(1)}`.padEnd(6) +
-      result.timeouts,
-  );
-}
+      let status = 'OK';
+      if (result.winRate < target.min) status = 'TOO HARD';
+      else if (result.winRate > target.max) status = 'TOO EASY';
+      else if (result.avgTime < MIN_AVG_TIME && result.winRate > 0)
+        status = 'TOO SHORT';
+      else if (result.avgTime > MAX_AVG_TIME && result.winRate > 0)
+        status = 'TOO LONG';
 
-// Summary
-console.log('─'.repeat(90));
-const ok = results.filter((r) => r.status === 'OK').length;
-const hard = results.filter((r) => r.status === 'TOO HARD').length;
-const easy = results.filter((r) => r.status === 'TOO EASY').length;
-const short = results.filter((r) => r.status === 'TOO SHORT').length;
-const long = results.filter((r) => r.status === 'TOO LONG').length;
-console.log(
-  `Results: ${ok} OK, ${hard} TOO HARD, ${easy} TOO EASY, ${short} TOO SHORT, ${long} TOO LONG`,
-);
+      results.push({ ...result, mission, target, status });
 
-if (hard + easy + short + long > 0) process.exit(1);
+      console.log(
+        mission.name.substring(0, 21).padEnd(22) +
+          mission.difficulty.padEnd(8) +
+          `${result.winRate.toFixed(0)}%`.padEnd(9) +
+          `${target.min}-${target.max}%`.padEnd(11) +
+          status.padEnd(12) +
+          `${result.avgTime.toFixed(0)}s`.padEnd(8) +
+          `${result.avgSurvivors.toFixed(1)}`.padEnd(6) +
+          result.timeouts,
+      );
+    }
+
+    // Summary
+    console.log('-'.repeat(90));
+    const ok = results.filter((r) => r.status === 'OK').length;
+    const hard = results.filter((r) => r.status === 'TOO HARD').length;
+    const easy = results.filter((r) => r.status === 'TOO EASY').length;
+    const short = results.filter((r) => r.status === 'TOO SHORT').length;
+    const long = results.filter((r) => r.status === 'TOO LONG').length;
+    console.log(
+      `Results: ${ok} OK, ${hard} TOO HARD, ${easy} TOO EASY, ${short} TOO SHORT, ${long} TOO LONG`,
+    );
+
+    const failCount = hard + easy + short + long;
+    assert.strictEqual(
+      failCount,
+      0,
+      `${failCount} missions failed balance check`,
+    );
+  });
+});

@@ -10,6 +10,8 @@
  * 3. Consistency across archetypes (skill should matter equally for all ships)
  */
 
+import assert from 'node:assert';
+import { describe, it } from 'node:test';
 import { Quaternion, Vector3 } from 'three';
 import { createWorld, getComponent } from '../../../src/core/ecs.ts';
 import { Faction } from '../../../src/core/types.ts';
@@ -26,10 +28,6 @@ const _PROFILES = ['rookie', 'regular', 'veteran', 'ace'];
 const RUNS_PER_MATCHUP = 50;
 const MAX_FIGHT_TIME = 60;
 const MAX_TICKS = MAX_FIGHT_TIME * TICK_RATE;
-
-console.log(`\n${'='.repeat(70)}`);
-console.log('SKILL SCALING VERIFICATION');
-console.log('='.repeat(70));
 
 // Run a single matchup
 function runMatchup(archetype, profileA, profileB, runs) {
@@ -92,153 +90,189 @@ function runMatchup(archetype, profileA, profileB, runs) {
   };
 }
 
-// Test 1: Skill ladder per archetype
-console.log('\n--- TEST 1: SKILL LADDER BY ARCHETYPE ---');
-console.log('Each row shows higher skill win rate against lower skill');
-console.log(
-  'Archetype'.padEnd(14) +
-    'R>Rk'.padStart(8) +
-    'V>R'.padStart(8) +
-    'A>V'.padStart(8) +
-    'A>Rk'.padStart(8),
-);
-console.log('-'.repeat(14 + 32));
+describe('Skill Scaling Verification', () => {
+  const ladderResults = {};
+  const anomalies = [];
 
-const ladderResults = {};
+  // Run tests and collect results
+  console.log(`\n${'='.repeat(70)}`);
+  console.log('SKILL SCALING VERIFICATION');
+  console.log('='.repeat(70));
 
-for (const archetype of ARCHETYPES) {
-  ladderResults[archetype] = {};
-
-  // Rookie vs Regular (Regular should win)
-  const rrResult = runMatchup(archetype, 'rookie', 'regular', RUNS_PER_MATCHUP);
-  ladderResults[archetype]['rookie-regular'] = rrResult.bWinRate;
-
-  // Regular vs Veteran (Veteran should win)
-  const rvResult = runMatchup(
-    archetype,
-    'regular',
-    'veteran',
-    RUNS_PER_MATCHUP,
+  // Test 1: Skill ladder per archetype
+  console.log('\n--- TEST 1: SKILL LADDER BY ARCHETYPE ---');
+  console.log('Each row shows higher skill win rate against lower skill');
+  console.log(
+    'Archetype'.padEnd(14) +
+      'R>Rk'.padStart(8) +
+      'V>R'.padStart(8) +
+      'A>V'.padStart(8) +
+      'A>Rk'.padStart(8),
   );
-  ladderResults[archetype]['regular-veteran'] = rvResult.bWinRate;
+  console.log('-'.repeat(14 + 32));
 
-  // Veteran vs Ace (Ace should win)
-  const vaResult = runMatchup(archetype, 'veteran', 'ace', RUNS_PER_MATCHUP);
-  ladderResults[archetype]['veteran-ace'] = vaResult.bWinRate;
+  for (const archetype of ARCHETYPES) {
+    ladderResults[archetype] = {};
 
-  // Rookie vs Ace (Ace should dominate)
-  const raResult = runMatchup(archetype, 'rookie', 'ace', RUNS_PER_MATCHUP);
-  ladderResults[archetype]['rookie-ace'] = raResult.bWinRate;
+    // Rookie vs Regular (Regular should win)
+    const rrResult = runMatchup(
+      archetype,
+      'rookie',
+      'regular',
+      RUNS_PER_MATCHUP,
+    );
+    ladderResults[archetype]['rookie-regular'] = rrResult.bWinRate;
+
+    // Regular vs Veteran (Veteran should win)
+    const rvResult = runMatchup(
+      archetype,
+      'regular',
+      'veteran',
+      RUNS_PER_MATCHUP,
+    );
+    ladderResults[archetype]['regular-veteran'] = rvResult.bWinRate;
+
+    // Veteran vs Ace (Ace should win)
+    const vaResult = runMatchup(archetype, 'veteran', 'ace', RUNS_PER_MATCHUP);
+    ladderResults[archetype]['veteran-ace'] = vaResult.bWinRate;
+
+    // Rookie vs Ace (Ace should dominate)
+    const raResult = runMatchup(archetype, 'rookie', 'ace', RUNS_PER_MATCHUP);
+    ladderResults[archetype]['rookie-ace'] = raResult.bWinRate;
+
+    console.log(
+      archetype.slice(0, 12).padEnd(14) +
+        `${rrResult.bWinRate.toFixed(0)}%`.padStart(8) +
+        `${rvResult.bWinRate.toFixed(0)}%`.padStart(8) +
+        `${vaResult.bWinRate.toFixed(0)}%`.padStart(8) +
+        `${raResult.bWinRate.toFixed(0)}%`.padStart(8),
+    );
+  }
+
+  // Test 2: Consistency check - skill should matter similarly across archetypes
+  console.log('\n--- TEST 2: SKILL CONSISTENCY ANALYSIS ---');
+
+  const regularBeatRookie = ARCHETYPES.map(
+    (a) => ladderResults[a]['rookie-regular'],
+  );
+  const avgRegularWin =
+    regularBeatRookie.reduce((a, b) => a + b, 0) / ARCHETYPES.length;
+  const minRegularWin = Math.min(...regularBeatRookie);
+  const maxRegularWin = Math.max(...regularBeatRookie);
 
   console.log(
-    archetype.slice(0, 12).padEnd(14) +
-      `${rrResult.bWinRate.toFixed(0)}%`.padStart(8) +
-      `${rvResult.bWinRate.toFixed(0)}%`.padStart(8) +
-      `${vaResult.bWinRate.toFixed(0)}%`.padStart(8) +
-      `${raResult.bWinRate.toFixed(0)}%`.padStart(8),
+    `Regular > Rookie: avg=${avgRegularWin.toFixed(0)}%, range=${minRegularWin.toFixed(0)}-${maxRegularWin.toFixed(0)}%`,
   );
-}
 
-// Test 2: Consistency check - skill should matter similarly across archetypes
-console.log('\n--- TEST 2: SKILL CONSISTENCY ANALYSIS ---');
+  const veteranBeatRegular = ARCHETYPES.map(
+    (a) => ladderResults[a]['regular-veteran'],
+  );
+  const avgVeteranWin =
+    veteranBeatRegular.reduce((a, b) => a + b, 0) / ARCHETYPES.length;
+  const minVeteranWin = Math.min(...veteranBeatRegular);
+  const maxVeteranWin = Math.max(...veteranBeatRegular);
 
-const regularBeatRookie = ARCHETYPES.map(
-  (a) => ladderResults[a]['rookie-regular'],
-);
-const avgRegularWin =
-  regularBeatRookie.reduce((a, b) => a + b, 0) / ARCHETYPES.length;
-const minRegularWin = Math.min(...regularBeatRookie);
-const maxRegularWin = Math.max(...regularBeatRookie);
+  console.log(
+    `Veteran > Regular: avg=${avgVeteranWin.toFixed(0)}%, range=${minVeteranWin.toFixed(0)}-${maxVeteranWin.toFixed(0)}%`,
+  );
 
-console.log(
-  `Regular > Rookie: avg=${avgRegularWin.toFixed(0)}%, range=${minRegularWin.toFixed(0)}-${maxRegularWin.toFixed(0)}%`,
-);
+  const aceBeatVeteran = ARCHETYPES.map((a) => ladderResults[a]['veteran-ace']);
+  const avgAceWin =
+    aceBeatVeteran.reduce((a, b) => a + b, 0) / ARCHETYPES.length;
+  const minAceWin = Math.min(...aceBeatVeteran);
+  const maxAceWin = Math.max(...aceBeatVeteran);
 
-const veteranBeatRegular = ARCHETYPES.map(
-  (a) => ladderResults[a]['regular-veteran'],
-);
-const avgVeteranWin =
-  veteranBeatRegular.reduce((a, b) => a + b, 0) / ARCHETYPES.length;
-const minVeteranWin = Math.min(...veteranBeatRegular);
-const maxVeteranWin = Math.max(...veteranBeatRegular);
+  console.log(
+    `Ace > Veteran: avg=${avgAceWin.toFixed(0)}%, range=${minAceWin.toFixed(0)}-${maxAceWin.toFixed(0)}%`,
+  );
 
-console.log(
-  `Veteran > Regular: avg=${avgVeteranWin.toFixed(0)}%, range=${minVeteranWin.toFixed(0)}-${maxVeteranWin.toFixed(0)}%`,
-);
+  const aceBeatRookie = ARCHETYPES.map((a) => ladderResults[a]['rookie-ace']);
+  const avgAceRookie =
+    aceBeatRookie.reduce((a, b) => a + b, 0) / ARCHETYPES.length;
 
-const aceBeatVeteran = ARCHETYPES.map((a) => ladderResults[a]['veteran-ace']);
-const avgAceWin = aceBeatVeteran.reduce((a, b) => a + b, 0) / ARCHETYPES.length;
-const minAceWin = Math.min(...aceBeatVeteran);
-const maxAceWin = Math.max(...aceBeatVeteran);
+  console.log(`Ace > Rookie: avg=${avgAceRookie.toFixed(0)}% (should be >80%)`);
 
-console.log(
-  `Ace > Veteran: avg=${avgAceWin.toFixed(0)}%, range=${minAceWin.toFixed(0)}-${maxAceWin.toFixed(0)}%`,
-);
+  // Test 3: Identify anomalies
+  console.log('\n--- TEST 3: SKILL ANOMALIES ---');
 
-const aceBeatRookie = ARCHETYPES.map((a) => ladderResults[a]['rookie-ace']);
-const avgAceRookie =
-  aceBeatRookie.reduce((a, b) => a + b, 0) / ARCHETYPES.length;
+  for (const archetype of ARCHETYPES) {
+    const r = ladderResults[archetype];
 
-console.log(`Ace > Rookie: avg=${avgAceRookie.toFixed(0)}% (should be >80%)`);
+    // Higher skill should win >55% of the time at least
+    if (r['rookie-regular'] < 55) {
+      anomalies.push(
+        `${archetype}: Regular only beats Rookie ${r['rookie-regular'].toFixed(0)}%`,
+      );
+    }
+    if (r['regular-veteran'] < 55) {
+      anomalies.push(
+        `${archetype}: Veteran only beats Regular ${r['regular-veteran'].toFixed(0)}%`,
+      );
+    }
+    if (r['veteran-ace'] < 55) {
+      anomalies.push(
+        `${archetype}: Ace only beats Veteran ${r['veteran-ace'].toFixed(0)}%`,
+      );
+    }
 
-// Test 3: Identify anomalies
-console.log('\n--- TEST 3: SKILL ANOMALIES ---');
-const anomalies = [];
+    // Ace should crush Rookie (>75%)
+    if (r['rookie-ace'] < 75) {
+      anomalies.push(
+        `${archetype}: Ace only beats Rookie ${r['rookie-ace'].toFixed(0)}%`,
+      );
+    }
+  }
 
-for (const archetype of ARCHETYPES) {
-  const r = ladderResults[archetype];
-
-  // Higher skill should win >55% of the time at least
-  if (r['rookie-regular'] < 55) {
-    anomalies.push(
-      `${archetype}: Regular only beats Rookie ${r['rookie-regular'].toFixed(0)}%`,
+  if (anomalies.length === 0) {
+    console.log(
+      'No skill scaling anomalies detected - progression is healthy!',
     );
+  } else {
+    console.log('Anomalies found:');
+    for (const a of anomalies) {
+      console.log(`  - ${a}`);
+    }
   }
-  if (r['regular-veteran'] < 55) {
-    anomalies.push(
-      `${archetype}: Veteran only beats Regular ${r['regular-veteran'].toFixed(0)}%`,
+
+  // Test 4: Skill tier value
+  console.log('\n--- TEST 4: SKILL TIER VALUE ---');
+  console.log('How much does each skill tier matter?');
+
+  const tier1Gap = avgRegularWin - 50; // How much better is Regular than Rookie
+  const tier2Gap = avgVeteranWin - 50; // How much better is Veteran than Regular
+  const tier3Gap = avgAceWin - 50; // How much better is Ace than Veteran
+
+  console.log(`Rookie -> Regular: +${tier1Gap.toFixed(0)}% advantage`);
+  console.log(`Regular -> Veteran: +${tier2Gap.toFixed(0)}% advantage`);
+  console.log(`Veteran -> Ace: +${tier3Gap.toFixed(0)}% advantage`);
+
+  // Check if tiers are meaningful
+  if (tier1Gap < 10 || tier2Gap < 10 || tier3Gap < 5) {
+    console.log('\nWARNING: Some skill tiers provide minimal advantage');
+  }
+
+  console.log(`\n${'='.repeat(70)}`);
+  console.log('SKILL SCALING VERIFICATION COMPLETE');
+  console.log(`${'='.repeat(70)}\n`);
+
+  it('should have no skill scaling anomalies', () => {
+    assert.strictEqual(
+      anomalies.length,
+      0,
+      `Found ${anomalies.length} anomalies: ${anomalies.join('; ')}`,
     );
-  }
-  if (r['veteran-ace'] < 55) {
-    anomalies.push(
-      `${archetype}: Ace only beats Veteran ${r['veteran-ace'].toFixed(0)}%`,
+  });
+
+  it('should have meaningful skill tier advantages', () => {
+    assert.ok(tier1Gap >= 10, `Rookie->Regular gap too small: ${tier1Gap}%`);
+    assert.ok(tier2Gap >= 10, `Regular->Veteran gap too small: ${tier2Gap}%`);
+    assert.ok(tier3Gap >= 5, `Veteran->Ace gap too small: ${tier3Gap}%`);
+  });
+
+  it('should have ace dominate rookie (>80% win rate)', () => {
+    assert.ok(
+      avgAceRookie >= 80,
+      `Ace vs Rookie win rate too low: ${avgAceRookie}%`,
     );
-  }
-
-  // Ace should crush Rookie (>75%)
-  if (r['rookie-ace'] < 75) {
-    anomalies.push(
-      `${archetype}: Ace only beats Rookie ${r['rookie-ace'].toFixed(0)}%`,
-    );
-  }
-}
-
-if (anomalies.length === 0) {
-  console.log('No skill scaling anomalies detected - progression is healthy!');
-} else {
-  console.log('Anomalies found:');
-  for (const a of anomalies) {
-    console.log(`  - ${a}`);
-  }
-}
-
-// Test 4: Skill tier value
-console.log('\n--- TEST 4: SKILL TIER VALUE ---');
-console.log('How much does each skill tier matter?');
-
-const tier1Gap = avgRegularWin - 50; // How much better is Regular than Rookie
-const tier2Gap = avgVeteranWin - 50; // How much better is Veteran than Regular
-const tier3Gap = avgAceWin - 50; // How much better is Ace than Veteran
-
-console.log(`Rookie -> Regular: +${tier1Gap.toFixed(0)}% advantage`);
-console.log(`Regular -> Veteran: +${tier2Gap.toFixed(0)}% advantage`);
-console.log(`Veteran -> Ace: +${tier3Gap.toFixed(0)}% advantage`);
-
-// Check if tiers are meaningful
-if (tier1Gap < 10 || tier2Gap < 10 || tier3Gap < 5) {
-  console.log('\nWARNING: Some skill tiers provide minimal advantage');
-}
-
-console.log(`\n${'='.repeat(70)}`);
-console.log('SKILL SCALING VERIFICATION COMPLETE');
-console.log(`${'='.repeat(70)}\n`);
+  });
+});

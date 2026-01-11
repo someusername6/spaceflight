@@ -5,6 +5,8 @@
  * Mirror matches are edge cases; most gameplay involves different ship types.
  */
 
+import assert from 'node:assert';
+import { describe, it } from 'node:test';
 import { Quaternion, Vector3 } from 'three';
 import { createWorld, getComponent } from '../../../src/core/ecs.ts';
 import { Faction } from '../../../src/core/types.ts';
@@ -30,13 +32,6 @@ const TEST_CASES = [
 ];
 
 const PROFILES = ['rookie', 'regular', 'veteran', 'ace'];
-
-console.log(`\n${'='.repeat(70)}`);
-console.log('SKILL SCALING VS BRAWLER');
-console.log(
-  '(How well does each skill level perform against a regular brawler?)',
-);
-console.log('='.repeat(70));
 
 // Run a single matchup
 function runMatchup(
@@ -95,63 +90,108 @@ function runMatchup(
   return (shipWins / runs) * 100;
 }
 
-// Test each ship type
-for (const { ship, opponent, startRange } of TEST_CASES) {
+describe('Skill Scaling vs Brawler', () => {
+  console.log(`\n${'='.repeat(70)}`);
+  console.log('SKILL SCALING VS BRAWLER');
   console.log(
-    `\n--- ${ship.toUpperCase()} vs ${opponent} (regular) @ ${startRange}m ---`,
+    '(How well does each skill level perform against a regular brawler?)',
   );
-  console.log('Profile       Win Rate   Expected');
-  console.log('-'.repeat(40));
+  console.log('='.repeat(70));
 
-  for (const profile of PROFILES) {
-    const winRate = runMatchup(
-      ship,
-      profile,
-      opponent,
-      'regular',
-      RUNS_PER_MATCHUP,
-      startRange,
-    );
+  const testResults = {};
 
-    // Expected: rookie < regular ≈ 50% < veteran < ace
-    let expected;
-    switch (profile) {
-      case 'rookie':
-        expected = '<40%';
-        break;
-      case 'regular':
-        expected = '~50%';
-        break;
-      case 'veteran':
-        expected = '>55%';
-        break;
-      case 'ace':
-        expected = '>70%';
-        break;
-    }
-
-    const status =
-      (profile === 'rookie' && winRate < 40) ||
-      (profile === 'regular' && winRate >= 40 && winRate <= 60) ||
-      (profile === 'veteran' && winRate > 55) ||
-      (profile === 'ace' && winRate > 70)
-        ? '✓'
-        : '✗';
-
+  // Test each ship type
+  for (const { ship, opponent, startRange } of TEST_CASES) {
     console.log(
-      profile.padEnd(14) +
-        `${winRate.toFixed(0)}%`.padStart(8) +
-        expected.padStart(12) +
-        `  ${status}`,
+      `\n--- ${ship.toUpperCase()} vs ${opponent} (regular) @ ${startRange}m ---`,
     );
-  }
-}
+    console.log('Profile       Win Rate   Expected');
+    console.log('-'.repeat(40));
 
-console.log(`\n${'='.repeat(70)}`);
-console.log(
-  'KEY INSIGHT: In typical gameplay (vs brawlers), skill should scale correctly.',
-);
-console.log(
-  'Mirror matches are edge cases that may have inverted skill scaling.',
-);
-console.log('='.repeat(70));
+    testResults[ship] = {};
+
+    for (const profile of PROFILES) {
+      const winRate = runMatchup(
+        ship,
+        profile,
+        opponent,
+        'regular',
+        RUNS_PER_MATCHUP,
+        startRange,
+      );
+
+      testResults[ship][profile] = winRate;
+
+      // Expected: rookie < regular ≈ 50% < veteran < ace
+      let expected;
+      switch (profile) {
+        case 'rookie':
+          expected = '<40%';
+          break;
+        case 'regular':
+          expected = '~50%';
+          break;
+        case 'veteran':
+          expected = '>55%';
+          break;
+        case 'ace':
+          expected = '>70%';
+          break;
+      }
+
+      const status =
+        (profile === 'rookie' && winRate < 40) ||
+        (profile === 'regular' && winRate >= 40 && winRate <= 60) ||
+        (profile === 'veteran' && winRate > 55) ||
+        (profile === 'ace' && winRate > 70)
+          ? '✓'
+          : '✗';
+
+      console.log(
+        profile.padEnd(14) +
+          `${winRate.toFixed(0)}%`.padStart(8) +
+          expected.padStart(12) +
+          `  ${status}`,
+      );
+    }
+  }
+
+  console.log(`\n${'='.repeat(70)}`);
+  console.log(
+    'KEY INSIGHT: In typical gameplay (vs brawlers), skill should scale correctly.',
+  );
+  console.log(
+    'Mirror matches are edge cases that may have inverted skill scaling.',
+  );
+  console.log('='.repeat(70));
+
+  it('should have ace beat regular brawler most of the time', () => {
+    for (const { ship } of TEST_CASES) {
+      const aceWinRate = testResults[ship]?.ace;
+      if (aceWinRate !== undefined) {
+        assert.ok(
+          aceWinRate > 50,
+          `${ship} ace should beat regular brawler >50%: got ${aceWinRate.toFixed(0)}%`,
+        );
+      }
+    }
+  });
+
+  it('should have skill progression (higher skill = better win rate)', () => {
+    for (const { ship } of TEST_CASES) {
+      const results = testResults[ship];
+      if (results) {
+        // Ace should beat veteran's win rate
+        assert.ok(
+          results.ace >= results.veteran - 5,
+          `${ship}: Ace (${results.ace.toFixed(0)}%) should be >= Veteran (${results.veteran.toFixed(0)}%)`,
+        );
+        // Veteran should beat regular's win rate
+        assert.ok(
+          results.veteran >= results.regular - 5,
+          `${ship}: Veteran (${results.veteran.toFixed(0)}%) should be >= Regular (${results.regular.toFixed(0)}%)`,
+        );
+      }
+    }
+  });
+});

@@ -9,6 +9,8 @@
  * 2. With preferredCombatRange values for each archetype
  */
 
+import assert from 'node:assert';
+import { describe, it } from 'node:test';
 import { Quaternion, Vector3 } from 'three';
 import { createWorld, getComponent } from '../../../src/core/ecs.ts';
 import { Faction } from '../../../src/core/types.ts';
@@ -25,10 +27,6 @@ import {
 const RUNS_PER_TEST = 25;
 const MAX_FIGHT_TIME = 45;
 const MAX_TICKS = MAX_FIGHT_TIME * TICK_RATE;
-
-console.log(`\n${'='.repeat(70)}`);
-console.log('AI CLOSING BEHAVIOR TEST');
-console.log('='.repeat(70));
 
 // Store originals
 const originals = {};
@@ -135,60 +133,83 @@ function runClosingTest(description, setupFn) {
   };
 }
 
-const tests = [];
+describe('AI Closing Behavior', () => {
+  console.log(`\n${'='.repeat(70)}`);
+  console.log('AI CLOSING BEHAVIOR TEST');
+  console.log('='.repeat(70));
 
-// TEST 1: Baseline (no preferredCombatRange)
-console.log('\n=== TEST 1: BASELINE (No preferredCombatRange) ===');
-tests.push(
-  runClosingTest('BASELINE', () => {
-    // Clear any existing preferredCombatRange
-    for (const name of Object.keys(SHIP_ARCHETYPES)) {
-      delete SHIP_ARCHETYPES[name].preferredCombatRange;
-    }
-  }),
-);
+  const tests = [];
 
-// TEST 2: With preferredCombatRange values
-console.log('\n=== TEST 2: WITH preferredCombatRange ===');
-console.log('Striker: 400m (for red laser at 400m range)');
-tests.push(
-  runClosingTest('WITH PREFERRED RANGE', () => {
-    // Set preferred ranges based on weapon loadouts
-    SHIP_ARCHETYPES.scout.preferredCombatRange = 350; // Fast, close-range
-    SHIP_ARCHETYPES.interceptor.preferredCombatRange = 700; // Versatile
-    SHIP_ARCHETYPES.striker.preferredCombatRange = 400; // Red laser range
-    SHIP_ARCHETYPES.bomber.preferredCombatRange = 500; // Missile boat
-    SHIP_ARCHETYPES.defender.preferredCombatRange = 600; // Tanky
-    SHIP_ARCHETYPES.raider.preferredCombatRange = 400; // Glass cannon close
-    SHIP_ARCHETYPES.sentinel.preferredCombatRange = 1000; // Long range
-  }),
-);
-
-// TEST 3: With increased red laser range (500m) + preferredCombatRange
-console.log('\n=== TEST 3: RED LASER 500m + preferredCombatRange ===');
-const origRedRange = PRIMARY_WEAPONS['red laser'].range;
-tests.push(
-  runClosingTest('RED 500m + PREFERRED', () => {
-    PRIMARY_WEAPONS['red laser'].range = 500;
-    SHIP_ARCHETYPES.striker.preferredCombatRange = 450; // Just inside new range
-  }),
-);
-PRIMARY_WEAPONS['red laser'].range = origRedRange;
-
-// Summary
-console.log(`\n${'='.repeat(70)}`);
-console.log('AI CLOSING BEHAVIOR SUMMARY');
-console.log('='.repeat(70));
-console.log('\n| Config | Avg Distance | Min Distance | Beam % |');
-console.log('|--------|--------------|--------------|--------|');
-for (const t of tests) {
-  console.log(
-    `| ${t.description.padEnd(20)} | ${t.avgDistance.toFixed(0).padStart(10)}m | ${t.minDistance.toFixed(0).padStart(11)}m | ${t.beamPct.toFixed(1).padStart(5)}% |`,
+  // TEST 1: Baseline (no preferredCombatRange)
+  console.log('\n=== TEST 1: BASELINE (No preferredCombatRange) ===');
+  tests.push(
+    runClosingTest('BASELINE', () => {
+      // Clear any existing preferredCombatRange
+      for (const name of Object.keys(SHIP_ARCHETYPES)) {
+        delete SHIP_ARCHETYPES[name].preferredCombatRange;
+      }
+    }),
   );
-}
 
-const improvement = tests[0].avgDistance - tests[1].avgDistance;
-console.log(
-  `\nDistance improvement with preferredCombatRange: ${improvement.toFixed(0)}m closer`,
-);
-console.log(`\n${'='.repeat(70)}`);
+  // TEST 2: With preferredCombatRange values
+  console.log('\n=== TEST 2: WITH preferredCombatRange ===');
+  console.log('Striker: 400m (for red laser at 400m range)');
+  tests.push(
+    runClosingTest('WITH PREFERRED RANGE', () => {
+      // Set preferred ranges based on weapon loadouts
+      SHIP_ARCHETYPES.scout.preferredCombatRange = 350; // Fast, close-range
+      SHIP_ARCHETYPES.interceptor.preferredCombatRange = 700; // Versatile
+      SHIP_ARCHETYPES.striker.preferredCombatRange = 400; // Red laser range
+      SHIP_ARCHETYPES.bomber.preferredCombatRange = 500; // Missile boat
+      SHIP_ARCHETYPES.defender.preferredCombatRange = 600; // Tanky
+      SHIP_ARCHETYPES.raider.preferredCombatRange = 400; // Glass cannon close
+      SHIP_ARCHETYPES.sentinel.preferredCombatRange = 1000; // Long range
+    }),
+  );
+
+  // TEST 3: With increased red laser range (500m) + preferredCombatRange
+  console.log('\n=== TEST 3: RED LASER 500m + preferredCombatRange ===');
+  const origRedRange = PRIMARY_WEAPONS['red laser'].range;
+  tests.push(
+    runClosingTest('RED 500m + PREFERRED', () => {
+      PRIMARY_WEAPONS['red laser'].range = 500;
+      SHIP_ARCHETYPES.striker.preferredCombatRange = 450; // Just inside new range
+    }),
+  );
+  PRIMARY_WEAPONS['red laser'].range = origRedRange;
+
+  // Summary
+  console.log(`\n${'='.repeat(70)}`);
+  console.log('AI CLOSING BEHAVIOR SUMMARY');
+  console.log('='.repeat(70));
+  console.log('\n| Config | Avg Distance | Min Distance | Beam % |');
+  console.log('|--------|--------------|--------------|--------|');
+  for (const t of tests) {
+    console.log(
+      `| ${t.description.padEnd(20)} | ${t.avgDistance.toFixed(0).padStart(10)}m | ${t.minDistance.toFixed(0).padStart(11)}m | ${t.beamPct.toFixed(1).padStart(5)}% |`,
+    );
+  }
+
+  const improvement = tests[0].avgDistance - tests[1].avgDistance;
+  console.log(
+    `\nDistance improvement with preferredCombatRange: ${improvement.toFixed(0)}m closer`,
+  );
+  console.log(`\n${'='.repeat(70)}`);
+
+  it('should have combat occur at reasonable distances', () => {
+    for (const t of tests) {
+      assert.ok(
+        t.avgDistance < 1000,
+        `${t.description}: Combat distance too far: ${t.avgDistance.toFixed(0)}m`,
+      );
+    }
+  });
+
+  it('should have preferredCombatRange improve closing behavior', () => {
+    // With preferredCombatRange should have shorter or equal distance
+    assert.ok(
+      tests[1].avgDistance <= tests[0].avgDistance + 50,
+      `preferredCombatRange should not increase distance significantly`,
+    );
+  });
+});

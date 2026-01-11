@@ -3,6 +3,7 @@
  */
 
 import assert from 'node:assert';
+import { describe, it } from 'node:test';
 import { createSlotArray, getSlot } from '../../../src/campaign/slot-array.ts';
 import {
   buyAmmo,
@@ -54,222 +55,201 @@ function createTestState(
   };
 }
 
-console.log('=== Store Ammo Tests ===\n');
+describe('Store Ammo', () => {
+  describe('getMaxAmmoCapacity', () => {
+    it('scales with bank size for autocannon', () => {
+      const autocannonBase = PRIMARY_WEAPONS.autocannon.ammo;
 
-// Test: getMaxAmmoCapacity scales with bank size
-console.log('Testing getMaxAmmoCapacity...');
-{
-  const autocannonBase = PRIMARY_WEAPONS.autocannon.ammo;
+      assert.strictEqual(
+        getMaxAmmoCapacity('autocannon', 1),
+        autocannonBase * 1,
+        'Bank size 1',
+      );
+      assert.strictEqual(
+        getMaxAmmoCapacity('autocannon', 2),
+        autocannonBase * 2,
+        'Bank size 2',
+      );
+      assert.strictEqual(
+        getMaxAmmoCapacity('autocannon', 3),
+        autocannonBase * 3,
+        'Bank size 3',
+      );
+    });
 
-  assert.strictEqual(
-    getMaxAmmoCapacity('autocannon', 1),
-    autocannonBase * 1,
-    'Bank size 1',
-  );
-  assert.strictEqual(
-    getMaxAmmoCapacity('autocannon', 2),
-    autocannonBase * 2,
-    'Bank size 2',
-  );
-  assert.strictEqual(
-    getMaxAmmoCapacity('autocannon', 3),
-    autocannonBase * 3,
-    'Bank size 3',
-  );
+    it('scales with bank size for railgun', () => {
+      const railgunBase = PRIMARY_WEAPONS.railgun.ammo;
+      assert.strictEqual(
+        getMaxAmmoCapacity('railgun', 1),
+        railgunBase * 1,
+        'Railgun bank 1',
+      );
+      assert.strictEqual(
+        getMaxAmmoCapacity('railgun', 2),
+        railgunBase * 2,
+        'Railgun bank 2',
+      );
+    });
 
-  const railgunBase = PRIMARY_WEAPONS.railgun.ammo;
-  assert.strictEqual(
-    getMaxAmmoCapacity('railgun', 1),
-    railgunBase * 1,
-    'Railgun bank 1',
-  );
-  assert.strictEqual(
-    getMaxAmmoCapacity('railgun', 2),
-    railgunBase * 2,
-    'Railgun bank 2',
-  );
+    it('returns 0 for energy weapons', () => {
+      assert.strictEqual(
+        getMaxAmmoCapacity('plasma', 1),
+        0,
+        'Plasma has no ammo',
+      );
+      assert.strictEqual(
+        getMaxAmmoCapacity('pulse', 1),
+        0,
+        'Pulse has no ammo',
+      );
+    });
+  });
 
-  // Energy weapons have no ammo
-  assert.strictEqual(getMaxAmmoCapacity('plasma', 1), 0, 'Plasma has no ammo');
-  assert.strictEqual(getMaxAmmoCapacity('pulse', 1), 0, 'Pulse has no ammo');
+  describe('buyAmmo', () => {
+    it('adds ammo to storage and deducts credits', () => {
+      let state = createTestState();
+      const amountToBuy = 50;
+      state = buyAmmo(state, 'autocannon', amountToBuy);
 
-  console.log('  - Bank size scaling: PASS');
-  console.log('  - Energy weapons return 0: PASS');
-}
+      const pricePerRound = getAmmoPrice('autocannon', 'buy');
+      const expectedCost = amountToBuy * pricePerRound;
+      assert.strictEqual(
+        state.credits,
+        1000 - expectedCost,
+        `Credits deducted (${pricePerRound} credit/round)`,
+      );
+      assert.strictEqual(state.storedAmmo.length, 1, 'Ammo added to storage');
+      assert.strictEqual(
+        state.storedAmmo[0].weaponType,
+        'autocannon',
+        'Correct weapon type',
+      );
+      assert.strictEqual(state.storedAmmo[0].count, 50, 'Correct count');
+    });
 
-// Test: buyAmmo adds to storage
-console.log('\nTesting buyAmmo...');
-{
-  let state = createTestState();
-  const amountToBuy = 50;
-  state = buyAmmo(state, 'autocannon', amountToBuy);
+    it('stacks ammo when buying more of the same type', () => {
+      let state = createTestState();
+      state = buyAmmo(state, 'autocannon', 50);
+      state = buyAmmo(state, 'autocannon', 30);
+      assert.strictEqual(state.storedAmmo.length, 1, 'Still one stack');
+      assert.strictEqual(state.storedAmmo[0].count, 80, 'Stacked count');
+    });
 
-  const pricePerRound = getAmmoPrice('autocannon', 'buy');
-  const expectedCost = amountToBuy * pricePerRound;
-  assert.strictEqual(
-    state.credits,
-    1000 - expectedCost,
-    `Credits deducted (${pricePerRound} credit/round)`,
-  );
-  assert.strictEqual(state.storedAmmo.length, 1, 'Ammo added to storage');
-  assert.strictEqual(
-    state.storedAmmo[0].weaponType,
-    'autocannon',
-    'Correct weapon type',
-  );
-  assert.strictEqual(state.storedAmmo[0].count, 50, 'Correct count');
+    it('fails when cannot afford', () => {
+      let state = createTestState();
+      state.credits = 10;
+      const before = state;
+      const railgunPrice = getAmmoPrice('railgun', 'buy');
+      state = buyAmmo(state, 'railgun', 10);
 
-  // Buy more - should stack
-  state = buyAmmo(state, 'autocannon', 30);
-  assert.strictEqual(state.storedAmmo.length, 1, 'Still one stack');
-  assert.strictEqual(state.storedAmmo[0].count, 80, 'Stacked count');
+      assert.strictEqual(
+        state,
+        before,
+        `State unchanged when can't afford (10 * ${railgunPrice} = ${10 * railgunPrice} credits needed)`,
+      );
+    });
+  });
 
-  console.log('  - Basic buy: PASS');
-  console.log('  - Stacking: PASS');
-}
+  describe('loadAmmoToWeapon', () => {
+    it('respects max capacity', () => {
+      const maxCap = PRIMARY_WEAPONS.autocannon.ammo;
 
-// Test: buyAmmo fails when can't afford
-console.log('\nTesting buyAmmo insufficient credits...');
-{
-  let state = createTestState();
-  state.credits = 10;
-  const before = state;
-  const railgunPrice = getAmmoPrice('railgun', 'buy');
-  // Try to buy 10 slugs - should fail if cost exceeds 10 credits
-  state = buyAmmo(state, 'railgun', 10);
+      let state = createTestState('autocannon', 1, 0);
+      state.storedAmmo = [{ weaponType: 'autocannon', count: 500 }];
 
-  assert.strictEqual(
-    state,
-    before,
-    `State unchanged when can't afford (10 * ${railgunPrice} = ${10 * railgunPrice} credits needed)`,
-  );
+      state = loadAmmoToWeapon(state, 'ship1', 0, 500);
 
-  console.log('  - Insufficient credits check: PASS');
-}
+      const weapon = getSlot(state.ships[0].primaryWeapons, 0);
+      assert.strictEqual(
+        weapon.currentAmmo,
+        maxCap,
+        `Capped at max capacity (${maxCap})`,
+      );
+      assert.strictEqual(
+        state.storedAmmo[0].count,
+        500 - maxCap,
+        'Remaining in storage',
+      );
+    });
 
-// Test: loadAmmoToWeapon respects max capacity
-console.log('\nTesting loadAmmoToWeapon capacity limits...');
-{
-  const maxCap = PRIMARY_WEAPONS.autocannon.ammo; // 200 for bank size 1
+    it('respects bank size 2 capacity', () => {
+      const baseAmmo = PRIMARY_WEAPONS.autocannon.ammo;
+      const maxCap = baseAmmo * 2;
 
-  let state = createTestState('autocannon', 1, 0);
-  state.storedAmmo = [{ weaponType: 'autocannon', count: 500 }];
+      let state = createTestState('autocannon', 2, 0);
+      state.storedAmmo = [{ weaponType: 'autocannon', count: 1000 }];
 
-  // Try to load more than capacity
-  state = loadAmmoToWeapon(state, 'ship1', 0, 500);
+      state = loadAmmoToWeapon(state, 'ship1', 0, 1000);
 
-  const weapon = getSlot(state.ships[0].primaryWeapons, 0);
-  assert.strictEqual(
-    weapon.currentAmmo,
-    maxCap,
-    `Capped at max capacity (${maxCap})`,
-  );
-  assert.strictEqual(
-    state.storedAmmo[0].count,
-    500 - maxCap,
-    'Remaining in storage',
-  );
+      const weapon = getSlot(state.ships[0].primaryWeapons, 0);
+      assert.strictEqual(
+        weapon.currentAmmo,
+        maxCap,
+        `Capped at bank size 2 capacity (${maxCap})`,
+      );
+    });
 
-  console.log(`  - Capacity limit (${maxCap}): PASS`);
-}
+    it('returns unchanged state when weapon is full', () => {
+      const maxCap = PRIMARY_WEAPONS.autocannon.ammo;
 
-// Test: loadAmmoToWeapon with bank size 2
-console.log('\nTesting loadAmmoToWeapon with bank size 2...');
-{
-  const baseAmmo = PRIMARY_WEAPONS.autocannon.ammo;
-  const maxCap = baseAmmo * 2; // Double for bank size 2
+      let state = createTestState('autocannon', 1, maxCap);
+      state.storedAmmo = [{ weaponType: 'autocannon', count: 100 }];
 
-  let state = createTestState('autocannon', 2, 0);
-  state.storedAmmo = [{ weaponType: 'autocannon', count: 1000 }];
+      const before = state;
+      state = loadAmmoToWeapon(state, 'ship1', 0, 50);
 
-  state = loadAmmoToWeapon(state, 'ship1', 0, 1000);
+      assert.strictEqual(state, before, 'State unchanged when weapon full');
+    });
 
-  const weapon = getSlot(state.ships[0].primaryWeapons, 0);
-  assert.strictEqual(
-    weapon.currentAmmo,
-    maxCap,
-    `Capped at bank size 2 capacity (${maxCap})`,
-  );
+    it('does partial fill when capacity is limited', () => {
+      const maxCap = PRIMARY_WEAPONS.autocannon.ammo;
+      const startAmmo = maxCap - 50;
 
-  console.log(`  - Bank size 2 capacity (${maxCap}): PASS`);
-}
+      let state = createTestState('autocannon', 1, startAmmo);
+      state.storedAmmo = [{ weaponType: 'autocannon', count: 100 }];
 
-// Test: loadAmmoToWeapon when already at capacity
-console.log('\nTesting loadAmmoToWeapon when full...');
-{
-  const maxCap = PRIMARY_WEAPONS.autocannon.ammo;
+      state = loadAmmoToWeapon(state, 'ship1', 0, 100);
 
-  let state = createTestState('autocannon', 1, maxCap); // Already full
-  state.storedAmmo = [{ weaponType: 'autocannon', count: 100 }];
+      const weapon = getSlot(state.ships[0].primaryWeapons, 0);
+      assert.strictEqual(weapon.currentAmmo, maxCap, 'Filled to capacity');
+      assert.strictEqual(state.storedAmmo[0].count, 50, 'Only took what fits');
+    });
+  });
 
-  const before = state;
-  state = loadAmmoToWeapon(state, 'ship1', 0, 50);
+  describe('unloadAmmoFromWeapon', () => {
+    it('removes ammo from weapon and adds to storage', () => {
+      let state = createTestState('autocannon', 1, 100);
 
-  assert.strictEqual(state, before, 'State unchanged when weapon full');
+      state = unloadAmmoFromWeapon(state, 'ship1', 0, 30);
 
-  console.log('  - Already full check: PASS');
-}
+      const weapon = getSlot(state.ships[0].primaryWeapons, 0);
+      assert.strictEqual(weapon.currentAmmo, 70, 'Ammo reduced');
+      assert.strictEqual(state.storedAmmo.length, 1, 'Ammo added to storage');
+      assert.strictEqual(
+        state.storedAmmo[0].count,
+        30,
+        'Correct amount in storage',
+      );
+    });
+  });
 
-// Test: loadAmmoToWeapon partial fill
-console.log('\nTesting loadAmmoToWeapon partial fill...');
-{
-  const maxCap = PRIMARY_WEAPONS.autocannon.ammo;
-  const startAmmo = maxCap - 50; // 50 slots available
+  describe('sellAmmo', () => {
+    it('removes ammo from storage and adds credits', () => {
+      let state = createTestState();
+      state.storedAmmo = [{ weaponType: 'railgun', count: 10 }];
+      state.credits = 0;
 
-  let state = createTestState('autocannon', 1, startAmmo);
-  state.storedAmmo = [{ weaponType: 'autocannon', count: 100 }];
+      const amountToSell = 5;
+      state = sellAmmo(state, 'railgun', amountToSell);
 
-  state = loadAmmoToWeapon(state, 'ship1', 0, 100);
-
-  const weapon = getSlot(state.ships[0].primaryWeapons, 0);
-  assert.strictEqual(weapon.currentAmmo, maxCap, 'Filled to capacity');
-  assert.strictEqual(state.storedAmmo[0].count, 50, 'Only took what fits');
-
-  console.log('  - Partial fill: PASS');
-}
-
-// Test: unloadAmmoFromWeapon
-console.log('\nTesting unloadAmmoFromWeapon...');
-{
-  let state = createTestState('autocannon', 1, 100);
-
-  state = unloadAmmoFromWeapon(state, 'ship1', 0, 30);
-
-  const weapon = getSlot(state.ships[0].primaryWeapons, 0);
-  assert.strictEqual(weapon.currentAmmo, 70, 'Ammo reduced');
-  assert.strictEqual(state.storedAmmo.length, 1, 'Ammo added to storage');
-  assert.strictEqual(
-    state.storedAmmo[0].count,
-    30,
-    'Correct amount in storage',
-  );
-
-  console.log('  - Basic unload: PASS');
-}
-
-// Test: sellAmmo
-console.log('\nTesting sellAmmo...');
-{
-  let state = createTestState();
-  state.storedAmmo = [{ weaponType: 'railgun', count: 10 }];
-  state.credits = 0;
-
-  const amountToSell = 5;
-  state = sellAmmo(state, 'railgun', amountToSell);
-
-  const sellPrice = getAmmoPrice('railgun', 'sell');
-  const expectedGain = amountToSell * sellPrice;
-  assert.strictEqual(
-    state.credits,
-    expectedGain,
-    `Credits gained (${sellPrice} credits/round sell price)`,
-  );
-  assert.strictEqual(state.storedAmmo[0].count, 5, 'Ammo reduced');
-
-  console.log('  - Sell ammo: PASS');
-}
-
-// Missile capacity is tested separately in loadout tests
-console.log('\nMissile capacity scaling: N/A (tested in loadout)');
-
-console.log('\n=== All Store Ammo Tests Passed ===');
+      const sellPrice = getAmmoPrice('railgun', 'sell');
+      const expectedGain = amountToSell * sellPrice;
+      assert.strictEqual(
+        state.credits,
+        expectedGain,
+        `Credits gained (${sellPrice} credits/round sell price)`,
+      );
+      assert.strictEqual(state.storedAmmo[0].count, 5, 'Ammo reduced');
+    });
+  });
+});

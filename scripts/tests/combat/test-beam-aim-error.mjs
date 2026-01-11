@@ -7,6 +7,8 @@
  * - Different skill levels have different aim error magnitudes
  */
 
+import assert from 'node:assert';
+import { describe, it } from 'node:test';
 import { Vector3 } from 'three';
 import {
   applyAimError,
@@ -17,103 +19,132 @@ import { AI_PROFILES } from '../../../src/data/ai-profiles.ts';
 
 const SAMPLES = 1000;
 
-console.log(`\n${'='.repeat(70)}`);
-console.log('BEAM AIM ERROR TEST');
-console.log('(Verifies aim error magnitudes scale with skill level)');
-console.log('='.repeat(70));
-
-console.log('\n--- AIM ERROR PARAMETERS BY PROFILE ---');
-console.log('Profile       Base Error   Drift Speed   Angular Factor');
-console.log('-'.repeat(60));
-
 const PROFILES = ['rookie', 'regular', 'veteran', 'ace'];
-for (const name of PROFILES) {
-  const profile = AI_PROFILES[name];
-  const baseError = ((profile.aimErrorBase * 180) / Math.PI).toFixed(1);
-  const driftSpeed = ((profile.aimErrorDriftSpeed * 180) / Math.PI).toFixed(2);
-  const angularFactor = profile.aimErrorAngularFactor.toFixed(2);
 
-  console.log(
-    name.padEnd(14) +
-      `${baseError}°`.padStart(10) +
-      `${driftSpeed}°/s`.padStart(14) +
-      angularFactor.padStart(16),
-  );
-}
+describe('Beam Aim Error', () => {
+  console.log(`\n${'='.repeat(70)}`);
+  console.log('BEAM AIM ERROR TEST');
+  console.log('(Verifies aim error magnitudes scale with skill level)');
+  console.log('='.repeat(70));
 
-console.log('\n--- SIMULATED AIM ERROR DISTRIBUTION ---');
-console.log('(Random samples of aim error offset magnitude)');
-console.log('Profile       Avg Error   Max Error   Expected Order');
-console.log('-'.repeat(60));
+  console.log('\n--- AIM ERROR PARAMETERS BY PROFILE ---');
+  console.log('Profile       Base Error   Drift Speed   Angular Factor');
+  console.log('-'.repeat(60));
 
-const results = [];
-for (const name of PROFILES) {
-  const profile = AI_PROFILES[name];
-  const prng = createPRNG(12345);
+  for (const name of PROFILES) {
+    const profile = AI_PROFILES[name];
+    const baseError = ((profile.aimErrorBase * 180) / Math.PI).toFixed(1);
+    const driftSpeed = ((profile.aimErrorDriftSpeed * 180) / Math.PI).toFixed(
+      2,
+    );
+    const angularFactor = profile.aimErrorAngularFactor.toFixed(2);
 
-  let totalError = 0;
-  let maxError = 0;
-
-  for (let i = 0; i < SAMPLES; i++) {
-    const aimError = createAimError(prng, profile);
-    const errorMagnitude = aimError.offset.length();
-    totalError += errorMagnitude;
-    maxError = Math.max(maxError, errorMagnitude);
+    console.log(
+      name.padEnd(14) +
+        `${baseError}°`.padStart(10) +
+        `${driftSpeed}°/s`.padStart(14) +
+        angularFactor.padStart(16),
+    );
   }
 
-  const avgError = (totalError / SAMPLES) * (180 / Math.PI);
-  const maxErrorDeg = maxError * (180 / Math.PI);
-  results.push({ name, avgError, maxErrorDeg });
+  console.log('\n--- SIMULATED AIM ERROR DISTRIBUTION ---');
+  console.log('(Random samples of aim error offset magnitude)');
+  console.log('Profile       Avg Error   Max Error   Expected Order');
+  console.log('-'.repeat(60));
+
+  const results = [];
+  for (const name of PROFILES) {
+    const profile = AI_PROFILES[name];
+    const prng = createPRNG(12345);
+
+    let totalError = 0;
+    let maxError = 0;
+
+    for (let i = 0; i < SAMPLES; i++) {
+      const aimError = createAimError(prng, profile);
+      const errorMagnitude = aimError.offset.length();
+      totalError += errorMagnitude;
+      maxError = Math.max(maxError, errorMagnitude);
+    }
+
+    const avgError = (totalError / SAMPLES) * (180 / Math.PI);
+    const maxErrorDeg = maxError * (180 / Math.PI);
+    results.push({ name, avgError, maxErrorDeg });
+
+    console.log(
+      name.padEnd(14) +
+        `${avgError.toFixed(2)}°`.padStart(10) +
+        `${maxErrorDeg.toFixed(2)}°`.padStart(12),
+    );
+  }
+
+  // Verify ordering
+  console.log('\n--- SKILL ORDERING VERIFICATION ---');
+  const [rookie, regular, veteran, ace] = results;
+  const orderCorrect =
+    rookie.avgError > regular.avgError &&
+    regular.avgError > veteran.avgError &&
+    veteran.avgError > ace.avgError;
 
   console.log(
-    name.padEnd(14) +
-      `${avgError.toFixed(2)}°`.padStart(10) +
-      `${maxErrorDeg.toFixed(2)}°`.padStart(12),
+    `Rookie(${rookie.avgError.toFixed(2)}°) > ` +
+      `Regular(${regular.avgError.toFixed(2)}°) > ` +
+      `Veteran(${veteran.avgError.toFixed(2)}°) > ` +
+      `Ace(${ace.avgError.toFixed(2)}°): ${orderCorrect ? '✓' : '✗'}`,
   );
-}
 
-// Verify ordering
-console.log('\n--- SKILL ORDERING VERIFICATION ---');
-const [rookie, regular, veteran, ace] = results;
-const orderCorrect =
-  rookie.avgError > regular.avgError &&
-  regular.avgError > veteran.avgError &&
-  veteran.avgError > ace.avgError;
+  // Test applyAimError function
+  console.log('\n--- APPLY AIM ERROR TEST ---');
+  console.log('(Verifies applyAimError offsets direction correctly)');
 
-console.log(
-  `Rookie(${rookie.avgError.toFixed(2)}°) > ` +
-    `Regular(${regular.avgError.toFixed(2)}°) > ` +
-    `Veteran(${veteran.avgError.toFixed(2)}°) > ` +
-    `Ace(${ace.avgError.toFixed(2)}°): ${orderCorrect ? '✓' : '✗'}`,
-);
+  const testDir = new Vector3(0, 0, -1).normalize();
+  const prng = createPRNG(42);
 
-// Test applyAimError function
-console.log('\n--- APPLY AIM ERROR TEST ---');
-console.log('(Verifies applyAimError offsets direction correctly)');
+  for (const name of PROFILES) {
+    const profile = AI_PROFILES[name];
+    const aimError = createAimError(prng, profile);
+    const result = applyAimError(testDir, aimError);
 
-const testDir = new Vector3(0, 0, -1).normalize();
-const prng = createPRNG(42);
+    // Calculate angle offset
+    const dot = Math.max(-1, Math.min(1, testDir.dot(result)));
+    const angle = Math.acos(dot) * (180 / Math.PI);
 
-for (const name of PROFILES) {
-  const profile = AI_PROFILES[name];
-  const aimError = createAimError(prng, profile);
-  const result = applyAimError(testDir, aimError);
+    console.log(
+      `${name.padEnd(10)}: forward + aim error = ${angle.toFixed(2)}° offset`,
+    );
+  }
 
-  // Calculate angle offset
-  const dot = Math.max(-1, Math.min(1, testDir.dot(result)));
-  const angle = Math.acos(dot) * (180 / Math.PI);
-
+  console.log(`\n${'='.repeat(70)}`);
   console.log(
-    `${name.padEnd(10)}: forward + aim error = ${angle.toFixed(2)}° offset`,
+    'KEY INSIGHT: Beam accuracy comes from ship rotation via aimToward().',
   );
-}
+  console.log(
+    'Higher skill = lower aimErrorBase = ship points more accurately.',
+  );
+  console.log(
+    'Beams fire in ship forward direction, so they hit when ship aims right.',
+  );
+  console.log('='.repeat(70));
 
-console.log(`\n${'='.repeat(70)}`);
-console.log(
-  'KEY INSIGHT: Beam accuracy comes from ship rotation via aimToward().',
-);
-console.log('Higher skill = lower aimErrorBase = ship points more accurately.');
-console.log(
-  'Beams fire in ship forward direction, so they hit when ship aims right.',
-);
-console.log('='.repeat(70));
+  it('should have skill ordering (rookie > regular > veteran > ace error)', () => {
+    assert.ok(
+      orderCorrect,
+      `Skill ordering incorrect: Rookie(${rookie.avgError.toFixed(2)}°), Regular(${regular.avgError.toFixed(2)}°), Veteran(${veteran.avgError.toFixed(2)}°), Ace(${ace.avgError.toFixed(2)}°)`,
+    );
+  });
+
+  it('should have ace with lowest aim error', () => {
+    assert.ok(
+      ace.avgError < rookie.avgError,
+      `Ace should have lower error than Rookie: ${ace.avgError.toFixed(2)}° vs ${rookie.avgError.toFixed(2)}°`,
+    );
+  });
+
+  it('should have meaningful error differences between skill levels', () => {
+    const rookieRegularDiff = rookie.avgError - regular.avgError;
+    assert.ok(
+      rookieRegularDiff > 0,
+      `Rookie-Regular difference should be positive: ${rookieRegularDiff.toFixed(2)}°`,
+    );
+  });
+});

@@ -12,6 +12,8 @@
  * 5. Red laser burst (add red laser for close-range burst)
  */
 
+import assert from 'node:assert';
+import { describe, it } from 'node:test';
 import { Quaternion, Vector3 } from 'three';
 import { createWorld, getComponent } from '../../../src/core/ecs.ts';
 import { Faction } from '../../../src/core/types.ts';
@@ -27,11 +29,6 @@ import {
 const RUNS_PER_TEST = 40;
 const MAX_FIGHT_TIME = 45;
 const MAX_TICKS = MAX_FIGHT_TIME * TICK_RATE;
-
-console.log(`\n${'='.repeat(70)}`);
-console.log('RAIDER VARIANT TESTING');
-console.log('='.repeat(70));
-console.log('Goal: "Glass cannon alpha" - high burst, gun-focused, fast kills');
 
 // Store original raider config
 const originalRaider = JSON.parse(JSON.stringify(SHIP_ARCHETYPES.raider));
@@ -133,119 +130,164 @@ function runRaiderTest(description, modifyFn) {
   };
 }
 
-const tests = [];
-
-// TEST 1: Baseline
-console.log('\n=== TEST 1: BASELINE (Current Raider) ===');
-console.log('Primary: plasma(2), autocannon(2), pulse(1), pulse(1)');
-console.log('Secondary: dart(4), rocket(4), decoy(4)');
-tests.push(
-  runRaiderTest('BASELINE', () => {
-    // No changes
-  }),
-);
-
-// TEST 2: Reduced missiles
-console.log('\n=== TEST 2: REDUCED MISSILES ===');
-console.log('Secondary: dart(2), rocket(2), decoy(4)');
-tests.push(
-  runRaiderTest('REDUCED MISSILES', () => {
-    SHIP_ARCHETYPES.raider.secondaryWeapons = [
-      { name: 'dart', count: 2, size: 1 },
-      { name: 'rocket', count: 2, size: 1 },
-      { name: 'decoy', count: 4, size: 1 },
-    ];
-  }),
-);
-
-// TEST 3: Railgun alpha
-console.log('\n=== TEST 3: RAILGUN ALPHA ===');
-console.log('Primary: plasma(2), autocannon(2), railgun(2)');
-console.log('Secondary: dart(2), decoy(4)');
-tests.push(
-  runRaiderTest('RAILGUN ALPHA', () => {
-    SHIP_ARCHETYPES.raider.primaryWeapons = [
-      { name: 'plasma', size: 2 },
-      { name: 'autocannon', size: 2 },
-      { name: 'railgun', size: 2 },
-    ];
-    SHIP_ARCHETYPES.raider.secondaryWeapons = [
-      { name: 'dart', count: 2, size: 1 },
-      { name: 'decoy', count: 4, size: 1 },
-    ];
-  }),
-);
-
-// TEST 4: Bigger primaries
-console.log('\n=== TEST 4: BIGGER PRIMARIES ===');
-console.log('Primary: plasma(3), autocannon(3), pulse(2)');
-console.log('Secondary: dart(2), rocket(2), decoy(4)');
-tests.push(
-  runRaiderTest('BIGGER PRIMARIES', () => {
-    SHIP_ARCHETYPES.raider.primaryWeapons = [
-      { name: 'plasma', size: 3 },
-      { name: 'autocannon', size: 3 },
-      { name: 'pulse', size: 2 },
-    ];
-    SHIP_ARCHETYPES.raider.secondaryWeapons = [
-      { name: 'dart', count: 2, size: 1 },
-      { name: 'rocket', count: 2, size: 1 },
-      { name: 'decoy', count: 4, size: 1 },
-    ];
-  }),
-);
-
-// TEST 5: Red laser burst
-console.log('\n=== TEST 5: RED LASER BURST ===');
-console.log('Primary: plasma(2), autocannon(2), redLaser(2)');
-console.log('Secondary: dart(2), rocket(2), decoy(4)');
-tests.push(
-  runRaiderTest('RED LASER BURST', () => {
-    SHIP_ARCHETYPES.raider.primaryWeapons = [
-      { name: 'plasma', size: 2 },
-      { name: 'autocannon', size: 2 },
-      { name: 'redLaser', size: 2 },
-    ];
-    SHIP_ARCHETYPES.raider.secondaryWeapons = [
-      { name: 'dart', count: 2, size: 1 },
-      { name: 'rocket', count: 2, size: 1 },
-      { name: 'decoy', count: 4, size: 1 },
-    ];
-  }),
-);
-
-// TEST 6: All guns, no missiles
-console.log('\n=== TEST 6: ALL GUNS ===');
-console.log('Primary: plasma(3), autocannon(3), pulse(2), pulse(2)');
-console.log('Secondary: decoy(6) only');
-tests.push(
-  runRaiderTest('ALL GUNS', () => {
-    SHIP_ARCHETYPES.raider.primaryWeapons = [
-      { name: 'plasma', size: 3 },
-      { name: 'autocannon', size: 3 },
-      { name: 'pulse', size: 2 },
-      { name: 'pulse', size: 2 },
-    ];
-    SHIP_ARCHETYPES.raider.secondaryWeapons = [
-      { name: 'decoy', count: 6, size: 1 },
-    ];
-  }),
-);
-
-// Summary
-console.log(`\n${'='.repeat(70)}`);
-console.log('RAIDER VARIANT SUMMARY');
-console.log('='.repeat(70));
-console.log('\n| Variant | Win% | TTK | Proj% | Beam% | Missile% |');
-console.log('|---------|------|-----|-------|-------|----------|');
-for (const t of tests) {
+describe('Raider Variant Testing', () => {
+  console.log(`\n${'='.repeat(70)}`);
+  console.log('RAIDER VARIANT TESTING');
+  console.log('='.repeat(70));
   console.log(
-    `| ${t.description.padEnd(18)} | ${t.winRate.toFixed(0).padStart(3)}% | ${t.avgTTK.toFixed(1).padStart(4)}s | ${t.projPct.toFixed(0).padStart(4)}% | ${t.beamPct.toFixed(0).padStart(4)}% | ${t.missilePct.toFixed(0).padStart(7)}% |`,
+    'Goal: "Glass cannon alpha" - high burst, gun-focused, fast kills',
   );
-}
 
-console.log('\nRecommendation criteria:');
-console.log('- Glass cannon: Should win fast (low TTK) or die fast');
-console.log('- Alpha strike: High burst, decisive engagements');
-console.log('- Gun-focused: Missile% should be <50%');
-console.log(`\n${'='.repeat(70)}`);
+  const tests = [];
+
+  // TEST 1: Baseline
+  console.log('\n=== TEST 1: BASELINE (Current Raider) ===');
+  console.log('Primary: plasma(2), autocannon(2), pulse(1), pulse(1)');
+  console.log('Secondary: dart(4), rocket(4), decoy(4)');
+  tests.push(
+    runRaiderTest('BASELINE', () => {
+      // No changes
+    }),
+  );
+
+  // TEST 2: Reduced missiles
+  console.log('\n=== TEST 2: REDUCED MISSILES ===');
+  console.log('Secondary: dart(2), rocket(2), decoy(4)');
+  tests.push(
+    runRaiderTest('REDUCED MISSILES', () => {
+      SHIP_ARCHETYPES.raider.secondaryWeapons = [
+        { name: 'dart', count: 2, size: 1 },
+        { name: 'rocket', count: 2, size: 1 },
+        { name: 'decoy', count: 4, size: 1 },
+      ];
+    }),
+  );
+
+  // TEST 3: Railgun alpha
+  console.log('\n=== TEST 3: RAILGUN ALPHA ===');
+  console.log('Primary: plasma(2), autocannon(2), railgun(2)');
+  console.log('Secondary: dart(2), decoy(4)');
+  tests.push(
+    runRaiderTest('RAILGUN ALPHA', () => {
+      SHIP_ARCHETYPES.raider.primaryWeapons = [
+        { name: 'plasma', size: 2 },
+        { name: 'autocannon', size: 2 },
+        { name: 'railgun', size: 2 },
+      ];
+      SHIP_ARCHETYPES.raider.secondaryWeapons = [
+        { name: 'dart', count: 2, size: 1 },
+        { name: 'decoy', count: 4, size: 1 },
+      ];
+    }),
+  );
+
+  // TEST 4: Bigger primaries
+  console.log('\n=== TEST 4: BIGGER PRIMARIES ===');
+  console.log('Primary: plasma(3), autocannon(3), pulse(2)');
+  console.log('Secondary: dart(2), rocket(2), decoy(4)');
+  tests.push(
+    runRaiderTest('BIGGER PRIMARIES', () => {
+      SHIP_ARCHETYPES.raider.primaryWeapons = [
+        { name: 'plasma', size: 3 },
+        { name: 'autocannon', size: 3 },
+        { name: 'pulse', size: 2 },
+      ];
+      SHIP_ARCHETYPES.raider.secondaryWeapons = [
+        { name: 'dart', count: 2, size: 1 },
+        { name: 'rocket', count: 2, size: 1 },
+        { name: 'decoy', count: 4, size: 1 },
+      ];
+    }),
+  );
+
+  // TEST 5: Red laser burst
+  console.log('\n=== TEST 5: RED LASER BURST ===');
+  console.log('Primary: plasma(2), autocannon(2), redLaser(2)');
+  console.log('Secondary: dart(2), rocket(2), decoy(4)');
+  tests.push(
+    runRaiderTest('RED LASER BURST', () => {
+      SHIP_ARCHETYPES.raider.primaryWeapons = [
+        { name: 'plasma', size: 2 },
+        { name: 'autocannon', size: 2 },
+        { name: 'redLaser', size: 2 },
+      ];
+      SHIP_ARCHETYPES.raider.secondaryWeapons = [
+        { name: 'dart', count: 2, size: 1 },
+        { name: 'rocket', count: 2, size: 1 },
+        { name: 'decoy', count: 4, size: 1 },
+      ];
+    }),
+  );
+
+  // TEST 6: All guns, no missiles
+  console.log('\n=== TEST 6: ALL GUNS ===');
+  console.log('Primary: plasma(3), autocannon(3), pulse(2), pulse(2)');
+  console.log('Secondary: decoy(6) only');
+  tests.push(
+    runRaiderTest('ALL GUNS', () => {
+      SHIP_ARCHETYPES.raider.primaryWeapons = [
+        { name: 'plasma', size: 3 },
+        { name: 'autocannon', size: 3 },
+        { name: 'pulse', size: 2 },
+        { name: 'pulse', size: 2 },
+      ];
+      SHIP_ARCHETYPES.raider.secondaryWeapons = [
+        { name: 'decoy', count: 6, size: 1 },
+      ];
+    }),
+  );
+
+  // Summary
+  console.log(`\n${'='.repeat(70)}`);
+  console.log('RAIDER VARIANT SUMMARY');
+  console.log('='.repeat(70));
+  console.log('\n| Variant | Win% | TTK | Proj% | Beam% | Missile% |');
+  console.log('|---------|------|-----|-------|-------|----------|');
+  for (const t of tests) {
+    console.log(
+      `| ${t.description.padEnd(18)} | ${t.winRate.toFixed(0).padStart(3)}% | ${t.avgTTK.toFixed(1).padStart(4)}s | ${t.projPct.toFixed(0).padStart(4)}% | ${t.beamPct.toFixed(0).padStart(4)}% | ${t.missilePct.toFixed(0).padStart(7)}% |`,
+    );
+  }
+
+  console.log('\nRecommendation criteria:');
+  console.log('- Glass cannon: Should win fast (low TTK) or die fast');
+  console.log('- Alpha strike: High burst, decisive engagements');
+  console.log('- Gun-focused: Missile% should be <50%');
+  console.log(`\n${'='.repeat(70)}`);
+
+  it('should have baseline raider be functional', () => {
+    const baseline = tests[0];
+    assert.ok(
+      baseline.winRate > 20,
+      `Baseline raider should win >20%: got ${baseline.winRate.toFixed(0)}%`,
+    );
+  });
+
+  it('should have variants with different damage profiles', () => {
+    // Check that variants actually differ from baseline
+    const baseline = tests[0];
+    let hasDifferentProfile = false;
+    for (let i = 1; i < tests.length; i++) {
+      const variant = tests[i];
+      const projDiff = Math.abs(variant.projPct - baseline.projPct);
+      const missileDiff = Math.abs(variant.missilePct - baseline.missilePct);
+      if (projDiff > 5 || missileDiff > 5) {
+        hasDifferentProfile = true;
+        break;
+      }
+    }
+    assert.ok(
+      hasDifferentProfile,
+      'At least one variant should have a different damage profile',
+    );
+  });
+
+  it('should have all guns variant reduce missile dependency', () => {
+    const allGuns = tests.find((t) => t.description === 'ALL GUNS');
+    assert.ok(allGuns, 'ALL GUNS variant should exist');
+    assert.ok(
+      allGuns.missilePct < 30,
+      `ALL GUNS should have <30% missile damage: got ${allGuns.missilePct.toFixed(0)}%`,
+    );
+  });
+});

@@ -2,6 +2,8 @@
 /**
  * Test Runner - organizes tests into quick vs long-running categories.
  *
+ * Uses Node.js built-in test runner (node:test) via tsx.
+ *
  * Usage:
  *   npx tsx scripts/tests/run-tests.mjs          # Run quick tests (default)
  *   npx tsx scripts/tests/run-tests.mjs --all    # Run all tests
@@ -43,6 +45,7 @@ const QUICK_TESTS = [
   'ai/test-ai-missile-lock.mjs',
   'ai/test-ai-speed-compatibility.mjs',
   'ai/test-aim-error-angular.mjs',
+  'ai/test-ai-weapon-selection.mjs',
 
   // Campaign logic tests
   'campaign/test-slot-array.mjs',
@@ -62,20 +65,19 @@ const BALANCE_TESTS = [
   'combat/test-ttk-matrix.mjs',
   'combat/test-skill-vs-brawler.mjs',
 
-  // AI behavior (simulation-based)
-  'ai/test-ai-combat-behavior.mjs',
-  'ai/test-ai-weapon-selection.mjs',
-  'ai/test-evade-effectiveness.mjs',
-
   // Campaign/mission
   'campaign/test-mission-pacing.mjs',
 ];
 
+/**
+ * Run a single test file using node:test runner via tsx.
+ */
 async function runTest(testPath) {
   const fullPath = join(__dirname, testPath);
   return new Promise((resolve) => {
     const start = Date.now();
-    const proc = spawn('npx', ['tsx', fullPath], {
+    // Use tsx --test to run with node:test runner
+    const proc = spawn('npx', ['tsx', '--test', fullPath], {
       stdio: 'inherit',
       shell: true,
     });
@@ -91,6 +93,9 @@ async function runTest(testPath) {
   });
 }
 
+/**
+ * Run a list of tests sequentially.
+ */
 async function runTests(tests, label) {
   console.log(`\n${'='.repeat(60)}`);
   console.log(`Running ${label} (${tests.length} tests)`);

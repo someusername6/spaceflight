@@ -3,6 +3,7 @@
  */
 
 import assert from 'node:assert';
+import { describe, it } from 'node:test';
 import { resupplyShipConstrained } from '../../../src/campaign/resupply/resupply-constrained.ts';
 import { createSlotArray, getSlot } from '../../../src/campaign/slot-array.ts';
 import { getMaxAmmoCapacity } from '../../../src/campaign/store/store-ammo.ts';
@@ -61,240 +62,234 @@ function createTestState(options = {}) {
   };
 }
 
-console.log('=== Resupply Ship Tests ===\n');
+describe('Resupply Ship', () => {
+  describe('resupplyShipConstrained storage priority', () => {
+    it('uses storage first before buying from store', () => {
+      const maxAmmo = getMaxAmmoCapacity('autocannon', 1);
+      const currentAmmo = 50;
+      const storedAmmo = 100;
 
-// Test: resupplyShipConstrained uses storage first
-console.log('Testing resupplyShipConstrained storage priority...');
-{
-  const maxAmmo = getMaxAmmoCapacity('autocannon', 1);
-  const currentAmmo = 50;
-  const storedAmmo = 100;
+      const state = createTestState({
+        currentAmmo,
+        storedAmmo,
+        storeStockAmmo: 1000,
+      });
+      const result = resupplyShipConstrained(state, 'ship1');
 
-  const state = createTestState({
-    currentAmmo,
-    storedAmmo,
-    storeStockAmmo: 1000,
+      assert.strictEqual(result.success, true, 'Resupply succeeded');
+      assert.strictEqual(
+        result.fromStorage.ammo.get('autocannon'),
+        storedAmmo,
+        'Used all storage',
+      );
+      assert.strictEqual(
+        result.bought.ammo.get('autocannon'),
+        50,
+        'Bought remaining from store',
+      );
+
+      const ship = result.state.ships.find((s) => s.id === 'ship1');
+      assert.strictEqual(
+        getSlot(ship.primaryWeapons, 0).currentAmmo,
+        maxAmmo,
+        'Ship ammo is full',
+      );
+      assert.strictEqual(result.state.storedAmmo.length, 0, 'Storage is empty');
+    });
   });
-  const result = resupplyShipConstrained(state, 'ship1');
 
-  assert.strictEqual(result.success, true, 'Resupply succeeded');
-  assert.strictEqual(
-    result.fromStorage.ammo.get('autocannon'),
-    storedAmmo,
-    'Used all storage',
-  );
-  assert.strictEqual(
-    result.bought.ammo.get('autocannon'),
-    50,
-    'Bought remaining from store',
-  );
+  describe('resupplyShipConstrained credit limit', () => {
+    it('respects credit limit and reports shortages', () => {
+      const state = createTestState({
+        currentAmmo: 0,
+        storedAmmo: 0,
+        storeStockAmmo: 1000,
+        credits: 5,
+      });
+      const result = resupplyShipConstrained(state, 'ship1');
 
-  const ship = result.state.ships.find((s) => s.id === 'ship1');
-  assert.strictEqual(
-    getSlot(ship.primaryWeapons, 0).currentAmmo,
-    maxAmmo,
-    'Ship ammo is full',
-  );
-  assert.strictEqual(result.state.storedAmmo.length, 0, 'Storage is empty');
-
-  console.log('  - Storage priority: PASS');
-  console.log('  - Storage consumed: PASS');
-  console.log('  - Remaining bought from store: PASS');
-}
-
-// Test: resupplyShipConstrained respects credit limit
-console.log('\nTesting resupplyShipConstrained credit limit...');
-{
-  const state = createTestState({
-    currentAmmo: 0,
-    storedAmmo: 0,
-    storeStockAmmo: 1000,
-    credits: 5,
+      assert.strictEqual(
+        result.success,
+        false,
+        'Resupply incomplete due to credits',
+      );
+      assert.ok(result.shortages.ammo.size > 0, 'Has shortages');
+      assert.ok(result.creditsSpent <= 5, 'Did not spend more than available');
+    });
   });
-  const result = resupplyShipConstrained(state, 'ship1');
 
-  assert.strictEqual(
-    result.success,
-    false,
-    'Resupply incomplete due to credits',
-  );
-  assert.ok(result.shortages.ammo.size > 0, 'Has shortages');
-  assert.ok(result.creditsSpent <= 5, 'Did not spend more than available');
+  describe('resupplyShipConstrained store stock limit', () => {
+    it('respects store stock limit and depletes stock', () => {
+      const state = createTestState({
+        currentAmmo: 0,
+        storedAmmo: 0,
+        storeStockAmmo: 50,
+        credits: 10000,
+      });
+      const result = resupplyShipConstrained(state, 'ship1');
 
-  console.log('  - Credit limit respected: PASS');
-  console.log('  - Shortages reported: PASS');
-}
-
-// Test: resupplyShipConstrained respects store stock
-console.log('\nTesting resupplyShipConstrained store stock limit...');
-{
-  const state = createTestState({
-    currentAmmo: 0,
-    storedAmmo: 0,
-    storeStockAmmo: 50,
-    credits: 10000,
+      assert.strictEqual(
+        result.success,
+        false,
+        'Resupply incomplete due to stock',
+      );
+      assert.strictEqual(
+        result.bought.ammo.get('autocannon'),
+        50,
+        'Bought all available stock',
+      );
+      assert.ok(
+        result.shortages.ammo.get('autocannon') > 0,
+        'Has ammo shortage',
+      );
+      assert.strictEqual(
+        result.state.storeStock.ammo.autocannon,
+        0,
+        'Store stock depleted',
+      );
+    });
   });
-  const result = resupplyShipConstrained(state, 'ship1');
 
-  assert.strictEqual(result.success, false, 'Resupply incomplete due to stock');
-  assert.strictEqual(
-    result.bought.ammo.get('autocannon'),
-    50,
-    'Bought all available stock',
-  );
-  assert.ok(result.shortages.ammo.get('autocannon') > 0, 'Has ammo shortage');
-  assert.strictEqual(
-    result.state.storeStock.ammo.autocannon,
-    0,
-    'Store stock depleted',
-  );
+  describe('resupplyShipConstrained missile storage priority', () => {
+    it('uses stored missiles first before buying', () => {
+      const state = {
+        seed: 12345,
+        nextId: 100,
+        commanderId: 'commander1',
+        credits: 1000,
+        ships: [
+          {
+            id: 'ship1',
+            shipClass: 'firefly',
+            primaryWeapons: createSlotArray([
+              { weaponType: 'plasma', bankSize: 1 },
+            ]),
+            secondaryWeapons: createSlotArray([
+              { weaponType: 'heatseeking', bankSize: 1, count: 2, maxCount: 4 },
+            ]),
+            pilot: { id: 'commander1', name: 'Commander' },
+            hullDamage: 0,
+          },
+        ],
+        pilots: [{ id: 'commander1', name: 'Commander' }],
+        storedShips: [],
+        storedWeapons: [
+          { weaponType: 'heatseeking', category: 'secondary', count: 2 },
+        ],
+        storedAmmo: [],
+        storeStock: {
+          ships: {},
+          primaries: {},
+          secondaries: { heatseeking: 100 },
+          ammo: {},
+        },
+        availableRecruits: [],
+        currentSector: 1,
+      };
 
-  console.log('  - Store stock limit: PASS');
-  console.log('  - Stock depleted: PASS');
-}
+      const result = resupplyShipConstrained(state, 'ship1');
 
-// Test: resupplyShipConstrained uses stored missiles first
-console.log('\nTesting resupplyShipConstrained missile storage priority...');
-{
-  const state = {
-    seed: 12345,
-    nextId: 100,
-    commanderId: 'commander1',
-    credits: 1000,
-    ships: [
-      {
-        id: 'ship1',
-        shipClass: 'firefly',
-        primaryWeapons: createSlotArray([
-          { weaponType: 'plasma', bankSize: 1 },
-        ]),
-        secondaryWeapons: createSlotArray([
-          { weaponType: 'heatseeking', bankSize: 1, count: 2, maxCount: 4 },
-        ]),
-        pilot: { id: 'commander1', name: 'Commander' },
-        hullDamage: 0,
-      },
-    ],
-    pilots: [{ id: 'commander1', name: 'Commander' }],
-    storedShips: [],
-    storedWeapons: [
-      { weaponType: 'heatseeking', category: 'secondary', count: 2 },
-    ],
-    storedAmmo: [],
-    storeStock: {
-      ships: {},
-      primaries: {},
-      secondaries: { heatseeking: 100 },
-      ammo: {},
-    },
-    availableRecruits: [],
-    currentSector: 1,
-  };
+      assert.strictEqual(result.success, true, 'Resupply succeeded');
+      assert.strictEqual(
+        result.fromStorage.missiles.get('heatseeking'),
+        2,
+        'Used missiles from storage',
+      );
+      assert.strictEqual(
+        result.bought.missiles.get('heatseeking') ?? 0,
+        0,
+        'Did not buy missiles',
+      );
+      assert.strictEqual(result.creditsSpent, 0, 'No credits spent');
 
-  const result = resupplyShipConstrained(state, 'ship1');
+      const ship = result.state.ships.find((s) => s.id === 'ship1');
+      assert.strictEqual(
+        getSlot(ship.secondaryWeapons, 0).count,
+        4,
+        'Ship missiles are full',
+      );
 
-  assert.strictEqual(result.success, true, 'Resupply succeeded');
-  assert.strictEqual(
-    result.fromStorage.missiles.get('heatseeking'),
-    2,
-    'Used missiles from storage',
-  );
-  assert.strictEqual(
-    result.bought.missiles.get('heatseeking') ?? 0,
-    0,
-    'Did not buy missiles',
-  );
-  assert.strictEqual(result.creditsSpent, 0, 'No credits spent');
-
-  const ship = result.state.ships.find((s) => s.id === 'ship1');
-  assert.strictEqual(
-    getSlot(ship.secondaryWeapons, 0).count,
-    4,
-    'Ship missiles are full',
-  );
-
-  const storedMissiles = result.state.storedWeapons.find(
-    (w) => w.weaponType === 'heatseeking' && w.category === 'secondary',
-  );
-  assert.strictEqual(storedMissiles, undefined, 'Missile storage is empty');
-
-  console.log('  - Missile storage priority: PASS');
-  console.log('  - Missiles consumed from storage: PASS');
-  console.log('  - No credits spent: PASS');
-}
-
-// Test: resupplyShipConstrained message generation
-console.log('\nTesting message generation...');
-{
-  const state = createTestState({
-    currentAmmo: 100,
-    storedAmmo: 50,
-    storeStockAmmo: 1000,
+      const storedMissiles = result.state.storedWeapons.find(
+        (w) => w.weaponType === 'heatseeking' && w.category === 'secondary',
+      );
+      assert.strictEqual(storedMissiles, undefined, 'Missile storage is empty');
+    });
   });
-  const result = resupplyShipConstrained(state, 'ship1');
 
-  assert.ok(Array.isArray(result.messages), 'messages is an array');
-  const allMessages = result.messages.join(' ');
-  assert.ok(allMessages.includes('storage'), 'Message mentions storage');
-  assert.ok(allMessages.includes('Bought'), 'Message mentions purchase');
-  assert.ok(result.messages.length >= 2, 'Separate messages per item');
-  assert.ok(
-    result.messages.some((m) => m.includes('Autocannon')),
-    'Has message for Autocannon',
-  );
+  describe('message generation', () => {
+    it('generates messages for storage and purchase', () => {
+      const state = createTestState({
+        currentAmmo: 100,
+        storedAmmo: 50,
+        storeStockAmmo: 1000,
+      });
+      const result = resupplyShipConstrained(state, 'ship1');
 
-  console.log('  - Messages array format: PASS');
-  console.log('  - Message includes storage info: PASS');
-  console.log('  - Message includes purchase info: PASS');
-  console.log('  - One message per item type: PASS');
-}
-
-// Test: shortageReason in messages with explicit item names
-console.log('\nTesting shortageReason in resupply messages...');
-{
-  const creditShortageState = createTestState({
-    currentAmmo: 0,
-    storedAmmo: 0,
-    storeStockAmmo: 1000,
-    credits: 1,
+      assert.ok(Array.isArray(result.messages), 'messages is an array');
+      const allMessages = result.messages.join(' ');
+      assert.ok(allMessages.includes('storage'), 'Message mentions storage');
+      assert.ok(allMessages.includes('Bought'), 'Message mentions purchase');
+      assert.ok(result.messages.length >= 2, 'Separate messages per item');
+      assert.ok(
+        result.messages.some((m) => m.includes('Autocannon')),
+        'Has message for Autocannon',
+      );
+    });
   });
-  const creditResult = resupplyShipConstrained(creditShortageState, 'ship1');
 
-  assert.strictEqual(
-    creditResult.shortageReason,
-    'credits',
-    'Reason is credits',
-  );
-  const creditMessages = creditResult.messages.join(' ');
-  assert.ok(
-    creditMessages.includes('insufficient credits'),
-    'Message mentions credits',
-  );
-  assert.ok(
-    creditMessages.includes('Autocannon'),
-    'Message mentions specific item',
-  );
-  assert.ok(creditMessages.includes('Short'), 'Message uses Short prefix');
+  describe('shortageReason in resupply messages', () => {
+    it('reports credit shortage reason with specific item names', () => {
+      const creditShortageState = createTestState({
+        currentAmmo: 0,
+        storedAmmo: 0,
+        storeStockAmmo: 1000,
+        credits: 1,
+      });
+      const creditResult = resupplyShipConstrained(
+        creditShortageState,
+        'ship1',
+      );
 
-  const stockShortageState = createTestState({
-    currentAmmo: 0,
-    storedAmmo: 0,
-    storeStockAmmo: 10,
-    credits: 10000,
+      assert.strictEqual(
+        creditResult.shortageReason,
+        'credits',
+        'Reason is credits',
+      );
+      const creditMessages = creditResult.messages.join(' ');
+      assert.ok(
+        creditMessages.includes('insufficient credits'),
+        'Message mentions credits',
+      );
+      assert.ok(
+        creditMessages.includes('Autocannon'),
+        'Message mentions specific item',
+      );
+      assert.ok(creditMessages.includes('Short'), 'Message uses Short prefix');
+    });
+
+    it('reports stock shortage reason with specific item names', () => {
+      const stockShortageState = createTestState({
+        currentAmmo: 0,
+        storedAmmo: 0,
+        storeStockAmmo: 10,
+        credits: 10000,
+      });
+      const stockResult = resupplyShipConstrained(stockShortageState, 'ship1');
+
+      assert.strictEqual(
+        stockResult.shortageReason,
+        'stock',
+        'Reason is stock',
+      );
+      const stockMessages = stockResult.messages.join(' ');
+      assert.ok(
+        stockMessages.includes('out of stock'),
+        'Message mentions stock',
+      );
+      assert.ok(
+        stockMessages.includes('Autocannon'),
+        'Message mentions specific item',
+      );
+    });
   });
-  const stockResult = resupplyShipConstrained(stockShortageState, 'ship1');
-
-  assert.strictEqual(stockResult.shortageReason, 'stock', 'Reason is stock');
-  const stockMessages = stockResult.messages.join(' ');
-  assert.ok(stockMessages.includes('out of stock'), 'Message mentions stock');
-  assert.ok(
-    stockMessages.includes('Autocannon'),
-    'Message mentions specific item',
-  );
-
-  console.log('  - Credit shortage reason: PASS');
-  console.log('  - Stock shortage reason: PASS');
-  console.log('  - Messages include specific item names: PASS');
-}
-
-console.log('\n=== All Resupply Ship Tests Passed ===');
+});

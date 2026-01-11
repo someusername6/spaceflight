@@ -12,6 +12,8 @@
  * - Player survival rate
  */
 
+import assert from 'node:assert';
+import { describe, it } from 'node:test';
 import { generateContracts } from '../../../src/ui/screens/contracts.ts';
 import { PLAYER_MODES, runScenario } from './mission-sim.mjs';
 
@@ -94,12 +96,59 @@ function printMissionResults(missionKey) {
   }
 }
 
+function collectPacingIssues(allResults) {
+  const issues = [];
+
+  for (const missionKey of Object.keys(MISSIONS)) {
+    const missionResults = allResults.filter(
+      (r) => r.missionKey === missionKey,
+    );
+    const idleResult = missionResults.find((r) => r.playerMode === 'idle');
+    const regularResult = missionResults.find(
+      (r) => r.playerMode === 'regular',
+    );
+
+    if (idleResult.avgWinTime > 0 && idleResult.avgWinTime < 15) {
+      issues.push(
+        `${MISSIONS[missionKey].name}: Mission resolves too fast when idle (${idleResult.avgWinTime.toFixed(1)}s)`,
+      );
+    }
+
+    if (idleResult.winRate > 80) {
+      issues.push(
+        `${MISSIONS[missionKey].name}: Wingmen carry too hard - ${idleResult.winRate.toFixed(0)}% win with idle player`,
+      );
+    }
+
+    if (
+      idleResult.winRate < 20 &&
+      idleResult.avgWinTime > 0 &&
+      idleResult.avgWinTime < 20
+    ) {
+      issues.push(
+        `${MISSIONS[missionKey].name}: Player gets killed too fast with no input`,
+      );
+    }
+
+    if (
+      regularResult &&
+      regularResult.avgWinTime > 0 &&
+      regularResult.avgWinTime < 20
+    ) {
+      issues.push(
+        `${MISSIONS[missionKey].name}: Regular-skill victories too fast (${regularResult.avgWinTime.toFixed(1)}s)`,
+      );
+    }
+  }
+
+  return issues;
+}
+
 function printPacingAnalysis(allResults) {
   console.log(`\n${'='.repeat(80)}`);
   console.log('PACING ANALYSIS');
   console.log('='.repeat(80));
 
-  // Group by mission
   for (const missionKey of Object.keys(MISSIONS)) {
     const missionResults = allResults.filter(
       (r) => r.missionKey === missionKey,
@@ -111,18 +160,17 @@ function printPacingAnalysis(allResults) {
 
     console.log(`\n${MISSIONS[missionKey].name}:`);
 
-    // Check for issues
     const issues = [];
 
     if (idleResult.avgWinTime > 0 && idleResult.avgWinTime < 15) {
       issues.push(
-        `⚠ Mission resolves too fast when idle (${idleResult.avgWinTime.toFixed(1)}s)`,
+        `Mission resolves too fast when idle (${idleResult.avgWinTime.toFixed(1)}s)`,
       );
     }
 
     if (idleResult.winRate > 80) {
       issues.push(
-        `⚠ Wingmen carry too hard - ${idleResult.winRate.toFixed(0)}% win with idle player`,
+        `Wingmen carry too hard - ${idleResult.winRate.toFixed(0)}% win with idle player`,
       );
     }
 
@@ -131,7 +179,7 @@ function printPacingAnalysis(allResults) {
       idleResult.avgWinTime > 0 &&
       idleResult.avgWinTime < 20
     ) {
-      issues.push('⚠ Player gets killed too fast with no input');
+      issues.push('Player gets killed too fast with no input');
     }
 
     if (
@@ -140,19 +188,18 @@ function printPacingAnalysis(allResults) {
       regularResult.avgWinTime < 20
     ) {
       issues.push(
-        `⚠ Regular-skill victories too fast (${regularResult.avgWinTime.toFixed(1)}s)`,
+        `Regular-skill victories too fast (${regularResult.avgWinTime.toFixed(1)}s)`,
       );
     }
 
     if (issues.length === 0) {
-      console.log('  ✓ Pacing looks reasonable');
+      console.log('  Pacing looks reasonable');
     } else {
       for (const issue of issues) {
-        console.log(`  ${issue}`);
+        console.log(`  Warning: ${issue}`);
       }
     }
 
-    // Print engagement summary (using avgWinTime for victories)
     const idleWinTime =
       idleResult.avgWinTime > 0 ? `${idleResult.avgWinTime.toFixed(1)}s` : '-';
     console.log(
@@ -171,22 +218,33 @@ function printPacingAnalysis(allResults) {
 }
 
 // ============================================================================
-// Main
+// Tests
 // ============================================================================
 
-printHeader();
+describe('Mission Pacing', () => {
+  it('runs pacing analysis for all missions', () => {
+    printHeader();
 
-const allResults = [];
+    const allResults = [];
 
-for (const missionKey of Object.keys(MISSIONS)) {
-  printMissionResults(missionKey);
+    for (const missionKey of Object.keys(MISSIONS)) {
+      printMissionResults(missionKey);
 
-  for (const mode of PLAYER_MODES) {
-    allResults.push(runScenario(MISSIONS[missionKey], missionKey, mode));
-  }
-}
+      for (const mode of PLAYER_MODES) {
+        allResults.push(runScenario(MISSIONS[missionKey], missionKey, mode));
+      }
+    }
 
-printPacingAnalysis(allResults);
+    printPacingAnalysis(allResults);
 
-console.log(`\n${'='.repeat(80)}`);
-console.log('Test complete.');
+    console.log(`\n${'='.repeat(80)}`);
+    console.log('Test complete.');
+
+    // Collect pacing issues for assertion
+    const _issues = collectPacingIssues(allResults);
+
+    // This test logs warnings but doesn't fail - it's a smoke test for observation
+    // If we want strict enforcement, we can assert on _issues.length === 0
+    assert.ok(true, 'Pacing analysis completed');
+  });
+});

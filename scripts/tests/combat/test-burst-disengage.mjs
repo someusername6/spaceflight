@@ -12,6 +12,8 @@
  * - Reposition correctly increases distance from target
  */
 
+import assert from 'node:assert';
+import { describe, it } from 'node:test';
 import { Quaternion, Vector3 } from 'three';
 import { AIState } from '../../../src/components/ai.ts';
 import { createWorld, getComponent } from '../../../src/core/ecs.ts';
@@ -28,10 +30,6 @@ import {
 const RUNS_PER_TEST = 30;
 const MAX_FIGHT_TIME = 60;
 const MAX_TICKS = MAX_FIGHT_TIME * TICK_RATE;
-
-console.log('='.repeat(70));
-console.log('BURST-DISENGAGE BEHAVIOR TEST');
-console.log('='.repeat(70));
 
 // Store original archetypes
 const originalArchetypes = { ...SHIP_ARCHETYPES };
@@ -135,134 +133,165 @@ function runBurstDisengageTest(archetype, seed, _preferredRange = undefined) {
   };
 }
 
-// ============================================================
-// TEST 1: Standard ships should NOT use Reposition
-// ============================================================
-console.log('\n--- TEST 1: STANDARD SHIPS (no preferredCombatRange) ---');
-console.log(
-  'Expected: 0 repositions (standard ships always close to engage)\n',
-);
+describe('Burst-Disengage Behavior', () => {
+  console.log('='.repeat(70));
+  console.log('BURST-DISENGAGE BEHAVIOR TEST');
+  console.log('='.repeat(70));
 
-const standardArchetypes = ['scout', 'interceptor', 'striker', 'raider'];
-let standardPasses = 0;
-
-for (const archetype of standardArchetypes) {
-  let totalRepos = 0;
-  for (let run = 0; run < RUNS_PER_TEST; run++) {
-    const result = runBurstDisengageTest(archetype, run * 1000);
-    totalRepos += result.repositionCount;
-  }
-  const avgRepos = totalRepos / RUNS_PER_TEST;
-  const pass = avgRepos < 0.1; // Allow for tiny floating point issues
-  if (pass) standardPasses++;
+  // ============================================================
+  // TEST 1: Standard ships should NOT use Reposition
+  // ============================================================
+  console.log('\n--- TEST 1: STANDARD SHIPS (no preferredCombatRange) ---');
   console.log(
-    `  ${archetype.padEnd(12)}: ${avgRepos.toFixed(1)} avg repositions - ${pass ? 'PASS' : 'FAIL'}`,
+    'Expected: 0 repositions (standard ships always close to engage)\n',
   );
-}
 
-// ============================================================
-// TEST 2: Long-range ships SHOULD use Reposition
-// ============================================================
-console.log('\n--- TEST 2: LONG-RANGE SHIPS (preferredCombatRange=1000) ---');
-console.log('Expected: Multiple repositions per fight\n');
+  const standardArchetypes = ['scout', 'interceptor', 'striker', 'raider'];
+  let standardPasses = 0;
+  const standardResults = {};
 
-const longRangeVariant = createLongRangeVariant('striker', 1000);
-let _longRangePasses = 0;
-let totalReposLongRange = 0;
-let totalDistanceGained = 0;
-let totalEngageTime = 0;
-let totalRepositionTime = 0;
-
-for (let run = 0; run < RUNS_PER_TEST; run++) {
-  const result = runBurstDisengageTest(longRangeVariant, run * 1000);
-  totalReposLongRange += result.repositionCount;
-  totalDistanceGained += result.avgDistanceGained;
-  totalEngageTime += result.engageTime;
-  totalRepositionTime += result.repositionTime;
-}
-
-const avgReposLongRange = totalReposLongRange / RUNS_PER_TEST;
-const avgDistanceGained = totalDistanceGained / RUNS_PER_TEST;
-const avgEngageTime = totalEngageTime / RUNS_PER_TEST;
-const avgRepositionTime = totalRepositionTime / RUNS_PER_TEST;
-
-const longRangeUsesRepos = avgReposLongRange >= 0.5; // At least half of fights have repositioning
-const gainsDistance = avgDistanceGained > 50;
-
-console.log(`  Avg repositions/fight: ${avgReposLongRange.toFixed(1)}`);
-console.log(`  Avg distance gained: ${avgDistanceGained.toFixed(0)}m`);
-console.log(`  Engage time: ${avgEngageTime.toFixed(1)}s`);
-console.log(`  Reposition time: ${avgRepositionTime.toFixed(1)}s`);
-console.log(`  Uses reposition: ${longRangeUsesRepos ? 'PASS' : 'FAIL'}`);
-console.log(`  Gains distance: ${gainsDistance ? 'PASS' : 'FAIL'}`);
-
-if (longRangeUsesRepos) _longRangePasses++;
-if (gainsDistance) _longRangePasses++;
-
-// ============================================================
-// TEST 3: Different preferred ranges
-// ============================================================
-console.log('\n--- TEST 3: VARYING PREFERRED COMBAT RANGES ---');
-console.log('Expected: Higher ranges = more repositions\n');
-
-const rangeTests = [600, 800, 1000, 1200];
-const rangeResults = [];
-
-for (const range of rangeTests) {
-  const variant = createLongRangeVariant('striker', range);
-  let totalRepos = 0;
-  for (let run = 0; run < RUNS_PER_TEST; run++) {
-    const result = runBurstDisengageTest(variant, run * 1000);
-    totalRepos += result.repositionCount;
+  for (const archetype of standardArchetypes) {
+    let totalRepos = 0;
+    for (let run = 0; run < RUNS_PER_TEST; run++) {
+      const result = runBurstDisengageTest(archetype, run * 1000);
+      totalRepos += result.repositionCount;
+    }
+    const avgRepos = totalRepos / RUNS_PER_TEST;
+    const pass = avgRepos < 0.1; // Allow for tiny floating point issues
+    if (pass) standardPasses++;
+    standardResults[archetype] = { avgRepos, pass };
+    console.log(
+      `  ${archetype.padEnd(12)}: ${avgRepos.toFixed(1)} avg repositions - ${pass ? 'PASS' : 'FAIL'}`,
+    );
   }
-  const avgRepos = totalRepos / RUNS_PER_TEST;
-  rangeResults.push({ range, avgRepos });
-  console.log(`  Range ${range}m: ${avgRepos.toFixed(1)} avg repositions`);
-}
 
-// Higher ranges should have more repositions
-const rangesIncreasing =
-  rangeResults[3].avgRepos >= rangeResults[0].avgRepos * 0.8;
-console.log(
-  `\n  Higher ranges = more repositions: ${rangesIncreasing ? 'PASS' : 'FAIL'}`,
-);
+  // ============================================================
+  // TEST 2: Long-range ships SHOULD use Reposition
+  // ============================================================
+  console.log('\n--- TEST 2: LONG-RANGE SHIPS (preferredCombatRange=1000) ---');
+  console.log('Expected: Multiple repositions per fight\n');
 
-// ============================================================
-// SUMMARY
-// ============================================================
-restoreArchetypes();
+  const longRangeVariant = createLongRangeVariant('striker', 1000);
+  let _longRangePasses = 0;
+  let totalReposLongRange = 0;
+  let totalDistanceGained = 0;
+  let totalEngageTime = 0;
+  let totalRepositionTime = 0;
 
-console.log(`\n${'='.repeat(70)}`);
-console.log('SUMMARY');
-console.log('='.repeat(70));
+  for (let run = 0; run < RUNS_PER_TEST; run++) {
+    const result = runBurstDisengageTest(longRangeVariant, run * 1000);
+    totalReposLongRange += result.repositionCount;
+    totalDistanceGained += result.avgDistanceGained;
+    totalEngageTime += result.engageTime;
+    totalRepositionTime += result.repositionTime;
+  }
 
-const totalTests = standardArchetypes.length + 3;
-const totalPasses =
-  standardPasses +
-  (longRangeUsesRepos ? 1 : 0) +
-  (gainsDistance ? 1 : 0) +
-  (rangesIncreasing ? 1 : 0);
+  const avgReposLongRange = totalReposLongRange / RUNS_PER_TEST;
+  const avgDistanceGained = totalDistanceGained / RUNS_PER_TEST;
+  const avgEngageTime = totalEngageTime / RUNS_PER_TEST;
+  const avgRepositionTime = totalRepositionTime / RUNS_PER_TEST;
 
-console.log(`\nTests passed: ${totalPasses}/${totalTests}`);
+  const longRangeUsesRepos = avgReposLongRange >= 0.5; // At least half of fights have repositioning
+  const gainsDistance = avgDistanceGained > 50;
 
-if (standardPasses === standardArchetypes.length) {
-  console.log('✓ Standard ships correctly avoid Reposition state');
-} else {
-  console.log('✗ Some standard ships incorrectly using Reposition');
-}
+  console.log(`  Avg repositions/fight: ${avgReposLongRange.toFixed(1)}`);
+  console.log(`  Avg distance gained: ${avgDistanceGained.toFixed(0)}m`);
+  console.log(`  Engage time: ${avgEngageTime.toFixed(1)}s`);
+  console.log(`  Reposition time: ${avgRepositionTime.toFixed(1)}s`);
+  console.log(`  Uses reposition: ${longRangeUsesRepos ? 'PASS' : 'FAIL'}`);
+  console.log(`  Gains distance: ${gainsDistance ? 'PASS' : 'FAIL'}`);
 
-if (longRangeUsesRepos && gainsDistance) {
-  console.log('✓ Long-range ships correctly use burst-disengage pattern');
-} else {
-  console.log('✗ Long-range ships not using burst-disengage correctly');
-}
+  if (longRangeUsesRepos) _longRangePasses++;
+  if (gainsDistance) _longRangePasses++;
 
-if (rangesIncreasing) {
-  console.log('✓ Reposition frequency scales with preferred range');
-} else {
-  console.log('✗ Reposition frequency not scaling correctly');
-}
+  // ============================================================
+  // TEST 3: Different preferred ranges
+  // ============================================================
+  console.log('\n--- TEST 3: VARYING PREFERRED COMBAT RANGES ---');
+  console.log('Expected: Higher ranges = more repositions\n');
 
-console.log(`\n${'='.repeat(70)}`);
-console.log('BURST-DISENGAGE TEST COMPLETE');
-console.log(`${'='.repeat(70)}\n`);
+  const rangeTests = [600, 800, 1000, 1200];
+  const rangeResults = [];
+
+  for (const range of rangeTests) {
+    const variant = createLongRangeVariant('striker', range);
+    let totalRepos = 0;
+    for (let run = 0; run < RUNS_PER_TEST; run++) {
+      const result = runBurstDisengageTest(variant, run * 1000);
+      totalRepos += result.repositionCount;
+    }
+    const avgRepos = totalRepos / RUNS_PER_TEST;
+    rangeResults.push({ range, avgRepos });
+    console.log(`  Range ${range}m: ${avgRepos.toFixed(1)} avg repositions`);
+  }
+
+  // Higher ranges should have more repositions
+  const rangesIncreasing =
+    rangeResults[3].avgRepos >= rangeResults[0].avgRepos * 0.8;
+  console.log(
+    `\n  Higher ranges = more repositions: ${rangesIncreasing ? 'PASS' : 'FAIL'}`,
+  );
+
+  // ============================================================
+  // SUMMARY
+  // ============================================================
+  restoreArchetypes();
+
+  console.log(`\n${'='.repeat(70)}`);
+  console.log('SUMMARY');
+  console.log('='.repeat(70));
+
+  const totalTests = standardArchetypes.length + 3;
+  const totalPasses =
+    standardPasses +
+    (longRangeUsesRepos ? 1 : 0) +
+    (gainsDistance ? 1 : 0) +
+    (rangesIncreasing ? 1 : 0);
+
+  console.log(`\nTests passed: ${totalPasses}/${totalTests}`);
+
+  if (standardPasses === standardArchetypes.length) {
+    console.log('✓ Standard ships correctly avoid Reposition state');
+  } else {
+    console.log('✗ Some standard ships incorrectly using Reposition');
+  }
+
+  if (longRangeUsesRepos && gainsDistance) {
+    console.log('✓ Long-range ships correctly use burst-disengage pattern');
+  } else {
+    console.log('✗ Long-range ships not using burst-disengage correctly');
+  }
+
+  if (rangesIncreasing) {
+    console.log('✓ Reposition frequency scales with preferred range');
+  } else {
+    console.log('✗ Reposition frequency not scaling correctly');
+  }
+
+  console.log(`\n${'='.repeat(70)}`);
+  console.log('BURST-DISENGAGE TEST COMPLETE');
+  console.log(`${'='.repeat(70)}\n`);
+
+  it('should have standard ships avoid Reposition state', () => {
+    for (const archetype of standardArchetypes) {
+      assert.ok(
+        standardResults[archetype].pass,
+        `${archetype} should not use Reposition: ${standardResults[archetype].avgRepos.toFixed(1)} avg`,
+      );
+    }
+  });
+
+  it('should have long-range ships use Reposition state', () => {
+    assert.ok(
+      longRangeUsesRepos,
+      `Long-range ships should use Reposition: ${avgReposLongRange.toFixed(1)} avg`,
+    );
+  });
+
+  it('should have Reposition gain distance', () => {
+    assert.ok(
+      gainsDistance || avgReposLongRange < 0.5,
+      `Reposition should gain distance: ${avgDistanceGained.toFixed(0)}m avg`,
+    );
+  });
+});

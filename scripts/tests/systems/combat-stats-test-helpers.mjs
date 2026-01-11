@@ -56,40 +56,6 @@ export {
   recordShotHit,
 };
 
-/** Test state */
-export let passed = 0;
-export let failed = 0;
-
-/** Reset test counts */
-export function resetCounts() {
-  passed = 0;
-  failed = 0;
-}
-
-/** Run a test */
-export function test(name, fn) {
-  try {
-    fn();
-    console.log(`✓ ${name}`);
-    passed++;
-  } catch (e) {
-    console.log(`✗ ${name}: ${e.message}`);
-    failed++;
-  }
-}
-
-/** Assert a condition */
-export function assert(condition, message) {
-  if (!condition) throw new Error(message || 'Assertion failed');
-}
-
-/** Assert approximate equality */
-export function assertApprox(actual, expected, tolerance = 0.001, message) {
-  if (Math.abs(actual - expected) > tolerance) {
-    throw new Error(message || `Expected ${expected}, got ${actual}`);
-  }
-}
-
 /** Create a test ship with combat stats */
 export function createTestShip(world, isPlayer = false) {
   const entity = createEntity(world);
@@ -111,11 +77,4 @@ export function createTestEnemy(world) {
   addComponent(world, entity, createShipIdentity('raider', `Enemy ${entity}`));
   addComponent(world, entity, createCombatStats());
   return entity;
-}
-
-/** Print summary and return exit code */
-export function printSummary() {
-  console.log('');
-  console.log(`Tests: ${passed} passed, ${failed} failed`);
-  return failed > 0 ? 1 : 0;
 }

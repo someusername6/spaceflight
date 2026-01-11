@@ -2,76 +2,73 @@
  * Missile Owner Collision Tests
  */
 
+import assert from 'node:assert';
+import { describe, it } from 'node:test';
 import { entityExists } from '../../../src/core/ecs.ts';
 import {
-  assert,
   createShip,
   createTestMissile,
   createTestWorld,
   Faction,
   runFrame,
-  summarize,
-  test,
 } from '../shared/test-utils.mjs';
-
-console.log('\n=== MISSILE OWNER COLLISION TESTS ===\n');
 
 const MISSILE_OWNER_SAFE_DISTANCE = 100;
 
-test('Missile ignores owner collision within safe distance', () => {
-  const world = createTestWorld();
-  const owner = createShip(world, 0, 0, 0, Faction.Player);
-  const missile = createTestMissile(world, owner, 5, 0, 0, {
-    distanceTraveled: 50,
+describe('Missile Owner Collision Tests', () => {
+  it('Missile ignores owner collision within safe distance', () => {
+    const world = createTestWorld();
+    const owner = createShip(world, 0, 0, 0, Faction.Player);
+    const missile = createTestMissile(world, owner, 5, 0, 0, {
+      distanceTraveled: 50,
+    });
+
+    runFrame(world);
+
+    assert.ok(entityExists(world, missile), 'Missile should still exist');
+    assert.ok(
+      world.systemState.combatStats.missilesHitOwner === 0,
+      'Should not count owner hit',
+    );
   });
 
-  runFrame(world);
+  it('Missile destroyed on owner collision after safe distance', () => {
+    const world = createTestWorld();
+    const owner = createShip(world, 0, 0, 0, Faction.Player);
+    const missile = createTestMissile(world, owner, 5, 0, 0, {
+      distanceTraveled: 150,
+    });
 
-  assert(entityExists(world, missile), 'Missile should still exist');
-  assert(
-    world.systemState.combatStats.missilesHitOwner === 0,
-    'Should not count owner hit',
-  );
-});
+    runFrame(world);
 
-test('Missile destroyed on owner collision after safe distance', () => {
-  const world = createTestWorld();
-  const owner = createShip(world, 0, 0, 0, Faction.Player);
-  const missile = createTestMissile(world, owner, 5, 0, 0, {
-    distanceTraveled: 150,
+    assert.ok(!entityExists(world, missile), 'Missile should be destroyed');
+    assert.ok(
+      world.systemState.combatStats.missilesHitOwner === 1,
+      'Should count exactly 1 owner hit',
+    );
   });
 
-  runFrame(world);
+  it('Owner collision counted once across multiple frames', () => {
+    const world = createTestWorld();
+    const owner = createShip(world, 0, 0, 0, Faction.Player);
+    createTestMissile(world, owner, 5, 0, 0, { distanceTraveled: 150 });
 
-  assert(!entityExists(world, missile), 'Missile should be destroyed');
-  assert(
-    world.systemState.combatStats.missilesHitOwner === 1,
-    'Should count exactly 1 owner hit',
-  );
+    runFrame(world);
+    runFrame(world);
+    runFrame(world);
+
+    assert.ok(
+      world.systemState.combatStats.missilesHitOwner === 1,
+      `Should count exactly 1 owner hit, got ${world.systemState.combatStats.missilesHitOwner}`,
+    );
+  });
+
+  it('Safe distance (100m) sufficient for torpedo turn radius', () => {
+    const torpedoSpeed = 200;
+    const timeToSafeDistance = MISSILE_OWNER_SAFE_DISTANCE / torpedoSpeed;
+    assert.ok(
+      timeToSafeDistance >= 0.5,
+      `Expected >= 0.5s, got ${timeToSafeDistance}s`,
+    );
+  });
 });
-
-test('Owner collision counted once across multiple frames', () => {
-  const world = createTestWorld();
-  const owner = createShip(world, 0, 0, 0, Faction.Player);
-  createTestMissile(world, owner, 5, 0, 0, { distanceTraveled: 150 });
-
-  runFrame(world);
-  runFrame(world);
-  runFrame(world);
-
-  assert(
-    world.systemState.combatStats.missilesHitOwner === 1,
-    `Should count exactly 1 owner hit, got ${world.systemState.combatStats.missilesHitOwner}`,
-  );
-});
-
-test('Safe distance (100m) sufficient for torpedo turn radius', () => {
-  const torpedoSpeed = 200;
-  const timeToSafeDistance = MISSILE_OWNER_SAFE_DISTANCE / torpedoSpeed;
-  assert(
-    timeToSafeDistance >= 0.5,
-    `Expected >= 0.5s, got ${timeToSafeDistance}s`,
-  );
-});
-
-summarize();

@@ -16,7 +16,7 @@ The codebase demonstrates **production-quality architecture** with excellent adh
 |----------|-------|----------|--------|
 | ~~CRITICAL~~ | ~~SlotArray serialization bug~~ | `slot-array.ts` | ✅ Fixed |
 | Medium | Missing TypeScript strict mode | `tsconfig.json` | Open |
-| Low | Inconsistent test organization | `scripts/` | Open |
+| ~~Low~~ | ~~Inconsistent test organization~~ | `scripts/` | ✅ Fixed |
 
 ---
 
@@ -159,21 +159,32 @@ Three patterns are used correctly:
 
 ## 5. Test Coverage
 
-### 5.1 Test Organization ⚠️ INCONSISTENT
+### 5.1 Test Organization ✅ STANDARDIZED
 
-**Location:** `scripts/`
+**Location:** `scripts/tests/`
 
-- 81 test files present
-- Some tests are standalone scripts, others use test framework
-- No unified test runner configuration found
+All tests now use Node.js built-in test runner (`node:test`) with `node:assert`:
+- 60+ test files migrated to consistent `describe`/`it` pattern
+- Shared utilities in `scripts/tests/shared/test-utils.mjs`
+- Test runner categorizes quick vs balance tests
 
-**Recommendation:** Standardize on a single test pattern
+**Pattern:**
+```javascript
+import assert from 'node:assert';
+import { describe, it } from 'node:test';
+
+describe('Feature', () => {
+  it('does something', () => {
+    assert.strictEqual(actual, expected);
+  });
+});
+```
 
 ### 5.2 Test Types Observed
 
 - Unit tests for pure functions
 - Integration tests for systems
-- Manual verification scripts for rendering
+- Balance/simulation tests for gameplay tuning
 
 ---
 
@@ -194,12 +205,11 @@ No unnecessary dependencies observed.
 ### Short-term
 
 1. **Enable strict TypeScript** - Incremental migration to catch null issues
-2. **Standardize test runner** - Pick one pattern for all tests
 
 ### Long-term
 
-3. **Add integration test for save/load cycle** - Would have caught the SlotArray bug earlier
-4. **Document system execution order** - Currently implicit in game-loop.ts
+2. **Add integration test for save/load cycle** - Would have caught the SlotArray bug earlier
+3. **Document system execution order** - Currently implicit in game-loop.ts
 
 ---
 

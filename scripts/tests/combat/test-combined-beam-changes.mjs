@@ -9,6 +9,8 @@
  * Target: Increase beam damage from ~11% to ~20%
  */
 
+import assert from 'node:assert';
+import { describe, it } from 'node:test';
 import { Quaternion, Vector3 } from 'three';
 import { createWorld, getComponent } from '../../../src/core/ecs.ts';
 import { Faction } from '../../../src/core/types.ts';
@@ -26,10 +28,6 @@ import {
 const RUNS_PER_MATCHUP = 20;
 const MAX_FIGHT_TIME = 45;
 const MAX_TICKS = MAX_FIGHT_TIME * TICK_RATE;
-
-console.log(`\n${'='.repeat(70)}`);
-console.log('COMBINED BEAM BALANCE TEST');
-console.log('='.repeat(70));
 
 // Store originals
 const origRedRange = PRIMARY_WEAPONS['red laser'].range;
@@ -164,71 +162,97 @@ function runCombinedTest(description, setupFn) {
   return { description, beamPct, avgDistance, results };
 }
 
-const tests = [];
+describe('Combined Beam Balance', () => {
+  console.log(`\n${'='.repeat(70)}`);
+  console.log('COMBINED BEAM BALANCE TEST');
+  console.log('='.repeat(70));
 
-// TEST 1: Baseline
-console.log('\n=== TEST 1: BASELINE ===');
-tests.push(runCombinedTest('BASELINE', () => {}));
+  const tests = [];
 
-// TEST 2: All changes combined
-console.log('\n=== TEST 2: ALL CHANGES COMBINED ===');
-console.log('- Red laser: 400→500m');
-console.log('- Blue laser: 25→30 DPS');
-console.log('- Striker: red→green laser');
-console.log('- Defender: +green laser');
-console.log('- Scout: +red laser');
-console.log('- preferredCombatRange for all ships');
+  // TEST 1: Baseline
+  console.log('\n=== TEST 1: BASELINE ===');
+  tests.push(runCombinedTest('BASELINE', () => {}));
 
-tests.push(
-  runCombinedTest('ALL CHANGES', () => {
-    // Range/DPS adjustments
-    PRIMARY_WEAPONS['red laser'].range = 500;
-    PRIMARY_WEAPONS['blue laser'].damage = 30;
+  // TEST 2: All changes combined
+  console.log('\n=== TEST 2: ALL CHANGES COMBINED ===');
+  console.log('- Red laser: 400→500m');
+  console.log('- Blue laser: 25→30 DPS');
+  console.log('- Striker: red→green laser');
+  console.log('- Defender: +green laser');
+  console.log('- Scout: +red laser');
+  console.log('- preferredCombatRange for all ships');
 
-    // Ship reassignments
-    SHIP_ARCHETYPES.striker.primaryWeapons = [
-      { name: 'plasma', size: 2 },
-      { name: 'autocannon', size: 2 },
-      { name: 'greenLaser', size: 2 }, // was red laser
-      { name: 'pulse', size: 1 },
-      { name: 'pulse', size: 1 },
-    ];
+  tests.push(
+    runCombinedTest('ALL CHANGES', () => {
+      // Range/DPS adjustments
+      PRIMARY_WEAPONS['red laser'].range = 500;
+      PRIMARY_WEAPONS['blue laser'].damage = 30;
 
-    SHIP_ARCHETYPES.defender.primaryWeapons = [
-      { name: 'plasma', size: 2 },
-      { name: 'greenLaser', size: 2 }, // added
-      { name: 'pulse', size: 1 },
-    ];
+      // Ship reassignments
+      SHIP_ARCHETYPES.striker.primaryWeapons = [
+        { name: 'plasma', size: 2 },
+        { name: 'autocannon', size: 2 },
+        { name: 'greenLaser', size: 2 }, // was red laser
+        { name: 'pulse', size: 1 },
+        { name: 'pulse', size: 1 },
+      ];
 
-    SHIP_ARCHETYPES.scout.primaryWeapons = [
-      { name: 'pulse', size: 1 },
-      { name: 'redLaser', size: 1 }, // added
-    ];
+      SHIP_ARCHETYPES.defender.primaryWeapons = [
+        { name: 'plasma', size: 2 },
+        { name: 'greenLaser', size: 2 }, // added
+        { name: 'pulse', size: 1 },
+      ];
 
-    // preferredCombatRange values
-    SHIP_ARCHETYPES.scout.preferredCombatRange = 400; // Fast, red laser
-    SHIP_ARCHETYPES.interceptor.preferredCombatRange = 700; // Versatile
-    SHIP_ARCHETYPES.striker.preferredCombatRange = 700; // Now has green laser
-    SHIP_ARCHETYPES.bomber.preferredCombatRange = 500; // Missile boat
-    SHIP_ARCHETYPES.defender.preferredCombatRange = 600; // Tanky, green laser
-    SHIP_ARCHETYPES.raider.preferredCombatRange = 400; // Glass cannon
-    SHIP_ARCHETYPES.sentinel.preferredCombatRange = 1000; // Long range
-  }),
-);
+      SHIP_ARCHETYPES.scout.primaryWeapons = [
+        { name: 'pulse', size: 1 },
+        { name: 'redLaser', size: 1 }, // added
+      ];
 
-// Summary
-console.log(`\n${'='.repeat(70)}`);
-console.log('COMBINED BEAM BALANCE SUMMARY');
-console.log('='.repeat(70));
-console.log('\n| Config | Beam % | Change | Avg Distance |');
-console.log('|--------|--------|--------|--------------|');
-const baseline = tests[0];
-for (const t of tests) {
-  const delta = t.beamPct - baseline.beamPct;
-  console.log(
-    `| ${t.description.padEnd(16)} | ${t.beamPct.toFixed(1).padStart(5)}% | ${delta >= 0 ? '+' : ''}${delta.toFixed(1).padStart(5)}% | ${t.avgDistance.toFixed(0).padStart(11)}m |`,
+      // preferredCombatRange values
+      SHIP_ARCHETYPES.scout.preferredCombatRange = 400; // Fast, red laser
+      SHIP_ARCHETYPES.interceptor.preferredCombatRange = 700; // Versatile
+      SHIP_ARCHETYPES.striker.preferredCombatRange = 700; // Now has green laser
+      SHIP_ARCHETYPES.bomber.preferredCombatRange = 500; // Missile boat
+      SHIP_ARCHETYPES.defender.preferredCombatRange = 600; // Tanky, green laser
+      SHIP_ARCHETYPES.raider.preferredCombatRange = 400; // Glass cannon
+      SHIP_ARCHETYPES.sentinel.preferredCombatRange = 1000; // Long range
+    }),
   );
-}
 
-console.log('\nTarget: ~20% beam damage (from ~11%)');
-console.log(`\n${'='.repeat(70)}`);
+  // Summary
+  console.log(`\n${'='.repeat(70)}`);
+  console.log('COMBINED BEAM BALANCE SUMMARY');
+  console.log('='.repeat(70));
+  console.log('\n| Config | Beam % | Change | Avg Distance |');
+  console.log('|--------|--------|--------|--------------|');
+  const baseline = tests[0];
+  for (const t of tests) {
+    const delta = t.beamPct - baseline.beamPct;
+    console.log(
+      `| ${t.description.padEnd(16)} | ${t.beamPct.toFixed(1).padStart(5)}% | ${delta >= 0 ? '+' : ''}${delta.toFixed(1).padStart(5)}% | ${t.avgDistance.toFixed(0).padStart(11)}m |`,
+    );
+  }
+
+  console.log('\nTarget: ~20% beam damage (from ~11%)');
+  console.log(`\n${'='.repeat(70)}`);
+
+  it('should have beam damage in baseline', () => {
+    assert.ok(
+      baseline.beamPct > 0,
+      `Baseline should have some beam damage: ${baseline.beamPct.toFixed(1)}%`,
+    );
+  });
+
+  it('should have reasonable combat distances', () => {
+    for (const t of tests) {
+      assert.ok(
+        t.avgDistance < 1000,
+        `${t.description}: Combat distance too far: ${t.avgDistance.toFixed(0)}m`,
+      );
+      assert.ok(
+        t.avgDistance > 100,
+        `${t.description}: Combat distance too close: ${t.avgDistance.toFixed(0)}m`,
+      );
+    }
+  });
+});
