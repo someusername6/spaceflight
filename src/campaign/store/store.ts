@@ -12,6 +12,7 @@ import {
   SCRAP_CONVERSION_FEE,
   SCRAP_PER_SHIP,
 } from '../../data/prices';
+import { generateCampaignId } from '../id-generator';
 import { mergeSecondaryIntoStorage } from '../ship-utils';
 import type { CampaignState, StoredShip, StoredWeapon } from '../types';
 
@@ -39,14 +40,6 @@ export {
   MISSILE_TRICKLE_LOADS,
 } from './store-catalog';
 
-/** Counter for deterministic ID generation */
-let itemIdCounter = 0;
-
-/** Generate unique ID for stored items (deterministic, counter-based) */
-function generateId(): string {
-  return `item_${++itemIdCounter}`;
-}
-
 // ============ Ship Buy/Sell ============
 
 /** Buy a ship (add to storage) */
@@ -60,13 +53,15 @@ export function buyShip(
     return state;
   }
 
+  const [shipId, nextId] = generateCampaignId(state.nextId, 'ship');
   const newShip: StoredShip = {
-    id: generateId(),
+    id: shipId,
     shipClass,
   };
 
   return {
     ...state,
+    nextId,
     credits: state.credits - price,
     storedShips: [...state.storedShips, newShip],
     storeStock: {
@@ -332,14 +327,16 @@ export function convertScrapToShip(
     newStoredScrap[shipClass] = remaining;
   }
 
-  // Create new ship
+  // Create new ship with ID from state
+  const [shipId, nextId] = generateCampaignId(state.nextId, 'ship');
   const newShip: StoredShip = {
-    id: generateId(),
+    id: shipId,
     shipClass,
   };
 
   return {
     ...state,
+    nextId,
     credits: state.credits - fee,
     storedScrap: newStoredScrap,
     storedShips: [...state.storedShips, newShip],

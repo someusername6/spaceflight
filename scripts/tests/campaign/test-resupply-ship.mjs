@@ -18,6 +18,8 @@ function createTestState(options = {}) {
   } = options;
 
   return {
+    seed: 12345,
+    nextId: 100,
     commanderId: 'commander1',
     credits,
     ships: [
@@ -154,6 +156,8 @@ console.log('\nTesting resupplyShipConstrained store stock limit...');
 console.log('\nTesting resupplyShipConstrained missile storage priority...');
 {
   const state = {
+    seed: 12345,
+    nextId: 100,
     commanderId: 'commander1',
     credits: 1000,
     ships: [

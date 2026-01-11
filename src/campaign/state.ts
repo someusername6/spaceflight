@@ -4,6 +4,7 @@
 
 import { createDerivedPRNG, random } from '../core/prng';
 import { getArchetype } from '../factories/ship';
+import { generateCampaignId } from './id-generator';
 import { generateInitialRecruits } from './recruits';
 import { createInitialStoreStock, generateSectorStock } from './store/store';
 import { getMaxMissileCapacity } from './store/store-ammo';
@@ -17,17 +18,10 @@ import type {
 } from './types';
 import { MAX_SECTOR } from './types';
 
-/** Counter for deterministic ID generation */
-let idCounter = 0;
-
-/** Generate a unique ID (deterministic, counter-based) */
-function generateId(): string {
-  return `ship_${++idCounter}`;
-}
-
 /** Create a ship from an archetype with default loadout */
 export function createShipFromArchetype(
   archetype: string,
+  id: string,
   pilot: Pilot | null = null,
 ): OwnedShip {
   const stats = getArchetype(archetype);
@@ -50,7 +44,7 @@ export function createShipFromArchetype(
   }));
 
   return {
-    id: generateId(),
+    id,
     shipClass: stats.shipClassName, // Use the underlying ship class
     primaryWeapons,
     secondaryWeapons,
@@ -59,9 +53,9 @@ export function createShipFromArchetype(
 }
 
 /** Create a pilot with default stats */
-function createPilot(name: string, skill: Pilot['skill']): Pilot {
+function createPilot(id: string, name: string, skill: Pilot['skill']): Pilot {
   return {
-    id: generateId(),
+    id,
     name,
     skill,
     kills: 0,
@@ -73,54 +67,69 @@ function createPilot(name: string, skill: Pilot['skill']): Pilot {
   };
 }
 
-/** Create commander pilot (the player) */
-function createCommander(): Pilot {
-  return createPilot('Commander', 'ace');
-}
-
-/** Create default starting pilots */
-function createStartingPilots(): Pilot[] {
-  return [
-    createPilot('Viper', 'regular'),
-    createPilot('Ghost', 'regular'),
-    createPilot('Shadow', 'regular'),
-  ];
-}
-
 /** Create a new campaign with default starting state */
 export function createNewCampaign(): CampaignState {
   // Generate master seed for this campaign run (different each time)
   const seed = Date.now() >>> 0;
 
+  // Track ID counter locally during creation
+  let nextId = 1;
+
+  // Helper to generate IDs during campaign creation
+  const genId = (prefix: string): string => {
+    const [id, newNextId] = generateCampaignId(nextId, prefix);
+    nextId = newNextId;
+    return id;
+  };
+
   // Create all pilots (commander + wingmen)
-  const commander = createCommander();
-  const wingmanPilots = createStartingPilots();
-  const allPilots = [commander, ...wingmanPilots];
+  const commander = createPilot(genId('pilot'), 'Commander', 'ace');
+  const wingman1Pilot = createPilot(genId('pilot'), 'Viper', 'regular');
+  const wingman2Pilot = createPilot(genId('pilot'), 'Ghost', 'regular');
+  const wingman3Pilot = createPilot(genId('pilot'), 'Shadow', 'regular');
+  const allPilots = [commander, wingman1Pilot, wingman2Pilot, wingman3Pilot];
 
   // Create ships with assigned pilots
-  const commanderShip = createShipFromArchetype('fighter', commander);
-  const wingman1 = createShipFromArchetype('fighter', wingmanPilots[0]);
-  const wingman2 = createShipFromArchetype('fighter', wingmanPilots[1]);
-  const wingman3 = createShipFromArchetype('fighter', wingmanPilots[2]);
+  const commanderShip = createShipFromArchetype(
+    'fighter',
+    genId('ship'),
+    commander,
+  );
+  const wingman1 = createShipFromArchetype(
+    'fighter',
+    genId('ship'),
+    wingman1Pilot,
+  );
+  const wingman2 = createShipFromArchetype(
+    'fighter',
+    genId('ship'),
+    wingman2Pilot,
+  );
+  const wingman3 = createShipFromArchetype(
+    'fighter',
+    genId('ship'),
+    wingman3Pilot,
+  );
 
   // Generate initial recruits using derived PRNG (missionCount=0 at start)
   const recruitRng = createDerivedPRNG(seed, 'recruits', 0);
-  const availableRecruits = generateInitialRecruits(allPilots, () =>
-    random(recruitRng),
-  );
+  const { recruits: availableRecruits, nextId: afterRecruits } =
+    generateInitialRecruits(nextId, allPilots, () => random(recruitRng));
+  nextId = afterRecruits;
 
   return {
     seed,
+    nextId,
     credits: 1000,
     commanderId: commander.id,
     ships: [commanderShip, wingman1, wingman2, wingman3],
-    pilots: allPilots, // All pilots stored here
-    storedShips: [], // No spare ships at start
+    pilots: allPilots,
+    storedShips: [],
     storedWeapons: [],
-    storedAmmo: [], // No spare ammo at start
+    storedAmmo: [],
     storedScrap: {},
     storeStock: createInitialStoreStock(),
-    availableRecruits, // Pilots available for hire
+    availableRecruits,
     currentSector: 1,
     sectorMissionsCompleted: 0,
     completedContracts: [],

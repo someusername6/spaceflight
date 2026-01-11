@@ -23,6 +23,8 @@ function createTestState(options = {}) {
   } = options;
 
   return {
+    seed: 12345,
+    nextId: 100,
     commanderId: 'commander1',
     credits,
     ships: [
@@ -69,6 +71,8 @@ console.log('=== Resupply Estimate Tests ===\n');
 console.log('Testing resupplyAllShipsConstrained commander priority...');
 {
   const state = {
+    seed: 12345,
+    nextId: 100,
     commanderId: 'commander1',
     credits: 1000,
     ships: [
@@ -207,6 +211,8 @@ console.log('\nTesting estimateShipResupplyCost...');
 console.log('\nTesting estimateAllShipsResupplyCost...');
 {
   const twoShipState = {
+    seed: 12345,
+    nextId: 100,
     commanderId: 'commander1',
     credits: 1000,
     ships: [

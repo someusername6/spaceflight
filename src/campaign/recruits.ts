@@ -2,6 +2,7 @@
  * Recruit Management - generate and hire pilots.
  */
 
+import { generateCampaignId } from './id-generator';
 import type { CampaignState, HireablePilot, Pilot, SkillLevel } from './types';
 
 /** Pilot names pool for random generation */
@@ -100,15 +101,6 @@ function getSkillWeights(sector: number): Map<SkillLevel, number> {
   return weights;
 }
 
-/** Counter for generating unique IDs (not gameplay-sensitive) */
-let idCounter = 0;
-
-/** Generate a unique ID using counter (deterministic, no Math.random) */
-function generateId(prefix: string): string {
-  idCounter++;
-  return `${prefix}-${idCounter}`;
-}
-
 /** Pick a random skill level based on sector-adjusted weights */
 function pickRandomSkill(
   rng: () => number,
@@ -157,14 +149,30 @@ function pickRandomName(rng: () => number, usedNames: Set<string>): string {
   return availableNames[index] as string;
 }
 
-/** Generate a pool of recruits with sector-adjusted skill distribution */
+/** Result of recruit generation including updated nextId */
+interface GenerateRecruitsResult {
+  recruits: HireablePilot[];
+  nextId: number;
+}
+
+/**
+ * Generate a pool of recruits with sector-adjusted skill distribution.
+ * @param nextId - Current ID counter from campaign state
+ * @param count - Number of recruits to generate
+ * @param existingPilots - Pilots already in the campaign (for name uniqueness)
+ * @param existingRecruits - Recruits already available (for name uniqueness)
+ * @param rng - Random number generator function
+ * @param sector - Current sector (affects skill distribution)
+ * @returns Generated recruits and updated nextId
+ */
 export function generateRecruits(
+  nextId: number,
   count: number,
   existingPilots: Pilot[],
   existingRecruits: HireablePilot[],
   rng: () => number,
   sector: number,
-): HireablePilot[] {
+): GenerateRecruitsResult {
   const usedNames = new Set<string>();
 
   // Add existing pilot names to avoid duplicates
@@ -176,6 +184,7 @@ export function generateRecruits(
   }
 
   const recruits: HireablePilot[] = [];
+  let currentNextId = nextId;
 
   for (let i = 0; i < count; i++) {
     const name = pickRandomName(rng, usedNames);
@@ -183,33 +192,47 @@ export function generateRecruits(
 
     const { skill, price } = pickRandomSkill(rng, sector);
 
+    const [id, newNextId] = generateCampaignId(currentNextId, 'recruit');
+    currentNextId = newNextId;
+
     recruits.push({
-      id: generateId('recruit'),
+      id,
       name,
       skill,
       price,
     });
   }
 
-  return recruits;
+  return { recruits, nextId: currentNextId };
 }
 
-/** Generate initial recruits for a new campaign (sector 1) */
+/**
+ * Generate initial recruits for a new campaign (sector 1).
+ * @param nextId - Current ID counter
+ * @param existingPilots - Starting pilots (for name uniqueness)
+ * @param rng - Random number generator function
+ * @returns Generated recruits and updated nextId
+ */
 export function generateInitialRecruits(
+  nextId: number,
   existingPilots: Pilot[],
   rng: () => number,
-): HireablePilot[] {
-  return generateRecruits(4, existingPilots, [], rng, 1);
+): GenerateRecruitsResult {
+  return generateRecruits(nextId, 4, existingPilots, [], rng, 1);
 }
 
-/** Refresh the recruit pool (called after each mission) */
+/**
+ * Refresh the recruit pool (called after each mission).
+ * Uses state.nextId for deterministic ID generation.
+ */
 export function refreshRecruits(
   state: CampaignState,
   rng: () => number,
 ): CampaignState {
   // Generate 3-5 new recruits with sector-appropriate skill distribution
   const count = 3 + Math.floor(rng() * 3); // 3, 4, or 5
-  const newRecruits = generateRecruits(
+  const { recruits: newRecruits, nextId } = generateRecruits(
+    state.nextId,
     count,
     state.pilots,
     [],
@@ -219,11 +242,20 @@ export function refreshRecruits(
 
   return {
     ...state,
+    nextId,
     availableRecruits: newRecruits,
   };
 }
 
-/** Hire a recruit - adds to roster, removes from available */
+/**
+ * Hire a recruit - adds to roster, removes from available.
+ * Uses state.nextId for the new pilot's ID.
+ *
+ * Note: Recruits have temporary IDs (e.g., 'recruit_5') that are discarded
+ * when hired. The new pilot receives a permanent ID (e.g., 'pilot_12') from
+ * the campaign's ID counter. This ensures pilot IDs are consistent and
+ * deterministic regardless of when recruits were generated.
+ */
 export function hirePilot(
   state: CampaignState,
   recruitId: string,
@@ -240,9 +272,12 @@ export function hirePilot(
     return state;
   }
 
+  // Generate new pilot ID from state
+  const [pilotId, nextId] = generateCampaignId(state.nextId, 'pilot');
+
   // Create new pilot from recruit
   const newPilot: Pilot = {
-    id: generateId('pilot'),
+    id: pilotId,
     name: recruit.name,
     skill: recruit.skill,
     kills: 0,
@@ -255,6 +290,7 @@ export function hirePilot(
 
   return {
     ...state,
+    nextId,
     credits: state.credits - recruit.price,
     pilots: [...state.pilots, newPilot],
     availableRecruits: state.availableRecruits.filter(

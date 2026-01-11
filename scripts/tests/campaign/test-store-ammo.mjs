@@ -20,7 +20,10 @@ function createTestState(
   currentAmmo = 0,
 ) {
   return {
+    seed: 12345,
+    nextId: 100,
     credits: 1000,
+    commanderId: 'commander1',
     ships: [
       {
         id: 'ship1',

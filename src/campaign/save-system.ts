@@ -7,10 +7,11 @@
  * - Metadata (save time, mission count, credits) for UI display
  */
 
+import { computeMaxIdFromState } from './id-generator';
 import type { CampaignState } from './types';
 
 /** Current save format version - increment when CampaignState changes */
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 /** Number of available save slots */
 export const MAX_SAVE_SLOTS = 3;
@@ -92,6 +93,16 @@ function migrateState(
       const sectorFactor = (migrated.currentSector ?? 1) * 7919;
       migrated.seed = (missionFactor + creditsFactor + sectorFactor) >>> 0;
       console.log(`[Save Migration] v1->v2: Added seed ${migrated.seed}`);
+    }
+  }
+
+  // v2 -> v3: Add nextId field for deterministic ID generation
+  if (fromVersion < 3) {
+    if (typeof migrated.nextId !== 'number') {
+      // Compute max ID from existing entities and set nextId = max + 1
+      const maxId = computeMaxIdFromState(migrated);
+      migrated.nextId = maxId + 1;
+      console.log(`[Save Migration] v2->v3: Set nextId to ${migrated.nextId}`);
     }
   }
 
