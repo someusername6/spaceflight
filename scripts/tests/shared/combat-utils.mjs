@@ -80,6 +80,7 @@ export function initCombatStats(world) {
     shotsHit: {},
     damageDealt: {},
     shrapnelHit: {},
+    shrapnelSpawned: 0,
     missilesFired: {},
     missilesHit: {},
     missileDamage: {},

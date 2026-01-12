@@ -339,14 +339,13 @@ function drawMissileLeadIndicator(
     smoothedMissilePos.y >= 0 &&
     smoothedMissilePos.y <= screenHeight
   ) {
-    // Use a distinct style for missile lead - diamond shape with label
+    // Use a distinct style for missile lead - diamond shape
     drawMissileLeadMarker(
       ctx,
       smoothedMissilePos.x,
       smoothedMissilePos.y,
       color,
       outOfRange,
-      weapon.name,
     );
   }
 }

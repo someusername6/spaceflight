@@ -206,14 +206,16 @@ export function missileSystem(world: World, dt: number): void {
       // Detonate if we're past closest approach (distance increasing while within radius)
       if (withinRadius && wasWithinRadius && distanceIncreasing) {
         // Spawn shrapnel
+        const missileName =
+          missile.missileType.charAt(0).toUpperCase() +
+          missile.missileType.slice(1); // Capitalize for stats (e.g., "Starburst")
         spawnShrapnel(
           world,
           transform.position,
           missile.shrapnelCount,
           missile.owner,
           missileFaction,
-          missile.missileType.charAt(0).toUpperCase() +
-            missile.missileType.slice(1), // Capitalize for stats (e.g., "Starburst")
+          missileName,
           {
             damage: missile.shrapnelDamage,
             speed: missile.shrapnelSpeed,
@@ -221,11 +223,16 @@ export function missileSystem(world: World, dt: number): void {
           },
         );
 
-        // Track stats
+        // Record proximity detonation as a hit (missile achieved its purpose)
+        recordMissileHit(world, missile.owner, missileName);
+
+        // Track aggregate stats (for balance analysis)
         if (world.systemState.combatStats) {
-          world.systemState.combatStats.shrapnelSpawned =
-            (world.systemState.combatStats.shrapnelSpawned || 0) +
-            missile.shrapnelCount;
+          const stats = world.systemState.combatStats;
+          stats.missilesHit[missileName] =
+            (stats.missilesHit[missileName] || 0) + 1;
+          stats.shrapnelSpawned =
+            (stats.shrapnelSpawned || 0) + missile.shrapnelCount;
         }
 
         spawnMissileExplosion(world, transform.position, false);
@@ -233,10 +240,8 @@ export function missileSystem(world: World, dt: number): void {
         continue;
       }
 
-      // Store current distance for next frame comparison (if not already set by AoE logic)
-      if (missile.previousClosestEnemyDistance === undefined) {
-        missile.previousClosestEnemyDistance = closestDistance;
-      }
+      // Store current distance for next frame comparison
+      missile.previousClosestEnemyDistance = closestDistance;
     }
 
     // Check if expired

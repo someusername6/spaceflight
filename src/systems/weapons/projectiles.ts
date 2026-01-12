@@ -203,6 +203,9 @@ export function projectileSystem(world: World, dt: number): void {
     const collision = getComponent<Collision>(world, entity, 'collision');
     if (collision && collision.collidedWith.length > 0) {
       for (const other of collision.collidedWith) {
+        // Skip entities that no longer exist (stale collision data)
+        if (!entityExists(world, other)) continue;
+
         // Skip collision with owner
         if (other === projectile.owner) continue;
 

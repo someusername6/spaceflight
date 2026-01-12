@@ -239,7 +239,6 @@ export function drawMissileLeadMarker(
   y: number,
   color: string,
   outOfRange: boolean,
-  label: string,
 ): void {
   const size = 8;
   const alpha = outOfRange ? 0.5 : 1.0;
@@ -258,14 +257,11 @@ export function drawMissileLeadMarker(
   ctx.closePath();
   ctx.stroke();
 
-  // Center dot and label
+  // Center dot
   ctx.fillStyle = color;
   ctx.beginPath();
   ctx.arc(x, y, 2, 0, Math.PI * 2);
   ctx.fill();
-  ctx.font = '10px monospace';
-  ctx.textAlign = 'center';
-  ctx.fillText(label, x, y + size + 12);
 
   ctx.restore();
 }

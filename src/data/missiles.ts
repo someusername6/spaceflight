@@ -64,18 +64,18 @@ export const MISSILES: Record<string, MissileStats> = {
     speed: 600,
     turnRate: 0,
     range: 1000,
-    damage: 0, // No impact damage, only shrapnel
+    damage: 0, // No impact damage, pure shrapnel
     fireRate: 0.5,
     lockSpeed: 0,
     lockConeAngle: 60,
     capacity: 12,
-    // Proximity shrapnel detonation (like Flak but as a missile)
-    // Tuned for ~3x Rocket value: closer detonation, more shrapnel
-    flakRadius: 30, // Detonate closer for better hit rate
-    shrapnelCount: 50, // More pieces for area saturation
+    // Proximity shrapnel detonation - area denial weapon
+    // Value comes from area coverage, not single-target damage
+    flakRadius: 120,
+    shrapnelCount: 80,
     shrapnelDamage: 4,
     shrapnelSpeed: 500,
-    shrapnelRange: 100, // Shorter range for denser pattern
+    shrapnelRange: 120,
   },
   cluster: {
     name: 'Cluster',

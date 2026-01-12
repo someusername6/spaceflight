@@ -208,10 +208,24 @@ export function renderSecondaryStats(weaponType: string): string {
     ? `${(1 / stats.lockSpeed).toFixed(1)}s`
     : 'N/A';
 
+  // Shrapnel stats for starburst-type missiles
+  const shrapnelStats = stats.flakRadius
+    ? `
+      <div class="stat-row"><span>Burst radius</span><span>${stats.flakRadius} m</span></div>
+      <div class="stat-row"><span>Shrapnel count</span><span>${stats.shrapnelCount}</span></div>
+      <div class="stat-row"><span>Shrapnel damage</span><span>${stats.shrapnelDamage}</span></div>
+      <div class="stat-row"><span>Shrapnel range</span><span>${stats.shrapnelRange} m</span></div>
+    `
+    : '';
+
+  // For shrapnel missiles, show "Impact damage" label to clarify it's separate
+  const damageLabel = stats.flakRadius ? 'Impact damage' : 'Damage';
+
   return `
     <div class="item-stats">
       <div class="stat-row"><span>Size</span><span>${stats.capacity} per bank</span></div>
-      <div class="stat-row"><span>Damage</span><span>${stats.damage}</span></div>
+      <div class="stat-row"><span>${damageLabel}</span><span>${stats.damage}</span></div>
+      ${shrapnelStats}
       <div class="stat-row"><span>Speed</span><span>${stats.speed} m/s</span></div>
       <div class="stat-row"><span>Range</span><span>${stats.range} m</span></div>
       <div class="stat-row"><span>Tracking</span><span>${trackingText}</span></div>

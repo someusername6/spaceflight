@@ -121,6 +121,9 @@ export function createNewCampaign(): CampaignState {
     generateInitialRecruits(nextId, allPilots, () => random(recruitRng));
   nextId = afterRecruits;
 
+  // Generate initial store stock
+  const storeStock = createInitialStoreStock();
+
   return {
     seed,
     nextId,
@@ -132,7 +135,7 @@ export function createNewCampaign(): CampaignState {
     storedWeapons: [],
     storedAmmo: [],
     storedScrap: {},
-    storeStock: createInitialStoreStock(),
+    storeStock,
     availableRecruits,
     currentSector: 1,
     sectorMissionsCompleted: 0,

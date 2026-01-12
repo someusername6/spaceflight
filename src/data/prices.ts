@@ -32,7 +32,7 @@ export const PRIMARY_PRICES: Record<string, { buy: number; sell: number }> = {
   // Ballistic weapons (require ammo)
   autocannon: { buy: 150, sell: 75 },
   slugCannon: { buy: 220, sell: 110 },
-  gyrojet: { buy: 160, sell: 80 }, // Cheap weapon, expensive ammo
+  gyrojet: { buy: 160, sell: 80 },
   railgun: { buy: 300, sell: 150 },
   flak: { buy: 200, sell: 100 },
 
@@ -41,7 +41,7 @@ export const PRIMARY_PRICES: Record<string, { buy: number; sell: number }> = {
   greenLaser: { buy: 200, sell: 100 },
   blueLaser: { buy: 180, sell: 90 },
   lightning: { buy: 220, sell: 110 },
-  torch: { buy: 280, sell: 140 }, // Short-range plasma cutter
+  torch: { buy: 280, sell: 140 },
   nuclearLance: { buy: 500, sell: 250 },
 };
 
@@ -59,7 +59,7 @@ export const AMMO_PRICES: Record<string, { buy: number; sell: number }> = {
 export const SECONDARY_PRICES: Record<string, { buy: number; sell: number }> = {
   // Dumbfire (cheap to moderate)
   rocket: { buy: 5, sell: 2 },
-  starburst: { buy: 15, sell: 7 },
+  starburst: { buy: 10, sell: 5 },
   cluster: { buy: 8, sell: 4 },
 
   // Homing (moderate)

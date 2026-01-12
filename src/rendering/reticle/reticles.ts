@@ -13,6 +13,7 @@ import type {
   PrimaryWeapons,
   SecondaryWeapons,
 } from '../../components/weapons';
+import { getCurrentSecondary } from '../../components/weapons';
 import { getComponent, hasComponent, queryEntities } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
 import {
@@ -282,7 +283,12 @@ function renderTarget(
     drawOnScreenReticle(ctx, bounds, target.distance, color);
 
     // Draw lock-on progress indicator for targets being locked
-    if (target.isLockTarget && target.lockProgress > 0) {
+    // Only show for weapons that require lock (not dumbfire)
+    const currentSecondary = secondaryWeapons
+      ? getCurrentSecondary(secondaryWeapons)
+      : undefined;
+    const weaponRequiresLock = currentSecondary?.requiresLock ?? false;
+    if (target.isLockTarget && target.lockProgress > 0 && weaponRequiresLock) {
       drawLockIndicator(ctx, bounds, target.lockProgress, color);
     }
 
