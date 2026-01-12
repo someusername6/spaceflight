@@ -149,6 +149,10 @@ export interface CampaignState {
   /** Missions completed in current sector (resets on sector advance) */
   sectorMissionsCompleted: number;
   completedContracts: string[];
+  /** Contract IDs that have been attempted (win or lose) - for "fresh" indicator */
+  attemptedContracts: string[];
+  /** Number of contract refreshes used in current sector (resets on sector advance) */
+  contractRefreshCount: number;
   missionCount: number;
 }
 

@@ -140,6 +140,8 @@ export function createNewCampaign(): CampaignState {
     currentSector: 1,
     sectorMissionsCompleted: 0,
     completedContracts: [],
+    attemptedContracts: [],
+    contractRefreshCount: 0,
     missionCount: 0,
   };
 }
@@ -280,7 +282,40 @@ export function advanceSector(state: CampaignState): CampaignState {
     ...state,
     currentSector: newSector,
     sectorMissionsCompleted: 0,
+    contractRefreshCount: 0,
     storeStock: generateSectorStock(newSector),
+  };
+}
+
+/** Get the cost to refresh contracts (scales with sector) */
+export function getContractRefreshCost(sector: number): number {
+  return 500 * sector;
+}
+
+/** Refresh available contracts (increment refresh counter, deduct cost) */
+export function refreshContracts(state: CampaignState): CampaignState {
+  const cost = getContractRefreshCost(state.currentSector);
+  if (state.credits < cost) {
+    return state; // Can't afford refresh
+  }
+  return {
+    ...state,
+    credits: state.credits - cost,
+    contractRefreshCount: state.contractRefreshCount + 1,
+  };
+}
+
+/** Mark a contract as attempted (called when mission starts) */
+export function markContractAttempted(
+  state: CampaignState,
+  contractId: string,
+): CampaignState {
+  if (state.attemptedContracts.includes(contractId)) {
+    return state; // Already tracked
+  }
+  return {
+    ...state,
+    attemptedContracts: [...state.attemptedContracts, contractId],
   };
 }
 

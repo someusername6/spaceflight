@@ -2,7 +2,10 @@
  * Contracts screen - displays available missions to choose from.
  */
 
-import { isCommanderAssigned } from '../../campaign/state';
+import {
+  getContractRefreshCost,
+  isCommanderAssigned,
+} from '../../campaign/state';
 import {
   type CampaignState,
   type Contract,
@@ -19,7 +22,7 @@ import {
   type ScreenAPI,
   type ScreenHandle,
 } from '../framework/screen';
-import { generateContracts } from './contracts-data';
+import { generateContracts, getMissionCount } from './contracts-data';
 import { showSectorAdvanceModal } from './sector-advance-modal';
 
 /** Contracts screen state */
@@ -31,9 +34,18 @@ interface ContractsState {
 interface ContractsProps {
   campaignState: CampaignState;
   contracts: Contract[];
+  /** True if all missions completed and these are replays (50% reward) */
+  isReplayMode: boolean;
+  /** Number of uncompleted missions remaining in sector */
+  remainingCount: number;
+  /** Total missions in sector */
+  totalMissions: number;
+  /** Refresh cost for current sector */
+  refreshCost: number;
   onNavigate: (destination: NavDestination) => void;
   onAccept: (contract: Contract) => void;
   onAdvanceSector: () => void;
+  onRefresh: () => void;
 }
 
 /** Legacy UI interface for backwards compatibility */
@@ -45,6 +57,7 @@ export interface ContractsUI {
   onNavigate: (destination: NavDestination) => void;
   onAccept: (contract: Contract) => void;
   onAdvanceSector: () => void;
+  onRefresh: () => void;
 }
 
 // Re-export types and functions for external use
@@ -63,18 +76,23 @@ function countTotalEnemies(contract: Contract): number {
 function renderContractListItem(
   contract: Contract,
   isSelected: boolean,
+  isReplayMode: boolean,
 ): string {
+  const replayBadge = isReplayMode
+    ? '<span class="contract-badge replay">REPLAY</span>'
+    : '';
+
   return `
     <article
-      class="contract-list-item ${isSelected ? 'selected' : ''}"
+      class="contract-list-item ${isSelected ? 'selected' : ''} ${isReplayMode ? 'replay-mode' : ''}"
       data-contract-id="${contract.id}"
       role="option"
       aria-selected="${isSelected}"
       tabindex="0"
-      aria-label="${contract.name}, ${contract.difficulty} difficulty, ${contract.reward} credits"
+      aria-label="${contract.name}, ${contract.difficulty} difficulty, ${contract.reward} credits${isReplayMode ? ', replay mission' : ''}"
     >
       <div class="contract-list-info">
-        <div class="contract-list-name">${contract.name}</div>
+        <div class="contract-list-name">${contract.name}${replayBadge}</div>
         <span class="contract-difficulty ${contract.difficulty}" aria-label="Difficulty: ${contract.difficulty}">
           ${contract.difficulty.toUpperCase()}
         </span>
@@ -133,9 +151,18 @@ function renderContractDetail(contract: Contract, canLaunch: boolean): string {
 /** Contracts screen component */
 const ContractsScreenComponent: Screen<ContractsState, ContractsProps> = {
   render(state, props) {
-    const { campaignState, contracts, onNavigate } = props;
+    const {
+      campaignState,
+      contracts,
+      isReplayMode,
+      remainingCount,
+      totalMissions,
+      refreshCost,
+      onNavigate,
+    } = props;
     const currentSector = campaignState.currentSector;
     const canAdvance = currentSector < MAX_SECTOR;
+    const canAffordRefresh = campaignState.credits >= refreshCost;
 
     const navBar = renderNavBar({
       activeTab: 'contracts',
@@ -150,6 +177,23 @@ const ContractsScreenComponent: Screen<ContractsState, ContractsProps> = {
 
     const canLaunch = isCommanderAssigned(campaignState);
 
+    // Pool counter showing remaining missions
+    const poolCounter = isReplayMode
+      ? '<div class="contracts-pool-counter replay">All missions completed - Replay mode (50% rewards)</div>'
+      : `<div class="contracts-pool-counter">${remainingCount}/${totalMissions} contracts remaining</div>`;
+
+    // Refresh button
+    const refreshButton = `
+      <button
+        class="btn btn-secondary contracts-refresh-btn ${!canAffordRefresh ? 'disabled' : ''}"
+        id="btn-refresh-contracts"
+        ${!canAffordRefresh ? 'disabled' : ''}
+        title="${canAffordRefresh ? 'Get different contracts' : 'Not enough credits'}"
+      >
+        Refresh (${refreshCost} cr)
+      </button>
+    `;
+
     // Advance sector button (only show if not at max sector)
     const advanceButton = canAdvance
       ? `<button class="btn btn-secondary contracts-advance-btn" id="btn-advance-sector">
@@ -163,8 +207,12 @@ const ContractsScreenComponent: Screen<ContractsState, ContractsProps> = {
         <main class="contracts-screen" aria-label="Contract selection">
           <div class="contracts-layout">
             <aside class="contracts-list-panel" role="listbox" aria-label="Available contracts">
-              ${contracts.map((c) => renderContractListItem(c, c.id === state.selectedContractId)).join('')}
-              ${advanceButton}
+              ${poolCounter}
+              ${contracts.map((c) => renderContractListItem(c, c.id === state.selectedContractId, isReplayMode)).join('')}
+              <div class="contracts-actions">
+                ${refreshButton}
+                ${advanceButton}
+              </div>
             </aside>
             <section class="contracts-detail-panel" aria-label="Contract details">
               ${selectedContract ? renderContractDetail(selectedContract, canLaunch) : '<div class="empty-state-panel" role="status">Select a contract to view details</div>'}
@@ -176,7 +224,8 @@ const ContractsScreenComponent: Screen<ContractsState, ContractsProps> = {
   },
 
   bind(api: ScreenAPI<ContractsState>, props: ContractsProps) {
-    const { contracts, onNavigate, onAccept, onAdvanceSector } = props;
+    const { contracts, onNavigate, onAccept, onAdvanceSector, onRefresh } =
+      props;
     const currentSector = props.campaignState.currentSector;
 
     // Bind navigation bar
@@ -212,6 +261,11 @@ const ContractsScreenComponent: Screen<ContractsState, ContractsProps> = {
       onNavigate('squadron');
     });
 
+    // Refresh contracts button
+    api.on('#btn-refresh-contracts', 'click', () => {
+      onRefresh();
+    });
+
     // Advance sector button - show confirmation modal
     api.on('#btn-advance-sector', 'click', () => {
       showSectorAdvanceModal(currentSector).then((result) => {
@@ -233,24 +287,31 @@ export function createContractsUI(
   onNavigate: (destination: NavDestination) => void,
   onAccept: (contract: Contract) => void,
   onAdvanceSector: () => void,
+  onRefresh: () => void,
 ): ContractsUI {
   // Clean up previous handle
   screenHandle?.destroy();
 
-  const contracts = generateContracts(
+  const generated = generateContracts(
     state.currentSector,
     state.seed,
     state.sectorMissionsCompleted,
     4,
     state.completedContracts,
+    state.contractRefreshCount,
   );
   const initialState: ContractsState = { selectedContractId: null };
   const props: ContractsProps = {
     campaignState: state,
-    contracts,
+    contracts: generated.contracts,
+    isReplayMode: generated.isReplayMode,
+    remainingCount: generated.remainingCount,
+    totalMissions: getMissionCount(state.currentSector),
+    refreshCost: getContractRefreshCost(state.currentSector),
     onNavigate,
     onAccept,
     onAdvanceSector,
+    onRefresh,
   };
 
   screenHandle = createScreen(
@@ -264,32 +325,44 @@ export function createContractsUI(
   return {
     element,
     state,
-    contracts,
+    contracts: generated.contracts,
     selectedContractId: null,
     onNavigate,
     onAccept,
     onAdvanceSector,
+    onRefresh,
   };
 }
 
 /** Update contracts UI */
-export function updateContractsUI(ui: ContractsUI, state: CampaignState): void {
+export function updateContractsUI(
+  ui: ContractsUI,
+  state: CampaignState,
+  onRefresh: () => void,
+): void {
   ui.state = state;
-  ui.contracts = generateContracts(
+  const generated = generateContracts(
     state.currentSector,
     state.seed,
     state.sectorMissionsCompleted,
     4,
     state.completedContracts,
+    state.contractRefreshCount,
   );
+  ui.contracts = generated.contracts;
 
   if (screenHandle) {
     screenHandle.setProps({
       campaignState: state,
-      contracts: ui.contracts,
+      contracts: generated.contracts,
+      isReplayMode: generated.isReplayMode,
+      remainingCount: generated.remainingCount,
+      totalMissions: getMissionCount(state.currentSector),
+      refreshCost: getContractRefreshCost(state.currentSector),
       onNavigate: ui.onNavigate,
       onAccept: ui.onAccept,
       onAdvanceSector: ui.onAdvanceSector,
+      onRefresh,
     });
   }
 }

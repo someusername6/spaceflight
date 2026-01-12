@@ -26,7 +26,11 @@ import { showSquadSelection } from '../../ui/screens/squadron/selection';
 import { createStoreUI } from '../../ui/screens/store/store';
 import type { CampaignController } from '../controller-types';
 import { launchMission } from '../mission/mission-launcher';
-import { advanceSector } from '../state';
+import {
+  advanceSector,
+  markContractAttempted,
+  refreshContracts,
+} from '../state';
 import type { Contract } from '../types';
 
 /**
@@ -178,6 +182,13 @@ export function setupContractsScreen(controller: CampaignController): void {
         return;
       }
 
+      // Mark contract as attempted (for "fresh" indicator)
+      const stateWithAttempt = markContractAttempted(
+        screenManager.campaignState,
+        contract.id,
+      );
+      updateCampaignState(screenManager, stateWithAttempt);
+
       // Start mission with selected ships
       startMission(screenManager, contract);
       launchMission(
@@ -192,6 +203,13 @@ export function setupContractsScreen(controller: CampaignController): void {
       const newState = advanceSector(screenManager.campaignState);
       updateCampaignState(screenManager, newState);
       // Refresh contracts screen with new sector's missions
+      setupContractsScreen(controller);
+    },
+    () => {
+      // Refresh contracts (pay credits, get new selection)
+      const newState = refreshContracts(screenManager.campaignState);
+      updateCampaignState(screenManager, newState);
+      // Refresh contracts screen with new selection
       setupContractsScreen(controller);
     },
   );

@@ -16,6 +16,16 @@ import type { Contract, MissionTier } from '../../campaign/types';
 import { createDerivedPRNG, shuffle } from '../../core/prng';
 import { ALL_MISSIONS } from './missions';
 
+/** Result of contract generation with metadata */
+export interface GeneratedContracts {
+  /** The contracts available to the player */
+  contracts: Contract[];
+  /** True if all missions completed and these are replays (50% reward) */
+  isReplayMode: boolean;
+  /** Number of uncompleted missions remaining in sector */
+  remainingCount: number;
+}
+
 /**
  * Get all missions for a specific sector.
  */
@@ -32,6 +42,9 @@ export function getMissions(sector: number, tier?: MissionTier): Contract[] {
   );
 }
 
+/** Replay mode reward multiplier (50% of normal reward) */
+const REPLAY_REWARD_MULTIPLIER = 0.5;
+
 /**
  * Generate contracts for the contracts screen.
  * Returns a selection of missions from the current sector, mixing tiers.
@@ -41,6 +54,7 @@ export function getMissions(sector: number, tier?: MissionTier): Contract[] {
  * @param sectorMissionsCompleted - Missions completed in current sector (for variation)
  * @param count - Number of contracts to show (default 4)
  * @param completedIds - IDs of already completed missions to exclude
+ * @param refreshCount - Number of times contracts have been refreshed (for variation)
  */
 export function generateContracts(
   sector: number,
@@ -48,29 +62,34 @@ export function generateContracts(
   sectorMissionsCompleted: number,
   count = 4,
   completedIds: string[] = [],
-): Contract[] {
+  refreshCount = 0,
+): GeneratedContracts {
   // Get all missions for this sector that haven't been completed
-  const available = getMissionsForSector(sector).filter(
+  const allSectorMissions = getMissionsForSector(sector);
+  const available = allSectorMissions.filter(
     (m) => !completedIds.includes(m.id),
   );
 
-  if (available.length === 0) {
-    // All missions completed - allow replaying any mission from this sector
-    return getMissionsForSector(sector).slice(0, count);
-  }
+  const isReplayMode = available.length === 0;
+  const remainingCount = available.length;
+
+  // Use full pool if in replay mode, otherwise use available missions
+  const pool = isReplayMode ? allSectorMissions : available;
 
   // Use derived PRNG for deterministic selection (prevents save scumming)
+  // Include refreshCount in seed so refreshing gives different results
   const prng = createDerivedPRNG(
     seed,
     'contracts',
     sector,
     sectorMissionsCompleted,
+    refreshCount,
   );
 
   // Try to get a mix of tiers
-  const lowTier = available.filter((m) => m.tier === 'low');
-  const midTier = available.filter((m) => m.tier === 'mid');
-  const highTier = available.filter((m) => m.tier === 'high');
+  const lowTier = pool.filter((m) => m.tier === 'low');
+  const midTier = pool.filter((m) => m.tier === 'mid');
+  const highTier = pool.filter((m) => m.tier === 'high');
 
   const selected: Contract[] = [];
 
@@ -87,12 +106,22 @@ export function generateContracts(
 
   // If we don't have enough, fill from any tier
   if (selected.length < count) {
-    const remaining = available.filter((m) => !selected.includes(m));
+    const remaining = pool.filter((m) => !selected.includes(m));
     selected.push(...pickFrom(remaining, count - selected.length));
   }
 
   // Sort by reward (ascending)
-  return selected.sort((a, b) => a.reward - b.reward).slice(0, count);
+  let contracts = selected.sort((a, b) => a.reward - b.reward).slice(0, count);
+
+  // In replay mode, halve all rewards
+  if (isReplayMode) {
+    contracts = contracts.map((c) => ({
+      ...c,
+      reward: Math.floor(c.reward * REPLAY_REWARD_MULTIPLIER),
+    }));
+  }
+
+  return { contracts, isReplayMode, remainingCount };
 }
 
 /**
