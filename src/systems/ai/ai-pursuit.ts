@@ -44,7 +44,7 @@ export function pursueTarget(
   ai: AIControlled,
   transform: Transform,
   physics: Physics,
-  _dt: number,
+  dt: number,
   closeUrgently = false,
 ): void {
   const { toTarget, leadPoint } = tempVectors;
@@ -102,7 +102,7 @@ export function pursueTarget(
   toTarget.copy(aimPoint).sub(transform.position);
   if (toTarget.lengthSq() > 0.001) {
     toTarget.normalize();
-    aimToward(world, entity, ai, transform, toTarget, weapons, aimError);
+    aimToward(world, entity, ai, transform, toTarget, weapons, aimError, dt);
   }
 
   setSpeedInputs(ai, physics, physics.maxSpeed);
@@ -118,7 +118,7 @@ export function maintainDistanceEngage(
   ai: AIControlled,
   transform: Transform,
   physics: Physics,
-  _dt: number,
+  dt: number,
 ): void {
   const { toTarget, leadPoint } = tempVectors;
 
@@ -163,7 +163,7 @@ export function maintainDistanceEngage(
   toTarget.copy(aimPoint).sub(transform.position);
   if (toTarget.lengthSq() > 0.001) {
     toTarget.normalize();
-    aimToward(world, entity, ai, transform, toTarget, weapons, aimError);
+    aimToward(world, entity, ai, transform, toTarget, weapons, aimError, dt);
   }
 
   // Stop moving - we're facing the target for aiming, so any forward

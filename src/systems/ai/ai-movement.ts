@@ -7,7 +7,7 @@
 import { Quaternion, Vector3 } from 'three';
 import type { AIControlled } from '../../components/ai';
 import type { AimError } from '../../components/aim-error';
-import { applyAimError } from '../../components/aim-error';
+import { applyAimError, updateBeamTracking } from '../../components/aim-error';
 import type { Physics } from '../../components/physics';
 import type { Transform } from '../../components/transform';
 import type { PrimaryWeapons } from '../../components/weapons';
@@ -142,8 +142,14 @@ export function turnToward(
  * Beam weapons are fixed-mount, so aim error is applied to ship rotation.
  * Projectile weapons have aim error applied at spawn time instead.
  *
+ * For beam ships, uses beamTrackingSpeed to control how fast the ship
+ * tracks toward the perceived target. This creates skill differentiation:
+ * - Ace (high tracking): quickly locks onto target
+ * - Rookie (low tracking): slow lock, hunting behavior
+ *
  * @param weapons - Optional pre-fetched weapons (avoids redundant lookup)
  * @param aimError - Optional pre-fetched aim error (avoids redundant lookup)
+ * @param dt - Time delta for beam tracking interpolation (default 1/60s)
  */
 export function aimToward(
   world: World,
@@ -153,13 +159,24 @@ export function aimToward(
   direction: Vector3,
   weapons?: PrimaryWeapons | null,
   aimError?: AimError | null,
+  dt = 1 / 60,
 ): void {
   // Use provided components or fetch them
   const w =
     weapons ?? getComponent<PrimaryWeapons>(world, entity, 'primaryWeapons');
   const e = aimError ?? getComponent<AimError>(world, entity, 'aimError');
 
-  if (w?.hasBeams && e) {
+  if (w?.hasOnlyBeams && e) {
+    // For beam-ONLY ships: apply aim error, then track toward perceived target
+    // Uses beamTrackingSpeed for smooth tracking (ace = fast lock, rookie = hunting)
+    const perceivedDir = applyAimError(direction, e);
+    // Update beam tracking (interpolates currentBeamDirection toward perceivedDir)
+    updateBeamTracking(e, perceivedDir, dt);
+    // Turn toward the tracked direction (not instant aim)
+    turnToward(ai, transform, e.currentBeamDirection);
+  } else if (w?.hasBeams && e) {
+    // For MIXED weapon ships (beam + projectile): use direct aim error
+    // Projectile weapons need proper lead calculation, not beam tracking
     const perceivedDir = applyAimError(direction, e);
     turnToward(ai, transform, perceivedDir);
   } else {

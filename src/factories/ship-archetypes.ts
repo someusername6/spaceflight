@@ -20,8 +20,9 @@ export interface SecondaryBankSpec {
  * - brawler: Standard combat, skill improves aim and composure
  * - escape: Hit-and-run, skill improves flee timing and survival
  * - kiting: Ranged combat, skill improves range maintenance
+ * - gunboat: Multi-weapon ships, constant firing constraints prevent volume advantage
  */
-export type AIPlaystyle = 'brawler' | 'escape' | 'kiting';
+export type AIPlaystyle = 'brawler' | 'escape' | 'kiting' | 'gunboat';
 
 /** Weapon loadout for an archetype */
 interface WeaponLoadout {
@@ -102,7 +103,9 @@ export const SHIP_ARCHETYPES: Record<string, ShipStats> = {
   }),
 
   // Striker: Heavy gun platform - GUNS focus with medium-range beam
+  // Uses 'gunboat' playstyle to prevent "spray and pray" skill inversion
   striker: createArchetype('striker', {
+    playstyle: 'gunboat', // Constant firing constraints prevent volume advantage
     primaryWeapons: [
       { name: 'plasma', size: 2 },
       { name: 'autocannon', size: 2 },
@@ -190,7 +193,7 @@ export const SHIP_ARCHETYPES: Record<string, ShipStats> = {
   // Lancer: Sentinel chassis with green laser loadout - mid-range beam brawler
   // Engages at medium range where beam falloff is manageable
   lancer: createArchetype('sentinel', {
-    playstyle: 'brawler', // Mid-range beam fighter, not a kiter
+    playstyle: 'beam', // Beam fighter - constant defensive thresholds prevent inversion
     primaryWeapons: [
       { name: 'greenLaser', size: 3 }, // Sentinel bank 1 is size 3
       { name: 'greenLaser', size: 2 },
@@ -205,9 +208,9 @@ export const SHIP_ARCHETYPES: Record<string, ShipStats> = {
 
   // Lancer Blue: Sentinel chassis with blue laser - mid-range beam fighter
   // Blue laser: 50 DPS base, 1200m range - but heavy falloff means close is better
-  // Brawler playstyle at medium range balances reach vs damage output
+  // Beam playstyle ensures skill scales correctly in beam-vs-beam duels
   lancerBlue: createArchetype('sentinel', {
-    playstyle: 'brawler',
+    playstyle: 'beam',
     primaryWeapons: [
       { name: 'blueLaser', size: 3 },
       { name: 'blueLaser', size: 2 },
@@ -222,8 +225,9 @@ export const SHIP_ARCHETYPES: Record<string, ShipStats> = {
 
   // Lancer Red: Sentinel chassis with red laser - close range high DPS variant
   // Red laser: 120 DPS, 400m range
+  // preferredCombatRange 200m ensures ace (1.3x = 260m) stays within effective range
   lancerRed: createArchetype('sentinel', {
-    playstyle: 'brawler',
+    playstyle: 'beam',
     primaryWeapons: [
       { name: 'redLaser', size: 3 },
       { name: 'redLaser', size: 2 },
@@ -233,6 +237,6 @@ export const SHIP_ARCHETYPES: Record<string, ShipStats> = {
       { name: 'dart', count: 4, size: 1 },
       { name: 'decoy', count: 4, size: 1 },
     ],
-    preferredCombatRange: 300, // Close range for red laser effectiveness
+    preferredCombatRange: 200, // Close range - ace at 260m still has good damage
   }),
 };

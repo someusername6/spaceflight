@@ -5,12 +5,14 @@
  * - brawler: Standard - better aim, lower panic threshold, more aggressive
  * - escape: Speed-based survival - skilled pilots use speed advantage better
  * - kiting: Range maintenance - skilled pilots maintain optimal distance
+ * - beam: Close-range beam ships - skill improves accuracy without changing
+ *         defensive behavior (prevents "brave ace" inversion in beam duels)
  */
 
 import { type AIProfile, getAIProfile } from './ai-profiles';
 
 /** Playstyle type for skill scaling */
-export type AIPlaystyle = 'brawler' | 'escape' | 'kiting';
+export type AIPlaystyle = 'brawler' | 'escape' | 'kiting' | 'beam' | 'gunboat';
 
 /** Skill level as 0-1 value for aim error scaling */
 const SKILL_VALUES: Record<string, number> = {
@@ -137,6 +139,75 @@ export function getProfileForPlaystyle(
         // Constant repositioning
         repositionCooldown: 4.0,
         maxRepositionTime: 4.0,
+      };
+    }
+
+    case 'beam': {
+      // Beam playstyle: for close-range beam ships (e.g., lancers)
+      //
+      // KEY INSIGHT: In beam-vs-beam duels, the standard brawler "brave ace"
+      // behavior is COUNTERPRODUCTIVE. Ace stays until 12% shields while
+      // rookie evades at 31% - but with continuous beams at close range,
+      // the ace just takes more damage before retreating.
+      //
+      // SOLUTION: Use constant defensive thresholds (like escape/kiting)
+      // so skill only affects ACCURACY, not suicidal bravery.
+      //
+      // Skill differentiation comes from aim error multiplier:
+      // - More aggressive than kiting since beams need bigger differences
+      // - At 400m range: ace wobbles 3m, rookie wobbles 120m+
+      const beamAimMult = 4.0 - skill * 3.0; // Ace 1x, Rookie 4x
+
+      return {
+        ...base,
+        // Tiered aim error with aggressive scaling for beam ships
+        aimErrorBase: base.aimErrorBase * beamAimMult,
+        aimErrorDriftSpeed: base.aimErrorDriftSpeed * beamAimMult,
+        // CONSTANT defensive thresholds - prevents "brave ace" inversion
+        // All skill levels evade at same point, so fights are fair accuracy races
+        evadeShieldThreshold: 0.25,
+        regroupShieldThreshold: 0.12,
+        recoverShieldThreshold: 0.55,
+        // Constant combat range (beam ships want to stay close)
+        combatRangeMultiplier: 1.0,
+        // Constant heat management
+        heatSwitchThreshold: 0.8,
+        linkedFireHeatThreshold: 0.7,
+        // Beam ships fire at moderate angles (continuous damage)
+        minFiringAngle: 30,
+        // Standard evade/regroup timing
+        evadeCooldown: 4.0,
+        regroupMinTime: 2.5,
+      };
+    }
+
+    case 'gunboat': {
+      // Gunboat playstyle: for multi-weapon brawlers (e.g., striker with 5 weapons)
+      //
+      // KEY INSIGHT: With many weapons, rookie's "spray and pray" (45° firing angle,
+      // high heat threshold) produces higher DPS than veteran's selective firing.
+      // Volume compensates for accuracy in close-range brawling.
+      //
+      // SOLUTION: Use constant constraints for ALL skill levels.
+      // All skill differentiation comes from base profile aim error.
+      // This creates fair mirror matches where accuracy is the only factor.
+      //
+      // NOTE: Striker mirrors may still show slight inversion at lower tiers
+      // due to weapon mix effects, but should be within acceptable variance.
+      return {
+        ...base,
+        // Keep base aim error from profile (main skill differentiator)
+        // CONSTANT firing angle - prevents rookie volume advantage
+        minFiringAngle: 25,
+        // CONSTANT heat management - prevents rookie overheat advantage
+        heatSwitchThreshold: 0.75,
+        linkedFireHeatThreshold: 0.6,
+        // CONSTANT defensive thresholds - prevents "brave ace" inversion
+        evadeShieldThreshold: 0.25,
+        regroupShieldThreshold: 0.12,
+        recoverShieldThreshold: 0.55,
+        // Constant combat range
+        combatRangeMultiplier: 1.0,
       };
     }
 
