@@ -34,8 +34,8 @@ export const SECTOR_2_EASY: Contract[] = [
     reward: 3366,
   },
   {
-    id: 's2-fuel-depot',
-    name: 'Fuel Depot',
+    id: 's2-sector-sweep',
+    name: 'Sector Sweep',
     description:
       'Clear the sector. Dragonflies, Stingers, and Fireflies across four waves.',
     difficulty: 'easy',
@@ -62,7 +62,7 @@ export const SECTOR_2_EASY: Contract[] = [
     reward: 3614,
   },
   {
-    id: 's2-convoy-escort',
+    id: 's2-raider-intercept',
     name: 'Raider Intercept',
     description: 'Intercept raider force. Fireflies and Stingers.',
     difficulty: 'easy',

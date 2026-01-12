@@ -34,8 +34,8 @@ export const SECTOR_5_EASY: Contract[] = [
     reward: 8694,
   },
   {
-    id: 's5-lance-battery',
-    name: 'Lance Battery',
+    id: 's5-ace-formation',
+    name: 'Ace Formation',
     description:
       'Destroy ace formation. Phantoms, Dragonflies, and Fireflies - all elite.',
     difficulty: 'easy',

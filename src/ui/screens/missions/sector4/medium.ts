@@ -33,10 +33,10 @@ export const SECTOR_4_MEDIUM: Contract[] = [
     reward: 7211,
   },
   {
-    id: 's4-ace-squadron',
-    name: 'Ace Squadron',
+    id: 's4-veteran-squadron',
+    name: 'Veteran Squadron',
     description:
-      'Face elite pilots. Phantoms, Wasps, and Dragonflies with Ace skill.',
+      'Face elite pilots. Phantoms, Wasps, and Dragonflies - all veteran.',
     difficulty: 'medium',
     sector: 4,
     tier: 'mid',
@@ -89,8 +89,8 @@ export const SECTOR_4_MEDIUM: Contract[] = [
     reward: 7976,
   },
   {
-    id: 's4-nuke-convoy',
-    name: 'Nuke Convoy',
+    id: 's4-elite-strike',
+    name: 'Elite Strike',
     description:
       'Destroy elite strike force. Phantoms with Ace Fireflies and veteran Dragonflies.',
     difficulty: 'medium',

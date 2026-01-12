@@ -85,9 +85,10 @@ export const SECTOR_4_HARD: Contract[] = [
     reward: 9304,
   },
   {
-    id: 's4-titan-assault',
-    name: 'Titan Assault',
-    description: 'Face heavy assault. Ace Phantoms and elite Dragonflies.',
+    id: 's4-ace-assault',
+    name: 'Ace Assault',
+    description:
+      'Face heavy assault. Ace Phantoms, Dragonflies, and Fireflies.',
     difficulty: 'hard',
     sector: 4,
     tier: 'high',
@@ -112,8 +113,8 @@ export const SECTOR_4_HARD: Contract[] = [
     reward: 9409,
   },
   {
-    id: 's4-capital-defense',
-    name: 'Capital Defense',
+    id: 's4-maximum-force',
+    name: 'Maximum Force',
     description:
       'Destroy ace squadron. Phantoms and Dragonflies at maximum skill.',
     difficulty: 'hard',

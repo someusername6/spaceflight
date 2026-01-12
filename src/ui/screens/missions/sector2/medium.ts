@@ -61,8 +61,8 @@ export const SECTOR_2_MEDIUM: Contract[] = [
     reward: 4218,
   },
   {
-    id: 's2-comm-relay',
-    name: 'Comm Relay',
+    id: 's2-reinforced-patrol',
+    name: 'Reinforced Patrol',
     description:
       'Destroy reinforced patrol. Veteran Fireflies and Dragonflies in numbers.',
     difficulty: 'medium',

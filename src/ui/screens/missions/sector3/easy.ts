@@ -34,8 +34,8 @@ export const SECTOR_3_EASY: Contract[] = [
     reward: 4019,
   },
   {
-    id: 's3-forward-base',
-    name: 'Forward Base',
+    id: 's3-veteran-formation',
+    name: 'Veteran Formation',
     description:
       'Destroy enemy formation. Veteran Fireflies and Dragonflies in five waves.',
     difficulty: 'easy',

@@ -6,9 +6,10 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_1_HARD: Contract[] = [
   {
-    id: 's1-mining-claim',
-    name: 'Mining Claim',
-    description: 'Destroy raider force. Mixed hostiles with Mantis commanders.',
+    id: 's1-mixed-assault',
+    name: 'Mixed Assault',
+    description:
+      'Destroy assault force. Embers and Shockers with Mantis commanders.',
     difficulty: 'hard',
     sector: 1,
     tier: 'high',
@@ -114,9 +115,10 @@ export const SECTOR_1_HARD: Contract[] = [
     reward: 4656,
   },
   {
-    id: 's1-pirate-outpost',
-    name: 'Pirate Outpost',
-    description: 'Clear pirate squadron. Multiple waves of tough hostiles.',
+    id: 's1-hornet-sweep',
+    name: 'Hornet Sweep',
+    description:
+      'Destroy Hornet squadron. Plasma fighters with Wasp and Mantis support.',
     difficulty: 'hard',
     sector: 1,
     tier: 'high',

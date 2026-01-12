@@ -34,7 +34,7 @@ export const SECTOR_2_HARD: Contract[] = [
     reward: 5217,
   },
   {
-    id: 's2-torch-run',
+    id: 's2-laser-storm',
     name: 'Laser Storm',
     description: 'Survive laser onslaught. Fireflies and Vipers closing fast.',
     difficulty: 'hard',

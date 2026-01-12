@@ -6,8 +6,8 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_4_EASY: Contract[] = [
   {
-    id: 's4-titan-patrol',
-    name: 'Titan Patrol',
+    id: 's4-veteran-assault',
+    name: 'Veteran Assault',
     description:
       'Destroy assault group. Phantoms, Dragonflies, and Fireflies - all veteran.',
     difficulty: 'easy',

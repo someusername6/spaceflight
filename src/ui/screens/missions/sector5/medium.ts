@@ -61,9 +61,10 @@ export const SECTOR_5_MEDIUM: Contract[] = [
     reward: 11167,
   },
   {
-    id: 's5-heavy-metal',
-    name: 'Heavy Metal',
-    description: 'Destroy heavy assault. Phantoms and Dragonflies in force.',
+    id: 's5-endless-wave',
+    name: 'Endless Wave',
+    description:
+      'Destroy assault force. Ace Phantoms, Dragonflies, and Fireflies.',
     difficulty: 'medium',
     sector: 5,
     tier: 'mid',

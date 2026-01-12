@@ -9,7 +9,7 @@ export const SECTOR_3_MEDIUM: Contract[] = [
     id: 's3-heat-wave',
     name: 'Heat Wave',
     description:
-      'Survive the inferno. Fireants and Beetles with heavy support.',
+      'Survive the inferno. Fireants with Phantom escorts closing fast.',
     difficulty: 'medium',
     sector: 3,
     tier: 'mid',
@@ -90,8 +90,8 @@ export const SECTOR_3_MEDIUM: Contract[] = [
     reward: 5694,
   },
   {
-    id: 's3-supply-interdiction',
-    name: 'Supply Interdiction',
+    id: 's3-red-wave',
+    name: 'Red Wave',
     description:
       'Destroy enemy force. Heavy waves of veteran Fireflies and Dragonflies.',
     difficulty: 'medium',
@@ -122,10 +122,9 @@ export const SECTOR_3_MEDIUM: Contract[] = [
     reward: 5729,
   },
   {
-    id: 's3-rocketeer-assault',
-    name: 'Rocketeer Assault',
-    description:
-      'Face heavy assault. Phantoms and Dragonflies with accelerating rounds.',
+    id: 's3-phantom-assault',
+    name: 'Phantom Assault',
+    description: 'Face heavy assault. Phantoms and Ace Dragonflies in force.',
     difficulty: 'medium',
     sector: 3,
     tier: 'mid',

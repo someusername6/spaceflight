@@ -6,8 +6,8 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_3_HARD: Contract[] = [
   {
-    id: 's3-command-ship',
-    name: 'Command Ship',
+    id: 's3-triple-threat',
+    name: 'Triple Threat',
     description:
       'Destroy enemy squadron. Fireflies, Dragonflies, and Phantoms in force.',
     difficulty: 'hard',
