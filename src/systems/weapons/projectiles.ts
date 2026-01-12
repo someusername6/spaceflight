@@ -6,7 +6,6 @@
 import * as THREE from 'three';
 import type { Collision } from '../../components/collision';
 import type { FactionComponent } from '../../components/faction';
-import { areEnemies } from '../../components/faction';
 import type {
   Projectile,
   ProjectileCategory,
@@ -24,7 +23,8 @@ import {
 } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
 import { dealDamage } from '../damage';
-import { recordDamage, recordShotHit } from '../stats';
+import { recordDamage, recordShotHit, recordShrapnelHit } from '../stats';
+import { findClosestEnemyDistance } from './missile-aoe';
 import { spawnShrapnel } from './shrapnel';
 
 /** Queue a hit effect via world state (consumed by rendering layer) */
@@ -42,7 +42,6 @@ function queueHitEffect(
 }
 
 // Reusable vectors
-const distanceVec = new THREE.Vector3();
 const toTarget = new THREE.Vector3();
 const desiredDirection = new THREE.Vector3();
 
@@ -145,7 +144,8 @@ export function projectileSystem(world: World, dt: number): void {
       continue;
     }
 
-    // Check for flak explosion (proximity-based shrapnel burst)
+    // Check for flak explosion (closest-approach detonation)
+    // Detonates when: A. within flak radius, and B. distance starts increasing (past closest point)
     if (projectile.flakRadius !== undefined && projectile.shrapnelCount) {
       const projectileFaction = getComponent<FactionComponent>(
         world,
@@ -153,52 +153,38 @@ export function projectileSystem(world: World, dt: number): void {
         'faction',
       );
 
-      // Check all potential targets for proximity
-      let shouldExplode = false;
-      for (const target of queryEntities(world, ['health', 'transform'])) {
-        // Skip self and projectiles
-        if (target === entity || hasComponent(world, target, 'projectile'))
-          continue;
-        // Skip owner
-        if (target === projectile.owner) continue;
+      // Find closest enemy distance (includes missiles for point-defense)
+      const closestDistance = findClosestEnemyDistance(
+        world,
+        transform.position,
+        projectile.owner,
+        projectileFaction,
+        { includeMissiles: true },
+      );
 
-        // Check faction - flak only triggers on enemies (but shrapnel damages all)
-        const targetFaction = getComponent<FactionComponent>(
-          world,
-          target,
-          'faction',
-        );
-        if (projectileFaction && targetFaction) {
-          if (!areEnemies(projectileFaction.faction, targetFaction.faction)) {
-            continue;
-          }
-        }
+      const previousDistance = projectile.previousClosestEnemyDistance;
+      const withinRadius = closestDistance < projectile.flakRadius;
+      const wasWithinRadius =
+        previousDistance !== undefined &&
+        previousDistance < projectile.flakRadius;
+      const distanceIncreasing =
+        previousDistance !== undefined && closestDistance > previousDistance;
 
-        // Check distance
-        const targetTransform = getComponent<Transform>(
-          world,
-          target,
-          'transform',
-        );
-        if (targetTransform) {
-          distanceVec.copy(targetTransform.position).sub(transform.position);
-          const distance = distanceVec.length();
-
-          if (distance <= projectile.flakRadius) {
-            shouldExplode = true;
-            break;
-          }
-        }
-      }
-
-      if (shouldExplode) {
-        // Spawn shrapnel in all directions
+      // Detonate if we're past closest approach (distance increasing while within radius)
+      if (withinRadius && wasWithinRadius && distanceIncreasing) {
+        // Spawn shrapnel in all directions, attributed to parent weapon
         spawnShrapnel(
           world,
           transform.position,
           projectile.shrapnelCount,
           projectile.owner,
           projectileFaction,
+          projectile.weaponName,
+          {
+            damage: projectile.shrapnelDamage,
+            speed: projectile.shrapnelSpeed,
+            range: projectile.shrapnelRange,
+          },
         );
 
         // Queue hit effect for the explosion
@@ -208,6 +194,9 @@ export function projectileSystem(world: World, dt: number): void {
         toRemove.push(entity);
         continue;
       }
+
+      // Store current distance for next frame comparison
+      projectile.previousClosestEnemyDistance = closestDistance;
     }
 
     // Check for collisions with ships (non-projectile entities)
@@ -252,18 +241,54 @@ export function projectileSystem(world: World, dt: number): void {
           'projectile',
           totalDamage,
         );
-        recordShotHit(world, projectile.owner, projectile.weaponName);
 
-        // Track aggregate damage stats by weapon (for balance analysis)
+        // Track per-ship hits: shrapnel vs regular projectiles
+        if (projectile.isShrapnel) {
+          recordShrapnelHit(world, projectile.owner, projectile.weaponName);
+        } else {
+          recordShotHit(world, projectile.owner, projectile.weaponName);
+        }
+
+        // Track aggregate stats by weapon (for balance analysis)
         if (world.systemState.combatStats) {
           const stats = world.systemState.combatStats;
           stats.damageDealt[projectile.weaponName] =
             (stats.damageDealt[projectile.weaponName] || 0) + totalDamage;
+          // Track hits separately: shrapnel vs regular projectiles
+          if (projectile.isShrapnel) {
+            stats.shrapnelHit[projectile.weaponName] =
+              (stats.shrapnelHit[projectile.weaponName] || 0) + 1;
+          } else {
+            stats.shotsHit[projectile.weaponName] =
+              (stats.shotsHit[projectile.weaponName] || 0) + 1;
+          }
         }
 
         // Queue hit effect only if hull took damage (shields-only = no sparks)
         if (result.hullDamage > 0) {
           queueHitEffect(world, transform.position, projectile.category);
+        }
+
+        // If flak projectile, spawn shrapnel on direct impact
+        if (projectile.flakRadius !== undefined && projectile.shrapnelCount) {
+          const projectileFaction = getComponent<FactionComponent>(
+            world,
+            entity,
+            'faction',
+          );
+          spawnShrapnel(
+            world,
+            transform.position,
+            projectile.shrapnelCount,
+            projectile.owner,
+            projectileFaction,
+            projectile.weaponName,
+            {
+              damage: projectile.shrapnelDamage,
+              speed: projectile.shrapnelSpeed,
+              range: projectile.shrapnelRange,
+            },
+          );
         }
 
         // Projectile is consumed

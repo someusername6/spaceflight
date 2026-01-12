@@ -1,20 +1,12 @@
 /** Missile System - Handles missile tracking, movement, and hits. */
 
 import * as THREE from 'three';
-import {
-  DECOY_SEDUCE_CHANCE,
-  DECOY_SEDUCE_RANGE,
-  type Decoy,
-} from '../../components/decoy';
-import { createExplosion } from '../../components/explosion';
+import { DECOY_SEDUCE_CHANCE, type Decoy } from '../../components/decoy';
 import type { FactionComponent } from '../../components/faction';
 import type { Missile } from '../../components/missile';
 import { isMissileExpired } from '../../components/missile';
 import type { Transform } from '../../components/transform';
-import { createTransform } from '../../components/transform';
 import {
-  addComponent,
-  createEntity,
   entityExists,
   getComponent,
   hasComponent,
@@ -30,11 +22,14 @@ import {
   checkForEnemiesInRange,
   dealAoeDamage,
   destroyProjectilesInRadius,
+  findClosestEnemyDistance,
+  recordAoeMissileStats,
 } from './missile-aoe';
-
-const MISSILE_EXPLOSION_SIZE = 4;
-const MISSILE_EXPLOSION_COLOR = new THREE.Color(1.0, 0.5, 0.1);
-const NUKE_EXPLOSION_SIZE = 15;
+import {
+  findNearestDecoy,
+  spawnMissileExplosion,
+  trackTarget,
+} from './missile-helpers';
 
 // Safe distance before missile can collide with owner (avoids spawn-inside-hitbox issues)
 // Set high enough that missiles never hit their owner in normal combat scenarios
@@ -42,11 +37,8 @@ const NUKE_EXPLOSION_SIZE = 15;
 const MISSILE_OWNER_SAFE_DISTANCE = 100;
 
 // Reusable vectors and quaternions (avoid per-frame allocations)
-const toTarget = new THREE.Vector3();
-const rotationAxis = new THREE.Vector3();
 const tempForward = new THREE.Vector3();
 const tempQuat = new THREE.Quaternion();
-const toDecoy = new THREE.Vector3();
 
 /** Missile system - tracking and collision handling */
 export function missileSystem(world: World, dt: number): void {
@@ -123,6 +115,69 @@ export function missileSystem(world: World, dt: number): void {
     tempQuat.setFromUnitVectors(tempForward, missile.direction);
     transform.rotation.copy(tempQuat);
 
+    // Check for AoE proximity detonation (closest-approach logic)
+    // Detonates when: A. within AoE radius, and B. distance starts increasing (past closest point)
+    if (missile.aoeRadius > 0) {
+      const missileFaction = getComponent<FactionComponent>(
+        world,
+        entity,
+        'faction',
+      );
+
+      // Find closest enemy distance (excludes missiles/projectiles for nukes)
+      const closestDistance = findClosestEnemyDistance(
+        world,
+        transform.position,
+        missile.owner,
+        missileFaction,
+        { includeMissiles: false },
+      );
+
+      const previousDistance = missile.previousClosestEnemyDistance;
+      const withinRadius = closestDistance < missile.aoeRadius;
+      const wasWithinRadius =
+        previousDistance !== undefined && previousDistance < missile.aoeRadius;
+      const distanceIncreasing =
+        previousDistance !== undefined && closestDistance > previousDistance;
+
+      // Detonate if we're past closest approach (distance increasing while within radius)
+      if (withinRadius && wasWithinRadius && distanceIncreasing) {
+        const missileName =
+          missile.missileType.charAt(0).toUpperCase() +
+          missile.missileType.slice(1);
+
+        // AoE damage to all nearby entities
+        const aoeResult = dealAoeDamage(
+          world,
+          transform.position,
+          missile.aoeRadius,
+          missile.damage,
+          missile.owner,
+          -1 as Entity, // No exclusion
+          missileName,
+          missile.target, // Track if locked target was hit
+        );
+        recordAoeMissileStats(world, missile.owner, missileName, aoeResult);
+
+        // Nuke also destroys projectiles within blast radius
+        if (missile.isNuke) {
+          destroyProjectilesInRadius(
+            world,
+            transform.position,
+            missile.aoeRadius,
+            missile.owner,
+          );
+        }
+
+        spawnMissileExplosion(world, transform.position, missile.isNuke);
+        toRemove.push(entity);
+        continue;
+      }
+
+      // Store current distance for next frame comparison
+      missile.previousClosestEnemyDistance = closestDistance;
+    }
+
     // Check if expired
     if (isMissileExpired(missile)) {
       // Track expired missiles
@@ -140,19 +195,22 @@ export function missileSystem(world: World, dt: number): void {
         );
 
         if (hasEnemiesInRange) {
-          // Trigger AoE explosion
+          // Trigger AoE explosion (half damage for expired nuke)
           const missileName =
             missile.missileType.charAt(0).toUpperCase() +
             missile.missileType.slice(1);
-          dealAoeDamage(
+          const aoeResult = dealAoeDamage(
             world,
             transform.position,
             missile.aoeRadius,
             missile.damage * 0.5,
             missile.owner,
-            -1 as Entity, // No direct hit target to exclude
-            missileName, // For damage attribution
+            -1 as Entity, // No exclusion
+            missileName,
+            missile.target, // Track if locked target was hit
           );
+          recordAoeMissileStats(world, missile.owner, missileName, aoeResult);
+
           // Nuke also destroys projectiles within blast radius
           destroyProjectilesInRadius(
             world,
@@ -187,50 +245,25 @@ export function missileSystem(world: World, dt: number): void {
         if (hasComponent(world, other, 'missile')) continue;
 
         // Friendly fire enabled - missiles damage anyone except owner
-
-        // Deal direct damage to the hit target
-        const damageResult = dealDamage(
-          world,
-          other,
-          missile.damage,
-          transform.position,
-        );
-
-        // Track per-ship missile hit and damage stats
         const missileName =
           missile.missileType.charAt(0).toUpperCase() +
           missile.missileType.slice(1);
-        const totalDamage = damageResult.shieldDamage + damageResult.hullDamage;
-        recordMissileHit(world, missile.owner, missileName);
-        recordDamage(
-          world,
-          missile.owner,
-          other,
-          missileName,
-          'missile',
-          totalDamage,
-        );
 
-        // Track aggregate missile hit and damage stats (for balance analysis)
-        if (world.systemState.combatStats && missile.missileType) {
-          const stats = world.systemState.combatStats;
-          stats.missilesHit[missileName] =
-            (stats.missilesHit[missileName] || 0) + 1;
-          stats.missileDamage[missileName] =
-            (stats.missileDamage[missileName] || 0) + totalDamage;
-        }
-
-        // Handle AoE damage if missile has AoE radius
+        // Handle AoE missiles (nukes): no direct damage, full AoE centered on impact
         if (missile.aoeRadius > 0) {
-          dealAoeDamage(
+          // AoE damage includes the hit target (no exclusion)
+          const aoeResult = dealAoeDamage(
             world,
             transform.position,
             missile.aoeRadius,
-            missile.damage * 0.5, // AoE does half damage
+            missile.damage, // Full damage for AoE
             missile.owner,
-            other, // Exclude the directly-hit target
-            missileName, // For damage attribution
+            -1 as Entity, // Don't exclude anyone
+            missileName,
+            missile.target, // Track if locked target was hit
           );
+          recordAoeMissileStats(world, missile.owner, missileName, aoeResult);
+
           // Nuke also destroys projectiles within blast radius
           if (missile.isNuke) {
             destroyProjectilesInRadius(
@@ -239,6 +272,43 @@ export function missileSystem(world: World, dt: number): void {
               missile.aoeRadius,
               missile.owner,
             );
+          }
+        } else {
+          // Non-AoE missiles: deal direct damage
+          const damageResult = dealDamage(
+            world,
+            other,
+            missile.damage,
+            transform.position,
+          );
+          const totalDamage =
+            damageResult.shieldDamage + damageResult.hullDamage;
+
+          // Track per-ship damage stats for direct hit
+          recordDamage(
+            world,
+            missile.owner,
+            other,
+            missileName,
+            'missile',
+            totalDamage,
+          );
+
+          // Only count as hit if we hit the locked target
+          const hitTarget = other === missile.target && totalDamage > 0;
+          if (hitTarget) {
+            recordMissileHit(world, missile.owner, missileName);
+          }
+
+          // Track aggregate stats (for balance analysis)
+          if (world.systemState.combatStats && missile.missileType) {
+            const stats = world.systemState.combatStats;
+            if (hitTarget) {
+              stats.missilesHit[missileName] =
+                (stats.missilesHit[missileName] || 0) + 1;
+            }
+            stats.missileDamage[missileName] =
+              (stats.missileDamage[missileName] || 0) + totalDamage;
           }
         }
 
@@ -253,103 +323,4 @@ export function missileSystem(world: World, dt: number): void {
   for (const entity of toRemove) {
     removeEntity(world, entity);
   }
-}
-
-/** Spawn an explosion for missile impact */
-function spawnMissileExplosion(
-  world: World,
-  position: THREE.Vector3,
-  isNuke = false,
-): void {
-  const explosion = createEntity(world);
-  addComponent(
-    world,
-    explosion,
-    createTransform(position.x, position.y, position.z),
-  );
-
-  if (isNuke) {
-    // Nuke gets special explosion with unique visuals
-    addComponent(
-      world,
-      explosion,
-      createExplosion(
-        NUKE_EXPLOSION_SIZE,
-        MISSILE_EXPLOSION_COLOR,
-        undefined,
-        'nuke',
-      ),
-    );
-  } else {
-    addComponent(
-      world,
-      explosion,
-      createExplosion(MISSILE_EXPLOSION_SIZE, MISSILE_EXPLOSION_COLOR),
-    );
-  }
-}
-
-/** Turn missile toward its target */
-function trackTarget(
-  missile: Missile,
-  missileTransform: Transform,
-  targetTransform: Transform,
-  dt: number,
-): void {
-  // Calculate direction to target
-  toTarget
-    .copy(targetTransform.position)
-    .sub(missileTransform.position)
-    .normalize();
-
-  // Calculate angle between current direction and target direction
-  const dot = missile.direction.dot(toTarget);
-  const clampedDot = Math.max(-1, Math.min(1, dot));
-  const angleBetween = Math.acos(clampedDot);
-
-  if (angleBetween < 0.001) return; // Already pointing at target
-
-  // Calculate max turn this frame
-  const maxTurn = missile.turnRate * dt;
-
-  if (angleBetween <= maxTurn) {
-    // Can reach target direction this frame
-    missile.direction.copy(toTarget);
-  } else {
-    // Rotate toward target by maxTurn
-    rotationAxis.crossVectors(missile.direction, toTarget).normalize();
-    if (rotationAxis.lengthSq() < 0.0001) {
-      // Parallel vectors - pick arbitrary axis
-      rotationAxis.set(0, 1, 0);
-    }
-    tempQuat.setFromAxisAngle(rotationAxis, maxTurn);
-    missile.direction.applyQuaternion(tempQuat).normalize();
-  }
-}
-
-/** Find nearest decoy within seduce range (for missile seduction) */
-function findNearestDecoy(
-  world: World,
-  missilePosition: THREE.Vector3,
-): Entity | undefined {
-  let nearestDecoy: Entity | undefined;
-  let nearestDistance = DECOY_SEDUCE_RANGE;
-
-  for (const entity of queryEntities(world, ['decoy', 'transform'])) {
-    const transform = getComponent<Transform>(
-      world,
-      entity,
-      'transform',
-    ) as Transform;
-
-    toDecoy.copy(transform.position).sub(missilePosition);
-    const distance = toDecoy.length();
-
-    if (distance < nearestDistance) {
-      nearestDistance = distance;
-      nearestDecoy = entity;
-    }
-  }
-
-  return nearestDecoy;
 }

@@ -25,6 +25,21 @@ export interface MissileSelection {
 }
 
 /**
+ * Calculate minimum safe firing distance for a missile to avoid self-damage.
+ * Returns 0 if no minimum distance restriction.
+ *
+ * For AoE missiles (Nukes): safe distance = aoeRadius
+ * (the blast damages everything within the radius, including the shooter
+ * if they're too close when the missile detonates on target)
+ */
+export function getMinSafeDistance(missile: SecondaryWeapon): number {
+  if (missile.aoeRadius && missile.aoeRadius > 0) {
+    return missile.aoeRadius;
+  }
+  return 0;
+}
+
+/**
  * Check if a missile can fire (same logic as player).
  */
 function canMissileFire(
@@ -40,6 +55,10 @@ function canMissileFire(
 
   // Lock check - SAME as player logic
   if (missile.requiresLock && !isLocked) return false;
+
+  // Safety: don't fire AoE missiles when too close (self-damage risk)
+  const minSafe = getMinSafeDistance(missile);
+  if (minSafe > 0 && distance < minSafe) return false;
 
   return true;
 }

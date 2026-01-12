@@ -33,6 +33,7 @@ export {
   recordMissileSeduced,
   recordShotFired,
   recordShotHit,
+  recordShrapnelHit,
 } from './stats-weapons';
 
 /** Initialize match stats at mission start */
@@ -138,7 +139,7 @@ export function initWeaponAmmoCounts(world: World, entity: Entity): void {
           weapon.name,
           'projectile',
         );
-        weaponStats.ammoCarried = weapon.ammo;
+        weaponStats.ammoCarried += weapon.ammo; // Sum across all banks
       }
     }
   }

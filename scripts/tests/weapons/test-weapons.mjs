@@ -205,19 +205,19 @@ describe('Gyrojet Weapon', () => {
 
   it('Gyrojet has correct stats', () => {
     assert.ok(
-      WEAPON_DEFS.gyrojet.range === 1500,
-      'Gyrojet range should be 1500m',
+      WEAPON_DEFS.gyrojet.range === 2000,
+      'Gyrojet range should be 2000m',
     );
     assert.ok(
-      WEAPON_DEFS.gyrojet.damage === 50,
-      'Gyrojet damage at max speed should be 50',
+      WEAPON_DEFS.gyrojet.damage === 200,
+      'Gyrojet damage at max speed should be 200',
     );
-    assert.ok(WEAPON_DEFS.gyrojet.ammo === 30, 'Gyrojet should have 30 ammo');
+    assert.ok(WEAPON_DEFS.gyrojet.ammo === 60, 'Gyrojet should have 60 ammo');
   });
 
-  it('Gyrojet has 2 shots per second fire rate', () => {
+  it('Gyrojet has 4 shots per second fire rate', () => {
     const fireRate = 1 / WEAPON_DEFS.gyrojet.fireRate;
-    assertApprox(fireRate, 2, 0.1, 'Gyrojet fire rate');
+    assertApprox(fireRate, 4, 0.1, 'Gyrojet fire rate');
   });
 });
 
@@ -252,7 +252,7 @@ describe('Weapon Count Validation', () => {
       'Autocannon should have 200 ammo',
     );
     assert.ok(WEAPON_DEFS.railgun.ammo === 20, 'Railgun should have 20 ammo');
-    assert.ok(WEAPON_DEFS.flak.ammo === 50, 'Flak should have 50 ammo');
+    assert.ok(WEAPON_DEFS.flak.ammo === 200, 'Flak should have 200 ammo');
   });
 
   it('Standard beams have no ammo (infinite)', () => {

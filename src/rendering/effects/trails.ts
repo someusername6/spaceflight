@@ -178,10 +178,12 @@ export function updateBoltRenderer(
     let projectileBolt = renderer.bolts.get(entity);
 
     if (!projectileBolt) {
+      // Use visualName for rendering, fall back to weaponName
+      const visualName = projectile.visualName ?? projectile.weaponName;
       projectileBolt = acquireBolt(
         renderer,
         scene,
-        projectile.weaponName,
+        visualName,
         transform.position,
       );
       renderer.bolts.set(entity, projectileBolt);

@@ -125,8 +125,12 @@ export interface SystemState {
   combatStats?: {
     /** Shots fired by weapon name */
     shotsFired: Record<string, number>;
+    /** Shots that hit targets by weapon name */
+    shotsHit: Record<string, number>;
     /** Damage dealt by weapon name */
     damageDealt: Record<string, number>;
+    /** Shrapnel pieces that hit targets (for flak) */
+    shrapnelHit: Record<string, number>;
     /** Missiles fired by type */
     missilesFired: Record<string, number>;
     /** Missiles that hit targets */

@@ -119,8 +119,8 @@ describe('Bank Size Scaling', () => {
     it('Ballistic weapon (Flak) bank size scaling', () => {
       const weapons = createPrimaryWeapons([{ name: 'flak', size: 2 }]);
       const weapon = weapons.weapons[0];
-      assert.strictEqual(weapon.ammo, 100, 'Flak ammo should be 100 (50 * 2)');
-      assert.strictEqual(weapon.maxAmmo, 100, 'Max ammo should be 100');
+      assert.strictEqual(weapon.ammo, 400, 'Flak ammo should be 400 (200 * 2)');
+      assert.strictEqual(weapon.maxAmmo, 400, 'Max ammo should be 400');
     });
   });
 

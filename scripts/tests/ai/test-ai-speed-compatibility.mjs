@@ -65,12 +65,12 @@ describe('AI Speed Compatibility (Lead Indicator Distance)', () => {
     );
   });
 
-  it('Single mode when mixing slow and medium speed projectiles', () => {
-    // Flak (350) and Pulse (600) have ~71% speed difference (ratio 1.71)
+  it('Single mode when mixing slow and fast projectiles', () => {
+    // Autocannon (500) and Railgun (2000) have 4:1 speed ratio
     // This exceeds the 30% threshold - should NOT link
     const weapons = createPrimaryWeapons([
-      { name: 'flak', size: 1 }, // 350 m/s
-      { name: 'pulse', size: 1 }, // 600 m/s
+      { name: 'autocannon', size: 1 }, // 500 m/s
+      { name: 'railgun', size: 1 }, // 2000 m/s
     ]);
     const heat = createHeat(100, 10);
     heat.current = 20;
@@ -87,7 +87,7 @@ describe('AI Speed Compatibility (Lead Indicator Distance)', () => {
     assert.strictEqual(
       selection.mode,
       'single',
-      `Flak (350) + Pulse (600) should NOT fire linked, got ${selection.mode}`,
+      `Autocannon (500) + Railgun (2000) should NOT fire linked, got ${selection.mode}`,
     );
   });
 

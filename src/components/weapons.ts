@@ -26,6 +26,12 @@ export interface PrimaryWeapon {
   flakRadius?: number;
   /** Number of shrapnel projectiles on flak explosion */
   shrapnelCount?: number;
+  /** Shrapnel travel range before expiring */
+  shrapnelRange?: number;
+  /** Shrapnel damage per piece */
+  shrapnelDamage?: number;
+  /** Shrapnel projectile speed (m/s) */
+  shrapnelSpeed?: number;
   /** Pulse beam - fires in discrete pulses instead of continuous */
   isPulseBeam?: boolean;
   /** Interval between pulse beam shots (seconds) */

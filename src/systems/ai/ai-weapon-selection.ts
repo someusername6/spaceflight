@@ -16,6 +16,15 @@ import {
   getWeaponRangeCategory,
   RangeCategory,
 } from './ai-weapon-categories';
+import {
+  areProjectileSpeedsCompatible,
+  findAutoaimWeapon,
+  findCoolestWeapon,
+  findInfiniteAmmoWeapon,
+  hasAmmo,
+  hasIonWeapon,
+  isWeaponInRange,
+} from './ai-weapon-helpers';
 
 // Re-export for backwards compatibility
 export {
@@ -32,74 +41,23 @@ export interface WeaponSelection {
 }
 
 /**
- * Maximum speed ratio for weapons to be considered "lead compatible".
- * Weapons with speeds differing by more than this ratio will aim at very
- * different points, causing one to miss if fired together.
- * 1.3 = 30% difference (e.g., 400 vs 520 m/s is compatible)
+ * Calculate minimum safe firing distance for a weapon to avoid self-damage.
+ * Returns 0 if no minimum distance restriction.
+ *
+ * For Flak/shrapnel weapons: safe distance = shrapnelRange
+ * (shrapnel travels outward from detonation point; if target is closer than
+ * shrapnel range, some pieces could travel back and hit the shooter)
  */
-const MAX_SPEED_RATIO = 1.3;
-
-/**
- * Check if two projectile speeds are "lead compatible" - similar enough
- * that they'll aim at approximately the same point.
- */
-function areSpeedsCompatible(speed1: number, speed2: number): boolean {
-  // Beams (speed 0) are only compatible with other beams
-  if (speed1 === 0 || speed2 === 0) {
-    return speed1 === 0 && speed2 === 0;
-  }
-  // Check ratio is within threshold
-  const ratio = speed1 > speed2 ? speed1 / speed2 : speed2 / speed1;
-  return ratio <= MAX_SPEED_RATIO;
-}
-
-/**
- * Check if all projectile weapons have compatible speeds for linked fire.
- * Beams are ignored (they fire separately).
- */
-function areProjectileSpeedsCompatible(weapons: PrimaryWeapons): boolean {
-  let firstSpeed: number | null = null;
-
-  for (const weapon of weapons.weapons) {
-    if (!weapon || weapon.category === 'beam') continue;
-    if (!hasAmmo(weapon)) continue;
-
-    if (firstSpeed === null) {
-      firstSpeed = weapon.projectileSpeed;
-    } else if (!areSpeedsCompatible(firstSpeed, weapon.projectileSpeed)) {
-      return false;
+export function getMinSafeDistance(weapon: PrimaryWeapon): number {
+  if (weapon.shrapnelCount && weapon.shrapnelCount > 0) {
+    if (weapon.shrapnelRange === undefined) {
+      throw new Error(
+        `Weapon "${weapon.name}" has shrapnelCount but missing required shrapnelRange`,
+      );
     }
+    return weapon.shrapnelRange;
   }
-  return true;
-}
-
-/**
- * Check if a weapon is suitable for the given distance.
- */
-function isWeaponInRange(weapon: PrimaryWeapon, distance: number): boolean {
-  // Weapon must reach the target
-  if (weapon.range < distance) return false;
-
-  // For very long range weapons, don't use at close range (waste)
-  const weaponCategory = getWeaponRangeCategory(weapon);
-  const distanceCategory = getDistanceCategory(distance);
-
-  // Very long range weapons (railgun) shouldn't be used at short range
-  if (
-    weaponCategory === RangeCategory.VeryLong &&
-    distanceCategory === RangeCategory.Short
-  ) {
-    return false;
-  }
-
-  return true;
-}
-
-/**
- * Check if weapon has ammo (or infinite ammo).
- */
-function hasAmmo(weapon: PrimaryWeapon): boolean {
-  return weapon.ammo === undefined || weapon.ammo > 0;
+  return 0;
 }
 
 /**
@@ -118,6 +76,10 @@ function scoreWeapon(
   // Base: weapon must be in range
   if (!isWeaponInRange(weapon, distance)) return -1000;
   if (!hasAmmo(weapon)) return -1000;
+
+  // Safety: don't fire shrapnel weapons when too close (self-damage risk)
+  const minSafe = getMinSafeDistance(weapon);
+  if (minSafe > 0 && distance < minSafe) return -1000;
 
   // Range match bonus (prefer weapons that match the distance)
   const weaponCategory = getWeaponRangeCategory(weapon);
@@ -138,22 +100,16 @@ function scoreWeapon(
   // Heat efficiency bonus (prefer low-heat weapons when hot)
   const heatPerShot = getEffectiveHeat(weapon);
   if (heatPercent > profile.heatSwitchThreshold) {
-    // When hot, strongly prefer low-heat weapons
     score += Math.max(0, 30 - heatPerShot * 2);
   } else {
-    // Normal: slight preference for efficiency
     score += Math.max(0, 10 - heatPerShot);
   }
 
   // Ammo conservation: prefer infinite ammo weapons
-  if (weapon.ammo === undefined) {
-    score += 15;
-  }
+  if (weapon.ammo === undefined) score += 15;
 
   // Shield targeting: Ion gets bonus against shields
-  if (targetHasShields && weapon.name === 'Ion') {
-    score += 40;
-  }
+  if (targetHasShields && weapon.name === 'Ion') score += 40;
 
   // Beam weapons get hitscan bonus at close-medium range
   if (weapon.category === 'beam' && distanceCategory === RangeCategory.Short) {
@@ -175,14 +131,6 @@ function scoreWeapon(
 
 /**
  * Select optimal primary weapon for AI based on tactical situation.
- *
- * @param weapons - AI's primary weapons
- * @param distance - Distance to target
- * @param heat - AI's heat component
- * @param targetShields - Target's shields (or undefined)
- * @param firingAngle - Angle to target in degrees (0 = dead ahead)
- * @param profile - AI behavior profile with thresholds
- * @returns Weapon selection result
  */
 export function selectOptimalPrimaryWeapon(
   weapons: PrimaryWeapons,
@@ -198,7 +146,6 @@ export function selectOptimalPrimaryWeapon(
 
   // If heat is critical, don't fire at all
   if (heatPercent >= HEAT_WARNING_THRESHOLD) {
-    // Only fire if we have a very low-heat option
     const coolWeapon = findCoolestWeapon(weapons, distance);
     if (
       coolWeapon !== null &&
@@ -209,17 +156,12 @@ export function selectOptimalPrimaryWeapon(
     return { mode: 'none' };
   }
 
-  // Don't waste finite ammo at poor firing angles (use profile threshold)
-  // However, weapons with autoaim can fire at wider angles since the
-  // projectile will correct toward the target within the autoaim cone
+  // Don't waste finite ammo at poor firing angles
   if (firingAngle > profile.minFiringAngle) {
-    // Try infinite ammo weapons first
     const infiniteWeapon = findInfiniteAmmoWeapon(weapons, distance);
     if (infiniteWeapon !== null) {
       return { mode: 'single', index: infiniteWeapon };
     }
-
-    // Check if any finite ammo weapon has autoaim that extends the effective threshold
     const autoaimWeapon = findAutoaimWeapon(
       weapons,
       distance,
@@ -229,8 +171,6 @@ export function selectOptimalPrimaryWeapon(
     if (autoaimWeapon !== null) {
       return { mode: 'single', index: autoaimWeapon };
     }
-
-    // No infinite ammo or autoaim at this angle - wait for better angle
     return { mode: 'none' };
   }
 
@@ -265,16 +205,9 @@ export function selectOptimalPrimaryWeapon(
     }
   }
 
-  // No valid weapons
-  if (validWeaponCount === 0) {
-    return { mode: 'none' };
-  }
+  if (validWeaponCount === 0) return { mode: 'none' };
 
   // LINKED MODE: Fire all weapons when conditions are favorable
-  // - All weapons can reach target and have ammo
-  // - Heat is manageable (use profile's linked fire threshold)
-  // - Not targeting shields with Ion available (prefer focused fire)
-  // - Projectile weapons have compatible speeds (similar lead points)
   if (
     allWeaponsValid &&
     validWeaponCount > 1 &&
@@ -285,95 +218,10 @@ export function selectOptimalPrimaryWeapon(
     return { mode: 'linked' };
   }
 
-  // SINGLE MODE: Use best weapon when:
-  // - Only one valid weapon
-  // - Heat is high (conserve heat)
-  // - Need focused fire (Ion vs shields)
-  // - Some weapons out of range
+  // SINGLE MODE: Use best weapon
   if (bestIndex >= 0) {
     return { mode: 'single', index: bestIndex };
   }
 
   return { mode: 'none' };
-}
-
-/**
- * Check if weapons include an Ion weapon.
- */
-function hasIonWeapon(weapons: PrimaryWeapons): boolean {
-  return weapons.weapons.some((w) => w?.name === 'Ion');
-}
-
-/**
- * Find the coolest (lowest heat) weapon that can reach the target.
- */
-function findCoolestWeapon(
-  weapons: PrimaryWeapons,
-  distance: number,
-): number | null {
-  let coolestIndex: number | null = null;
-  let lowestHeat = Infinity;
-
-  for (let i = 0; i < weapons.weapons.length; i++) {
-    const weapon = weapons.weapons[i];
-    if (!weapon || !isWeaponInRange(weapon, distance) || !hasAmmo(weapon)) {
-      continue;
-    }
-
-    const heat = getEffectiveHeat(weapon);
-    if (heat < lowestHeat) {
-      lowestHeat = heat;
-      coolestIndex = i;
-    }
-  }
-
-  return coolestIndex;
-}
-
-/**
- * Find an infinite ammo weapon that can reach the target.
- */
-function findInfiniteAmmoWeapon(
-  weapons: PrimaryWeapons,
-  distance: number,
-): number | null {
-  for (let i = 0; i < weapons.weapons.length; i++) {
-    const weapon = weapons.weapons[i];
-    if (
-      weapon &&
-      weapon.ammo === undefined &&
-      isWeaponInRange(weapon, distance)
-    ) {
-      return i;
-    }
-  }
-  return null;
-}
-
-/**
- * Find a finite ammo weapon with autoaim that can fire at the current angle.
- * Autoaim extends the effective firing threshold by the autoaim FOV.
- * e.g., ace (14° threshold) with 2° autoaim can fire at 16° since autoaim corrects.
- */
-function findAutoaimWeapon(
-  weapons: PrimaryWeapons,
-  distance: number,
-  firingAngle: number,
-  profile: AIProfile,
-): number | null {
-  for (let i = 0; i < weapons.weapons.length; i++) {
-    const weapon = weapons.weapons[i];
-    if (!weapon || weapon.category === 'beam') continue;
-    if (!isWeaponInRange(weapon, distance)) continue;
-    if (weapon.ammo !== undefined && weapon.ammo <= 0) continue;
-
-    // Check if weapon has autoaim that extends the effective threshold
-    if (weapon.autoaimFov && weapon.autoaimFov > 0) {
-      const effectiveThreshold = profile.minFiringAngle + weapon.autoaimFov;
-      if (firingAngle <= effectiveThreshold) {
-        return i;
-      }
-    }
-  }
-  return null;
 }

@@ -18,10 +18,48 @@ import {
 } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
 import { dealDamage } from '../damage';
-import { recordDamage } from '../stats';
+import { recordDamage, recordMissileHit } from '../stats';
 
 // Reusable vector for AoE distance calculation
 const aoeTempVec = new THREE.Vector3();
+
+/** Result of AoE damage for stats tracking */
+export interface AoeDamageResult {
+  /** Total damage dealt to all entities */
+  totalDamage: number;
+  /** Whether the specified target (if any) was damaged */
+  hitTarget: boolean;
+}
+
+/**
+ * Record AoE missile stats for debrief and balance analysis.
+ * Call this after dealAoeDamage to track hits and damage.
+ */
+export function recordAoeMissileStats(
+  world: World,
+  owner: Entity,
+  missileName: string,
+  aoeResult: AoeDamageResult,
+): void {
+  // Track per-ship stats: count as hit if locked target was damaged
+  if (aoeResult.hitTarget) {
+    recordMissileHit(world, owner, missileName);
+  }
+
+  // Track aggregate stats (for balance analysis)
+  if (world.systemState.combatStats) {
+    const stats = world.systemState.combatStats;
+    if (aoeResult.hitTarget) {
+      stats.missilesHit[missileName] =
+        (stats.missilesHit[missileName] || 0) + 1;
+    }
+    stats.missileDamage[missileName] =
+      (stats.missileDamage[missileName] || 0) + aoeResult.totalDamage;
+  }
+}
+
+/** Damage category for stats attribution */
+export type AoeDamageCategory = 'projectile' | 'beam' | 'missile';
 
 /** Deal AoE damage to all entities within radius (including missiles and projectiles) */
 export function dealAoeDamage(
@@ -32,7 +70,14 @@ export function dealAoeDamage(
   owner: Entity,
   exclude: Entity,
   weaponName?: string,
-): void {
+  /** Optional target entity to check if hit (for stats tracking) */
+  target?: Entity,
+  /** Damage category for stats attribution (default: 'missile') */
+  category: AoeDamageCategory = 'missile',
+): AoeDamageResult {
+  let totalDamage = 0;
+  let hitTarget = false;
+
   // Find all entities with health and transform within radius
   for (const entity of queryEntities(world, ['transform', 'health'])) {
     if (entity === owner || entity === exclude) continue;
@@ -59,21 +104,118 @@ export function dealAoeDamage(
       const damage = maxDamage * falloff;
       if (damage > 0) {
         const result = dealDamage(world, entity, damage, center);
+        const entityDamage = result.shieldDamage + result.hullDamage;
+        totalDamage += entityDamage;
+
+        // Track if we hit the specified target
+        if (entity === target && entityDamage > 0) {
+          hitTarget = true;
+        }
+
         // Track AoE damage to ships (attribute to weapon that caused it)
         if (weaponName) {
-          const totalDamage = result.shieldDamage + result.hullDamage;
           recordDamage(
             world,
             owner,
             entity,
             weaponName,
-            'missile',
-            totalDamage,
+            category,
+            entityDamage,
           );
         }
       }
     }
   }
+
+  return { totalDamage, hitTarget };
+}
+
+/**
+ * Options for finding closest enemy distance
+ */
+export interface ClosestEnemyOptions {
+  /** Include enemy missiles in search (default: false) */
+  includeMissiles?: boolean;
+}
+
+/**
+ * Find the closest distance to any enemy entity.
+ * Used for AoE proximity detonation (flak, nuke).
+ * @returns Closest distance to an enemy, or Infinity if none found
+ */
+export function findClosestEnemyDistance(
+  world: World,
+  center: THREE.Vector3,
+  owner: Entity,
+  ownerFaction: FactionComponent | undefined,
+  options: ClosestEnemyOptions = {},
+): number {
+  let closestDistance = Infinity;
+
+  // Check entities with health (ships, structures, etc.)
+  // Missiles are handled separately in the second loop if includeMissiles is true
+  for (const entity of queryEntities(world, ['transform', 'health'])) {
+    if (entity === owner) continue;
+    if (hasComponent(world, entity, 'projectile')) continue;
+    if (hasComponent(world, entity, 'missile')) continue; // Always skip, handled below
+
+    // Check faction - only consider enemies (non-faction entities cannot trigger detonation)
+    const entityFaction = getComponent<FactionComponent>(
+      world,
+      entity,
+      'faction',
+    );
+    if (!ownerFaction || !entityFaction) continue;
+    if (!areEnemies(ownerFaction.faction, entityFaction.faction)) continue;
+
+    const transform = getComponent<Transform>(
+      world,
+      entity,
+      'transform',
+    ) as Transform;
+    const health = getComponent<Health>(world, entity, 'health') as Health;
+
+    // Skip dead entities
+    if (health.hull <= 0) continue;
+
+    aoeTempVec.copy(transform.position).sub(center);
+    const distance = aoeTempVec.length();
+
+    if (distance < closestDistance) {
+      closestDistance = distance;
+    }
+  }
+
+  // Additionally check missiles if requested (for flak point-defense)
+  if (options.includeMissiles) {
+    for (const entity of queryEntities(world, ['missile', 'transform'])) {
+      if (entity === owner) continue;
+
+      // Check faction - only consider enemy missiles (non-faction cannot trigger)
+      const entityFaction = getComponent<FactionComponent>(
+        world,
+        entity,
+        'faction',
+      );
+      if (!ownerFaction || !entityFaction) continue;
+      if (!areEnemies(ownerFaction.faction, entityFaction.faction)) continue;
+
+      const transform = getComponent<Transform>(
+        world,
+        entity,
+        'transform',
+      ) as Transform;
+
+      aoeTempVec.copy(transform.position).sub(center);
+      const distance = aoeTempVec.length();
+
+      if (distance < closestDistance) {
+        closestDistance = distance;
+      }
+    }
+  }
+
+  return closestDistance;
 }
 
 /** Check if any enemies are within range (for smart nuke detonation) */

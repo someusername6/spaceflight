@@ -15,6 +15,7 @@ export interface WeaponStats {
   // Projectile weapons (energy/ballistic)
   shotsFired: number;
   shotsOnTarget: number; // Shots that dealt damage
+  shrapnelHitsOnTarget: number; // Shrapnel pieces that hit (for flak)
 
   // Beam weapons
   timeFired: number; // Seconds beam was active
@@ -47,6 +48,7 @@ export function createWeaponStats(
     category,
     shotsFired: 0,
     shotsOnTarget: 0,
+    shrapnelHitsOnTarget: 0,
     timeFired: 0,
     timeOnTarget: 0,
     isPulseBeam,

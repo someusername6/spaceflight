@@ -9,6 +9,7 @@ import {
 import { createFaction, Faction } from '../../../src/components/faction.ts';
 import { createHealth } from '../../../src/components/health.ts';
 import { createShipIdentity } from '../../../src/components/ship-identity.ts';
+import { createPrimaryWeapons } from '../../../src/components/weapons.ts';
 import {
   addComponent,
   createEntity,
@@ -20,6 +21,7 @@ import {
 import {
   handleShipDeath,
   initMatchStats,
+  initWeaponAmmoCounts,
   recordBeamFired,
   recordBeamHit,
   recordDamage,
@@ -46,6 +48,7 @@ export {
   removeEntity,
   handleShipDeath,
   initMatchStats,
+  initWeaponAmmoCounts,
   recordBeamFired,
   recordBeamHit,
   recordDamage,
@@ -54,6 +57,7 @@ export {
   recordMissileSeduced,
   recordShotFired,
   recordShotHit,
+  createPrimaryWeapons,
 };
 
 /** Create a test ship with combat stats */

@@ -77,7 +77,9 @@ export const SYSTEMS = [
 export function initCombatStats(world) {
   world.systemState.combatStats = {
     shotsFired: {},
+    shotsHit: {},
     damageDealt: {},
+    shrapnelHit: {},
     missilesFired: {},
     missilesHit: {},
     missileDamage: {},

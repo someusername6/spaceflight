@@ -97,7 +97,7 @@ describe('Store Stock Caps', () => {
       }
 
       assert.strictEqual(
-        state.storeStock.secondaries['seeker'],
+        state.storeStock.secondaries.seeker,
         seekerCap,
         `Seeker stock capped at ${seekerCap}`,
       );
@@ -117,7 +117,7 @@ describe('Store Stock Caps', () => {
       }
 
       assert.strictEqual(
-        state.storeStock.ammo['autocannon'],
+        state.storeStock.ammo.autocannon,
         autoCap,
         `Autocannon ammo capped at ${autoCap}`,
       );
@@ -125,7 +125,7 @@ describe('Store Stock Caps', () => {
 
     it('does not cap primaries', () => {
       let state = createTestState(1, 1);
-      const initialPrimaries = state.storeStock.primaries['plasma'];
+      const initialPrimaries = state.storeStock.primaries.plasma;
 
       // Apply trickle many times
       for (let i = 1; i <= 100; i++) {
@@ -136,7 +136,7 @@ describe('Store Stock Caps', () => {
       // Primaries should be able to grow beyond any reasonable cap
       // With 40% chance and 100 missions, expected ~40 additions
       assert.ok(
-        state.storeStock.primaries['plasma'] > initialPrimaries + 20,
+        state.storeStock.primaries.plasma > initialPrimaries + 20,
         'Primaries can grow significantly (probabilistic)',
       );
     });
@@ -156,7 +156,7 @@ describe('Store Stock Caps', () => {
       }
 
       assert.strictEqual(
-        state.storeStock.secondaries['torpedo'],
+        state.storeStock.secondaries.torpedo,
         torpedoCap,
         `Torpedo stock capped at ${torpedoCap}`,
       );
@@ -168,20 +168,20 @@ describe('Store Stock Caps', () => {
       const autoCap = getAmmoStockCap(PRIMARY_WEAPONS.autocannon.ammo, 0);
 
       // Manually set stock to exactly the cap
-      state.storeStock.secondaries['seeker'] = seekerCap;
-      state.storeStock.ammo['autocannon'] = autoCap;
+      state.storeStock.secondaries.seeker = seekerCap;
+      state.storeStock.ammo.autocannon = autoCap;
 
       // Apply trickle
       state = applyStoreTrickle(state);
 
       // Stock should remain at cap, not increase
       assert.strictEqual(
-        state.storeStock.secondaries['seeker'],
+        state.storeStock.secondaries.seeker,
         seekerCap,
         'Seeker stays at cap',
       );
       assert.strictEqual(
-        state.storeStock.ammo['autocannon'],
+        state.storeStock.ammo.autocannon,
         autoCap,
         'Autocannon ammo stays at cap',
       );
@@ -192,14 +192,14 @@ describe('Store Stock Caps', () => {
       const seekerCap = getMissileStockCap(MISSILES.seeker.capacity, 0);
 
       // Set stock to just below cap (cap - 1)
-      state.storeStock.secondaries['seeker'] = seekerCap - 1;
+      state.storeStock.secondaries.seeker = seekerCap - 1;
 
       // Apply trickle (would normally add 16 for seeker)
       state = applyStoreTrickle(state);
 
       // Stock should be capped, not cap + 15
       assert.strictEqual(
-        state.storeStock.secondaries['seeker'],
+        state.storeStock.secondaries.seeker,
         seekerCap,
         'Seeker clamped to cap, not exceeded',
       );
@@ -214,11 +214,11 @@ describe('Store Stock Caps', () => {
       const autoCap = getAmmoStockCap(PRIMARY_WEAPONS.autocannon.ammo, 0);
 
       assert.ok(
-        stock.secondaries['seeker'] < seekerCap,
+        stock.secondaries.seeker < seekerCap,
         'Initial seeker stock below cap',
       );
       assert.ok(
-        stock.ammo['autocannon'] < autoCap,
+        stock.ammo.autocannon < autoCap,
         'Initial autocannon ammo below cap',
       );
     });

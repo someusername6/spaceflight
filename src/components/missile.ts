@@ -35,6 +35,8 @@ export interface Missile extends ComponentBase {
   isNuke: boolean; // For visual effects (larger explosion)
   missileType: MissileType; // Visual appearance type
   resistedDecoys: Set<Entity>; // Decoys this missile already resisted (no re-roll)
+  /** Previous frame's closest distance to enemy (for AoE proximity detonation) */
+  previousClosestEnemyDistance?: number;
 }
 
 /** Creates a Missile component */

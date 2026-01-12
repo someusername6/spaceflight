@@ -18,29 +18,30 @@ import {
   createEntity,
   createWorld,
   getComponent,
+  queryEntities,
 } from '../../../src/core/ecs.ts';
+import { spawnShrapnel } from '../../../src/systems/weapons/shrapnel.ts';
 
 describe('Flak Cannon Tests', () => {
   it('Flak projectile has flakRadius and shrapnelCount', () => {
     const owner = 1;
     const direction = new THREE.Vector3(0, 0, -1);
-    const flakRadius = 80;
-    const shrapnelCount = 8;
+    const flakRadius = 50;
+    const shrapnelCount = 10;
 
     const projectile = createProjectile(
       owner,
-      15, // damage
-      350, // speed
+      0, // damage (shell does no damage)
+      400, // speed
       600, // range
       direction,
       'ballistic',
       'Flak',
-      flakRadius,
-      shrapnelCount,
+      { flakRadius, shrapnelCount },
     );
 
-    assert.ok(projectile.flakRadius === 80, 'Flak radius should be 80');
-    assert.ok(projectile.shrapnelCount === 8, 'Shrapnel count should be 8');
+    assert.ok(projectile.flakRadius === 50, 'Flak radius should be 50');
+    assert.ok(projectile.shrapnelCount === 10, 'Shrapnel count should be 10');
     assert.ok(projectile.weaponName === 'Flak', 'Weapon name should be Flak');
     assert.ok(
       projectile.category === 'ballistic',
@@ -72,29 +73,30 @@ describe('Flak Cannon Tests', () => {
     );
   });
 
-  it('Shrapnel projectile is created correctly', () => {
+  it('Shrapnel projectile inherits parent weapon name for stats', () => {
     const owner = 1;
     const direction = new THREE.Vector3(1, 0, 0).normalize();
 
+    // Shrapnel should be attributed to parent weapon (e.g., "Flak")
     const shrapnel = createProjectile(
       owner,
-      8, // shrapnel damage
+      50, // shrapnel damage
       450, // shrapnel speed
       120, // shrapnel range
       direction,
       'ballistic',
-      'Shrapnel',
+      'Flak', // Parent weapon name for stats attribution
     );
 
     assert.ok(
-      shrapnel.weaponName === 'Shrapnel',
-      'Weapon name should be Shrapnel',
+      shrapnel.weaponName === 'Flak',
+      'Shrapnel should be attributed to parent weapon (Flak)',
     );
     assert.ok(
       shrapnel.category === 'ballistic',
       'Category should be ballistic',
     );
-    assert.ok(shrapnel.damage === 8, 'Shrapnel damage should be 8');
+    assert.ok(shrapnel.damage === 50, 'Shrapnel damage should be 50');
     assert.ok(shrapnel.speed === 450, 'Shrapnel speed should be 450');
     assert.ok(shrapnel.range === 120, 'Shrapnel range should be 120');
   });
@@ -190,5 +192,62 @@ describe('Flak Cannon Tests', () => {
 
     assert.ok(distance === 100, `Distance should be 100, got ${distance}`);
     assert.ok(distance > 80, 'Enemy should be outside flak radius of 80');
+  });
+
+  it('spawnShrapnel creates projectiles with parent weapon name', () => {
+    const world = createWorld();
+
+    // Create owner ship
+    const owner = createEntity(world);
+    addComponent(world, owner, createTransform(0, 0, 0));
+    addComponent(world, owner, createFaction(Faction.Player));
+
+    const ownerFaction = getComponent(world, owner, 'faction');
+    const position = new THREE.Vector3(100, 0, 0);
+
+    // Spawn shrapnel with parent weapon name "Flak"
+    spawnShrapnel(world, position, 8, owner, ownerFaction, 'Flak');
+
+    // Verify shrapnel projectiles were created with correct weapon name
+    const projectiles = [...queryEntities(world, ['projectile'])];
+    assert.ok(
+      projectiles.length === 8,
+      `Should spawn 8 shrapnel, got ${projectiles.length}`,
+    );
+
+    for (const entity of projectiles) {
+      const proj = getComponent(world, entity, 'projectile');
+      assert.ok(
+        proj.weaponName === 'Flak',
+        `Shrapnel should have weaponName "Flak", got "${proj.weaponName}"`,
+      );
+      assert.ok(proj.category === 'ballistic', 'Shrapnel should be ballistic');
+    }
+  });
+
+  it('spawnShrapnel attributes damage to any parent weapon', () => {
+    const world = createWorld();
+
+    const owner = createEntity(world);
+    addComponent(world, owner, createTransform(0, 0, 0));
+
+    const position = new THREE.Vector3(0, 0, 0);
+
+    // Test with a hypothetical different weapon name
+    spawnShrapnel(world, position, 3, owner, undefined, 'CustomFlakGun');
+
+    const projectiles = [...queryEntities(world, ['projectile'])];
+    assert.ok(
+      projectiles.length === 3,
+      `Should spawn 3 shrapnel, got ${projectiles.length}`,
+    );
+
+    for (const entity of projectiles) {
+      const proj = getComponent(world, entity, 'projectile');
+      assert.ok(
+        proj.weaponName === 'CustomFlakGun',
+        `Shrapnel should inherit parent name "CustomFlakGun", got "${proj.weaponName}"`,
+      );
+    }
   });
 });

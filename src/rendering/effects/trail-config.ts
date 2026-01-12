@@ -66,9 +66,10 @@ const WEAPON_VISUALS: Record<string, WeaponVisualConfig> = {
     boltShape: 'cylinder',
   },
   Flak: {
-    color: new THREE.Color(1.0, 0.2, 0.2), // Red
-    radius: 0.4,
-    boltShape: 'sphere',
+    color: new THREE.Color(1.0, 0.0, 0.0), // Red
+    radius: 0.25,
+    length: 15,
+    boltShape: 'cylinder',
   },
   Shrapnel: {
     color: new THREE.Color(1.0, 0.9, 0.3), // Yellow

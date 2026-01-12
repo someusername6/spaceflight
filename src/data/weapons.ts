@@ -24,10 +24,16 @@ export interface WeaponStats {
   ammoName?: string;
   /** Short name for store list display (defaults to name if not set) */
   listName?: string;
-  /** Flak explosion radius */
+  /** Flak explosion radius (detonation trigger distance) */
   flakRadius?: number;
   /** Number of shrapnel pieces */
   shrapnelCount?: number;
+  /** Shrapnel damage per piece */
+  shrapnelDamage?: number;
+  /** Shrapnel projectile speed (m/s) */
+  shrapnelSpeed?: number;
+  /** Shrapnel travel range before expiring */
+  shrapnelRange?: number;
   /** Pulse beam fires discrete bolts instead of continuous */
   isPulseBeam?: boolean;
   /** Pulse beam interval (for Lightning) */
@@ -140,7 +146,7 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
     fireRate: 0.4, // 400ms (2.5 shots/sec)
     range: 1000,
     damage: 45,
-    ammo: 40,
+    ammo: 100,
     ammoName: 'Slug Cannon Rounds',
   },
   railgun: {
@@ -159,14 +165,17 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
     name: 'Flak',
     category: 'ballistic',
     heatPerShot: 4,
-    projectileSpeed: 350,
-    fireRate: 0.25, // Was 0.4s, faster for rapid area denial (120 DPS)
+    projectileSpeed: 400,
+    fireRate: 0.25,
     range: 600,
-    damage: 30, // Was 15, +100% for viable primary weapon
-    ammo: 50,
+    damage: 0, // Shell does no damage, only shrapnel
+    ammo: 200,
     ammoName: 'Flak Shells',
-    flakRadius: 100, // Was 80, larger AoE for area denial
-    shrapnelCount: 8,
+    flakRadius: 50,
+    shrapnelCount: 10,
+    shrapnelDamage: 4,
+    shrapnelSpeed: 500,
+    shrapnelRange: 120, // Should be >= flakRadius so shrapnel can reach targets
   },
   gyrojet: {
     name: 'Gyrojet',
@@ -176,10 +185,10 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
     projectileSpeed: 1200, // Max speed (accelerates from 200 → 1200)
     initialSpeed: 200, // Slow start, accelerates to max
     acceleration: 400, // 400 m/s² - reaches max in 2.5 seconds
-    fireRate: 0.5, // 500ms (2 shots/sec)
-    range: 1500, // Long range to benefit from acceleration
-    damage: 50, // Damage at max speed; scales with speed
-    ammo: 30,
+    fireRate: 0.25, // 250ms (4 shots/sec)
+    range: 2000, // Long range to benefit from acceleration
+    damage: 200, // Damage at max speed; scales with speed
+    ammo: 60,
     ammoName: 'Gyrojet Rockets',
     trackingRate: 2, // 2°/sec gentle tracking
     trackingCone: 30, // Only tracks if target within 30° cone

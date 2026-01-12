@@ -52,6 +52,19 @@ export function recordShotHit(
   }
 }
 
+/** Record a shrapnel piece that hit a target (for flak weapons) */
+export function recordShrapnelHit(
+  world: World,
+  source: Entity,
+  weaponName: string,
+): void {
+  const stats = getComponent<CombatStats>(world, source, 'combatStats');
+  if (stats) {
+    const weaponStats = getOrCreateWeaponStats(stats, weaponName, 'projectile');
+    weaponStats.shrapnelHitsOnTarget++;
+  }
+}
+
 /** Record beam firing time (called each frame while beam is active) */
 export function recordBeamFired(
   world: World,

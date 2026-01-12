@@ -101,6 +101,9 @@ export interface ProjectileWeaponInfo {
   category?: string; // WeaponCategory includes 'beam' but we filter that out
   flakRadius?: number;
   shrapnelCount?: number;
+  shrapnelDamage?: number;
+  shrapnelSpeed?: number;
+  shrapnelRange?: number;
   shieldDamageMultiplier?: number;
   ionize?: boolean;
   // Gyrojet-style fields
@@ -112,36 +115,44 @@ export interface ProjectileWeaponInfo {
   autoaimFov?: number;
 }
 
-/** Build gyrojet-style options if weapon uses them */
-function buildGyrojetOptions(
+/** Build projectile options from weapon stats */
+function buildProjectileOptions(
   weapon: ProjectileWeaponInfo,
   target?: Entity,
 ): CreateProjectileOptions | undefined {
-  if (
-    weapon.acceleration === undefined &&
-    weapon.trackingRate === undefined &&
-    !weapon.speedDamageScale
-  ) {
-    return undefined;
-  }
   const options: CreateProjectileOptions = {};
+
+  // Copy optional fields (only add if defined)
+  if (weapon.flakRadius !== undefined) options.flakRadius = weapon.flakRadius;
+  if (weapon.shrapnelCount !== undefined)
+    options.shrapnelCount = weapon.shrapnelCount;
+  if (weapon.shrapnelDamage !== undefined)
+    options.shrapnelDamage = weapon.shrapnelDamage;
+  if (weapon.shrapnelSpeed !== undefined)
+    options.shrapnelSpeed = weapon.shrapnelSpeed;
+  if (weapon.shrapnelRange !== undefined)
+    options.shrapnelRange = weapon.shrapnelRange;
+  if (weapon.shieldDamageMultiplier !== undefined)
+    options.shieldDamageMultiplier = weapon.shieldDamageMultiplier;
+  if (weapon.ionize !== undefined) options.ionize = weapon.ionize;
+  if (weapon.speedDamageScale)
+    options.speedDamageScale = weapon.speedDamageScale;
+
+  // Gyrojet-style acceleration
   if (weapon.acceleration !== undefined) {
     options.acceleration = weapon.acceleration;
     options.maxSpeed = weapon.projectileSpeed;
   }
+
+  // Tracking (gyrojet)
   if (weapon.trackingRate !== undefined) {
     options.trackingRate = weapon.trackingRate;
-    if (weapon.trackingCone !== undefined) {
+    if (weapon.trackingCone !== undefined)
       options.trackingCone = weapon.trackingCone;
-    }
-    if (target !== undefined) {
-      options.trackingTarget = target;
-    }
+    if (target !== undefined) options.trackingTarget = target;
   }
-  if (weapon.speedDamageScale) {
-    options.speedDamageScale = weapon.speedDamageScale;
-  }
-  return options;
+
+  return Object.keys(options).length > 0 ? options : undefined;
 }
 
 /** Create and add projectile entity with all components */
@@ -158,7 +169,7 @@ function createProjectileEntity(
   const category: ProjectileCategory =
     weapon.category === 'ballistic' ? 'ballistic' : 'energy';
   const startSpeed = weapon.initialSpeed ?? weapon.projectileSpeed;
-  const options = buildGyrojetOptions(weapon, target);
+  const options = buildProjectileOptions(weapon, target);
 
   addComponent(world, projectile, createTransform(pos.x, pos.y, pos.z));
   addComponent(
@@ -172,10 +183,6 @@ function createProjectileEntity(
       direction,
       category,
       weapon.name as WeaponName,
-      weapon.flakRadius,
-      weapon.shrapnelCount,
-      weapon.shieldDamageMultiplier,
-      weapon.ionize,
       options,
     ),
   );

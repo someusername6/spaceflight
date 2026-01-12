@@ -29,11 +29,18 @@ export interface Projectile extends ComponentBase {
   distanceTraveled: number;
   direction: Vector3; // Unit vector, direction of travel
   category: ProjectileCategory; // For hit effect visuals
-  weaponName: WeaponName; // For specific visual appearance
+  weaponName: WeaponName; // For stats attribution
+  visualName?: WeaponName; // For visual appearance (defaults to weaponName)
   /** Flak explosion radius - if set, projectile explodes into shrapnel when enemies are within this range */
   flakRadius?: number;
   /** Number of shrapnel projectiles to spawn on flak explosion */
   shrapnelCount?: number;
+  /** Shrapnel damage per piece */
+  shrapnelDamage?: number;
+  /** Shrapnel projectile speed (m/s) */
+  shrapnelSpeed?: number;
+  /** Shrapnel travel range before expiring */
+  shrapnelRange?: number;
   /** Shield damage multiplier (default 1.0) */
   shieldDamageMultiplier?: number;
   /** Ion effect - ionizes target shields, doubling regen delay for 8 seconds */
@@ -53,12 +60,19 @@ export interface Projectile extends ComponentBase {
   baseDamage?: number;
   /** Target entity for in-flight tracking (undefined = no target/target died) */
   trackingTarget?: Entity | undefined;
+  /** Previous frame's closest distance to enemy (for flak proximity detonation) */
+  previousClosestEnemyDistance?: number;
+  /** True if this is shrapnel from a flak explosion (for stats tracking) */
+  isShrapnel?: boolean;
 }
 
 /** Extended options for projectile creation */
 export interface CreateProjectileOptions {
   flakRadius?: number;
   shrapnelCount?: number;
+  shrapnelDamage?: number;
+  shrapnelSpeed?: number;
+  shrapnelRange?: number;
   shieldDamageMultiplier?: number;
   ionize?: boolean;
   // Gyrojet-style options
@@ -68,6 +82,8 @@ export interface CreateProjectileOptions {
   trackingCone?: number;
   speedDamageScale?: boolean;
   trackingTarget?: Entity;
+  isShrapnel?: boolean;
+  visualName?: WeaponName;
 }
 
 /** Creates a Projectile component */
@@ -79,10 +95,6 @@ export function createProjectile(
   direction: Vector3,
   category: ProjectileCategory = 'energy',
   weaponName: WeaponName = 'Plasma',
-  flakRadius?: number,
-  shrapnelCount?: number,
-  shieldDamageMultiplier?: number,
-  ionize?: boolean,
   options?: CreateProjectileOptions,
 ): Projectile {
   const projectile: Projectile = {
@@ -96,25 +108,22 @@ export function createProjectile(
     category,
     weaponName,
   };
-  // Legacy parameters (for backwards compatibility)
-  if (flakRadius !== undefined) projectile.flakRadius = flakRadius;
-  if (shrapnelCount !== undefined) projectile.shrapnelCount = shrapnelCount;
-  if (shieldDamageMultiplier !== undefined)
-    projectile.shieldDamageMultiplier = shieldDamageMultiplier;
-  if (ionize !== undefined) projectile.ionize = ionize;
 
-  // Extended options (for gyrojet and future weapons)
+  // Apply options
   if (options) {
-    // Override legacy params if also in options
     if (options.flakRadius !== undefined)
       projectile.flakRadius = options.flakRadius;
     if (options.shrapnelCount !== undefined)
       projectile.shrapnelCount = options.shrapnelCount;
+    if (options.shrapnelDamage !== undefined)
+      projectile.shrapnelDamage = options.shrapnelDamage;
+    if (options.shrapnelSpeed !== undefined)
+      projectile.shrapnelSpeed = options.shrapnelSpeed;
+    if (options.shrapnelRange !== undefined)
+      projectile.shrapnelRange = options.shrapnelRange;
     if (options.shieldDamageMultiplier !== undefined)
       projectile.shieldDamageMultiplier = options.shieldDamageMultiplier;
     if (options.ionize !== undefined) projectile.ionize = options.ionize;
-
-    // Gyrojet-specific fields
     if (options.acceleration !== undefined)
       projectile.acceleration = options.acceleration;
     if (options.maxSpeed !== undefined) projectile.maxSpeed = options.maxSpeed;
@@ -128,6 +137,10 @@ export function createProjectile(
     }
     if (options.trackingTarget !== undefined)
       projectile.trackingTarget = options.trackingTarget;
+    if (options.isShrapnel !== undefined)
+      projectile.isShrapnel = options.isShrapnel;
+    if (options.visualName !== undefined)
+      projectile.visualName = options.visualName;
   }
 
   return projectile;

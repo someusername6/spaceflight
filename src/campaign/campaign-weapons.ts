@@ -40,6 +40,9 @@ function createPrimaryFromEquipped(equipped: EquippedPrimary): PrimaryWeapon {
   // Copy optional properties
   if (stats.flakRadius) weapon.flakRadius = stats.flakRadius;
   if (stats.shrapnelCount) weapon.shrapnelCount = stats.shrapnelCount;
+  if (stats.shrapnelRange) weapon.shrapnelRange = stats.shrapnelRange;
+  if (stats.shrapnelDamage) weapon.shrapnelDamage = stats.shrapnelDamage;
+  if (stats.shrapnelSpeed) weapon.shrapnelSpeed = stats.shrapnelSpeed;
   if (stats.isPulseBeam) weapon.isPulseBeam = stats.isPulseBeam;
   if (stats.pulseInterval) weapon.pulseInterval = stats.pulseInterval;
   if (stats.noFalloff) weapon.noFalloff = stats.noFalloff;

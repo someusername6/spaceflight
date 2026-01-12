@@ -8,36 +8,46 @@ import { createFaction } from '../../components/faction';
 import { createProjectile } from '../../components/projectile';
 import { createTransform } from '../../components/transform';
 import { addComponent, createEntity } from '../../core/ecs';
+import { randomUnitVector } from '../../core/prng';
 import type { Entity, World } from '../../core/types';
 import { createCollision } from '../collision';
 
-/** Shrapnel projectile stats */
-const SHRAPNEL_SPEED = 450;
-const SHRAPNEL_RANGE = 120;
-const SHRAPNEL_DAMAGE = 8;
-const SHRAPNEL_RADIUS = 0.3;
+/** Default shrapnel stats (used if weapon doesn't specify) */
+const DEFAULT_SHRAPNEL_SPEED = 450;
+const DEFAULT_SHRAPNEL_RANGE = 80;
+const DEFAULT_SHRAPNEL_DAMAGE = 4;
+const SHRAPNEL_COLLISION_RADIUS = 0.3;
 
-/** Spawn shrapnel projectiles from a flak explosion */
+/** Shrapnel configuration from weapon stats */
+export interface ShrapnelConfig {
+  damage?: number | undefined;
+  speed?: number | undefined;
+  range?: number | undefined;
+}
+
+/**
+ * Spawn shrapnel projectiles from a flak explosion.
+ * Each piece goes in a random direction (uniform on sphere surface).
+ * @param parentWeaponName - Weapon name for stats attribution (e.g., "Flak")
+ * @param config - Optional shrapnel stats from weapon definition
+ */
 export function spawnShrapnel(
   world: World,
   position: THREE.Vector3,
   count: number,
   owner: Entity,
   ownerFaction: FactionComponent | undefined,
+  parentWeaponName: string,
+  config?: ShrapnelConfig,
 ): void {
-  const goldenAngle = Math.PI * (3 - Math.sqrt(5)); // ~137.5 degrees
+  const damage = config?.damage ?? DEFAULT_SHRAPNEL_DAMAGE;
+  const speed = config?.speed ?? DEFAULT_SHRAPNEL_SPEED;
+  const range = config?.range ?? DEFAULT_SHRAPNEL_RANGE;
 
   for (let i = 0; i < count; i++) {
-    // Distribute shrapnel in a sphere using golden ratio
-    const y = 1 - (i / (count - 1)) * 2; // y goes from 1 to -1
-    const radiusAtY = Math.sqrt(1 - y * y);
-    const theta = goldenAngle * i;
-
-    const direction = new THREE.Vector3(
-      radiusAtY * Math.cos(theta),
-      y,
-      radiusAtY * Math.sin(theta),
-    ).normalize();
+    // Random direction uniformly distributed on sphere surface
+    const randDir = randomUnitVector(world.prng);
+    const direction = new THREE.Vector3(randDir.x, randDir.y, randDir.z);
 
     const shrapnel = createEntity(world);
 
@@ -46,20 +56,18 @@ export function spawnShrapnel(
       shrapnel,
       createTransform(position.x, position.y, position.z),
     );
-    addComponent(
-      world,
-      shrapnel,
-      createProjectile(
-        owner,
-        SHRAPNEL_DAMAGE,
-        SHRAPNEL_SPEED,
-        SHRAPNEL_RANGE,
-        direction,
-        'ballistic',
-        'Shrapnel',
-      ),
+    const projectile = createProjectile(
+      owner,
+      damage,
+      speed,
+      range,
+      direction,
+      'ballistic',
+      parentWeaponName,
+      { isShrapnel: true, visualName: 'Shrapnel' },
     );
-    addComponent(world, shrapnel, createCollision(SHRAPNEL_RADIUS));
+    addComponent(world, shrapnel, projectile);
+    addComponent(world, shrapnel, createCollision(SHRAPNEL_COLLISION_RADIUS));
 
     if (ownerFaction) {
       addComponent(world, shrapnel, createFaction(ownerFaction.faction));

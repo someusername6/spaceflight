@@ -39,11 +39,10 @@ export const PRIMARY_UNLOCK_SECTOR: Record<string, number> = {
   plasma: 1,
   blueLaser: 1, // Beam: long-range sniper
   autocannon: 1, // Ballistic: close-range brawler
-
   // Sector 2: Mid-tier weapons
   greenLaser: 2,
-  flak: 2,
   slugCannon: 2,
+  flak: 2,
 
   // Sector 3: Advanced weapons
   redLaser: 3,
