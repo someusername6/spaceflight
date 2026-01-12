@@ -134,7 +134,7 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
     projectileSpeed: 500,
     fireRate: 0.065, // 65ms
     range: 400,
-    damage: 9, // Was 8, +12.5% for close-range advantage (not +25%, was too strong)
+    damage: 9,
     ammo: 200,
     ammoName: 'Autocannon Rounds',
   },
@@ -148,6 +148,7 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
     damage: 45,
     ammo: 100,
     ammoName: 'Slug Cannon Rounds',
+    autoaimFov: 0.5,
   },
   railgun: {
     name: 'Railgun',
@@ -159,7 +160,7 @@ export const PRIMARY_WEAPONS: Record<string, WeaponStats> = {
     damage: 80,
     ammo: 20,
     ammoName: 'Railgun Slugs',
-    autoaimFov: 2, // Smart round corrects within 2° cone
+    autoaimFov: 2,
   },
   flak: {
     name: 'Flak',

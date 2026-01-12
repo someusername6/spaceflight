@@ -47,12 +47,12 @@ export const PRIMARY_PRICES: Record<string, { buy: number; sell: number }> = {
 
 /** Ammo prices for ballistic primaries (per round) */
 export const AMMO_PRICES: Record<string, { buy: number; sell: number }> = {
-  autocannon: { buy: 0.1, sell: 0 }, // 0.1 credit per round (1 cr per 10)
-  slugCannon: { buy: 1, sell: 0.5 }, // 1 credit per slug (40 cr full reload)
-  gyrojet: { buy: 3, sell: 1.5 }, // 3 credits per rocket (90 cr full reload)
-  railgun: { buy: 5, sell: 2 }, // 5 credits per slug
-  flak: { buy: 2, sell: 1 }, // 2 credits per shell
-  nuclearLance: { buy: 50, sell: 25 }, // 50 credits per charge
+  autocannon: { buy: 0.1, sell: 0 },
+  slugCannon: { buy: 1, sell: 0.5 },
+  gyrojet: { buy: 2, sell: 1 },
+  railgun: { buy: 5, sell: 2 },
+  flak: { buy: 2, sell: 1 },
+  nuclearLance: { buy: 50, sell: 25 },
 };
 
 /** Secondary weapon/missile prices (per missile, consumable) */
