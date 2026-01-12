@@ -6,8 +6,8 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_2_HARD: Contract[] = [
   {
-    id: 's2-laser-gauntlet',
-    name: 'Laser Gauntlet',
+    id: 's2-blinded-by-the-light',
+    name: 'Blinded by the Light',
     description:
       'Face the beam gauntlet. Veteran Fireflies and Vipers with lasers.',
     difficulty: 'hard',
@@ -34,8 +34,8 @@ export const SECTOR_2_HARD: Contract[] = [
     reward: 5215,
   },
   {
-    id: 's2-elite-hunters',
-    name: 'Elite Hunters',
+    id: 's2-the-predator-polka',
+    name: 'The Predator Polka',
     description:
       'Face elite formation. Phantoms, Bruisers, and Shredders together.',
     difficulty: 'hard',
@@ -62,8 +62,8 @@ export const SECTOR_2_HARD: Contract[] = [
     reward: 5364,
   },
   {
-    id: 's2-contested-ground',
-    name: 'Contested Ground',
+    id: 's2-fight-for-your-right',
+    name: 'Fight for Your Right',
     description: 'Hold contested zone. Maximum force with veteran pilots.',
     difficulty: 'hard',
     sector: 2,
@@ -89,8 +89,8 @@ export const SECTOR_2_HARD: Contract[] = [
     reward: 5477,
   },
   {
-    id: 's2-laser-storm',
-    name: 'Laser Storm',
+    id: 's2-disco-inferno',
+    name: 'Disco Inferno',
     description: 'Survive laser onslaught. Fireflies and Vipers closing fast.',
     difficulty: 'hard',
     sector: 2,
@@ -116,8 +116,8 @@ export const SECTOR_2_HARD: Contract[] = [
     reward: 5700,
   },
   {
-    id: 's2-wasp-nest',
-    name: 'Wasp Nest',
+    id: 's2-buzz-aldrin',
+    name: 'Buzz Aldrin',
     description: 'Destroy Wasp squadron. Fast interceptors with autocannons.',
     difficulty: 'hard',
     sector: 2,

@@ -6,8 +6,8 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_2_EASY: Contract[] = [
   {
-    id: 's2-sector-sweep',
-    name: 'Sector Sweep',
+    id: 's2-dust-in-the-wind',
+    name: 'Dust in the Wind',
     description:
       'Clear the sector. Dragonflies, Stingers, and Fireflies across four waves.',
     difficulty: 'easy',
@@ -34,8 +34,8 @@ export const SECTOR_2_EASY: Contract[] = [
     reward: 3385,
   },
   {
-    id: 's2-starburst-field',
-    name: 'Starburst Field',
+    id: 's2-starman',
+    name: 'Starman',
     description: 'Survive area denial. Sparklers with starburst missiles.',
     difficulty: 'easy',
     sector: 2,
@@ -61,8 +61,8 @@ export const SECTOR_2_EASY: Contract[] = [
     reward: 3497,
   },
   {
-    id: 's2-raider-intercept',
-    name: 'Raider Intercept',
+    id: 's2-running-down-a-dream',
+    name: 'Running Down a Dream',
     description: 'Intercept raider force. Fireflies and Stingers.',
     difficulty: 'easy',
     sector: 2,
@@ -88,8 +88,8 @@ export const SECTOR_2_EASY: Contract[] = [
     reward: 3516,
   },
   {
-    id: 's2-slug-patrol',
-    name: 'Slug Patrol',
+    id: 's2-the-bruiser-brothers',
+    name: 'The Bruiser Brothers',
     description:
       'Intercept heavy patrol. Bruisers with slug cannons hitting hard.',
     difficulty: 'easy',
@@ -116,8 +116,8 @@ export const SECTOR_2_EASY: Contract[] = [
     reward: 3762,
   },
   {
-    id: 's2-cluster-run',
-    name: 'Cluster Run',
+    id: 's2-locust-hocus-pocus',
+    name: 'Locust Hocus Pocus',
     description:
       'Destroy Locust squadron. Cluster missiles incoming - watch spacing.',
     difficulty: 'easy',
@@ -144,8 +144,8 @@ export const SECTOR_2_EASY: Contract[] = [
     reward: 4023,
   },
   {
-    id: 's2-border-skirmish',
-    name: 'Border Skirmish',
+    id: 's2-borderline',
+    name: 'Borderline',
     description:
       'Engage contested space. Fireflies, Dragonflies, and Stingers.',
     difficulty: 'easy',

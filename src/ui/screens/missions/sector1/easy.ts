@@ -6,8 +6,8 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_1_EASY: Contract[] = [
   {
-    id: 's1-swarm-warning',
-    name: 'Swarm Warning',
+    id: 's1-gnat-expectations',
+    name: 'Gnat Expectations',
     description:
       'Intercept missile carriers. Gnats with swarm missiles incoming.',
     difficulty: 'easy',
@@ -34,8 +34,8 @@ export const SECTOR_1_EASY: Contract[] = [
     reward: 2582,
   },
   {
-    id: 's1-first-contact',
-    name: 'First Contact',
+    id: 's1-stray-scout-strut',
+    name: 'Stray Scout Strut',
     description: 'Destroy scout patrol. Rookie pilots in light craft.',
     difficulty: 'easy',
     sector: 1,
@@ -61,8 +61,8 @@ export const SECTOR_1_EASY: Contract[] = [
     reward: 2797,
   },
   {
-    id: 's1-red-dawn',
-    name: 'Red Dawn',
+    id: 's1-ember-elegy',
+    name: 'Ember Elegy',
     description:
       'Intercept laser patrol. Embers with red lasers at close range.',
     difficulty: 'easy',
@@ -89,8 +89,8 @@ export const SECTOR_1_EASY: Contract[] = [
     reward: 2797,
   },
   {
-    id: 's1-ion-storm',
-    name: 'Ion Storm',
+    id: 's1-ion-maiden',
+    name: 'Ion Maiden',
     description: 'Eliminate hostile patrol. Shockers with ion cannons.',
     difficulty: 'easy',
     sector: 1,
@@ -116,8 +116,8 @@ export const SECTOR_1_EASY: Contract[] = [
     reward: 2958,
   },
   {
-    id: 's1-mantis-guard',
-    name: 'Mantis Guard',
+    id: 's1-praying-for-time',
+    name: 'Praying for Time',
     description: 'Destroy patrol. Mantis fighters with decoy countermeasures.',
     difficulty: 'easy',
     sector: 1,

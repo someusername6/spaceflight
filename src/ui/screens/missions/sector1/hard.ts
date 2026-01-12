@@ -6,8 +6,8 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_1_HARD: Contract[] = [
   {
-    id: 's1-mixed-assault',
-    name: 'Mixed Assault',
+    id: 's1-medley-of-mayhem',
+    name: 'Medley of Mayhem',
     description:
       'Destroy assault force. Embers and Shockers with Mantis commanders.',
     difficulty: 'hard',
@@ -34,8 +34,8 @@ export const SECTOR_1_HARD: Contract[] = [
     reward: 4291,
   },
   {
-    id: 's1-sniper-alley',
-    name: 'Sniper Alley',
+    id: 's1-sniper-blues',
+    name: 'Sniper Blues',
     description: 'Engage long-range patrol. Blue laser snipers at distance.',
     difficulty: 'hard',
     sector: 1,
@@ -52,8 +52,8 @@ export const SECTOR_1_HARD: Contract[] = [
     reward: 4409,
   },
   {
-    id: 's1-raider-hunt',
-    name: 'Raider Hunt',
+    id: 's1-hunting-high-and-low',
+    name: 'Hunting High and Low',
     description: 'Hunt raider squadron. Heavy resistance expected.',
     difficulty: 'hard',
     sector: 1,
@@ -79,8 +79,8 @@ export const SECTOR_1_HARD: Contract[] = [
     reward: 4466,
   },
   {
-    id: 's1-hornet-sweep',
-    name: 'Hornet Sweep',
+    id: 's1-flight-of-the-bumblebee',
+    name: 'Flight of the Bumblebee',
     description:
       'Destroy Hornet squadron. Plasma fighters with Wasp and Mantis support.',
     difficulty: 'hard',
@@ -107,8 +107,8 @@ export const SECTOR_1_HARD: Contract[] = [
     reward: 4477,
   },
   {
-    id: 's1-full-spectrum',
-    name: 'Full Spectrum',
+    id: 's1-rainbow-in-the-dark',
+    name: 'Rainbow in the Dark',
     description: 'Face all enemy types. Variety of hostiles incoming.',
     difficulty: 'hard',
     sector: 1,
@@ -134,8 +134,8 @@ export const SECTOR_1_HARD: Contract[] = [
     reward: 4534,
   },
   {
-    id: 's1-frontier-siege',
-    name: 'Frontier Siege',
+    id: 's1-hold-the-line',
+    name: 'Hold the Line',
     description: 'Hold the frontier. Wasps and Hornets in force.',
     difficulty: 'hard',
     sector: 1,

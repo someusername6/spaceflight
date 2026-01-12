@@ -6,8 +6,8 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_4_EASY: Contract[] = [
   {
-    id: 's4-nuke-warning',
-    name: 'Nuke Warning',
+    id: 's4-atomic',
+    name: 'Atomic',
     description:
       'Nuclear threat detected. Juggernaut with nuke payload inbound.',
     difficulty: 'easy',
@@ -34,8 +34,8 @@ export const SECTOR_4_EASY: Contract[] = [
     reward: 4645,
   },
   {
-    id: 's4-railgun-scouts',
-    name: 'Railgun Scouts',
+    id: 's4-the-distance',
+    name: 'The Distance',
     description: 'Engage sniper patrol. Scorpions with railguns at long range.',
     difficulty: 'easy',
     sector: 4,
@@ -61,8 +61,8 @@ export const SECTOR_4_EASY: Contract[] = [
     reward: 5383,
   },
   {
-    id: 's4-perimeter-breach',
-    name: 'Perimeter Breach',
+    id: 's4-uninvited',
+    name: 'Uninvited',
     description:
       'Engage response force. Phantoms with Firefly and Dragonfly support.',
     difficulty: 'easy',
@@ -89,8 +89,8 @@ export const SECTOR_4_EASY: Contract[] = [
     reward: 6275,
   },
   {
-    id: 's4-titan-escort',
-    name: 'Titan Escort',
+    id: 's4-clash-of-the-titans',
+    name: 'Clash of the Titans',
     description: 'Intercept heavy assault. A Titan with Phantom escorts.',
     difficulty: 'easy',
     sector: 4,
@@ -116,8 +116,8 @@ export const SECTOR_4_EASY: Contract[] = [
     reward: 6686,
   },
   {
-    id: 's4-veteran-assault',
-    name: 'Veteran Assault',
+    id: 's4-fortunate-son',
+    name: 'Fortunate Son',
     description:
       'Destroy assault group. Phantoms, Dragonflies, and Fireflies - all veteran.',
     difficulty: 'easy',
@@ -144,8 +144,8 @@ export const SECTOR_4_EASY: Contract[] = [
     reward: 7303,
   },
   {
-    id: 's4-garrison-duty',
-    name: 'Garrison Duty',
+    id: 's4-watchtower',
+    name: 'Watchtower',
     description:
       'Destroy incoming hostiles. Wasps, Dragonflies, and Fireflies - some Aces.',
     difficulty: 'easy',

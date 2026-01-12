@@ -6,8 +6,8 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_3_EASY: Contract[] = [
   {
-    id: 's3-torch-bearers',
-    name: 'Torch Bearers',
+    id: 's3-light-my-fire',
+    name: 'Light My Fire',
     description: 'Survive the heat. Fireants with torch beams - stay at range.',
     difficulty: 'easy',
     sector: 3,
@@ -33,8 +33,8 @@ export const SECTOR_3_EASY: Contract[] = [
     reward: 3728,
   },
   {
-    id: 's3-veteran-formation',
-    name: 'Veteran Formation',
+    id: 's3-war-pigs',
+    name: 'War Pigs',
     description:
       'Destroy enemy formation. Veteran Fireflies and Dragonflies in five waves.',
     difficulty: 'easy',
@@ -65,8 +65,8 @@ export const SECTOR_3_EASY: Contract[] = [
     reward: 4348,
   },
   {
-    id: 's3-lightning-strike',
-    name: 'Lightning Strike',
+    id: 's3-ride-the-lightning',
+    name: 'Ride the Lightning',
     description:
       'Engage electrical attack. Moths with lightning cannons incoming.',
     difficulty: 'easy',
@@ -93,8 +93,8 @@ export const SECTOR_3_EASY: Contract[] = [
     reward: 4400,
   },
   {
-    id: 's3-gyrojet-patrol',
-    name: 'Gyrojet Patrol',
+    id: 's3-rocket-man',
+    name: 'Rocket Man',
     description:
       'Intercept rocket fighters. Rocketeers with accelerating rounds.',
     difficulty: 'easy',
@@ -121,8 +121,8 @@ export const SECTOR_3_EASY: Contract[] = [
     reward: 4765,
   },
   {
-    id: 's3-interceptor-wing',
-    name: 'Interceptor Wing',
+    id: 's3-danger-zone',
+    name: 'Danger Zone',
     description: 'Engage fast attack wing. Phantoms, Dragonflies, and Wasps.',
     difficulty: 'easy',
     sector: 3,
@@ -148,8 +148,8 @@ export const SECTOR_3_EASY: Contract[] = [
     reward: 4846,
   },
   {
-    id: 's3-torpedo-run',
-    name: 'Torpedo Run',
+    id: 's3-das-boot',
+    name: 'Das Boot',
     description: 'Heavy ordnance incoming. Beetles with torpedo launchers.',
     difficulty: 'easy',
     sector: 3,

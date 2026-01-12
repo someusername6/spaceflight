@@ -6,8 +6,8 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_4_HARD: Contract[] = [
   {
-    id: 's4-core-breach',
-    name: 'Core Breach',
+    id: 's4-heart-of-the-matter',
+    name: 'Heart of the Matter',
     description: 'Final core assault. All S4 elite archetypes in force.',
     difficulty: 'hard',
     sector: 4,
@@ -33,8 +33,8 @@ export const SECTOR_4_HARD: Contract[] = [
     reward: 8728,
   },
   {
-    id: 's4-ace-assault',
-    name: 'Ace Assault',
+    id: 's4-ace-of-spades',
+    name: 'Ace of Spades',
     description:
       'Face heavy assault. Ace Phantoms, Dragonflies, and Fireflies.',
     difficulty: 'hard',
@@ -53,8 +53,8 @@ export const SECTOR_4_HARD: Contract[] = [
     reward: 9229,
   },
   {
-    id: 's4-maximum-force',
-    name: 'Maximum Force',
+    id: 's4-balls-to-the-wall',
+    name: 'Balls to the Wall',
     description:
       'Destroy ace squadron. Phantoms and Dragonflies at maximum skill.',
     difficulty: 'hard',
@@ -73,8 +73,8 @@ export const SECTOR_4_HARD: Contract[] = [
     reward: 9229,
   },
   {
-    id: 's4-warlord',
-    name: 'Warlord',
+    id: 's4-master-of-puppets',
+    name: 'Master of Puppets',
     description:
       'Eliminate the warlord. Ace Phantoms and Dragonflies - no mercy.',
     difficulty: 'hard',
@@ -97,8 +97,8 @@ export const SECTOR_4_HARD: Contract[] = [
     reward: 9361,
   },
   {
-    id: 's4-nuclear-strike',
-    name: 'Nuclear Strike',
+    id: 's4-radioactive',
+    name: 'Radioactive',
     description:
       'Stop nuclear assault. Juggernaut and Behemoth with nuke payloads.',
     difficulty: 'hard',

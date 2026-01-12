@@ -6,8 +6,8 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_3_HARD: Contract[] = [
   {
-    id: 's3-heavy-assault',
-    name: 'Heavy Assault',
+    id: 's3-hammer-to-fall',
+    name: 'Hammer to Fall',
     description:
       'Destroy assault force. Phantoms and Beetles with Ace Dragonfly escorts.',
     difficulty: 'hard',
@@ -34,8 +34,8 @@ export const SECTOR_3_HARD: Contract[] = [
     reward: 6250,
   },
   {
-    id: 's3-warzone-breach',
-    name: 'Warzone Breach',
+    id: 's3-break-on-through',
+    name: 'Break on Through',
     description: 'Break through enemy lines. Elite assault force.',
     difficulty: 'hard',
     sector: 3,
@@ -61,8 +61,8 @@ export const SECTOR_3_HARD: Contract[] = [
     reward: 6560,
   },
   {
-    id: 's3-triple-threat',
-    name: 'Triple Threat',
+    id: 's3-three-dog-night',
+    name: 'Three Dog Night',
     description:
       'Destroy enemy squadron. Fireflies, Dragonflies, and Phantoms in force.',
     difficulty: 'hard',
@@ -93,8 +93,8 @@ export const SECTOR_3_HARD: Contract[] = [
     reward: 6645,
   },
   {
-    id: 's3-storm-front',
-    name: 'Storm Front',
+    id: 's3-riders-on-the-storm',
+    name: 'Riders on the Storm',
     description: 'Survive the storm. Phantoms and Wasps with Ace pilots.',
     difficulty: 'hard',
     sector: 3,
@@ -120,8 +120,8 @@ export const SECTOR_3_HARD: Contract[] = [
     reward: 6665,
   },
   {
-    id: 's3-final-push',
-    name: 'Final Push',
+    id: 's3-the-final-countdown',
+    name: 'The Final Countdown',
     description: 'Maximum enemy resistance. Ace pilots across all waves.',
     difficulty: 'hard',
     sector: 3,

@@ -6,8 +6,8 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_1_MEDIUM: Contract[] = [
   {
-    id: 's1-patrol-duty',
-    name: 'Patrol Duty',
+    id: 's1-another-day-in-paradise',
+    name: 'Another Day in Paradise',
     description: 'Clear the sector. Mixed hostiles across multiple waves.',
     difficulty: 'medium',
     sector: 1,
@@ -33,8 +33,8 @@ export const SECTOR_1_MEDIUM: Contract[] = [
     reward: 3499,
   },
   {
-    id: 's1-debris-field',
-    name: 'Debris Field',
+    id: 's1-toys-in-the-void',
+    name: 'Toys in the Void',
     description: 'Eliminate scattered hostiles. Mixed patrol craft.',
     difficulty: 'medium',
     sector: 1,
@@ -60,8 +60,8 @@ export const SECTOR_1_MEDIUM: Contract[] = [
     reward: 3499,
   },
   {
-    id: 's1-plasma-storm',
-    name: 'Plasma Storm',
+    id: 's1-purple-rain',
+    name: 'Purple Rain',
     description: 'Face plasma barrage. Hornets and Mantis incoming.',
     difficulty: 'medium',
     sector: 1,
@@ -87,8 +87,8 @@ export const SECTOR_1_MEDIUM: Contract[] = [
     reward: 3684,
   },
   {
-    id: 's1-supply-raid',
-    name: 'Supply Raid',
+    id: 's1-take-the-money-and-run',
+    name: 'Take the Money and Run',
     description: 'Intercept enemy squadron. Shockers and Embers incoming.',
     difficulty: 'medium',
     sector: 1,
@@ -114,8 +114,8 @@ export const SECTOR_1_MEDIUM: Contract[] = [
     reward: 3743,
   },
   {
-    id: 's1-autocannon-alley',
-    name: 'Autocannon Alley',
+    id: 's1-lead-serenade',
+    name: 'Lead Serenade',
     description: 'Survive the gauntlet. Wasps with autocannons.',
     difficulty: 'medium',
     sector: 1,

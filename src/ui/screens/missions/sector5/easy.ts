@@ -6,8 +6,8 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_5_EASY: Contract[] = [
   {
-    id: 's5-wraith-scout',
-    name: 'Wraith Scout',
+    id: 's5-spirit-in-the-sky',
+    name: 'Spirit in the Sky',
     description: 'Intercept nuclear lance carrier. A Wraith with ace escorts.',
     difficulty: 'easy',
     sector: 5,
@@ -33,8 +33,8 @@ export const SECTOR_5_EASY: Contract[] = [
     reward: 8147,
   },
   {
-    id: 's5-ace-formation',
-    name: 'Ace Formation',
+    id: 's5-aces-wild',
+    name: 'Aces Wild',
     description:
       'Destroy ace formation. Phantoms, Dragonflies, and Fireflies - ace pilots.',
     difficulty: 'easy',
@@ -61,8 +61,8 @@ export const SECTOR_5_EASY: Contract[] = [
     reward: 8668,
   },
   {
-    id: 's5-scorpion-nest',
-    name: 'Scorpion Nest',
+    id: 's5-blackout',
+    name: 'Blackout',
     description:
       'Clear sniper position. Scorpions with railguns and elite escorts.',
     difficulty: 'easy',
@@ -89,8 +89,8 @@ export const SECTOR_5_EASY: Contract[] = [
     reward: 9818,
   },
   {
-    id: 's5-no-mans-land',
-    name: "No Man's Land",
+    id: 's5-where-eagles-dare',
+    name: 'Where Eagles Dare',
     description:
       'Survive beyond the frontier. Ace Phantoms, Dragonflies, and Fireflies.',
     difficulty: 'easy',
@@ -117,8 +117,8 @@ export const SECTOR_5_EASY: Contract[] = [
     reward: 10127,
   },
   {
-    id: 's5-meat-grinder',
-    name: 'Meat Grinder',
+    id: 's5-another-one-bites-the-dust',
+    name: 'Another One Bites the Dust',
     description:
       'Survive the grinder. Four waves of Ace Phantoms and Dragonflies.',
     difficulty: 'easy',

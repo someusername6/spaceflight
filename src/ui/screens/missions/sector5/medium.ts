@@ -6,8 +6,8 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_5_MEDIUM: Contract[] = [
   {
-    id: 's5-nuclear-convoy',
-    name: 'Nuclear Convoy',
+    id: 's5-convoy',
+    name: 'Convoy',
     description:
       'Intercept nuclear convoy. Juggernaut with nuke payload and elite escorts.',
     difficulty: 'medium',
@@ -34,8 +34,8 @@ export const SECTOR_5_MEDIUM: Contract[] = [
     reward: 10930,
   },
   {
-    id: 's5-iron-wall',
-    name: 'Iron Wall',
+    id: 's5-another-brick-in-the-wall',
+    name: 'Another Brick in the Wall',
     description:
       'Break the iron wall. Ace Phantoms, Dragonflies, and Fireflies.',
     difficulty: 'medium',
@@ -62,8 +62,8 @@ export const SECTOR_5_MEDIUM: Contract[] = [
     reward: 11117,
   },
   {
-    id: 's5-bomber-wing',
-    name: 'Bomber Wing',
+    id: 's5-flight-of-the-valkyries',
+    name: 'Flight of the Valkyries',
     description: 'Destroy bomber wing. Behemoths with Phantom escorts.',
     difficulty: 'medium',
     sector: 5,
@@ -89,8 +89,8 @@ export const SECTOR_5_MEDIUM: Contract[] = [
     reward: 11271,
   },
   {
-    id: 's5-specter-formation',
-    name: 'Specter Formation',
+    id: 's5-every-breath-you-take',
+    name: 'Every Breath You Take',
     description: 'Destroy sniper formation. Specter with ace escorts.',
     difficulty: 'medium',
     sector: 5,

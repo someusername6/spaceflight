@@ -6,8 +6,8 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_3_MEDIUM: Contract[] = [
   {
-    id: 's3-heat-wave',
-    name: 'Heat Wave',
+    id: 's3-hot-blooded',
+    name: 'Hot Blooded',
     description:
       'Survive the inferno. Fireants with Phantom escorts closing fast.',
     difficulty: 'medium',
@@ -34,8 +34,8 @@ export const SECTOR_3_MEDIUM: Contract[] = [
     reward: 4875,
   },
   {
-    id: 's3-moth-swarm',
-    name: 'Moth Swarm',
+    id: 's3-mothership-connection',
+    name: 'Mothership Connection',
     description:
       'Face lightning barrage. Moths with swarm missiles and lightning cannons.',
     difficulty: 'medium',
@@ -62,8 +62,8 @@ export const SECTOR_3_MEDIUM: Contract[] = [
     reward: 5004,
   },
   {
-    id: 's3-red-wave',
-    name: 'Red Wave',
+    id: 's3-crimson-tide',
+    name: 'Crimson Tide',
     description:
       'Destroy enemy force. Heavy waves of veteran Fireflies and Dragonflies.',
     difficulty: 'medium',
@@ -94,8 +94,8 @@ export const SECTOR_3_MEDIUM: Contract[] = [
     reward: 5588,
   },
   {
-    id: 's3-phantom-assault',
-    name: 'Phantom Assault',
+    id: 's3-ghost-riders-in-the-sky',
+    name: 'Ghost Riders in the Sky',
     description: 'Face heavy assault. Phantoms and Ace Dragonflies in force.',
     difficulty: 'medium',
     sector: 3,
@@ -121,8 +121,8 @@ export const SECTOR_3_MEDIUM: Contract[] = [
     reward: 5614,
   },
   {
-    id: 's3-elite-patrol',
-    name: 'Elite Patrol',
+    id: 's3-aces-high',
+    name: 'Aces High',
     description:
       'Face veteran squadron. Wasps and Dragonflies with skilled pilots.',
     difficulty: 'medium',

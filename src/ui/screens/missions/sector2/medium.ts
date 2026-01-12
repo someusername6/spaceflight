@@ -6,8 +6,8 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_2_MEDIUM: Contract[] = [
   {
-    id: 's2-heavy-metal',
-    name: 'Heavy Metal',
+    id: 's2-heavy-metal-queen',
+    name: 'Heavy Metal Queen',
     description: 'Destroy heavy fighters. Bruisers with slug cannons leading.',
     difficulty: 'medium',
     sector: 2,
@@ -33,8 +33,8 @@ export const SECTOR_2_MEDIUM: Contract[] = [
     reward: 3868,
   },
   {
-    id: 's2-flak-screen',
-    name: 'Flak Screen',
+    id: 's2-wall-of-sound',
+    name: 'Wall of Sound',
     description:
       'Breach the flak screen. Shredders with flak cannons and Phantom escorts.',
     difficulty: 'medium',
@@ -61,8 +61,8 @@ export const SECTOR_2_MEDIUM: Contract[] = [
     reward: 4040,
   },
   {
-    id: 's2-phantom-strike',
-    name: 'Phantom Strike',
+    id: 's2-dart-side-of-the-moon',
+    name: 'Dart Side of the Moon',
     description:
       'Face elite interceptors. Phantoms with green lasers and dart missiles.',
     difficulty: 'medium',
@@ -89,8 +89,8 @@ export const SECTOR_2_MEDIUM: Contract[] = [
     reward: 4798,
   },
   {
-    id: 's2-reinforced-patrol',
-    name: 'Reinforced Patrol',
+    id: 's2-backup-singers',
+    name: 'Backup Singers',
     description:
       'Destroy reinforced patrol. Veteran Fireflies and Dragonflies in numbers.',
     difficulty: 'medium',
@@ -117,8 +117,8 @@ export const SECTOR_2_MEDIUM: Contract[] = [
     reward: 4949,
   },
   {
-    id: 's2-viper-nest',
-    name: 'Viper Nest',
+    id: 's2-fangs-for-the-memories',
+    name: 'Fangs for the Memories',
     description: 'Clear Viper squadron. Green laser fighters with long range.',
     difficulty: 'medium',
     sector: 2,

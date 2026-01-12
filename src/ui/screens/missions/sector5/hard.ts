@@ -6,8 +6,8 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_5_HARD: Contract[] = [
   {
-    id: 's5-elite-armada',
-    name: 'Elite Armada',
+    id: 's5-dont-stop-me-now',
+    name: "Don't Stop Me Now",
     description: 'Destroy the armada. Elite Phantoms and Dragonflies.',
     difficulty: 'hard',
     sector: 5,
@@ -29,8 +29,8 @@ export const SECTOR_5_HARD: Contract[] = [
     reward: 12543,
   },
   {
-    id: 's5-omega',
-    name: 'Omega',
+    id: 's5-the-end',
+    name: 'The End',
     description: 'The ultimate challenge. Ace Phantoms with maximum force.',
     difficulty: 'hard',
     sector: 5,
@@ -56,8 +56,8 @@ export const SECTOR_5_HARD: Contract[] = [
     reward: 12787,
   },
   {
-    id: 's5-titan-assault',
-    name: 'Titan Assault',
+    id: 's5-godzilla',
+    name: 'Godzilla',
     description: 'Stop the titan. Heavy railgun striker with elite escorts.',
     difficulty: 'hard',
     sector: 5,
@@ -83,8 +83,8 @@ export const SECTOR_5_HARD: Contract[] = [
     reward: 12874,
   },
   {
-    id: 's5-final-stand',
-    name: 'Final Stand',
+    id: 's5-wont-back-down',
+    name: "Won't Back Down",
     description: 'Make your final stand. Four waves of elite fighters.',
     difficulty: 'hard',
     sector: 5,
@@ -110,8 +110,8 @@ export const SECTOR_5_HARD: Contract[] = [
     reward: 12942,
   },
   {
-    id: 's5-wraith-patrol',
-    name: 'Wraith Patrol',
+    id: 's5-ghost-town',
+    name: 'Ghost Town',
     description:
       'Hunt Wraith patrol. Nuclear lance carriers with elite escorts.',
     difficulty: 'hard',
@@ -138,8 +138,8 @@ export const SECTOR_5_HARD: Contract[] = [
     reward: 13015,
   },
   {
-    id: 's5-wraith-strike',
-    name: 'Wraith Strike',
+    id: 's5-black-magic-woman',
+    name: 'Black Magic Woman',
     description: 'Stop nuclear assault. Multiple Wraiths with elite support.',
     difficulty: 'hard',
     sector: 5,
