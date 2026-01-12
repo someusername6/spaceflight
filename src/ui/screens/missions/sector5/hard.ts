@@ -30,7 +30,34 @@ export const SECTOR_5_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 12400,
+    reward: 12074,
+  },
+  {
+    id: 's5-apocalypse',
+    name: 'Apocalypse',
+    description: 'Face the apocalypse. Maximum enemy force across four waves.',
+    difficulty: 'hard',
+    sector: 5,
+    tier: 'high',
+    waves: [
+      {
+        enemies: [{ archetype: 'phantom', skill: 'elite', count: 3 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'elite', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'phantom', skill: 'elite', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'firefly', skill: 'elite', count: 3 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 12219,
   },
   {
     id: 's5-final-stand',
@@ -61,7 +88,7 @@ export const SECTOR_5_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 12650,
+    reward: 12632,
   },
   {
     id: 's5-elite-armada',
@@ -88,34 +115,7 @@ export const SECTOR_5_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 12850,
-  },
-  {
-    id: 's5-apocalypse',
-    name: 'Apocalypse',
-    description: 'Face the apocalypse. Maximum enemy force across four waves.',
-    difficulty: 'hard',
-    sector: 5,
-    tier: 'high',
-    waves: [
-      {
-        enemies: [{ archetype: 'phantom', skill: 'elite', count: 3 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'elite', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'elite', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'firefly', skill: 'elite', count: 3 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 13000,
+    reward: 12844,
   },
   {
     id: 's5-omega',
@@ -142,6 +142,6 @@ export const SECTOR_5_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 13100,
+    reward: 12921,
   },
 ];

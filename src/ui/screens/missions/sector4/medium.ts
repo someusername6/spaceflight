@@ -6,24 +6,23 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_4_MEDIUM: Contract[] = [
   {
-    id: 's4-nuke-convoy',
-    name: 'Nuke Convoy',
-    description:
-      'Destroy elite strike force. Phantoms with Ace Fireflies and veteran Dragonflies.',
+    id: 's4-behemoth-approach',
+    name: 'Behemoth Approach',
+    description: 'Intercept bomber wing. Behemoth with heavy ordnance inbound.',
     difficulty: 'medium',
     sector: 4,
     tier: 'mid',
     waves: [
       {
-        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
+        enemies: [{ archetype: 'moth', skill: 'ace', count: 3 }],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'firefly', skill: 'ace', count: 3 }],
+        enemies: [{ archetype: 'fireant', skill: 'ace', count: 2 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
+        enemies: [{ archetype: 'behemoth', skill: 'veteran', count: 1 }],
         delay: [8, 12],
       },
       {
@@ -31,7 +30,7 @@ export const SECTOR_4_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 8000,
+    reward: 7211,
   },
   {
     id: 's4-ace-squadron',
@@ -59,7 +58,7 @@ export const SECTOR_4_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 8200,
+    reward: 7509,
   },
   {
     id: 's4-specter-hunt',
@@ -87,26 +86,27 @@ export const SECTOR_4_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 8450,
+    reward: 7976,
   },
   {
-    id: 's4-behemoth-approach',
-    name: 'Behemoth Approach',
-    description: 'Intercept bomber wing. Behemoth with heavy ordnance inbound.',
+    id: 's4-nuke-convoy',
+    name: 'Nuke Convoy',
+    description:
+      'Destroy elite strike force. Phantoms with Ace Fireflies and veteran Dragonflies.',
     difficulty: 'medium',
     sector: 4,
     tier: 'mid',
     waves: [
       {
-        enemies: [{ archetype: 'moth', skill: 'ace', count: 3 }],
+        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'fireant', skill: 'ace', count: 2 }],
+        enemies: [{ archetype: 'firefly', skill: 'ace', count: 3 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'behemoth', skill: 'veteran', count: 1 }],
+        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
         delay: [8, 12],
       },
       {
@@ -114,7 +114,7 @@ export const SECTOR_4_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 8650,
+    reward: 8399,
   },
   {
     id: 's4-scorpion-nest',
@@ -142,6 +142,6 @@ export const SECTOR_4_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 8850,
+    reward: 8490,
   },
 ];

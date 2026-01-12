@@ -30,61 +30,7 @@ export const SECTOR_1_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3700,
-  },
-  {
-    id: 's1-supply-raid',
-    name: 'Supply Raid',
-    description: 'Intercept enemy squadron. Shockers and Embers incoming.',
-    difficulty: 'medium',
-    sector: 1,
-    tier: 'mid',
-    waves: [
-      {
-        enemies: [{ archetype: 'shocker', skill: 'regular', count: 2 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'ember', skill: 'rookie', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'shocker', skill: 'regular', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'ember', skill: 'regular', count: 2 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 3750,
-  },
-  {
-    id: 's1-debris-field',
-    name: 'Debris Field',
-    description: 'Eliminate scattered hostiles. Mixed patrol craft.',
-    difficulty: 'medium',
-    sector: 1,
-    tier: 'mid',
-    waves: [
-      {
-        enemies: [{ archetype: 'ember', skill: 'regular', count: 3 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'gnat', skill: 'regular', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'shocker', skill: 'regular', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'ember', skill: 'regular', count: 2 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 3800,
+    reward: 3407,
   },
   {
     id: 's1-plasma-storm',
@@ -111,7 +57,34 @@ export const SECTOR_1_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3850,
+    reward: 3684,
+  },
+  {
+    id: 's1-supply-raid',
+    name: 'Supply Raid',
+    description: 'Intercept enemy squadron. Shockers and Embers incoming.',
+    difficulty: 'medium',
+    sector: 1,
+    tier: 'mid',
+    waves: [
+      {
+        enemies: [{ archetype: 'shocker', skill: 'regular', count: 2 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'ember', skill: 'rookie', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'shocker', skill: 'regular', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'ember', skill: 'regular', count: 2 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 3825,
   },
   {
     id: 's1-autocannon-alley',
@@ -138,6 +111,33 @@ export const SECTOR_1_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3900,
+    reward: 3935,
+  },
+  {
+    id: 's1-debris-field',
+    name: 'Debris Field',
+    description: 'Eliminate scattered hostiles. Mixed patrol craft.',
+    difficulty: 'medium',
+    sector: 1,
+    tier: 'mid',
+    waves: [
+      {
+        enemies: [{ archetype: 'ember', skill: 'regular', count: 3 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'gnat', skill: 'regular', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'shocker', skill: 'regular', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'ember', skill: 'regular', count: 2 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 3988,
   },
 ];

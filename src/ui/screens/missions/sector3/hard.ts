@@ -35,62 +35,7 @@ export const SECTOR_3_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 6200,
-  },
-  {
-    id: 's3-heavy-assault',
-    name: 'Heavy Assault',
-    description:
-      'Destroy assault force. Phantoms and Beetles with Ace Dragonfly escorts.',
-    difficulty: 'hard',
-    sector: 3,
-    tier: 'high',
-    waves: [
-      {
-        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 3 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'beetle', skill: 'regular', count: 1 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 6350,
-  },
-  {
-    id: 's3-storm-front',
-    name: 'Storm Front',
-    description: 'Survive the storm. Phantoms and Wasps with Ace pilots.',
-    difficulty: 'hard',
-    sector: 3,
-    tier: 'high',
-    waves: [
-      {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'wasp', skill: 'ace', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'wasp', skill: 'ace', count: 2 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 6450,
+    reward: 6512,
   },
   {
     id: 's3-warzone-breach',
@@ -114,6 +59,33 @@ export const SECTOR_3_HARD: Contract[] = [
       },
       {
         enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 3 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 6527,
+  },
+  {
+    id: 's3-storm-front',
+    name: 'Storm Front',
+    description: 'Survive the storm. Phantoms and Wasps with Ace pilots.',
+    difficulty: 'hard',
+    sector: 3,
+    tier: 'high',
+    waves: [
+      {
+        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'wasp', skill: 'ace', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'wasp', skill: 'ace', count: 2 }],
         delay: [8, 12],
       },
     ],
@@ -144,6 +116,34 @@ export const SECTOR_3_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 6700,
+    reward: 6781,
+  },
+  {
+    id: 's3-heavy-assault',
+    name: 'Heavy Assault',
+    description:
+      'Destroy assault force. Phantoms and Beetles with Ace Dragonfly escorts.',
+    difficulty: 'hard',
+    sector: 3,
+    tier: 'high',
+    waves: [
+      {
+        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 3 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'beetle', skill: 'regular', count: 1 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 6852,
   },
 ];

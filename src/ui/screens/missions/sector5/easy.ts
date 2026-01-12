@@ -6,34 +6,6 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_5_EASY: Contract[] = [
   {
-    id: 's5-lance-battery',
-    name: 'Lance Battery',
-    description:
-      'Destroy ace formation. Phantoms, Dragonflies, and Fireflies - all elite.',
-    difficulty: 'easy',
-    sector: 5,
-    tier: 'low',
-    waves: [
-      {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 3 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'firefly', skill: 'ace', count: 3 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 8350,
-  },
-  {
     id: 's5-wraith-scout',
     name: 'Wraith Scout',
     description:
@@ -59,13 +31,13 @@ export const SECTOR_5_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 8600,
+    reward: 8694,
   },
   {
-    id: 's5-no-mans-land',
-    name: "No Man's Land",
+    id: 's5-lance-battery',
+    name: 'Lance Battery',
     description:
-      'Survive beyond the frontier. Ace Phantoms, Dragonflies, and Fireflies.',
+      'Destroy ace formation. Phantoms, Dragonflies, and Fireflies - all elite.',
     difficulty: 'easy',
     sector: 5,
     tier: 'low',
@@ -79,43 +51,15 @@ export const SECTOR_5_EASY: Contract[] = [
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 3 }],
+        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'firefly', skill: 'ace', count: 2 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 8850,
-  },
-  {
-    id: 's5-meat-grinder',
-    name: 'Meat Grinder',
-    description:
-      'Survive the grinder. Four waves of Ace Phantoms and Dragonflies.',
-    difficulty: 'easy',
-    sector: 5,
-    tier: 'low',
-    waves: [
-      {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 3 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'firefly', skill: 'ace', count: 2 }],
+        enemies: [{ archetype: 'firefly', skill: 'ace', count: 3 }],
         delay: [8, 12],
       },
     ],
-    reward: 9000,
+    reward: 8734,
   },
   {
     id: 's5-elite-vanguard',
@@ -143,7 +87,63 @@ export const SECTOR_5_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 9150,
+    reward: 8734,
+  },
+  {
+    id: 's5-no-mans-land',
+    name: "No Man's Land",
+    description:
+      'Survive beyond the frontier. Ace Phantoms, Dragonflies, and Fireflies.',
+    difficulty: 'easy',
+    sector: 5,
+    tier: 'low',
+    waves: [
+      {
+        enemies: [{ archetype: 'phantom', skill: 'ace', count: 3 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'firefly', skill: 'ace', count: 2 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 8788,
+  },
+  {
+    id: 's5-meat-grinder',
+    name: 'Meat Grinder',
+    description:
+      'Survive the grinder. Four waves of Ace Phantoms and Dragonflies.',
+    difficulty: 'easy',
+    sector: 5,
+    tier: 'low',
+    waves: [
+      {
+        enemies: [{ archetype: 'phantom', skill: 'ace', count: 3 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'firefly', skill: 'ace', count: 2 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 8788,
   },
   {
     id: 's5-specter-formation',
@@ -170,6 +170,6 @@ export const SECTOR_5_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 9300,
+    reward: 10051,
   },
 ];

@@ -6,6 +6,34 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_3_MEDIUM: Contract[] = [
   {
+    id: 's3-heat-wave',
+    name: 'Heat Wave',
+    description:
+      'Survive the inferno. Fireants and Beetles with heavy support.',
+    difficulty: 'medium',
+    sector: 3,
+    tier: 'mid',
+    waves: [
+      {
+        enemies: [{ archetype: 'fireant', skill: 'veteran', count: 2 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'fireant', skill: 'veteran', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 5486,
+  },
+  {
     id: 's3-moth-swarm',
     name: 'Moth Swarm',
     description:
@@ -31,7 +59,35 @@ export const SECTOR_3_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 5400,
+    reward: 5533,
+  },
+  {
+    id: 's3-elite-patrol',
+    name: 'Elite Patrol',
+    description:
+      'Face veteran squadron. Wasps and Dragonflies with skilled pilots.',
+    difficulty: 'medium',
+    sector: 3,
+    tier: 'mid',
+    waves: [
+      {
+        enemies: [{ archetype: 'wasp', skill: 'regular', count: 2 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'wasp', skill: 'regular', count: 2 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 5694,
   },
   {
     id: 's3-supply-interdiction',
@@ -63,63 +119,7 @@ export const SECTOR_3_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 5600,
-  },
-  {
-    id: 's3-elite-patrol',
-    name: 'Elite Patrol',
-    description:
-      'Face veteran squadron. Wasps and Dragonflies with skilled pilots.',
-    difficulty: 'medium',
-    sector: 3,
-    tier: 'mid',
-    waves: [
-      {
-        enemies: [{ archetype: 'wasp', skill: 'regular', count: 2 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'wasp', skill: 'regular', count: 2 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 5750,
-  },
-  {
-    id: 's3-heat-wave',
-    name: 'Heat Wave',
-    description:
-      'Survive the inferno. Fireants and Beetles with heavy support.',
-    difficulty: 'medium',
-    sector: 3,
-    tier: 'mid',
-    waves: [
-      {
-        enemies: [{ archetype: 'fireant', skill: 'veteran', count: 2 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'fireant', skill: 'veteran', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 5900,
+    reward: 5729,
   },
   {
     id: 's3-rocketeer-assault',
@@ -147,6 +147,6 @@ export const SECTOR_3_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 6050,
+    reward: 5912,
   },
 ];

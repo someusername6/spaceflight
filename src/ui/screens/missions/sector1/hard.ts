@@ -30,61 +30,7 @@ export const SECTOR_1_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 4000,
-  },
-  {
-    id: 's1-pirate-outpost',
-    name: 'Pirate Outpost',
-    description: 'Clear pirate squadron. Multiple waves of tough hostiles.',
-    difficulty: 'hard',
-    sector: 1,
-    tier: 'high',
-    waves: [
-      {
-        enemies: [{ archetype: 'hornet', skill: 'regular', count: 2 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'ember', skill: 'regular', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'wasp', skill: 'regular', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'mantis', skill: 'regular', count: 2 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 4100,
-  },
-  {
-    id: 's1-raider-hunt',
-    name: 'Raider Hunt',
-    description: 'Hunt raider squadron. Heavy resistance expected.',
-    difficulty: 'hard',
-    sector: 1,
-    tier: 'high',
-    waves: [
-      {
-        enemies: [{ archetype: 'shocker', skill: 'regular', count: 3 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'ember', skill: 'regular', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'wasp', skill: 'regular', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'mantis', skill: 'regular', count: 2 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 4200,
+    reward: 4521,
   },
   {
     id: 's1-full-spectrum',
@@ -111,7 +57,7 @@ export const SECTOR_1_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 4400,
+    reward: 4534,
   },
   {
     id: 's1-frontier-siege',
@@ -138,6 +84,60 @@ export const SECTOR_1_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 4600,
+    reward: 4551,
+  },
+  {
+    id: 's1-raider-hunt',
+    name: 'Raider Hunt',
+    description: 'Hunt raider squadron. Heavy resistance expected.',
+    difficulty: 'hard',
+    sector: 1,
+    tier: 'high',
+    waves: [
+      {
+        enemies: [{ archetype: 'shocker', skill: 'regular', count: 3 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'ember', skill: 'regular', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'wasp', skill: 'regular', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'mantis', skill: 'regular', count: 2 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 4656,
+  },
+  {
+    id: 's1-pirate-outpost',
+    name: 'Pirate Outpost',
+    description: 'Clear pirate squadron. Multiple waves of tough hostiles.',
+    difficulty: 'hard',
+    sector: 1,
+    tier: 'high',
+    waves: [
+      {
+        enemies: [{ archetype: 'hornet', skill: 'regular', count: 2 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'ember', skill: 'regular', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'wasp', skill: 'regular', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'mantis', skill: 'regular', count: 2 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 4677,
   },
 ];

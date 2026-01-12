@@ -6,62 +6,6 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_5_MEDIUM: Contract[] = [
   {
-    id: 's5-iron-wall',
-    name: 'Iron Wall',
-    description:
-      'Break the iron wall. Heavy Phantoms, Dragonflies, and Fireflies.',
-    difficulty: 'medium',
-    sector: 5,
-    tier: 'mid',
-    waves: [
-      {
-        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 3 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'firefly', skill: 'ace', count: 3 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 10800,
-  },
-  {
-    id: 's5-wraith-patrol',
-    name: 'Wraith Patrol',
-    description:
-      'Hunt Wraith patrol. Nuclear lance carriers with elite escorts.',
-    difficulty: 'medium',
-    sector: 5,
-    tier: 'mid',
-    waves: [
-      {
-        enemies: [{ archetype: 'wraith', skill: 'elite', count: 1 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'elite', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'wraith', skill: 'elite', count: 1 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'elite', count: 3 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 11100,
-  },
-  {
     id: 's5-bomber-wing',
     name: 'Bomber Wing',
     description: 'Destroy bomber wing. Behemoths with Phantom escorts.',
@@ -86,7 +30,7 @@ export const SECTOR_5_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 11400,
+    reward: 9967,
   },
   {
     id: 's5-elite-guard',
@@ -114,7 +58,7 @@ export const SECTOR_5_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 11600,
+    reward: 11167,
   },
   {
     id: 's5-heavy-metal',
@@ -141,6 +85,62 @@ export const SECTOR_5_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 11850,
+    reward: 11167,
+  },
+  {
+    id: 's5-iron-wall',
+    name: 'Iron Wall',
+    description:
+      'Break the iron wall. Heavy Phantoms, Dragonflies, and Fireflies.',
+    difficulty: 'medium',
+    sector: 5,
+    tier: 'mid',
+    waves: [
+      {
+        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 3 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'phantom', skill: 'ace', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'firefly', skill: 'ace', count: 3 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 11252,
+  },
+  {
+    id: 's5-wraith-patrol',
+    name: 'Wraith Patrol',
+    description:
+      'Hunt Wraith patrol. Nuclear lance carriers with elite escorts.',
+    difficulty: 'medium',
+    sector: 5,
+    tier: 'mid',
+    waves: [
+      {
+        enemies: [{ archetype: 'wraith', skill: 'elite', count: 1 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'phantom', skill: 'elite', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'wraith', skill: 'elite', count: 1 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'phantom', skill: 'elite', count: 3 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 11488,
   },
 ];

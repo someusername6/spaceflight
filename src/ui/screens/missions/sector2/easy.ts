@@ -6,6 +6,34 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_2_EASY: Contract[] = [
   {
+    id: 's2-border-skirmish',
+    name: 'Border Skirmish',
+    description:
+      'Engage contested space. Fireflies, Dragonflies, and Stingers.',
+    difficulty: 'easy',
+    sector: 2,
+    tier: 'low',
+    waves: [
+      {
+        enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'stinger', skill: 'regular', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 3366,
+  },
+  {
     id: 's2-fuel-depot',
     name: 'Fuel Depot',
     description:
@@ -31,7 +59,7 @@ export const SECTOR_2_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3200,
+    reward: 3614,
   },
   {
     id: 's2-convoy-escort',
@@ -58,63 +86,7 @@ export const SECTOR_2_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3400,
-  },
-  {
-    id: 's2-cluster-run',
-    name: 'Cluster Run',
-    description:
-      'Destroy Locust squadron. Cluster missiles incoming - watch spacing.',
-    difficulty: 'easy',
-    sector: 2,
-    tier: 'low',
-    waves: [
-      {
-        enemies: [{ archetype: 'locust', skill: 'regular', count: 2 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'locust', skill: 'regular', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'stinger', skill: 'veteran', count: 2 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 3500,
-  },
-  {
-    id: 's2-border-skirmish',
-    name: 'Border Skirmish',
-    description:
-      'Engage contested space. Fireflies, Dragonflies, and Stingers.',
-    difficulty: 'easy',
-    sector: 2,
-    tier: 'low',
-    waves: [
-      {
-        enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'stinger', skill: 'regular', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 3600,
+    reward: 3705,
   },
   {
     id: 's2-starburst-field',
@@ -141,7 +113,7 @@ export const SECTOR_2_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3650,
+    reward: 3736,
   },
   {
     id: 's2-slug-patrol',
@@ -169,6 +141,34 @@ export const SECTOR_2_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3750,
+    reward: 3765,
+  },
+  {
+    id: 's2-cluster-run',
+    name: 'Cluster Run',
+    description:
+      'Destroy Locust squadron. Cluster missiles incoming - watch spacing.',
+    difficulty: 'easy',
+    sector: 2,
+    tier: 'low',
+    waves: [
+      {
+        enemies: [{ archetype: 'locust', skill: 'regular', count: 2 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'locust', skill: 'regular', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'stinger', skill: 'veteran', count: 2 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 3870,
   },
 ];

@@ -31,7 +31,34 @@ export const SECTOR_2_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 4400,
+    reward: 3971,
+  },
+  {
+    id: 's2-heavy-metal',
+    name: 'Heavy Metal',
+    description: 'Destroy heavy fighters. Bruisers with slug cannons leading.',
+    difficulty: 'medium',
+    sector: 2,
+    tier: 'mid',
+    waves: [
+      {
+        enemies: [{ archetype: 'bruiser', skill: 'regular', count: 2 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'bruiser', skill: 'veteran', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 4218,
   },
   {
     id: 's2-comm-relay',
@@ -59,34 +86,7 @@ export const SECTOR_2_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 4600,
-  },
-  {
-    id: 's2-viper-nest',
-    name: 'Viper Nest',
-    description: 'Clear Viper squadron. Green laser fighters with long range.',
-    difficulty: 'medium',
-    sector: 2,
-    tier: 'mid',
-    waves: [
-      {
-        enemies: [{ archetype: 'viper', skill: 'regular', count: 2 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'viper', skill: 'regular', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 4700,
+    reward: 4552,
   },
   {
     id: 's2-phantom-strike',
@@ -114,33 +114,33 @@ export const SECTOR_2_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 4850,
+    reward: 4761,
   },
   {
-    id: 's2-heavy-metal',
-    name: 'Heavy Metal',
-    description: 'Destroy heavy fighters. Bruisers with slug cannons leading.',
+    id: 's2-viper-nest',
+    name: 'Viper Nest',
+    description: 'Clear Viper squadron. Green laser fighters with long range.',
     difficulty: 'medium',
     sector: 2,
     tier: 'mid',
     waves: [
       {
-        enemies: [{ archetype: 'bruiser', skill: 'regular', count: 2 }],
+        enemies: [{ archetype: 'viper', skill: 'regular', count: 2 }],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
+        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'bruiser', skill: 'veteran', count: 2 }],
+        enemies: [{ archetype: 'viper', skill: 'regular', count: 2 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
+        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
         delay: [8, 12],
       },
     ],
-    reward: 5000,
+    reward: 4789,
   },
 ];
