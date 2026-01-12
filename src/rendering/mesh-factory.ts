@@ -19,6 +19,7 @@ const MISSILE_VISUALS: Record<
   { radius: number; length: number; color: number; emissive?: number }
 > = {
   rocket: { radius: 0.6, length: 2.5, color: 0xff4400 },
+  starburst: { radius: 0.6, length: 2.5, color: 0xffcc00, emissive: 0xffaa00 },
   seeker: { radius: 0.4, length: 3.0, color: 0x00ffcc },
   dart: { radius: 0.25, length: 3.5, color: 0xaaddff, emissive: 0x4488ff },
   cluster: { radius: 0.35, length: 2.0, color: 0xffaa00 },

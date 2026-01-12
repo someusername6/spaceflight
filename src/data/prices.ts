@@ -57,8 +57,9 @@ export const AMMO_PRICES: Record<string, { buy: number; sell: number }> = {
 
 /** Secondary weapon/missile prices (per missile, consumable) */
 export const SECONDARY_PRICES: Record<string, { buy: number; sell: number }> = {
-  // Dumbfire (cheap)
+  // Dumbfire (cheap to moderate)
   rocket: { buy: 5, sell: 2 },
+  starburst: { buy: 15, sell: 7 },
   cluster: { buy: 8, sell: 4 },
 
   // Homing (moderate)

@@ -68,6 +68,7 @@ export const SECONDARY_UNLOCK_SECTOR: Record<string, number> = {
   // Sector 2: Mid-tier missiles
   dart: 2,
   cluster: 2,
+  starburst: 2,
 
   // Sector 3: Advanced missiles
   torpedo: 3,

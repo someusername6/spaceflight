@@ -88,6 +88,17 @@ function createSecondaryFromEquipped(
   if (stats.isNuke) weapon.isNuke = stats.isNuke;
   if (stats.isDecoy) weapon.isDecoy = stats.isDecoy;
 
+  // Shrapnel/flak properties for proximity detonation
+  if (stats.flakRadius !== undefined) weapon.flakRadius = stats.flakRadius;
+  if (stats.shrapnelCount !== undefined)
+    weapon.shrapnelCount = stats.shrapnelCount;
+  if (stats.shrapnelDamage !== undefined)
+    weapon.shrapnelDamage = stats.shrapnelDamage;
+  if (stats.shrapnelSpeed !== undefined)
+    weapon.shrapnelSpeed = stats.shrapnelSpeed;
+  if (stats.shrapnelRange !== undefined)
+    weapon.shrapnelRange = stats.shrapnelRange;
+
   return weapon;
 }
 

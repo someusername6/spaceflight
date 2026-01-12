@@ -30,6 +30,7 @@ import {
   spawnMissileExplosion,
   trackTarget,
 } from './missile-helpers';
+import { spawnShrapnel } from './shrapnel';
 
 // Safe distance before missile can collide with owner (avoids spawn-inside-hitbox issues)
 // Set high enough that missiles never hit their owner in normal combat scenarios
@@ -176,6 +177,66 @@ export function missileSystem(world: World, dt: number): void {
 
       // Store current distance for next frame comparison
       missile.previousClosestEnemyDistance = closestDistance;
+    }
+
+    // Check for shrapnel proximity detonation (Starburst-like missiles)
+    if (missile.flakRadius && missile.flakRadius > 0 && missile.shrapnelCount) {
+      const missileFaction = getComponent<FactionComponent>(
+        world,
+        entity,
+        'faction',
+      );
+
+      // Find closest enemy distance
+      const closestDistance = findClosestEnemyDistance(
+        world,
+        transform.position,
+        missile.owner,
+        missileFaction,
+        { includeMissiles: false },
+      );
+
+      const previousDistance = missile.previousClosestEnemyDistance;
+      const withinRadius = closestDistance < missile.flakRadius;
+      const wasWithinRadius =
+        previousDistance !== undefined && previousDistance < missile.flakRadius;
+      const distanceIncreasing =
+        previousDistance !== undefined && closestDistance > previousDistance;
+
+      // Detonate if we're past closest approach (distance increasing while within radius)
+      if (withinRadius && wasWithinRadius && distanceIncreasing) {
+        // Spawn shrapnel
+        spawnShrapnel(
+          world,
+          transform.position,
+          missile.shrapnelCount,
+          missile.owner,
+          missileFaction,
+          missile.missileType.charAt(0).toUpperCase() +
+            missile.missileType.slice(1), // Capitalize for stats (e.g., "Starburst")
+          {
+            damage: missile.shrapnelDamage,
+            speed: missile.shrapnelSpeed,
+            range: missile.shrapnelRange,
+          },
+        );
+
+        // Track stats
+        if (world.systemState.combatStats) {
+          world.systemState.combatStats.shrapnelSpawned =
+            (world.systemState.combatStats.shrapnelSpawned || 0) +
+            missile.shrapnelCount;
+        }
+
+        spawnMissileExplosion(world, transform.position, false);
+        toRemove.push(entity);
+        continue;
+      }
+
+      // Store current distance for next frame comparison (if not already set by AoE logic)
+      if (missile.previousClosestEnemyDistance === undefined) {
+        missile.previousClosestEnemyDistance = closestDistance;
+      }
     }
 
     // Check if expired

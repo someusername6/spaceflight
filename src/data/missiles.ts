@@ -27,6 +27,16 @@ export interface MissileStats {
   isDecoy?: boolean;
   /** Is this a nuke (special explosion effects)? */
   isNuke?: boolean;
+  /** Proximity detonation radius - explodes when enemies within range */
+  flakRadius?: number;
+  /** Number of shrapnel projectiles on detonation */
+  shrapnelCount?: number;
+  /** Shrapnel damage per piece */
+  shrapnelDamage?: number;
+  /** Shrapnel projectile speed (m/s) */
+  shrapnelSpeed?: number;
+  /** Shrapnel travel range before expiring */
+  shrapnelRange?: number;
 }
 
 /**
@@ -47,6 +57,25 @@ export const MISSILES: Record<string, MissileStats> = {
     lockSpeed: 0,
     lockConeAngle: 60,
     capacity: 12, // Cheap dumbfire, carry lots
+  },
+  starburst: {
+    name: 'Starburst',
+    requiresLock: false,
+    speed: 600,
+    turnRate: 0,
+    range: 1000,
+    damage: 0, // No impact damage, only shrapnel
+    fireRate: 0.5,
+    lockSpeed: 0,
+    lockConeAngle: 60,
+    capacity: 12,
+    // Proximity shrapnel detonation (like Flak but as a missile)
+    // Tuned for ~3x Rocket value: closer detonation, more shrapnel
+    flakRadius: 30, // Detonate closer for better hit rate
+    shrapnelCount: 50, // More pieces for area saturation
+    shrapnelDamage: 4,
+    shrapnelSpeed: 500,
+    shrapnelRange: 100, // Shorter range for denser pattern
   },
   cluster: {
     name: 'Cluster',

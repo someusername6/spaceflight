@@ -7,11 +7,14 @@
 import * as THREE from 'three';
 import type { AimError } from '../../components/aim-error';
 import { applyAimError } from '../../components/aim-error';
-import { createDecoy } from '../../components/decoy';
 import type { FactionComponent } from '../../components/faction';
 import { createFaction } from '../../components/faction';
 import { createHealth } from '../../components/health';
-import { createMissile, type MissileType } from '../../components/missile';
+import {
+  createMissile,
+  type MissileShrapnelConfig,
+  type MissileType,
+} from '../../components/missile';
 import type {
   CreateProjectileOptions,
   ProjectileCategory,
@@ -22,20 +25,14 @@ import type { Transform } from '../../components/transform';
 import { createTransform } from '../../components/transform';
 import type { SecondaryWeapon } from '../../components/weapons';
 import { addComponent, createEntity } from '../../core/ecs';
-import { randomUnitVector } from '../../core/prng';
 import type { Entity, World } from '../../core/types';
 import { createCollision } from '../collision';
 import { getForward } from '../physics';
-import {
-  recordDecoyDeployed,
-  recordMissileLaunched,
-  recordShotFired,
-} from '../stats';
+import { recordMissileLaunched, recordShotFired } from '../stats';
 
 /** Spawn offsets from ship center */
 const PROJECTILE_SPAWN_OFFSET = 3;
 const MISSILE_SPAWN_OFFSET = 4; // Owner collision ignored for first 20m of travel
-const DECOY_SPAWN_OFFSET = 3; // Below the ship (downward)
 
 /** Lateral offset between weapon banks */
 const BANK_LATERAL_OFFSET = 1.5;
@@ -47,7 +44,6 @@ const MISSILE_RADIUS = 1.0;
 // Reusable vectors (avoid per-spawn allocations)
 const spawnPos = new THREE.Vector3();
 const rightAxis = new THREE.Vector3();
-const downAxis = new THREE.Vector3();
 const toIntercept = new THREE.Vector3();
 
 /** Autoaim parameters for projectile correction */
@@ -301,6 +297,21 @@ export function spawnMissile(
 
   // Create missile component with type for visuals
   const missileType = weapon.name.toLowerCase() as MissileType;
+
+  // Build shrapnel config if weapon has shrapnel properties
+  let shrapnelConfig: MissileShrapnelConfig | undefined;
+  if (weapon.flakRadius !== undefined) {
+    shrapnelConfig = { flakRadius: weapon.flakRadius };
+    if (weapon.shrapnelCount !== undefined)
+      shrapnelConfig.shrapnelCount = weapon.shrapnelCount;
+    if (weapon.shrapnelDamage !== undefined)
+      shrapnelConfig.shrapnelDamage = weapon.shrapnelDamage;
+    if (weapon.shrapnelSpeed !== undefined)
+      shrapnelConfig.shrapnelSpeed = weapon.shrapnelSpeed;
+    if (weapon.shrapnelRange !== undefined)
+      shrapnelConfig.shrapnelRange = weapon.shrapnelRange;
+  }
+
   addComponent(
     world,
     missile,
@@ -315,6 +326,7 @@ export function spawnMissile(
       weapon.aoeRadius ?? 0,
       weapon.isNuke ?? false,
       missileType,
+      shrapnelConfig,
     ),
   );
 
@@ -340,56 +352,5 @@ export function spawnMissile(
   }
 }
 
-/** Decoy collision radius */
-const DECOY_RADIUS = 1.5;
-
-// Reusable vector for decoy direction (avoid per-call allocations)
-const decoyDirection = new THREE.Vector3();
-
-/** Spawn a decoy entity (launches from bottom of ship with downward bias) */
-export function spawnDecoy(
-  world: World,
-  owner: Entity,
-  ownerTransform: Transform,
-  ownerFaction: FactionComponent | undefined,
-): void {
-  // Get ship's local "down" direction (negative Y in local space)
-  downAxis.set(0, -1, 0).applyQuaternion(ownerTransform.rotation);
-  spawnPos
-    .copy(ownerTransform.position)
-    .addScaledVector(downAxis, DECOY_SPAWN_OFFSET);
-
-  // Random direction biased downward (away from ship)
-  const randomDir = randomUnitVector(world.prng);
-  decoyDirection.set(randomDir.x, randomDir.y, randomDir.z);
-  // Bias toward downward (ship's local down direction)
-  decoyDirection.addScaledVector(downAxis, 1.5).normalize();
-
-  const decoy = createEntity(world);
-
-  // Create transform at spawn position
-  const decoyTransform = createTransform(spawnPos.x, spawnPos.y, spawnPos.z);
-  addComponent(world, decoy, decoyTransform);
-
-  // Create decoy component
-  addComponent(world, decoy, createDecoy(owner, decoyDirection));
-
-  // Add collision (decoys can destroy missiles on contact)
-  addComponent(world, decoy, createCollision(DECOY_RADIUS));
-
-  // Add health (decoys have 1 HP like missiles)
-  addComponent(world, decoy, createHealth(1));
-
-  // Decoys inherit owner's faction
-  if (ownerFaction) {
-    addComponent(world, decoy, createFaction(ownerFaction.faction));
-  }
-
-  // Track per-ship stats
-  recordDecoyDeployed(world, owner);
-
-  // Track aggregate stats if enabled (for balance analysis)
-  if (world.systemState.combatStats) {
-    world.systemState.combatStats.decoysLaunched++;
-  }
-}
+// Re-export spawnDecoy from decoy-spawning.ts for backwards compatibility
+export { spawnDecoy } from './decoy-spawning';

@@ -131,6 +131,8 @@ export interface SystemState {
     damageDealt: Record<string, number>;
     /** Shrapnel pieces that hit targets (for flak) */
     shrapnelHit: Record<string, number>;
+    /** Total shrapnel projectiles spawned */
+    shrapnelSpawned: number;
     /** Missiles fired by type */
     missilesFired: Record<string, number>;
     /** Missiles that hit targets */

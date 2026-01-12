@@ -77,6 +77,16 @@ export interface SecondaryWeapon {
   aoeRadius?: number; // Area of effect radius (undefined = no AoE)
   isNuke?: boolean; // Special nuke explosion effects
   isDecoy?: boolean; // Countermeasure - distracts missiles
+  /** Proximity detonation radius - explodes when enemies within range */
+  flakRadius?: number;
+  /** Number of shrapnel projectiles on detonation */
+  shrapnelCount?: number;
+  /** Shrapnel damage per piece */
+  shrapnelDamage?: number;
+  /** Shrapnel projectile speed (m/s) */
+  shrapnelSpeed?: number;
+  /** Shrapnel travel range before expiring */
+  shrapnelRange?: number;
 }
 
 /** Decoy weapon definition (bankSize, count, maxCount set at creation) */

@@ -13,6 +13,7 @@ export { MISSILES } from '../data/missiles';
 /** Missile type for visual differentiation */
 export type MissileType =
   | 'rocket'
+  | 'starburst'
   | 'seeker'
   | 'dart'
   | 'cluster'
@@ -37,6 +38,25 @@ export interface Missile extends ComponentBase {
   resistedDecoys: Set<Entity>; // Decoys this missile already resisted (no re-roll)
   /** Previous frame's closest distance to enemy (for AoE proximity detonation) */
   previousClosestEnemyDistance?: number;
+  /** Proximity detonation radius - explodes when enemies within range */
+  flakRadius?: number;
+  /** Number of shrapnel projectiles on detonation */
+  shrapnelCount?: number;
+  /** Shrapnel damage per piece */
+  shrapnelDamage?: number;
+  /** Shrapnel projectile speed (m/s) */
+  shrapnelSpeed?: number;
+  /** Shrapnel travel range before expiring */
+  shrapnelRange?: number;
+}
+
+/** Optional shrapnel config for missiles */
+export interface MissileShrapnelConfig {
+  flakRadius?: number;
+  shrapnelCount?: number;
+  shrapnelDamage?: number;
+  shrapnelSpeed?: number;
+  shrapnelRange?: number;
 }
 
 /** Creates a Missile component */
@@ -51,8 +71,9 @@ export function createMissile(
   aoeRadius = 0,
   isNuke = false,
   missileType: MissileType = 'seeker',
+  shrapnel?: MissileShrapnelConfig,
 ): Missile {
-  return {
+  const missile: Missile = {
     type: 'missile',
     owner,
     target,
@@ -67,6 +88,20 @@ export function createMissile(
     missileType,
     resistedDecoys: new Set(),
   };
+
+  // Only add shrapnel properties if defined (exactOptionalPropertyTypes)
+  if (shrapnel?.flakRadius !== undefined)
+    missile.flakRadius = shrapnel.flakRadius;
+  if (shrapnel?.shrapnelCount !== undefined)
+    missile.shrapnelCount = shrapnel.shrapnelCount;
+  if (shrapnel?.shrapnelDamage !== undefined)
+    missile.shrapnelDamage = shrapnel.shrapnelDamage;
+  if (shrapnel?.shrapnelSpeed !== undefined)
+    missile.shrapnelSpeed = shrapnel.shrapnelSpeed;
+  if (shrapnel?.shrapnelRange !== undefined)
+    missile.shrapnelRange = shrapnel.shrapnelRange;
+
+  return missile;
 }
 
 /** Check if missile has exceeded its range */
