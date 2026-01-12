@@ -141,7 +141,7 @@ export const CORE_ARCHETYPES: Record<string, EnemyShipStats> = {
 
   // Fighter with green lasers - mid-range beam fighter
   viper: createArchetype('fighter', {
-    playstyle: 'brawler',
+    playstyle: 'beam', // Beam weapon - constant defensive thresholds
     primaryWeapons: [
       { name: 'greenLaser', size: 1 },
       { name: 'greenLaser', size: 1 },

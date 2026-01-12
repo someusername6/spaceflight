@@ -8,8 +8,7 @@ export const SECTOR_5_EASY: Contract[] = [
   {
     id: 's5-wraith-scout',
     name: 'Wraith Scout',
-    description:
-      'Intercept nuclear lance carrier. A Wraith with elite escorts.',
+    description: 'Intercept nuclear lance carrier. A Wraith with ace escorts.',
     difficulty: 'easy',
     sector: 5,
     tier: 'low',
@@ -19,11 +18,11 @@ export const SECTOR_5_EASY: Contract[] = [
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'wraith', skill: 'ace', count: 1 }],
+        enemies: [{ archetype: 'wraith', skill: 'veteran', count: 1 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 3 }],
+        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
         delay: [8, 12],
       },
       {
@@ -31,13 +30,13 @@ export const SECTOR_5_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 8694,
+    reward: 8147,
   },
   {
     id: 's5-ace-formation',
     name: 'Ace Formation',
     description:
-      'Destroy ace formation. Phantoms, Dragonflies, and Fireflies - all elite.',
+      'Destroy ace formation. Phantoms, Dragonflies, and Fireflies - ace pilots.',
     difficulty: 'easy',
     sector: 5,
     tier: 'low',
@@ -47,7 +46,7 @@ export const SECTOR_5_EASY: Contract[] = [
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 3 }],
+        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
         delay: [8, 12],
       },
       {
@@ -55,24 +54,28 @@ export const SECTOR_5_EASY: Contract[] = [
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'firefly', skill: 'ace', count: 3 }],
+        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
         delay: [8, 12],
       },
     ],
-    reward: 8734,
+    reward: 8668,
   },
   {
-    id: 's5-elite-vanguard',
-    name: 'Elite Vanguard',
+    id: 's5-scorpion-nest',
+    name: 'Scorpion Nest',
     description:
-      'Engage elite vanguard. Phantoms and Dragonflies with Ace pilots.',
+      'Clear sniper position. Scorpions with railguns and elite escorts.',
     difficulty: 'easy',
     sector: 5,
     tier: 'low',
     waves: [
       {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 3 }],
+        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
         delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'scorpion', skill: 'ace', count: 1 }],
+        delay: [8, 12],
       },
       {
         enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 3 }],
@@ -82,12 +85,8 @@ export const SECTOR_5_EASY: Contract[] = [
         enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
         delay: [8, 12],
       },
-      {
-        enemies: [{ archetype: 'firefly', skill: 'ace', count: 3 }],
-        delay: [8, 12],
-      },
     ],
-    reward: 8734,
+    reward: 9818,
   },
   {
     id: 's5-no-mans-land',
@@ -115,7 +114,7 @@ export const SECTOR_5_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 8788,
+    reward: 10127,
   },
   {
     id: 's5-meat-grinder',
@@ -143,33 +142,6 @@ export const SECTOR_5_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 8788,
-  },
-  {
-    id: 's5-specter-formation',
-    name: 'Specter Formation',
-    description: 'Destroy sniper formation. Specter with elite escorts.',
-    difficulty: 'easy',
-    sector: 5,
-    tier: 'low',
-    waves: [
-      {
-        enemies: [{ archetype: 'specter', skill: 'ace', count: 1 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 10051,
+    reward: 10127,
   },
 ];

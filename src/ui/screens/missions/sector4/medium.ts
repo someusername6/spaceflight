@@ -22,7 +22,10 @@ export const SECTOR_4_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'behemoth', skill: 'veteran', count: 1 }],
+        enemies: [
+          { archetype: 'behemoth', skill: 'ace', count: 2 },
+          { archetype: 'phantom', skill: 'veteran', count: 1 },
+        ],
         delay: [8, 12],
       },
       {
@@ -30,35 +33,7 @@ export const SECTOR_4_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 7211,
-  },
-  {
-    id: 's4-veteran-squadron',
-    name: 'Veteran Squadron',
-    description:
-      'Face elite pilots. Phantoms, Wasps, and Dragonflies - all veteran.',
-    difficulty: 'medium',
-    sector: 4,
-    tier: 'mid',
-    waves: [
-      {
-        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'wasp', skill: 'veteran', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 7509,
+    reward: 7391,
   },
   {
     id: 's4-specter-hunt',
@@ -74,7 +49,7 @@ export const SECTOR_4_MEDIUM: Contract[] = [
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'specter', skill: 'regular', count: 1 }],
+        enemies: [{ archetype: 'specter', skill: 'veteran', count: 1 }],
         delay: [8, 12],
       },
       {
@@ -86,7 +61,31 @@ export const SECTOR_4_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 7976,
+    reward: 7586,
+  },
+  {
+    id: 's4-veteran-squadron',
+    name: 'Veteran Squadron',
+    description:
+      'Face elite pilots. Phantoms, Wasps, and Dragonflies - all veteran.',
+    difficulty: 'medium',
+    sector: 4,
+    tier: 'mid',
+    waves: [
+      {
+        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
+        delay: [3, 6],
+      },
+      {
+        enemies: [{ archetype: 'wasp', skill: 'ace', count: 2 }],
+        delay: [4, 7],
+      },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 3 }],
+        delay: [4, 7],
+      },
+    ],
+    reward: 7590,
   },
   {
     id: 's4-elite-strike',
@@ -99,22 +98,22 @@ export const SECTOR_4_MEDIUM: Contract[] = [
     waves: [
       {
         enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
-        delay: [5, 10],
+        delay: [4, 8],
       },
       {
         enemies: [{ archetype: 'firefly', skill: 'ace', count: 3 }],
-        delay: [8, 12],
+        delay: [6, 10],
       },
       {
         enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
-        delay: [8, 12],
+        delay: [6, 10],
       },
       {
         enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
-        delay: [8, 12],
+        delay: [6, 10],
       },
     ],
-    reward: 8399,
+    reward: 8333,
   },
   {
     id: 's4-scorpion-nest',
@@ -142,6 +141,6 @@ export const SECTOR_4_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 8490,
+    reward: 8432,
   },
 ];

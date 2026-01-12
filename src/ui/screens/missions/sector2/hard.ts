@@ -6,61 +6,6 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_2_HARD: Contract[] = [
   {
-    id: 's2-elite-hunters',
-    name: 'Elite Hunters',
-    description:
-      'Face elite formation. Phantoms, Bruisers, and Shredders together.',
-    difficulty: 'hard',
-    sector: 2,
-    tier: 'high',
-    waves: [
-      {
-        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'bruiser', skill: 'veteran', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'shredder', skill: 'veteran', count: 1 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 3 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 5217,
-  },
-  {
-    id: 's2-laser-storm',
-    name: 'Laser Storm',
-    description: 'Survive laser onslaught. Fireflies and Vipers closing fast.',
-    difficulty: 'hard',
-    sector: 2,
-    tier: 'high',
-    waves: [
-      {
-        enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'viper', skill: 'veteran', count: 2 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 5470,
-  },
-  {
     id: 's2-laser-gauntlet',
     name: 'Laser Gauntlet',
     description:
@@ -86,7 +31,35 @@ export const SECTOR_2_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 5506,
+    reward: 5215,
+  },
+  {
+    id: 's2-elite-hunters',
+    name: 'Elite Hunters',
+    description:
+      'Face elite formation. Phantoms, Bruisers, and Shredders together.',
+    difficulty: 'hard',
+    sector: 2,
+    tier: 'high',
+    waves: [
+      {
+        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'bruiser', skill: 'veteran', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'shredder', skill: 'veteran', count: 1 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 3 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 5364,
   },
   {
     id: 's2-contested-ground',
@@ -105,7 +78,7 @@ export const SECTOR_2_HARD: Contract[] = [
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
+        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
         delay: [8, 12],
       },
       {
@@ -113,7 +86,34 @@ export const SECTOR_2_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 5798,
+    reward: 5477,
+  },
+  {
+    id: 's2-laser-storm',
+    name: 'Laser Storm',
+    description: 'Survive laser onslaught. Fireflies and Vipers closing fast.',
+    difficulty: 'hard',
+    sector: 2,
+    tier: 'high',
+    waves: [
+      {
+        enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'viper', skill: 'veteran', count: 3 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 5700,
   },
   {
     id: 's2-wasp-nest',
@@ -125,21 +125,21 @@ export const SECTOR_2_HARD: Contract[] = [
     waves: [
       {
         enemies: [{ archetype: 'wasp', skill: 'regular', count: 2 }],
-        delay: [5, 10],
+        delay: [8, 12],
       },
       {
         enemies: [{ archetype: 'wasp', skill: 'veteran', count: 3 }],
-        delay: [8, 12],
+        delay: [10, 15],
       },
       {
         enemies: [{ archetype: 'wasp', skill: 'veteran', count: 2 }],
-        delay: [8, 12],
+        delay: [10, 15],
       },
       {
         enemies: [{ archetype: 'wasp', skill: 'veteran', count: 3 }],
-        delay: [8, 12],
+        delay: [10, 15],
       },
     ],
-    reward: 5827,
+    reward: 5931,
   },
 ];

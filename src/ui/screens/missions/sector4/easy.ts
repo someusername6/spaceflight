@@ -6,34 +6,6 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_4_EASY: Contract[] = [
   {
-    id: 's4-veteran-assault',
-    name: 'Veteran Assault',
-    description:
-      'Destroy assault group. Phantoms, Dragonflies, and Fireflies - all veteran.',
-    difficulty: 'easy',
-    sector: 4,
-    tier: 'low',
-    waves: [
-      {
-        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 2 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 5469,
-  },
-  {
     id: 's4-nuke-warning',
     name: 'Nuke Warning',
     description:
@@ -51,7 +23,34 @@ export const SECTOR_4_EASY: Contract[] = [
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
+        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'firefly', skill: 'ace', count: 3 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 4645,
+  },
+  {
+    id: 's4-railgun-scouts',
+    name: 'Railgun Scouts',
+    description: 'Engage sniper patrol. Scorpions with railguns at long range.',
+    difficulty: 'easy',
+    sector: 4,
+    tier: 'low',
+    waves: [
+      {
+        enemies: [{ archetype: 'scorpion', skill: 'regular', count: 1 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
         delay: [8, 12],
       },
       {
@@ -59,7 +58,7 @@ export const SECTOR_4_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 5742,
+    reward: 5383,
   },
   {
     id: 's4-perimeter-breach',
@@ -87,34 +86,7 @@ export const SECTOR_4_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 6060,
-  },
-  {
-    id: 's4-railgun-scouts',
-    name: 'Railgun Scouts',
-    description: 'Engage sniper patrol. Scorpions with railguns at long range.',
-    difficulty: 'easy',
-    sector: 4,
-    tier: 'low',
-    waves: [
-      {
-        enemies: [{ archetype: 'scorpion', skill: 'regular', count: 1 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 6112,
+    reward: 6275,
   },
   {
     id: 's4-titan-escort',
@@ -141,7 +113,35 @@ export const SECTOR_4_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 6513,
+    reward: 6686,
+  },
+  {
+    id: 's4-veteran-assault',
+    name: 'Veteran Assault',
+    description:
+      'Destroy assault group. Phantoms, Dragonflies, and Fireflies - all veteran.',
+    difficulty: 'easy',
+    sector: 4,
+    tier: 'low',
+    waves: [
+      {
+        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 2 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 7303,
   },
   {
     id: 's4-garrison-duty',
@@ -169,6 +169,6 @@ export const SECTOR_4_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 7933,
+    reward: 7420,
   },
 ];

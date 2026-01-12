@@ -10,7 +10,7 @@ import { createArchetype, type EnemyShipStats } from './types';
 export const ELITE_ARCHETYPES: Record<string, EnemyShipStats> = {
   // Striker with railguns - heavy assault, high damage output
   titan: createArchetype('striker', {
-    playstyle: 'brawler',
+    playstyle: 'gunboat', // 5 primaries - constant firing constraints
     primaryWeapons: [
       { name: 'railgun', size: 2 },
       { name: 'railgun', size: 2 },
@@ -25,7 +25,7 @@ export const ELITE_ARCHETYPES: Record<string, EnemyShipStats> = {
   // Defender with nukes - tanky missile platform
   // Defender banks: secondary [2,2,1,1,1]
   juggernaut: createArchetype('defender', {
-    playstyle: 'brawler',
+    playstyle: 'beam', // Beam weapon - constant defensive thresholds
     primaryWeapons: [
       { name: 'redLaser', size: 2 },
       { name: 'redLaser', size: 2 },
@@ -78,7 +78,7 @@ export const ELITE_ARCHETYPES: Record<string, EnemyShipStats> = {
   // Interceptor with green lasers - fast elite dogfighter
   // Interceptor banks: primary [2,2], secondary [1,2,1]
   phantom: createArchetype('interceptor', {
-    playstyle: 'brawler',
+    playstyle: 'beam', // Beam weapon - constant defensive thresholds
     primaryWeapons: [
       { name: 'greenLaser', size: 2 },
       { name: 'greenLaser', size: 2 },

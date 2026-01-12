@@ -6,16 +6,15 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_3_EASY: Contract[] = [
   {
-    id: 's3-lightning-strike',
-    name: 'Lightning Strike',
-    description:
-      'Engage electrical attack. Moths with lightning cannons incoming.',
+    id: 's3-torch-bearers',
+    name: 'Torch Bearers',
+    description: 'Survive the heat. Fireants with torch beams - stay at range.',
     difficulty: 'easy',
     sector: 3,
     tier: 'low',
     waves: [
       {
-        enemies: [{ archetype: 'moth', skill: 'regular', count: 3 }],
+        enemies: [{ archetype: 'fireant', skill: 'veteran', count: 2 }],
         delay: [5, 10],
       },
       {
@@ -23,7 +22,7 @@ export const SECTOR_3_EASY: Contract[] = [
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'moth', skill: 'veteran', count: 3 }],
+        enemies: [{ archetype: 'fireant', skill: 'veteran', count: 2 }],
         delay: [8, 12],
       },
       {
@@ -31,7 +30,7 @@ export const SECTOR_3_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 4019,
+    reward: 3728,
   },
   {
     id: 's3-veteran-formation',
@@ -63,34 +62,35 @@ export const SECTOR_3_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 4217,
+    reward: 4348,
   },
   {
-    id: 's3-torpedo-run',
-    name: 'Torpedo Run',
-    description: 'Heavy ordnance incoming. Beetles with torpedo launchers.',
+    id: 's3-lightning-strike',
+    name: 'Lightning Strike',
+    description:
+      'Engage electrical attack. Moths with lightning cannons incoming.',
     difficulty: 'easy',
     sector: 3,
     tier: 'low',
     waves: [
       {
-        enemies: [{ archetype: 'beetle', skill: 'regular', count: 1 }],
+        enemies: [{ archetype: 'moth', skill: 'veteran', count: 3 }],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
+        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 2 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
+        enemies: [{ archetype: 'moth', skill: 'regular', count: 3 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
+        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
         delay: [8, 12],
       },
     ],
-    reward: 4283,
+    reward: 4400,
   },
   {
     id: 's3-gyrojet-patrol',
@@ -106,7 +106,7 @@ export const SECTOR_3_EASY: Contract[] = [
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
+        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
         delay: [8, 12],
       },
       {
@@ -118,34 +118,7 @@ export const SECTOR_3_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 4627,
-  },
-  {
-    id: 's3-torch-bearers',
-    name: 'Torch Bearers',
-    description: 'Survive the heat. Fireants with torch beams - stay at range.',
-    difficulty: 'easy',
-    sector: 3,
-    tier: 'low',
-    waves: [
-      {
-        enemies: [{ archetype: 'fireant', skill: 'veteran', count: 2 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'fireant', skill: 'veteran', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 4749,
+    reward: 4765,
   },
   {
     id: 's3-interceptor-wing',
@@ -156,7 +129,7 @@ export const SECTOR_3_EASY: Contract[] = [
     tier: 'low',
     waves: [
       {
-        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
+        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
         delay: [5, 10],
       },
       {
@@ -168,10 +141,37 @@ export const SECTOR_3_EASY: Contract[] = [
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'wasp', skill: 'regular', count: 2 }],
+        enemies: [{ archetype: 'wasp', skill: 'veteran', count: 2 }],
         delay: [8, 12],
       },
     ],
-    reward: 5222,
+    reward: 4846,
+  },
+  {
+    id: 's3-torpedo-run',
+    name: 'Torpedo Run',
+    description: 'Heavy ordnance incoming. Beetles with torpedo launchers.',
+    difficulty: 'easy',
+    sector: 3,
+    tier: 'low',
+    waves: [
+      {
+        enemies: [{ archetype: 'beetle', skill: 'veteran', count: 1 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 4986,
   },
 ];

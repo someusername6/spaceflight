@@ -20,9 +20,10 @@ export interface SecondaryBankSpec {
  * - brawler: Standard combat, skill improves aim and composure
  * - escape: Hit-and-run, skill improves flee timing and survival
  * - kiting: Ranged combat, skill improves range maintenance
+ * - beam: Beam weapons, constant defensive thresholds prevent brave ace inversion
  * - gunboat: Multi-weapon ships, constant firing constraints prevent volume advantage
  */
-export type AIPlaystyle = 'brawler' | 'escape' | 'kiting' | 'gunboat';
+export type AIPlaystyle = 'brawler' | 'escape' | 'kiting' | 'beam' | 'gunboat';
 
 /** Weapon loadout for an archetype */
 interface WeaponLoadout {

@@ -16,22 +16,95 @@ export const SECTOR_1_HARD: Contract[] = [
     waves: [
       {
         enemies: [{ archetype: 'ember', skill: 'regular', count: 3 }],
+        delay: [5, 8],
+      },
+      {
+        enemies: [{ archetype: 'shocker', skill: 'veteran', count: 2 }],
+        delay: [6, 10],
+      },
+      {
+        enemies: [{ archetype: 'mantis', skill: 'regular', count: 2 }],
+        delay: [6, 10],
+      },
+      {
+        enemies: [{ archetype: 'ember', skill: 'veteran', count: 2 }],
+        delay: [6, 10],
+      },
+    ],
+    reward: 4291,
+  },
+  {
+    id: 's1-sniper-alley',
+    name: 'Sniper Alley',
+    description: 'Engage long-range patrol. Blue laser snipers at distance.',
+    difficulty: 'hard',
+    sector: 1,
+    tier: 'high',
+    waves: [
+      {
+        enemies: [
+          { archetype: 'glowworm', skill: 'veteran', count: 3 },
+          { archetype: 'shocker', skill: 'regular', count: 4 },
+        ],
+        delay: [5, 10],
+      },
+    ],
+    reward: 4409,
+  },
+  {
+    id: 's1-raider-hunt',
+    name: 'Raider Hunt',
+    description: 'Hunt raider squadron. Heavy resistance expected.',
+    difficulty: 'hard',
+    sector: 1,
+    tier: 'high',
+    waves: [
+      {
+        enemies: [{ archetype: 'shocker', skill: 'regular', count: 3 }],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'shocker', skill: 'regular', count: 2 }],
+        enemies: [{ archetype: 'ember', skill: 'regular', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'wasp', skill: 'regular', count: 2 }],
         delay: [8, 12],
       },
       {
         enemies: [{ archetype: 'mantis', skill: 'regular', count: 2 }],
         delay: [8, 12],
       },
+    ],
+    reward: 4466,
+  },
+  {
+    id: 's1-hornet-sweep',
+    name: 'Hornet Sweep',
+    description:
+      'Destroy Hornet squadron. Plasma fighters with Wasp and Mantis support.',
+    difficulty: 'hard',
+    sector: 1,
+    tier: 'high',
+    waves: [
       {
-        enemies: [{ archetype: 'ember', skill: 'regular', count: 2 }],
+        enemies: [{ archetype: 'hornet', skill: 'regular', count: 2 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'ember', skill: 'regular', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'wasp', skill: 'regular', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'mantis', skill: 'regular', count: 2 }],
         delay: [8, 12],
       },
     ],
-    reward: 4521,
+    reward: 4477,
   },
   {
     id: 's1-full-spectrum',
@@ -86,60 +159,5 @@ export const SECTOR_1_HARD: Contract[] = [
       },
     ],
     reward: 4551,
-  },
-  {
-    id: 's1-raider-hunt',
-    name: 'Raider Hunt',
-    description: 'Hunt raider squadron. Heavy resistance expected.',
-    difficulty: 'hard',
-    sector: 1,
-    tier: 'high',
-    waves: [
-      {
-        enemies: [{ archetype: 'shocker', skill: 'regular', count: 3 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'ember', skill: 'regular', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'wasp', skill: 'regular', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'mantis', skill: 'regular', count: 2 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 4656,
-  },
-  {
-    id: 's1-hornet-sweep',
-    name: 'Hornet Sweep',
-    description:
-      'Destroy Hornet squadron. Plasma fighters with Wasp and Mantis support.',
-    difficulty: 'hard',
-    sector: 1,
-    tier: 'high',
-    waves: [
-      {
-        enemies: [{ archetype: 'hornet', skill: 'regular', count: 2 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'ember', skill: 'regular', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'wasp', skill: 'regular', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'mantis', skill: 'regular', count: 2 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 4677,
   },
 ];

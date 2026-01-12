@@ -1,14 +1,16 @@
 /**
  * Sector 5: Endless Mode Missions
- * Enemy skill: Veteran → Ace
+ * Enemy skill: Veteran → Ace → Elite
  * Rewards: 8,350-13,100 cr
  *
  * Valid archetypes (all weapons):
- * S1-S4: All previous archetypes
+ * S1-S4: All previous archetypes (phantom, dragonfly, firefly, behemoth, specter,
+ *        titan, juggernaut, scorpion, etc.)
  * S5: wraith (nuclearLance, railgun, torpedo, seeker, decoy)
  *
  * S5 weapon coverage required:
- * - Primaries: nuclearLance
+ * - Primaries: nuclearLance (wraith)
+ * - Elite heavies: titan (railgun), juggernaut (nuke), scorpion (railgun)
  */
 
 import type { Contract } from '../../../../campaign/types';

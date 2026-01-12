@@ -36,7 +36,7 @@ export const S1_ARCHETYPES: Record<string, EnemyShipStats> = {
 
   // Patrol with red lasers and rockets - aggressive close-range (redLaser exception)
   ember: createArchetype('patrol', {
-    playstyle: 'brawler',
+    playstyle: 'beam', // Beam weapon - constant defensive thresholds
     primaryWeapons: [
       { name: 'redLaser', size: 1 },
       { name: 'redLaser', size: 1 },
@@ -83,7 +83,7 @@ export const S2_ARCHETYPES: Record<string, EnemyShipStats> = {
   // Raider with flak cannons - anti-fighter screen
   // Raider banks: primary [3,3,1,1], secondary [1,1,1]
   shredder: createArchetype('raider', {
-    playstyle: 'brawler',
+    playstyle: 'gunboat', // 4 primaries - constant firing constraints
     primaryWeapons: [
       { name: 'flak', size: 3 },
       { name: 'flak', size: 3 },
@@ -100,7 +100,7 @@ export const S2_ARCHETYPES: Record<string, EnemyShipStats> = {
 
   // Scout with starburst missiles - area denial
   sparkler: createArchetype('scout', {
-    playstyle: 'escape',
+    playstyle: 'beam', // Beam weapon - constant defensive thresholds
     primaryWeapons: [
       { name: 'greenLaser', size: 1 },
       { name: 'greenLaser', size: 1 },

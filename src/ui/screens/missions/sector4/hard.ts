@@ -30,7 +30,47 @@ export const SECTOR_4_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 8858,
+    reward: 8728,
+  },
+  {
+    id: 's4-ace-assault',
+    name: 'Ace Assault',
+    description:
+      'Face heavy assault. Ace Phantoms, Dragonflies, and Fireflies.',
+    difficulty: 'hard',
+    sector: 4,
+    tier: 'high',
+    waves: [
+      {
+        enemies: [{ archetype: 'phantom', skill: 'ace', count: 4 }],
+        delay: [3, 6],
+      },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 5 }],
+        delay: [4, 7],
+      },
+    ],
+    reward: 9229,
+  },
+  {
+    id: 's4-maximum-force',
+    name: 'Maximum Force',
+    description:
+      'Destroy ace squadron. Phantoms and Dragonflies at maximum skill.',
+    difficulty: 'hard',
+    sector: 4,
+    tier: 'high',
+    waves: [
+      {
+        enemies: [{ archetype: 'phantom', skill: 'ace', count: 4 }],
+        delay: [3, 6],
+      },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 5 }],
+        delay: [4, 7],
+      },
+    ],
+    reward: 9229,
   },
   {
     id: 's4-warlord',
@@ -54,7 +94,7 @@ export const SECTOR_4_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 9039,
+    reward: 9361,
   },
   {
     id: 's4-nuclear-strike',
@@ -82,62 +122,6 @@ export const SECTOR_4_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 9304,
-  },
-  {
-    id: 's4-ace-assault',
-    name: 'Ace Assault',
-    description:
-      'Face heavy assault. Ace Phantoms, Dragonflies, and Fireflies.',
-    difficulty: 'hard',
-    sector: 4,
-    tier: 'high',
-    waves: [
-      {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'firefly', skill: 'ace', count: 3 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 9409,
-  },
-  {
-    id: 's4-maximum-force',
-    name: 'Maximum Force',
-    description:
-      'Destroy ace squadron. Phantoms and Dragonflies at maximum skill.',
-    difficulty: 'hard',
-    sector: 4,
-    tier: 'high',
-    waves: [
-      {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 9411,
+    reward: 9667,
   },
 ];

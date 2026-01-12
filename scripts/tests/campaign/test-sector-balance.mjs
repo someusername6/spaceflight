@@ -2,8 +2,12 @@
 /**
  * Sector Mission Balance Test
  *
- * Tests missions for a single sector. Pass sector number as argument.
- * Usage: npx tsx scripts/tests/campaign/test-sector-balance.mjs 1
+ * Tests missions for a single sector and difficulty level.
+ * Usage:
+ *   npx tsx scripts/tests/campaign/test-sector-balance.mjs 1 easy
+ *   npx tsx scripts/tests/campaign/test-sector-balance.mjs 1 medium
+ *   npx tsx scripts/tests/campaign/test-sector-balance.mjs 1 hard
+ *   npx tsx scripts/tests/campaign/test-sector-balance.mjs 1  # all difficulties
  *
  * Balance targets by difficulty:
  * - Easy: 60-80% win rate
@@ -41,6 +45,7 @@ import {
 // ============================================================================
 
 const SECTOR = parseInt(process.argv[2], 10) || 1;
+const DIFFICULTY = process.argv[3] || null; // easy, medium, hard, or null for all
 const MAX_SIMULATION_TIME = 300;
 const MAX_TICKS = MAX_SIMULATION_TIME * TICK_RATE;
 const RUNS_PER_MISSION = 30;
@@ -185,11 +190,21 @@ function runMissionTests(mission) {
 // Tests
 // ============================================================================
 
-describe(`Sector ${SECTOR} Balance`, () => {
-  const missions = getMissionsForSector(SECTOR);
+const difficultyLabel = DIFFICULTY ? DIFFICULTY.toUpperCase() : 'ALL';
+
+describe(`Sector ${SECTOR} ${difficultyLabel} Balance`, () => {
+  let missions = getMissionsForSector(SECTOR);
+
+  // Filter by difficulty if specified
+  if (DIFFICULTY) {
+    missions = missions.filter((m) => m.difficulty === DIFFICULTY);
+  }
 
   it('has missions to test', () => {
-    assert.ok(missions.length > 0, `No missions found for sector ${SECTOR}`);
+    assert.ok(
+      missions.length > 0,
+      `No missions found for sector ${SECTOR}${DIFFICULTY ? ` difficulty ${DIFFICULTY}` : ''}`,
+    );
   });
 
   it('all missions meet balance targets', () => {
@@ -201,7 +216,7 @@ describe(`Sector ${SECTOR} Balance`, () => {
 
     console.log('='.repeat(90));
     console.log(
-      `SECTOR ${SECTOR} BALANCE TEST (${missions.length} missions, ${RUNS_PER_MISSION} runs each)`,
+      `SECTOR ${SECTOR} ${difficultyLabel} BALANCE TEST (${missions.length} missions, ${RUNS_PER_MISSION} runs each)`,
     );
     console.log(`Loadout: ${loadoutDesc}`);
     console.log(

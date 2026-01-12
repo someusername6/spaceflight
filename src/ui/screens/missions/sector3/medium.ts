@@ -19,7 +19,7 @@ export const SECTOR_3_MEDIUM: Contract[] = [
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
+        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
         delay: [8, 12],
       },
       {
@@ -27,11 +27,11 @@ export const SECTOR_3_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
+        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
         delay: [8, 12],
       },
     ],
-    reward: 5486,
+    reward: 4875,
   },
   {
     id: 's3-moth-swarm',
@@ -43,11 +43,11 @@ export const SECTOR_3_MEDIUM: Contract[] = [
     tier: 'mid',
     waves: [
       {
-        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
+        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'moth', skill: 'ace', count: 3 }],
+        enemies: [{ archetype: 'moth', skill: 'ace', count: 4 }],
         delay: [8, 12],
       },
       {
@@ -59,35 +59,7 @@ export const SECTOR_3_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 5533,
-  },
-  {
-    id: 's3-elite-patrol',
-    name: 'Elite Patrol',
-    description:
-      'Face veteran squadron. Wasps and Dragonflies with skilled pilots.',
-    difficulty: 'medium',
-    sector: 3,
-    tier: 'mid',
-    waves: [
-      {
-        enemies: [{ archetype: 'wasp', skill: 'regular', count: 2 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'wasp', skill: 'regular', count: 2 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 5694,
+    reward: 5004,
   },
   {
     id: 's3-red-wave',
@@ -119,7 +91,7 @@ export const SECTOR_3_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 5729,
+    reward: 5588,
   },
   {
     id: 's3-phantom-assault',
@@ -142,10 +114,38 @@ export const SECTOR_3_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 3 }],
+        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
         delay: [8, 12],
       },
     ],
-    reward: 5912,
+    reward: 5614,
+  },
+  {
+    id: 's3-elite-patrol',
+    name: 'Elite Patrol',
+    description:
+      'Face veteran squadron. Wasps and Dragonflies with skilled pilots.',
+    difficulty: 'medium',
+    sector: 3,
+    tier: 'mid',
+    waves: [
+      {
+        enemies: [{ archetype: 'wasp', skill: 'veteran', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
+        delay: [10, 15],
+      },
+      {
+        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
+        delay: [10, 15],
+      },
+      {
+        enemies: [{ archetype: 'wasp', skill: 'veteran', count: 2 }],
+        delay: [10, 15],
+      },
+    ],
+    reward: 6130,
   },
 ];

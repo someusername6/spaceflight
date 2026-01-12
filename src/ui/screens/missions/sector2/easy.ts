@@ -6,34 +6,6 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_2_EASY: Contract[] = [
   {
-    id: 's2-border-skirmish',
-    name: 'Border Skirmish',
-    description:
-      'Engage contested space. Fireflies, Dragonflies, and Stingers.',
-    difficulty: 'easy',
-    sector: 2,
-    tier: 'low',
-    waves: [
-      {
-        enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'stinger', skill: 'regular', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 3366,
-  },
-  {
     id: 's2-sector-sweep',
     name: 'Sector Sweep',
     description:
@@ -59,7 +31,34 @@ export const SECTOR_2_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3614,
+    reward: 3385,
+  },
+  {
+    id: 's2-starburst-field',
+    name: 'Starburst Field',
+    description: 'Survive area denial. Sparklers with starburst missiles.',
+    difficulty: 'easy',
+    sector: 2,
+    tier: 'low',
+    waves: [
+      {
+        enemies: [{ archetype: 'sparkler', skill: 'regular', count: 2 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'sparkler', skill: 'rookie', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'stinger', skill: 'regular', count: 2 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 3497,
   },
   {
     id: 's2-raider-intercept',
@@ -86,34 +85,7 @@ export const SECTOR_2_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3705,
-  },
-  {
-    id: 's2-starburst-field',
-    name: 'Starburst Field',
-    description: 'Survive area denial. Sparklers with starburst missiles.',
-    difficulty: 'easy',
-    sector: 2,
-    tier: 'low',
-    waves: [
-      {
-        enemies: [{ archetype: 'sparkler', skill: 'rookie', count: 2 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'rookie', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'sparkler', skill: 'rookie', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'stinger', skill: 'rookie', count: 3 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 3736,
+    reward: 3516,
   },
   {
     id: 's2-slug-patrol',
@@ -141,7 +113,7 @@ export const SECTOR_2_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3765,
+    reward: 3762,
   },
   {
     id: 's2-cluster-run',
@@ -169,6 +141,34 @@ export const SECTOR_2_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3870,
+    reward: 4023,
+  },
+  {
+    id: 's2-border-skirmish',
+    name: 'Border Skirmish',
+    description:
+      'Engage contested space. Fireflies, Dragonflies, and Stingers.',
+    difficulty: 'easy',
+    sector: 2,
+    tier: 'low',
+    waves: [
+      {
+        enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'stinger', skill: 'regular', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 4032,
   },
 ];
