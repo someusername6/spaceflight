@@ -18,7 +18,7 @@ import {
   SHIP_PRICES,
 } from '../../../src/data/prices.ts';
 import { PRIMARY_WEAPONS } from '../../../src/data/weapons.ts';
-import { ENEMY_ARCHETYPES } from '../../../src/factories/enemy-archetypes.ts';
+import { ENEMY_ARCHETYPES } from '../../../src/factories/enemy-archetypes/index.ts';
 import { SHIP_ARCHETYPES } from '../../../src/factories/ship-archetypes.ts';
 
 // ============================================================================

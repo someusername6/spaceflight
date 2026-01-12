@@ -10,7 +10,7 @@
 import { MISSILES } from '../data/missiles';
 import { SHIP_CLASSES } from '../data/ships';
 import { PRIMARY_WEAPONS } from '../data/weapons';
-import { ENEMY_ARCHETYPES } from './enemy-archetypes';
+import { ENEMY_ARCHETYPES } from './enemy-archetypes/index';
 import { SHIP_ARCHETYPES } from './ship-archetypes';
 
 /**

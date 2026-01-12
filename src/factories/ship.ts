@@ -37,7 +37,7 @@ import { getProfileForPlaystyle, type ProfileName } from '../data/ai-profiles';
 import { getWeaponStats } from '../data/weapons';
 import { initWeaponAmmoCounts } from '../systems/stats';
 import { validateArchetypeLoadout } from './archetype-validation';
-import { ENEMY_ARCHETYPES } from './enemy-archetypes';
+import { ENEMY_ARCHETYPES } from './enemy-archetypes/index';
 import { SHIP_ARCHETYPES, type ShipStats } from './ship-archetypes';
 
 export type { SecondaryBankSpec, ShipStats } from './ship-archetypes';
