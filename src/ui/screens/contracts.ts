@@ -22,7 +22,7 @@ import {
   type ScreenAPI,
   type ScreenHandle,
 } from '../framework/screen';
-import { generateContracts, getMissionCount } from './contracts-data';
+import { generateContracts } from './contracts-data';
 import { showSectorAdvanceModal } from './sector-advance-modal';
 
 /** Contracts screen state */
@@ -36,10 +36,6 @@ interface ContractsProps {
   contracts: Contract[];
   /** True if all missions completed and these are replays (50% reward) */
   isReplayMode: boolean;
-  /** Number of uncompleted missions remaining in sector */
-  remainingCount: number;
-  /** Total missions in sector */
-  totalMissions: number;
   /** Refresh cost for current sector */
   refreshCost: number;
   onNavigate: (destination: NavDestination) => void;
@@ -151,15 +147,8 @@ function renderContractDetail(contract: Contract, canLaunch: boolean): string {
 /** Contracts screen component */
 const ContractsScreenComponent: Screen<ContractsState, ContractsProps> = {
   render(state, props) {
-    const {
-      campaignState,
-      contracts,
-      isReplayMode,
-      remainingCount,
-      totalMissions,
-      refreshCost,
-      onNavigate,
-    } = props;
+    const { campaignState, contracts, isReplayMode, refreshCost, onNavigate } =
+      props;
     const currentSector = campaignState.currentSector;
     const canAdvance = currentSector < MAX_SECTOR;
     const canAffordRefresh = campaignState.credits >= refreshCost;
@@ -177,10 +166,11 @@ const ContractsScreenComponent: Screen<ContractsState, ContractsProps> = {
 
     const canLaunch = isCommanderAssigned(campaignState);
 
-    // Pool counter showing remaining missions
+    // Pool counter showing completed missions (no total shown for replayability)
+    const completedCount = campaignState.sectorMissionsCompleted;
     const poolCounter = isReplayMode
-      ? '<div class="contracts-pool-counter replay">All missions completed - Replay mode (50% rewards)</div>'
-      : `<div class="contracts-pool-counter">${remainingCount}/${totalMissions} contracts remaining</div>`;
+      ? '<div class="contracts-pool-counter replay">Replay mode (50% rewards)</div>'
+      : `<div class="contracts-pool-counter">${completedCount} contracts completed</div>`;
 
     // Refresh button
     const refreshButton = `
@@ -305,8 +295,6 @@ export function createContractsUI(
     campaignState: state,
     contracts: generated.contracts,
     isReplayMode: generated.isReplayMode,
-    remainingCount: generated.remainingCount,
-    totalMissions: getMissionCount(state.currentSector),
     refreshCost: getContractRefreshCost(state.currentSector),
     onNavigate,
     onAccept,
@@ -356,8 +344,6 @@ export function updateContractsUI(
       campaignState: state,
       contracts: generated.contracts,
       isReplayMode: generated.isReplayMode,
-      remainingCount: generated.remainingCount,
-      totalMissions: getMissionCount(state.currentSector),
       refreshCost: getContractRefreshCost(state.currentSector),
       onNavigate: ui.onNavigate,
       onAccept: ui.onAccept,

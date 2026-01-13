@@ -22,8 +22,6 @@ export interface GeneratedContracts {
   contracts: Contract[];
   /** True if all missions completed and these are replays (50% reward) */
   isReplayMode: boolean;
-  /** Number of uncompleted missions remaining in sector */
-  remainingCount: number;
 }
 
 /**
@@ -71,7 +69,6 @@ export function generateContracts(
   );
 
   const isReplayMode = available.length === 0;
-  const remainingCount = available.length;
 
   // Use full pool if in replay mode, otherwise use available missions
   const pool = isReplayMode ? allSectorMissions : available;
@@ -121,14 +118,7 @@ export function generateContracts(
     }));
   }
 
-  return { contracts, isReplayMode, remainingCount };
-}
-
-/**
- * Get total mission count for a sector.
- */
-export function getMissionCount(sector: number): number {
-  return getMissionsForSector(sector).length;
+  return { contracts, isReplayMode };
 }
 
 /**
