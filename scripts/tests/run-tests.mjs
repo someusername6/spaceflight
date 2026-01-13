@@ -67,8 +67,9 @@ const BALANCE_TESTS = [
   'combat/test-ttk-matrix.mjs',
   'combat/test-skill-vs-brawler.mjs',
 
-  // Campaign/mission
+  // Campaign/mission balance
   'campaign/test-mission-pacing.mjs',
+  'campaign/test-sector-balance.mjs',
 ];
 
 /**

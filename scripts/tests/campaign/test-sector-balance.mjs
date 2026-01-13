@@ -38,7 +38,7 @@ import {
   getLoadout,
   getLoadoutDescription,
   spawnWave,
-} from './mission-simulation.mjs';
+} from '../shared/mission-simulation.mjs';
 
 // ============================================================================
 // Configuration

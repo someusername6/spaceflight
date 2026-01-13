@@ -16,13 +16,13 @@ import { Quaternion, Vector3 } from 'three';
 import { createWorld, getComponent } from '../../../src/core/ecs.ts';
 import { Faction } from '../../../src/core/types.ts';
 import { createAIShip } from '../../../src/factories/ship.ts';
+import { aggregateCombatStats } from '../shared/combat-reporting.mjs';
 import {
   initCombatStats,
   jitter,
   runFrame,
   TICK_RATE,
 } from '../shared/combat-utils.mjs';
-import { aggregateCombatStats } from './combat-reporting.mjs';
 
 const SKILL_LEVELS = ['rookie', 'regular', 'veteran', 'ace'];
 

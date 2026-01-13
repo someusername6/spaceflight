@@ -14,7 +14,7 @@ import {
   getOrCreateWeaponStats,
   initMatchStats,
   recordDamage,
-} from './combat-stats-test-helpers.mjs';
+} from '../shared/combat-stats-test-helpers.mjs';
 
 describe('Combat Stats Core', () => {
   // =============================================================================

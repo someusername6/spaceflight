@@ -15,7 +15,7 @@
 import assert from 'node:assert';
 import { describe, it } from 'node:test';
 import { generateContracts } from '../../../src/ui/screens/contracts.ts';
-import { PLAYER_MODES, runScenario } from './mission-sim.mjs';
+import { PLAYER_MODES, runScenario } from '../shared/mission-sim.mjs';
 
 // ============================================================================
 // Mission Definitions - imported from src/ui/contracts.ts

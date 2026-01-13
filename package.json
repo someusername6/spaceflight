@@ -12,9 +12,7 @@
     "format": "biome format --write src/ scripts/",
     "lint": "biome check src/ scripts/",
     "lint:fix": "biome check --write src/ scripts/",
-    "sim": "node scripts/simulation/run-all.mjs",
-    "sim:dust": "node scripts/simulation/dust.mjs",
-    "sim:ai": "npx tsx scripts/simulation/ai-tests.mjs",
+    "validate-hardpoints": "node scripts/build/validate-hardpoints.mjs",
     "test": "npx tsx scripts/tests/run-tests.mjs",
     "test:all": "npx tsx scripts/tests/run-tests.mjs --all",
     "test:balance": "npx tsx scripts/tests/run-tests.mjs --balance"

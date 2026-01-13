@@ -4,7 +4,6 @@
 
 import assert from 'node:assert';
 import { describe, it } from 'node:test';
-import { assertApprox } from '../shared/test-utils.mjs';
 import {
   createCombatStats,
   createTestEnemy,
@@ -21,7 +20,8 @@ import {
   recordMissileSeduced,
   recordShotFired,
   recordShotHit,
-} from './combat-stats-test-helpers.mjs';
+} from '../shared/combat-stats-test-helpers.mjs';
+import { assertApprox } from '../shared/test-utils.mjs';
 
 describe('Weapon Stats', () => {
   // =============================================================================

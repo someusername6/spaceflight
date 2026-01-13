@@ -16,7 +16,7 @@ import {
   recordShotFired,
   recordShotHit,
   removeEntity,
-} from './combat-stats-test-helpers.mjs';
+} from '../shared/combat-stats-test-helpers.mjs';
 
 describe('Kill/Assist Attribution', () => {
   // =============================================================================
