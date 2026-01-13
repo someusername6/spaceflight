@@ -6,9 +6,11 @@ import * as THREE from 'three';
 import { Faction, type FactionComponent } from '../components/faction';
 import type { Missile } from '../components/missile';
 import type { Physics } from '../components/physics';
+import type { ShipIdentity } from '../components/ship-identity';
 import type { Transform } from '../components/transform';
 import { getComponent, hasComponent, isShip, queryEntities } from '../core/ecs';
 import type { Entity, World } from '../core/types';
+import { getArchetype } from '../factories/ship';
 import { TICK_SEC } from '../game';
 import { setLightningResolution } from './beam-effects/lightning';
 import {
@@ -177,7 +179,17 @@ export function syncScene(renderer: Renderer, world: World, alpha = 1): void {
       } else if (isDecoy) {
         mesh = createDecoyMesh(faction?.faction ?? Faction.Neutral);
       } else {
-        mesh = createShipMesh(faction?.faction ?? Faction.Neutral);
+        // Get ship class from identity -> archetype -> shipClassName
+        const identity = getComponent<ShipIdentity>(
+          world,
+          entity,
+          'shipIdentity',
+        );
+        const archetype = identity
+          ? getArchetype(identity.archetype)
+          : undefined;
+        const shipClass = archetype?.shipClassName;
+        mesh = createShipMesh(faction?.faction ?? Faction.Neutral, shipClass);
       }
       scene.add(mesh);
       entityMeshes.set(entity, mesh);

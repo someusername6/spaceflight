@@ -5,6 +5,54 @@
 import * as THREE from 'three';
 import { Faction } from '../components/faction';
 import type { MissileType } from '../components/missile';
+import { SHIP_GEOMETRIES, type ShipClass } from './ship-geometries';
+
+/** Cached BufferGeometry instances built on demand from embedded data */
+const shipGeometries = new Map<ShipClass, THREE.BufferGeometry>();
+
+/** Check if a string is a valid ship class */
+function isShipClass(name: string): name is ShipClass {
+  return name in SHIP_GEOMETRIES;
+}
+
+/**
+ * Get or create geometry for a ship class.
+ * Geometries are built lazily on first use and cached.
+ */
+function getShipGeometry(shipClass: ShipClass): THREE.BufferGeometry {
+  const cached = shipGeometries.get(shipClass);
+  if (cached) return cached;
+
+  const data = SHIP_GEOMETRIES[shipClass];
+  const geometry = new THREE.BufferGeometry();
+
+  geometry.setAttribute(
+    'position',
+    new THREE.Float32BufferAttribute(data.positions, 3),
+  );
+
+  if (data.normals) {
+    geometry.setAttribute(
+      'normal',
+      new THREE.Float32BufferAttribute(data.normals, 3),
+    );
+  }
+
+  if (data.indices) {
+    const vertexCount = data.positions.length / 3;
+    const IndexBuffer =
+      vertexCount > 65535
+        ? THREE.Uint32BufferAttribute
+        : THREE.Uint16BufferAttribute;
+    geometry.setIndex(new IndexBuffer(data.indices, 1));
+  }
+
+  geometry.computeBoundingBox();
+  geometry.computeBoundingSphere();
+  shipGeometries.set(shipClass, geometry);
+
+  return geometry;
+}
 
 /** Colors for factions: Green=Player, Red=Enemy, Yellow=Neutral */
 export const FACTION_COLORS = {
@@ -28,14 +76,36 @@ const MISSILE_VISUALS: Record<
   nuke: { radius: 0.9, length: 5.0, color: 0xff2200, emissive: 0xff0000 },
 };
 
-/** Creates a placeholder ship mesh */
-export function createShipMesh(faction: Faction): THREE.Mesh {
-  const geometry = new THREE.ConeGeometry(2, 8, 4);
-  geometry.rotateX(Math.PI / 2);
+/** Ship scale factor to match original cone size */
+const SHIP_MODEL_SCALE = 1.5;
 
+/**
+ * Creates a ship mesh.
+ * Uses embedded geometry if available, otherwise falls back to cone.
+ * @param faction - Ship faction for coloring
+ * @param shipClass - Ship class name (e.g., 'fighter', 'bomber') for model selection
+ */
+export function createShipMesh(
+  faction: Faction,
+  shipClass?: string,
+): THREE.Mesh {
   const color = FACTION_COLORS[faction] ?? 0xffffff;
   const material = new THREE.MeshPhongMaterial({ color });
 
+  // Try to use embedded geometry (built lazily on first use)
+  if (shipClass && isShipClass(shipClass)) {
+    const geometry = getShipGeometry(shipClass).clone();
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.scale.setScalar(SHIP_MODEL_SCALE);
+    // Models created in top-down view (nose pointing +Y in Blender)
+    // Rotate -90° on X to point nose forward (-Z in game)
+    mesh.rotation.x = -Math.PI / 2;
+    return mesh;
+  }
+
+  // Fallback to cone geometry
+  const geometry = new THREE.ConeGeometry(2, 8, 4);
+  geometry.rotateX(Math.PI / 2);
   return new THREE.Mesh(geometry, material);
 }
 
