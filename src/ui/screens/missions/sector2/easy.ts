@@ -12,7 +12,6 @@ export const SECTOR_2_EASY: Contract[] = [
       'Clear the sector. Dragonflies, Stingers, and Fireflies across four waves.',
     difficulty: 'easy',
     sector: 2,
-    tier: 'low',
     waves: [
       {
         enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
@@ -39,7 +38,6 @@ export const SECTOR_2_EASY: Contract[] = [
     description: 'Survive area denial. Sparklers with starburst missiles.',
     difficulty: 'easy',
     sector: 2,
-    tier: 'low',
     waves: [
       {
         enemies: [{ archetype: 'sparkler', skill: 'regular', count: 2 }],
@@ -66,7 +64,6 @@ export const SECTOR_2_EASY: Contract[] = [
     description: 'Intercept raider force. Fireflies and Stingers.',
     difficulty: 'easy',
     sector: 2,
-    tier: 'low',
     waves: [
       {
         enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
@@ -94,7 +91,6 @@ export const SECTOR_2_EASY: Contract[] = [
       'Intercept heavy patrol. Bruisers with slug cannons hitting hard.',
     difficulty: 'easy',
     sector: 2,
-    tier: 'low',
     waves: [
       {
         enemies: [{ archetype: 'bruiser', skill: 'regular', count: 2 }],
@@ -122,7 +118,6 @@ export const SECTOR_2_EASY: Contract[] = [
       'Destroy Locust squadron. Cluster missiles incoming - watch spacing.',
     difficulty: 'easy',
     sector: 2,
-    tier: 'low',
     waves: [
       {
         enemies: [{ archetype: 'locust', skill: 'regular', count: 2 }],
@@ -150,7 +145,6 @@ export const SECTOR_2_EASY: Contract[] = [
       'Engage contested space. Fireflies, Dragonflies, and Stingers.',
     difficulty: 'easy',
     sector: 2,
-    tier: 'low',
     waves: [
       {
         enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],

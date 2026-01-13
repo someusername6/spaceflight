@@ -12,7 +12,6 @@ export const SECTOR_1_EASY: Contract[] = [
       'Intercept missile carriers. Gnats with swarm missiles incoming.',
     difficulty: 'easy',
     sector: 1,
-    tier: 'low',
     waves: [
       {
         enemies: [{ archetype: 'gnat', skill: 'veteran', count: 3 }],
@@ -39,7 +38,6 @@ export const SECTOR_1_EASY: Contract[] = [
     description: 'Destroy scout patrol. Rookie pilots in light craft.',
     difficulty: 'easy',
     sector: 1,
-    tier: 'low',
     waves: [
       {
         enemies: [{ archetype: 'ember', skill: 'veteran', count: 3 }],
@@ -67,7 +65,6 @@ export const SECTOR_1_EASY: Contract[] = [
       'Intercept laser patrol. Embers with red lasers at close range.',
     difficulty: 'easy',
     sector: 1,
-    tier: 'low',
     waves: [
       {
         enemies: [{ archetype: 'ember', skill: 'veteran', count: 3 }],
@@ -94,7 +91,6 @@ export const SECTOR_1_EASY: Contract[] = [
     description: 'Eliminate hostile patrol. Shockers with ion cannons.',
     difficulty: 'easy',
     sector: 1,
-    tier: 'low',
     waves: [
       {
         enemies: [{ archetype: 'shocker', skill: 'veteran', count: 2 }],
@@ -121,7 +117,6 @@ export const SECTOR_1_EASY: Contract[] = [
     description: 'Destroy patrol. Mantis fighters with decoy countermeasures.',
     difficulty: 'easy',
     sector: 1,
-    tier: 'low',
     waves: [
       {
         enemies: [{ archetype: 'mantis', skill: 'rookie', count: 2 }],

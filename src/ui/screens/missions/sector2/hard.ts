@@ -12,7 +12,6 @@ export const SECTOR_2_HARD: Contract[] = [
       'Face the beam gauntlet. Veteran Fireflies and Vipers with lasers.',
     difficulty: 'hard',
     sector: 2,
-    tier: 'high',
     waves: [
       {
         enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
@@ -40,7 +39,6 @@ export const SECTOR_2_HARD: Contract[] = [
       'Face elite formation. Phantoms, Bruisers, and Shredders together.',
     difficulty: 'hard',
     sector: 2,
-    tier: 'high',
     waves: [
       {
         enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
@@ -67,7 +65,6 @@ export const SECTOR_2_HARD: Contract[] = [
     description: 'Hold contested zone. Maximum force with veteran pilots.',
     difficulty: 'hard',
     sector: 2,
-    tier: 'high',
     waves: [
       {
         enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
@@ -94,7 +91,6 @@ export const SECTOR_2_HARD: Contract[] = [
     description: 'Survive laser onslaught. Fireflies and Vipers closing fast.',
     difficulty: 'hard',
     sector: 2,
-    tier: 'high',
     waves: [
       {
         enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
@@ -121,7 +117,6 @@ export const SECTOR_2_HARD: Contract[] = [
     description: 'Destroy Wasp squadron. Fast interceptors with autocannons.',
     difficulty: 'hard',
     sector: 2,
-    tier: 'high',
     waves: [
       {
         enemies: [{ archetype: 'wasp', skill: 'regular', count: 2 }],

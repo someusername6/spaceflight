@@ -12,7 +12,6 @@ export const SECTOR_3_MEDIUM: Contract[] = [
       'Survive the inferno. Fireants with Phantom escorts closing fast.',
     difficulty: 'medium',
     sector: 3,
-    tier: 'mid',
     waves: [
       {
         enemies: [{ archetype: 'fireant', skill: 'veteran', count: 2 }],
@@ -40,7 +39,6 @@ export const SECTOR_3_MEDIUM: Contract[] = [
       'Face lightning barrage. Moths with swarm missiles and lightning cannons.',
     difficulty: 'medium',
     sector: 3,
-    tier: 'mid',
     waves: [
       {
         enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
@@ -68,7 +66,6 @@ export const SECTOR_3_MEDIUM: Contract[] = [
       'Destroy enemy force. Heavy waves of veteran Fireflies and Dragonflies.',
     difficulty: 'medium',
     sector: 3,
-    tier: 'mid',
     waves: [
       {
         enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
@@ -99,7 +96,6 @@ export const SECTOR_3_MEDIUM: Contract[] = [
     description: 'Face heavy assault. Phantoms and Ace Dragonflies in force.',
     difficulty: 'medium',
     sector: 3,
-    tier: 'mid',
     waves: [
       {
         enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
@@ -127,7 +123,6 @@ export const SECTOR_3_MEDIUM: Contract[] = [
       'Face veteran squadron. Wasps and Dragonflies with skilled pilots.',
     difficulty: 'medium',
     sector: 3,
-    tier: 'mid',
     waves: [
       {
         enemies: [{ archetype: 'wasp', skill: 'veteran', count: 2 }],

@@ -11,7 +11,6 @@ export const SECTOR_1_MEDIUM: Contract[] = [
     description: 'Clear the sector. Mixed hostiles across multiple waves.',
     difficulty: 'medium',
     sector: 1,
-    tier: 'mid',
     waves: [
       {
         enemies: [{ archetype: 'ember', skill: 'regular', count: 3 }],
@@ -38,7 +37,6 @@ export const SECTOR_1_MEDIUM: Contract[] = [
     description: 'Eliminate scattered hostiles. Mixed patrol craft.',
     difficulty: 'medium',
     sector: 1,
-    tier: 'mid',
     waves: [
       {
         enemies: [{ archetype: 'ember', skill: 'regular', count: 3 }],
@@ -65,7 +63,6 @@ export const SECTOR_1_MEDIUM: Contract[] = [
     description: 'Face plasma barrage. Hornets and Mantis incoming.',
     difficulty: 'medium',
     sector: 1,
-    tier: 'mid',
     waves: [
       {
         enemies: [{ archetype: 'hornet', skill: 'rookie', count: 2 }],
@@ -92,7 +89,6 @@ export const SECTOR_1_MEDIUM: Contract[] = [
     description: 'Intercept enemy squadron. Shockers and Embers incoming.',
     difficulty: 'medium',
     sector: 1,
-    tier: 'mid',
     waves: [
       {
         enemies: [{ archetype: 'shocker', skill: 'veteran', count: 2 }],
@@ -119,7 +115,6 @@ export const SECTOR_1_MEDIUM: Contract[] = [
     description: 'Survive the gauntlet. Wasps with autocannons.',
     difficulty: 'medium',
     sector: 1,
-    tier: 'mid',
     waves: [
       {
         enemies: [{ archetype: 'wasp', skill: 'rookie', count: 2 }],

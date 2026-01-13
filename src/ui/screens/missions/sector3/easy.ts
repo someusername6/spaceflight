@@ -11,7 +11,6 @@ export const SECTOR_3_EASY: Contract[] = [
     description: 'Survive the heat. Fireants with torch beams - stay at range.',
     difficulty: 'easy',
     sector: 3,
-    tier: 'low',
     waves: [
       {
         enemies: [{ archetype: 'fireant', skill: 'veteran', count: 2 }],
@@ -39,7 +38,6 @@ export const SECTOR_3_EASY: Contract[] = [
       'Destroy enemy formation. Veteran Fireflies and Dragonflies in five waves.',
     difficulty: 'easy',
     sector: 3,
-    tier: 'low',
     waves: [
       {
         enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
@@ -71,7 +69,6 @@ export const SECTOR_3_EASY: Contract[] = [
       'Engage electrical attack. Moths with lightning cannons incoming.',
     difficulty: 'easy',
     sector: 3,
-    tier: 'low',
     waves: [
       {
         enemies: [{ archetype: 'moth', skill: 'veteran', count: 3 }],
@@ -99,7 +96,6 @@ export const SECTOR_3_EASY: Contract[] = [
       'Intercept rocket fighters. Rocketeers with accelerating rounds.',
     difficulty: 'easy',
     sector: 3,
-    tier: 'low',
     waves: [
       {
         enemies: [{ archetype: 'rocketeer', skill: 'veteran', count: 1 }],
@@ -126,7 +122,6 @@ export const SECTOR_3_EASY: Contract[] = [
     description: 'Engage fast attack wing. Phantoms, Dragonflies, and Wasps.',
     difficulty: 'easy',
     sector: 3,
-    tier: 'low',
     waves: [
       {
         enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
@@ -153,7 +148,6 @@ export const SECTOR_3_EASY: Contract[] = [
     description: 'Heavy ordnance incoming. Beetles with torpedo launchers.',
     difficulty: 'easy',
     sector: 3,
-    tier: 'low',
     waves: [
       {
         enemies: [{ archetype: 'beetle', skill: 'veteran', count: 1 }],

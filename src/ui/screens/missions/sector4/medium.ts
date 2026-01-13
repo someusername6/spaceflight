@@ -11,7 +11,6 @@ export const SECTOR_4_MEDIUM: Contract[] = [
     description: 'Intercept bomber wing. Behemoth with heavy ordnance inbound.',
     difficulty: 'medium',
     sector: 4,
-    tier: 'mid',
     waves: [
       {
         enemies: [{ archetype: 'moth', skill: 'ace', count: 3 }],
@@ -42,7 +41,6 @@ export const SECTOR_4_MEDIUM: Contract[] = [
       'Hunt Specters. Elite railgun snipers with Dragonfly and Phantom escort.',
     difficulty: 'medium',
     sector: 4,
-    tier: 'mid',
     waves: [
       {
         enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
@@ -70,7 +68,6 @@ export const SECTOR_4_MEDIUM: Contract[] = [
       'Face elite pilots. Phantoms, Wasps, and Dragonflies - all veteran.',
     difficulty: 'medium',
     sector: 4,
-    tier: 'mid',
     waves: [
       {
         enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
@@ -94,7 +91,6 @@ export const SECTOR_4_MEDIUM: Contract[] = [
       'Destroy elite strike force. Phantoms with Ace Fireflies and veteran Dragonflies.',
     difficulty: 'medium',
     sector: 4,
-    tier: 'mid',
     waves: [
       {
         enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
@@ -122,7 +118,6 @@ export const SECTOR_4_MEDIUM: Contract[] = [
       'Clear sniper position. Scorpions with railguns and Phantom escorts.',
     difficulty: 'medium',
     sector: 4,
-    tier: 'mid',
     waves: [
       {
         enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],

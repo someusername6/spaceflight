@@ -12,7 +12,6 @@ export const SECTOR_5_MEDIUM: Contract[] = [
       'Intercept nuclear convoy. Juggernaut with nuke payload and elite escorts.',
     difficulty: 'medium',
     sector: 5,
-    tier: 'mid',
     waves: [
       {
         enemies: [{ archetype: 'phantom', skill: 'ace', count: 3 }],
@@ -40,7 +39,6 @@ export const SECTOR_5_MEDIUM: Contract[] = [
       'Break the iron wall. Ace Phantoms, Dragonflies, and Fireflies.',
     difficulty: 'medium',
     sector: 5,
-    tier: 'mid',
     waves: [
       {
         enemies: [{ archetype: 'phantom', skill: 'ace', count: 3 }],
@@ -67,7 +65,6 @@ export const SECTOR_5_MEDIUM: Contract[] = [
     description: 'Destroy bomber wing. Behemoths with Phantom escorts.',
     difficulty: 'medium',
     sector: 5,
-    tier: 'mid',
     waves: [
       {
         enemies: [{ archetype: 'phantom', skill: 'elite', count: 3 }],
@@ -94,7 +91,6 @@ export const SECTOR_5_MEDIUM: Contract[] = [
     description: 'Destroy sniper formation. Specter with ace escorts.',
     difficulty: 'medium',
     sector: 5,
-    tier: 'mid',
     waves: [
       {
         enemies: [{ archetype: 'specter', skill: 'ace', count: 1 }],

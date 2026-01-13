@@ -11,7 +11,6 @@ export const SECTOR_5_EASY: Contract[] = [
     description: 'Intercept nuclear lance carrier. A Wraith with ace escorts.',
     difficulty: 'easy',
     sector: 5,
-    tier: 'low',
     waves: [
       {
         enemies: [{ archetype: 'phantom', skill: 'ace', count: 3 }],
@@ -39,7 +38,6 @@ export const SECTOR_5_EASY: Contract[] = [
       'Destroy ace formation. Phantoms, Dragonflies, and Fireflies - ace pilots.',
     difficulty: 'easy',
     sector: 5,
-    tier: 'low',
     waves: [
       {
         enemies: [{ archetype: 'phantom', skill: 'ace', count: 3 }],
@@ -67,7 +65,6 @@ export const SECTOR_5_EASY: Contract[] = [
       'Clear sniper position. Scorpions with railguns and elite escorts.',
     difficulty: 'easy',
     sector: 5,
-    tier: 'low',
     waves: [
       {
         enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
@@ -95,7 +92,6 @@ export const SECTOR_5_EASY: Contract[] = [
       'Survive beyond the frontier. Ace Phantoms, Dragonflies, and Fireflies.',
     difficulty: 'easy',
     sector: 5,
-    tier: 'low',
     waves: [
       {
         enemies: [{ archetype: 'phantom', skill: 'ace', count: 3 }],
@@ -123,7 +119,6 @@ export const SECTOR_5_EASY: Contract[] = [
       'Survive the grinder. Four waves of Ace Phantoms and Dragonflies.',
     difficulty: 'easy',
     sector: 5,
-    tier: 'low',
     waves: [
       {
         enemies: [{ archetype: 'phantom', skill: 'ace', count: 3 }],

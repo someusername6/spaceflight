@@ -11,7 +11,6 @@ export const SECTOR_4_HARD: Contract[] = [
     description: 'Final core assault. All S4 elite archetypes in force.',
     difficulty: 'hard',
     sector: 4,
-    tier: 'high',
     waves: [
       {
         enemies: [{ archetype: 'specter', skill: 'ace', count: 1 }],
@@ -39,7 +38,6 @@ export const SECTOR_4_HARD: Contract[] = [
       'Face heavy assault. Ace Phantoms, Dragonflies, and Fireflies.',
     difficulty: 'hard',
     sector: 4,
-    tier: 'high',
     waves: [
       {
         enemies: [{ archetype: 'phantom', skill: 'ace', count: 4 }],
@@ -59,7 +57,6 @@ export const SECTOR_4_HARD: Contract[] = [
       'Destroy ace squadron. Phantoms and Dragonflies at maximum skill.',
     difficulty: 'hard',
     sector: 4,
-    tier: 'high',
     waves: [
       {
         enemies: [{ archetype: 'phantom', skill: 'ace', count: 4 }],
@@ -79,7 +76,6 @@ export const SECTOR_4_HARD: Contract[] = [
       'Eliminate the warlord. Ace Phantoms and Dragonflies - no mercy.',
     difficulty: 'hard',
     sector: 4,
-    tier: 'high',
     waves: [
       {
         enemies: [{ archetype: 'phantom', skill: 'ace', count: 3 }],
@@ -103,7 +99,6 @@ export const SECTOR_4_HARD: Contract[] = [
       'Stop nuclear assault. Juggernaut and Behemoth with nuke payloads.',
     difficulty: 'hard',
     sector: 4,
-    tier: 'high',
     waves: [
       {
         enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],

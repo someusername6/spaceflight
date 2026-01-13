@@ -8,11 +8,10 @@
  * - Medium: 40-60% win rate
  * - Hard: 20-40% win rate
  *
- * Each sector has all three difficulties. "Tier" (low/mid/high) determines
- * reward amount, not difficulty. See ECONOMY.md for sector test loadouts.
+ * Each sector has all three difficulties. See ECONOMY.md for sector test loadouts.
  */
 
-import type { Contract, MissionTier } from '../../campaign/types';
+import type { Contract } from '../../campaign/types';
 import { createDerivedPRNG, shuffle } from '../../core/prng';
 import { ALL_MISSIONS } from './missions';
 
@@ -31,21 +30,12 @@ export function getMissionsForSector(sector: number): Contract[] {
   return ALL_MISSIONS.filter((m) => m.sector === sector);
 }
 
-/**
- * Get missions filtered by sector and optionally by tier.
- */
-export function getMissions(sector: number, tier?: MissionTier): Contract[] {
-  return ALL_MISSIONS.filter(
-    (m) => m.sector === sector && (tier === undefined || m.tier === tier),
-  );
-}
-
 /** Replay mode reward multiplier (50% of normal reward) */
 const REPLAY_REWARD_MULTIPLIER = 0.5;
 
 /**
  * Generate contracts for the contracts screen.
- * Returns a selection of missions from the current sector, mixing tiers.
+ * Returns a selection of missions from the current sector, mixing difficulties.
  *
  * @param sector - Current campaign sector (1-5)
  * @param seed - Campaign seed for deterministic selection
@@ -83,25 +73,25 @@ export function generateContracts(
     refreshCount,
   );
 
-  // Try to get a mix of tiers
-  const lowTier = pool.filter((m) => m.tier === 'low');
-  const midTier = pool.filter((m) => m.tier === 'mid');
-  const highTier = pool.filter((m) => m.tier === 'high');
+  // Try to get a mix of difficulties
+  const easyMissions = pool.filter((m) => m.difficulty === 'easy');
+  const mediumMissions = pool.filter((m) => m.difficulty === 'medium');
+  const hardMissions = pool.filter((m) => m.difficulty === 'hard');
 
   const selected: Contract[] = [];
 
-  // Pick 1-2 from each tier if available, prioritizing variety
+  // Pick 1-2 from each difficulty if available, prioritizing variety
   const pickFrom = (arr: Contract[], max: number) => {
     const shuffled = shuffle(prng, [...arr]);
     return shuffled.slice(0, max);
   };
 
-  // Aim for 2 low, 1 mid, 1 high (or adjust based on availability)
-  selected.push(...pickFrom(lowTier, 2));
-  selected.push(...pickFrom(midTier, 1));
-  selected.push(...pickFrom(highTier, 1));
+  // Aim for 2 easy, 1 medium, 1 hard (or adjust based on availability)
+  selected.push(...pickFrom(easyMissions, 2));
+  selected.push(...pickFrom(mediumMissions, 1));
+  selected.push(...pickFrom(hardMissions, 1));
 
-  // If we don't have enough, fill from any tier
+  // If we don't have enough, fill from any difficulty
   if (selected.length < count) {
     const remaining = pool.filter((m) => !selected.includes(m));
     selected.push(...pickFrom(remaining, count - selected.length));

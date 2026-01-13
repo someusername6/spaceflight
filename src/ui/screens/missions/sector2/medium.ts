@@ -11,7 +11,6 @@ export const SECTOR_2_MEDIUM: Contract[] = [
     description: 'Destroy heavy fighters. Bruisers with slug cannons leading.',
     difficulty: 'medium',
     sector: 2,
-    tier: 'mid',
     waves: [
       {
         enemies: [{ archetype: 'bruiser', skill: 'regular', count: 2 }],
@@ -39,7 +38,6 @@ export const SECTOR_2_MEDIUM: Contract[] = [
       'Breach the flak screen. Shredders with flak cannons and Phantom escorts.',
     difficulty: 'medium',
     sector: 2,
-    tier: 'mid',
     waves: [
       {
         enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
@@ -67,7 +65,6 @@ export const SECTOR_2_MEDIUM: Contract[] = [
       'Face elite interceptors. Phantoms with green lasers and dart missiles.',
     difficulty: 'medium',
     sector: 2,
-    tier: 'mid',
     waves: [
       {
         enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
@@ -95,7 +92,6 @@ export const SECTOR_2_MEDIUM: Contract[] = [
       'Destroy reinforced patrol. Veteran Fireflies and Dragonflies in numbers.',
     difficulty: 'medium',
     sector: 2,
-    tier: 'mid',
     waves: [
       {
         enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
@@ -122,7 +118,6 @@ export const SECTOR_2_MEDIUM: Contract[] = [
     description: 'Clear Viper squadron. Green laser fighters with long range.',
     difficulty: 'medium',
     sector: 2,
-    tier: 'mid',
     waves: [
       {
         enemies: [{ archetype: 'viper', skill: 'veteran', count: 2 }],

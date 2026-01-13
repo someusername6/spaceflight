@@ -12,7 +12,6 @@ export const SECTOR_1_HARD: Contract[] = [
       'Destroy assault force. Embers and Shockers with Mantis commanders.',
     difficulty: 'hard',
     sector: 1,
-    tier: 'high',
     waves: [
       {
         enemies: [{ archetype: 'ember', skill: 'regular', count: 3 }],
@@ -39,7 +38,6 @@ export const SECTOR_1_HARD: Contract[] = [
     description: 'Engage long-range patrol. Blue laser snipers at distance.',
     difficulty: 'hard',
     sector: 1,
-    tier: 'high',
     waves: [
       {
         enemies: [
@@ -57,7 +55,6 @@ export const SECTOR_1_HARD: Contract[] = [
     description: 'Hunt raider squadron. Heavy resistance expected.',
     difficulty: 'hard',
     sector: 1,
-    tier: 'high',
     waves: [
       {
         enemies: [{ archetype: 'shocker', skill: 'regular', count: 3 }],
@@ -85,7 +82,6 @@ export const SECTOR_1_HARD: Contract[] = [
       'Destroy Hornet squadron. Plasma fighters with Wasp and Mantis support.',
     difficulty: 'hard',
     sector: 1,
-    tier: 'high',
     waves: [
       {
         enemies: [{ archetype: 'hornet', skill: 'regular', count: 2 }],
@@ -112,7 +108,6 @@ export const SECTOR_1_HARD: Contract[] = [
     description: 'Face all enemy types. Variety of hostiles incoming.',
     difficulty: 'hard',
     sector: 1,
-    tier: 'high',
     waves: [
       {
         enemies: [{ archetype: 'hornet', skill: 'rookie', count: 2 }],
@@ -139,7 +134,6 @@ export const SECTOR_1_HARD: Contract[] = [
     description: 'Hold the frontier. Wasps and Hornets in force.',
     difficulty: 'hard',
     sector: 1,
-    tier: 'high',
     waves: [
       {
         enemies: [{ archetype: 'wasp', skill: 'rookie', count: 2 }],

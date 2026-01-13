@@ -12,7 +12,6 @@ export const SECTOR_3_HARD: Contract[] = [
       'Destroy assault force. Phantoms and Beetles with Ace Dragonfly escorts.',
     difficulty: 'hard',
     sector: 3,
-    tier: 'high',
     waves: [
       {
         enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
@@ -39,7 +38,6 @@ export const SECTOR_3_HARD: Contract[] = [
     description: 'Break through enemy lines. Elite assault force.',
     difficulty: 'hard',
     sector: 3,
-    tier: 'high',
     waves: [
       {
         enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
@@ -67,7 +65,6 @@ export const SECTOR_3_HARD: Contract[] = [
       'Destroy enemy squadron. Fireflies, Dragonflies, and Phantoms in force.',
     difficulty: 'hard',
     sector: 3,
-    tier: 'high',
     waves: [
       {
         enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
@@ -98,7 +95,6 @@ export const SECTOR_3_HARD: Contract[] = [
     description: 'Survive the storm. Phantoms and Wasps with Ace pilots.',
     difficulty: 'hard',
     sector: 3,
-    tier: 'high',
     waves: [
       {
         enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
@@ -125,7 +121,6 @@ export const SECTOR_3_HARD: Contract[] = [
     description: 'Maximum enemy resistance. Ace pilots across all waves.',
     difficulty: 'hard',
     sector: 3,
-    tier: 'high',
     waves: [
       {
         enemies: [{ archetype: 'phantom', skill: 'veteran', count: 3 }],

@@ -12,7 +12,6 @@ export const SECTOR_4_EASY: Contract[] = [
       'Nuclear threat detected. Juggernaut with nuke payload inbound.',
     difficulty: 'easy',
     sector: 4,
-    tier: 'low',
     waves: [
       {
         enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
@@ -39,7 +38,6 @@ export const SECTOR_4_EASY: Contract[] = [
     description: 'Engage sniper patrol. Scorpions with railguns at long range.',
     difficulty: 'easy',
     sector: 4,
-    tier: 'low',
     waves: [
       {
         enemies: [{ archetype: 'scorpion', skill: 'regular', count: 1 }],
@@ -67,7 +65,6 @@ export const SECTOR_4_EASY: Contract[] = [
       'Engage response force. Phantoms with Firefly and Dragonfly support.',
     difficulty: 'easy',
     sector: 4,
-    tier: 'low',
     waves: [
       {
         enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
@@ -94,7 +91,6 @@ export const SECTOR_4_EASY: Contract[] = [
     description: 'Intercept heavy assault. A Titan with Phantom escorts.',
     difficulty: 'easy',
     sector: 4,
-    tier: 'low',
     waves: [
       {
         enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
@@ -122,7 +118,6 @@ export const SECTOR_4_EASY: Contract[] = [
       'Destroy assault group. Phantoms, Dragonflies, and Fireflies - all veteran.',
     difficulty: 'easy',
     sector: 4,
-    tier: 'low',
     waves: [
       {
         enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
@@ -150,7 +145,6 @@ export const SECTOR_4_EASY: Contract[] = [
       'Destroy incoming hostiles. Wasps, Dragonflies, and Fireflies - some Aces.',
     difficulty: 'easy',
     sector: 4,
-    tier: 'low',
     waves: [
       {
         enemies: [{ archetype: 'wasp', skill: 'veteran', count: 3 }],

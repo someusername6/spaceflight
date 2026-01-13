@@ -11,7 +11,6 @@ export const SECTOR_5_HARD: Contract[] = [
     description: 'Destroy the armada. Elite Phantoms and Dragonflies.',
     difficulty: 'hard',
     sector: 5,
-    tier: 'high',
     waves: [
       {
         enemies: [{ archetype: 'phantom', skill: 'elite', count: 3 }],
@@ -34,7 +33,6 @@ export const SECTOR_5_HARD: Contract[] = [
     description: 'The ultimate challenge. Ace Phantoms with maximum force.',
     difficulty: 'hard',
     sector: 5,
-    tier: 'high',
     waves: [
       {
         enemies: [{ archetype: 'phantom', skill: 'ace', count: 4 }],
@@ -61,7 +59,6 @@ export const SECTOR_5_HARD: Contract[] = [
     description: 'Stop the titan. Heavy railgun striker with elite escorts.',
     difficulty: 'hard',
     sector: 5,
-    tier: 'high',
     waves: [
       {
         enemies: [{ archetype: 'phantom', skill: 'elite', count: 2 }],
@@ -88,7 +85,6 @@ export const SECTOR_5_HARD: Contract[] = [
     description: 'Make your final stand. Four waves of elite fighters.',
     difficulty: 'hard',
     sector: 5,
-    tier: 'high',
     waves: [
       {
         enemies: [{ archetype: 'phantom', skill: 'elite', count: 3 }],
@@ -116,7 +112,6 @@ export const SECTOR_5_HARD: Contract[] = [
       'Hunt Wraith patrol. Nuclear lance carriers with elite escorts.',
     difficulty: 'hard',
     sector: 5,
-    tier: 'high',
     waves: [
       {
         enemies: [{ archetype: 'wraith', skill: 'elite', count: 1 }],
@@ -143,7 +138,6 @@ export const SECTOR_5_HARD: Contract[] = [
     description: 'Stop nuclear assault. Multiple Wraiths with elite support.',
     difficulty: 'hard',
     sector: 5,
-    tier: 'high',
     waves: [
       {
         enemies: [{ archetype: 'wraith', skill: 'elite', count: 1 }],

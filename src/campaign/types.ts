@@ -59,9 +59,6 @@ export interface StoredShip {
   shipClass: string; // 'interceptor', 'striker', etc.
 }
 
-/** Mission tier within a sector (risk/reward level) */
-export type MissionTier = 'low' | 'mid' | 'high';
-
 /** A contract (mission) available to accept */
 export interface Contract {
   id: string;
@@ -70,8 +67,6 @@ export interface Contract {
   difficulty: 'easy' | 'medium' | 'hard';
   /** Sector this mission belongs to (1-5) */
   sector: number;
-  /** Risk/reward tier within the sector */
-  tier: MissionTier;
   /** Waves of enemies - each wave spawns when the previous is cleared */
   waves: ContractWave[];
   reward: number; // credits
