@@ -13,6 +13,7 @@
  * - handlers/pause-handler.ts: Escape key, pause menu
  */
 
+import { logDebug } from '../core/logger';
 import { initKeyBindings } from '../input/key-bindings';
 import { initGameSettings } from '../settings/game-settings';
 import { initInput } from '../systems/input';
@@ -69,7 +70,7 @@ export function startCampaign(container: HTMLElement): CampaignController {
   // Show title screen initially
   goToTitle(screenManager);
 
-  console.log('Campaign initialized - showing title screen');
+  logDebug('Campaign initialized - showing title screen');
 
   return controller;
 }
@@ -112,7 +113,7 @@ function startCampaignGameplay(controller: CampaignController): void {
   setupEscapeHandler(controller, setupSettings, setupTitle);
 
   const { campaignState } = screenManager;
-  console.log('Campaign gameplay started');
-  console.log(`Credits: ${campaignState.credits}`);
-  console.log(`Ships: ${campaignState.ships.length}`);
+  logDebug('Campaign gameplay started');
+  logDebug(`Credits: ${campaignState.credits}`);
+  logDebug(`Ships: ${campaignState.ships.length}`);
 }

@@ -14,7 +14,7 @@ import {
   removeEntity,
 } from '../../core/ecs';
 import { random } from '../../core/prng';
-import type { Entity, World } from '../../core/types';
+import { type Entity, NO_ENTITY, type World } from '../../core/types';
 import type { Collision } from '../collision';
 import { dealDamage } from '../damage';
 import { recordDamage, recordMissileHit, recordMissileSeduced } from '../stats';
@@ -26,7 +26,9 @@ import {
   recordAoeMissileStats,
 } from './missile-aoe';
 import {
+  capitalizeMissileType,
   findNearestDecoy,
+  shouldDetonateAtClosestApproach,
   spawnMissileExplosion,
   trackTarget,
 } from './missile-helpers';
@@ -70,9 +72,7 @@ export function missileSystem(world: World, dt: number): void {
           missile.target = nearestDecoy;
 
           // Track per-ship seduction stats
-          const missileName =
-            missile.missileType.charAt(0).toUpperCase() +
-            missile.missileType.slice(1);
+          const missileName = capitalizeMissileType(missile.missileType);
           if (decoyOwner !== undefined) {
             recordMissileSeduced(world, missile.owner, missileName, decoyOwner);
           }
@@ -134,18 +134,15 @@ export function missileSystem(world: World, dt: number): void {
         { includeMissiles: false },
       );
 
-      const previousDistance = missile.previousClosestEnemyDistance;
-      const withinRadius = closestDistance < missile.aoeRadius;
-      const wasWithinRadius =
-        previousDistance !== undefined && previousDistance < missile.aoeRadius;
-      const distanceIncreasing =
-        previousDistance !== undefined && closestDistance > previousDistance;
-
       // Detonate if we're past closest approach (distance increasing while within radius)
-      if (withinRadius && wasWithinRadius && distanceIncreasing) {
-        const missileName =
-          missile.missileType.charAt(0).toUpperCase() +
-          missile.missileType.slice(1);
+      if (
+        shouldDetonateAtClosestApproach(
+          closestDistance,
+          missile.previousClosestEnemyDistance,
+          missile.aoeRadius,
+        )
+      ) {
+        const missileName = capitalizeMissileType(missile.missileType);
 
         // AoE damage to all nearby entities
         const aoeResult = dealAoeDamage(
@@ -154,7 +151,7 @@ export function missileSystem(world: World, dt: number): void {
           missile.aoeRadius,
           missile.damage,
           missile.owner,
-          -1 as Entity, // No exclusion
+          NO_ENTITY, // No exclusion
           missileName,
           missile.target, // Track if locked target was hit
         );
@@ -196,19 +193,15 @@ export function missileSystem(world: World, dt: number): void {
         { includeMissiles: false },
       );
 
-      const previousDistance = missile.previousClosestEnemyDistance;
-      const withinRadius = closestDistance < missile.flakRadius;
-      const wasWithinRadius =
-        previousDistance !== undefined && previousDistance < missile.flakRadius;
-      const distanceIncreasing =
-        previousDistance !== undefined && closestDistance > previousDistance;
-
       // Detonate if we're past closest approach (distance increasing while within radius)
-      if (withinRadius && wasWithinRadius && distanceIncreasing) {
-        // Spawn shrapnel
-        const missileName =
-          missile.missileType.charAt(0).toUpperCase() +
-          missile.missileType.slice(1); // Capitalize for stats (e.g., "Starburst")
+      if (
+        shouldDetonateAtClosestApproach(
+          closestDistance,
+          missile.previousClosestEnemyDistance,
+          missile.flakRadius,
+        )
+      ) {
+        const missileName = capitalizeMissileType(missile.missileType);
         spawnShrapnel(
           world,
           transform.position,
@@ -262,16 +255,14 @@ export function missileSystem(world: World, dt: number): void {
 
         if (hasEnemiesInRange) {
           // Trigger AoE explosion (half damage for expired nuke)
-          const missileName =
-            missile.missileType.charAt(0).toUpperCase() +
-            missile.missileType.slice(1);
+          const missileName = capitalizeMissileType(missile.missileType);
           const aoeResult = dealAoeDamage(
             world,
             transform.position,
             missile.aoeRadius,
             missile.damage * 0.5,
             missile.owner,
-            -1 as Entity, // No exclusion
+            NO_ENTITY, // No exclusion
             missileName,
             missile.target, // Track if locked target was hit
           );
@@ -311,9 +302,7 @@ export function missileSystem(world: World, dt: number): void {
         if (hasComponent(world, other, 'missile')) continue;
 
         // Friendly fire enabled - missiles damage anyone except owner
-        const missileName =
-          missile.missileType.charAt(0).toUpperCase() +
-          missile.missileType.slice(1);
+        const missileName = capitalizeMissileType(missile.missileType);
 
         // Handle AoE missiles (nukes): no direct damage, full AoE centered on impact
         if (missile.aoeRadius > 0) {
@@ -324,7 +313,7 @@ export function missileSystem(world: World, dt: number): void {
             missile.aoeRadius,
             missile.damage, // Full damage for AoE
             missile.owner,
-            -1 as Entity, // Don't exclude anyone
+            NO_ENTITY, // Don't exclude anyone
             missileName,
             missile.target, // Track if locked target was hit
           );

@@ -7,6 +7,7 @@
  * - Metadata (save time, mission count, credits) for UI display
  */
 
+import { logDebug, logError, logWarn } from '../core/logger';
 import { computeMaxIdFromState } from './id-generator';
 import { slotArrayFromJSON } from './slot-array';
 import type {
@@ -97,7 +98,7 @@ function migrateState(
       const creditsFactor = (migrated.credits ?? 0) * 31;
       const sectorFactor = (migrated.currentSector ?? 1) * 7919;
       migrated.seed = (missionFactor + creditsFactor + sectorFactor) >>> 0;
-      console.log(`[Save Migration] v1->v2: Added seed ${migrated.seed}`);
+      logDebug(`Save Migration v1->v2: Added seed ${migrated.seed}`);
     }
   }
 
@@ -107,7 +108,7 @@ function migrateState(
       // Compute max ID from existing entities and set nextId = max + 1
       const maxId = computeMaxIdFromState(migrated);
       migrated.nextId = maxId + 1;
-      console.log(`[Save Migration] v2->v3: Set nextId to ${migrated.nextId}`);
+      logDebug(`Save Migration v2->v3: Set nextId to ${migrated.nextId}`);
     }
   }
 
@@ -116,9 +117,7 @@ function migrateState(
   // The weapon arrays are just { slotCount: N } objects with no actual data.
   // We reset weapons to empty slots - player will need to re-equip.
   if (fromVersion < 4) {
-    console.log(
-      '[Save Migration] v3->v4: Fixing corrupted SlotArray weapon data',
-    );
+    logDebug('Save Migration v3->v4: Fixing corrupted SlotArray weapon data');
     for (const ship of migrated.ships) {
       // Check if weapon data is corrupted (raw object instead of array)
       const primary = ship.primaryWeapons as unknown;
@@ -126,18 +125,14 @@ function migrateState(
 
       if (!Array.isArray(primary)) {
         const slotCount = (primary as { slotCount?: number })?.slotCount ?? 2;
-        console.log(
-          `[Save Migration] Ship ${ship.id}: Resetting ${slotCount} primary slots`,
-        );
+        logDebug(`Ship ${ship.id}: Resetting ${slotCount} primary slots`);
         (ship as unknown as Record<string, unknown>).primaryWeapons =
           Array(slotCount).fill(null);
       }
 
       if (!Array.isArray(secondary)) {
         const slotCount = (secondary as { slotCount?: number })?.slotCount ?? 2;
-        console.log(
-          `[Save Migration] Ship ${ship.id}: Resetting ${slotCount} secondary slots`,
-        );
+        logDebug(`Ship ${ship.id}: Resetting ${slotCount} secondary slots`);
         (ship as unknown as Record<string, unknown>).secondaryWeapons =
           Array(slotCount).fill(null);
       }
@@ -181,7 +176,7 @@ function getSaveKey(slot: number): string {
  */
 export function saveGame(slot: number, state: CampaignState): boolean {
   if (slot < 1 || slot > MAX_SAVE_SLOTS) {
-    console.error(`Invalid save slot: ${slot}`);
+    logError(`Invalid save slot: ${slot}`);
     return false;
   }
 
@@ -196,7 +191,7 @@ export function saveGame(slot: number, state: CampaignState): boolean {
     localStorage.setItem(getSaveKey(slot), json);
     return true;
   } catch (error) {
-    console.error(`Failed to save game to slot ${slot}:`, error);
+    logError(`Failed to save game to slot ${slot}:`, error);
     return false;
   }
 }
@@ -208,7 +203,7 @@ export function saveGame(slot: number, state: CampaignState): boolean {
  */
 export function loadGame(slot: number): CampaignState | null {
   if (slot < 1 || slot > MAX_SAVE_SLOTS) {
-    console.error(`Invalid save slot: ${slot}`);
+    logError(`Invalid save slot: ${slot}`);
     return null;
   }
 
@@ -220,22 +215,20 @@ export function loadGame(slot: number): CampaignState | null {
 
     // Validate save data structure
     if (!isValidSaveData(parsed)) {
-      console.error(`Invalid save data structure in slot ${slot}`);
+      logError(`Invalid save data structure in slot ${slot}`);
       return null;
     }
 
     // Validate campaign state structure
     if (!isValidCampaignState(parsed.state)) {
-      console.error(`Invalid campaign state in slot ${slot}`);
+      logError(`Invalid campaign state in slot ${slot}`);
       return null;
     }
 
     // Apply migrations if save is from older version
     let state = parsed.state;
     if (parsed.version < SAVE_VERSION) {
-      console.log(
-        `[Save] Migrating save from v${parsed.version} to v${SAVE_VERSION}`,
-      );
+      logDebug(`Migrating save from v${parsed.version} to v${SAVE_VERSION}`);
       state = migrateState(state, parsed.version);
     }
 
@@ -244,7 +237,7 @@ export function loadGame(slot: number): CampaignState | null {
 
     return state;
   } catch (error) {
-    console.error(`Failed to load game from slot ${slot}:`, error);
+    logError(`Failed to load game from slot ${slot}:`, error);
     return null;
   }
 }
@@ -255,7 +248,7 @@ export function loadGame(slot: number): CampaignState | null {
  */
 export function deleteSave(slot: number): void {
   if (slot < 1 || slot > MAX_SAVE_SLOTS) {
-    console.error(`Invalid save slot: ${slot}`);
+    logError(`Invalid save slot: ${slot}`);
     return;
   }
 
@@ -280,13 +273,13 @@ export function getSaveMetadata(slot: number): SaveMetadata | null {
 
     // Validate save data structure
     if (!isValidSaveData(parsed)) {
-      console.warn(`Invalid save data structure in slot ${slot}`);
+      logWarn(`Invalid save data structure in slot ${slot}`);
       return null;
     }
 
     // Validate campaign state structure
     if (!isValidCampaignState(parsed.state)) {
-      console.warn(`Invalid campaign state in slot ${slot}`);
+      logWarn(`Invalid campaign state in slot ${slot}`);
       return null;
     }
 

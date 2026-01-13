@@ -14,7 +14,7 @@
  * - Secondaries: nuke
  */
 
-import type { Contract } from '../../../../campaign/types';
+import type { Contract } from '../types';
 import { SECTOR_4_EASY } from './easy';
 import { SECTOR_4_HARD } from './hard';
 import { SECTOR_4_MEDIUM } from './medium';

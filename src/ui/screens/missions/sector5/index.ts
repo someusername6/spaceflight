@@ -13,7 +13,7 @@
  * - Elite heavies: titan (railgun), juggernaut (nuke), scorpion (railgun)
  */
 
-import type { Contract } from '../../../../campaign/types';
+import type { Contract } from '../types';
 import { SECTOR_5_EASY } from './easy';
 import { SECTOR_5_HARD } from './hard';
 import { SECTOR_5_MEDIUM } from './medium';

@@ -124,3 +124,22 @@ export function findNearestDecoy(
 
   return nearestDecoy;
 }
+
+/** Capitalize missile type for display/stats (e.g., "rocket" -> "Rocket") */
+export function capitalizeMissileType(missileType: string): string {
+  return missileType.charAt(0).toUpperCase() + missileType.slice(1);
+}
+
+/** Check if missile should detonate based on closest approach logic */
+export function shouldDetonateAtClosestApproach(
+  closestDistance: number,
+  previousDistance: number | undefined,
+  radius: number,
+): boolean {
+  const withinRadius = closestDistance < radius;
+  const wasWithinRadius =
+    previousDistance !== undefined && previousDistance < radius;
+  const distanceIncreasing =
+    previousDistance !== undefined && closestDistance > previousDistance;
+  return withinRadius && wasWithinRadius && distanceIncreasing;
+}

@@ -2,7 +2,7 @@
  * Sector 1: Easy Missions (60-80% win rate)
  */
 
-import type { Contract } from '../../../../campaign/types';
+import type { Contract } from '../types';
 
 export const SECTOR_1_EASY: Contract[] = [
   {

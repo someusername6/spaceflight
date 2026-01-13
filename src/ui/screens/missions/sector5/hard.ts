@@ -2,7 +2,7 @@
  * Sector 5: Hard Missions (20-40% win rate)
  */
 
-import type { Contract } from '../../../../campaign/types';
+import type { Contract } from '../types';
 
 export const SECTOR_5_HARD: Contract[] = [
   {

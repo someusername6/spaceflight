@@ -2,6 +2,7 @@
  * Campaign state management - create, save, load campaign state.
  */
 
+import { logDebug } from '../core/logger';
 import { createDerivedPRNG, random } from '../core/prng';
 import { getArchetype } from '../factories/ship';
 import { generateCampaignId } from './id-generator';
@@ -221,7 +222,7 @@ export function applyMissionResults(
       killedPilotIds.add(lostShip.pilot.id);
       // Log commander death for debugging (caller handles game-over via isGameOver)
       if (lostShip.pilot.id === state.commanderId) {
-        console.log('[Campaign] Commander killed - game over state');
+        logDebug('Commander killed - game over state');
       }
     }
   }
@@ -367,7 +368,3 @@ export function applyAmmoUsage(
     ships: updatedShips,
   };
 }
-
-// Future: localStorage save/load
-// export function saveCampaign(state: CampaignState): void { ... }
-// export function loadCampaign(): CampaignState | null { ... }

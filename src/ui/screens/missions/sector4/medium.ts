@@ -2,7 +2,7 @@
  * Sector 4: Medium Missions (40-60% win rate)
  */
 
-import type { Contract } from '../../../../campaign/types';
+import type { Contract } from '../types';
 
 export const SECTOR_4_MEDIUM: Contract[] = [
   {

@@ -10,6 +10,9 @@ export { Euler, Quaternion, Vector3 } from 'three';
 /** Entity is just a numeric ID */
 export type Entity = number;
 
+/** Sentinel value for "no entity" (used when entity parameter is optional) */
+export const NO_ENTITY = -1 as Entity;
+
 /** All components must have a type tag for identification */
 export interface ComponentBase {
   readonly type: string;

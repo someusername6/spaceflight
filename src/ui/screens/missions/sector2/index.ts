@@ -15,7 +15,7 @@
  * - Secondaries: dart, cluster, starburst
  */
 
-import type { Contract } from '../../../../campaign/types';
+import type { Contract } from '../types';
 import { SECTOR_2_EASY } from './easy';
 import { SECTOR_2_HARD } from './hard';
 import { SECTOR_2_MEDIUM } from './medium';

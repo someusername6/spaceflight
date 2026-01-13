@@ -22,7 +22,7 @@
  * - Hard 20-40%: Regular skill, include hornet/wasp at rookie
  */
 
-import type { Contract } from '../../../../campaign/types';
+import type { Contract } from '../types';
 import { SECTOR_1_EASY } from './easy';
 import { SECTOR_1_HARD } from './hard';
 import { SECTOR_1_MEDIUM } from './medium';

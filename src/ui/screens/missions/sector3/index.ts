@@ -13,7 +13,7 @@
  * - Secondaries: torpedo
  */
 
-import type { Contract } from '../../../../campaign/types';
+import type { Contract } from '../types';
 import { SECTOR_3_EASY } from './easy';
 import { SECTOR_3_HARD } from './hard';
 import { SECTOR_3_MEDIUM } from './medium';
