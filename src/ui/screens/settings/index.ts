@@ -103,6 +103,7 @@ const SettingsScreenComponent: Screen<SettingsState, SettingsScreenCallbacks> =
       // Back button
       api.on('#btn-settings-back', 'click', () => {
         cleanupKeyListener();
+        cleanupSettingsEscapeHandler();
         props.onBack();
       });
 
@@ -198,6 +199,9 @@ const SettingsScreenComponent: Screen<SettingsState, SettingsScreenCallbacks> =
         setupKeyListener(api, state.listeningAction);
       }
 
+      // ESC closes settings - handled via capture phase listener (see setupSettingsEscapeHandler)
+      setupSettingsEscapeHandler(state.listeningAction, props.onBack);
+
       // Re-attach battle simulation canvas after re-render (if present)
       reattachBattleCanvas();
     },
@@ -282,6 +286,41 @@ function cleanupKeyListener(): void {
   }
 }
 
+/** Active ESC handler for closing settings */
+let settingsEscapeHandler: ((e: KeyboardEvent) => void) | null = null;
+
+/** Setup capture-phase ESC handler to close settings */
+function setupSettingsEscapeHandler(
+  listeningAction: GameAction | null,
+  onBack: () => void,
+): void {
+  cleanupSettingsEscapeHandler();
+
+  // Don't add ESC handler if we're in key rebinding mode (that has its own handler)
+  if (listeningAction) return;
+
+  settingsEscapeHandler = (e: KeyboardEvent) => {
+    if (e.code === 'Escape') {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      cleanupKeyListener();
+      cleanupSettingsEscapeHandler();
+      onBack();
+    }
+  };
+
+  // Use capture phase to run before global escape handler
+  document.addEventListener('keydown', settingsEscapeHandler, true);
+}
+
+/** Clean up the settings escape handler */
+function cleanupSettingsEscapeHandler(): void {
+  if (settingsEscapeHandler) {
+    document.removeEventListener('keydown', settingsEscapeHandler, true);
+    settingsEscapeHandler = null;
+  }
+}
+
 /** Screen handle for external control */
 let screenHandle: ScreenHandle<SettingsState, SettingsScreenCallbacks> | null =
   null;
@@ -329,6 +368,7 @@ export function bindSettingsScreen(
 /** Cleanup settings screen (cancel any listening and reset state) */
 export function cleanupSettingsScreen(): void {
   cleanupKeyListener();
+  cleanupSettingsEscapeHandler();
   screenHandle?.destroy();
   screenHandle = null;
 }
