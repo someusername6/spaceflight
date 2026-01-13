@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { Faction } from '../components/faction';
 import type { MissileType } from '../components/missile';
+import { SHIP_MODEL_SCALE } from './constants';
 import { SHIP_GEOMETRIES, type ShipClass } from './ship-geometries';
 
 /** Cached BufferGeometry instances built on demand from embedded data */
@@ -75,9 +76,6 @@ const MISSILE_VISUALS: Record<
   torpedo: { radius: 0.7, length: 4.0, color: 0x6688aa },
   nuke: { radius: 0.9, length: 5.0, color: 0xff2200, emissive: 0xff0000 },
 };
-
-/** Ship scale factor to match original cone size */
-const SHIP_MODEL_SCALE = 1.5;
 
 /**
  * Creates a ship mesh.

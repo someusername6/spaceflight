@@ -22,7 +22,7 @@ import {
   getBeamColor,
 } from './beam-helpers';
 import { findAllBeamHits } from './beam-raycasting';
-import { calculateBankOffset } from './weapon-spawning';
+import { getWeaponSpawnPosition } from './weapon-spawning';
 import { getPlayerAutoaimBonus } from './weapons';
 
 // Reusable objects
@@ -139,14 +139,16 @@ function fireInstantBeam(
   targetEntity: Entity | undefined,
   isPlayer = false,
 ): void {
-  // Calculate beam origin with bank offset
-  const origin = calculateBankOffset(
+  // Calculate beam origin using hardpoint positions (or fallback to bank offset)
+  getWeaponSpawnPosition(
+    rayOrigin,
+    world,
+    owner,
     transform,
     weaponIndex,
     totalBanks,
     BEAM_SPAWN_OFFSET,
   );
-  rayOrigin.copy(origin);
   rayDirection.copy(direction);
 
   // Apply autoaim if weapon has autoaimFov or isPlayer, and target exists

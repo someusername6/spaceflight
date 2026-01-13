@@ -65,8 +65,8 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     primaryBanks: [1, 1],
     secondaryBanks: [1],
     primaryHardpoints: [
-      { row: 0, x: 0.3, svgX: 12, svgY: 32 },
-      { row: 0, x: 0.7, svgX: 52, svgY: 32 },
+      { row: 0, x: 0.2, svgX: 12, svgY: 24 },
+      { row: 0, x: 0.8, svgX: 52, svgY: 24 },
     ],
     secondaryHardpoints: [{ row: 0, x: 0.5, svgX: 32, svgY: 46 }],
   },

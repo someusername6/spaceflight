@@ -1,7 +1,8 @@
 /**
- * Weapon Spawning - Creates projectile and missile entities.
+ * Weapon Spawning - Creates projectile entities.
  *
  * Each weapon bank has a distinct spawn point offset from ship center.
+ * Primary weapons spawn at hardpoint positions defined in ship data.
  */
 
 import * as THREE from 'three';
@@ -9,42 +10,94 @@ import type { AimError } from '../../components/aim-error';
 import { applyAimError } from '../../components/aim-error';
 import type { FactionComponent } from '../../components/faction';
 import { createFaction } from '../../components/faction';
-import { createHealth } from '../../components/health';
-import {
-  createMissile,
-  type MissileShrapnelConfig,
-  type MissileType,
-} from '../../components/missile';
 import type {
   CreateProjectileOptions,
   ProjectileCategory,
   WeaponName,
 } from '../../components/projectile';
 import { createProjectile } from '../../components/projectile';
+import type { ShipIdentity } from '../../components/ship-identity';
 import type { Transform } from '../../components/transform';
 import { createTransform } from '../../components/transform';
-import type { SecondaryWeapon } from '../../components/weapons';
-import { addComponent, createEntity } from '../../core/ecs';
+import { addComponent, createEntity, getComponent } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
+import { getArchetype } from '../../factories/ship';
 import { createCollision } from '../collision';
 import { getForward } from '../physics';
-import { recordMissileLaunched, recordShotFired } from '../stats';
+import { recordShotFired } from '../stats';
+import { getHardpointWorldPosition } from './hardpoint-positions';
 
-/** Spawn offsets from ship center */
+/** Spawn offset from ship center */
 const PROJECTILE_SPAWN_OFFSET = 3;
-const MISSILE_SPAWN_OFFSET = 4; // Owner collision ignored for first 20m of travel
 
 /** Lateral offset between weapon banks */
 const BANK_LATERAL_OFFSET = 1.5;
 
-/** Collision radii */
+/** Collision radius */
 const PROJECTILE_RADIUS = 0.5;
-const MISSILE_RADIUS = 1.0;
 
 // Reusable vectors (avoid per-spawn allocations)
 const spawnPos = new THREE.Vector3();
 const rightAxis = new THREE.Vector3();
 const toIntercept = new THREE.Vector3();
+
+/**
+ * Get ship class name from entity's identity.
+ * Returns undefined if entity has no shipIdentity or archetype has no ship class.
+ */
+function getShipClassName(world: World, entity: Entity): string | undefined {
+  const identity = getComponent<ShipIdentity>(world, entity, 'shipIdentity');
+  if (!identity) return undefined;
+
+  const archetype = getArchetype(identity.archetype);
+  return archetype?.shipClassName;
+}
+
+/**
+ * Get spawn position for a weapon, using hardpoint data if available.
+ * Falls back to symmetric bank distribution if hardpoints not defined.
+ *
+ * @param out - Vector3 to store the result (modified in place)
+ * @param world - ECS world
+ * @param owner - Entity firing the weapon
+ * @param ownerTransform - Owner's current transform
+ * @param bankIndex - Which weapon bank (0-indexed)
+ * @param totalBanks - Total number of weapon banks
+ * @param forwardOffset - Additional forward offset from ship center
+ */
+export function getWeaponSpawnPosition(
+  out: THREE.Vector3,
+  world: World,
+  owner: Entity,
+  ownerTransform: Transform,
+  bankIndex: number,
+  totalBanks: number,
+  forwardOffset: number,
+): void {
+  const shipClassName = getShipClassName(world, owner);
+
+  if (shipClassName) {
+    const found = getHardpointWorldPosition(
+      out,
+      ownerTransform,
+      shipClassName,
+      bankIndex,
+      forwardOffset,
+    );
+    if (found) {
+      return;
+    }
+  }
+
+  // Fallback to symmetric bank distribution
+  const fallbackPos = calculateBankOffset(
+    ownerTransform,
+    bankIndex,
+    totalBanks,
+    forwardOffset,
+  );
+  out.copy(fallbackPos);
+}
 
 /** Autoaim parameters for projectile correction */
 export interface AutoaimParams {
@@ -207,16 +260,20 @@ export function spawnProjectile(
   target?: Entity,
 ): void {
   const forward = getForward(ownerTransform);
-  const pos = calculateBankOffset(
+  getWeaponSpawnPosition(
+    spawnPos,
+    world,
+    owner,
     ownerTransform,
     bankIndex,
     totalBanks,
     PROJECTILE_SPAWN_OFFSET,
   );
+
   createProjectileEntity(
     world,
     owner,
-    pos,
+    spawnPos,
     forward,
     weapon,
     ownerFaction,
@@ -238,7 +295,10 @@ export function spawnProjectileWithAimError(
   target?: Entity,
 ): void {
   const forward = getForward(ownerTransform);
-  const pos = calculateBankOffset(
+  getWeaponSpawnPosition(
+    spawnPos,
+    world,
+    owner,
     ownerTransform,
     bankIndex,
     totalBanks,
@@ -250,7 +310,7 @@ export function spawnProjectileWithAimError(
 
   // Apply autoaim correction if within cone
   if (autoaim && autoaim.fovDegrees > 0) {
-    toIntercept.copy(autoaim.interceptPoint).sub(pos).normalize();
+    toIntercept.copy(autoaim.interceptPoint).sub(spawnPos).normalize();
     const dot = direction.dot(toIntercept);
     const angleRad = Math.acos(Math.max(-1, Math.min(1, dot)));
     const angleDeg = angleRad * (180 / Math.PI);
@@ -262,7 +322,7 @@ export function spawnProjectileWithAimError(
   createProjectileEntity(
     world,
     owner,
-    pos,
+    spawnPos,
     direction,
     weapon,
     ownerFaction,
@@ -270,87 +330,6 @@ export function spawnProjectileWithAimError(
   );
 }
 
-/** Spawn a missile entity */
-export function spawnMissile(
-  world: World,
-  owner: Entity,
-  ownerTransform: Transform,
-  weapon: SecondaryWeapon,
-  ownerFaction: FactionComponent | undefined,
-  target: Entity | undefined,
-  aimDirection?: THREE.Vector3, // Optional aim direction for dumbfire lead
-): void {
-  const forward = getForward(ownerTransform);
-  spawnPos
-    .copy(ownerTransform.position)
-    .addScaledVector(forward, MISSILE_SPAWN_OFFSET);
-
-  // Use provided aim direction for dumbfire, or forward for tracking missiles
-  const direction = aimDirection ?? forward;
-
-  const missile = createEntity(world);
-
-  // Create transform at spawn position
-  const missileTransform = createTransform(spawnPos.x, spawnPos.y, spawnPos.z);
-  missileTransform.rotation.copy(ownerTransform.rotation);
-  addComponent(world, missile, missileTransform);
-
-  // Create missile component with type for visuals
-  const missileType = weapon.name.toLowerCase() as MissileType;
-
-  // Build shrapnel config if weapon has shrapnel properties
-  let shrapnelConfig: MissileShrapnelConfig | undefined;
-  if (weapon.flakRadius !== undefined) {
-    shrapnelConfig = { flakRadius: weapon.flakRadius };
-    if (weapon.shrapnelCount !== undefined)
-      shrapnelConfig.shrapnelCount = weapon.shrapnelCount;
-    if (weapon.shrapnelDamage !== undefined)
-      shrapnelConfig.shrapnelDamage = weapon.shrapnelDamage;
-    if (weapon.shrapnelSpeed !== undefined)
-      shrapnelConfig.shrapnelSpeed = weapon.shrapnelSpeed;
-    if (weapon.shrapnelRange !== undefined)
-      shrapnelConfig.shrapnelRange = weapon.shrapnelRange;
-  }
-
-  addComponent(
-    world,
-    missile,
-    createMissile(
-      owner,
-      target,
-      weapon.damage,
-      weapon.speed,
-      weapon.turnRate,
-      weapon.range,
-      direction,
-      weapon.aoeRadius ?? 0,
-      weapon.isNuke ?? false,
-      missileType,
-      shrapnelConfig,
-    ),
-  );
-
-  // Add collision
-  addComponent(world, missile, createCollision(MISSILE_RADIUS));
-
-  // Add health (missiles have 1 HP - destroyed by any hit)
-  addComponent(world, missile, createHealth(1));
-
-  // Missiles inherit owner's faction
-  if (ownerFaction) {
-    addComponent(world, missile, createFaction(ownerFaction.faction));
-  }
-
-  // Track per-ship stats
-  recordMissileLaunched(world, owner, weapon.name);
-
-  // Track aggregate stats if enabled (for balance analysis)
-  if (world.systemState.combatStats) {
-    const stats = world.systemState.combatStats;
-    stats.missilesFired[weapon.name] =
-      (stats.missilesFired[weapon.name] || 0) + 1;
-  }
-}
-
-// Re-export spawnDecoy from decoy-spawning.ts for backwards compatibility
+// Re-export for backwards compatibility
 export { spawnDecoy } from './decoy-spawning';
+export { spawnMissile } from './missile-spawning';

@@ -5,7 +5,7 @@
  * mission reward values and sort missions by reward.
  */
 
-import path from 'path';
+import path from 'node:path';
 import { Project, SyntaxKind } from 'ts-morph';
 
 // Mission file paths by sector and difficulty
