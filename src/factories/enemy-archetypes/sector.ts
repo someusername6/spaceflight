@@ -30,7 +30,7 @@ export const S1_ARCHETYPES: Record<string, EnemyShipStats> = {
       { name: 'pulse', size: 1 },
       { name: 'pulse', size: 1 },
     ],
-    secondaryWeapons: [{ name: 'swarm', count: 10, size: 1 }],
+    secondaryWeapons: [{ name: 'swarm', count: 20, size: 1 }],
     preferredCombatRange: 400,
   }),
 

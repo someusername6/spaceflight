@@ -8,6 +8,20 @@
 import { createArchetype, type EnemyShipStats } from './types';
 
 export const ELITE_ARCHETYPES: Record<string, EnemyShipStats> = {
+  // Striker with torches - heavy heat injection assault
+  inferno: createArchetype('striker', {
+    playstyle: 'brawler',
+    primaryWeapons: [
+      { name: 'torch', size: 2 },
+      { name: 'torch', size: 2 },
+      { name: 'torch', size: 2 },
+      { name: 'torch', size: 1 },
+      { name: 'torch', size: 1 },
+    ],
+    secondaryWeapons: [{ name: 'rocket', count: 6, size: 1 }],
+    preferredCombatRange: 200,
+  }),
+
   // Striker with railguns - heavy assault, high damage output
   titan: createArchetype('striker', {
     playstyle: 'gunboat', // 5 primaries - constant firing constraints

@@ -26,9 +26,9 @@ const NUM_TRIALS = parseInt(process.argv[4], 10) || 200;
 
 // Balance targets by difficulty
 const BALANCE_TARGETS = {
-  easy: { min: 60, max: 80 },
-  medium: { min: 40, max: 60 },
-  hard: { min: 20, max: 40 },
+  easy: { min: 80, max: 90 },
+  medium: { min: 70, max: 80 },
+  hard: { min: 60, max: 70 },
 };
 
 // ============================================================================

@@ -18,13 +18,13 @@ export interface SectorAdvanceResult {
   confirmed: boolean;
 }
 
-/** Enemy skill ranges per sector (for display) */
-const SECTOR_ENEMY_SKILLS: Record<number, string> = {
-  1: 'Green, Rookie, Regular',
-  2: 'Rookie, Regular, Veteran',
-  3: 'Regular, Veteran, Ace',
-  4: 'Veteran, Ace',
-  5: 'Ace, Elite',
+/** Threat descriptions per sector (for display) */
+const SECTOR_THREAT_LEVELS: Record<number, string> = {
+  1: 'Light patrols, rookie pilots',
+  2: 'Coordinated squads, veteran pilots',
+  3: 'Heavy ordnance, ace pilots',
+  4: 'Elite ships, specialized weapons',
+  5: 'Maximum threat, no mercy',
 };
 
 /** Modal state (no state needed for this simple modal) */
@@ -46,7 +46,7 @@ const SectorAdvanceModalScreen: Screen<AdvanceModalState, AdvanceModalProps> = {
     const { currentSector } = props;
     const targetSector = currentSector + 1;
     const targetName = getSectorName(targetSector);
-    const targetSkills = SECTOR_ENEMY_SKILLS[targetSector] ?? 'Unknown';
+    const targetThreat = SECTOR_THREAT_LEVELS[targetSector] ?? 'Unknown';
     const isEndless = targetSector >= MAX_SECTOR;
 
     return `
@@ -61,8 +61,8 @@ const SectorAdvanceModalScreen: Screen<AdvanceModalState, AdvanceModalProps> = {
             </div>
 
             <div class="advance-warning">
-              <span class="advance-label">Enemy Pilots</span>
-              <span class="advance-value advance-skills">${targetSkills}</span>
+              <span class="advance-label">Threat Level</span>
+              <span class="advance-value advance-skills">${targetThreat}</span>
             </div>
 
             ${isEndless ? '<div class="advance-endless-note">Endless mode - no further sectors</div>' : ''}

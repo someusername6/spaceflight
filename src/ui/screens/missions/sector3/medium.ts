@@ -6,64 +6,6 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_3_MEDIUM: Contract[] = [
   {
-    id: 's3-mothership-connection',
-    name: 'Mothership Connection',
-    description:
-      'Face lightning barrage. Moths with swarm missiles and lightning cannons.',
-    difficulty: 'medium',
-    sector: 3,
-    waves: [
-      {
-        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'moth', skill: 'veteran', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 5011,
-  },
-  {
-    id: 's3-crimson-tide',
-    name: 'Crimson Tide',
-    description:
-      'Destroy enemy force. Heavy waves of veteran Fireflies and Dragonflies.',
-    difficulty: 'medium',
-    sector: 3,
-    waves: [
-      {
-        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 2 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 5235,
-  },
-  {
     id: 's3-hot-blooded',
     name: 'Hot Blooded',
     description:
@@ -72,33 +14,71 @@ export const SECTOR_3_MEDIUM: Contract[] = [
     sector: 3,
     waves: [
       {
-        enemies: [{ archetype: 'fireant', skill: 'veteran', count: 2 }],
+        enemies: [
+          { archetype: 'fireant', skill: 'rookie', count: 1 },
+          { archetype: 'phantom', skill: 'rookie', count: 1 },
+        ],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
+        enemies: [
+          { archetype: 'fireant', skill: 'rookie', count: 2 },
+          { archetype: 'phantom', skill: 'rookie', count: 1 },
+        ],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'fireant', skill: 'veteran', count: 2 }],
+        enemies: [
+          { archetype: 'fireant', skill: 'regular', count: 2 },
+          { archetype: 'phantom', skill: 'rookie', count: 1 },
+        ],
+        delay: [8, 12],
+      },
+      {
+        enemies: [
+          { archetype: 'fireant', skill: 'regular', count: 2 },
+          { archetype: 'phantom', skill: 'regular', count: 1 },
+        ],
+        delay: [8, 12],
+      },
+    ],
+    reward: 3811,
+  },
+  {
+    id: 's3-ghost-riders-in-the-sky',
+    name: 'Ghost Riders in the Sky',
+    description: 'Face assault force. Phantoms and Dragonflies.',
+    difficulty: 'medium',
+    sector: 3,
+    waves: [
+      {
+        enemies: [{ archetype: 'phantom', skill: 'rookie', count: 2 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
         delay: [8, 12],
       },
       {
         enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
         delay: [8, 12],
       },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
+        delay: [8, 12],
+      },
     ],
-    reward: 5402,
+    reward: 3864,
   },
   {
-    id: 's3-ghost-riders-in-the-sky',
-    name: 'Ghost Riders in the Sky',
-    description: 'Face heavy assault. Phantoms and Ace Dragonflies in force.',
+    id: 's3-crimson-tide',
+    name: 'Crimson Tide',
+    description: 'Destroy enemy force. Fireflies and Dragonflies in waves.',
     difficulty: 'medium',
     sector: 3,
     waves: [
       {
-        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
+        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
         delay: [5, 10],
       },
       {
@@ -106,7 +86,7 @@ export const SECTOR_3_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
+        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
         delay: [8, 12],
       },
       {
@@ -114,13 +94,13 @@ export const SECTOR_3_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 5488,
+    reward: 4405,
   },
   {
     id: 's3-aces-high',
     name: 'Aces High',
     description:
-      'Face veteran squadron. Wasps and Dragonflies with skilled pilots.',
+      'Face veteran squadron. Wasps, Dragonflies, and Rocketeers with skilled pilots.',
     difficulty: 'medium',
     sector: 3,
     waves: [
@@ -129,18 +109,45 @@ export const SECTOR_3_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
       {
+        enemies: [{ archetype: 'rocketeer', skill: 'veteran', count: 2 }],
+        delay: [10, 15],
+      },
+      {
         enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
         delay: [10, 15],
       },
       {
-        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
-        delay: [10, 15],
-      },
-      {
-        enemies: [{ archetype: 'wasp', skill: 'veteran', count: 2 }],
+        enemies: [{ archetype: 'rocketeer', skill: 'veteran', count: 2 }],
         delay: [10, 15],
       },
     ],
-    reward: 5637,
+    reward: 4755,
+  },
+  {
+    id: 's3-mothership-connection',
+    name: 'Mothership Connection',
+    description:
+      'Face lightning barrage. Moths with swarm missiles and lightning cannons.',
+    difficulty: 'medium',
+    sector: 3,
+    waves: [
+      {
+        enemies: [{ archetype: 'moth', skill: 'ace', count: 4 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'moth', skill: 'ace', count: 6 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'moth', skill: 'ace', count: 6 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'moth', skill: 'elite', count: 6 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 4782,
   },
 ];

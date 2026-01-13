@@ -1,5 +1,5 @@
 /**
- * Sector 2: Easy Missions (60-80% win rate)
+ * Sector 2: Easy Missions (80-90% win rate)
  */
 
 import type { Contract } from '../../../../campaign/types';
@@ -14,15 +14,15 @@ export const SECTOR_2_EASY: Contract[] = [
     sector: 2,
     waves: [
       {
-        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
+        enemies: [{ archetype: 'dragonfly', skill: 'rookie', count: 2 }],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
+        enemies: [{ archetype: 'firefly', skill: 'rookie', count: 3 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 2 }],
+        enemies: [{ archetype: 'dragonfly', skill: 'rookie', count: 3 }],
         delay: [8, 12],
       },
       {
@@ -30,33 +30,7 @@ export const SECTOR_2_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3172,
-  },
-  {
-    id: 's2-starman',
-    name: 'Starman',
-    description: 'Survive area denial. Sparklers with starburst missiles.',
-    difficulty: 'easy',
-    sector: 2,
-    waves: [
-      {
-        enemies: [{ archetype: 'sparkler', skill: 'regular', count: 2 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'sparkler', skill: 'rookie', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'stinger', skill: 'regular', count: 2 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 3365,
+    reward: 2571,
   },
   {
     id: 's2-the-bruiser-brothers',
@@ -67,50 +41,49 @@ export const SECTOR_2_EASY: Contract[] = [
     sector: 2,
     waves: [
       {
-        enemies: [{ archetype: 'bruiser', skill: 'regular', count: 2 }],
+        enemies: [{ archetype: 'bruiser', skill: 'rookie', count: 1 }],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
+        enemies: [{ archetype: 'bruiser', skill: 'rookie', count: 1 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'bruiser', skill: 'regular', count: 2 }],
+        enemies: [{ archetype: 'bruiser', skill: 'rookie', count: 2 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
+        enemies: [{ archetype: 'bruiser', skill: 'rookie', count: 2 }],
         delay: [8, 12],
       },
     ],
-    reward: 3740,
+    reward: 2587,
   },
   {
-    id: 's2-locust-hocus-pocus',
-    name: 'Locust Hocus Pocus',
-    description:
-      'Destroy Locust squadron. Cluster missiles incoming - watch spacing.',
+    id: 's2-starman',
+    name: 'Starman',
+    description: 'Survive area denial. Sparklers with starburst missiles.',
     difficulty: 'easy',
     sector: 2,
     waves: [
       {
-        enemies: [{ archetype: 'locust', skill: 'regular', count: 2 }],
+        enemies: [{ archetype: 'sparkler', skill: 'rookie', count: 1 }],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
+        enemies: [{ archetype: 'sparkler', skill: 'rookie', count: 2 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'locust', skill: 'regular', count: 2 }],
+        enemies: [{ archetype: 'sparkler', skill: 'rookie', count: 2 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'stinger', skill: 'veteran', count: 2 }],
+        enemies: [{ archetype: 'sparkler', skill: 'regular', count: 2 }],
         delay: [8, 12],
       },
     ],
-    reward: 3815,
+    reward: 2811,
   },
   {
     id: 's2-running-down-a-dream',
@@ -120,23 +93,23 @@ export const SECTOR_2_EASY: Contract[] = [
     sector: 2,
     waves: [
       {
-        enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
+        enemies: [{ archetype: 'firefly', skill: 'rookie', count: 2 }],
         delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'stinger', skill: 'rookie', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'firefly', skill: 'rookie', count: 3 }],
+        delay: [8, 12],
       },
       {
         enemies: [{ archetype: 'stinger', skill: 'regular', count: 3 }],
         delay: [8, 12],
       },
-      {
-        enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
-        delay: [8, 12],
-      },
     ],
-    reward: 3921,
+    reward: 3158,
   },
   {
     id: 's2-borderline',
@@ -147,22 +120,49 @@ export const SECTOR_2_EASY: Contract[] = [
     sector: 2,
     waves: [
       {
-        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
+        enemies: [{ archetype: 'firefly', skill: 'rookie', count: 2 }],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
+        enemies: [{ archetype: 'dragonfly', skill: 'rookie', count: 3 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'stinger', skill: 'regular', count: 3 }],
+        enemies: [{ archetype: 'stinger', skill: 'rookie', count: 3 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
+        enemies: [{ archetype: 'firefly', skill: 'regular', count: 4 }],
         delay: [8, 12],
       },
     ],
-    reward: 4602,
+    reward: 3238,
+  },
+  {
+    id: 's2-locust-hocus-pocus',
+    name: 'Locust Hocus Pocus',
+    description:
+      'Destroy Locust squadron. Cluster missiles incoming - watch spacing.',
+    difficulty: 'easy',
+    sector: 2,
+    waves: [
+      {
+        enemies: [{ archetype: 'locust', skill: 'rookie', count: 2 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'locust', skill: 'rookie', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'locust', skill: 'regular', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'locust', skill: 'regular', count: 3 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 3854,
   },
 ];

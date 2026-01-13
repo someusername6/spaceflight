@@ -6,56 +6,30 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_1_MEDIUM: Contract[] = [
   {
-    id: 's1-another-day-in-paradise',
-    name: 'Another Day in Paradise',
-    description: 'Clear the sector. Mixed hostiles across multiple waves.',
+    id: 's1-take-the-money-and-run',
+    name: 'Take the Money and Run',
+    description: 'Intercept enemy squadron. Shockers and Embers incoming.',
     difficulty: 'medium',
     sector: 1,
     waves: [
       {
-        enemies: [{ archetype: 'ember', skill: 'regular', count: 3 }],
-        delay: [5, 8],
-      },
-      {
-        enemies: [{ archetype: 'gnat', skill: 'veteran', count: 3 }],
-        delay: [6, 10],
-      },
-      {
-        enemies: [{ archetype: 'shocker', skill: 'regular', count: 2 }],
-        delay: [6, 10],
-      },
-      {
-        enemies: [{ archetype: 'ember', skill: 'veteran', count: 2 }],
-        delay: [6, 10],
-      },
-    ],
-    reward: 3104,
-  },
-  {
-    id: 's1-lead-serenade',
-    name: 'Lead Serenade',
-    description: 'Survive the gauntlet. Wasps with autocannons.',
-    difficulty: 'medium',
-    sector: 1,
-    waves: [
-      {
-        enemies: [{ archetype: 'ember', skill: 'regular', count: 2 }],
+        enemies: [{ archetype: 'shocker', skill: 'rookie', count: 2 }],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'wasp', skill: 'regular', count: 2 }],
+        enemies: [{ archetype: 'ember', skill: 'rookie', count: 4 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'shocker', skill: 'regular', count: 2 }],
+        enemies: [{ archetype: 'shocker', skill: 'rookie', count: 3 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'ember', skill: 'veteran', count: 2 }],
+        enemies: [{ archetype: 'ember', skill: 'regular', count: 4 }],
         delay: [8, 12],
       },
     ],
-    reward: 3522,
+    reward: 2844,
   },
   {
     id: 's1-purple-rain',
@@ -65,7 +39,7 @@ export const SECTOR_1_MEDIUM: Contract[] = [
     sector: 1,
     waves: [
       {
-        enemies: [{ archetype: 'hornet', skill: 'rookie', count: 2 }],
+        enemies: [{ archetype: 'hornet', skill: 'rookie', count: 1 }],
         delay: [5, 10],
       },
       {
@@ -77,36 +51,62 @@ export const SECTOR_1_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'mantis', skill: 'regular', count: 2 }],
+        enemies: [{ archetype: 'mantis', skill: 'rookie', count: 2 }],
         delay: [8, 12],
       },
     ],
-    reward: 3610,
+    reward: 3083,
   },
   {
-    id: 's1-take-the-money-and-run',
-    name: 'Take the Money and Run',
-    description: 'Intercept enemy squadron. Shockers and Embers incoming.',
+    id: 's1-lead-serenade',
+    name: 'Lead Serenade',
+    description: 'Survive the gauntlet. Wasps with autocannons.',
     difficulty: 'medium',
     sector: 1,
     waves: [
       {
-        enemies: [{ archetype: 'shocker', skill: 'veteran', count: 2 }],
+        enemies: [{ archetype: 'wasp', skill: 'rookie', count: 1 }],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'ember', skill: 'veteran', count: 2 }],
+        enemies: [{ archetype: 'wasp', skill: 'rookie', count: 2 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'shocker', skill: 'regular', count: 2 }],
+        enemies: [{ archetype: 'wasp', skill: 'rookie', count: 2 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'ember', skill: 'veteran', count: 2 }],
+        enemies: [{ archetype: 'wasp', skill: 'rookie', count: 2 }],
         delay: [8, 12],
       },
     ],
-    reward: 3841,
+    reward: 3350,
+  },
+  {
+    id: 's1-another-day-in-paradise',
+    name: 'Another Day in Paradise',
+    description: 'Clear the sector. Mixed hostiles across multiple waves.',
+    difficulty: 'medium',
+    sector: 1,
+    waves: [
+      {
+        enemies: [{ archetype: 'ember', skill: 'regular', count: 3 }],
+        delay: [5, 8],
+      },
+      {
+        enemies: [{ archetype: 'gnat', skill: 'regular', count: 4 }],
+        delay: [6, 10],
+      },
+      {
+        enemies: [{ archetype: 'shocker', skill: 'rookie', count: 3 }],
+        delay: [6, 10],
+      },
+      {
+        enemies: [{ archetype: 'ember', skill: 'regular', count: 4 }],
+        delay: [6, 10],
+      },
+    ],
+    reward: 3369,
   },
 ];
