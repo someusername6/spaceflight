@@ -1,8 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <!-- Decoy: Countermeasure with signal waves -->
+  <g transform="translate(6 0)">
   <circle cx="24" cy="16" r="10"/>
   <path d="M24 10 L24 22 M18 16 L30 16"/>
-  <path d="M40 8 Q52 16 40 24"/>
-  <path d="M52 6 Q68 16 52 26"/>
-  <path d="M64 4 Q84 16 64 28"/>
+  
+  <g transform="translate(6 0)">
+  <path d="M38.5 8.5 A 16 16 0 0 1 38.5 23.5" />
+  <path d="M49.5 2.5 A 28 28 0 0 1 49.5 29.5" />
+  <path d="M60.5 -3.5 A 40 40 0 0 1 60.5 35.5" />
+  </g>
+  </g>
 </svg>
