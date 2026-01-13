@@ -6,6 +6,32 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_3_HARD: Contract[] = [
   {
+    id: 's3-the-final-countdown',
+    name: 'The Final Countdown',
+    description: 'Maximum enemy resistance. Ace pilots across all waves.',
+    difficulty: 'hard',
+    sector: 3,
+    waves: [
+      {
+        enemies: [{ archetype: 'phantom', skill: 'regular', count: 3 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'wasp', skill: 'veteran', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'wasp', skill: 'veteran', count: 2 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 6122,
+  },
+  {
     id: 's3-hammer-to-fall',
     name: 'Hammer to Fall',
     description:
@@ -30,33 +56,7 @@ export const SECTOR_3_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 6250,
-  },
-  {
-    id: 's3-break-on-through',
-    name: 'Break on Through',
-    description: 'Break through enemy lines. Elite assault force.',
-    difficulty: 'hard',
-    sector: 3,
-    waves: [
-      {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'wasp', skill: 'ace', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 3 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 6560,
+    reward: 6257,
   },
   {
     id: 's3-three-dog-night',
@@ -87,7 +87,7 @@ export const SECTOR_3_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 6645,
+    reward: 6431,
   },
   {
     id: 's3-riders-on-the-storm',
@@ -113,17 +113,17 @@ export const SECTOR_3_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 6665,
+    reward: 6722,
   },
   {
-    id: 's3-the-final-countdown',
-    name: 'The Final Countdown',
-    description: 'Maximum enemy resistance. Ace pilots across all waves.',
+    id: 's3-break-on-through',
+    name: 'Break on Through',
+    description: 'Break through enemy lines. Elite assault force.',
     difficulty: 'hard',
     sector: 3,
     waves: [
       {
-        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 3 }],
+        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
         delay: [5, 10],
       },
       {
@@ -131,14 +131,14 @@ export const SECTOR_3_HARD: Contract[] = [
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
+        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'wasp', skill: 'veteran', count: 2 }],
+        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 3 }],
         delay: [8, 12],
       },
     ],
-    reward: 6758,
+    reward: 6805,
   },
 ];

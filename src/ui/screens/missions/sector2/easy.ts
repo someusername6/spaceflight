@@ -30,7 +30,7 @@ export const SECTOR_2_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3385,
+    reward: 3172,
   },
   {
     id: 's2-starman',
@@ -56,33 +56,7 @@ export const SECTOR_2_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3497,
-  },
-  {
-    id: 's2-running-down-a-dream',
-    name: 'Running Down a Dream',
-    description: 'Intercept raider force. Fireflies and Stingers.',
-    difficulty: 'easy',
-    sector: 2,
-    waves: [
-      {
-        enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'stinger', skill: 'regular', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 3516,
+    reward: 3365,
   },
   {
     id: 's2-the-bruiser-brothers',
@@ -109,7 +83,7 @@ export const SECTOR_2_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3762,
+    reward: 3740,
   },
   {
     id: 's2-locust-hocus-pocus',
@@ -136,7 +110,33 @@ export const SECTOR_2_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 4023,
+    reward: 3815,
+  },
+  {
+    id: 's2-running-down-a-dream',
+    name: 'Running Down a Dream',
+    description: 'Intercept raider force. Fireflies and Stingers.',
+    difficulty: 'easy',
+    sector: 2,
+    waves: [
+      {
+        enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'stinger', skill: 'regular', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 3921,
   },
   {
     id: 's2-borderline',
@@ -147,11 +147,11 @@ export const SECTOR_2_EASY: Contract[] = [
     sector: 2,
     waves: [
       {
-        enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
+        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
+        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
         delay: [8, 12],
       },
       {
@@ -159,10 +159,10 @@ export const SECTOR_2_EASY: Contract[] = [
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
+        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
         delay: [8, 12],
       },
     ],
-    reward: 4032,
+    reward: 4602,
   },
 ];

@@ -6,60 +6,31 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_4_MEDIUM: Contract[] = [
   {
-    id: 's4-b-52s',
-    name: 'B-52s',
-    description: 'Intercept bomber wing. Behemoth with heavy ordnance inbound.',
-    difficulty: 'medium',
-    sector: 4,
-    waves: [
-      {
-        enemies: [{ archetype: 'moth', skill: 'ace', count: 3 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'fireant', skill: 'ace', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [
-          { archetype: 'behemoth', skill: 'ace', count: 2 },
-          { archetype: 'phantom', skill: 'veteran', count: 1 },
-        ],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 7391,
-  },
-  {
-    id: 's4-spooky',
-    name: 'Spooky',
+    id: 's4-strike-a-pose',
+    name: 'Strike a Pose',
     description:
-      'Hunt Specters. Elite railgun snipers with Dragonfly and Phantom escort.',
+      'Destroy elite strike force. Phantoms with Ace Fireflies and veteran Dragonflies.',
     difficulty: 'medium',
     sector: 4,
     waves: [
+      {
+        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
+        delay: [4, 8],
+      },
+      {
+        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
+        delay: [6, 10],
+      },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
+        delay: [6, 10],
+      },
       {
         enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'specter', skill: 'veteran', count: 1 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
-        delay: [8, 12],
+        delay: [6, 10],
       },
     ],
-    reward: 7586,
+    reward: 6333,
   },
   {
     id: 's4-brothers-in-arms',
@@ -82,34 +53,7 @@ export const SECTOR_4_MEDIUM: Contract[] = [
         delay: [4, 7],
       },
     ],
-    reward: 7590,
-  },
-  {
-    id: 's4-strike-a-pose',
-    name: 'Strike a Pose',
-    description:
-      'Destroy elite strike force. Phantoms with Ace Fireflies and veteran Dragonflies.',
-    difficulty: 'medium',
-    sector: 4,
-    waves: [
-      {
-        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
-        delay: [4, 8],
-      },
-      {
-        enemies: [{ archetype: 'firefly', skill: 'ace', count: 3 }],
-        delay: [6, 10],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
-        delay: [6, 10],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
-        delay: [6, 10],
-      },
-    ],
-    reward: 8333,
+    reward: 7828,
   },
   {
     id: 's4-rock-you-like-a-hurricane',
@@ -136,6 +80,62 @@ export const SECTOR_4_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 8432,
+    reward: 8061,
+  },
+  {
+    id: 's4-spooky',
+    name: 'Spooky',
+    description:
+      'Hunt Specters. Elite railgun snipers with Dragonfly and Phantom escort.',
+    difficulty: 'medium',
+    sector: 4,
+    waves: [
+      {
+        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'specter', skill: 'veteran', count: 1 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 8070,
+  },
+  {
+    id: 's4-b-52s',
+    name: 'B-52s',
+    description: 'Intercept bomber wing. Behemoth with heavy ordnance inbound.',
+    difficulty: 'medium',
+    sector: 4,
+    waves: [
+      {
+        enemies: [{ archetype: 'moth', skill: 'ace', count: 3 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'fireant', skill: 'ace', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [
+          { archetype: 'behemoth', skill: 'ace', count: 2 },
+          { archetype: 'phantom', skill: 'veteran', count: 1 },
+        ],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 8143,
   },
 ];

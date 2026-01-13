@@ -6,31 +6,43 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_2_HARD: Contract[] = [
   {
-    id: 's2-blinded-by-the-light',
-    name: 'Blinded by the Light',
+    id: 's2-disco-inferno',
+    name: 'Disco Inferno',
     description:
-      'Face the beam gauntlet. Veteran Fireflies and Vipers with lasers.',
+      'Survive laser onslaught. All laser colors lighting up the void.',
     difficulty: 'hard',
     sector: 2,
     waves: [
       {
-        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
+        enemies: [
+          { archetype: 'firefly', skill: 'regular', count: 2 },
+          { archetype: 'viper', skill: 'regular', count: 2 },
+        ],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 4 }],
+        enemies: [
+          { archetype: 'glowworm', skill: 'veteran', count: 2 },
+          { archetype: 'firefly', skill: 'veteran', count: 2 },
+        ],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'viper', skill: 'regular', count: 2 }],
+        enemies: [
+          { archetype: 'viper', skill: 'veteran', count: 2 },
+          { archetype: 'glowworm', skill: 'regular', count: 2 },
+        ],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
+        enemies: [
+          { archetype: 'firefly', skill: 'veteran', count: 2 },
+          { archetype: 'viper', skill: 'veteran', count: 2 },
+        ],
         delay: [8, 12],
       },
     ],
-    reward: 5215,
+    reward: 4804,
   },
   {
     id: 's2-the-predator-polka',
@@ -57,59 +69,7 @@ export const SECTOR_2_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 5364,
-  },
-  {
-    id: 's2-fight-for-your-right',
-    name: 'Fight for Your Right',
-    description: 'Hold contested zone. Maximum force with veteran pilots.',
-    difficulty: 'hard',
-    sector: 2,
-    waves: [
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'viper', skill: 'veteran', count: 2 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 5477,
-  },
-  {
-    id: 's2-disco-inferno',
-    name: 'Disco Inferno',
-    description: 'Survive laser onslaught. Fireflies and Vipers closing fast.',
-    difficulty: 'hard',
-    sector: 2,
-    waves: [
-      {
-        enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'viper', skill: 'veteran', count: 3 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 5700,
+    reward: 5101,
   },
   {
     id: 's2-buzz-aldrin',
@@ -135,6 +95,59 @@ export const SECTOR_2_HARD: Contract[] = [
         delay: [10, 15],
       },
     ],
-    reward: 5931,
+    reward: 5617,
+  },
+  {
+    id: 's2-blinded-by-the-light',
+    name: 'Blinded by the Light',
+    description:
+      'Face the beam gauntlet. Veteran Fireflies and Vipers with lasers.',
+    difficulty: 'hard',
+    sector: 2,
+    waves: [
+      {
+        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 4 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'viper', skill: 'regular', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 5638,
+  },
+  {
+    id: 's2-fight-for-your-right',
+    name: 'Fight for Your Right',
+    description: 'Hold contested zone. Maximum force with veteran pilots.',
+    difficulty: 'hard',
+    sector: 2,
+    waves: [
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'viper', skill: 'regular', count: 2 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 5658,
   },
 ];

@@ -6,10 +6,20 @@
  */
 
 import { Quaternion, Vector3 } from 'three';
-import { getComponent, queryEntities } from '../../../src/core/ecs.ts';
+import {
+  createWorld,
+  getComponent,
+  queryEntities,
+} from '../../../src/core/ecs.ts';
 import { randomRange } from '../../../src/core/prng.ts';
 import { Faction } from '../../../src/core/types.ts';
 import { createAIShip } from '../../../src/factories/ship.ts';
+import {
+  initCombatStats,
+  SYSTEMS,
+  TICK_RATE,
+  TICK_SEC,
+} from './combat-utils.mjs';
 import { getArchetypeValue, getPlayerShipValue } from './mission-value.mjs';
 
 // ============================================================================
@@ -188,4 +198,154 @@ export function getLoadoutConsumableValue(sector) {
   }
 
   return totalValue;
+}
+
+// ============================================================================
+// Mission Simulation
+// ============================================================================
+
+const DEFAULT_MAX_SIMULATION_TIME = 300;
+
+/**
+ * Run a single mission simulation.
+ * @param {Object} mission - Mission definition with waves
+ * @param {number} seed - Random seed for determinism
+ * @param {number} sector - Sector number for loadout selection
+ * @param {Object} options - Optional overrides
+ * @param {number} options.maxSimulationTime - Max time in seconds (default 300)
+ * @returns {Object} metrics - { winner, timeToComplete, playerTeamRemaining, timeout }
+ */
+export function runMission(mission, seed, sector, options = {}) {
+  const maxSimulationTime =
+    options.maxSimulationTime ?? DEFAULT_MAX_SIMULATION_TIME;
+  const maxTicks = maxSimulationTime * TICK_RATE;
+
+  const world = createWorld(seed);
+  initCombatStats(world);
+
+  // Spawn sector-specific loadout
+  const loadout = getLoadout(sector);
+  loadout.forEach((ship, i) => {
+    const x = (i - (loadout.length - 1) / 2) * 50;
+    createAIShip(
+      world,
+      ship.archetype,
+      Faction.Player,
+      new Vector3(x, 0, 0),
+      new Quaternion(),
+      ship.skill,
+    );
+  });
+
+  const waveState = {
+    currentWave: 0,
+    totalWaves: mission.waves.length,
+    waveCleared: false,
+    delayRemaining: 0,
+  };
+  if (mission.waves.length > 0) spawnWave(world, mission.waves[0], 0);
+
+  const metrics = {
+    winner: null,
+    timeToComplete: 0,
+    playerTeamRemaining: 0,
+    timeout: false,
+  };
+
+  for (let tick = 0; tick < maxTicks; tick++) {
+    world.systemState.gameTime += TICK_SEC;
+    for (const system of SYSTEMS) system(world, TICK_SEC);
+
+    let playerTeamCount = 0,
+      enemyCount = 0;
+    for (const entity of queryEntities(world, ['faction', 'health'])) {
+      const faction = getComponent(world, entity, 'faction');
+      if (faction.faction === Faction.Player) playerTeamCount++;
+      else if (faction.faction === Faction.Enemy) enemyCount++;
+    }
+    metrics.playerTeamRemaining = playerTeamCount;
+
+    // Wave management
+    if (enemyCount === 0 && !waveState.waveCleared) {
+      waveState.waveCleared = true;
+      const nextWaveIndex = waveState.currentWave + 1;
+      if (nextWaveIndex < waveState.totalWaves) {
+        waveState.delayRemaining = calculateWaveDelay(
+          mission.waves[nextWaveIndex].delay,
+          world.prng,
+        );
+      }
+    }
+
+    if (
+      waveState.waveCleared &&
+      waveState.currentWave + 1 < waveState.totalWaves
+    ) {
+      if (waveState.delayRemaining > 0) waveState.delayRemaining -= TICK_SEC;
+      else {
+        waveState.currentWave++;
+        waveState.waveCleared = false;
+        spawnWave(
+          world,
+          mission.waves[waveState.currentWave],
+          waveState.currentWave,
+        );
+      }
+    }
+
+    if (playerTeamCount === 0) {
+      metrics.winner = 'enemy';
+      metrics.timeToComplete = (tick + 1) / TICK_RATE;
+      break;
+    }
+
+    const allWavesSpawned = waveState.currentWave >= waveState.totalWaves - 1;
+    if (enemyCount === 0 && allWavesSpawned && waveState.waveCleared) {
+      metrics.winner = 'player';
+      metrics.timeToComplete = (tick + 1) / TICK_RATE;
+      break;
+    }
+  }
+
+  if (!metrics.winner) {
+    metrics.timeout = true;
+    metrics.timeToComplete = maxSimulationTime;
+    metrics.winner = metrics.playerTeamRemaining > 0 ? 'player' : 'enemy';
+  }
+
+  return metrics;
+}
+
+/**
+ * Run multiple trials of a mission and aggregate results.
+ * @param {Object} mission - Mission definition with waves and id
+ * @param {number} sector - Sector number for loadout selection
+ * @param {number} runs - Number of trials to run
+ * @param {Object} options - Optional overrides passed to runMission
+ * @returns {Object} aggregated results
+ */
+export function runMissionTrials(mission, sector, runs, options = {}) {
+  const results = [];
+  for (let i = 0; i < runs; i++) {
+    const seed = 12345 + i * 7919 + mission.id.charCodeAt(0) * 13;
+    results.push(runMission(mission, seed, sector, options));
+  }
+
+  const wins = results.filter((r) => r.winner === 'player');
+  return {
+    runs,
+    wins: wins.length,
+    losses: results.length - wins.length,
+    winRate: (wins.length / results.length) * 100,
+    avgTime:
+      wins.length > 0
+        ? wins.reduce((s, r) => s + r.timeToComplete, 0) / wins.length
+        : 0,
+    avgSurvivors:
+      wins.length > 0
+        ? wins.reduce((s, r) => s + r.playerTeamRemaining, 0) / wins.length
+        : 0,
+    timeouts: results.filter((r) => r.timeout).length,
+    results, // raw results for further analysis
+  };
 }

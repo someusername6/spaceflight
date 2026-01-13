@@ -19,21 +19,16 @@ import {
   createWorld,
   getComponent,
   queryEntities,
-} from '../../../src/core/ecs.ts';
-import { Faction } from '../../../src/core/types.ts';
-import { createAIShip } from '../../../src/factories/ship.ts';
-import { getMissionsForSector } from '../../../src/ui/screens/contracts-data.ts';
+} from '../../src/core/ecs.ts';
+import { Faction } from '../../src/core/types.ts';
+import { createAIShip } from '../../src/factories/ship.ts';
+import { getMissionsForSector } from '../../src/ui/screens/contracts-data.ts';
 import {
   initCombatStats,
   SYSTEMS,
   TICK_RATE,
   TICK_SEC,
-} from '../shared/combat-utils.mjs';
-import {
-  createProject,
-  getMissionFilePath,
-  updateMissionFile,
-} from './mission-file-updater.mjs';
+} from '../tests/shared/combat-utils.mjs';
 import {
   calculateWaveDelay,
   getLoadout,
@@ -41,13 +36,18 @@ import {
   getLoadoutConsumableValue,
   getLoadoutDescription,
   spawnWave,
-} from './mission-simulation.mjs';
+} from '../tests/shared/mission-simulation.mjs';
 import {
   calculateReward,
   getMissionEnemyValue,
   getPlayerShipValue,
   SECONDARY_PRICES,
-} from './mission-value.mjs';
+} from '../tests/shared/mission-value.mjs';
+import {
+  createProject,
+  getMissionFilePath,
+  updateMissionFile,
+} from './mission-file-updater.mjs';
 
 // ============================================================================
 // Configuration

@@ -6,6 +6,59 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_2_MEDIUM: Contract[] = [
   {
+    id: 's2-fangs-for-the-memories',
+    name: 'Fangs for the Memories',
+    description: 'Clear Viper squadron. Green laser fighters with long range.',
+    difficulty: 'medium',
+    sector: 2,
+    waves: [
+      {
+        enemies: [{ archetype: 'viper', skill: 'regular', count: 2 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'viper', skill: 'veteran', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 4041,
+  },
+  {
+    id: 's2-backup-singers',
+    name: 'Backup Singers',
+    description:
+      'Destroy reinforced patrol. Veteran Fireflies and Dragonflies in numbers.',
+    difficulty: 'medium',
+    sector: 2,
+    waves: [
+      {
+        enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'stinger', skill: 'regular', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 4400,
+  },
+  {
     id: 's2-heavy-metal-queen',
     name: 'Heavy Metal Queen',
     description: 'Destroy heavy fighters. Bruisers with slug cannons leading.',
@@ -17,7 +70,7 @@ export const SECTOR_2_MEDIUM: Contract[] = [
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
+        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
         delay: [8, 12],
       },
       {
@@ -25,38 +78,11 @@ export const SECTOR_2_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
+        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 4 }],
         delay: [8, 12],
       },
     ],
-    reward: 3868,
-  },
-  {
-    id: 's2-wall-of-sound',
-    name: 'Wall of Sound',
-    description:
-      'Breach the flak screen. Shredders with flak cannons and Phantom escorts.',
-    difficulty: 'medium',
-    sector: 2,
-    waves: [
-      {
-        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'shredder', skill: 'regular', count: 1 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 4040,
+    reward: 4610,
   },
   {
     id: 's2-dart-side-of-the-moon',
@@ -83,59 +109,33 @@ export const SECTOR_2_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 4798,
+    reward: 4790,
   },
   {
-    id: 's2-backup-singers',
-    name: 'Backup Singers',
+    id: 's2-wall-of-sound',
+    name: 'Wall of Sound',
     description:
-      'Destroy reinforced patrol. Veteran Fireflies and Dragonflies in numbers.',
+      'Breach the flak screen. Shredders with flak cannons and Phantom escorts.',
     difficulty: 'medium',
     sector: 2,
     waves: [
       {
-        enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
+        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
+        enemies: [{ archetype: 'shredder', skill: 'veteran', count: 1 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'stinger', skill: 'regular', count: 3 }],
+        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 4 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 4949,
-  },
-  {
-    id: 's2-fangs-for-the-memories',
-    name: 'Fangs for the Memories',
-    description: 'Clear Viper squadron. Green laser fighters with long range.',
-    difficulty: 'medium',
-    sector: 2,
-    waves: [
-      {
-        enemies: [{ archetype: 'viper', skill: 'veteran', count: 2 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'viper', skill: 'veteran', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
+        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
         delay: [8, 12],
       },
     ],
-    reward: 4956,
+    reward: 4875,
   },
 ];

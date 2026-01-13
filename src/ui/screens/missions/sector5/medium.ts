@@ -22,42 +22,15 @@ export const SECTOR_5_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 3 }],
+        enemies: [{ archetype: 'dragonfly', skill: 'elite', count: 3 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 10930,
-  },
-  {
-    id: 's5-another-brick-in-the-wall',
-    name: 'Another Brick in the Wall',
-    description:
-      'Break the iron wall. Ace Phantoms, Dragonflies, and Fireflies.',
-    difficulty: 'medium',
-    sector: 5,
-    waves: [
-      {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 3 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'firefly', skill: 'ace', count: 3 }],
+        enemies: [{ archetype: 'phantom', skill: 'elite', count: 2 }],
         delay: [8, 12],
       },
     ],
-    reward: 11117,
+    reward: 10554,
   },
   {
     id: 's5-flight-of-the-valkyries',
@@ -83,7 +56,34 @@ export const SECTOR_5_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 11271,
+    reward: 11234,
+  },
+  {
+    id: 's5-another-brick-in-the-wall',
+    name: 'Another Brick in the Wall',
+    description:
+      'Break the iron wall. Ace Phantoms, Dragonflies, and Fireflies.',
+    difficulty: 'medium',
+    sector: 5,
+    waves: [
+      {
+        enemies: [{ archetype: 'phantom', skill: 'elite', count: 3 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 4 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'firefly', skill: 'ace', count: 3 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 11996,
   },
   {
     id: 's5-every-breath-you-take',
@@ -109,6 +109,6 @@ export const SECTOR_5_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 11868,
+    reward: 12253,
   },
 ];

@@ -6,33 +6,6 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_4_EASY: Contract[] = [
   {
-    id: 's4-atomic',
-    name: 'Atomic',
-    description:
-      'Nuclear threat detected. Juggernaut with nuke payload inbound.',
-    difficulty: 'easy',
-    sector: 4,
-    waves: [
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'juggernaut', skill: 'regular', count: 1 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'firefly', skill: 'ace', count: 3 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 4645,
-  },
-  {
     id: 's4-the-distance',
     name: 'The Distance',
     description: 'Engage sniper patrol. Scorpions with railguns at long range.',
@@ -56,7 +29,7 @@ export const SECTOR_4_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 5383,
+    reward: 5492,
   },
   {
     id: 's4-uninvited',
@@ -83,7 +56,7 @@ export const SECTOR_4_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 6275,
+    reward: 6213,
   },
   {
     id: 's4-clash-of-the-titans',
@@ -109,7 +82,34 @@ export const SECTOR_4_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 6686,
+    reward: 6339,
+  },
+  {
+    id: 's4-atomic',
+    name: 'Atomic',
+    description:
+      'Nuclear threat detected. Juggernaut with nuke payload inbound.',
+    difficulty: 'easy',
+    sector: 4,
+    waves: [
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'juggernaut', skill: 'regular', count: 1 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 6775,
   },
   {
     id: 's4-fortunate-son',
@@ -136,7 +136,7 @@ export const SECTOR_4_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 7303,
+    reward: 6866,
   },
   {
     id: 's4-watchtower',
@@ -163,6 +163,6 @@ export const SECTOR_4_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 7420,
+    reward: 7838,
   },
 ];

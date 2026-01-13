@@ -29,33 +29,33 @@ export const SECTOR_1_MEDIUM: Contract[] = [
         delay: [6, 10],
       },
     ],
-    reward: 3499,
+    reward: 3104,
   },
   {
-    id: 's1-toys-in-the-void',
-    name: 'Toys in the Void',
-    description: 'Eliminate scattered hostiles. Mixed patrol craft.',
+    id: 's1-lead-serenade',
+    name: 'Lead Serenade',
+    description: 'Survive the gauntlet. Wasps with autocannons.',
     difficulty: 'medium',
     sector: 1,
     waves: [
       {
-        enemies: [{ archetype: 'ember', skill: 'regular', count: 3 }],
-        delay: [5, 8],
+        enemies: [{ archetype: 'ember', skill: 'regular', count: 2 }],
+        delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'gnat', skill: 'veteran', count: 3 }],
-        delay: [6, 10],
+        enemies: [{ archetype: 'wasp', skill: 'regular', count: 2 }],
+        delay: [8, 12],
       },
       {
         enemies: [{ archetype: 'shocker', skill: 'regular', count: 2 }],
-        delay: [6, 10],
+        delay: [8, 12],
       },
       {
         enemies: [{ archetype: 'ember', skill: 'veteran', count: 2 }],
-        delay: [6, 10],
+        delay: [8, 12],
       },
     ],
-    reward: 3499,
+    reward: 3522,
   },
   {
     id: 's1-purple-rain',
@@ -81,7 +81,7 @@ export const SECTOR_1_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3684,
+    reward: 3610,
   },
   {
     id: 's1-take-the-money-and-run',
@@ -107,32 +107,6 @@ export const SECTOR_1_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3743,
-  },
-  {
-    id: 's1-lead-serenade',
-    name: 'Lead Serenade',
-    description: 'Survive the gauntlet. Wasps with autocannons.',
-    difficulty: 'medium',
-    sector: 1,
-    waves: [
-      {
-        enemies: [{ archetype: 'wasp', skill: 'rookie', count: 2 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'ember', skill: 'veteran', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'wasp', skill: 'rookie', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'shocker', skill: 'regular', count: 2 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 3960,
+    reward: 3841,
   },
 ];

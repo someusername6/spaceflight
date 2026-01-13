@@ -6,33 +6,6 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_3_MEDIUM: Contract[] = [
   {
-    id: 's3-hot-blooded',
-    name: 'Hot Blooded',
-    description:
-      'Survive the inferno. Fireants with Phantom escorts closing fast.',
-    difficulty: 'medium',
-    sector: 3,
-    waves: [
-      {
-        enemies: [{ archetype: 'fireant', skill: 'veteran', count: 2 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'fireant', skill: 'veteran', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 4875,
-  },
-  {
     id: 's3-mothership-connection',
     name: 'Mothership Connection',
     description:
@@ -41,11 +14,11 @@ export const SECTOR_3_MEDIUM: Contract[] = [
     sector: 3,
     waves: [
       {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
+        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'moth', skill: 'ace', count: 4 }],
+        enemies: [{ archetype: 'moth', skill: 'veteran', count: 3 }],
         delay: [8, 12],
       },
       {
@@ -57,7 +30,7 @@ export const SECTOR_3_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 5004,
+    reward: 5011,
   },
   {
     id: 's3-crimson-tide',
@@ -88,7 +61,34 @@ export const SECTOR_3_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 5588,
+    reward: 5235,
+  },
+  {
+    id: 's3-hot-blooded',
+    name: 'Hot Blooded',
+    description:
+      'Survive the inferno. Fireants with Phantom escorts closing fast.',
+    difficulty: 'medium',
+    sector: 3,
+    waves: [
+      {
+        enemies: [{ archetype: 'fireant', skill: 'veteran', count: 2 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'fireant', skill: 'veteran', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 5402,
   },
   {
     id: 's3-ghost-riders-in-the-sky',
@@ -114,7 +114,7 @@ export const SECTOR_3_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 5614,
+    reward: 5488,
   },
   {
     id: 's3-aces-high',
@@ -141,6 +141,6 @@ export const SECTOR_3_MEDIUM: Contract[] = [
         delay: [10, 15],
       },
     ],
-    reward: 6130,
+    reward: 5637,
   },
 ];

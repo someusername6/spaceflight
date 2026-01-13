@@ -6,6 +6,32 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_1_EASY: Contract[] = [
   {
+    id: 's1-praying-for-time',
+    name: 'Praying for Time',
+    description: 'Destroy patrol. Mantis fighters with decoy countermeasures.',
+    difficulty: 'easy',
+    sector: 1,
+    waves: [
+      {
+        enemies: [{ archetype: 'mantis', skill: 'rookie', count: 2 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'gnat', skill: 'regular', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'mantis', skill: 'regular', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'ember', skill: 'regular', count: 2 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 2606,
+  },
+  {
     id: 's1-gnat-expectations',
     name: 'Gnat Expectations',
     description:
@@ -30,7 +56,7 @@ export const SECTOR_1_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 2582,
+    reward: 2692,
   },
   {
     id: 's1-stray-scout-strut',
@@ -56,34 +82,7 @@ export const SECTOR_1_EASY: Contract[] = [
         delay: [4, 6],
       },
     ],
-    reward: 2797,
-  },
-  {
-    id: 's1-ember-elegy',
-    name: 'Ember Elegy',
-    description:
-      'Intercept laser patrol. Embers with red lasers at close range.',
-    difficulty: 'easy',
-    sector: 1,
-    waves: [
-      {
-        enemies: [{ archetype: 'ember', skill: 'veteran', count: 3 }],
-        delay: [3, 5],
-      },
-      {
-        enemies: [{ archetype: 'gnat', skill: 'regular', count: 3 }],
-        delay: [4, 6],
-      },
-      {
-        enemies: [{ archetype: 'ember', skill: 'veteran', count: 2 }],
-        delay: [4, 6],
-      },
-      {
-        enemies: [{ archetype: 'gnat', skill: 'regular', count: 2 }],
-        delay: [4, 6],
-      },
-    ],
-    reward: 2797,
+    reward: 2784,
   },
   {
     id: 's1-ion-maiden',
@@ -109,32 +108,6 @@ export const SECTOR_1_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 2958,
-  },
-  {
-    id: 's1-praying-for-time',
-    name: 'Praying for Time',
-    description: 'Destroy patrol. Mantis fighters with decoy countermeasures.',
-    difficulty: 'easy',
-    sector: 1,
-    waves: [
-      {
-        enemies: [{ archetype: 'mantis', skill: 'rookie', count: 2 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'gnat', skill: 'regular', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'mantis', skill: 'regular', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'ember', skill: 'regular', count: 2 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 3021,
+    reward: 3237,
   },
 ];
