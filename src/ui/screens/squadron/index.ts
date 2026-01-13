@@ -31,8 +31,8 @@ import {
   destroyShipConnectors,
   initShipConnectors,
 } from '../../ship/connectors';
-import { renderPilotViewer } from '../pilot-viewer';
-import { renderRecruitViewer } from '../recruit-viewer';
+import { renderPilotViewer } from '../roster/pilot-viewer';
+import { renderRecruitViewer } from '../roster/recruit-viewer';
 import { closeShipPicker } from '../ship-picker';
 import {
   bindSquadronEvents,

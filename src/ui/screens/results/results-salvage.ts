@@ -2,8 +2,11 @@
  * Salvage Section Rendering - Extracts salvage display from results screen.
  */
 
-import type { SalvageResult } from '../../campaign/salvage';
-import { getAmmoDisplayName, getWeaponDisplayName } from '../../data/weapons';
+import type { SalvageResult } from '../../../campaign/salvage';
+import {
+  getAmmoDisplayName,
+  getWeaponDisplayName,
+} from '../../../data/weapons';
 
 /** Render salvage section within rewards */
 export function renderSalvageSection(salvage: SalvageResult | null): string {

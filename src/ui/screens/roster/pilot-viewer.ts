@@ -2,8 +2,8 @@
  * Pilot Viewer - renders detailed pilot information and assignment options.
  */
 
-import type { CampaignState, OwnedShip, Pilot } from '../../campaign/types';
-import { getShipIconPath, iconErrorHandler } from '../ship/viewer';
+import type { CampaignState, OwnedShip, Pilot } from '../../../campaign/types';
+import { getShipIconPath, iconErrorHandler } from '../../ship/viewer';
 
 /** Get available ships for pilot assignment (ships without pilots) */
 function getAvailableShipsForPilot(state: CampaignState): OwnedShip[] {

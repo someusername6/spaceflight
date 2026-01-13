@@ -4,14 +4,17 @@
  * Shows per-pilot cards with kills, assists, damage, and weapon breakdowns.
  */
 
-import type { CombatStats, WeaponStats } from '../../components/combat-stats';
-import { snapshotStats } from '../../components/combat-stats';
-import { Faction, type FactionComponent } from '../../components/faction';
-import type { Health } from '../../components/health';
-import type { ShipIdentity } from '../../components/ship-identity';
-import { getComponent, hasComponent, queryEntities } from '../../core/ecs';
-import type { World } from '../../core/types';
-import { getShipIconPath, iconErrorHandler } from '../ship/viewer';
+import type {
+  CombatStats,
+  WeaponStats,
+} from '../../../components/combat-stats';
+import { snapshotStats } from '../../../components/combat-stats';
+import { Faction, type FactionComponent } from '../../../components/faction';
+import type { Health } from '../../../components/health';
+import type { ShipIdentity } from '../../../components/ship-identity';
+import { getComponent, hasComponent, queryEntities } from '../../../core/ecs';
+import type { World } from '../../../core/types';
+import { getShipIconPath, iconErrorHandler } from '../../ship/viewer';
 
 /** Data for a pilot's debrief card */
 export interface PilotDebriefData {

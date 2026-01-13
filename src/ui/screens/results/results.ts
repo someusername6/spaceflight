@@ -7,15 +7,15 @@
  * - Fixed continue button at bottom
  */
 
-import type { SalvageResult } from '../../campaign/salvage';
-import type { CampaignState, Contract } from '../../campaign/types';
-import type { World } from '../../core/types';
+import type { SalvageResult } from '../../../campaign/salvage';
+import type { CampaignState, Contract } from '../../../campaign/types';
+import type { World } from '../../../core/types';
 import {
   createScreen,
   type Screen,
   type ScreenAPI,
   type ScreenHandle,
-} from '../framework/screen';
+} from '../../framework/screen';
 import {
   collectDebriefData,
   type MissionDebriefData,

@@ -6,7 +6,7 @@ import type {
   CampaignState,
   HireablePilot,
   SkillLevel,
-} from '../../campaign/types';
+} from '../../../campaign/types';
 
 /** Get skill description for display */
 function getSkillDescription(skill: SkillLevel): string {

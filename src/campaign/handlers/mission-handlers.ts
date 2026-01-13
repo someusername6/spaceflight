@@ -14,7 +14,10 @@ import {
   Screen,
   updateCampaignState,
 } from '../../ui/common/screens';
-import { createGameOverUI, createResultsUI } from '../../ui/screens/results';
+import {
+  createGameOverUI,
+  createResultsUI,
+} from '../../ui/screens/results/results';
 import type { CampaignController } from '../controller-types';
 import type { SalvageResult } from '../salvage';
 import { createNewCampaign } from '../state';
