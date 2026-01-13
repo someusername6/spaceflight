@@ -145,6 +145,7 @@ export function initWeaponAmmoCounts(world: World, entity: Entity): void {
   }
 
   // Track secondary weapon ammo (missiles and decoys)
+  // For multi-projectile missiles, ammoCarried represents total missiles, not shots
   const secondaryWeapons = getComponent<SecondaryWeapons>(
     world,
     entity,
@@ -162,7 +163,9 @@ export function initWeaponAmmoCounts(world: World, entity: Entity): void {
           weapon.name,
           'missile',
         );
-        weaponStats.ammoCarried += weapon.count;
+        // Scale by projectilesPerShot so ammoCarried matches missilesLaunched
+        const projectilesPerShot = weapon.projectilesPerShot ?? 1;
+        weaponStats.ammoCarried += weapon.count * projectilesPerShot;
       }
     }
   }

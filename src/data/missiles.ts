@@ -21,6 +21,8 @@ export interface MissileStats {
   lockConeAngle: number;
   /** Base capacity per bank (scales with bank size) */
   capacity: number;
+  /** Number of missiles spawned per shot (default 1) */
+  projectilesPerShot?: number;
   /** Area of effect radius (undefined = no AoE) */
   aoeRadius?: number;
   /** Is this a decoy rather than a weapon? */
@@ -83,11 +85,12 @@ export const MISSILES: Record<string, MissileStats> = {
     speed: 400,
     turnRate: 60,
     range: 1200,
-    damage: 25,
+    damage: 8, // 8 damage per missile × 3 = 24 total
     fireRate: 0.8,
     lockSpeed: 0,
     lockConeAngle: 60,
     capacity: 10,
+    projectilesPerShot: 3, // Fires 3 missiles per shot
   },
 
   // === HOMING (lock required) ===
@@ -119,14 +122,15 @@ export const MISSILES: Record<string, MissileStats> = {
   swarm: {
     name: 'Swarm',
     requiresLock: true,
-    speed: 500,
+    speed: 400,
     turnRate: 100,
     range: 600,
-    damage: 10,
+    damage: 2, // 2 damage per missile × 8 = 16 total
     fireRate: 0.1, // Rapid fire
     lockSpeed: 0.4, // 2.5 seconds to lock (was 1.25s)
     lockConeAngle: 60,
     capacity: 20, // Many small missiles
+    projectilesPerShot: 8, // Fires 8 missiles per shot
   },
 
   // === HEAVY (slow lock, high damage) ===

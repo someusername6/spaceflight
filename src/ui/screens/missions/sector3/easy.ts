@@ -1,5 +1,5 @@
 /**
- * Sector 3: Easy Missions (60-80% win rate)
+ * Sector 3: Easy Missions (80-90% win rate)
  */
 
 import type { Contract } from '../types';
@@ -68,10 +68,17 @@ export const SECTOR_3_EASY: Contract[] = [
     waves: [
       {
         enemies: [
-          { archetype: 'moth', skill: 'regular', count: 1 },
-          { archetype: 'dragonfly', skill: 'regular', count: 2 },
+          { archetype: 'moth', skill: 'rookie', count: 1 },
+          { archetype: 'dragonfly', skill: 'rookie', count: 2 },
         ],
         delay: [5, 10],
+      },
+      {
+        enemies: [
+          { archetype: 'moth', skill: 'rookie', count: 2 },
+          { archetype: 'dragonfly', skill: 'rookie', count: 2 },
+        ],
+        delay: [8, 12],
       },
       {
         enemies: [
@@ -82,20 +89,13 @@ export const SECTOR_3_EASY: Contract[] = [
       },
       {
         enemies: [
-          { archetype: 'moth', skill: 'veteran', count: 2 },
-          { archetype: 'dragonfly', skill: 'regular', count: 2 },
-        ],
-        delay: [8, 12],
-      },
-      {
-        enemies: [
-          { archetype: 'moth', skill: 'veteran', count: 2 },
+          { archetype: 'moth', skill: 'regular', count: 2 },
           { archetype: 'dragonfly', skill: 'veteran', count: 2 },
         ],
         delay: [8, 12],
       },
     ],
-    reward: 3917,
+    reward: 3543,
   },
   {
     id: 's3-light-my-fire',

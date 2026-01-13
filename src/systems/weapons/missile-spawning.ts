@@ -26,26 +26,69 @@ const MISSILE_SPAWN_OFFSET = 4; // Owner collision ignored for first 20m of trav
 /** Collision radius */
 const MISSILE_RADIUS = 1.0;
 
-// Reusable vector
-const spawnPos = new THREE.Vector3();
+/** Cone angle from forward for multi-projectile missiles (degrees) */
+const MULTI_MISSILE_CONE_ANGLE = 10;
 
-/** Spawn a missile entity */
-export function spawnMissile(
+// Reusable vectors
+const spawnPos = new THREE.Vector3();
+const coneDir = new THREE.Vector3();
+const perpAxis = new THREE.Vector3();
+
+/**
+ * Calculate direction for a missile in a cone pattern.
+ * All missiles are spread evenly around a cone at MULTI_MISSILE_CONE_ANGLE from forward.
+ *
+ * @param direction - The forward firing direction
+ * @param index - Which missile (0-indexed)
+ * @param total - Total number of missiles
+ * @returns Direction vector for this missile
+ */
+function getConeDirection(
+  direction: THREE.Vector3,
+  index: number,
+  total: number,
+): THREE.Vector3 {
+  // Single missile fires straight forward
+  if (total <= 1) {
+    coneDir.copy(direction);
+    return coneDir;
+  }
+
+  // Find a perpendicular axis to rotate around
+  // Use world up (Y) unless direction is nearly vertical
+  perpAxis.set(0, 1, 0);
+  if (Math.abs(direction.y) > 0.9) {
+    perpAxis.set(1, 0, 0);
+  }
+  // Make it truly perpendicular via cross product
+  perpAxis.crossVectors(direction, perpAxis).normalize();
+
+  // Start by rotating forward by cone angle around the perpendicular axis
+  const coneAngleRad = (MULTI_MISSILE_CONE_ANGLE * Math.PI) / 180;
+  coneDir.copy(direction);
+  coneDir.applyAxisAngle(perpAxis, coneAngleRad);
+
+  // Then rotate around the forward direction to distribute missiles evenly
+  const rotationAroundForward = (index / total) * Math.PI * 2;
+  coneDir.applyAxisAngle(direction, rotationAroundForward);
+
+  return coneDir;
+}
+
+/** Spawn a single missile entity (internal helper) */
+function spawnSingleMissile(
   world: World,
   owner: Entity,
   ownerTransform: Transform,
   weapon: SecondaryWeapon,
   ownerFaction: FactionComponent | undefined,
   target: Entity | undefined,
-  aimDirection?: THREE.Vector3, // Optional aim direction for dumbfire lead
+  direction: THREE.Vector3,
 ): void {
   const forward = getForward(ownerTransform);
   spawnPos
     .copy(ownerTransform.position)
     .addScaledVector(forward, MISSILE_SPAWN_OFFSET);
-
-  // Use provided aim direction for dumbfire, or forward for tracking missiles
-  const direction = aimDirection ?? forward;
 
   const missile = createEntity(world);
 
@@ -108,5 +151,40 @@ export function spawnMissile(
     const stats = world.systemState.combatStats;
     stats.missilesFired[weapon.name] =
       (stats.missilesFired[weapon.name] || 0) + 1;
+  }
+}
+
+/** Spawn missile entity (or multiple for cluster/swarm weapons) */
+export function spawnMissile(
+  world: World,
+  owner: Entity,
+  ownerTransform: Transform,
+  weapon: SecondaryWeapon,
+  ownerFaction: FactionComponent | undefined,
+  target: Entity | undefined,
+  aimDirection?: THREE.Vector3, // Optional aim direction for dumbfire lead
+): void {
+  const forward = getForward(ownerTransform);
+  // Use provided aim direction for dumbfire, or forward for tracking missiles
+  const baseDirection = aimDirection ?? forward;
+
+  const projectileCount = weapon.projectilesPerShot ?? 1;
+
+  // Spawn missiles in a cone pattern (single missile goes straight)
+  for (let i = 0; i < projectileCount; i++) {
+    const missileDirection = getConeDirection(
+      baseDirection,
+      i,
+      projectileCount,
+    ).clone();
+    spawnSingleMissile(
+      world,
+      owner,
+      ownerTransform,
+      weapon,
+      ownerFaction,
+      target,
+      missileDirection,
+    );
   }
 }

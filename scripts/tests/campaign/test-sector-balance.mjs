@@ -10,9 +10,9 @@
  *   npx tsx scripts/tests/campaign/test-sector-balance.mjs 1  # all difficulties
  *
  * Balance targets by difficulty:
- * - Easy: 60-80% win rate
- * - Medium: 40-60% win rate
- * - Hard: 20-40% win rate
+ * - Easy: 80-90% win rate
+ * - Medium: 70-80% win rate
+ * - Hard: 60-70% win rate
  * - All: 90-180s average victory time
  */
 
@@ -32,15 +32,15 @@ const SECTOR = parseInt(process.argv[2], 10) || 1;
 const DIFFICULTY = process.argv[3] || null; // easy, medium, hard, or null for all
 const RUNS_PER_MISSION = 30;
 
-// Balance targets by DIFFICULTY per ECONOMY.md:
-// - Easy: 60-80% win rate
-// - Medium: 40-60% win rate
-// - Hard: 20-40% win rate
+// Balance targets by DIFFICULTY:
+// - Easy: 80-90% win rate
+// - Medium: 70-80% win rate
+// - Hard: 60-70% win rate
 // - All with 90s+ average victory time
 const BALANCE_TARGETS = {
-  easy: { min: 60, max: 80 },
-  medium: { min: 40, max: 60 },
-  hard: { min: 20, max: 40 },
+  easy: { min: 80, max: 90 },
+  medium: { min: 70, max: 80 },
+  hard: { min: 60, max: 70 },
 };
 const MIN_AVG_TIME = 90; // seconds
 const MAX_AVG_TIME = 180; // seconds
@@ -79,7 +79,7 @@ describe(`Sector ${SECTOR} ${difficultyLabel} Balance`, () => {
     );
     console.log(`Loadout: ${loadoutDesc}`);
     console.log(
-      `Targets: Easy 60-80%, Medium 40-60%, Hard 20-40%, all 90-180s avg time`,
+      `Targets: Easy 80-90%, Medium 70-80%, Hard 60-70%, all 90-180s avg time`,
     );
     console.log('='.repeat(90));
     console.log(

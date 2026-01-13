@@ -30,9 +30,9 @@ This document summarizes the game's economy for planning sector-balanced mission
 Missions are tested against sector-specific loadouts (see Simulation Test Loadouts section).
 
 **Target Win Rates (by difficulty):**
-- Easy: 60-80%
-- Medium: 40-60%
-- Hard: 20-40%
+- Easy: 80-90%
+- Medium: 70-80%
+- Hard: 60-70%
 
 All missions should average 90-180s victory time.
 
@@ -121,7 +121,7 @@ Expected average salvage: ~5% of destroyed ship value.
 
 ### Easy Mission Example
 - **Reward:** ~1,500 cr
-- **Win rate:** 70% average (target: 60-80%)
+- **Win rate:** 85% average (target: 80-90%)
 - **Ships lost (avg):** 0.3-1.2 per mission
 - **Lost ship cost:** ~400 (hull) + 200 (weapons) + 240 (missiles) + 200 (pilot) = ~1,040 cr
 - **Survivor costs:** ~120 cr consumables (missiles used)
@@ -169,7 +169,7 @@ Each sector has 3 difficulty levels. Economics assuming starting-loadout player:
 
 ### Easy Difficulty
 ```
-Reward: 1,250 cr avg (70% win rate → expected: 875 cr)
+Reward: 1,250 cr avg (85% win rate → expected: 1,063 cr)
 Ships lost: 0.8 per mission
 Replacement: 832 cr
 Consumables: 384 cr (3.2 survivors × 120)
@@ -180,7 +180,7 @@ Net per mission: -191 cr
 
 ### Medium Difficulty
 ```
-Reward: 1,750 cr avg (50% win rate → expected: 875 cr)
+Reward: 1,750 cr avg (75% win rate → expected: 1,313 cr)
 Ships lost: 1.2 per mission
 Replacement: 1,248 cr
 Consumables: 336 cr (2.8 survivors × 120)
@@ -191,7 +191,7 @@ Net per mission: -173 cr
 
 ### Hard Difficulty
 ```
-Reward: 2,250 cr avg (30% win rate → expected: 675 cr)
+Reward: 2,250 cr avg (65% win rate → expected: 1,463 cr)
 Ships lost: 1.8 per mission
 Replacement: 1,872 cr
 Consumables: 264 cr (2.2 survivors × 120)
@@ -375,9 +375,9 @@ which improves as they progress through the campaign: Regular → Veteran → Ac
 
 | Difficulty | Target Win Rate | Avg Time |
 |------------|-----------------|----------|
-| Easy | 60-80% | 90-180s |
-| Medium | 40-60% | 90-180s |
-| Hard | 20-40% | 90-180s |
+| Easy | 80-90% | 90-180s |
+| Medium | 70-80% | 90-180s |
+| Hard | 60-70% | 90-180s |
 
 Each sector should have all three difficulties available. Missions are balanced against the sector-specific test loadout (see above), NOT a universal 4x Regular loadout.
 

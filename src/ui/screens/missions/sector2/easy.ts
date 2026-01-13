@@ -151,18 +151,18 @@ export const SECTOR_2_EASY: Contract[] = [
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'locust', skill: 'rookie', count: 3 }],
+        enemies: [{ archetype: 'locust', skill: 'rookie', count: 2 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'locust', skill: 'regular', count: 3 }],
+        enemies: [{ archetype: 'locust', skill: 'rookie', count: 2 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'locust', skill: 'regular', count: 3 }],
+        enemies: [{ archetype: 'locust', skill: 'rookie', count: 2 }],
         delay: [8, 12],
       },
     ],
-    reward: 3854,
+    reward: 3561,
   },
 ];

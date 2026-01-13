@@ -10,7 +10,7 @@ Weapons (projectiles, missiles, beams, decoys), shields, AI (states, behaviors, 
 
 ### Phase 4: Campaign Loop ✅
 - **4.1 Minimal Loop**: Screen state machine, hangar/contracts/results UI, campaign controller
-- **4.2 Mission Pacing**: Wave-based spawning, wingman threat prioritization, balance targets (Easy 60-80%, Medium 40-60%, Hard 20-40% win rates, 90s+ avg time)
+- **4.2 Mission Pacing**: Wave-based spawning, wingman threat prioritization, balance targets (Easy 80-90%, Medium 70-80%, Hard 60-70% win rates, 90s+ avg time)
 - **4.3 QoL**: Auto-targeting, match speed, target camera, lead indicator smoothing, decoys targetable
 - **4.4 Combat Stats**: Per-ship/weapon stats, kill/assist attribution, debrief UI
 - **4.5 Campaign Economy**: Equipment inventory, loadout customization, store, item-based salvage, pilot hiring, squad selection

@@ -65,7 +65,7 @@ export const SECONDARY_PRICES: Record<string, { buy: number; sell: number }> = {
   // Homing (moderate)
   seeker: { buy: 15, sell: 7 },
   dart: { buy: 10, sell: 5 },
-  swarm: { buy: 3, sell: 1 },
+  swarm: { buy: 7, sell: 3 },
 
   // Heavy (expensive)
   torpedo: { buy: 40, sell: 20 },

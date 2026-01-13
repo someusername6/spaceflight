@@ -17,9 +17,9 @@
  * - glowworm at green is very weak
  * - ember/shocker at regular skill is quite deadly
  * - wasp/hornet are extremely deadly - use sparingly at low skills
- * - Easy 60-80%: 3 enemies at rookie, or 2 mantis/ember
- * - Medium 40-60%: Mix of rookie and regular, light on mantis
- * - Hard 20-40%: Regular skill, include hornet/wasp at rookie
+ * - Easy 80-90%: 3 enemies at rookie, or 2 mantis/ember
+ * - Medium 70-80%: Mix of rookie and regular, light on mantis
+ * - Hard 60-70%: Regular skill, include hornet/wasp at rookie
  */
 
 import type { Contract } from '../types';

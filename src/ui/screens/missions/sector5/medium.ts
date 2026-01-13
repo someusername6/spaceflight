@@ -1,5 +1,5 @@
 /**
- * Sector 5: Medium Missions (40-60% win rate)
+ * Sector 5: Medium Missions (70-80% win rate)
  */
 
 import type { Contract } from '../types';

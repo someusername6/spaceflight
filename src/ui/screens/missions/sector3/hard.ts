@@ -1,5 +1,5 @@
 /**
- * Sector 3: Hard Missions (20-40% win rate)
+ * Sector 3: Hard Missions (60-70% win rate)
  */
 
 import type { Contract } from '../types';
@@ -13,23 +13,23 @@ export const SECTOR_3_HARD: Contract[] = [
     sector: 3,
     waves: [
       {
-        enemies: [{ archetype: 'moth', skill: 'ace', count: 4 }],
+        enemies: [{ archetype: 'moth', skill: 'rookie', count: 3 }],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'moth', skill: 'ace', count: 6 }],
+        enemies: [{ archetype: 'moth', skill: 'regular', count: 4 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'moth', skill: 'ace', count: 6 }],
+        enemies: [{ archetype: 'moth', skill: 'regular', count: 4 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'moth', skill: 'ace', count: 6 }],
+        enemies: [{ archetype: 'moth', skill: 'regular', count: 4 }],
         delay: [8, 12],
       },
     ],
-    reward: 5037,
+    reward: 4015,
   },
   {
     id: 's3-das-boot',

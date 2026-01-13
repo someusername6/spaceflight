@@ -74,6 +74,8 @@ export interface SecondaryWeapon {
   lockConeAngle: number;
   /** Bank size (1, 2, or 3) - affects ammo capacity */
   bankSize: number;
+  /** Number of missiles spawned per shot (default 1) */
+  projectilesPerShot?: number;
   aoeRadius?: number; // Area of effect radius (undefined = no AoE)
   isNuke?: boolean; // Special nuke explosion effects
   isDecoy?: boolean; // Countermeasure - distracts missiles

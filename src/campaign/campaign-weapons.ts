@@ -99,6 +99,10 @@ function createSecondaryFromEquipped(
   if (stats.shrapnelRange !== undefined)
     weapon.shrapnelRange = stats.shrapnelRange;
 
+  // Multi-projectile missiles (cluster, swarm)
+  if (stats.projectilesPerShot !== undefined)
+    weapon.projectilesPerShot = stats.projectilesPerShot;
+
   return weapon;
 }
 

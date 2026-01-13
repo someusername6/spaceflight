@@ -1,10 +1,36 @@
 /**
- * Sector 1: Medium Missions (40-60% win rate)
+ * Sector 1: Medium Missions (70-80% win rate)
  */
 
 import type { Contract } from '../types';
 
 export const SECTOR_1_MEDIUM: Contract[] = [
+  {
+    id: 's1-another-day-in-paradise',
+    name: 'Another Day in Paradise',
+    description: 'Clear the sector. Mixed hostiles across multiple waves.',
+    difficulty: 'medium',
+    sector: 1,
+    waves: [
+      {
+        enemies: [{ archetype: 'ember', skill: 'regular', count: 3 }],
+        delay: [5, 8],
+      },
+      {
+        enemies: [{ archetype: 'gnat', skill: 'rookie', count: 3 }],
+        delay: [6, 10],
+      },
+      {
+        enemies: [{ archetype: 'shocker', skill: 'rookie', count: 3 }],
+        delay: [6, 10],
+      },
+      {
+        enemies: [{ archetype: 'ember', skill: 'regular', count: 3 }],
+        delay: [6, 10],
+      },
+    ],
+    reward: 2128,
+  },
   {
     id: 's1-take-the-money-and-run',
     name: 'Take the Money and Run',
@@ -82,31 +108,5 @@ export const SECTOR_1_MEDIUM: Contract[] = [
       },
     ],
     reward: 3350,
-  },
-  {
-    id: 's1-another-day-in-paradise',
-    name: 'Another Day in Paradise',
-    description: 'Clear the sector. Mixed hostiles across multiple waves.',
-    difficulty: 'medium',
-    sector: 1,
-    waves: [
-      {
-        enemies: [{ archetype: 'ember', skill: 'regular', count: 3 }],
-        delay: [5, 8],
-      },
-      {
-        enemies: [{ archetype: 'gnat', skill: 'regular', count: 4 }],
-        delay: [6, 10],
-      },
-      {
-        enemies: [{ archetype: 'shocker', skill: 'rookie', count: 3 }],
-        delay: [6, 10],
-      },
-      {
-        enemies: [{ archetype: 'ember', skill: 'regular', count: 4 }],
-        delay: [6, 10],
-      },
-    ],
-    reward: 3369,
   },
 ];

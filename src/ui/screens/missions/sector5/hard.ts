@@ -1,5 +1,5 @@
 /**
- * Sector 5: Hard Missions (20-40% win rate)
+ * Sector 5: Hard Missions (60-70% win rate)
  */
 
 import type { Contract } from '../types';

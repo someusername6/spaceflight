@@ -221,10 +221,18 @@ export function renderSecondaryStats(weaponType: string): string {
   // For shrapnel missiles, show "Impact damage" label to clarify it's separate
   const damageLabel = stats.flakRadius ? 'Impact damage' : 'Damage';
 
+  // Multi-projectile missiles (cluster, swarm)
+  const projectilesPerShot = stats.projectilesPerShot ?? 1;
+  const projectilesText =
+    projectilesPerShot > 1
+      ? `<div class="stat-row"><span>Missiles per shot</span><span>${projectilesPerShot}</span></div>`
+      : '';
+
   return `
     <div class="item-stats">
       <div class="stat-row"><span>Size</span><span>${stats.capacity} per bank</span></div>
       <div class="stat-row"><span>${damageLabel}</span><span>${stats.damage}</span></div>
+      ${projectilesText}
       ${shrapnelStats}
       <div class="stat-row"><span>Speed</span><span>${stats.speed} m/s</span></div>
       <div class="stat-row"><span>Range</span><span>${stats.range} m</span></div>

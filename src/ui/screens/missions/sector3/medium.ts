@@ -1,5 +1,5 @@
 /**
- * Sector 3: Medium Missions (40-60% win rate)
+ * Sector 3: Medium Missions (70-80% win rate)
  */
 
 import type { Contract } from '../types';
@@ -97,6 +97,33 @@ export const SECTOR_3_MEDIUM: Contract[] = [
     reward: 4405,
   },
   {
+    id: 's3-mothership-connection',
+    name: 'Mothership Connection',
+    description:
+      'Face lightning barrage. Moths with swarm missiles and lightning cannons.',
+    difficulty: 'medium',
+    sector: 3,
+    waves: [
+      {
+        enemies: [{ archetype: 'moth', skill: 'rookie', count: 3 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'moth', skill: 'regular', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'moth', skill: 'regular', count: 4 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'moth', skill: 'regular', count: 4 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 4601,
+  },
+  {
     id: 's3-aces-high',
     name: 'Aces High',
     description:
@@ -122,32 +149,5 @@ export const SECTOR_3_MEDIUM: Contract[] = [
       },
     ],
     reward: 4755,
-  },
-  {
-    id: 's3-mothership-connection',
-    name: 'Mothership Connection',
-    description:
-      'Face lightning barrage. Moths with swarm missiles and lightning cannons.',
-    difficulty: 'medium',
-    sector: 3,
-    waves: [
-      {
-        enemies: [{ archetype: 'moth', skill: 'ace', count: 4 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'moth', skill: 'ace', count: 6 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'moth', skill: 'ace', count: 6 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'moth', skill: 'elite', count: 6 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 4782,
   },
 ];

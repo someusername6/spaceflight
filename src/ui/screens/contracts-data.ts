@@ -4,9 +4,9 @@
  * Mission definitions are split by sector in ./missions/ directory.
  *
  * Balance targets by DIFFICULTY (vs sector-specific loadout, 90s+ avg time):
- * - Easy: 60-80% win rate
- * - Medium: 40-60% win rate
- * - Hard: 20-40% win rate
+ * - Easy: 80-90% win rate
+ * - Medium: 70-80% win rate
+ * - Hard: 60-70% win rate
  *
  * Each sector has all three difficulties. See ECONOMY.md for sector test loadouts.
  */
