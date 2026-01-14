@@ -14,6 +14,7 @@
  * of multiple operations (e.g., await openDB(), await getReplayCount()).
  */
 
+import { logWarn } from '../core/logger';
 import { compressJSON, decompressJSON, isCompressionSupported } from './gzip';
 import type { FullReplayData, ReplaySummary, StoredReplay } from './types';
 import { MAX_STORED_REPLAYS, toReplaySummary } from './types';
@@ -247,7 +248,7 @@ export async function listReplays(): Promise<ReplaySummary[]> {
         if (metadata) {
           results.push(toReplaySummary(metadata));
         } else {
-          console.warn(`Replay ${stored.id} has no metadata, skipping`);
+          logWarn(`Replay ${stored.id} has no metadata, skipping`);
         }
         cursor.continue();
       } else {

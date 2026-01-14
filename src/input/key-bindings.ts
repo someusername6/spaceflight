@@ -5,6 +5,8 @@
  * via the settings screen, and bindings are persisted to localStorage.
  */
 
+import { logError, logWarn } from '../core/logger';
+
 /** All bindable actions in the game */
 export type GameAction =
   | 'pitchUp'
@@ -144,7 +146,7 @@ export function saveKeyBindings(): void {
   try {
     localStorage.setItem(BINDINGS_STORAGE_KEY, JSON.stringify(currentBindings));
   } catch (error) {
-    console.error('Failed to save key bindings:', error);
+    logError('Failed to save key bindings:', error);
   }
 }
 
@@ -197,7 +199,7 @@ function loadBindingsFromStorage(): Partial<KeyBindings> | null {
 
     const parsed: unknown = JSON.parse(json);
     if (!parsed || typeof parsed !== 'object') {
-      console.warn('Invalid key bindings format in storage');
+      logWarn('Invalid key bindings format in storage');
       return null;
     }
 
@@ -213,7 +215,7 @@ function loadBindingsFromStorage(): Partial<KeyBindings> | null {
 
     return Object.keys(validBindings).length > 0 ? validBindings : null;
   } catch {
-    console.warn('Failed to parse key bindings from storage');
+    logWarn('Failed to parse key bindings from storage');
     return null;
   }
 }

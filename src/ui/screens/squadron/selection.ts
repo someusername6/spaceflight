@@ -16,6 +16,7 @@ import {
   getDeploymentLimit,
   type OwnedShip,
 } from '../../../campaign/types';
+import { logError } from '../../../core/logger';
 import { showError } from '../../common/notification';
 import {
   renderPrimarySummary,
@@ -249,7 +250,7 @@ export function showSquadSelection(
   const commanderPilot = state.pilots.find((p) => p.id === state.commanderId);
   if (!commanderPilot) {
     // This indicates state corruption - commander death should trigger game over
-    console.error('[Squad] Commander pilot not found - state corrupted', {
+    logError('[Squad] Commander pilot not found - state corrupted', {
       commanderId: state.commanderId,
       pilotIds: state.pilots.map((p) => p.id),
     });
@@ -266,7 +267,7 @@ export function showSquadSelection(
   );
   if (!commanderShip) {
     // Commander pilot exists but has no ship - also state corruption
-    console.error('[Squad] Commander has no ship - state corrupted', {
+    logError('[Squad] Commander has no ship - state corrupted', {
       commanderId: state.commanderId,
       shipPilotIds: state.ships.map((s) => s.pilot?.id),
     });

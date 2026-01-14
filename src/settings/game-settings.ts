@@ -5,6 +5,8 @@
  * similar to how key bindings work.
  */
 
+import { logError, logWarn } from '../core/logger';
+
 /** Available frame rate cap options */
 export type FrameRateCap = 30 | 60 | 120 | 0; // 0 = uncapped
 
@@ -115,7 +117,7 @@ export function saveGameSettings(): void {
   try {
     localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(currentSettings));
   } catch (error) {
-    console.error('Failed to save game settings:', error);
+    logError('Failed to save game settings:', error);
   }
 }
 
@@ -151,7 +153,7 @@ function loadSettingsFromStorage(): Partial<GameSettings> | null {
 
     const parsed: unknown = JSON.parse(json);
     if (!parsed || typeof parsed !== 'object') {
-      console.warn('Invalid game settings format in storage');
+      logWarn('Invalid game settings format in storage');
       return null;
     }
 
@@ -170,7 +172,7 @@ function loadSettingsFromStorage(): Partial<GameSettings> | null {
 
     return Object.keys(validSettings).length > 0 ? validSettings : null;
   } catch {
-    console.warn('Failed to parse game settings from storage');
+    logWarn('Failed to parse game settings from storage');
     return null;
   }
 }

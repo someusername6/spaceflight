@@ -3,6 +3,7 @@
  */
 
 import { Vector3 } from 'three';
+import { logDebug, logError } from '../../core/logger';
 import { deriveKey } from '../../core/prng';
 import { createGame, startGame } from '../../game';
 import { InputRecorder } from '../../input/input-recorder';
@@ -94,7 +95,7 @@ export function launchMission(
     spawnPlayerFromCampaign(game.world, playerShip, new Vector3(0, 0, 0));
   } else {
     // This should never happen - squad selection should prevent it
-    console.error('[Mission] No commander ship found!', {
+    logError('[Mission] No commander ship found!', {
       commanderId: campaignState.commanderId,
       shipCount: campaignState.ships.length,
       pilotCount: campaignState.pilots.length,
@@ -148,11 +149,11 @@ export function launchMission(
   // Handle first wave - spawn immediately or after delay (shared with replay)
   initializeFirstWave(game.world, waveState, contract.waves);
   if (waveState.delayRemaining > 0) {
-    console.log(
+    logDebug(
       `[WAVE ${performance.now().toFixed(0)}ms] First wave in ${waveState.delayRemaining.toFixed(1)}s`,
     );
   } else {
-    console.log(
+    logDebug(
       `[WAVE ${performance.now().toFixed(0)}ms] Wave 1/${waveState.totalWaves} spawned`,
     );
   }
@@ -199,10 +200,10 @@ export function launchMission(
     (sum, w) => sum + w.enemies.reduce((s, e) => s + e.count, 0),
     0,
   );
-  console.log(
+  logDebug(
     `[MISSION ${performance.now().toFixed(0)}ms] Mission started: ${contract.name}`,
   );
-  console.log(
+  logDebug(
     `[MISSION ${performance.now().toFixed(0)}ms] ${totalEnemies} enemies across ${contract.waves.length} waves`,
   );
 }

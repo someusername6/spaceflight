@@ -2,6 +2,7 @@
  * Recruit Management - generate and hire pilots.
  */
 
+import { logWarn } from '../core/logger';
 import { generateCampaignId } from './id-generator';
 import type { CampaignState, HireablePilot, Pilot, SkillLevel } from './types';
 
@@ -263,12 +264,12 @@ export function hirePilot(
   const recruit = state.availableRecruits.find((r) => r.id === recruitId);
 
   if (!recruit) {
-    console.warn(`Recruit ${recruitId} not found`);
+    logWarn(`Recruit ${recruitId} not found`);
     return state;
   }
 
   if (state.credits < recruit.price) {
-    console.warn(`Cannot afford recruit ${recruit.name} (${recruit.price} cr)`);
+    logWarn(`Cannot afford recruit ${recruit.name} (${recruit.price} cr)`);
     return state;
   }
 

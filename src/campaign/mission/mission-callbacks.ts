@@ -4,7 +4,7 @@
 
 import type { CombatStats } from '../../components/combat-stats';
 import { getComponent, queryEntities } from '../../core/ecs';
-import { logError } from '../../core/logger';
+import { logError, logWarn } from '../../core/logger';
 import { createDerivedPRNG, random } from '../../core/prng';
 import type { World } from '../../core/types';
 import {
@@ -126,9 +126,7 @@ export function createMissionEndExecutor(
       // Build full replay data with deployment loadouts for deterministic reconstruction
       const playerLoadout = recorder.getPlayerLoadout();
       if (!playerLoadout) {
-        console.warn(
-          '[Replay] No player loadout captured, skipping replay save',
-        );
+        logWarn('[Replay] No player loadout captured, skipping replay save');
         return;
       }
 
@@ -157,7 +155,7 @@ export function createMissionEndExecutor(
 
       // Save to IndexedDB (async, fire and forget)
       saveReplay(fullReplay).catch((err) => {
-        console.warn('[Replay] Failed to save replay:', err);
+        logWarn('[Replay] Failed to save replay:', err);
       });
     }
 

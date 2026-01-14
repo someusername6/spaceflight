@@ -5,6 +5,7 @@
  * On death, stats are snapshotted to MatchStats for the debrief.
  */
 
+import { logWarn } from '../core/logger';
 import type { ComponentBase, Entity } from '../core/types';
 
 /** Per-weapon statistics */
@@ -102,7 +103,7 @@ export function getOrCreateWeaponStats(
     stats.weaponStats.set(weaponName, weaponStats);
   } else if (isPulseBeam && !weaponStats.isPulseBeam) {
     // Catch inconsistent isPulseBeam calls - this indicates a bug in call order
-    console.warn(
+    logWarn(
       `WeaponStats for "${weaponName}" created with isPulseBeam=false but later called with isPulseBeam=true. Check call order.`,
     );
     weaponStats.isPulseBeam = true; // Fix it anyway to avoid display issues
