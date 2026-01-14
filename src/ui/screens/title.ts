@@ -11,6 +11,7 @@
 
 import { deleteSave, hasSaves, loadGame } from '../../campaign/save-system';
 import type { CampaignState } from '../../campaign/types';
+import { isStorageAvailable } from '../../replay/storage';
 import { TITLE_SCREEN_BATTLE } from '../../simulation/battle-configs';
 import {
   type BattleSimulation,
@@ -35,6 +36,7 @@ export interface TitleScreenProps {
   onNewGame: () => void;
   onContinue: (state: CampaignState, slot: number) => void;
   onSettings: () => void;
+  onReplays: () => void;
 }
 
 /** Current view state */
@@ -50,6 +52,7 @@ interface TitleState {
 /** Render main menu view */
 function renderMainView(): string {
   const canContinue = hasSaves();
+  const hasReplayStorage = isStorageAvailable();
 
   return `
     <div class="title-main-view">
@@ -71,6 +74,13 @@ function renderMainView(): string {
           </button>
           <button class="btn btn-title" id="btn-settings">
             Settings
+          </button>
+          <button
+            class="btn btn-title"
+            id="btn-replays"
+            ${hasReplayStorage ? '' : 'disabled'}
+          >
+            Replays
           </button>
         </div>
       </div>
@@ -123,6 +133,10 @@ const TitleScreenComponent: Screen<TitleState, TitleScreenProps> = {
 
     api.on('#btn-settings', 'click', () => {
       props.onSettings();
+    });
+
+    api.on('#btn-replays', 'click', () => {
+      props.onReplays();
     });
 
     // Save view buttons
@@ -221,6 +235,7 @@ export function renderTitleScreen(element: HTMLElement): void {
     onNewGame: () => {},
     onContinue: () => {},
     onSettings: () => {},
+    onReplays: () => {},
   });
 }
 

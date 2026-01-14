@@ -1,0 +1,292 @@
+/**
+ * Replays Screen Styles
+ */
+
+.replays-screen {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: var(--spacing-lg);
+  gap: var(--spacing-md);
+  background: var(--bg-primary);
+}
+
+.replays-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--border-dim);
+}
+
+.replays-title {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--text-primary);
+}
+
+.replays-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+/* Empty state */
+.replay-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.replay-hint {
+  font-size: 0.875rem;
+  color: var(--text-dim);
+}
+
+/* Loading state */
+.replay-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-secondary);
+}
+
+/* Error state */
+.replay-error {
+  padding: var(--spacing-md);
+  background: var(--bg-danger);
+  border: 1px solid var(--border-danger);
+  border-radius: var(--radius);
+  color: var(--text-danger);
+}
+
+/* Replay card */
+.replay-card {
+  display: flex;
+  flex-direction: column;
+  padding: var(--spacing-md);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius);
+  gap: var(--spacing-sm);
+}
+
+.replay-card:hover {
+  border-color: var(--border-primary);
+}
+
+.replay-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.replay-mission-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.replay-outcome {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.replay-victory {
+  background: var(--bg-success);
+  color: var(--text-success);
+}
+
+.replay-defeat {
+  background: var(--bg-danger);
+  color: var(--text-danger);
+}
+
+.replay-card-details {
+  display: flex;
+  gap: var(--spacing-md);
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.replay-card-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-xs);
+}
+
+/* Confirm delete overlay */
+.replay-confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.replay-confirm-dialog {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius);
+  padding: var(--spacing-lg);
+  max-width: 400px;
+  text-align: center;
+}
+
+.replay-confirm-dialog h3 {
+  margin: 0 0 var(--spacing-md) 0;
+  color: var(--text-primary);
+}
+
+.replay-confirm-dialog p {
+  margin: 0 0 var(--spacing-lg) 0;
+  color: var(--text-secondary);
+}
+
+.replay-confirm-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: center;
+}
+
+/* Small button variant */
+.btn-small {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: 0.75rem;
+}
+
+/* ========================================
+   REPLAY VIEWER
+   ======================================== */
+
+/* Override game-screen styles for full-screen viewer */
+.game-screen:has(.replay-viewer) {
+  padding: 0;
+  align-items: stretch;
+}
+
+.replay-viewer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  align-self: stretch;
+  background: #000;
+}
+
+.replay-viewer-loading,
+.replay-viewer-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-secondary);
+  gap: var(--spacing-md);
+}
+
+.replay-canvas-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.replay-hud {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: var(--spacing-md);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+  pointer-events: none;
+}
+
+.replay-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  pointer-events: auto;
+}
+
+.btn-icon {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+
+.btn-play-pause {
+  width: 48px;
+  height: 48px;
+  font-size: 1.25rem;
+}
+
+.replay-timeline-container {
+  flex: 1;
+  position: relative;
+  height: 8px;
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.replay-timeline {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2;
+  margin: 0;
+}
+
+.replay-timeline-progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: var(--accent-primary);
+  border-radius: 4px;
+  pointer-events: none;
+  transition: width 0.1s linear;
+}
+
+.replay-time {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  min-width: 80px;
+  text-align: right;
+}
+
+.replay-seeking {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  pointer-events: none;
+}

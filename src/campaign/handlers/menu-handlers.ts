@@ -9,12 +9,26 @@
 import { resumeGame } from '../../game';
 import {
   getScreenElement,
+  goBackFromReplays,
+  goBackFromReplayViewer,
   goBackFromSettings,
+  goToReplays,
+  goToReplayViewer,
   goToSettings,
   Screen,
   setCurrentSaveSlot,
   updateCampaignState,
 } from '../../ui/common/screens';
+import {
+  bindReplaysScreen,
+  cleanupReplaysScreen,
+  renderReplaysScreen,
+} from '../../ui/screens/replay/replay-list';
+import {
+  bindReplayViewer,
+  cleanupReplayViewer,
+  renderReplayViewer,
+} from '../../ui/screens/replay/replay-viewer';
 import {
   bindSettingsScreen,
   cleanupSettingsScreen,
@@ -66,6 +80,74 @@ export function setupTitleScreen(
     onSettings: () => {
       goToSettings(screenManager);
       setupSettingsScreen(controller, onStartGameplay);
+    },
+    onReplays: () => {
+      goToReplays(screenManager);
+      setupReplaysScreen(controller, onStartGameplay);
+    },
+  });
+}
+
+/**
+ * Setup replays screen with callbacks.
+ */
+export function setupReplaysScreen(
+  controller: CampaignController,
+  onStartGameplay: () => void,
+): void {
+  const { screenManager } = controller;
+  const replaysElement = getScreenElement(screenManager, Screen.REPLAYS);
+
+  renderReplaysScreen(replaysElement);
+  bindReplaysScreen(replaysElement, {
+    onBack: () => {
+      // Transfer canvas back to title if coming from there
+      if (
+        screenManager.previousScreen === Screen.TITLE &&
+        hasBattleSimulation()
+      ) {
+        const canvas = getBattleSimulationCanvas();
+        const titleBg = document.getElementById('title-battle-bg');
+        if (canvas && titleBg) {
+          titleBg.appendChild(canvas);
+        }
+      }
+
+      cleanupReplaysScreen();
+      goBackFromReplays(screenManager);
+
+      // Re-setup the screen we're returning to
+      const currentScreen = screenManager.currentScreen;
+      if (currentScreen === Screen.TITLE) {
+        setupTitleScreen(controller, onStartGameplay);
+      }
+    },
+    onWatch: (replayId: string) => {
+      goToReplayViewer(screenManager);
+      setupReplayViewer(controller, onStartGameplay, replayId);
+    },
+  });
+}
+
+/**
+ * Setup replay viewer screen.
+ */
+export function setupReplayViewer(
+  controller: CampaignController,
+  onStartGameplay: () => void,
+  replayId: string,
+): void {
+  const { screenManager } = controller;
+  const viewerElement = getScreenElement(screenManager, Screen.REPLAY_VIEWER);
+
+  renderReplayViewer(viewerElement);
+  bindReplayViewer(viewerElement, replayId, {
+    onBack: () => {
+      cleanupReplayViewer();
+      goBackFromReplayViewer(screenManager);
+
+      // Re-setup replays list
+      setupReplaysScreen(controller, onStartGameplay);
     },
   });
 }

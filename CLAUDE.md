@@ -73,3 +73,52 @@ When working in these areas, read the source for patterns:
 - **Campaign controller**: `src/campaign/controller.ts` and `src/campaign/handlers/`
 - **ECS patterns**: `src/core/ecs.ts`
 - **State mutations**: `src/campaign/loadout.ts` (immutable update pattern)
+- **Replay system**: `src/replay/` (see Replay Determinism below)
+
+## Replay Determinism (CRITICAL)
+
+The replay system records player inputs and reconstructs battles deterministically. **Any entity that affects simulation must be reconstructed identically.**
+
+### When Modifying Mission/Combat Features, Ask:
+
+1. Does this add new entities that affect combat? (ships, weapons, abilities)
+2. Does this change how entities are configured? (stats, loadouts, positions)
+3. Does this introduce new sources of randomness?
+
+If YES to any: **Update the replay system** in `src/replay/`.
+
+### Replay Reconstruction Checklist
+
+When adding features that affect missions, ensure replay captures:
+
+- [ ] Player ship class and stats
+- [ ] Player weapons (type, bank size, ammo counts)
+- [ ] Wingmen (loadouts and starting positions)
+- [ ] Any new entity types that affect outcomes
+- [ ] Any configuration that varies between runs
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `src/replay/types.ts` | Data structures (bump `REPLAY_VERSION` when changing) |
+| `src/input/input-recorder.ts` | Captures data at mission START |
+| `src/campaign/mission/mission-callbacks.ts` | Saves replay at mission END |
+| `src/replay/mission-setup.ts` | Reconstructs world for playback |
+| `src/replay/storage.ts` | Version migration for old replays |
+
+### Historical Bugs
+
+**v2 → v3: Missing loadout data**
+- Live game used campaign loadouts; replay used archetype defaults
+- Live game spawned wingmen; replay didn't
+- Fix: Added `playerLoadout` and `wingmen` to replay data format
+
+**v3: Rendering PRNG contamination**
+- Rendering code (lightning, missile exhaust) consumed `world.prng`
+- PRNG state diverged based on frame rate, not tick count
+- Fix: Added `world.renderPrng` for visual-only randomness
+
+**v3: Wave initialization mismatch**
+- Replay was missing `waveState.currentWave = -1` for delayed first waves
+- Fix: Created shared `initializeFirstWave()` and `processWaveTick()` in `mission-waves.ts`

@@ -5,10 +5,14 @@
 import { Vector3 } from 'three';
 import { deriveKey } from '../../core/prng';
 import { createGame, startGame } from '../../game';
+import { InputRecorder } from '../../input/input-recorder';
+import type { ReplayWingman } from '../../replay/types';
+import { startRecording } from '../../systems/input';
 import { initMatchStats } from '../../systems/stats';
 import { setMissionContainer } from '../../ui/common/screens';
 import type { CampaignController } from '../controller-types';
 import {
+  shipToReplayLoadout,
   spawnPlayerFromCampaign,
   spawnWingmanFromCampaign,
 } from '../ship-spawning';
@@ -24,10 +28,9 @@ import {
   updateMissionRenderers,
 } from './mission-renderer';
 import {
-  calculateWaveDelay,
   createMissionEndState,
   createWaveState,
-  spawnWave,
+  initializeFirstWave,
 } from './mission-waves';
 
 /** Callback type for contracts screen setup */
@@ -69,6 +72,9 @@ export function launchMission(
   const game = createGame(seed);
   controller.game = game;
 
+  // Create input recorder (will capture deployment data below)
+  const recorder = new InputRecorder(seed, contract.id);
+
   // Create all renderers and store in controller for disposal
   const renderers = createMissionRenderers(controller.missionContainer, seed);
   controller.missionRenderers = renderers;
@@ -95,6 +101,8 @@ export function launchMission(
   }
 
   // Spawn deployed wingmen in tight symmetric formation near player
+  // Track positions for replay reconstruction
+  const replayWingmen: ReplayWingman[] = [];
   wingmen.forEach((wingman, index) => {
     const side = index % 2 === 0 ? 1 : -1;
     const xOffset = 20 * side; // 20m left/right
@@ -104,7 +112,24 @@ export function launchMission(
       wingman,
       new Vector3(xOffset, 0, zOffset),
     );
+    // Capture wingman loadout, position, and pilot skill for replay
+    const replayWingman: ReplayWingman = {
+      loadout: shipToReplayLoadout(wingman),
+      position: { x: xOffset, y: 0, z: zOffset },
+    };
+    if (wingman.pilot?.skill) {
+      replayWingman.pilotSkill = wingman.pilot.skill;
+    }
+    replayWingmen.push(replayWingman);
   });
+
+  // Store deployment data in recorder for replay reconstruction
+  if (playerShip) {
+    recorder.setDeployment(shipToReplayLoadout(playerShip), replayWingmen);
+  }
+
+  // Start recording input for replay (stopped in mission end executor)
+  startRecording(recorder);
 
   // Initialize match stats for debrief
   initMatchStats(game.world);
@@ -115,25 +140,16 @@ export function launchMission(
   // Mission end state for delayed transition
   const missionEndState = createMissionEndState();
 
-  // Handle first wave - spawn immediately or after delay
-  const firstWave = contract.waves[0];
-  if (firstWave) {
-    const firstWaveDelay = calculateWaveDelay(firstWave.delay, game.world.prng);
-    if (firstWaveDelay > 0) {
-      // Set currentWave = -1 so tick callback increments to 0 when spawning
-      waveState.currentWave = -1;
-      waveState.waveCleared = true;
-      waveState.delayRemaining = firstWaveDelay;
-      console.log(
-        `[WAVE ${performance.now().toFixed(0)}ms] First wave in ${firstWaveDelay.toFixed(1)}s`,
-      );
-    } else {
-      // Spawn immediately (no delay)
-      spawnWave(game.world, firstWave, 0);
-      console.log(
-        `[WAVE ${performance.now().toFixed(0)}ms] Wave 1/${waveState.totalWaves} spawned`,
-      );
-    }
+  // Handle first wave - spawn immediately or after delay (shared with replay)
+  initializeFirstWave(game.world, waveState, contract.waves);
+  if (waveState.delayRemaining > 0) {
+    console.log(
+      `[WAVE ${performance.now().toFixed(0)}ms] First wave in ${waveState.delayRemaining.toFixed(1)}s`,
+    );
+  } else {
+    console.log(
+      `[WAVE ${performance.now().toFixed(0)}ms] Wave 1/${waveState.totalWaves} spawned`,
+    );
   }
 
   // Set render callback with alpha for interpolation

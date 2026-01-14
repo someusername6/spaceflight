@@ -180,8 +180,10 @@ export interface World {
   toRemove: Set<Entity>;
   /** System-specific state (replaces module-level variables) */
   systemState: SystemState;
-  /** Seeded PRNG for deterministic randomness */
+  /** Seeded PRNG for deterministic randomness (simulation only) */
   prng: import('../core/prng').PRNGState;
+  /** Separate PRNG for rendering effects (does not affect simulation determinism) */
+  renderPrng: import('../core/prng').PRNGState;
 }
 
 /** Team/faction identifiers */

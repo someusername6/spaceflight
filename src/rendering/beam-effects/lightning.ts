@@ -173,7 +173,7 @@ export function updateLightningRenderer(
               beam.origin,
               beam.direction,
               OFF_TARGET_RANGE,
-              world.prng,
+              world.renderPrng,
             )
           : beam.hitPoint.clone();
 
@@ -182,7 +182,7 @@ export function updateLightningRenderer(
           endPoint,
           BOLT_SUBDIVISIONS,
           displacementScale,
-          world.prng,
+          world.renderPrng,
         );
 
         const branches = isOffTarget
@@ -191,7 +191,7 @@ export function updateLightningRenderer(
               segments,
               BRANCH_PROBABILITY,
               DISPLACEMENT_SCALE,
-              world.prng,
+              world.renderPrng,
             );
 
         bolt = {

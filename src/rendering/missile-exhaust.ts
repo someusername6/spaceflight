@@ -83,7 +83,7 @@ function createExhaust(
   return {
     cone,
     glow,
-    flickerPhase: random(world.prng) * Math.PI * 2, // Deterministic random start phase
+    flickerPhase: random(world.renderPrng) * Math.PI * 2, // Random start phase (uses renderPrng to not affect simulation)
   };
 }
 

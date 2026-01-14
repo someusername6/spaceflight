@@ -109,3 +109,6 @@
 
 /* Sector advance modal */
 @import "./screens/sector-advance.css";
+
+/* Replays screen */
+@import "./screens/replays.css";

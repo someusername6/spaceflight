@@ -2,16 +2,22 @@
  * Mission Callbacks - game loop callbacks for mission execution.
  */
 
+import type { CombatStats } from '../../components/combat-stats';
+import { getComponent, queryEntities } from '../../core/ecs';
 import { createDerivedPRNG, random } from '../../core/prng';
 import type { World } from '../../core/types';
 import {
-  countLivingEnemyShips,
   type Game,
   MissionResult,
   resetMissionNotification,
   resetMissionState,
   stopGame,
 } from '../../game';
+import { encodeRLE } from '../../replay/compression';
+import { saveReplay } from '../../replay/storage';
+import type { FullReplayData, ReplayOutcome } from '../../replay/types';
+import { REPLAY_VERSION } from '../../replay/types';
+import { stopRecording } from '../../systems/input';
 import { finalizeMatchStats } from '../../systems/stats';
 import { endMission, updateCampaignState } from '../../ui/common/screens';
 import type { CampaignController } from '../controller-types';
@@ -19,15 +25,16 @@ import { showGameOver, showResults } from '../handlers/mission-handlers';
 import { refreshRecruits } from '../recruits';
 import { applySalvage, calculateSalvage } from '../salvage';
 import { extractAmmoFromWorld } from '../ship-spawning';
-import { applyAmmoUsage, applyMissionResults, isGameOver } from '../state';
+import {
+  applyAmmoUsage,
+  applyMissionResults,
+  getCommanderShip,
+  isGameOver,
+} from '../state';
 import type { Contract } from '../types';
 import { createMissionResultOverlay } from '../utils';
 import type { MissionEndState, WaveState } from './mission-waves';
-import {
-  calculateWaveDelay,
-  MISSION_END_DELAY,
-  spawnWave,
-} from './mission-waves';
+import { MISSION_END_DELAY, processWaveTick } from './mission-waves';
 
 /** Create the mission end execution callback */
 export function createMissionEndExecutor(
@@ -42,6 +49,9 @@ export function createMissionEndExecutor(
   return () => {
     controller.missionEnded = true;
 
+    // Stop input recording and save replay
+    const recorder = stopRecording();
+
     // Finalize match stats before stopping
     finalizeMatchStats(game.world);
 
@@ -50,6 +60,99 @@ export function createMissionEndExecutor(
 
     // Stop the game loop
     stopGame(game);
+
+    // Save replay if we were recording
+    if (recorder) {
+      const replayData = recorder.getReplayData();
+      const matchStats = game.world.systemState.matchStats;
+
+      // Get player ship class from campaign state
+      const playerShip = getCommanderShip(screenManager.campaignState);
+      const shipType = playerShip?.shipClass ?? 'fighter';
+
+      // Calculate stats - first try living player, then check destroyed ships
+      let kills = 0;
+      let damageDealt = 0;
+      let damageTaken = 0;
+      let foundLivingPlayer = false;
+
+      // Query living player entity for stats (player survived)
+      for (const entity of queryEntities(game.world, [
+        'playerControlled',
+        'combatStats',
+      ])) {
+        const stats = getComponent<CombatStats>(
+          game.world,
+          entity,
+          'combatStats',
+        );
+        if (stats) {
+          kills = stats.kills;
+          damageDealt = stats.damageDealt;
+          damageTaken = stats.damageReceived;
+          foundLivingPlayer = true;
+          break; // Only one player
+        }
+      }
+
+      // If player died, get stats from destroyed ships record
+      if (!foundLivingPlayer && matchStats) {
+        for (const record of matchStats.destroyedShips) {
+          if (record.wasPlayer) {
+            kills = record.stats.kills;
+            damageDealt = record.stats.damageDealt;
+            damageTaken = record.stats.damageReceived;
+            break;
+          }
+        }
+      }
+
+      // Determine outcome
+      const outcome: ReplayOutcome = missionEndState.victory
+        ? 'victory'
+        : 'defeat';
+
+      // RLE compress inputs
+      const { data: compressedInputs, compressed } = encodeRLE(
+        replayData.inputs,
+      );
+
+      // Build full replay data with deployment loadouts for deterministic reconstruction
+      const fullReplay: FullReplayData = {
+        version: REPLAY_VERSION,
+        seed: replayData.seed,
+        inputs: compressedInputs,
+        inputsCompressed: compressed,
+        tickCount: replayData.tickCount,
+        metadata: {
+          id: '', // Assigned by storage
+          missionId: contract.id,
+          missionName: contract.name,
+          sector: contract.sector,
+          shipType,
+          outcome,
+          durationTicks: replayData.tickCount,
+          recordedAt: Date.now(),
+          gameVersion: __APP_VERSION__,
+          stats: { kills, damageDealt, damageTaken },
+        },
+      };
+
+      // v3: Include exact loadout for deterministic replay (if available)
+      const playerLoadout = recorder.getPlayerLoadout();
+      const wingmen = recorder.getWingmen();
+      if (playerLoadout) {
+        fullReplay.playerLoadout = playerLoadout;
+      }
+      if (wingmen.length > 0) {
+        fullReplay.wingmen = wingmen;
+      }
+
+      // Save to IndexedDB (async, fire and forget)
+      saveReplay(fullReplay).catch((err) => {
+        console.warn('[Replay] Failed to save replay:', err);
+      });
+    }
 
     // Get match stats for death/salvage processing
     const matchStats = game.world.systemState.matchStats;
@@ -147,46 +250,14 @@ export function createTickCallback(
       return; // Don't process waves while ending
     }
 
-    const enemyCount = countLivingEnemyShips(world);
+    // Process wave logic (shared with replay for determinism)
+    const result = processWaveTick(world, waveState, contract, TICK_SEC);
 
-    // Check if current wave is cleared
-    if (enemyCount === 0 && !waveState.waveCleared) {
-      waveState.waveCleared = true;
-      const nextWaveIndex = waveState.currentWave + 1;
-
-      if (nextWaveIndex < waveState.totalWaves) {
-        // Set delay for next wave
-        const nextWave = contract.waves[nextWaveIndex];
-        if (nextWave) {
-          waveState.delayRemaining = calculateWaveDelay(
-            nextWave.delay,
-            world.prng,
-          );
-        }
-      }
-    }
-
-    // Handle wave delay and spawning
-    if (
-      waveState.waveCleared &&
-      waveState.currentWave + 1 < waveState.totalWaves
-    ) {
-      if (waveState.delayRemaining > 0) {
-        waveState.delayRemaining -= TICK_SEC;
-      } else {
-        // Spawn next wave
-        waveState.currentWave++;
-        waveState.waveCleared = false;
-        const nextWave = contract.waves[waveState.currentWave];
-        if (nextWave) {
-          // Reset mission state so missionSystem can detect Victory for this wave
-          resetMissionState(game.world);
-          // Reset notification tracking so we get notified when this wave clears
-          resetMissionNotification(game);
-
-          spawnWave(world, nextWave, waveState.currentWave);
-        }
-      }
+    // Live gameplay needs to reset mission state when new wave spawns
+    // so missionSystem can detect Victory for this wave
+    if (result.waveSpawned) {
+      resetMissionState(game.world);
+      resetMissionNotification(game);
     }
   };
 }

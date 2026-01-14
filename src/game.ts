@@ -60,24 +60,34 @@ export const TICK_SEC = 1 / TICK_RATE;
  * 16. explosions - Update explosion effects
  * 17. mission - Check win/lose after cleanup
  */
+/**
+ * Simulation systems (without input handling).
+ * Used by replay playback to maintain identical execution order.
+ * Exported so replay can import directly instead of duplicating.
+ */
+export const SIMULATION_SYSTEMS: SystemFn[] = [
+  targetingSystem, // 1. Process target selection
+  aiSystem, // 2. AI decision making
+  aimErrorSystem, // 3. Update aim drift
+  weaponSystem, // 4. Handle firing (projectiles)
+  physicsSystem, // 5. Apply movement (rotation must be applied before beams)
+  beamSystem, // 6. Handle beam damage (uses current frame's transform)
+  projectileSystem, // 7. Move projectiles
+  missileSystem, // 8. Move missiles with tracking (decoy seduction here)
+  decoySystem, // 9. Move decoys, destroy missiles on contact
+  collisionSystem, // 10. Detect collisions
+  damageSystem, // 11. Apply damage
+  shieldSystem, // 12. Regenerate shields
+  heatSystem, // 13. Cool heat
+  cleanupSystem, // 14. Remove dead entities, spawn explosions
+  explosionSystem, // 15. Update explosion effects
+  missionSystem, // 16. Check win/lose
+];
+
+/** Full system order including input (for live gameplay) */
 const SYSTEM_ORDER: SystemFn[] = [
-  inputSystem, // 1. Read player input
-  targetingSystem, // 2. Process target selection
-  aiSystem, // 3. AI decision making
-  aimErrorSystem, // 4. Update aim drift
-  weaponSystem, // 5. Handle firing (projectiles)
-  physicsSystem, // 6. Apply movement (rotation must be applied before beams)
-  beamSystem, // 7. Handle beam damage (uses current frame's transform)
-  projectileSystem, // 8. Move projectiles
-  missileSystem, // 9. Move missiles with tracking (decoy seduction here)
-  decoySystem, // 10. Move decoys, destroy missiles on contact
-  collisionSystem, // 11. Detect collisions
-  damageSystem, // 12. Apply damage
-  shieldSystem, // 13. Regenerate shields
-  heatSystem, // 14. Cool heat
-  cleanupSystem, // 15. Remove dead entities, spawn explosions
-  explosionSystem, // 16. Update explosion effects
-  missionSystem, // 17. Check win/lose
+  inputSystem, // Read player input first
+  ...SIMULATION_SYSTEMS,
 ];
 
 /** Game instance state */

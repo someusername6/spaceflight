@@ -68,6 +68,9 @@ export function createWorld(seed: number = 0): World {
       },
     },
     prng: createPRNG(seed),
+    // Separate PRNG for rendering effects - same seed so visuals are consistent,
+    // but isolated from simulation to maintain determinism
+    renderPrng: createPRNG(seed),
   };
 }
 

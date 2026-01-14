@@ -6,6 +6,7 @@
  */
 
 import type { InputState } from '../core/types';
+import type { ReplayShipLoadout, ReplayWingman } from '../replay/types';
 import { applyDecodedInput, decodeInput, encodeInput } from './input-encoding';
 
 /**
@@ -40,10 +41,38 @@ export class InputRecorder {
   private inputs: number[] = [];
   private seed: number;
   private missionId: string | undefined;
+  private playerLoadout: ReplayShipLoadout | undefined;
+  private wingmen: ReplayWingman[] = [];
 
   constructor(seed: number, missionId?: string) {
     this.seed = seed;
     this.missionId = missionId;
+  }
+
+  /**
+   * Store deployment loadout data for replay reconstruction.
+   * Call this at mission start after spawning ships.
+   */
+  setDeployment(
+    playerLoadout: ReplayShipLoadout,
+    wingmen: ReplayWingman[],
+  ): void {
+    this.playerLoadout = playerLoadout;
+    this.wingmen = wingmen;
+  }
+
+  /**
+   * Get stored player loadout.
+   */
+  getPlayerLoadout(): ReplayShipLoadout | undefined {
+    return this.playerLoadout;
+  }
+
+  /**
+   * Get stored wingmen data.
+   */
+  getWingmen(): ReplayWingman[] {
+    return this.wingmen;
   }
 
   /**

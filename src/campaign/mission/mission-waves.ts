@@ -12,7 +12,8 @@ import { randomRange, randomUnitVector } from '../../core/prng';
 import { Faction, type World } from '../../core/types';
 import type { ProfileName } from '../../data/ai-profiles';
 import { createEnemyShip } from '../../factories/ship';
-import type { ContractWave } from '../types';
+import { countLivingEnemyShips } from '../../systems/mission';
+import type { Contract, ContractWave } from '../types';
 
 /** Wave state for tracking mission progress */
 export interface WaveState {
@@ -187,4 +188,100 @@ export function spawnWave(
 /** Count total enemies in a wave */
 function getTotalEnemies(wave: ContractWave): number {
   return wave.enemies.reduce((sum, spec) => sum + spec.count, 0);
+}
+
+/**
+ * Initialize wave state and spawn or schedule first wave.
+ * Shared between live gameplay and replay to ensure identical behavior.
+ */
+export function initializeFirstWave(
+  world: World,
+  waveState: WaveState,
+  waves: ContractWave[],
+): void {
+  const firstWave = waves[0];
+  if (!firstWave) return;
+
+  const firstWaveDelay = calculateWaveDelay(firstWave.delay, world.prng);
+  if (firstWaveDelay > 0) {
+    // Set currentWave = -1 so tick callback increments to 0 when spawning
+    waveState.currentWave = -1;
+    waveState.waveCleared = true;
+    waveState.delayRemaining = firstWaveDelay;
+  } else {
+    // Spawn first wave immediately
+    spawnWave(world, firstWave, 0);
+  }
+}
+
+/**
+ * Result of processing a wave tick.
+ * Used to communicate state changes to the caller.
+ */
+export interface WaveTickResult {
+  /** True if a new wave was spawned this tick */
+  waveSpawned: boolean;
+  /** Index of spawned wave (if waveSpawned is true) */
+  spawnedWaveIndex?: number;
+}
+
+/**
+ * Process wave logic for a single tick.
+ * Shared between live gameplay and replay to ensure identical behavior.
+ *
+ * @param world - The game world
+ * @param waveState - Mutable wave state
+ * @param mission - Mission contract with wave definitions
+ * @param dt - Delta time in seconds
+ * @returns Result indicating if a wave was spawned
+ */
+export function processWaveTick(
+  world: World,
+  waveState: WaveState,
+  mission: Contract,
+  dt: number,
+): WaveTickResult {
+  const result: WaveTickResult = { waveSpawned: false };
+  const enemyCount = countLivingEnemyShips(world);
+
+  // Check if current wave is cleared
+  if (enemyCount === 0 && !waveState.waveCleared) {
+    waveState.waveCleared = true;
+    const nextWaveIndex = waveState.currentWave + 1;
+
+    if (nextWaveIndex < waveState.totalWaves) {
+      // Set delay for next wave
+      const nextWave = mission.waves[nextWaveIndex];
+      if (nextWave) {
+        waveState.delayRemaining = calculateWaveDelay(
+          nextWave.delay,
+          world.prng,
+        );
+      }
+    }
+  }
+
+  // Handle wave delay and spawning
+  if (
+    waveState.waveCleared &&
+    waveState.currentWave + 1 < waveState.totalWaves
+  ) {
+    if (waveState.delayRemaining > 0) {
+      waveState.delayRemaining -= dt;
+    } else {
+      // Spawn next wave
+      waveState.currentWave++;
+      waveState.waveCleared = false;
+      waveState.delayRemaining = 0;
+
+      const nextWave = mission.waves[waveState.currentWave];
+      if (nextWave) {
+        spawnWave(world, nextWave, waveState.currentWave);
+        result.waveSpawned = true;
+        result.spawnedWaveIndex = waveState.currentWave;
+      }
+    }
+  }
+
+  return result;
 }

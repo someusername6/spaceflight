@@ -2,7 +2,7 @@
  * Screen state machine - manages transitions between game screens.
  *
  * Screens:
- * - TITLE: Main menu (new game, continue, settings)
+ * - TITLE: Main menu (new game, continue, settings, replays)
  * - SQUADRON: Unified pilot and ship management
  * - STORE: Equipment shop
  * - CONTRACTS: Mission selection
@@ -10,6 +10,7 @@
  * - RESULTS: Post-mission outcome
  * - GAME_OVER: Campaign ended
  * - SETTINGS: Key bindings and options
+ * - REPLAYS: Replay list and viewer
  */
 
 import type { CampaignState, Contract } from '../../campaign/types';
@@ -24,6 +25,8 @@ export enum Screen {
   RESULTS = 'results',
   GAME_OVER = 'game_over',
   SETTINGS = 'settings',
+  REPLAYS = 'replays',
+  REPLAY_VIEWER = 'replay_viewer',
 }
 
 /** Screen manager state */
@@ -43,6 +46,8 @@ export interface ScreenManager {
   resultsElement: HTMLElement | null;
   gameOverElement: HTMLElement | null;
   settingsElement: HTMLElement | null;
+  replaysElement: HTMLElement | null;
+  replayViewerElement: HTMLElement | null;
   missionContainer: HTMLElement | null;
 
   // Navigation history for settings (return to previous screen)
@@ -72,6 +77,8 @@ export function createScreenManager(
     resultsElement: null,
     gameOverElement: null,
     settingsElement: null,
+    replaysElement: null,
+    replayViewerElement: null,
     missionContainer: null,
     previousScreen: null,
   };
@@ -216,4 +223,30 @@ export function setCurrentSaveSlot(
   slot: number | null,
 ): void {
   manager.currentSaveSlot = slot;
+}
+
+/** Transition to replays screen (remembers previous screen for back navigation) */
+export function goToReplays(manager: ScreenManager): void {
+  manager.previousScreen = manager.currentScreen;
+  showScreen(manager, Screen.REPLAYS);
+}
+
+/** Return from replays to previous screen */
+export function goBackFromReplays(manager: ScreenManager): void {
+  const target = manager.previousScreen ?? Screen.TITLE;
+  manager.previousScreen = null;
+  showScreen(manager, target);
+}
+
+/** Transition to replay viewer (remembers replays screen for back navigation) */
+export function goToReplayViewer(manager: ScreenManager): void {
+  manager.previousScreen = manager.currentScreen;
+  showScreen(manager, Screen.REPLAY_VIEWER);
+}
+
+/** Return from replay viewer to replays list */
+export function goBackFromReplayViewer(manager: ScreenManager): void {
+  const target = manager.previousScreen ?? Screen.REPLAYS;
+  manager.previousScreen = null;
+  showScreen(manager, target);
 }
