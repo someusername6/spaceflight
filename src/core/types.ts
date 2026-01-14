@@ -118,6 +118,15 @@ export interface SystemState {
       color?: { r: number; g: number; b: number };
     }>;
   };
+  /** Muzzle flash queue - weapon spawning adds, rendering consumes */
+  muzzleFlashes: {
+    pending: Array<{
+      x: number;
+      y: number;
+      z: number;
+      weaponName: string;
+    }>;
+  };
   /** Object pool indices - reset each frame */
   pools: {
     beamWeapon: number;

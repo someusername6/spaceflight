@@ -271,8 +271,11 @@ function renderBolts(
   }
 }
 
-/** Dispose of lightning renderer resources */
-export function disposeLightningRenderer(
+/**
+ * Reset lightning renderer state (for replay seeking).
+ * Removes all active bolts and lines.
+ */
+export function resetLightningRenderer(
   renderer: LightningRenderer,
   scene: THREE.Scene,
 ): void {
@@ -281,10 +284,22 @@ export function disposeLightningRenderer(
     scene.remove(line.core);
     disposeRenderedLine(line);
   }
+  renderer.mainLines = [];
+
   for (const line of renderer.branchLines) {
     scene.remove(line.glow);
     scene.remove(line.core);
     disposeRenderedLine(line);
   }
+  renderer.branchLines = [];
+
   renderer.bolts.clear();
+}
+
+/** Dispose of lightning renderer resources */
+export function disposeLightningRenderer(
+  renderer: LightningRenderer,
+  scene: THREE.Scene,
+): void {
+  resetLightningRenderer(renderer, scene);
 }

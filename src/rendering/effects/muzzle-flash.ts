@@ -6,10 +6,8 @@
  */
 
 import * as THREE from 'three';
-import type { Projectile, WeaponName } from '../../components/projectile';
-import type { Transform } from '../../components/transform';
-import { getComponent, queryEntities } from '../../core/ecs';
-import type { Entity, World } from '../../core/types';
+import type { WeaponName } from '../../components/projectile';
+import type { World } from '../../core/types';
 
 /** Flash duration in seconds */
 const FLASH_DURATION = 0.08;
@@ -42,12 +40,8 @@ const BEAM_GLOW_COLORS: Record<string, THREE.Color> = {
 };
 const DEFAULT_BEAM_GLOW = new THREE.Color(1.0, 1.0, 1.0);
 
-// Track seen projectiles to detect new ones
-const seenProjectiles = new Set<Entity>();
-const newProjectiles: Array<{
-  position: THREE.Vector3;
-  weaponName: WeaponName;
-}> = [];
+// Reusable vector for processing pending flashes
+const flashPosition = new THREE.Vector3();
 
 /** Flash visual state */
 interface FlashVisual {
@@ -132,19 +126,23 @@ export function updateMuzzleFlashRenderer(
   world: World,
 ): void {
   const gameTime = world.systemState.gameTime;
+  const pendingFlashes = world.systemState.muzzleFlashes.pending;
 
-  // Detect new projectiles
-  detectNewProjectiles(world);
-
-  // Create flashes for new projectiles
-  for (const proj of newProjectiles) {
+  // Create flashes from pending queue (populated by weapon spawning)
+  for (const pending of pendingFlashes) {
+    flashPosition.set(pending.x, pending.y, pending.z);
     const flash: FlashVisual = {
-      mesh: createFlashMesh(renderer, scene, proj.position, proj.weaponName),
+      mesh: createFlashMesh(
+        renderer,
+        scene,
+        flashPosition,
+        pending.weaponName as WeaponName,
+      ),
       startTime: gameTime,
     };
     renderer.flashes.push(flash);
   }
-  newProjectiles.length = 0;
+  pendingFlashes.length = 0;
 
   // Update existing flashes
   for (let i = renderer.flashes.length - 1; i >= 0; i--) {
@@ -170,36 +168,6 @@ export function updateMuzzleFlashRenderer(
 
   // Update beam glows
   updateBeamGlows(renderer, scene, world);
-}
-
-/** Detect newly created projectiles */
-function detectNewProjectiles(world: World): void {
-  const currentProjectiles = new Set<Entity>();
-
-  for (const entity of queryEntities(world, ['projectile', 'transform'])) {
-    currentProjectiles.add(entity);
-
-    if (!seenProjectiles.has(entity)) {
-      // New projectile!
-      const transform = getComponent<Transform>(
-        world,
-        entity,
-        'transform',
-      ) as Transform;
-      const projectile = getComponent<Projectile>(world, entity, 'projectile');
-
-      newProjectiles.push({
-        position: transform.position.clone(),
-        weaponName: projectile?.weaponName ?? 'Plasma',
-      });
-    }
-  }
-
-  // Update seen set
-  seenProjectiles.clear();
-  for (const entity of currentProjectiles) {
-    seenProjectiles.add(entity);
-  }
 }
 
 /** Update beam origin glows */
@@ -268,6 +236,29 @@ function updateBeamGlows(
   }
 }
 
+/**
+ * Reset muzzle flash renderer state (for replay seeking).
+ * Clears active visuals without disposing shared resources.
+ */
+export function resetMuzzleFlashRenderer(
+  renderer: MuzzleFlashRenderer,
+  scene: THREE.Scene,
+): void {
+  // Remove active flashes from scene
+  for (const flash of renderer.flashes) {
+    scene.remove(flash.mesh);
+    flash.mesh.geometry.dispose();
+    (flash.mesh.material as THREE.Material).dispose();
+  }
+  renderer.flashes.length = 0;
+
+  // Hide beam glows (keep for reuse)
+  for (const glow of renderer.beamGlows.values()) {
+    glow.mesh.visible = false;
+    glow.light.intensity = 0;
+  }
+}
+
 /** Disposes of muzzle flash renderer resources */
 export function disposeMuzzleFlashRenderer(
   renderer: MuzzleFlashRenderer,
@@ -290,6 +281,4 @@ export function disposeMuzzleFlashRenderer(
 
   renderer.flashGeometry.dispose();
   renderer.glowGeometry.dispose();
-
-  seenProjectiles.clear();
 }

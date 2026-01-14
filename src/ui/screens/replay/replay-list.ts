@@ -66,17 +66,27 @@ function escapeHtml(unsafe: string): string {
     .replace(/'/g, '&#039;');
 }
 
+/** Get outcome class and text */
+function getOutcomeDisplay(outcome: string): { class: string; text: string } {
+  switch (outcome) {
+    case 'victory':
+      return { class: 'replay-victory', text: 'Victory' };
+    case 'timeout':
+      return { class: 'replay-timeout', text: 'Timeout' };
+    default:
+      return { class: 'replay-defeat', text: 'Defeat' };
+  }
+}
+
 /** Render an individual replay card */
 function renderReplayCard(replay: ReplaySummary): string {
-  const outcomeClass =
-    replay.outcome === 'victory' ? 'replay-victory' : 'replay-defeat';
-  const outcomeText = replay.outcome === 'victory' ? 'Victory' : 'Defeat';
+  const outcome = getOutcomeDisplay(replay.outcome);
 
   return `
     <div class="replay-card" data-replay-id="${escapeHtml(replay.id)}">
       <div class="replay-card-header">
         <span class="replay-mission-name">${escapeHtml(replay.missionName)}</span>
-        <span class="replay-outcome ${outcomeClass}">${outcomeText}</span>
+        <span class="replay-outcome ${outcome.class}">${outcome.text}</span>
       </div>
       <div class="replay-card-details">
         <span class="replay-sector">Sector ${replay.sector}</span>

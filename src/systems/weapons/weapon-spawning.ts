@@ -241,6 +241,14 @@ function createProjectileEntity(
     addComponent(world, projectile, createFaction(ownerFaction.faction));
   }
 
+  // Queue muzzle flash at spawn position
+  world.systemState.muzzleFlashes.pending.push({
+    x: pos.x,
+    y: pos.y,
+    z: pos.z,
+    weaponName: weapon.name,
+  });
+
   recordShotFired(world, owner, weapon.name);
   if (world.systemState.combatStats) {
     const stats = world.systemState.combatStats;

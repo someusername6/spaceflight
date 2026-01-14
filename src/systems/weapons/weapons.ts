@@ -192,6 +192,13 @@ function updateLockProgress(
   const weapon = getCurrentSecondary(weapons);
   if (!weapon) return;
 
+  // Don't lock if current weapon is empty - no point locking with no ammo
+  if (weapon.count <= 0) {
+    weapons.lockProgress = 0;
+    weapons.lockTarget = undefined;
+    return;
+  }
+
   // No valid target - lose lock
   if (target === undefined || target === null || !entityExists(world, target)) {
     weapons.lockProgress = 0;

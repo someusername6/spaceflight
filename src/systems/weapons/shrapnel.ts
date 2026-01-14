@@ -28,6 +28,10 @@ export interface ShrapnelConfig {
 /**
  * Spawn shrapnel projectiles from a flak explosion.
  * Each piece goes in a random direction (uniform on sphere surface).
+ *
+ * Note: Creates projectiles directly (not via createProjectileEntity) because
+ * shrapnel comes from explosions, not weapon muzzles - no muzzle flash needed.
+ *
  * @param parentWeaponName - Weapon name for stats attribution (e.g., "Flak")
  * @param config - Optional shrapnel stats from weapon definition
  */

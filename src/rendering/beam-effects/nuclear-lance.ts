@@ -107,8 +107,11 @@ export function updateNuclearLanceRenderer(
   }
 }
 
-/** Dispose of nuclear lance renderer resources */
-export function disposeNuclearLanceRenderer(
+/**
+ * Reset nuclear lance renderer state (for replay seeking).
+ * Removes active visuals without disposing shared geometries.
+ */
+export function resetNuclearLanceRenderer(
   renderer: NuclearLanceRenderer,
   scene: THREE.Scene,
 ): void {
@@ -154,11 +157,7 @@ export function disposeNuclearLanceRenderer(
     (points.material as THREE.Material).dispose();
   }
 
-  // Shared geometries
-  renderer.sphereGeometry.dispose();
-  renderer.ringGeometry.dispose();
-
-  // Clear all maps
+  // Clear all maps (keep shared geometries)
   renderer.shots.clear();
   renderer.originFlashMeshes.clear();
   renderer.originLights.clear();
@@ -169,4 +168,17 @@ export function disposeNuclearLanceRenderer(
   renderer.impactLights.clear();
   renderer.impactParticles.clear();
   renderer.particleVelocities.clear();
+}
+
+/** Dispose of nuclear lance renderer resources */
+export function disposeNuclearLanceRenderer(
+  renderer: NuclearLanceRenderer,
+  scene: THREE.Scene,
+): void {
+  // Use reset to clear active visuals
+  resetNuclearLanceRenderer(renderer, scene);
+
+  // Dispose shared geometries
+  renderer.sphereGeometry.dispose();
+  renderer.ringGeometry.dispose();
 }

@@ -161,8 +161,11 @@ function updateTorchCone(
   );
 }
 
-/** Dispose of torch renderer resources */
-export function disposeTorchRenderer(
+/**
+ * Reset torch renderer state (for replay seeking).
+ * Removes active visuals without disposing shared materials.
+ */
+export function resetTorchRenderer(
   renderer: TorchRenderer,
   scene: THREE.Scene,
 ): void {
@@ -172,6 +175,14 @@ export function disposeTorchRenderer(
     (cone.material as THREE.Material).dispose();
   }
   renderer.cones.clear();
+}
+
+/** Dispose of torch renderer resources */
+export function disposeTorchRenderer(
+  renderer: TorchRenderer,
+  scene: THREE.Scene,
+): void {
+  resetTorchRenderer(renderer, scene);
   renderer.coreMaterial.dispose();
   renderer.outerMaterial.dispose();
 }

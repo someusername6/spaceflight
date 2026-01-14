@@ -61,6 +61,9 @@ export function createWorld(seed: number = 0): World {
       projectileHits: {
         pending: [],
       },
+      muzzleFlashes: {
+        pending: [],
+      },
       pools: {
         beamWeapon: 0,
         collidable: 0,

@@ -131,6 +131,23 @@ export function updateShieldEffectRenderer(
   }
 }
 
+/**
+ * Reset shield effect renderer state (for replay seeking).
+ * Removes active visuals without disposing shared geometry.
+ */
+export function resetShieldEffectRenderer(
+  renderer: ShieldEffectRenderer,
+  scene: THREE.Scene,
+): void {
+  for (const visual of renderer.effects.values()) {
+    scene.remove(visual.mesh);
+    visual.mesh.geometry.dispose();
+    (visual.mesh.material as THREE.Material).dispose();
+  }
+  renderer.effects.clear();
+  // activeEffects is cleared each frame in update, no need to clear here
+}
+
 /** Disposes of shield effect renderer resources */
 export function disposeShieldEffectRenderer(
   renderer: ShieldEffectRenderer,

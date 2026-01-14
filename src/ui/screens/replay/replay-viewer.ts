@@ -194,12 +194,20 @@ const ReplayViewerComponent: Screen<ViewerState, ReplayViewerProps> = {
       updateSpeedButton(nextSpeed);
     });
 
-    // Timeline seek - use 'change' event (fires on release)
-    api.on('#replay-timeline', 'change', (_e, el) => {
+    // Timeline seek - use 'input' event for immediate response on click/drag
+    api.on('#replay-timeline', 'input', (_e, el) => {
       const target = parseInt((el as HTMLInputElement).value, 10);
-      api.updateState({ seeking: true });
+      const state = api.getState();
+      api.updateState({ seeking: true, currentTick: target });
       updateSeekingIndicator(true);
-      seekTo(target);
+      // Immediately show the target position on the timeline
+      updateTimelineUI(target, state.totalTicks);
+      const seekStarted = seekTo(target);
+      // If seek didn't start (e.g., same position), reset UI immediately
+      if (!seekStarted) {
+        api.updateState({ seeking: false });
+        updateSeekingIndicator(false);
+      }
     });
 
     // Keyboard shortcuts - use updateState to avoid re-render

@@ -9,6 +9,7 @@ import {
   createMissionRenderers,
   disposeMissionRenderers,
   type MissionRenderers,
+  resetMissionRenderers,
   updateMissionRenderers,
 } from '../../../campaign/mission/mission-renderer';
 import { ReplayPlayback } from '../../../replay/playback';
@@ -56,13 +57,22 @@ function startPlaybackLoop(): void {
 
     // Handle seeking
     if (viewerPlayback.isSeeking()) {
-      const stillSeeking = viewerPlayback.processSeek(
-        VIEWER_SEEK_TICKS_PER_FRAME,
-      );
-      if (!stillSeeking) {
-        const currentTick = viewerPlayback.getCurrentTick();
-        callbacks.updateState({ seeking: false, currentTick });
-        callbacks.onSeekComplete(currentTick, state.totalTicks);
+      try {
+        const stillSeeking = viewerPlayback.processSeek(
+          VIEWER_SEEK_TICKS_PER_FRAME,
+        );
+        if (!stillSeeking) {
+          const currentTick = viewerPlayback.getCurrentTick();
+          callbacks.updateState({ seeking: false, currentTick });
+          callbacks.onSeekComplete(currentTick, state.totalTicks);
+        }
+      } catch {
+        // If seek processing fails, reset seeking state
+        callbacks.updateState({ seeking: false });
+        callbacks.onSeekComplete(
+          viewerPlayback.getCurrentTick(),
+          state.totalTicks,
+        );
       }
       // Still update rendering during seek
       updateRendering();
@@ -162,11 +172,20 @@ export function cleanupViewer(): void {
   callbacks = null;
 }
 
-/** Seek to a specific tick */
-export function seekTo(targetTick: number): void {
-  if (viewerPlayback) {
+/**
+ * Seek to a specific tick.
+ * Returns true if seeking started, false if it was skipped (e.g., same position).
+ */
+export function seekTo(targetTick: number): boolean {
+  if (viewerPlayback && viewerRenderers) {
+    // Reset all renderers before seeking to clear stale visual effects
+    // This must happen before seekTo() which reinitializes the world
+    resetMissionRenderers(viewerRenderers);
     viewerPlayback.seekTo(targetTick);
+    // Check if seeking actually started
+    return viewerPlayback.isSeeking();
   }
+  return false;
 }
 
 /** Get the playback instance (for direct access if needed) */

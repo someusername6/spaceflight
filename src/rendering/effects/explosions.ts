@@ -143,6 +143,21 @@ export function updateExplosionRenderer(
   }
 }
 
+/**
+ * Reset explosion renderer state (for replay seeking).
+ * Returns active visuals to pool without disposing shared resources.
+ */
+export function resetExplosionRenderer(renderer: ExplosionRenderer): void {
+  // Return active visuals to pool
+  for (const visual of renderer.visuals.values()) {
+    releaseExplosionVisual(renderer, visual);
+  }
+  renderer.visuals.clear();
+
+  // Clear tracking state
+  seenExplosions.clear();
+}
+
 /** Disposes of explosion renderer resources */
 export function disposeExplosionRenderer(
   renderer: ExplosionRenderer,
@@ -170,4 +185,7 @@ export function disposeExplosionRenderer(
   renderer.sphereGeometry.dispose();
   renderer.nukeRingGeometry.dispose();
   renderer.scene = null;
+
+  // Clear tracking state
+  seenExplosions.clear();
 }

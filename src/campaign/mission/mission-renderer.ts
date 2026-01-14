@@ -9,14 +9,17 @@ import { findEntity, getComponent } from '../../core/ecs';
 import type { World } from '../../core/types';
 import {
   createLightningRenderer,
+  resetLightningRenderer,
   updateLightningRenderer,
 } from '../../rendering/beam-effects/lightning';
 import {
   createNuclearLanceRenderer,
+  resetNuclearLanceRenderer,
   updateNuclearLanceRenderer,
 } from '../../rendering/beam-effects/nuclear-lance';
 import {
   createTorchRenderer,
+  resetTorchRenderer,
   updateTorchRenderer,
 } from '../../rendering/beam-effects/torch';
 import {
@@ -25,29 +28,35 @@ import {
 } from '../../rendering/effects/dust';
 import {
   createExplosionRenderer,
+  resetExplosionRenderer,
   updateExplosionRenderer,
 } from '../../rendering/effects/explosions';
 import {
   createMuzzleFlashRenderer,
+  resetMuzzleFlashRenderer,
   updateMuzzleFlashRenderer,
 } from '../../rendering/effects/muzzle-flash';
 import {
   createProjectileHitRenderer,
+  resetProjectileHitRenderer,
   updateProjectileHitRenderer,
 } from '../../rendering/effects/projectile-hits';
 import {
   createShieldEffectRenderer,
+  resetShieldEffectRenderer,
   updateShieldEffectRenderer,
 } from '../../rendering/effects/shield-effects';
 import {
   createBoltRenderer,
   disposeBoltRenderer,
+  resetBoltRenderer,
   updateBoltRenderer,
 } from '../../rendering/effects/trails';
 import { createHUD, updateHUD } from '../../rendering/hud/hud';
 import { updateTargetCamera } from '../../rendering/hud/target-camera';
 import {
   createExhaustRenderer,
+  resetExhaustRenderer,
   updateExhaustRenderer,
 } from '../../rendering/missile-exhaust';
 import {
@@ -153,6 +162,26 @@ export function updateMissionRenderers(
     containerWidth,
     containerHeight,
   );
+}
+
+/**
+ * Reset all renderer state for replay seeking.
+ * Clears active visuals and tracking state without full disposal.
+ * Call this before reinitializing the world during seeking.
+ */
+export function resetMissionRenderers(renderers: MissionRenderers): void {
+  const scene = getScene(renderers.renderer);
+
+  // Reset all effect renderers
+  resetMuzzleFlashRenderer(renderers.muzzleFlashRenderer, scene);
+  resetBoltRenderer(renderers.boltRenderer);
+  resetExplosionRenderer(renderers.explosionRenderer);
+  resetExhaustRenderer(renderers.exhaustRenderer, scene);
+  resetShieldEffectRenderer(renderers.shieldEffectRenderer, scene);
+  resetProjectileHitRenderer(renderers.projectileHitRenderer, scene);
+  resetLightningRenderer(renderers.lightningRenderer, scene);
+  resetNuclearLanceRenderer(renderers.nuclearLanceRenderer, scene);
+  resetTorchRenderer(renderers.torchRenderer, scene);
 }
 
 /** Dispose all rendering resources */

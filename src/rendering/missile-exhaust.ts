@@ -150,6 +150,26 @@ export function updateExhaustRenderer(
   }
 }
 
+/**
+ * Reset exhaust renderer state (for replay seeking).
+ * Removes active visuals without disposing shared geometry.
+ */
+export function resetExhaustRenderer(
+  renderer: ExhaustRenderer,
+  scene: THREE.Scene,
+): void {
+  for (const exhaust of renderer.exhausts.values()) {
+    scene.remove(exhaust.cone);
+    scene.remove(exhaust.glow);
+    exhaust.cone.geometry.dispose();
+    (exhaust.cone.material as THREE.Material).dispose();
+  }
+  renderer.exhausts.clear();
+
+  // Clear tracking state
+  seenMissiles.clear();
+}
+
 /** Disposes of exhaust renderer resources */
 export function disposeExhaustRenderer(
   renderer: ExhaustRenderer,
@@ -163,4 +183,7 @@ export function disposeExhaustRenderer(
   }
   renderer.exhausts.clear();
   renderer.coneGeometry.dispose();
+
+  // Clear tracking state
+  seenMissiles.clear();
 }

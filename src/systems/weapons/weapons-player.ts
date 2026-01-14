@@ -17,6 +17,7 @@ import {
   cycleNextSecondary,
   findDecoyWeapon,
   getCurrentSecondary,
+  switchToNonEmptySecondary,
 } from '../../components/weapons';
 import type { Entity, World } from '../../core/types';
 import { spawnDecoy, spawnMissile } from './weapon-spawning';
@@ -121,6 +122,11 @@ export function handlePlayerSecondaryWeapons(
 
       // Reset lock progress - must re-acquire lock for next missile
       weapons.lockProgress = 0;
+
+      // Auto-switch to next non-empty secondary if this one is depleted
+      if (weapon.count <= 0) {
+        switchToNonEmptySecondary(weapons);
+      }
     }
   }
 }

@@ -8,7 +8,6 @@
  */
 
 import {
-  formatSaveDate,
   getAllSaveMetadata,
   type SaveMetadata,
   saveGame,
@@ -21,6 +20,7 @@ import {
   showModal,
 } from '../framework/screen';
 import { escapeHtml } from '../utils';
+import { renderSlotHeader, renderSlotInfo } from './save-slot';
 
 /** Pause menu result */
 export interface PauseMenuResult {
@@ -59,31 +59,26 @@ function renderSaveSlotForSave(
   if (!metadata) {
     return `
       <div class="pause-save-slot empty" data-slot="${slotNum}">
-        <div class="pause-save-header">
-          <span class="pause-slot-number">Slot ${slotNum}</span>
+        ${renderSlotHeader(slotNum, null)}
+        <div class="slot-empty">Empty Slot</div>
+        <div class="slot-actions">
+          <button class="btn btn-small btn-success btn-save-to-slot" data-slot="${slotNum}">
+            Save Here
+          </button>
         </div>
-        <div class="pause-save-empty">Empty Slot</div>
-        <button class="btn btn-small btn-success btn-save-to-slot" data-slot="${slotNum}">
-          Save Here
-        </button>
       </div>
     `;
   }
 
   return `
     <div class="pause-save-slot occupied" data-slot="${slotNum}">
-      <div class="pause-save-header">
-        <span class="pause-slot-number">Slot ${slotNum}</span>
-        <span class="pause-save-date">${formatSaveDate(metadata.timestamp)}</span>
+      ${renderSlotHeader(slotNum, metadata)}
+      ${renderSlotInfo(metadata)}
+      <div class="slot-actions">
+        <button class="btn btn-small btn-warning btn-save-to-slot" data-slot="${slotNum}">
+          Overwrite
+        </button>
       </div>
-      <div class="pause-save-info">
-        <span>Sector ${metadata.currentSector}</span>
-        <span>${metadata.missionCount} missions</span>
-        <span>${metadata.credits.toLocaleString()} credits</span>
-      </div>
-      <button class="btn btn-small btn-warning btn-save-to-slot" data-slot="${slotNum}">
-        Overwrite
-      </button>
     </div>
   `;
 }

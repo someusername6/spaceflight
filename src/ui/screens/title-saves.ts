@@ -3,11 +3,11 @@
  */
 
 import {
-  formatSaveDate,
   getAllSaveMetadata,
   type SaveMetadata,
 } from '../../campaign/save-system';
 import { escapeHtml } from '../utils';
+import { renderSlotHeader, renderSlotInfo } from './save-slot';
 
 /** Render a save slot card */
 export function renderSaveSlot(
@@ -19,39 +19,17 @@ export function renderSaveSlot(
   if (!metadata) {
     return `
       <div class="save-slot empty" data-slot="${slotNum}">
-        <div class="save-slot-header">
-          <span class="save-slot-number">Slot ${slotNum}</span>
-        </div>
-        <div class="save-slot-empty">Empty</div>
+        ${renderSlotHeader(slotNum, null)}
+        <div class="slot-empty">Empty</div>
       </div>
     `;
   }
 
   return `
     <div class="save-slot occupied" data-slot="${slotNum}">
-      <div class="save-slot-header">
-        <span class="save-slot-number">Slot ${slotNum}</span>
-        <span class="save-slot-date">${formatSaveDate(metadata.timestamp)}</span>
-      </div>
-      <div class="save-slot-info">
-        <div class="save-slot-stat">
-          <span class="save-stat-label">Sector</span>
-          <span class="save-stat-value">${metadata.currentSector}</span>
-        </div>
-        <div class="save-slot-stat">
-          <span class="save-stat-label">Missions</span>
-          <span class="save-stat-value">${metadata.missionCount}</span>
-        </div>
-        <div class="save-slot-stat">
-          <span class="save-stat-label">Credits</span>
-          <span class="save-stat-value">${metadata.credits.toLocaleString()}</span>
-        </div>
-        <div class="save-slot-stat">
-          <span class="save-stat-label">Ships</span>
-          <span class="save-stat-value">${metadata.shipCount}</span>
-        </div>
-      </div>
-      <div class="save-slot-actions">
+      ${renderSlotHeader(slotNum, metadata)}
+      ${renderSlotInfo(metadata)}
+      <div class="slot-actions">
         <button class="btn btn-small btn-load" data-slot="${slotNum}">Load</button>
         <button class="btn btn-small btn-danger btn-delete" data-slot="${slotNum}">Delete</button>
       </div>

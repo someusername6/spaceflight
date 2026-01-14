@@ -283,15 +283,12 @@ export function cycleNextLinkMode(weapons: PrimaryWeapons): void {
   }
 }
 
-/** Cycle to next secondary weapon */
-export function cycleNextSecondary(weapons: SecondaryWeapons): void {
-  if (weapons.weapons.length > 1) {
-    weapons.currentIndex = (weapons.currentIndex + 1) % weapons.weapons.length;
-    // Reset lock progress when switching weapons
-    weapons.lockProgress = 0;
-    weapons.lockWeaponIndex = -1;
-  }
-}
+// Re-export secondary weapon utilities from split module
+export {
+  cycleNextSecondary,
+  findDecoyWeapon,
+  switchToNonEmptySecondary,
+} from './weapons-secondary';
 
 /** Get current link mode name ('plasma', 'greenLaser', 'all', etc.) */
 export function getCurrentLinkMode(weapons: PrimaryWeapons): string {
@@ -353,19 +350,6 @@ export function canFire(
 ): boolean {
   const fireRate = 'fireRate' in weapon ? weapon.fireRate : 0.5;
   return now - lastFire >= fireRate;
-}
-
-/** Find decoy weapon in secondary weapons (returns index and weapon) */
-export function findDecoyWeapon(
-  weapons: SecondaryWeapons,
-): { index: number; weapon: SecondaryWeapon } | undefined {
-  for (let i = 0; i < weapons.weapons.length; i++) {
-    const weapon = weapons.weapons[i] as SecondaryWeapon;
-    if (weapon.isDecoy && weapon.count > 0) {
-      return { index: i, weapon };
-    }
-  }
-  return undefined;
 }
 
 /** Check if primary weapons include any beam weapons (uses cached value) */

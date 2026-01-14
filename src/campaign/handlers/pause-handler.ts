@@ -16,6 +16,7 @@ import {
   setCurrentSaveSlot,
 } from '../../ui/common/screens';
 import { showPauseMenu } from '../../ui/screens/pause-menu';
+import { closePopover } from '../../ui/screens/popover/state';
 import { cleanupTitleScreen, resetTitleScreen } from '../../ui/screens/title';
 import type { CampaignController } from '../controller-types';
 import { disposeMissionRenderers } from '../mission/mission-renderer';
@@ -62,6 +63,9 @@ export function setupEscapeHandler(
       if (inMission && controller.game) {
         pauseGame(controller.game);
       }
+
+      // Close any open popovers before showing pause menu
+      closePopover();
 
       // Can save on pre-mission screens, not during results or mission
       const canSave =

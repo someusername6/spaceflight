@@ -237,9 +237,11 @@
 .save-slot.occupied:hover {
   border-color: var(--color-secondary);
   background: rgba(0, 245, 255, 0.05);
+  box-shadow: 0 0 8px var(--color-secondary-glow);
 }
 
-.save-slot-header {
+/* Shared slot components (used by both title and pause menu) */
+.save-slot .slot-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -248,7 +250,7 @@
   border-bottom: 1px solid var(--border-color);
 }
 
-.save-slot-number {
+.save-slot .slot-number {
   font-family: var(--font-display);
   font-size: var(--text-sm);
   font-weight: var(--font-semibold);
@@ -257,13 +259,13 @@
   letter-spacing: var(--tracking-wide);
 }
 
-.save-slot-date {
+.save-slot .slot-date {
   font-family: var(--font-body);
   font-size: var(--text-xs);
   color: var(--text-dim);
 }
 
-.save-slot-empty {
+.save-slot .slot-empty {
   font-family: var(--font-ui);
   font-size: var(--text-sm);
   color: var(--text-dim);
@@ -271,20 +273,20 @@
   padding: var(--space-4);
 }
 
-.save-slot-info {
+.save-slot .slot-info-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: var(--space-2);
   margin-bottom: var(--space-3);
 }
 
-.save-slot-stat {
+.save-slot .slot-stat {
   display: flex;
   flex-direction: column;
   gap: var(--space-0-5);
 }
 
-.save-stat-label {
+.save-slot .slot-stat-label {
   font-family: var(--font-ui);
   font-size: var(--text-2xs);
   font-weight: var(--font-medium);
@@ -293,13 +295,13 @@
   letter-spacing: var(--tracking-wider);
 }
 
-.save-stat-value {
+.save-slot .slot-stat-value {
   font-family: var(--font-body);
   font-size: var(--text-sm);
   color: var(--color-secondary);
 }
 
-.save-slot-actions {
+.save-slot .slot-actions {
   display: flex;
   gap: var(--space-2);
   justify-content: flex-end;

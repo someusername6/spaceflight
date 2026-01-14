@@ -252,6 +252,21 @@ function disposeBolt(projectileBolt: ProjectileBolt, scene: THREE.Scene): void {
   (projectileBolt.bolt.material as THREE.Material).dispose();
 }
 
+/**
+ * Reset bolt renderer state (for replay seeking).
+ * Returns active bolts to pool without disposing shared resources.
+ */
+export function resetBoltRenderer(renderer: BoltRenderer): void {
+  // Return active bolts to pool
+  for (const projectileBolt of renderer.bolts.values()) {
+    releaseBolt(renderer, projectileBolt);
+  }
+  renderer.bolts.clear();
+
+  // Clear tracking state
+  seenProjectiles.clear();
+}
+
 /** Disposes of trail renderer resources */
 export function disposeBoltRenderer(
   renderer: BoltRenderer,
@@ -274,4 +289,7 @@ export function disposeBoltRenderer(
   renderer.ballisticBoltGeometry.dispose();
   renderer.capsuleBoltGeometry.dispose();
   renderer.scene = null;
+
+  // Clear tracking state
+  seenProjectiles.clear();
 }

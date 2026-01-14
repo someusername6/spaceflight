@@ -236,6 +236,25 @@ export function updateProjectileHitRenderer(
   }
 }
 
+/**
+ * Reset projectile hit renderer state (for replay seeking).
+ * Removes active effects without disposing shared geometry.
+ */
+export function resetProjectileHitRenderer(
+  renderer: ProjectileHitRenderer,
+  scene: THREE.Scene,
+): void {
+  for (const effect of renderer.effects) {
+    scene.remove(effect.flash);
+    scene.remove(effect.particles);
+    effect.flash.geometry.dispose();
+    (effect.flash.material as THREE.Material).dispose();
+    effect.particles.geometry.dispose();
+    (effect.particles.material as THREE.Material).dispose();
+  }
+  renderer.effects.length = 0;
+}
+
 /** Disposes of projectile hit renderer resources */
 export function disposeProjectileHitRenderer(
   renderer: ProjectileHitRenderer,
