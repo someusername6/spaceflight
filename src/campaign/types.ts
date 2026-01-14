@@ -22,7 +22,7 @@ export interface CampaignSettings {
 /** Default campaign settings */
 export const DEFAULT_CAMPAIGN_SETTINGS: CampaignSettings = {
   commanderName: 'Commander',
-  ironmanMode: true,
+  ironmanMode: false,
   autoaimDegrees: 2.5,
 };
 
