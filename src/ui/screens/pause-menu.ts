@@ -119,6 +119,9 @@ const PauseMenuScreen: Screen<PauseState, PauseProps> = {
     api.onGlobal('keydown', (e) => {
       if ((e as KeyboardEvent).code === 'Escape') {
         e.preventDefault();
+        // Stop other document-level listeners (like pause-handler) from firing
+        e.stopImmediatePropagation();
+
         const state = api.getState();
 
         if (state.view === 'confirm-quit') {

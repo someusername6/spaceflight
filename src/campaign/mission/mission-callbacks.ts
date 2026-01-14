@@ -22,7 +22,11 @@ import { stopRecording } from '../../systems/input';
 import { finalizeMatchStats } from '../../systems/stats';
 import { endMission, updateCampaignState } from '../../ui/common/screens';
 import type { CampaignController } from '../controller-types';
-import { showGameOver, showResults } from '../handlers/mission-handlers';
+import {
+  handleNonIronmanDefeat,
+  showGameOver,
+  showResults,
+} from '../handlers/mission-handlers';
 import { refreshRecruits } from '../recruits';
 import { applySalvage, calculateSalvage } from '../salvage';
 import { extractAmmoFromWorld } from '../ship-spawning';
@@ -32,7 +36,7 @@ import {
   getCommanderShip,
   isGameOver,
 } from '../state';
-import { autoSave } from '../storage';
+import { autoSave, deleteCheckpoint, getActiveSlotId } from '../storage';
 import type { Contract } from '../types';
 import { createMissionResultOverlay } from '../utils';
 import type { MissionEndState, WaveState } from './mission-waves';
@@ -212,12 +216,34 @@ export function createMissionEndExecutor(
     updateCampaignState(screenManager, newState);
     void autoSave(newState, 'mission-complete');
 
+    // Clean up checkpoint after mission (no longer needed)
+    if (!newState.settings.ironmanMode) {
+      const slotId = getActiveSlotId();
+      if (slotId) {
+        void deleteCheckpoint(slotId);
+      }
+    }
+
     // Transition to results or game over
     if (isGameOver(newState)) {
       endMission(screenManager, missionEndState.victory);
-      showGameOver(controller, setupContractsScreen).catch((error) => {
-        logError('Error in game over handler:', error);
-      });
+
+      // Check if this is an ironman campaign
+      const isIronman = newState.settings.ironmanMode;
+
+      if (isIronman) {
+        // Ironman: permadeath - show game over screen
+        showGameOver(controller, setupContractsScreen).catch((error) => {
+          logError('Error in game over handler:', error);
+        });
+      } else {
+        // Non-ironman: restore from checkpoint and return to hangar
+        handleNonIronmanDefeat(controller, setupContractsScreen).catch(
+          (error) => {
+            logError('Error in non-ironman defeat handler:', error);
+          },
+        );
+      }
     } else {
       endMission(screenManager, missionEndState.victory);
       showResults(

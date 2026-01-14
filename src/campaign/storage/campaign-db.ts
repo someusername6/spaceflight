@@ -2,7 +2,7 @@
  * Campaign Database - IndexedDB operations for campaign persistence.
  *
  * Features:
- * - Single active campaign (no slots)
+ * - 3 save slots for parallel campaigns
  * - Gzip compression when available
  * - Automatic SlotArray reconstitution on load
  * - Graceful fallback when IndexedDB unavailable
@@ -16,96 +16,98 @@ import {
 } from '../../replay/gzip';
 import type { CampaignState } from '../types';
 import {
+  ACTIVE_SLOT_KEY,
+  ALL_SLOT_IDS,
   CAMPAIGN_STORAGE_VERSION,
   type CampaignMetadata,
+  type SlotId,
   type StoredCampaignCompressed,
   type StoredCampaignData,
   type StoredCampaignUncompressed,
   type StoredMetadata,
 } from './campaign-types';
 import { reconstituteCampaignState } from './campaign-utils';
+import {
+  clearDBCache as clearSharedDBCache,
+  isStorageAvailable,
+  openDB,
+  STORE_CAMPAIGN,
+  STORE_CHECKPOINT,
+  STORE_METADATA,
+} from './db-connection';
 
-const DB_NAME = 'spaceflight-campaign';
-const DB_VERSION = 1;
-const STORE_NAME = 'campaign';
-const METADATA_STORE_NAME = 'metadata';
-const CAMPAIGN_KEY = 'active';
-const METADATA_KEY = 'active';
+/** Get the campaign storage key for a slot */
+function getCampaignKey(slotId: SlotId): string {
+  return `slot-${slotId}`;
+}
 
-/** Cached database connection */
-let dbPromise: Promise<IDBDatabase> | null = null;
+/** Get the metadata storage key for a slot */
+function getMetadataKey(slotId: SlotId): string {
+  return `slot-${slotId}`;
+}
 
-/** Track when campaign was first created (set on new campaign) */
-let campaignCreatedAt: number | null = null;
+/** Get the checkpoint storage key for a slot */
+function getCheckpointKey(slotId: SlotId): string {
+  return `checkpoint-slot-${slotId}`;
+}
 
-/** Check if IndexedDB is available */
-export function isStorageAvailable(): boolean {
+/** Track when each campaign was first created */
+const campaignCreatedAtMap: Map<SlotId, number> = new Map();
+
+// Re-export for external use
+export { isStorageAvailable };
+
+/**
+ * Get the currently active slot ID.
+ * Returns null if no slot is active.
+ */
+export function getActiveSlotId(): SlotId | null {
   try {
-    return typeof indexedDB !== 'undefined' && indexedDB !== null;
+    const stored = localStorage.getItem(ACTIVE_SLOT_KEY);
+    if (!stored) return null;
+    const value = parseInt(stored, 10);
+    if (value === 1 || value === 2 || value === 3) {
+      return value as SlotId;
+    }
+    return null;
   } catch {
-    return false;
+    return null;
   }
 }
 
 /**
- * Open or create the database.
- * Reuses cached connection.
+ * Set the currently active slot ID.
+ * Called when loading or creating a campaign.
  */
-function openDB(): Promise<IDBDatabase> {
-  if (dbPromise) return dbPromise;
-
-  dbPromise = new Promise((resolve, reject) => {
-    if (!isStorageAvailable()) {
-      reject(new Error('IndexedDB not available'));
-      return;
+export function setActiveSlotId(slotId: SlotId | null): void {
+  try {
+    if (slotId === null) {
+      localStorage.removeItem(ACTIVE_SLOT_KEY);
+    } else {
+      localStorage.setItem(ACTIVE_SLOT_KEY, String(slotId));
     }
-
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-    request.onerror = () => {
-      dbPromise = null;
-      reject(request.error);
-    };
-
-    request.onsuccess = () => {
-      const db = request.result;
-      db.onclose = () => {
-        dbPromise = null;
-      };
-      db.onversionchange = () => {
-        db.close();
-        dbPromise = null;
-      };
-      resolve(db);
-    };
-
-    request.onupgradeneeded = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME);
-      }
-      if (!db.objectStoreNames.contains(METADATA_STORE_NAME)) {
-        db.createObjectStore(METADATA_STORE_NAME);
-      }
-    };
-  });
-
-  return dbPromise;
+  } catch {
+    // Ignore storage errors
+  }
 }
 
 /**
- * Save campaign to IndexedDB.
+ * Save campaign to a specific slot.
  * Compresses with gzip if supported.
  * Also saves metadata separately for quick access.
  */
-export async function saveCampaign(state: CampaignState): Promise<void> {
+export async function saveCampaign(
+  state: CampaignState,
+  slotId: SlotId,
+): Promise<void> {
   const db = await openDB();
   const now = Date.now();
 
-  // Track creation time for new campaigns
-  if (campaignCreatedAt === null) {
-    campaignCreatedAt = now;
+  // Track creation time for new campaigns in this slot
+  if (!campaignCreatedAtMap.has(slotId)) {
+    campaignCreatedAtMap.set(slotId, now);
   }
+  const createdAt = campaignCreatedAtMap.get(slotId) ?? now;
 
   let stored: StoredCampaignData;
 
@@ -113,7 +115,7 @@ export async function saveCampaign(state: CampaignState): Promise<void> {
     const compressedState = await compressJSON(state);
     stored = {
       version: CAMPAIGN_STORAGE_VERSION,
-      createdAt: campaignCreatedAt,
+      createdAt,
       savedAt: now,
       compressed: true,
       compressedState,
@@ -121,12 +123,15 @@ export async function saveCampaign(state: CampaignState): Promise<void> {
   } else {
     stored = {
       version: CAMPAIGN_STORAGE_VERSION,
-      createdAt: campaignCreatedAt,
+      createdAt,
       savedAt: now,
       compressed: false,
       state,
     } satisfies StoredCampaignUncompressed;
   }
+
+  // Extract ship classes for metadata display
+  const shipClasses = state.ships.map((ship) => ship.shipClass);
 
   // Create metadata for quick access
   const metadata: StoredMetadata = {
@@ -136,17 +141,23 @@ export async function saveCampaign(state: CampaignState): Promise<void> {
     shipCount: state.ships.length,
     missionCount: state.missionCount,
     savedAt: now,
-    createdAt: campaignCreatedAt,
+    createdAt,
+    commanderName: state.settings.commanderName,
+    ironmanMode: state.settings.ironmanMode,
+    shipClasses,
   };
 
+  const campaignKey = getCampaignKey(slotId);
+  const metadataKey = getMetadataKey(slotId);
+
   return new Promise((resolve, reject) => {
-    const tx = db.transaction([STORE_NAME, METADATA_STORE_NAME], 'readwrite');
-    const campaignStore = tx.objectStore(STORE_NAME);
-    const metadataStore = tx.objectStore(METADATA_STORE_NAME);
+    const tx = db.transaction([STORE_CAMPAIGN, STORE_METADATA], 'readwrite');
+    const campaignStore = tx.objectStore(STORE_CAMPAIGN);
+    const metadataStore = tx.objectStore(STORE_METADATA);
 
     // Save both in the same transaction
-    campaignStore.put(stored, CAMPAIGN_KEY);
-    metadataStore.put(metadata, METADATA_KEY);
+    campaignStore.put(stored, campaignKey);
+    metadataStore.put(metadata, metadataKey);
 
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
@@ -154,18 +165,21 @@ export async function saveCampaign(state: CampaignState): Promise<void> {
 }
 
 /**
- * Load campaign from IndexedDB.
+ * Load campaign from a specific slot.
  * Automatically decompresses and reconstitutes SlotArrays.
- * Returns null if no campaign exists.
+ * Returns null if no campaign exists in that slot.
  */
-export async function loadCampaign(): Promise<CampaignState | null> {
+export async function loadCampaign(
+  slotId: SlotId,
+): Promise<CampaignState | null> {
   const db = await openDB();
+  const campaignKey = getCampaignKey(slotId);
 
   const stored = await new Promise<StoredCampaignData | undefined>(
     (resolve, reject) => {
-      const tx = db.transaction(STORE_NAME, 'readonly');
-      const store = tx.objectStore(STORE_NAME);
-      const request = store.get(CAMPAIGN_KEY);
+      const tx = db.transaction(STORE_CAMPAIGN, 'readonly');
+      const store = tx.objectStore(STORE_CAMPAIGN);
+      const request = store.get(campaignKey);
       request.onerror = () => reject(request.error);
       request.onsuccess = () => resolve(request.result as StoredCampaignData);
     },
@@ -182,7 +196,7 @@ export async function loadCampaign(): Promise<CampaignState | null> {
   }
 
   // Remember creation time for future saves
-  campaignCreatedAt = stored.createdAt;
+  campaignCreatedAtMap.set(slotId, stored.createdAt);
 
   let state: CampaignState;
 
@@ -196,28 +210,45 @@ export async function loadCampaign(): Promise<CampaignState | null> {
   state = reconstituteCampaignState(state);
 
   logDebug(
-    `Campaign loaded (saved ${new Date(stored.savedAt).toLocaleString()})`,
+    `Campaign loaded from slot ${slotId} (saved ${new Date(stored.savedAt).toLocaleString()})`,
   );
+
+  // Set this slot as active
+  setActiveSlotId(slotId);
 
   return state;
 }
 
 /**
- * Delete campaign from IndexedDB.
- * Called on commander death or when starting new campaign.
+ * Delete campaign from a specific slot.
+ * Also deletes any associated checkpoint.
  */
-export async function deleteCampaign(): Promise<void> {
+export async function deleteCampaign(slotId: SlotId): Promise<void> {
   const db = await openDB();
-  campaignCreatedAt = null;
+  campaignCreatedAtMap.delete(slotId);
+
+  const campaignKey = getCampaignKey(slotId);
+  const metadataKey = getMetadataKey(slotId);
+  const checkpointKey = getCheckpointKey(slotId);
+
+  // If this was the active slot, clear it
+  if (getActiveSlotId() === slotId) {
+    setActiveSlotId(null);
+  }
 
   return new Promise((resolve, reject) => {
-    const tx = db.transaction([STORE_NAME, METADATA_STORE_NAME], 'readwrite');
-    const campaignStore = tx.objectStore(STORE_NAME);
-    const metadataStore = tx.objectStore(METADATA_STORE_NAME);
+    const tx = db.transaction(
+      [STORE_CAMPAIGN, STORE_METADATA, STORE_CHECKPOINT],
+      'readwrite',
+    );
+    const campaignStore = tx.objectStore(STORE_CAMPAIGN);
+    const metadataStore = tx.objectStore(STORE_METADATA);
+    const checkpointStore = tx.objectStore(STORE_CHECKPOINT);
 
-    // Delete both in the same transaction
-    campaignStore.delete(CAMPAIGN_KEY);
-    metadataStore.delete(METADATA_KEY);
+    // Delete all slot data in the same transaction
+    campaignStore.delete(campaignKey);
+    metadataStore.delete(metadataKey);
+    checkpointStore.delete(checkpointKey);
 
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
@@ -225,15 +256,14 @@ export async function deleteCampaign(): Promise<void> {
 }
 
 /**
- * Check if a campaign exists without loading full state.
- * Uses metadata store for fast check.
+ * Check if any campaign exists in any slot.
  */
-export async function hasCampaign(): Promise<boolean> {
+export async function hasAnyCampaign(): Promise<boolean> {
   try {
     const db = await openDB();
     return new Promise((resolve, reject) => {
-      const tx = db.transaction(METADATA_STORE_NAME, 'readonly');
-      const store = tx.objectStore(METADATA_STORE_NAME);
+      const tx = db.transaction(STORE_METADATA, 'readonly');
+      const store = tx.objectStore(STORE_METADATA);
       const request = store.count();
       request.onerror = () => reject(request.error);
       request.onsuccess = () => resolve(request.result > 0);
@@ -244,52 +274,99 @@ export async function hasCampaign(): Promise<boolean> {
 }
 
 /**
- * Get campaign metadata without loading full state.
- * Reads from separate metadata store for fast access.
+ * Get metadata for a specific slot.
  */
-export async function getCampaignMetadata(): Promise<CampaignMetadata> {
+export async function getSlotMetadata(
+  slotId: SlotId,
+): Promise<CampaignMetadata> {
   try {
     const db = await openDB();
+    const metadataKey = getMetadataKey(slotId);
+
     const stored = await new Promise<StoredMetadata | undefined>(
       (resolve, reject) => {
-        const tx = db.transaction(METADATA_STORE_NAME, 'readonly');
-        const store = tx.objectStore(METADATA_STORE_NAME);
-        const request = store.get(METADATA_KEY);
+        const tx = db.transaction(STORE_METADATA, 'readonly');
+        const store = tx.objectStore(STORE_METADATA);
+        const request = store.get(metadataKey);
         request.onerror = () => reject(request.error);
         request.onsuccess = () => resolve(request.result as StoredMetadata);
       },
     );
 
     if (!stored) {
-      return { exists: false };
+      return { exists: false, slotId };
     }
 
-    return {
+    const metadata: CampaignMetadata = {
       exists: true,
+      slotId,
       sector: stored.sector,
       credits: stored.credits,
       shipCount: stored.shipCount,
       missionCount: stored.missionCount,
       savedAt: stored.savedAt,
     };
+
+    // Add optional fields only if defined
+    if (stored.commanderName !== undefined) {
+      metadata.commanderName = stored.commanderName;
+    }
+    if (stored.ironmanMode !== undefined) {
+      metadata.ironmanMode = stored.ironmanMode;
+    }
+    if (stored.shipClasses !== undefined) {
+      metadata.shipClasses = stored.shipClasses;
+    }
+
+    return metadata;
   } catch {
-    return { exists: false };
+    return { exists: false, slotId };
   }
 }
 
 /**
- * Set the campaign creation time.
- * Called when starting a new campaign.
+ * Get metadata for all 3 slots.
+ * Returns an array of metadata objects in slot order.
  */
-export function setCampaignCreatedAt(timestamp: number): void {
-  campaignCreatedAt = timestamp;
+export async function getAllSlotsMetadata(): Promise<CampaignMetadata[]> {
+  const results = await Promise.all(
+    ALL_SLOT_IDS.map((slotId) => getSlotMetadata(slotId)),
+  );
+  return results;
 }
 
 /**
- * Clear cached database connection.
+ * Set the campaign creation time for a slot.
+ * Called when starting a new campaign.
+ */
+export function setCampaignCreatedAt(slotId: SlotId, timestamp: number): void {
+  campaignCreatedAtMap.set(slotId, timestamp);
+}
+
+/**
+ * Clear cached database connection and state.
  * Useful for testing.
  */
 export function clearDBCache(): void {
-  dbPromise = null;
-  campaignCreatedAt = null;
+  clearSharedDBCache();
+  campaignCreatedAtMap.clear();
+}
+
+// ============================================================================
+// Legacy compatibility - these will be removed once migration is complete
+// ============================================================================
+
+/**
+ * @deprecated Use hasAnyCampaign() instead
+ */
+export const hasCampaign = hasAnyCampaign;
+
+/**
+ * @deprecated Use getSlotMetadata() or getAllSlotsMetadata() instead
+ */
+export async function getCampaignMetadata(): Promise<CampaignMetadata> {
+  // Return first occupied slot's metadata for backwards compat
+  const slots = await getAllSlotsMetadata();
+  const occupied = slots.find((s) => s.exists);
+  return occupied ?? { exists: false };
 }

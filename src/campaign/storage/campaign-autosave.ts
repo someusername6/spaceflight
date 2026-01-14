@@ -10,7 +10,7 @@
 
 import { logDebug, logError, logWarn } from '../../core/logger';
 import type { CampaignState } from '../types';
-import { saveCampaign } from './campaign-db';
+import { getActiveSlotId, saveCampaign } from './campaign-db';
 import { CAMPAIGN_STORAGE_VERSION } from './campaign-types';
 
 const EMERGENCY_SAVE_KEY = 'spaceflight_emergency_save';
@@ -55,9 +55,14 @@ export async function autoSave(
   saveInProgress = true;
 
   try {
-    await saveCampaign(state);
+    const slotId = getActiveSlotId();
+    if (!slotId) {
+      logDebug(`Auto-save skipped (no active slot): ${reason}`);
+      return;
+    }
+    await saveCampaign(state, slotId);
     lastSavedJSON = stateJSON;
-    logDebug(`Auto-saved: ${reason}`);
+    logDebug(`Auto-saved to slot ${slotId}: ${reason}`);
   } catch (error) {
     logError(`Auto-save failed (${reason}):`, error);
   } finally {
@@ -81,9 +86,14 @@ export async function forceSave(
   reason: string,
 ): Promise<boolean> {
   try {
-    await saveCampaign(state);
+    const slotId = getActiveSlotId();
+    if (!slotId) {
+      logError(`Force-save failed (no active slot): ${reason}`);
+      return false;
+    }
+    await saveCampaign(state, slotId);
     lastSavedJSON = JSON.stringify(state);
-    logDebug(`Force-saved: ${reason}`);
+    logDebug(`Force-saved to slot ${slotId}: ${reason}`);
     return true;
   } catch (error) {
     logError(`Force-save failed (${reason}):`, error);
@@ -153,6 +163,19 @@ export function recoverEmergencySave(): CampaignState | null {
     }
 
     if (!save.state || typeof save.state !== 'object') {
+      localStorage.removeItem(EMERGENCY_SAVE_KEY);
+      return null;
+    }
+
+    // Validate required properties exist (catches old format saves)
+    const state = save.state as Record<string, unknown>;
+    if (
+      !state.settings ||
+      typeof state.settings !== 'object' ||
+      !Array.isArray(state.ships) ||
+      !Array.isArray(state.pilots)
+    ) {
+      logWarn('Emergency save has incompatible format, discarding');
       localStorage.removeItem(EMERGENCY_SAVE_KEY);
       return null;
     }

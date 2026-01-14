@@ -3,7 +3,28 @@
  */
 
 import type { ProfileName } from '../data/ai-profiles';
+import type { PlayerAutoaim } from '../settings/game-settings';
 import type { SlotArray } from './slot-array';
+
+/** Campaign creation settings (locked after creation) */
+export interface CampaignSettings {
+  /** Custom name for the commander pilot */
+  commanderName: string;
+  /**
+   * Ironman mode - true = permadeath (campaign ends on death, autoaim locked).
+   * false = mission failure returns to pre-mission state.
+   */
+  ironmanMode: boolean;
+  /** Autoaim assist in degrees (locked if ironman mode enabled) */
+  autoaimDegrees: PlayerAutoaim;
+}
+
+/** Default campaign settings */
+export const DEFAULT_CAMPAIGN_SETTINGS: CampaignSettings = {
+  commanderName: 'Commander',
+  ironmanMode: true,
+  autoaimDegrees: 2.5,
+};
 
 /** Skill level for pilots */
 export type SkillLevel = ProfileName;
@@ -126,6 +147,8 @@ export function getDeploymentLimit(sector: number): number {
 
 /** Full campaign state */
 export interface CampaignState {
+  /** Campaign settings chosen at creation (immutable after creation) */
+  settings: CampaignSettings;
   /** Master seed for deterministic randomness (set at campaign creation) */
   seed: number;
   /** Next ID for entity generation (persisted for determinism) */

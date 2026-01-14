@@ -4,9 +4,11 @@
  * Handles:
  * - Title screen rendering and callbacks (new game, continue, settings)
  * - Settings screen rendering and callbacks (back navigation, canvas transfer)
+ * - Campaign creation flow with commander name, ironman mode, and autoaim
  */
 
 import { resumeGame } from '../../game';
+import { setPlayerAutoaim } from '../../settings/game-settings';
 import {
   getScreenElement,
   goBackFromReplays,
@@ -16,8 +18,11 @@ import {
   goToReplayViewer,
   goToSettings,
   Screen,
+  type ScreenManager,
   updateCampaignState,
 } from '../../ui/common/screens';
+import { showCampaignCreateModal } from '../../ui/screens/campaign-create';
+import { showLoadCampaignModal } from '../../ui/screens/load-campaign';
 import {
   bindReplaysScreen,
   cleanupReplaysScreen,
@@ -42,7 +47,46 @@ import {
 } from '../../ui/screens/title';
 import type { CampaignController } from '../controller-types';
 import { createNewCampaign } from '../state';
-import type { CampaignState } from '../types';
+import {
+  forceSave,
+  type SlotId,
+  setActiveSlotId,
+  setCampaignCreatedAt,
+} from '../storage';
+import type { CampaignSettings, CampaignState } from '../types';
+
+/**
+ * Sync global autoaim setting with campaign autoaim.
+ * Called when loading or creating a campaign.
+ */
+export function syncAutoaimFromCampaign(state: CampaignState): void {
+  setPlayerAutoaim(state.settings.autoaimDegrees);
+}
+
+/**
+ * Create a new campaign and save it to a slot.
+ */
+export async function createAndSaveNewCampaign(
+  screenManager: ScreenManager,
+  settings: CampaignSettings,
+  slotId: SlotId,
+): Promise<void> {
+  // Create campaign state with user settings
+  const newState = createNewCampaign(settings);
+  updateCampaignState(screenManager, newState);
+
+  // Set this slot as active
+  setActiveSlotId(slotId);
+
+  // Initialize creation timestamp for this slot
+  setCampaignCreatedAt(slotId, Date.now());
+
+  // Save to IndexedDB
+  await forceSave(newState, 'new-campaign');
+
+  // Sync autoaim setting
+  syncAutoaimFromCampaign(newState);
+}
 
 /**
  * Setup title screen with callbacks.
@@ -59,17 +103,37 @@ export async function setupTitleScreen(
 
   renderTitleScreen(titleElement);
   await bindTitleScreen(titleElement, {
-    onNewGame: () => {
-      // Create fresh campaign state
-      const newState = createNewCampaign();
-      updateCampaignState(screenManager, newState);
+    onNewGame: async () => {
+      // Show load campaign screen (slot selection)
+      const loadResult = await showLoadCampaignModal();
 
-      // Transition to squadron
-      onStartGameplay();
-    },
-    onContinue: (state: CampaignState) => {
-      // Use loaded campaign state
-      updateCampaignState(screenManager, state);
+      if (loadResult.action === 'cancel') {
+        return; // User cancelled
+      }
+
+      if (loadResult.action === 'load') {
+        // User selected existing campaign to load
+        updateCampaignState(screenManager, loadResult.state);
+        syncAutoaimFromCampaign(loadResult.state);
+        onStartGameplay();
+        return;
+      }
+
+      // User wants to create new campaign in selected slot
+      const createResult = await showCampaignCreateModal({
+        slotId: loadResult.slotId,
+      });
+      if (createResult.action === 'cancel') {
+        return; // User cancelled creation
+      }
+
+      // Create and save new campaign
+      const slotId = createResult.slotId ?? loadResult.slotId;
+      await createAndSaveNewCampaign(
+        screenManager,
+        createResult.settings,
+        slotId,
+      );
 
       // Transition to squadron
       onStartGameplay();

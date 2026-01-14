@@ -2,12 +2,22 @@
  * Campaign Storage Types
  *
  * Data structures for persistent campaign storage in IndexedDB.
+ * Supports 3 save slots for parallel campaigns.
  */
 
 import type { CampaignState } from '../types';
 
 /** Current storage format version */
 export const CAMPAIGN_STORAGE_VERSION = 1;
+
+/** Valid save slot IDs (1, 2, or 3) */
+export type SlotId = 1 | 2 | 3;
+
+/** All available slot IDs */
+export const ALL_SLOT_IDS: readonly SlotId[] = [1, 2, 3] as const;
+
+/** localStorage key for tracking active slot */
+export const ACTIVE_SLOT_KEY = 'spaceflight_active_slot';
 
 /**
  * Compressed storage format (current).
@@ -41,15 +51,22 @@ export type StoredCampaignData =
 
 /**
  * Campaign metadata for quick checks without loading full state.
- * Used for "Continue" button display.
+ * Used for load campaign screen display.
  */
 export interface CampaignMetadata {
   exists: boolean;
+  slotId?: SlotId;
   sector?: number;
   credits?: number;
   shipCount?: number;
   missionCount?: number;
   savedAt?: number;
+  /** Commander name for display */
+  commanderName?: string;
+  /** Ironman mode flag */
+  ironmanMode?: boolean;
+  /** Ship class names for displaying silhouettes */
+  shipClasses?: string[];
 }
 
 /**
@@ -64,4 +81,10 @@ export interface StoredMetadata {
   missionCount: number;
   savedAt: number;
   createdAt: number;
+  /** Commander name for display (optional for backwards compat) */
+  commanderName?: string;
+  /** Ironman mode flag (optional for backwards compat) */
+  ironmanMode?: boolean;
+  /** Ship class names for displaying silhouettes */
+  shipClasses?: string[];
 }

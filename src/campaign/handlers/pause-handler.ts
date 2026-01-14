@@ -19,6 +19,9 @@ import { disposeMissionRenderers } from '../mission/mission-renderer';
 /** Module-level escape key handler reference for cleanup */
 let escapeHandler: ((e: KeyboardEvent) => void) | null = null;
 
+/** Track if pause menu is currently open to prevent re-opening */
+let pauseMenuOpen = false;
+
 /**
  * Setup global escape key handler for pause menu.
  *
@@ -52,6 +55,11 @@ export function setupEscapeHandler(
     ) {
       e.preventDefault();
 
+      // Prevent re-opening pause menu if already open
+      if (pauseMenuOpen) {
+        return;
+      }
+
       const inMission = screenManager.currentScreen === Screen.MISSION;
 
       // Pause game during mission
@@ -62,12 +70,17 @@ export function setupEscapeHandler(
       // Close any open popovers before showing pause menu
       closePopover();
 
-      await handlePauseMenu(
-        controller,
-        inMission,
-        setupSettingsScreen,
-        setupTitleScreen,
-      );
+      pauseMenuOpen = true;
+      try {
+        await handlePauseMenu(
+          controller,
+          inMission,
+          setupSettingsScreen,
+          setupTitleScreen,
+        );
+      } finally {
+        pauseMenuOpen = false;
+      }
 
       // Resume game if still in mission (not quit)
       if (

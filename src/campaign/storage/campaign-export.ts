@@ -14,11 +14,12 @@ import {
 import type { CampaignState } from '../types';
 import {
   deleteCampaign,
+  getActiveSlotId,
   loadCampaign,
   saveCampaign,
   setCampaignCreatedAt,
 } from './campaign-db';
-import { CAMPAIGN_STORAGE_VERSION } from './campaign-types';
+import { CAMPAIGN_STORAGE_VERSION, type SlotId } from './campaign-types';
 import { reconstituteCampaignState } from './campaign-utils';
 
 /** Result of an import operation */
@@ -36,11 +37,17 @@ interface ExportedCampaign {
 }
 
 /**
- * Export current campaign to compressed bytes.
+ * Export campaign from a slot to compressed bytes.
+ * Uses active slot if not specified.
  * Returns null if no campaign exists.
  */
-export async function exportCampaignCompressed(): Promise<Uint8Array | null> {
-  const state = await loadCampaign();
+export async function exportCampaignCompressed(
+  slotId?: SlotId,
+): Promise<Uint8Array | null> {
+  const targetSlot = slotId ?? getActiveSlotId();
+  if (!targetSlot) return null;
+
+  const state = await loadCampaign(targetSlot);
   if (!state) return null;
 
   const exported: ExportedCampaign = {
@@ -53,11 +60,17 @@ export async function exportCampaignCompressed(): Promise<Uint8Array | null> {
 }
 
 /**
- * Export current campaign to JSON string.
+ * Export campaign from a slot to JSON string.
+ * Uses active slot if not specified.
  * Returns null if no campaign exists.
  */
-export async function exportCampaignJSON(): Promise<string | null> {
-  const state = await loadCampaign();
+export async function exportCampaignJSON(
+  slotId?: SlotId,
+): Promise<string | null> {
+  const targetSlot = slotId ?? getActiveSlotId();
+  if (!targetSlot) return null;
+
+  const state = await loadCampaign(targetSlot);
   if (!state) return null;
 
   const exported: ExportedCampaign = {
@@ -92,14 +105,21 @@ function validateExportedCampaign(data: unknown): data is ExportedCampaign {
 }
 
 /**
- * Import campaign from compressed bytes.
- * Overwrites any existing campaign.
+ * Import campaign from compressed bytes into a specific slot.
+ * Uses active slot if not specified.
+ * Overwrites any existing campaign in the slot.
  * Returns the imported state on success.
  */
 export async function importCampaignCompressed(
   data: Uint8Array,
+  slotId?: SlotId,
 ): Promise<ImportResult> {
   try {
+    const targetSlot = slotId ?? getActiveSlotId();
+    if (!targetSlot) {
+      return { success: false, error: 'No target slot specified' };
+    }
+
     const json = await decompressToString(data);
     const parsed: unknown = JSON.parse(json);
 
@@ -107,13 +127,13 @@ export async function importCampaignCompressed(
       return { success: false, error: 'Invalid campaign file format' };
     }
 
-    // Delete existing campaign first
-    await deleteCampaign();
+    // Delete existing campaign in target slot first
+    await deleteCampaign(targetSlot);
 
     // Reconstitute and save
     const state = reconstituteCampaignState(parsed.state);
-    setCampaignCreatedAt(parsed.exportedAt);
-    await saveCampaign(state);
+    setCampaignCreatedAt(targetSlot, parsed.exportedAt);
+    await saveCampaign(state, targetSlot);
 
     return { success: true, state };
   } catch (error) {
@@ -125,23 +145,32 @@ export async function importCampaignCompressed(
 }
 
 /**
- * Import campaign from JSON string.
- * Overwrites any existing campaign.
+ * Import campaign from JSON string into a specific slot.
+ * Uses active slot if not specified.
+ * Overwrites any existing campaign in the slot.
  * Returns the imported state on success.
  */
-export async function importCampaignJSON(json: string): Promise<ImportResult> {
+export async function importCampaignJSON(
+  json: string,
+  slotId?: SlotId,
+): Promise<ImportResult> {
   try {
+    const targetSlot = slotId ?? getActiveSlotId();
+    if (!targetSlot) {
+      return { success: false, error: 'No target slot specified' };
+    }
+
     const parsed: unknown = JSON.parse(json);
 
     if (!validateExportedCampaign(parsed)) {
       return { success: false, error: 'Invalid campaign file format' };
     }
 
-    await deleteCampaign();
+    await deleteCampaign(targetSlot);
 
     const state = reconstituteCampaignState(parsed.state);
-    setCampaignCreatedAt(parsed.exportedAt);
-    await saveCampaign(state);
+    setCampaignCreatedAt(targetSlot, parsed.exportedAt);
+    await saveCampaign(state, targetSlot);
 
     return { success: true, state };
   } catch (error) {
@@ -159,13 +188,15 @@ export interface ExportResult {
 }
 
 /**
- * Download current campaign as a .campaign.gz file.
+ * Download campaign from a slot as a .campaign.gz file.
+ * Uses active slot if not specified.
  */
 export async function downloadCampaign(
   filename?: string,
+  slotId?: SlotId,
 ): Promise<ExportResult> {
   try {
-    const compressed = await exportCampaignCompressed();
+    const compressed = await exportCampaignCompressed(slotId);
     if (!compressed) {
       return { success: false, error: 'No campaign to export' };
     }
@@ -193,11 +224,14 @@ export async function downloadCampaign(
 }
 
 /**
- * Open file picker to import a campaign.
+ * Open file picker to import a campaign into a specific slot.
+ * Uses active slot if not specified.
  * Automatically detects compressed vs JSON format.
  * Returns the imported state on success, or null if cancelled.
  */
-export async function openCampaignFile(): Promise<ImportResult | null> {
+export async function openCampaignFile(
+  slotId?: SlotId,
+): Promise<ImportResult | null> {
   const file = await pickFile();
   if (!file) return null; // User cancelled
 
@@ -206,13 +240,13 @@ export async function openCampaignFile(): Promise<ImportResult | null> {
 
   // Detect gzip by magic bytes
   if (isGzipCompressed(bytes)) {
-    return importCampaignCompressed(bytes);
+    return importCampaignCompressed(bytes, slotId);
   }
 
   // Assume JSON text
   const decoder = new TextDecoder();
   const json = decoder.decode(bytes);
-  return importCampaignJSON(json);
+  return importCampaignJSON(json, slotId);
 }
 
 /**

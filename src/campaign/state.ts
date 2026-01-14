@@ -15,13 +15,14 @@ import {
 } from './store/store-catalog';
 import { applyStoreTrickle } from './store/store-trickle';
 import type {
+  CampaignSettings,
   CampaignState,
   EquippedPrimary,
   EquippedSecondary,
   OwnedShip,
   Pilot,
 } from './types';
-import { MAX_SECTOR } from './types';
+import { DEFAULT_CAMPAIGN_SETTINGS, MAX_SECTOR } from './types';
 
 /** Create a ship from an archetype with default loadout */
 export function createShipFromArchetype(
@@ -73,7 +74,9 @@ function createPilot(id: string, name: string, skill: Pilot['skill']): Pilot {
 }
 
 /** Create a new campaign with default starting state */
-export function createNewCampaign(): CampaignState {
+export function createNewCampaign(
+  settings: CampaignSettings = DEFAULT_CAMPAIGN_SETTINGS,
+): CampaignState {
   // Generate master seed for this campaign run (different each time)
   const seed = Date.now() >>> 0;
 
@@ -88,7 +91,7 @@ export function createNewCampaign(): CampaignState {
   };
 
   // Create all pilots (commander + wingmen)
-  const commander = createPilot(genId('pilot'), 'Commander', 'ace');
+  const commander = createPilot(genId('pilot'), settings.commanderName, 'ace');
   const wingman1Pilot = createPilot(genId('pilot'), 'Viper', 'regular');
   const wingman2Pilot = createPilot(genId('pilot'), 'Ghost', 'regular');
   const wingman3Pilot = createPilot(genId('pilot'), 'Shadow', 'regular');
@@ -126,6 +129,7 @@ export function createNewCampaign(): CampaignState {
   const storeStock = createInitialStoreStock();
 
   return {
+    settings,
     seed,
     nextId,
     credits: 1000,

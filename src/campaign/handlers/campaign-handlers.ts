@@ -31,7 +31,7 @@ import {
   markContractAttempted,
   refreshContracts,
 } from '../state';
-import { autoSave } from '../storage';
+import { autoSave, getActiveSlotId, saveCheckpoint } from '../storage';
 import type { Contract } from '../types';
 
 /**
@@ -183,6 +183,18 @@ export function setupContractsScreen(controller: CampaignController): void {
       if (!result.confirmed) {
         // User cancelled, stay on contracts screen
         return;
+      }
+
+      // Save checkpoint for non-ironman campaigns (allows retry on defeat)
+      if (!screenManager.campaignState.settings.ironmanMode) {
+        const slotId = getActiveSlotId();
+        if (slotId) {
+          try {
+            await saveCheckpoint(screenManager.campaignState, slotId);
+          } catch {
+            // Non-critical - continue even if checkpoint fails
+          }
+        }
       }
 
       // Mark contract as attempted (for "fresh" indicator)

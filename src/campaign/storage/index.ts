@@ -17,11 +17,16 @@ export {
 export {
   clearDBCache,
   deleteCampaign,
+  getActiveSlotId,
+  getAllSlotsMetadata,
   getCampaignMetadata,
+  getSlotMetadata,
+  hasAnyCampaign,
   hasCampaign,
   isStorageAvailable,
   loadCampaign,
   saveCampaign,
+  setActiveSlotId,
   setCampaignCreatedAt,
 } from './campaign-db';
 export type { ExportResult, ImportResult } from './campaign-export';
@@ -35,5 +40,16 @@ export {
   openCampaignFile,
 } from './campaign-export';
 // Types
-export type { CampaignMetadata, StoredCampaignData } from './campaign-types';
-export { CAMPAIGN_STORAGE_VERSION } from './campaign-types';
+export type {
+  CampaignMetadata,
+  SlotId,
+  StoredCampaignData,
+} from './campaign-types';
+export { ALL_SLOT_IDS, CAMPAIGN_STORAGE_VERSION } from './campaign-types';
+// Checkpoint (pre-mission save for non-ironman recovery)
+export {
+  deleteCheckpoint,
+  hasCheckpoint,
+  loadCheckpoint,
+  saveCheckpoint,
+} from './checkpoint';

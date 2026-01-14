@@ -10,16 +10,17 @@
  */
 
 import {
+  ALL_SLOT_IDS,
   clearEmergencySave,
-  deleteCampaign,
-  getCampaignMetadata,
-  hasCampaign,
+  getActiveSlotId,
+  getAllSlotsMetadata,
+  hasAnyCampaign,
   isStorageAvailable,
-  loadCampaign,
   recoverEmergencySave,
+  type SlotId,
   saveCampaign,
+  setActiveSlotId,
 } from '../../campaign/storage';
-import type { CampaignState } from '../../campaign/types';
 import { logWarn } from '../../core/logger';
 import { TITLE_SCREEN_BATTLE } from '../../simulation/battle-configs';
 import {
@@ -35,7 +36,6 @@ import {
   type ScreenHandle,
 } from '../framework/screen';
 import {
-  renderConfirmOverwriteView,
   renderErrorView,
   renderLoadingView,
   renderMainView,
@@ -45,7 +45,6 @@ import {
 /** Title screen callbacks */
 export interface TitleScreenProps {
   onNewGame: () => void;
-  onContinue: (state: CampaignState) => void;
   onSettings: () => void;
   onReplays: () => void;
 }
@@ -61,9 +60,6 @@ const TitleScreenComponent: Screen<TitleState, TitleScreenProps> = {
         break;
       case 'loading':
         content = renderLoadingView();
-        break;
-      case 'confirm-overwrite':
-        content = renderConfirmOverwriteView(state);
         break;
       case 'error':
         content = renderErrorView(state.errorMessage ?? 'An error occurred.');
@@ -81,39 +77,9 @@ const TitleScreenComponent: Screen<TitleState, TitleScreenProps> = {
   },
 
   bind(api: ScreenAPI<TitleState>, props: TitleScreenProps) {
-    // Main menu buttons
-    api.on('#btn-new-game', 'click', async () => {
-      const state = api.getState();
-      if (state.hasCampaign) {
-        // Show confirmation before overwriting
-        api.setState({ view: 'confirm-overwrite' });
-      } else {
-        // No existing campaign, start directly
-        props.onNewGame();
-      }
-    });
-
-    api.on('#btn-continue', 'click', async () => {
-      api.setState({ view: 'loading' });
-
-      try {
-        const campaignState = await loadCampaign();
-        if (campaignState) {
-          api.setState({ view: 'main' });
-          props.onContinue(campaignState);
-        } else {
-          api.setState({
-            errorMessage:
-              'Failed to load campaign. The save data may be corrupted.',
-            view: 'error',
-          });
-        }
-      } catch (error) {
-        api.setState({
-          errorMessage: `Failed to load campaign: ${error instanceof Error ? error.message : 'Unknown error'}`,
-          view: 'error',
-        });
-      }
+    // Play button - shows slot selection modal
+    api.on('#btn-play', 'click', () => {
+      props.onNewGame();
     });
 
     api.on('#btn-settings', 'click', () => {
@@ -122,18 +88,6 @@ const TitleScreenComponent: Screen<TitleState, TitleScreenProps> = {
 
     api.on('#btn-replays', 'click', () => {
       props.onReplays();
-    });
-
-    // Confirm overwrite buttons
-    api.on('#btn-confirm-cancel', 'click', () => {
-      api.setState({ view: 'main' });
-    });
-
-    api.on('#btn-confirm-new', 'click', async () => {
-      // Delete existing campaign and start new
-      await deleteCampaign();
-      api.setState({ hasCampaign: false, view: 'main' });
-      props.onNewGame();
     });
 
     // Error OK button
@@ -146,9 +100,7 @@ const TitleScreenComponent: Screen<TitleState, TitleScreenProps> = {
       if ((e as KeyboardEvent).code === 'Escape') {
         e.preventDefault();
         const currentState = api.getState();
-        if (currentState.view === 'confirm-overwrite') {
-          api.setState({ view: 'main' });
-        } else if (currentState.view === 'error') {
+        if (currentState.view === 'error') {
           api.setState({ errorMessage: null, view: 'main' });
         }
       }
@@ -191,9 +143,31 @@ async function createInitialState(): Promise<TitleState> {
     // Check for emergency save from browser crash
     const emergencySave = recoverEmergencySave();
     if (emergencySave) {
+      // Find the best slot for recovery
+      let recoverySlot: SlotId | null = getActiveSlotId();
+
+      if (!recoverySlot) {
+        // No active slot - find an empty slot to avoid overwriting data
+        const allMetadata = await getAllSlotsMetadata();
+        const emptySlot = ALL_SLOT_IDS.find(
+          (id) => !allMetadata.find((m) => m.slotId === id && m.exists),
+        );
+
+        if (emptySlot) {
+          recoverySlot = emptySlot;
+        } else {
+          // All slots full - use slot 1 as last resort
+          logWarn(
+            'Emergency recovery: no empty slots, using slot 1 (may overwrite)',
+          );
+          recoverySlot = 1;
+        }
+      }
+
       try {
         // Save the recovered state to IndexedDB
-        await saveCampaign(emergencySave);
+        await saveCampaign(emergencySave, recoverySlot);
+        setActiveSlotId(recoverySlot);
         // Only clear emergency save after successful IndexedDB save
         clearEmergencySave();
       } catch (error) {
@@ -210,11 +184,28 @@ async function createInitialState(): Promise<TitleState> {
       };
     }
 
-    // Normal check for existing campaign
-    const exists = await hasCampaign();
+    // Normal check for existing campaigns
+    const exists = await hasAnyCampaign();
     if (exists) {
-      const metadata = await getCampaignMetadata();
-      if (metadata.exists) {
+      // Get metadata from the first occupied slot
+      const allMetadata = await getAllSlotsMetadata();
+      const activeSlot = getActiveSlotId();
+
+      // Prefer active slot, otherwise use first occupied slot
+      let metadata = activeSlot
+        ? allMetadata.find((m) => m.slotId === activeSlot && m.exists)
+        : null;
+
+      if (!metadata) {
+        metadata = allMetadata.find((m) => m.exists);
+      }
+
+      if (metadata?.exists) {
+        // Set active slot to the first occupied slot if not already set
+        if (!activeSlot && metadata.slotId) {
+          setActiveSlotId(metadata.slotId);
+        }
+
         return {
           ...baseState,
           hasCampaign: true,
@@ -224,7 +215,7 @@ async function createInitialState(): Promise<TitleState> {
       }
     }
   } catch {
-    // Ignore errors, just show no campaign
+    // IndexedDB errors (including timeout) fall through to return baseState
   }
 
   return baseState;
@@ -243,7 +234,6 @@ export function renderTitleScreen(element: HTMLElement): void {
   };
   element.innerHTML = TitleScreenComponent.render(initialState, {
     onNewGame: () => {},
-    onContinue: () => {},
     onSettings: () => {},
     onReplays: () => {},
   });
