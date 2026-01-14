@@ -50,6 +50,8 @@ const QUICK_TESTS = [
   // Campaign logic tests
   'campaign/test-slot-array.mjs',
   'campaign/test-save-load.mjs',
+  'campaign/test-campaign-settings.mjs',
+  'campaign/test-campaign-storage.mjs',
   'campaign/test-store-ammo.mjs',
   'campaign/test-store-caps.mjs',
   'campaign/test-resupply-needs.mjs',
