@@ -223,25 +223,6 @@ export function someSlot<T>(
   return findSlot(arr, predicate) !== undefined;
 }
 
-/**
- * Check if all occupied slots match the predicate.
- * Returns true for empty arrays.
- */
-export function everySlot<T>(
-  arr: SlotArray<T>,
-  predicate: (weapon: T, index: number) => boolean,
-): boolean {
-  const slots = getInternal(arr);
-  for (let i = 0; i < slots.length; i++) {
-    const slot = slots[i];
-    // Use != null to cover both null and undefined (array bounds)
-    if (slot != null && !predicate(slot, i)) {
-      return false;
-    }
-  }
-  return true;
-}
-
 // ============ Serialization ============
 
 /**
