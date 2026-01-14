@@ -122,3 +122,51 @@ When adding features that affect missions, ensure replay captures:
 **v3: Wave initialization mismatch**
 - Replay was missing `waveState.currentWave = -1` for delayed first waves
 - Fix: Created shared `initializeFirstWave()` and `processWaveTick()` in `mission-waves.ts`
+
+## Testing
+
+### Running Tests
+
+```bash
+npx tsx scripts/tests/run-tests.mjs          # Quick tests (default, ~20s)
+npx tsx scripts/tests/run-tests.mjs --all    # All tests including balance
+npx tsx scripts/tests/run-tests.mjs --balance # Balance tests only
+```
+
+### Test Categories
+
+| Category | Location | Purpose |
+|----------|----------|---------|
+| Quick tests | `scripts/tests/` | Fast, deterministic logic tests (~34 tests) |
+| Balance tests | `scripts/tests/combat/`, `campaign/` | Simulation-based balance verification |
+
+### Test Framework
+
+All tests use Node.js built-in test runner (`node:test`) with `describe`/`it` pattern:
+
+```javascript
+import assert from 'node:assert';
+import { describe, it } from 'node:test';
+
+describe('Feature', () => {
+  it('does something', () => {
+    assert.strictEqual(actual, expected, 'message');
+  });
+});
+```
+
+### Key Test Files
+
+| Area | Files |
+|------|-------|
+| ECS/Game | `integration/test-game.mjs`, `test-architecture.mjs` |
+| Weapons | `weapons/test-weapons*.mjs` |
+| AI | `ai/test-ai-*.mjs` |
+| Campaign | `campaign/test-*.mjs` |
+| Replay | `replay/test-*.mjs`, `systems/test-input-replay.mjs` |
+| Determinism | `systems/test-input-replay.mjs` |
+
+### Shared Test Utilities
+
+- `scripts/tests/shared/replay-test-utils.mjs` - Battle simulation helpers, checksum computation
+- `scripts/tests/replay/test-helpers.mjs` - Custom assertion helpers (legacy)

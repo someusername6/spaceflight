@@ -55,6 +55,14 @@ const QUICK_TESTS = [
   'campaign/test-resupply-needs.mjs',
   'campaign/test-resupply-ship.mjs',
   'campaign/test-resupply-estimate.mjs',
+
+  // Replay system tests
+  'replay/test-compression.mjs',
+  'replay/test-gzip.mjs',
+  'replay/test-playback.mjs',
+  'replay/test-storage.mjs',
+  'replay/test-storage-compression.mjs',
+  'systems/test-input-replay.mjs',
 ];
 
 // Balance/simulation tests - run multiple fights, take longer

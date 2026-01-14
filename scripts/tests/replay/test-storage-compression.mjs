@@ -7,12 +7,13 @@
  * 3. Roundtrip preserves all data
  */
 
+import assert from 'node:assert';
+import { describe, it } from 'node:test';
 import { isGzipCompressed } from '../../../src/replay/gzip.ts';
 import {
   exportReplayCompressed,
   importReplayCompressed,
 } from '../../../src/replay/storage.ts';
-import { assertEqual, assertTrue, runTests, test } from './test-helpers.mjs';
 
 // ============================================================================
 // Test Data
@@ -35,7 +36,7 @@ function createValidReplay() {
       outcome: 'victory',
       durationTicks: 5,
       recordedAt: Date.now(),
-      gameVersion: '0.1.8',
+      gameVersion: '0.2.0',
       stats: { kills: 3, damageDealt: 150, damageTaken: 50 },
     },
     playerLoadout: {
@@ -66,81 +67,81 @@ function createValidReplay() {
 // Compressed Export/Import Tests
 // ============================================================================
 
-test('exportReplayCompressed: produces gzip data', async () => {
-  const replay = createValidReplay();
-  const compressed = await exportReplayCompressed(replay);
+describe('Compressed Export/Import', () => {
+  it('exportReplayCompressed: produces gzip data', async () => {
+    const replay = createValidReplay();
+    const compressed = await exportReplayCompressed(replay);
 
-  assertTrue(compressed instanceof Uint8Array, 'Should return Uint8Array');
-  assertTrue(compressed.length > 0, 'Should have content');
-  assertTrue(isGzipCompressed(compressed), 'Should be valid gzip');
+    assert.ok(compressed instanceof Uint8Array, 'Should return Uint8Array');
+    assert.ok(compressed.length > 0, 'Should have content');
+    assert.ok(isGzipCompressed(compressed), 'Should be valid gzip');
+  });
+
+  it('importReplayCompressed: decompresses and validates', async () => {
+    const replay = createValidReplay();
+    const compressed = await exportReplayCompressed(replay);
+    const imported = await importReplayCompressed(compressed);
+
+    assert.strictEqual(imported.version, 1, 'Version should be 1');
+    assert.strictEqual(imported.seed, 12345, 'Seed should match');
+    assert.strictEqual(
+      imported.metadata.missionId,
+      's1-gnat-expectations',
+      'Mission ID should match',
+    );
+  });
+
+  it('compressed roundtrip: preserves all data', async () => {
+    const replay = createValidReplay();
+    const compressed = await exportReplayCompressed(replay);
+    const imported = await importReplayCompressed(compressed);
+
+    assert.strictEqual(
+      imported.version,
+      replay.version,
+      'Version should roundtrip',
+    );
+    assert.strictEqual(imported.seed, replay.seed, 'Seed should roundtrip');
+    assert.strictEqual(
+      imported.tickCount,
+      replay.tickCount,
+      'tickCount should roundtrip',
+    );
+    assert.strictEqual(
+      imported.metadata.missionId,
+      replay.metadata.missionId,
+      'missionId should roundtrip',
+    );
+    assert.strictEqual(
+      imported.playerLoadout.shipClass,
+      replay.playerLoadout.shipClass,
+      'playerLoadout.shipClass should roundtrip',
+    );
+    assert.strictEqual(
+      imported.wingmen.length,
+      replay.wingmen.length,
+      'wingmen.length should roundtrip',
+    );
+    assert.strictEqual(
+      imported.playerAutoaim,
+      replay.playerAutoaim,
+      'playerAutoaim should roundtrip',
+    );
+  });
+
+  it('compressed: compression ratio is reasonable', async () => {
+    // Create a replay with lots of repeated data (common in real replays)
+    const replay = createValidReplay();
+    replay.inputs = new Array(10000).fill(64); // 10k repeated inputs
+    replay.tickCount = 10000;
+
+    const json = JSON.stringify(replay);
+    const compressed = await exportReplayCompressed(replay);
+
+    const ratio = json.length / compressed.length;
+    assert.ok(
+      ratio > 5,
+      `Repetitive replay data should compress at least 5:1, got ${ratio.toFixed(2)}:1`,
+    );
+  });
 });
-
-test('importReplayCompressed: decompresses and validates', async () => {
-  const replay = createValidReplay();
-  const compressed = await exportReplayCompressed(replay);
-  const imported = await importReplayCompressed(compressed);
-
-  assertEqual(imported.version, 1, 'Version should be 1');
-  assertEqual(imported.seed, 12345, 'Seed should match');
-  assertEqual(
-    imported.metadata.missionId,
-    's1-gnat-expectations',
-    'Mission ID should match',
-  );
-});
-
-test('compressed roundtrip: preserves all data', async () => {
-  const replay = createValidReplay();
-  const compressed = await exportReplayCompressed(replay);
-  const imported = await importReplayCompressed(compressed);
-
-  assertEqual(imported.version, replay.version, 'Version should roundtrip');
-  assertEqual(imported.seed, replay.seed, 'Seed should roundtrip');
-  assertEqual(
-    imported.tickCount,
-    replay.tickCount,
-    'tickCount should roundtrip',
-  );
-  assertEqual(
-    imported.metadata.missionId,
-    replay.metadata.missionId,
-    'missionId should roundtrip',
-  );
-  assertEqual(
-    imported.playerLoadout.shipClass,
-    replay.playerLoadout.shipClass,
-    'playerLoadout.shipClass should roundtrip',
-  );
-  assertEqual(
-    imported.wingmen.length,
-    replay.wingmen.length,
-    'wingmen.length should roundtrip',
-  );
-  assertEqual(
-    imported.playerAutoaim,
-    replay.playerAutoaim,
-    'playerAutoaim should roundtrip',
-  );
-});
-
-test('compressed: compression ratio is reasonable', async () => {
-  // Create a replay with lots of repeated data (common in real replays)
-  const replay = createValidReplay();
-  replay.inputs = new Array(10000).fill(64); // 10k repeated inputs
-  replay.tickCount = 10000;
-
-  const json = JSON.stringify(replay);
-  const compressed = await exportReplayCompressed(replay);
-
-  const ratio = json.length / compressed.length;
-  assertTrue(
-    ratio > 5,
-    `Repetitive replay data should compress at least 5:1, got ${ratio.toFixed(2)}:1`,
-  );
-});
-
-// ============================================================================
-// Run Tests
-// ============================================================================
-
-await runTests('Replay Storage Compression Tests');
