@@ -17,7 +17,7 @@
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.85);
-  z-index: 1100; /* Above pause menu */
+  z-index: var(--z-alert);
   backdrop-filter: blur(4px);
 }
 

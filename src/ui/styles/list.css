@@ -1,9 +1,0 @@
-/**
- * List Styles - Generic list container
- */
-
-.ship-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}

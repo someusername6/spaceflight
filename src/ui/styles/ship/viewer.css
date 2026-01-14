@@ -219,11 +219,6 @@
   box-shadow: 0 0 12px var(--color-danger-glow);
 }
 
-/* Slot connector stub - small visual anchor, main lines drawn by SVG overlay */
-.slot-connector {
-  display: none; /* Hidden - connectors now drawn by SVG overlay */
-}
-
 /* Slot content */
 .slot-content {
   display: flex;

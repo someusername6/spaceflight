@@ -128,6 +128,25 @@
   outline-color: var(--color-danger);
 }
 
+/* Subdued danger button - gray by default, red on hover
+   Use for destructive actions that shouldn't dominate the UI */
+.btn-danger-subdued {
+  border-color: var(--border-color);
+  color: var(--text-secondary);
+  background: transparent;
+}
+
+.btn-danger-subdued:hover:not(:disabled) {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+  background: rgba(255, 51, 102, 0.1);
+  box-shadow: none;
+}
+
+.btn-danger-subdued:focus-visible {
+  outline-color: var(--color-danger);
+}
+
 .btn-success {
   background: linear-gradient(
     180deg,
@@ -228,6 +247,6 @@
   position: fixed;
   top: var(--space-5);
   left: var(--space-8);
-  z-index: 1001;
+  z-index: var(--z-fixed-ui);
   padding: var(--space-2-5) var(--space-5);
 }

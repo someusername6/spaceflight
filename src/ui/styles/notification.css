@@ -11,7 +11,7 @@
   top: var(--space-8);
   left: 50%;
   transform: translateX(-50%);
-  z-index: 2000;
+  z-index: var(--z-notification);
   display: flex;
   flex-direction: column;
   gap: var(--space-2);

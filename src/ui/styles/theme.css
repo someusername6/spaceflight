@@ -219,6 +219,10 @@
   --z-dropdown: 100;
   --z-nav: 100;
   --z-overlay: 1000;
+  --z-modal: 1000;
+  --z-fixed-ui: 1001;
+  --z-alert: 1100;
+  --z-notification: 2000;
   --z-tooltip: 10000;
 
   /* ========================================

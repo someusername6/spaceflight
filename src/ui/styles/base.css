@@ -180,7 +180,7 @@
   font-size: var(--text-2xl);
   font-weight: var(--font-semibold);
   color: var(--color-success);
-  z-index: 1001;
+  z-index: var(--z-fixed-ui);
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -341,56 +341,4 @@
   color: var(--text-dim);
   text-transform: uppercase;
   letter-spacing: var(--tracking-wider);
-}
-
-/* ========================================
-   SVG ICON FILTER CUSTOM PROPERTIES
-   Colorize stroke-only SVGs loaded via img tags
-   ======================================== */
-
-:root {
-  /* Base filter to convert black to cyan (secondary color) */
-  --filter-cyan: invert(83%) sepia(69%) saturate(1879%) hue-rotate(144deg)
-    brightness(104%) contrast(101%);
-
-  /* Base filter to convert black to amber/orange (primary color #ff9f1c) */
-  --filter-amber: invert(67%) sepia(89%) saturate(1200%) hue-rotate(360deg)
-    brightness(101%) contrast(101%);
-
-  /* Base filter to convert black to red (danger color) */
-  --filter-red: invert(40%) sepia(95%) saturate(1500%) hue-rotate(330deg)
-    brightness(95%) contrast(105%);
-
-  /* Base filter to convert black to green (success color) */
-  --filter-green: invert(70%) sepia(98%) saturate(456%) hue-rotate(85deg)
-    brightness(103%) contrast(101%);
-
-  /* Base filter to convert black to dim gray */
-  --filter-dim: invert(50%) sepia(0%) saturate(0%) brightness(80%) contrast(90%);
-}
-
-/* Utility class: cyan icon */
-.svg-icon-cyan {
-  filter: var(--filter-cyan);
-}
-
-/* Utility class: cyan icon with glow */
-.svg-icon-glow {
-  filter: var(--filter-cyan) drop-shadow(0 0 6px var(--color-secondary))
-    drop-shadow(0 0 12px var(--color-secondary-glow));
-}
-
-/* ========================================
-   SHARED ANIMATIONS
-   ======================================== */
-
-@keyframes fadeSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
