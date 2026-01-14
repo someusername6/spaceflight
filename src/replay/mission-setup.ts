@@ -150,6 +150,7 @@ function spawnWingmanFromReplayLoadout(
   loadout: ReplayShipLoadout,
   position: Vector3,
   rotation: Quaternion,
+  pilotName?: string,
   pilotSkill?: string,
 ): Entity {
   const stats = SHIP_CLASSES[loadout.shipClass];
@@ -192,8 +193,9 @@ function spawnWingmanFromReplayLoadout(
   addComponent(world, entity, createShieldHit());
   addComponent(world, entity, createFaction(Faction.Player));
 
-  // Callsign (for UI display only - use generic 'Wingman')
-  addComponent(world, entity, createShipIdentity(loadout.shipClass, 'Wingman'));
+  // Callsign for UI display - use pilot name if available, otherwise generic 'Wingman'
+  const callsign = pilotName ?? 'Wingman';
+  addComponent(world, entity, createShipIdentity(loadout.shipClass, callsign));
 
   // AI setup - use pilot skill from replay or default to regular
   // Note: Component order matches live gameplay (ship-spawning.ts)
@@ -285,6 +287,7 @@ export function setupReplayWorld(
       wingman.loadout,
       pos,
       playerRot,
+      wingman.pilotName,
       wingman.pilotSkill,
     );
   }

@@ -97,6 +97,8 @@ export interface ReplayWingman {
   loadout: ReplayShipLoadout;
   /** Position offset from origin (player starts at 0,0,0) */
   position: { x: number; y: number; z: number };
+  /** Pilot name/callsign for HUD display */
+  pilotName?: string;
   /** Pilot skill level for AI behavior (defaults to 'regular' if not set) */
   pilotSkill?: string;
 }

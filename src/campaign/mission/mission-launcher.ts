@@ -114,11 +114,14 @@ export function launchMission(
       wingman,
       new Vector3(xOffset, 0, zOffset),
     );
-    // Capture wingman loadout, position, and pilot skill for replay
+    // Capture wingman loadout, position, pilot name and skill for replay
     const replayWingman: ReplayWingman = {
       loadout: shipToReplayLoadout(wingman),
       position: { x: xOffset, y: 0, z: zOffset },
     };
+    if (wingman.pilot?.name) {
+      replayWingman.pilotName = wingman.pilot.name;
+    }
     if (wingman.pilot?.skill) {
       replayWingman.pilotSkill = wingman.pilot.skill;
     }
