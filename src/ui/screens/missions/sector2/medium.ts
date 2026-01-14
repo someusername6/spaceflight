@@ -115,7 +115,7 @@ export const SECTOR_2_MEDIUM: Contract[] = [
     id: 's2-backup-singers',
     name: 'Backup Singers',
     description:
-      'Destroy reinforced patrol. Fireflies and Dragonflies in numbers.',
+      'Destroy reinforced patrol. Fireflies, Dragonflies, and Locusts.',
     difficulty: 'medium',
     sector: 2,
     waves: [
@@ -124,7 +124,7 @@ export const SECTOR_2_MEDIUM: Contract[] = [
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 4 }],
+        enemies: [{ archetype: 'locust', skill: 'rookie', count: 2 }],
         delay: [8, 12],
       },
       {
@@ -136,6 +136,6 @@ export const SECTOR_2_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3787,
+    reward: 4274,
   },
 ];

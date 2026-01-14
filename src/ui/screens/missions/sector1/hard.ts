@@ -85,6 +85,32 @@ export const SECTOR_1_HARD: Contract[] = [
     reward: 3470,
   },
   {
+    id: 's1-rainbow-in-the-dark',
+    name: 'Rainbow in the Dark',
+    description: 'Face all enemy types. Glowworms, Mantis, Wasps, and Hornets.',
+    difficulty: 'hard',
+    sector: 1,
+    waves: [
+      {
+        enemies: [{ archetype: 'glowworm', skill: 'rookie', count: 2 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'mantis', skill: 'rookie', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'wasp', skill: 'rookie', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'hornet', skill: 'rookie', count: 2 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 3511,
+  },
+  {
     id: 's1-hold-the-line',
     name: 'Hold the Line',
     description: 'Hold the frontier. Wasps and Hornets in force.',
@@ -109,32 +135,6 @@ export const SECTOR_1_HARD: Contract[] = [
       },
     ],
     reward: 3584,
-  },
-  {
-    id: 's1-rainbow-in-the-dark',
-    name: 'Rainbow in the Dark',
-    description: 'Face all enemy types. Variety of hostiles incoming.',
-    difficulty: 'hard',
-    sector: 1,
-    waves: [
-      {
-        enemies: [{ archetype: 'hornet', skill: 'rookie', count: 1 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'mantis', skill: 'rookie', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'wasp', skill: 'rookie', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'hornet', skill: 'rookie', count: 2 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 3844,
   },
   {
     id: 's1-flight-of-the-bumblebee',

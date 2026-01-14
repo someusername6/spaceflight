@@ -6,6 +6,45 @@ import type { Contract } from '../types';
 
 export const SECTOR_4_HARD: Contract[] = [
   {
+    id: 's4-radioactive',
+    name: 'Radioactive',
+    description:
+      'Stop nuclear assault. Juggernauts and Behemoths with nuke payloads.',
+    difficulty: 'hard',
+    sector: 4,
+    waves: [
+      {
+        enemies: [
+          { archetype: 'juggernaut', skill: 'rookie', count: 1 },
+          { archetype: 'phantom', skill: 'regular', count: 1 },
+        ],
+        delay: [5, 10],
+      },
+      {
+        enemies: [
+          { archetype: 'behemoth', skill: 'rookie', count: 1 },
+          { archetype: 'dragonfly', skill: 'veteran', count: 2 },
+        ],
+        delay: [8, 12],
+      },
+      {
+        enemies: [
+          { archetype: 'juggernaut', skill: 'regular', count: 1 },
+          { archetype: 'inferno', skill: 'regular', count: 2 },
+        ],
+        delay: [8, 12],
+      },
+      {
+        enemies: [
+          { archetype: 'behemoth', skill: 'regular', count: 1 },
+          { archetype: 'dragonfly', skill: 'veteran', count: 2 },
+        ],
+        delay: [8, 12],
+      },
+    ],
+    reward: 6103,
+  },
+  {
     id: 's4-heart-of-the-matter',
     name: 'Heart of the Matter',
     description: 'Final core assault. An Ace Specter leads the charge.',
@@ -60,7 +99,8 @@ export const SECTOR_4_HARD: Contract[] = [
   {
     id: 's4-master-of-puppets',
     name: 'Master of Puppets',
-    description: 'Eliminate the warlord. Phantoms and Dragonflies - no mercy.',
+    description:
+      'Eliminate the warlord. Infernos with Phantom escorts - heat incoming.',
     difficulty: 'hard',
     sector: 4,
     waves: [
@@ -69,7 +109,10 @@ export const SECTOR_4_HARD: Contract[] = [
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
+        enemies: [
+          { archetype: 'inferno', skill: 'veteran', count: 3 },
+          { archetype: 'dragonfly', skill: 'regular', count: 2 },
+        ],
         delay: [8, 12],
       },
       {
@@ -77,49 +120,13 @@ export const SECTOR_4_HARD: Contract[] = [
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 6321,
-  },
-  {
-    id: 's4-radioactive',
-    name: 'Radioactive',
-    description:
-      'Stop nuclear assault. Juggernauts and Behemoths with nuke payloads.',
-    difficulty: 'hard',
-    sector: 4,
-    waves: [
-      {
         enemies: [
-          { archetype: 'juggernaut', skill: 'rookie', count: 1 },
-          { archetype: 'phantom', skill: 'regular', count: 1 },
-        ],
-        delay: [5, 10],
-      },
-      {
-        enemies: [
-          { archetype: 'behemoth', skill: 'rookie', count: 1 },
-          { archetype: 'dragonfly', skill: 'veteran', count: 2 },
-        ],
-        delay: [8, 12],
-      },
-      {
-        enemies: [
-          { archetype: 'juggernaut', skill: 'regular', count: 1 },
-          { archetype: 'phantom', skill: 'veteran', count: 1 },
-        ],
-        delay: [8, 12],
-      },
-      {
-        enemies: [
-          { archetype: 'behemoth', skill: 'regular', count: 1 },
+          { archetype: 'inferno', skill: 'ace', count: 2 },
           { archetype: 'dragonfly', skill: 'veteran', count: 2 },
         ],
         delay: [8, 12],
       },
     ],
-    reward: 6723,
+    reward: 8099,
   },
 ];

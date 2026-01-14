@@ -88,7 +88,7 @@ export const SECTOR_2_EASY: Contract[] = [
   {
     id: 's2-running-down-a-dream',
     name: 'Running Down a Dream',
-    description: 'Intercept raider force. Fireflies and Stingers.',
+    description: 'Intercept raider force. Fireflies, Stingers, and Locusts.',
     difficulty: 'easy',
     sector: 2,
     waves: [
@@ -97,7 +97,7 @@ export const SECTOR_2_EASY: Contract[] = [
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'stinger', skill: 'rookie', count: 3 }],
+        enemies: [{ archetype: 'locust', skill: 'rookie', count: 2 }],
         delay: [8, 12],
       },
       {
@@ -105,11 +105,11 @@ export const SECTOR_2_EASY: Contract[] = [
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'stinger', skill: 'regular', count: 3 }],
+        enemies: [{ archetype: 'stinger', skill: 'rookie', count: 3 }],
         delay: [8, 12],
       },
     ],
-    reward: 3158,
+    reward: 3150,
   },
   {
     id: 's2-borderline',

@@ -58,6 +58,32 @@ export const SECTOR_3_HARD: Contract[] = [
     reward: 5425,
   },
   {
+    id: 's3-break-on-through',
+    name: 'Break on Through',
+    description: 'Break through enemy lines. Fireants and Phantoms defend.',
+    difficulty: 'hard',
+    sector: 3,
+    waves: [
+      {
+        enemies: [{ archetype: 'phantom', skill: 'rookie', count: 2 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'fireant', skill: 'ace', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 5436,
+  },
+  {
     id: 's3-hammer-to-fall',
     name: 'Hammer to Fall',
     description:
@@ -83,32 +109,6 @@ export const SECTOR_3_HARD: Contract[] = [
       },
     ],
     reward: 5529,
-  },
-  {
-    id: 's3-break-on-through',
-    name: 'Break on Through',
-    description: 'Break through enemy lines. Elite assault force.',
-    difficulty: 'hard',
-    sector: 3,
-    waves: [
-      {
-        enemies: [{ archetype: 'phantom', skill: 'rookie', count: 2 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'wasp', skill: 'regular', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 5543,
   },
   {
     id: 's3-the-final-countdown',

@@ -137,68 +137,30 @@ export const SECTOR_4_EASY: Contract[] = [
     reward: 5630,
   },
   {
-    id: 's4-clash-of-the-titans',
-    name: 'Clash of the Titans',
-    description: 'Intercept heavy assault. Titans with Phantom escorts.',
-    difficulty: 'medium',
-    sector: 4,
-    waves: [
-      {
-        enemies: [
-          { archetype: 'titan', skill: 'rookie', count: 1 },
-          { archetype: 'dragonfly', skill: 'regular', count: 2 },
-        ],
-        delay: [5, 10],
-      },
-      {
-        enemies: [
-          { archetype: 'titan', skill: 'rookie', count: 1 },
-          { archetype: 'firefly', skill: 'regular', count: 2 },
-        ],
-        delay: [8, 12],
-      },
-      {
-        enemies: [
-          { archetype: 'titan', skill: 'rookie', count: 1 },
-          { archetype: 'dragonfly', skill: 'regular', count: 2 },
-        ],
-        delay: [8, 12],
-      },
-      {
-        enemies: [
-          { archetype: 'titan', skill: 'regular', count: 1 },
-          { archetype: 'phantom', skill: 'rookie', count: 1 },
-        ],
-        delay: [8, 12],
-      },
-    ],
-    reward: 6339,
-  },
-  {
-    id: 's4-atomic',
-    name: 'Atomic',
+    id: 's4-strike-a-pose',
+    name: 'Strike a Pose',
     description:
-      'Nuclear threat detected. Juggernauts with nuke payloads inbound.',
-    difficulty: 'medium',
+      'Destroy strike force. Phantoms with Fireflies and Dragonflies.',
+    difficulty: 'easy',
     sector: 4,
     waves: [
       {
-        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
-        delay: [5, 10],
+        enemies: [{ archetype: 'phantom', skill: 'rookie', count: 2 }],
+        delay: [4, 8],
+      },
+      {
+        enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
+        delay: [6, 10],
+      },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
+        delay: [6, 10],
       },
       {
         enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'juggernaut', skill: 'regular', count: 2 }],
-        delay: [8, 12],
+        delay: [6, 10],
       },
     ],
-    reward: 6775,
+    reward: 6333,
   },
 ];
