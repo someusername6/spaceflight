@@ -9,7 +9,7 @@
 export type FrameRateCap = 30 | 60 | 120 | 0; // 0 = uncapped
 
 /** Available player autoaim options (degrees) */
-export type PlayerAutoaim = 0 | 0.5 | 1 | 1.5 | 2 | 2.5 | 3;
+export type PlayerAutoaim = 0 | 0.5 | 1 | 1.5 | 2 | 2.5 | 3 | 3.5 | 4 | 4.5 | 5;
 
 /** Game settings structure */
 export interface GameSettings {
@@ -20,7 +20,7 @@ export interface GameSettings {
 /** Default settings */
 export const DEFAULT_SETTINGS: GameSettings = {
   frameRateCap: 60, // Default to 60fps (balances quality and power usage)
-  playerAutoaim: 1, // Default to 1 degree of autoaim assistance
+  playerAutoaim: 2.5, // Default to 2.5 degrees of autoaim assistance
 };
 
 /** Display names for player autoaim options */
@@ -35,6 +35,10 @@ export const PLAYER_AUTOAIM_OPTIONS: Array<{
   { value: 2, label: '2°' },
   { value: 2.5, label: '2.5°' },
   { value: 3, label: '3°' },
+  { value: 3.5, label: '3.5°' },
+  { value: 4, label: '4°' },
+  { value: 4.5, label: '4.5°' },
+  { value: 5, label: '5°' },
 ];
 
 /** Display names for frame rate options */

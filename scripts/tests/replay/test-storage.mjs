@@ -231,7 +231,7 @@ describe('importReplayFromJSON', () => {
 
   it('rejects invalid playerAutoaim value', () => {
     const replay = createValidReplay();
-    replay.playerAutoaim = 5; // Not a valid value (valid: 0, 0.5, 1, 1.5, 2, 2.5, 3)
+    replay.playerAutoaim = 6; // Not a valid value (valid: 0, 0.5, 1, ..., 5)
     assert.throws(
       () => importReplayFromJSON(JSON.stringify(replay)),
       /invalid playerAutoaim/,
