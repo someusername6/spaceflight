@@ -82,6 +82,21 @@ To make human play viable:
 - Permadeath: player death = campaign end
 - Multiplayer: all humans dead = campaign end
 
+## Game Modes
+
+### Standard Mode (Default)
+- **Checkpoints**: Auto-save before each mission
+- **Recovery**: Failed missions can be retried from checkpoint
+- **Aim assist adjustable**: Can change in settings during campaign
+- **Target audience**: New players, casual play, learning the game
+
+### Ironman Mode
+- **No checkpoints**: Progress saved only at mission completion
+- **True permadeath**: Commander death = immediate campaign end
+- **No recovery**: Failed missions cannot be retried
+- **Aim assist locked**: Cannot change aim assist during campaign
+- **Target audience**: Experienced players, roguelike tension
+
 ## Progression
 
 | Campaign % | Expected State |

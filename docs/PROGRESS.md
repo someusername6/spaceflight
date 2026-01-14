@@ -89,5 +89,31 @@ Weapons (projectiles, missiles, beams, decoys), shields, AI (states, behaviors, 
   - phantom: Interceptor elite dogfighter
   - specter: Elite sniper raider
 
-### 5.4 Remaining (Planned)
+### 5.4 Save System Improvements ✅
+- **IndexedDB Storage**: Campaign saves migrated from localStorage to IndexedDB (`src/campaign/storage/`)
+  - `campaign-db.ts` - Database operations (CRUD)
+  - `db-connection.ts` - Connection management
+  - `campaign-autosave.ts` - Automatic save functionality
+  - `checkpoint.ts` - Mission checkpoint management
+- **Campaign Creation Modal**: New game configuration (`src/ui/screens/campaign-create.ts`)
+  - Commander name input
+  - Game mode toggle (Ironman vs Standard)
+  - Aim assist selector (0-5° in 0.5° steps)
+- **Replay System**: Input recording and deterministic playback (`src/replay/`)
+  - `types.ts` - Replay data structures (versioned with migration support)
+  - `input-recorder.ts` - Captures player inputs and deployment data
+  - `mission-setup.ts` - Reconstructs world state for playback
+  - `storage.ts` - IndexedDB storage with FIFO eviction
+  - `gzip.ts` - Compression for replay export/import
+- **Replays Screen**: Browse and manage replays (`src/ui/screens/replay/replay-list.ts`)
+  - List saved replays with metadata (mission, outcome, duration, date)
+  - Watch, export, delete replays
+- **Settings Enhancements**: Graphics and gameplay options (`src/settings/game-settings.ts`)
+  - Frame rate cap (30/60/120/uncapped)
+  - Player autoaim adjustment (0-5°)
+- **Logging System**: Centralized debug logging (`src/core/logger.ts`)
+  - `logDebug()` - Debug-only output (controlled via localStorage)
+  - `logWarn()`, `logError()` - Always-visible warnings/errors
+
+### 5.5 Remaining (Planned)
 Procedural contracts, more ship classes, sound/music.

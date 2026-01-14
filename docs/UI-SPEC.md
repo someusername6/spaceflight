@@ -528,6 +528,117 @@ When Continue is clicked, shows save slots:
 
 ---
 
+## Modal: Campaign Creation
+
+### Purpose
+Configure new campaign settings before starting. Appears after clicking "New Game" on the title screen.
+
+### Layout
+```
+┌────────────────────────────────────────────────────────────┐
+│                     NEW CAMPAIGN                            │
+├────────────────────────────────────────────────────────────┤
+│                                                            │
+│  Commander Name                                            │
+│  ┌────────────────────────────────────────────────────┐   │
+│  │  [Commander                                    ]   │   │
+│  └────────────────────────────────────────────────────┘   │
+│                                                            │
+│  Game Mode                                                 │
+│  ┌──────────────────┐  ┌──────────────────┐              │
+│  │   [IRONMAN]      │  │    [STANDARD]    │              │
+│  └──────────────────┘  └──────────────────┘              │
+│  Warning/info text about selected mode                    │
+│                                                            │
+│  Aim Assist                                                │
+│  ┌────────────────────────────────────────────────────┐   │
+│  │  [2.5° (Medium)                              ▼]    │   │
+│  └────────────────────────────────────────────────────┘   │
+│  Aim assist adds a margin of error to weapon targeting.   │
+│                                                            │
+│            [Cancel]           [Start Campaign]             │
+└────────────────────────────────────────────────────────────┘
+```
+
+### Data Displayed
+- **Commander Name**: Text input for pilot callsign (default: "Commander")
+- **Game Mode**: Toggle between Ironman and Standard (default)
+- **Aim Assist**: Dropdown selector (0° to 5° in 0.5° increments)
+
+### Game Mode Effects
+| Mode | Checkpoints | On Failure | Aim Assist |
+|------|-------------|------------|------------|
+| Standard (default) | Before each mission | Retry from checkpoint | Can change anytime |
+| Ironman | None | Campaign ends | Locked for campaign |
+
+### Aim Assist
+- Adds a margin of error to weapon targeting (makes aiming easier)
+- Range: 0° (no assist) to 5° (maximum assist)
+- Default: 2.5° (medium)
+- In Ironman mode: locked at campaign start
+- In Standard mode: can be changed in settings during campaign
+
+### User Interactions
+| Action | Trigger | Result |
+|--------|---------|--------|
+| Edit name | Type in text field | Updates commander name |
+| Select mode | Click Ironman/Standard button | Toggles game mode |
+| Change aim assist | Click dropdown, select value | Updates aim assist |
+| Cancel | Click "Cancel" | Returns to title screen |
+| Start | Click "Start Campaign" | Creates campaign with settings |
+
+---
+
+## Screen: Replays
+
+### Purpose
+Browse and manage saved mission replays. Accessible from title screen.
+
+### Layout
+```
+┌────────────────────────────────────────────────────────────┐
+│  [Back]              REPLAYS                    [Import]   │
+├────────────────────────────────────────────────────────────┤
+│                                                            │
+│  ┌────────────────────────────────────────────────────┐   │
+│  │ Patrol Duty                              Victory   │   │
+│  │ Sector 1  |  1:45  |  Jan 10, 3:45pm               │   │
+│  │ [Watch]  [Export]  [Delete]                        │   │
+│  ├────────────────────────────────────────────────────┤   │
+│  │ Supply Escort                            Defeat    │   │
+│  │ Sector 2  |  2:12  |  Jan 10, 2:30pm               │   │
+│  │ [Watch]  [Export]  [Delete]                        │   │
+│  └────────────────────────────────────────────────────┘   │
+│                                                            │
+│  (Empty state: "No replays saved yet.")                   │
+└────────────────────────────────────────────────────────────┘
+```
+
+### Data Displayed
+Each replay entry shows:
+- **Mission name**
+- **Outcome** (Victory/Defeat/Timeout)
+- **Sector number**
+- **Duration** (MM:SS format)
+- **Date/time** recorded
+
+### User Interactions
+| Action | Trigger | Result |
+|--------|---------|--------|
+| Watch replay | Click "Watch" | Starts replay playback |
+| Export | Click "Export" | Downloads replay file |
+| Delete | Click "Delete" | Shows confirmation dialog |
+| Confirm delete | Click "Delete" in dialog | Removes replay |
+| Import | Click "Import" | Opens file picker for replay files |
+| Back | Click "Back" or Escape | Returns to previous screen |
+
+### Storage
+- Replays stored in IndexedDB (not localStorage)
+- FIFO eviction when storage limit reached
+- File location: `src/ui/screens/replay/replay-list.ts`
+
+---
+
 ## Screen: Settings
 
 ### Purpose

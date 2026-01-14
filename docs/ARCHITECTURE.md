@@ -135,6 +135,88 @@ For multiplayer support and consistent testing:
 
 Rendering reads from game state but never writes to it.
 
+## Replay System
+
+The game supports input recording and deterministic playback for debugging, sharing, and review.
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    MISSION START                            │
+│  InputRecorder captures:                                    │
+│  - Player loadout, wingmen, positions                       │
+│  - World seed, playerAutoaim setting                        │
+└─────────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    DURING MISSION                           │
+│  InputRecorder records per-tick:                            │
+│  - Active keys, mouse buttons                               │
+│  - RLE compression for efficient storage                    │
+└─────────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    MISSION END                              │
+│  Full replay saved to IndexedDB:                            │
+│  - Metadata (mission, outcome, stats)                       │
+│  - Player loadout + wingmen data                            │
+│  - Compressed input frames                                  │
+└─────────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    PLAYBACK                                 │
+│  mission-setup.ts reconstructs world:                       │
+│  - Same seed → same enemy spawns/AI                         │
+│  - Same loadout → same player stats                         │
+│  - Inject recorded inputs → identical simulation            │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `src/replay/types.ts` | Data structures, version constants |
+| `src/input/input-recorder.ts` | Captures inputs and deployment data |
+| `src/replay/mission-setup.ts` | Reconstructs world for playback |
+| `src/replay/storage.ts` | IndexedDB operations, FIFO eviction |
+| `src/replay/gzip.ts` | Compression for export/import |
+
+### Determinism Requirements
+
+For identical playback:
+
+1. **Same seed** - World PRNG produces same random values
+2. **Same loadout** - Player ship stats match original
+3. **Same wingmen** - AI wingmen with same positions/stats
+4. **Separate render PRNG** - Visual effects use `world.renderPrng` to avoid contaminating game PRNG
+
+### Version Migration
+
+Replay format is versioned (see `REPLAY_VERSION` in types.ts). Old replays are migrated on load when possible.
+
+## Logging System
+
+Centralized logging in `src/core/logger.ts` provides debug control.
+
+### API
+
+```typescript
+logDebug(message, ...args)  // Only when DEBUG_ENABLED
+logWarn(message, ...args)   // Always visible, prefixed [WARN]
+logError(message, ...args)  // Always visible, prefixed [ERROR]
+```
+
+### Debug Mode
+
+Enable debug output: `localStorage.setItem('DEBUG', 'true')` then refresh.
+
+Debug state is cached at module load to avoid per-call localStorage access.
+
 ## File Structure
 
 ```
