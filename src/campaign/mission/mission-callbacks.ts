@@ -118,6 +118,14 @@ export function createMissionEndExecutor(
       );
 
       // Build full replay data with deployment loadouts for deterministic reconstruction
+      const playerLoadout = recorder.getPlayerLoadout();
+      if (!playerLoadout) {
+        console.warn(
+          '[Replay] No player loadout captured, skipping replay save',
+        );
+        return;
+      }
+
       const fullReplay: FullReplayData = {
         version: REPLAY_VERSION,
         seed: replayData.seed,
@@ -136,17 +144,10 @@ export function createMissionEndExecutor(
           gameVersion: __APP_VERSION__,
           stats: { kills, damageDealt, damageTaken },
         },
+        playerLoadout,
+        wingmen: recorder.getWingmen(),
+        playerAutoaim: recorder.getPlayerAutoaim(),
       };
-
-      // v3: Include exact loadout for deterministic replay (if available)
-      const playerLoadout = recorder.getPlayerLoadout();
-      const wingmen = recorder.getWingmen();
-      if (playerLoadout) {
-        fullReplay.playerLoadout = playerLoadout;
-      }
-      if (wingmen.length > 0) {
-        fullReplay.wingmen = wingmen;
-      }
 
       // Save to IndexedDB (async, fire and forget)
       saveReplay(fullReplay).catch((err) => {

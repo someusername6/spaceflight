@@ -46,7 +46,6 @@ import type { Entity, World } from '../core/types';
 import { Faction } from '../core/types';
 import { getProfileForPlaystyle, type ProfileName } from '../data/ai-profiles';
 import { SHIP_CLASSES } from '../data/ships';
-import { createPlayerShip } from '../factories/ship';
 import { initMatchStats, initWeaponAmmoCounts } from '../systems/stats';
 import { getAllMissions } from '../ui/screens/contracts-data';
 import type { ReplayShipLoadout, ReplayWingman } from './types';
@@ -246,16 +245,13 @@ export interface ReplayWorldSetup {
 /**
  * Set up world for replay playback.
  * Creates player ship and wingmen using exact loadout from replay data.
- *
- * For v3+ replays: Uses stored loadout for deterministic reconstruction.
- * For v2 replays: Falls back to archetype defaults (may not match exactly).
  */
 export function setupReplayWorld(
   seed: number,
   missionId: string,
-  shipType: string,
-  playerLoadout?: ReplayShipLoadout,
-  wingmen?: ReplayWingman[],
+  playerLoadout: ReplayShipLoadout,
+  wingmen: ReplayWingman[],
+  playerAutoaim: number,
 ): ReplayWorldSetup {
   // Find mission definition
   const mission = findMissionById(missionId);
@@ -266,37 +262,31 @@ export function setupReplayWorld(
   // Create world with replay seed
   const world = createWorld(seed);
 
+  // Set replay autoaim override (affects weapon-firing.ts)
+  world.replayAutoaim = playerAutoaim;
+
   // Initialize match stats (for damage tracking)
   initMatchStats(world);
 
   // Spawn player at origin facing -Z
   const playerPos = new Vector3(0, 0, 0);
   const playerRot = new Quaternion();
+  spawnPlayerFromReplayLoadout(world, playerLoadout, playerPos, playerRot);
 
-  if (playerLoadout) {
-    // v3+: Use exact loadout from replay
-    spawnPlayerFromReplayLoadout(world, playerLoadout, playerPos, playerRot);
-  } else {
-    // v2 fallback: Use archetype defaults (may not match exactly)
-    createPlayerShip(world, shipType, playerPos, playerRot);
-  }
-
-  // Spawn wingmen from replay data (v3+)
-  if (wingmen && wingmen.length > 0) {
-    for (const wingman of wingmen) {
-      const pos = new Vector3(
-        wingman.position.x,
-        wingman.position.y,
-        wingman.position.z,
-      );
-      spawnWingmanFromReplayLoadout(
-        world,
-        wingman.loadout,
-        pos,
-        playerRot,
-        wingman.pilotSkill,
-      );
-    }
+  // Spawn wingmen from replay data
+  for (const wingman of wingmen) {
+    const pos = new Vector3(
+      wingman.position.x,
+      wingman.position.y,
+      wingman.position.z,
+    );
+    spawnWingmanFromReplayLoadout(
+      world,
+      wingman.loadout,
+      pos,
+      playerRot,
+      wingman.pilotSkill,
+    );
   }
 
   // Initialize wave state (shared with live gameplay for determinism)

@@ -1,53 +1,12 @@
 /**
- * Replay Validation and Migration
+ * Replay Validation
  *
- * Validates imported replay data and migrates older versions.
+ * Validates imported replay data.
  * Separated from storage.ts to keep files under 400 lines.
  */
 
+import { isValidPlayerAutoaim } from '../settings/game-settings';
 import { REPLAY_VERSION } from './types';
-
-/**
- * Migrate replay data from older versions to current format.
- * Each migration function handles one version increment.
- *
- * Migration history:
- * - v1 -> v2: Added inputsCompressed field, stats to metadata
- * - v2 -> v3: Added playerLoadout and wingmen for deterministic replay
- */
-export function migrateReplay(
-  data: Record<string, unknown>,
-): Record<string, unknown> {
-  let current = { ...data };
-  let version = current.version as number;
-
-  // v1 -> v2: Add missing fields with defaults
-  if (version === 1) {
-    // inputsCompressed didn't exist in v1, inputs were always uncompressed
-    if (current.inputsCompressed === undefined) {
-      current.inputsCompressed = false;
-    }
-    // stats didn't exist in v1 metadata
-    const metadata = current.metadata as Record<string, unknown>;
-    if (metadata.stats === undefined) {
-      metadata.stats = { kills: 0, damageDealt: 0, damageTaken: 0 };
-    }
-    current.version = 2;
-    version = 2;
-    current = { ...current, metadata: { ...metadata } };
-  }
-
-  // v2 -> v3: playerLoadout and wingmen are optional
-  // v2 replays don't have these fields - they'll use archetype defaults
-  // which may not match exactly (this is expected for old replays)
-  if (version === 2) {
-    // No automatic migration needed - fields are optional for backwards compat
-    // Just bump the version so we know the replay has been processed
-    current.version = 3;
-  }
-
-  return current;
-}
 
 /**
  * Validate basic replay structure.
@@ -68,9 +27,9 @@ export function validateVersion(replay: Record<string, unknown>): void {
   if (typeof replay.version !== 'number') {
     throw new Error('Invalid replay: missing version');
   }
-  if (replay.version > REPLAY_VERSION) {
+  if (replay.version !== REPLAY_VERSION) {
     throw new Error(
-      `Replay version ${replay.version} is newer than supported (${REPLAY_VERSION})`,
+      `Replay version ${replay.version} is not supported (expected ${REPLAY_VERSION})`,
     );
   }
 }
@@ -94,13 +53,17 @@ export function validateCoreFields(replay: Record<string, unknown>): void {
   if (typeof replay.tickCount !== 'number' || replay.tickCount < 0) {
     throw new Error('Invalid replay: missing or invalid tickCount');
   }
-  // Validate inputsCompressed if present
-  if (
-    replay.inputsCompressed !== undefined &&
-    typeof replay.inputsCompressed !== 'boolean'
-  ) {
+  if (typeof replay.inputsCompressed !== 'boolean') {
     throw new Error('Invalid replay: inputsCompressed must be a boolean');
   }
+  // Validate playerAutoaim
+  if (!isValidPlayerAutoaim(replay.playerAutoaim)) {
+    throw new Error('Invalid replay: invalid playerAutoaim value');
+  }
+  // Validate playerLoadout
+  validateShipLoadout(replay.playerLoadout, 'playerLoadout');
+  // Validate wingmen
+  validateWingmen(replay.wingmen);
 }
 
 /**
@@ -146,18 +109,16 @@ export function validateMetadata(replay: Record<string, unknown>): void {
     throw new Error('Invalid replay: missing gameVersion');
   }
 
-  // Validate stats if present
+  // Validate stats
   validateStats(metadata);
 }
 
 /**
- * Validate stats object if present.
+ * Validate stats object.
  */
 function validateStats(metadata: Record<string, unknown>): void {
-  if (metadata.stats === undefined) return;
-
   if (typeof metadata.stats !== 'object' || metadata.stats === null) {
-    throw new Error('Invalid replay: stats must be an object');
+    throw new Error('Invalid replay: missing stats');
   }
   const stats = metadata.stats as Record<string, unknown>;
   if (typeof stats.kills !== 'number') {
@@ -168,5 +129,132 @@ function validateStats(metadata: Record<string, unknown>): void {
   }
   if (typeof stats.damageTaken !== 'number') {
     throw new Error('Invalid replay: stats.damageTaken must be a number');
+  }
+}
+
+/**
+ * Validate ship loadout structure.
+ */
+function validateShipLoadout(loadout: unknown, context: string): void {
+  if (typeof loadout !== 'object' || loadout === null) {
+    throw new Error(`Invalid replay: ${context} must be an object`);
+  }
+  const obj = loadout as Record<string, unknown>;
+  if (typeof obj.shipClass !== 'string') {
+    throw new Error(`Invalid replay: ${context}.shipClass must be a string`);
+  }
+  if (!Array.isArray(obj.primaryWeapons)) {
+    throw new Error(`Invalid replay: ${context}.primaryWeapons must be array`);
+  }
+  if (!Array.isArray(obj.secondaryWeapons)) {
+    throw new Error(
+      `Invalid replay: ${context}.secondaryWeapons must be array`,
+    );
+  }
+  // Validate each primary weapon
+  for (let i = 0; i < obj.primaryWeapons.length; i++) {
+    validatePrimaryWeapon(
+      obj.primaryWeapons[i],
+      `${context}.primaryWeapons[${i}]`,
+    );
+  }
+  // Validate each secondary weapon
+  for (let i = 0; i < obj.secondaryWeapons.length; i++) {
+    validateSecondaryWeapon(
+      obj.secondaryWeapons[i],
+      `${context}.secondaryWeapons[${i}]`,
+    );
+  }
+}
+
+/**
+ * Validate primary weapon structure.
+ */
+function validatePrimaryWeapon(weapon: unknown, context: string): void {
+  if (typeof weapon !== 'object' || weapon === null) {
+    throw new Error(`Invalid replay: ${context} must be an object`);
+  }
+  const obj = weapon as Record<string, unknown>;
+  if (typeof obj.weaponId !== 'string') {
+    throw new Error(`Invalid replay: ${context}.weaponId must be a string`);
+  }
+  if (typeof obj.bankSize !== 'number' || obj.bankSize < 1) {
+    throw new Error(
+      `Invalid replay: ${context}.bankSize must be a positive number`,
+    );
+  }
+  // ammo and maxAmmo are optional for primary weapons (energy weapons don't have them)
+  if (obj.ammo !== undefined && typeof obj.ammo !== 'number') {
+    throw new Error(`Invalid replay: ${context}.ammo must be a number`);
+  }
+  if (obj.maxAmmo !== undefined && typeof obj.maxAmmo !== 'number') {
+    throw new Error(`Invalid replay: ${context}.maxAmmo must be a number`);
+  }
+}
+
+/**
+ * Validate secondary weapon structure.
+ */
+function validateSecondaryWeapon(weapon: unknown, context: string): void {
+  if (typeof weapon !== 'object' || weapon === null) {
+    throw new Error(`Invalid replay: ${context} must be an object`);
+  }
+  const obj = weapon as Record<string, unknown>;
+  if (typeof obj.weaponId !== 'string') {
+    throw new Error(`Invalid replay: ${context}.weaponId must be a string`);
+  }
+  if (typeof obj.bankSize !== 'number' || obj.bankSize < 1) {
+    throw new Error(
+      `Invalid replay: ${context}.bankSize must be a positive number`,
+    );
+  }
+  // ammo and maxAmmo are required for secondary weapons (missiles)
+  if (typeof obj.ammo !== 'number') {
+    throw new Error(`Invalid replay: ${context}.ammo must be a number`);
+  }
+  if (typeof obj.maxAmmo !== 'number') {
+    throw new Error(`Invalid replay: ${context}.maxAmmo must be a number`);
+  }
+}
+
+/**
+ * Validate wingmen array.
+ */
+function validateWingmen(wingmen: unknown): void {
+  if (!Array.isArray(wingmen)) {
+    throw new Error('Invalid replay: wingmen must be an array');
+  }
+  for (let i = 0; i < wingmen.length; i++) {
+    validateWingman(wingmen[i], `wingmen[${i}]`);
+  }
+}
+
+/**
+ * Validate wingman structure.
+ */
+function validateWingman(wingman: unknown, context: string): void {
+  if (typeof wingman !== 'object' || wingman === null) {
+    throw new Error(`Invalid replay: ${context} must be an object`);
+  }
+  const obj = wingman as Record<string, unknown>;
+  // Validate loadout
+  validateShipLoadout(obj.loadout, `${context}.loadout`);
+  // Validate position
+  if (typeof obj.position !== 'object' || obj.position === null) {
+    throw new Error(`Invalid replay: ${context}.position must be an object`);
+  }
+  const pos = obj.position as Record<string, unknown>;
+  if (typeof pos.x !== 'number') {
+    throw new Error(`Invalid replay: ${context}.position.x must be a number`);
+  }
+  if (typeof pos.y !== 'number') {
+    throw new Error(`Invalid replay: ${context}.position.y must be a number`);
+  }
+  if (typeof pos.z !== 'number') {
+    throw new Error(`Invalid replay: ${context}.position.z must be a number`);
+  }
+  // pilotSkill is optional
+  if (obj.pilotSkill !== undefined && typeof obj.pilotSkill !== 'string') {
+    throw new Error(`Invalid replay: ${context}.pilotSkill must be a string`);
   }
 }

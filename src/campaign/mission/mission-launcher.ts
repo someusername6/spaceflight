@@ -7,6 +7,7 @@ import { deriveKey } from '../../core/prng';
 import { createGame, startGame } from '../../game';
 import { InputRecorder } from '../../input/input-recorder';
 import type { ReplayWingman } from '../../replay/types';
+import { getPlayerAutoaim } from '../../settings/game-settings';
 import { startRecording } from '../../systems/input';
 import { initMatchStats } from '../../systems/stats';
 import { setMissionContainer } from '../../ui/common/screens';
@@ -73,7 +74,8 @@ export function launchMission(
   controller.game = game;
 
   // Create input recorder (will capture deployment data below)
-  const recorder = new InputRecorder(seed, contract.id);
+  // Capture playerAutoaim at mission start for replay determinism
+  const recorder = new InputRecorder(seed, contract.id, getPlayerAutoaim());
 
   // Create all renderers and store in controller for disposal
   const renderers = createMissionRenderers(controller.missionContainer, seed);

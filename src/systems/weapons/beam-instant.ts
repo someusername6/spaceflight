@@ -154,7 +154,7 @@ function fireInstantBeam(
   // Apply autoaim if weapon has autoaimFov or isPlayer, and target exists
   const baseAutoaim = weapon.autoaimFov ?? 0;
   const effectiveAutoaim = isPlayer
-    ? baseAutoaim + getPlayerAutoaimBonus()
+    ? baseAutoaim + getPlayerAutoaimBonus(world)
     : baseAutoaim;
   if (effectiveAutoaim > 0 && targetEntity !== undefined) {
     const targetTransform = getComponent<Transform>(

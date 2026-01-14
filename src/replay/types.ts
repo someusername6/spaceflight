@@ -4,8 +4,10 @@
  * Interfaces and constants for the replay recording and playback system.
  */
 
-/** Replay format version for migration support */
-export const REPLAY_VERSION = 3;
+import type { PlayerAutoaim } from '../settings/game-settings';
+
+/** Replay format version */
+export const REPLAY_VERSION = 1;
 
 /** Simulation tick rate in Hz */
 export const TICK_RATE = 60;
@@ -135,7 +137,7 @@ export interface ReplayMetadata {
  * This is what gets saved to storage and exported to files.
  */
 export interface FullReplayData {
-  /** Format version for migrations */
+  /** Format version */
   version: typeof REPLAY_VERSION;
   /** World seed for deterministic reconstruction */
   seed: number;
@@ -147,16 +149,12 @@ export interface FullReplayData {
   tickCount: number;
   /** Mission and recording metadata */
   metadata: ReplayMetadata;
-  /**
-   * Player ship loadout at mission start.
-   * Added in v3 - optional for backwards compatibility with v2 replays.
-   */
-  playerLoadout?: ReplayShipLoadout;
-  /**
-   * Wingmen deployed with player.
-   * Added in v3 - optional for backwards compatibility with v2 replays.
-   */
-  wingmen?: ReplayWingman[];
+  /** Player ship loadout at mission start */
+  playerLoadout: ReplayShipLoadout;
+  /** Wingmen deployed with player (empty array if none) */
+  wingmen: ReplayWingman[];
+  /** Player autoaim setting at recording time (affects projectile aim) */
+  playerAutoaim: PlayerAutoaim;
 }
 
 /** Base fields shared by all stored replay formats */

@@ -7,7 +7,6 @@
 
 import { compressJSON, decompressToString, isGzipCompressed } from './gzip';
 import {
-  migrateReplay,
   validateCoreFields,
   validateMetadata,
   validateReplayStructure,
@@ -43,7 +42,7 @@ export function importReplayFromJSON(json: string): FullReplayData {
     throw new Error('Invalid JSON format');
   }
 
-  return validateAndMigrateReplay(data);
+  return validateReplay(data);
 }
 
 /**
@@ -58,15 +57,15 @@ export async function importReplayCompressed(
 }
 
 /**
- * Validate replay data and apply migrations.
+ * Validate replay data.
  */
-function validateAndMigrateReplay(data: unknown): FullReplayData {
+function validateReplay(data: unknown): FullReplayData {
   validateReplayStructure(data);
   validateVersion(data);
   validateCoreFields(data);
   validateMetadata(data);
-  const migrated = migrateReplay(data);
-  return migrated as unknown as FullReplayData;
+  // After validation, data conforms to FullReplayData
+  return data as unknown as FullReplayData;
 }
 
 /**

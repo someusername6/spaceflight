@@ -5,7 +5,6 @@
  * 1. Compressed export produces valid gzip
  * 2. Compressed import decompresses and validates
  * 3. Roundtrip preserves all data
- * 4. Migration works with compressed data
  */
 
 import { isGzipCompressed } from '../../../src/replay/gzip.ts';
@@ -19,10 +18,10 @@ import { assertEqual, assertTrue, runTests, test } from './test-helpers.mjs';
 // Test Data
 // ============================================================================
 
-/** Valid v3 replay data */
-function createValidV3Replay() {
+/** Valid v1 replay data */
+function createValidReplay() {
   return {
-    version: 3,
+    version: 1,
     seed: 12345,
     inputs: [64, 64, 64, 512, 512],
     inputsCompressed: false,
@@ -42,12 +41,7 @@ function createValidV3Replay() {
     playerLoadout: {
       shipClass: 'interceptor',
       primaryWeapons: [
-        {
-          weaponId: 'plasma',
-          bankSize: 2,
-          ammo: undefined,
-          maxAmmo: undefined,
-        },
+        { weaponId: 'plasma', bankSize: 2 },
         { weaponId: 'autocannon', bankSize: 1, ammo: 100, maxAmmo: 100 },
       ],
       secondaryWeapons: [
@@ -64,27 +58,7 @@ function createValidV3Replay() {
         position: { x: 20, y: 0, z: -10 },
       },
     ],
-  };
-}
-
-/** Valid v1 replay data (no inputsCompressed, no stats) */
-function createValidV1Replay() {
-  return {
-    version: 1,
-    seed: 12345,
-    inputs: [64, 64, 64, 512, 512],
-    tickCount: 5,
-    metadata: {
-      id: 'test-id',
-      missionId: 's1-gnat-expectations',
-      missionName: 'Gnat Expectations',
-      sector: 1,
-      shipType: 'fighter',
-      outcome: 'victory',
-      durationTicks: 5,
-      recordedAt: Date.now(),
-      gameVersion: '0.1.0',
-    },
+    playerAutoaim: 1,
   };
 }
 
@@ -93,7 +67,7 @@ function createValidV1Replay() {
 // ============================================================================
 
 test('exportReplayCompressed: produces gzip data', async () => {
-  const replay = createValidV3Replay();
+  const replay = createValidReplay();
   const compressed = await exportReplayCompressed(replay);
 
   assertTrue(compressed instanceof Uint8Array, 'Should return Uint8Array');
@@ -102,11 +76,11 @@ test('exportReplayCompressed: produces gzip data', async () => {
 });
 
 test('importReplayCompressed: decompresses and validates', async () => {
-  const replay = createValidV3Replay();
+  const replay = createValidReplay();
   const compressed = await exportReplayCompressed(replay);
   const imported = await importReplayCompressed(compressed);
 
-  assertEqual(imported.version, 3, 'Version should be 3');
+  assertEqual(imported.version, 1, 'Version should be 1');
   assertEqual(imported.seed, 12345, 'Seed should match');
   assertEqual(
     imported.metadata.missionId,
@@ -116,7 +90,7 @@ test('importReplayCompressed: decompresses and validates', async () => {
 });
 
 test('compressed roundtrip: preserves all data', async () => {
-  const replay = createValidV3Replay();
+  const replay = createValidReplay();
   const compressed = await exportReplayCompressed(replay);
   const imported = await importReplayCompressed(compressed);
 
@@ -142,43 +116,16 @@ test('compressed roundtrip: preserves all data', async () => {
     replay.wingmen.length,
     'wingmen.length should roundtrip',
   );
-});
-
-test('compressed: migrates old versions', async () => {
-  const v1 = createValidV1Replay();
-  // Manually compress v1 data (simulating old compressed replay)
-  const json = JSON.stringify(v1);
-  const encoder = new TextEncoder();
-  const cs = new CompressionStream('gzip');
-  const writer = cs.writable.getWriter();
-  writer.write(encoder.encode(json));
-  writer.close();
-
-  const chunks = [];
-  const reader = cs.readable.getReader();
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    chunks.push(value);
-  }
-  const totalLength = chunks.reduce((sum, c) => sum + c.length, 0);
-  const compressed = new Uint8Array(totalLength);
-  let offset = 0;
-  for (const chunk of chunks) {
-    compressed.set(chunk, offset);
-    offset += chunk.length;
-  }
-
-  const imported = await importReplayCompressed(compressed);
-
-  assertEqual(imported.version, 3, 'Should migrate to v3');
-  assertEqual(imported.inputsCompressed, false, 'Should add inputsCompressed');
-  assertTrue(imported.metadata.stats !== undefined, 'Should add stats');
+  assertEqual(
+    imported.playerAutoaim,
+    replay.playerAutoaim,
+    'playerAutoaim should roundtrip',
+  );
 });
 
 test('compressed: compression ratio is reasonable', async () => {
   // Create a replay with lots of repeated data (common in real replays)
-  const replay = createValidV3Replay();
+  const replay = createValidReplay();
   replay.inputs = new Array(10000).fill(64); // 10k repeated inputs
   replay.tickCount = 10000;
 

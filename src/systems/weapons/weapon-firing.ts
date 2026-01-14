@@ -25,9 +25,12 @@ import {
 
 const tempZeroVec = new THREE.Vector3(0, 0, 0);
 
-/** Get the player autoaim bonus from settings (default 1 degree) */
-export function getPlayerAutoaimBonus(): number {
-  return getPlayerAutoaim();
+/**
+ * Get the player autoaim bonus.
+ * During replay, uses the recorded setting. During live play, uses current setting.
+ */
+export function getPlayerAutoaimBonus(world: World): number {
+  return world.replayAutoaim ?? getPlayerAutoaim();
 }
 
 /** Weapon info for firing (avoids per-frame allocations) */
@@ -109,7 +112,7 @@ export function fireWeaponsByLinkMode(
     let autoaim: AutoaimParams | undefined;
     const baseAutoaim = weapon.autoaimFov ?? 0;
     const effectiveAutoaim = isPlayer
-      ? baseAutoaim + getPlayerAutoaimBonus()
+      ? baseAutoaim + getPlayerAutoaimBonus(world)
       : baseAutoaim;
     if (effectiveAutoaim > 0 && targetTransform) {
       const interceptPoint = calculateInterceptPoint(

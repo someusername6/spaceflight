@@ -59,13 +59,13 @@ export class ReplayPlayback {
 
     this.inputPlayer = new InputPlayer(this.inputs);
 
-    // Set up mission from replay metadata (v3+ includes loadout for determinism)
+    // Set up mission from replay metadata
     const { world, waveState, mission } = setupReplayWorld(
       replay.seed,
       replay.metadata.missionId,
-      replay.metadata.shipType,
       replay.playerLoadout,
       replay.wingmen,
+      replay.playerAutoaim,
     );
     this.world = world;
     this.waveState = waveState;
@@ -79,9 +79,9 @@ export class ReplayPlayback {
     const { world, waveState, mission } = setupReplayWorld(
       this.replay.seed,
       this.replay.metadata.missionId,
-      this.replay.metadata.shipType,
       this.replay.playerLoadout,
       this.replay.wingmen,
+      this.replay.playerAutoaim,
     );
     this.world = world;
     this.waveState = waveState;

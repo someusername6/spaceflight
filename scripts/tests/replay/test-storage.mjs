@@ -3,8 +3,7 @@
  *
  * Verifies:
  * 1. Import validation works correctly
- * 2. Version migration upgrades v1 replays to v2
- * 3. Export produces valid JSON
+ * 2. Export produces valid JSON
  */
 
 import {
@@ -23,10 +22,10 @@ import {
 // Test Data
 // ============================================================================
 
-/** Valid v3 replay data */
-function createValidV3Replay() {
+/** Valid v1 replay data */
+function createValidReplay() {
   return {
-    version: 3,
+    version: 1,
     seed: 12345,
     inputs: [64, 64, 64, 512, 512],
     inputsCompressed: false,
@@ -46,12 +45,7 @@ function createValidV3Replay() {
     playerLoadout: {
       shipClass: 'interceptor',
       primaryWeapons: [
-        {
-          weaponId: 'plasma',
-          bankSize: 2,
-          ammo: undefined,
-          maxAmmo: undefined,
-        },
+        { weaponId: 'plasma', bankSize: 2 },
         { weaponId: 'autocannon', bankSize: 1, ammo: 100, maxAmmo: 100 },
       ],
       secondaryWeapons: [
@@ -68,50 +62,7 @@ function createValidV3Replay() {
         position: { x: 20, y: 0, z: -10 },
       },
     ],
-  };
-}
-
-/** Valid v2 replay data (for migration testing) */
-function createValidV2Replay() {
-  return {
-    version: 2,
-    seed: 12345,
-    inputs: [64, 64, 64, 512, 512],
-    inputsCompressed: false,
-    tickCount: 5,
-    metadata: {
-      id: 'test-id',
-      missionId: 's1-gnat-expectations',
-      missionName: 'Gnat Expectations',
-      sector: 1,
-      shipType: 'fighter',
-      outcome: 'victory',
-      durationTicks: 5,
-      recordedAt: Date.now(),
-      gameVersion: '0.1.8',
-      stats: { kills: 3, damageDealt: 150, damageTaken: 50 },
-    },
-  };
-}
-
-/** Valid v1 replay data (no inputsCompressed, no stats) */
-function createValidV1Replay() {
-  return {
-    version: 1,
-    seed: 12345,
-    inputs: [64, 64, 64, 512, 512],
-    tickCount: 5,
-    metadata: {
-      id: 'test-id',
-      missionId: 's1-gnat-expectations',
-      missionName: 'Gnat Expectations',
-      sector: 1,
-      shipType: 'fighter',
-      outcome: 'victory',
-      durationTicks: 5,
-      recordedAt: Date.now(),
-      gameVersion: '0.1.0',
-    },
+    playerAutoaim: 1,
   };
 }
 
@@ -119,12 +70,12 @@ function createValidV1Replay() {
 // Import Validation Tests
 // ============================================================================
 
-test('importReplayFromJSON: valid v3 replay', () => {
-  const replay = createValidV3Replay();
+test('importReplayFromJSON: valid replay', () => {
+  const replay = createValidReplay();
   const json = JSON.stringify(replay);
   const imported = importReplayFromJSON(json);
 
-  assertEqual(imported.version, 3, 'Version should be 3');
+  assertEqual(imported.version, 1, 'Version should be 1');
   assertEqual(imported.seed, 12345, 'Seed should match');
   assertEqual(imported.tickCount, 5, 'Tick count should match');
   assertEqual(
@@ -132,14 +83,13 @@ test('importReplayFromJSON: valid v3 replay', () => {
     's1-gnat-expectations',
     'Mission ID should match',
   );
-  assertTrue(imported.playerLoadout !== undefined, 'Should have playerLoadout');
   assertEqual(
     imported.playerLoadout.shipClass,
     'interceptor',
     'Player ship class should match',
   );
-  assertTrue(imported.wingmen !== undefined, 'Should have wingmen');
   assertEqual(imported.wingmen.length, 1, 'Should have 1 wingman');
+  assertEqual(imported.playerAutoaim, 1, 'Player autoaim should match');
 });
 
 test('importReplayFromJSON: rejects invalid JSON', () => {
@@ -159,7 +109,7 @@ test('importReplayFromJSON: rejects non-object', () => {
 });
 
 test('importReplayFromJSON: rejects missing version', () => {
-  const replay = createValidV3Replay();
+  const replay = createValidReplay();
   delete replay.version;
   assertThrows(
     () => importReplayFromJSON(JSON.stringify(replay)),
@@ -168,18 +118,18 @@ test('importReplayFromJSON: rejects missing version', () => {
   );
 });
 
-test('importReplayFromJSON: rejects future version', () => {
-  const replay = createValidV3Replay();
+test('importReplayFromJSON: rejects wrong version', () => {
+  const replay = createValidReplay();
   replay.version = 999;
   assertThrows(
     () => importReplayFromJSON(JSON.stringify(replay)),
-    'newer than supported',
-    'Future version',
+    'not supported',
+    'Wrong version',
   );
 });
 
 test('importReplayFromJSON: rejects missing seed', () => {
-  const replay = createValidV3Replay();
+  const replay = createValidReplay();
   delete replay.seed;
   assertThrows(
     () => importReplayFromJSON(JSON.stringify(replay)),
@@ -189,7 +139,7 @@ test('importReplayFromJSON: rejects missing seed', () => {
 });
 
 test('importReplayFromJSON: rejects non-number inputs', () => {
-  const replay = createValidV3Replay();
+  const replay = createValidReplay();
   replay.inputs = [64, 'not a number', 512];
   assertThrows(
     () => importReplayFromJSON(JSON.stringify(replay)),
@@ -199,7 +149,7 @@ test('importReplayFromJSON: rejects non-number inputs', () => {
 });
 
 test('importReplayFromJSON: rejects missing missionId', () => {
-  const replay = createValidV3Replay();
+  const replay = createValidReplay();
   delete replay.metadata.missionId;
   assertThrows(
     () => importReplayFromJSON(JSON.stringify(replay)),
@@ -209,7 +159,7 @@ test('importReplayFromJSON: rejects missing missionId', () => {
 });
 
 test('importReplayFromJSON: rejects invalid outcome', () => {
-  const replay = createValidV3Replay();
+  const replay = createValidReplay();
   replay.metadata.outcome = 'invalid';
   assertThrows(
     () => importReplayFromJSON(JSON.stringify(replay)),
@@ -219,7 +169,7 @@ test('importReplayFromJSON: rejects invalid outcome', () => {
 });
 
 test('importReplayFromJSON: accepts timeout outcome', () => {
-  const replay = createValidV3Replay();
+  const replay = createValidReplay();
   replay.metadata.outcome = 'timeout';
   const imported = importReplayFromJSON(JSON.stringify(replay));
   assertEqual(
@@ -230,7 +180,7 @@ test('importReplayFromJSON: accepts timeout outcome', () => {
 });
 
 test('importReplayFromJSON: rejects invalid sector', () => {
-  const replay = createValidV3Replay();
+  const replay = createValidReplay();
   replay.metadata.sector = 0;
   assertThrows(
     () => importReplayFromJSON(JSON.stringify(replay)),
@@ -240,7 +190,7 @@ test('importReplayFromJSON: rejects invalid sector', () => {
 });
 
 test('importReplayFromJSON: validates stats fields', () => {
-  const replay = createValidV3Replay();
+  const replay = createValidReplay();
   replay.metadata.stats.kills = 'not a number';
   assertThrows(
     () => importReplayFromJSON(JSON.stringify(replay)),
@@ -249,64 +199,106 @@ test('importReplayFromJSON: validates stats fields', () => {
   );
 });
 
-// ============================================================================
-// Version Migration Tests
-// ============================================================================
-
-test('migration: v1 to v3 adds inputsCompressed and stats', () => {
-  const v1 = createValidV1Replay();
-  const json = JSON.stringify(v1);
-  const imported = importReplayFromJSON(json);
-
-  assertEqual(imported.version, 3, 'Version should be upgraded to 3');
-  assertEqual(
-    imported.inputsCompressed,
-    false,
-    'inputsCompressed should be added as false',
-  );
-  assertTrue(imported.metadata.stats !== undefined, 'stats should be added');
-  assertEqual(imported.metadata.stats.kills, 0, 'kills should default to 0');
-});
-
-test('migration: v2 to v3 upgrades version', () => {
-  const v2 = createValidV2Replay();
-  const json = JSON.stringify(v2);
-  const imported = importReplayFromJSON(json);
-
-  assertEqual(imported.version, 3, 'Version should be upgraded to 3');
-  // v2 replays don't have loadout data - they'll use fallback
-  assertEqual(
-    imported.playerLoadout,
-    undefined,
-    'playerLoadout should be undefined for v2',
-  );
-  assertEqual(
-    imported.wingmen,
-    undefined,
-    'wingmen should be undefined for v2',
+test('importReplayFromJSON: rejects missing playerLoadout', () => {
+  const replay = createValidReplay();
+  delete replay.playerLoadout;
+  assertThrows(
+    () => importReplayFromJSON(JSON.stringify(replay)),
+    'missing playerLoadout',
+    'Missing playerLoadout',
   );
 });
 
-test('migration: v1 replay preserves original data', () => {
-  const v1 = createValidV1Replay();
-  const json = JSON.stringify(v1);
-  const imported = importReplayFromJSON(json);
+test('importReplayFromJSON: rejects missing wingmen', () => {
+  const replay = createValidReplay();
+  delete replay.wingmen;
+  assertThrows(
+    () => importReplayFromJSON(JSON.stringify(replay)),
+    'missing wingmen',
+    'Missing wingmen',
+  );
+});
 
-  assertEqual(imported.seed, v1.seed, 'seed should be preserved');
-  assertEqual(
-    imported.tickCount,
-    v1.tickCount,
-    'tickCount should be preserved',
+test('importReplayFromJSON: rejects missing playerAutoaim', () => {
+  const replay = createValidReplay();
+  delete replay.playerAutoaim;
+  assertThrows(
+    () => importReplayFromJSON(JSON.stringify(replay)),
+    'invalid playerAutoaim',
+    'Missing playerAutoaim',
   );
-  assertEqual(
-    imported.metadata.missionId,
-    v1.metadata.missionId,
-    'missionId should be preserved',
+});
+
+test('importReplayFromJSON: rejects invalid playerAutoaim value', () => {
+  const replay = createValidReplay();
+  replay.playerAutoaim = 5; // Not a valid value (valid: 0, 0.5, 1, 1.5, 2, 2.5, 3)
+  assertThrows(
+    () => importReplayFromJSON(JSON.stringify(replay)),
+    'invalid playerAutoaim',
+    'Invalid playerAutoaim value',
   );
-  assertEqual(
-    imported.metadata.outcome,
-    v1.metadata.outcome,
-    'outcome should be preserved',
+});
+
+test('importReplayFromJSON: rejects invalid playerLoadout structure', () => {
+  const replay = createValidReplay();
+  replay.playerLoadout = { shipClass: 123 }; // shipClass should be string
+  assertThrows(
+    () => importReplayFromJSON(JSON.stringify(replay)),
+    'shipClass must be a string',
+    'Invalid shipClass type',
+  );
+});
+
+test('importReplayFromJSON: rejects missing primaryWeapons', () => {
+  const replay = createValidReplay();
+  delete replay.playerLoadout.primaryWeapons;
+  assertThrows(
+    () => importReplayFromJSON(JSON.stringify(replay)),
+    'primaryWeapons must be array',
+    'Missing primaryWeapons',
+  );
+});
+
+test('importReplayFromJSON: rejects invalid primary weapon', () => {
+  const replay = createValidReplay();
+  replay.playerLoadout.primaryWeapons[0] = { weaponId: 'plasma' }; // Missing bankSize
+  assertThrows(
+    () => importReplayFromJSON(JSON.stringify(replay)),
+    'bankSize must be a positive number',
+    'Invalid primary weapon bankSize',
+  );
+});
+
+test('importReplayFromJSON: rejects invalid secondary weapon', () => {
+  const replay = createValidReplay();
+  replay.playerLoadout.secondaryWeapons[0] = {
+    weaponId: 'seeker',
+    bankSize: 2,
+  }; // Missing ammo
+  assertThrows(
+    () => importReplayFromJSON(JSON.stringify(replay)),
+    'ammo must be a number',
+    'Invalid secondary weapon ammo',
+  );
+});
+
+test('importReplayFromJSON: rejects invalid wingman loadout', () => {
+  const replay = createValidReplay();
+  replay.wingmen[0].loadout = null;
+  assertThrows(
+    () => importReplayFromJSON(JSON.stringify(replay)),
+    'loadout must be an object',
+    'Invalid wingman loadout',
+  );
+});
+
+test('importReplayFromJSON: rejects invalid wingman position', () => {
+  const replay = createValidReplay();
+  replay.wingmen[0].position = { x: 'not a number', y: 0, z: 0 };
+  assertThrows(
+    () => importReplayFromJSON(JSON.stringify(replay)),
+    'position.x must be a number',
+    'Invalid wingman position',
   );
 });
 
@@ -315,21 +307,22 @@ test('migration: v1 replay preserves original data', () => {
 // ============================================================================
 
 test('exportReplayToJSON: produces valid JSON', () => {
-  const replay = createValidV3Replay();
+  const replay = createValidReplay();
   const json = exportReplayToJSON(replay);
 
   // Should be parseable
   const parsed = JSON.parse(json);
-  assertEqual(parsed.version, 3, 'Version should be in output');
+  assertEqual(parsed.version, 1, 'Version should be in output');
   assertEqual(parsed.seed, 12345, 'Seed should be in output');
   assertTrue(
     parsed.playerLoadout !== undefined,
     'playerLoadout should be in output',
   );
+  assertEqual(parsed.playerAutoaim, 1, 'playerAutoaim should be in output');
 });
 
 test('exportReplayToJSON: roundtrip preserves data', () => {
-  const replay = createValidV3Replay();
+  const replay = createValidReplay();
   const json = exportReplayToJSON(replay);
   const imported = importReplayFromJSON(json);
 
@@ -350,7 +343,6 @@ test('exportReplayToJSON: roundtrip preserves data', () => {
     replay.metadata.stats.kills,
     'stats.kills should roundtrip',
   );
-  // v3 loadout data
   assertEqual(
     imported.playerLoadout.shipClass,
     replay.playerLoadout.shipClass,
@@ -360,6 +352,11 @@ test('exportReplayToJSON: roundtrip preserves data', () => {
     imported.wingmen.length,
     replay.wingmen.length,
     'wingmen.length should roundtrip',
+  );
+  assertEqual(
+    imported.playerAutoaim,
+    replay.playerAutoaim,
+    'playerAutoaim should roundtrip',
   );
 });
 

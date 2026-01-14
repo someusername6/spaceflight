@@ -7,6 +7,7 @@
 
 import type { InputState } from '../core/types';
 import type { ReplayShipLoadout, ReplayWingman } from '../replay/types';
+import type { PlayerAutoaim } from '../settings/game-settings';
 import { applyDecodedInput, decodeInput, encodeInput } from './input-encoding';
 
 /**
@@ -43,10 +44,16 @@ export class InputRecorder {
   private missionId: string | undefined;
   private playerLoadout: ReplayShipLoadout | undefined;
   private wingmen: ReplayWingman[] = [];
+  private playerAutoaim: PlayerAutoaim;
 
-  constructor(seed: number, missionId?: string) {
+  constructor(
+    seed: number,
+    missionId: string | undefined,
+    playerAutoaim: PlayerAutoaim,
+  ) {
     this.seed = seed;
     this.missionId = missionId;
+    this.playerAutoaim = playerAutoaim;
   }
 
   /**
@@ -73,6 +80,13 @@ export class InputRecorder {
    */
   getWingmen(): ReplayWingman[] {
     return this.wingmen;
+  }
+
+  /**
+   * Get stored player autoaim setting.
+   */
+  getPlayerAutoaim(): PlayerAutoaim {
+    return this.playerAutoaim;
   }
 
   /**

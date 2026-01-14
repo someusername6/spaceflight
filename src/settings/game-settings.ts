@@ -133,16 +133,8 @@ function isValidFrameRateCap(value: unknown): value is FrameRateCap {
 /**
  * Validate player autoaim value.
  */
-function isValidPlayerAutoaim(value: unknown): value is PlayerAutoaim {
-  return (
-    value === 0 ||
-    value === 0.5 ||
-    value === 1 ||
-    value === 1.5 ||
-    value === 2 ||
-    value === 2.5 ||
-    value === 3
-  );
+export function isValidPlayerAutoaim(value: unknown): value is PlayerAutoaim {
+  return PLAYER_AUTOAIM_OPTIONS.some((opt) => opt.value === value);
 }
 
 /**
