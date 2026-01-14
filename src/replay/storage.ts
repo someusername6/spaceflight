@@ -14,15 +14,20 @@
  * of multiple operations (e.g., await openDB(), await getReplayCount()).
  */
 
-import {
-  migrateReplay,
-  validateCoreFields,
-  validateMetadata,
-  validateReplayStructure,
-  validateVersion,
-} from './storage-validation';
+import { compressJSON, decompressJSON, isCompressionSupported } from './gzip';
 import type { FullReplayData, ReplaySummary, StoredReplay } from './types';
 import { MAX_STORED_REPLAYS, toReplaySummary } from './types';
+
+// Re-export file operations from storage-files
+export {
+  downloadReplay,
+  downloadReplayJSON,
+  exportReplayCompressed,
+  exportReplayToJSON,
+  importReplayCompressed,
+  importReplayFromJSON,
+  openReplayFile,
+} from './storage-files';
 
 const DB_NAME = 'spaceflight-replays';
 const DB_VERSION = 1;
@@ -140,6 +145,7 @@ async function evictOldest(count: number): Promise<void> {
 /**
  * Save a replay to IndexedDB.
  * Auto-evicts oldest replays if over limit.
+ * Compresses replay data with gzip if supported.
  * Returns the assigned ID.
  */
 export async function saveReplay(replay: FullReplayData): Promise<string> {
@@ -154,19 +160,31 @@ export async function saveReplay(replay: FullReplayData): Promise<string> {
   const id = generateId();
 
   // Update metadata with assigned ID
+  const metadataWithId = { ...replay.metadata, id };
   const replayWithId: FullReplayData = {
     ...replay,
-    metadata: {
-      ...replay.metadata,
-      id,
-    },
+    metadata: metadataWithId,
   };
 
-  const stored: StoredReplay = {
-    id,
-    data: replayWithId,
-    savedAt: Date.now(),
-  };
+  // Build stored replay - compress if supported
+  let stored: StoredReplay;
+  if (isCompressionSupported()) {
+    const compressedData = await compressJSON(replayWithId);
+    stored = {
+      id,
+      savedAt: Date.now(),
+      metadata: metadataWithId,
+      compressedData,
+    };
+  } else {
+    // Fallback to uncompressed storage
+    stored = {
+      id,
+      savedAt: Date.now(),
+      metadata: metadataWithId,
+      data: replayWithId,
+    };
+  }
 
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, 'readwrite');
@@ -179,25 +197,36 @@ export async function saveReplay(replay: FullReplayData): Promise<string> {
 
 /**
  * Load a replay by ID.
+ * Automatically decompresses if stored in compressed format.
  * Returns null if not found.
  */
 export async function loadReplay(id: string): Promise<FullReplayData | null> {
   const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, 'readonly');
-    const store = tx.objectStore(STORE_NAME);
-    const request = store.get(id);
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => {
-      const stored = request.result as StoredReplay | undefined;
-      resolve(stored?.data ?? null);
-    };
-  });
+  const stored = await new Promise<StoredReplay | undefined>(
+    (resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const store = tx.objectStore(STORE_NAME);
+      const request = store.get(id);
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => resolve(request.result as StoredReplay);
+    },
+  );
+
+  if (!stored) return null;
+
+  // New format: compressed data
+  if (stored.compressedData) {
+    return decompressJSON<FullReplayData>(stored.compressedData);
+  }
+
+  // Legacy format: uncompressed data
+  return stored.data ?? null;
 }
 
 /**
  * List all replays as summaries (sorted by date, newest first).
  * More efficient than loading full replay data.
+ * Uses separate metadata field for compressed replays (no decompression needed).
  */
 export async function listReplays(): Promise<ReplaySummary[]> {
   const db = await openDB();
@@ -213,7 +242,13 @@ export async function listReplays(): Promise<ReplaySummary[]> {
       const cursor = request.result;
       if (cursor) {
         const stored = cursor.value as StoredReplay;
-        results.push(toReplaySummary(stored.data.metadata));
+        // New format has metadata at top level, legacy has it in data
+        const metadata = stored.metadata ?? stored.data?.metadata;
+        if (metadata) {
+          results.push(toReplaySummary(metadata));
+        } else {
+          console.warn(`Replay ${stored.id} has no metadata, skipping`);
+        }
         cursor.continue();
       } else {
         resolve(results);
@@ -247,117 +282,5 @@ export async function clearAllReplays(): Promise<void> {
     const request = store.clear();
     request.onerror = () => reject(request.error);
     request.onsuccess = () => resolve();
-  });
-}
-
-// ============================================================================
-// File Export/Import
-// ============================================================================
-
-/**
- * Export replay to JSON string for file download.
- */
-export function exportReplayToJSON(replay: FullReplayData): string {
-  return JSON.stringify(replay, null, 2);
-}
-
-/**
- * Validate and import replay from JSON string.
- * Throws on invalid data.
- */
-export function importReplayFromJSON(json: string): FullReplayData {
-  let data: unknown;
-  try {
-    data = JSON.parse(json);
-  } catch {
-    throw new Error('Invalid JSON format');
-  }
-
-  // Validate structure and fields
-  validateReplayStructure(data);
-  validateVersion(data);
-  validateCoreFields(data);
-  validateMetadata(data);
-
-  // Version migration - upgrade older replay formats to current version
-  const migrated = migrateReplay(data);
-
-  return migrated as unknown as FullReplayData;
-}
-
-/**
- * Download replay as a JSON file.
- */
-export function downloadReplay(
-  replay: FullReplayData,
-  filename?: string,
-): void {
-  const json = exportReplayToJSON(replay);
-  const blob = new Blob([json], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-
-  const name =
-    filename ??
-    `replay-${replay.metadata.missionName.replace(/\s+/g, '-')}.json`;
-
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = name;
-  a.click();
-
-  URL.revokeObjectURL(url);
-}
-
-/**
- * Open file picker to import a replay.
- * Uses File System Access API if available, falls back to input element.
- */
-export async function openReplayFile(): Promise<FullReplayData | null> {
-  const file = await pickFile();
-  if (!file) return null;
-
-  const json = await file.text();
-  return importReplayFromJSON(json);
-}
-
-/**
- * Pick a file using best available method.
- */
-async function pickFile(): Promise<File | null> {
-  // Try modern File System Access API (Chromium)
-  if ('showOpenFilePicker' in window) {
-    try {
-      const handles = await (
-        window as Window & {
-          showOpenFilePicker: (options: {
-            types: { description: string; accept: Record<string, string[]> }[];
-          }) => Promise<FileSystemFileHandle[]>;
-        }
-      ).showOpenFilePicker({
-        types: [
-          {
-            description: 'Replay files',
-            accept: { 'application/json': ['.json', '.replay'] },
-          },
-        ],
-      });
-      const handle = handles[0];
-      if (!handle) return null;
-      return await handle.getFile();
-    } catch (e) {
-      // User cancelled or API error
-      if ((e as Error).name === 'AbortError') return null;
-      // Fall through to legacy method
-    }
-  }
-
-  // Fallback for Firefox/Safari
-  return new Promise((resolve) => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json,.replay';
-    input.onchange = () => resolve(input.files?.[0] ?? null);
-    input.oncancel = () => resolve(null);
-    input.click();
   });
 }

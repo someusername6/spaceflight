@@ -367,4 +367,4 @@ test('exportReplayToJSON: roundtrip preserves data', () => {
 // Run Tests
 // ============================================================================
 
-runTests('Replay Storage Tests');
+await runTests('Replay Storage Tests');

@@ -159,18 +159,43 @@ export interface FullReplayData {
   wingmen?: ReplayWingman[];
 }
 
-/**
- * Stored replay wrapper in IndexedDB.
- * Adds save timestamp for FIFO ordering.
- */
-export interface StoredReplay {
+/** Base fields shared by all stored replay formats */
+interface StoredReplayBase {
   /** Same as metadata.id */
   id: string;
-  /** Full replay data */
-  data: FullReplayData;
   /** Unix timestamp when saved to DB */
   savedAt: number;
 }
+
+/** Compressed storage format (current) */
+interface StoredReplayCompressed extends StoredReplayBase {
+  /** Metadata stored separately for efficient listing */
+  metadata: ReplayMetadata;
+  /** Compressed replay data as gzip bytes */
+  compressedData: Uint8Array;
+  /** Not present in compressed format */
+  data?: undefined;
+}
+
+/** Legacy uncompressed storage format (for backwards compatibility) */
+interface StoredReplayLegacy extends StoredReplayBase {
+  /** Legacy format may or may not have separate metadata */
+  metadata?: ReplayMetadata;
+  /** Not present in legacy format */
+  compressedData?: undefined;
+  /** Full uncompressed replay data */
+  data: FullReplayData;
+}
+
+/**
+ * Stored replay wrapper in IndexedDB.
+ * Adds save timestamp for FIFO ordering.
+ *
+ * Supports two storage formats:
+ * - Compressed: compressedData (gzip) + metadata stored separately
+ * - Legacy: data contains full uncompressed replay
+ */
+export type StoredReplay = StoredReplayCompressed | StoredReplayLegacy;
 
 /**
  * Summary info for replay list display.

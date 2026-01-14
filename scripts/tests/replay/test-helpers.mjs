@@ -35,7 +35,7 @@ export function assertThrows(fn, expectedMessage, testName) {
   }
 }
 
-export function runTests(testName) {
+export async function runTests(testName) {
   console.log(testName);
   console.log(`${'='.repeat(testName.length)}\n`);
 
@@ -44,7 +44,8 @@ export function runTests(testName) {
 
   for (const { name, fn } of tests) {
     try {
-      fn();
+      // Support both sync and async test functions
+      await fn();
       console.log(`✓ ${name}`);
       localPassed++;
     } catch (e) {

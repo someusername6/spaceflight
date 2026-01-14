@@ -191,7 +191,7 @@ const ReplaysScreenComponent: Screen<ReplaysState, ReplaysScreenProps> = {
         try {
           const replay = await loadReplay(replayId);
           if (replay) {
-            downloadReplay(replay);
+            await downloadReplay(replay);
           }
         } catch (err) {
           api.setState({
