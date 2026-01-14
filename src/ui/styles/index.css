@@ -111,6 +111,7 @@
 
 /* Settings screen */
 @import "./screens/settings.css";
+@import "./screens/settings-bindings.css";
 @import "./screens/settings-picker.css";
 
 /* Pause menu modal */

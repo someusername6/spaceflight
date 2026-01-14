@@ -225,117 +225,7 @@
   gap: 0;
 }
 
-/* ========================================
-   BINDING ROW
-   ======================================== */
-
-.binding-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--space-2) var(--space-3);
-  background: var(--bg-panel);
-  border-bottom: 1px solid var(--border-color);
-  transition: background-color var(--duration-base) var(--ease-out);
-}
-
-.binding-row:last-child {
-  border-bottom: none;
-}
-
-.binding-row:hover {
-  background: rgba(0, 245, 255, 0.03);
-}
-
-.binding-label {
-  font-family: var(--font-ui);
-  font-size: var(--text-sm);
-  color: var(--text-primary);
-}
-
-.binding-controls {
-  display: flex;
-  gap: var(--space-2);
-  align-items: center;
-}
-
-/* Key button */
-.binding-key {
-  min-width: 100px;
-  text-align: center;
-  font-family: var(--font-body);
-  font-size: var(--text-sm);
-  padding: var(--space-1-5) var(--space-3);
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid var(--border-light);
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all var(--duration-base) var(--ease-out);
-}
-
-.binding-key:hover {
-  border-color: var(--color-secondary);
-  color: var(--color-secondary);
-}
-
-.binding-key.listening {
-  background: rgba(255, 159, 28, 0.15);
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-  animation: pulse-border 1s ease-in-out infinite;
-}
-
-@keyframes pulse-border {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(255, 159, 28, 0.4);
-  }
-  50% {
-    box-shadow: 0 0 0 4px rgba(255, 159, 28, 0);
-  }
-}
-
-/* Reset individual key button */
-.btn-reset-key {
-  padding: var(--space-1) var(--space-1-5);
-  min-width: auto;
-  background: transparent;
-  border: 1px solid var(--border-color);
-  color: var(--text-dim);
-}
-
-.btn-reset-key:hover {
-  border-color: var(--color-warning);
-  color: var(--color-warning);
-}
-
-.reset-icon {
-  font-size: var(--text-sm);
-}
-
-/* Settings picker styles are in settings-picker.css */
-
-/* Graphics settings section */
-.graphics-settings {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-/* Tab content container */
-.settings-tab-content {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
-/* Tab header (for reset button, etc.) */
-.settings-tab-header {
-  display: flex;
-  justify-content: flex-end;
-  padding-bottom: var(--space-3);
-  border-bottom: 1px solid var(--border-color);
-}
+/* Binding row styles are in settings-bindings.css */
 
 /* ========================================
    SETTINGS FOOTER
@@ -397,4 +287,25 @@
 
 .settings-confirm-buttons .btn {
   min-width: 120px;
+}
+
+/* ========================================
+   LOCKED/DISABLED CONTROLS
+   ======================================== */
+
+.settings-picker-trigger.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.settings-picker-trigger.disabled:hover {
+  border-color: var(--border-color);
+  background: rgba(0, 245, 255, 0.03);
+}
+
+.settings-locked-hint {
+  display: block;
+  font-size: var(--text-xs);
+  color: var(--color-warning);
+  margin-top: var(--space-1);
 }

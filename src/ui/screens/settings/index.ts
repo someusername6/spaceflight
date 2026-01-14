@@ -4,6 +4,7 @@
 
 import {
   downloadCampaign,
+  getCampaignMetadata,
   hasCampaign,
   openCampaignFile,
 } from '../../../campaign/storage';
@@ -277,6 +278,7 @@ export function renderSettingsScreen(element: HTMLElement): void {
     showFpsPopover: false,
     showAutoaimPopover: false,
     hasCampaign: false,
+    ironmanCampaign: false,
   };
   element.innerHTML = SettingsScreenComponent.render(initialState, {
     onBack: () => {},
@@ -292,10 +294,15 @@ export async function bindSettingsScreen(
   screenHandle?.destroy();
   cleanupKeyListener();
 
-  // Check if campaign exists for data tab
+  // Check if campaign exists and if it's ironman
   let campaignExists = false;
+  let isIronman = false;
   try {
     campaignExists = await hasCampaign();
+    if (campaignExists) {
+      const metadata = await getCampaignMetadata();
+      isIronman = metadata.ironmanMode ?? false;
+    }
   } catch {
     // Ignore errors, assume no campaign
   }
@@ -307,6 +314,7 @@ export async function bindSettingsScreen(
     showFpsPopover: false,
     showAutoaimPopover: false,
     hasCampaign: campaignExists,
+    ironmanCampaign: isIronman,
   };
 
   screenHandle = createScreen(

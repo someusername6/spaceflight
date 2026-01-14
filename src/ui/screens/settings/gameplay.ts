@@ -35,8 +35,30 @@ function renderAutoaimPopover(currentAutoaim: PlayerAutoaim): string {
 }
 
 /** Render the gameplay tab content */
-export function renderGameplayTab(showAutoaimPopover: boolean): string {
+export function renderGameplayTab(
+  showAutoaimPopover: boolean,
+  ironmanLocked: boolean = false,
+): string {
   const currentAutoaim = getPlayerAutoaim();
+
+  // When ironman is active, show a disabled version with explanation
+  const autoaimControl = ironmanLocked
+    ? `
+      <div class="settings-picker-trigger-container">
+        <button class="settings-picker-trigger disabled" disabled>
+          ${getAutoaimLabel(currentAutoaim)}
+        </button>
+        <span class="settings-locked-hint">Locked for Ironman campaign</span>
+      </div>
+    `
+    : `
+      <div class="settings-picker-trigger-container">
+        <button class="settings-picker-trigger" id="autoaim-trigger">
+          ${getAutoaimLabel(currentAutoaim)}
+        </button>
+        ${showAutoaimPopover ? renderAutoaimPopover(currentAutoaim) : ''}
+      </div>
+    `;
 
   return `
     <div class="settings-tab-content">
@@ -44,12 +66,7 @@ export function renderGameplayTab(showAutoaimPopover: boolean): string {
         <div class="binding-row">
           <span class="binding-label">Aim Assist</span>
           <div class="binding-controls">
-            <div class="settings-picker-trigger-container">
-              <button class="settings-picker-trigger" id="autoaim-trigger">
-                ${getAutoaimLabel(currentAutoaim)}
-              </button>
-              ${showAutoaimPopover ? renderAutoaimPopover(currentAutoaim) : ''}
-            </div>
+            ${autoaimControl}
           </div>
         </div>
       </div>

@@ -19,6 +19,8 @@ export interface SettingsState {
   showFpsPopover: boolean;
   showAutoaimPopover: boolean;
   hasCampaign: boolean;
+  /** True if active campaign is ironman (autoaim locked) */
+  ironmanCampaign: boolean;
 }
 
 /** Render the reset confirmation view */
@@ -69,7 +71,10 @@ export function renderMainView(state: SettingsState): string {
   if (state.selectedTab === 'graphics') {
     tabContent = renderGraphicsTab(state.showFpsPopover);
   } else if (state.selectedTab === 'gameplay') {
-    tabContent = renderGameplayTab(state.showAutoaimPopover);
+    tabContent = renderGameplayTab(
+      state.showAutoaimPopover,
+      state.ironmanCampaign,
+    );
   } else if (state.selectedTab === 'data') {
     tabContent = renderDataTab(state.hasCampaign);
   } else {
