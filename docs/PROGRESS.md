@@ -75,12 +75,12 @@ Weapons (projectiles, missiles, beams, decoys), shields, AI (states, behaviors, 
   - Sector 5: Ultimate (nuclear lance)
 
 ### 5.3 Mission Content ✅
-- **41 Total Missions** across all 5 sectors (`src/ui/screens/missions/`)
-  - Sector 1: 9 missions (Frontier - Green/Rookie/Regular enemies, 2,500-4,600 cr)
-  - Sector 2: 8 missions (Contested Zone - Rookie/Regular/Veteran enemies, 3,200-5,800 cr)
-  - Sector 3: 8 missions (Warzone - Regular/Veteran/Ace enemies, 4,200-6,650 cr)
-  - Sector 4: 8 missions (Core Systems - Veteran/Ace enemies, 5,900-9,550 cr)
-  - Sector 5: 8 missions (Endless - Ace enemies, 8,350-13,050 cr)
+- **74 Total Missions** across all 5 sectors (`src/ui/screens/missions/`)
+  - Sector 1: 14 missions (Frontier - Green/Rookie/Regular enemies)
+  - Sector 2: 16 missions (Contested Zone - Rookie/Regular/Veteran enemies)
+  - Sector 3: 16 missions (Warzone - Regular/Veteran/Ace enemies)
+  - Sector 4: 15 missions (Core Systems - Veteran/Ace enemies)
+  - Sector 5: 13 missions (Endless - Ace enemies)
 - **Elite Archetypes** for late-game (`src/factories/enemy-archetypes.ts`)
   - titan: Striker with railguns
   - juggernaut: Defender with nukes

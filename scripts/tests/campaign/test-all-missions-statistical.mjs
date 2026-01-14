@@ -107,7 +107,7 @@ for (let i = 0; i < allMissions.length; i++) {
   const mission = allMissions[i];
   const progress = `[${i + 1}/${allMissions.length}]`;
   process.stdout.write(
-    `${progress} Testing "${mission.name}"...`.padEnd(60) + '\r',
+    `${`${progress} Testing "${mission.name}"...`.padEnd(60)}\r`,
   );
 
   const trialResult = runMissionTrials(

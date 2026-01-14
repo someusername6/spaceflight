@@ -107,7 +107,7 @@ if (!mission && !process.argv[3]) {
 
 if (!mission) {
   console.error(`Mission "${MISSION_NAME}" not found`);
-  console.error('Available missions in sector ' + SECTOR + ':');
+  console.error(`Available missions in sector ${SECTOR}:`);
   for (const m of sectorMissions) {
     console.error(`  - ${m.name} (${m.difficulty}) [${m.id}]`);
   }
