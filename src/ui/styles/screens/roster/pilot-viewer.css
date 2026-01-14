@@ -234,4 +234,15 @@
   background: rgba(0, 0, 0, 0.15);
 }
 
-/* .btn-unassign-pilot uses .btn-danger from buttons.css */
+/* Unassign button: subdued by default, red on hover */
+.btn-unassign-pilot.btn-danger {
+  border-color: var(--border-color);
+  color: var(--text-secondary);
+  background: transparent;
+}
+
+.btn-unassign-pilot.btn-danger:hover {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+  background: rgba(255, 51, 102, 0.1);
+}

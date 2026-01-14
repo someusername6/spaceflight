@@ -139,6 +139,19 @@
   width: 100%;
 }
 
+/* Unassign button: subdued by default, red on hover */
+.ship-picker-unassign.btn-danger {
+  border-color: var(--border-color);
+  color: var(--text-secondary);
+  background: transparent;
+}
+
+.ship-picker-unassign.btn-danger:hover {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+  background: rgba(255, 51, 102, 0.1);
+}
+
 /* ========================================
    EMPTY STATE
    ======================================== */

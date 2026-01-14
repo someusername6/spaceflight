@@ -172,6 +172,19 @@
   padding: var(--space-1-5) var(--space-3);
 }
 
+/* Delete button: subdued by default, red on hover */
+.replay-card-actions .btn-delete-replay {
+  border-color: var(--border-color);
+  color: var(--text-secondary);
+  background: transparent;
+}
+
+.replay-card-actions .btn-delete-replay:hover {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+  background: rgba(255, 51, 102, 0.1);
+}
+
 /* ========================================
    CONFIRM DELETE OVERLAY
    ======================================== */

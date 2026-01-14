@@ -23,6 +23,7 @@ import {
   type ScreenAPI,
   type ScreenHandle,
 } from '../../framework/screen';
+import { escapeHtml } from '../../utils';
 
 /** Replays screen callbacks */
 export interface ReplaysScreenProps {
@@ -54,16 +55,6 @@ function formatDate(timestamp: number): string {
     hour: '2-digit',
     minute: '2-digit',
   });
-}
-
-/** Escape HTML special characters to prevent XSS */
-function escapeHtml(unsafe: string): string {
-  return unsafe
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
 }
 
 /** Get outcome class and text */
