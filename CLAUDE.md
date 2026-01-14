@@ -137,7 +137,7 @@ npx tsx scripts/tests/run-tests.mjs --balance # Balance tests only
 
 | Category | Location | Purpose |
 |----------|----------|---------|
-| Quick tests | `scripts/tests/` | Fast, deterministic logic tests (~34 tests) |
+| Quick tests | `scripts/tests/` | Fast, deterministic logic tests (~36 test files) |
 | Balance tests | `scripts/tests/combat/`, `campaign/` | Simulation-based balance verification |
 
 ### Test Framework
@@ -163,10 +163,24 @@ describe('Feature', () => {
 | Weapons | `weapons/test-weapons*.mjs` |
 | AI | `ai/test-ai-*.mjs` |
 | Campaign | `campaign/test-*.mjs` |
+| Campaign Storage | `campaign/test-campaign-storage.mjs` (uses IndexedDB polyfill) |
 | Replay | `replay/test-*.mjs`, `systems/test-input-replay.mjs` |
 | Determinism | `systems/test-input-replay.mjs` |
 
 ### Shared Test Utilities
 
 - `scripts/tests/shared/replay-test-utils.mjs` - Battle simulation helpers, checksum computation
-- `scripts/tests/replay/test-helpers.mjs` - Custom assertion helpers (legacy)
+
+### Browser API Polyfills
+
+The campaign storage tests (`test-campaign-storage.mjs`) require browser API polyfills to run in Node.js:
+
+- **IndexedDB**: Uses `fake-indexeddb` package (npm dev dependency)
+- **localStorage**: Simple in-memory Map-based polyfill defined in test file
+
+When adding tests for browser-only code, follow the same pattern:
+```javascript
+// At top of test file, BEFORE imports that use browser APIs
+import 'fake-indexeddb/auto';  // Polyfill indexedDB
+globalThis.localStorage = { ... };  // Polyfill localStorage
+```
