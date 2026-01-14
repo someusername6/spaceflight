@@ -31,6 +31,7 @@ import {
   markContractAttempted,
   refreshContracts,
 } from '../state';
+import { autoSave } from '../storage';
 import type { Contract } from '../types';
 
 /**
@@ -68,9 +69,10 @@ export function setupSquadronScreen(
     }
   };
 
-  // State update handler
+  // State update handler with auto-save
   const onStateUpdate = (newState: typeof screenManager.campaignState) => {
     updateCampaignState(screenManager, newState);
+    void autoSave(newState, 'loadout-change');
   };
 
   createSquadronUI(
@@ -118,9 +120,10 @@ export function setupStoreScreen(
     }
   };
 
-  // State update handler
+  // State update handler with auto-save
   const onStateUpdate = (newState: typeof screenManager.campaignState) => {
     updateCampaignState(screenManager, newState);
+    void autoSave(newState, 'store-purchase');
   };
 
   createStoreUI(
@@ -188,6 +191,7 @@ export function setupContractsScreen(controller: CampaignController): void {
         contract.id,
       );
       updateCampaignState(screenManager, stateWithAttempt);
+      void autoSave(stateWithAttempt, 'mission-started');
 
       // Start mission with selected ships
       startMission(screenManager, contract);
@@ -202,6 +206,7 @@ export function setupContractsScreen(controller: CampaignController): void {
       // Advance to next sector
       const newState = advanceSector(screenManager.campaignState);
       updateCampaignState(screenManager, newState);
+      void autoSave(newState, 'sector-advance');
       // Refresh contracts screen with new sector's missions
       setupContractsScreen(controller);
     },
@@ -209,6 +214,7 @@ export function setupContractsScreen(controller: CampaignController): void {
       // Refresh contracts (pay credits, get new selection)
       const newState = refreshContracts(screenManager.campaignState);
       updateCampaignState(screenManager, newState);
+      void autoSave(newState, 'contracts-refresh');
       // Refresh contracts screen with new selection
       setupContractsScreen(controller);
     },

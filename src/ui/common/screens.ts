@@ -36,7 +36,6 @@ export interface ScreenManager {
   campaignState: CampaignState;
   selectedContract: Contract | null;
   lastMissionVictory: boolean;
-  currentSaveSlot: number | null;
 
   // Screen elements (created lazily)
   titleElement: HTMLElement | null;
@@ -69,7 +68,6 @@ export function createScreenManager(
     campaignState,
     selectedContract: null,
     lastMissionVictory: false,
-    currentSaveSlot: null,
     titleElement: null,
     squadronElement: null,
     storeElement: null,
@@ -200,7 +198,6 @@ export function updateCampaignState(
 
 /** Transition to title screen */
 export function goToTitle(manager: ScreenManager): void {
-  manager.currentSaveSlot = null;
   showScreen(manager, Screen.TITLE);
 }
 
@@ -215,14 +212,6 @@ export function goBackFromSettings(manager: ScreenManager): void {
   const target = manager.previousScreen ?? Screen.TITLE;
   manager.previousScreen = null;
   showScreen(manager, target);
-}
-
-/** Set the current save slot (for auto-save tracking) */
-export function setCurrentSaveSlot(
-  manager: ScreenManager,
-  slot: number | null,
-): void {
-  manager.currentSaveSlot = slot;
 }
 
 /** Transition to replays screen (remembers previous screen for back navigation) */

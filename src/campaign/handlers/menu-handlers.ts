@@ -16,7 +16,6 @@ import {
   goToReplayViewer,
   goToSettings,
   Screen,
-  setCurrentSaveSlot,
   updateCampaignState,
 } from '../../ui/common/screens';
 import {
@@ -51,35 +50,33 @@ import type { CampaignState } from '../types';
  * @param controller - Campaign controller instance
  * @param onStartGameplay - Callback when user starts gameplay (new game or continue)
  */
-export function setupTitleScreen(
+export async function setupTitleScreen(
   controller: CampaignController,
   onStartGameplay: () => void,
-): void {
+): Promise<void> {
   const { screenManager } = controller;
   const titleElement = getScreenElement(screenManager, Screen.TITLE);
 
   renderTitleScreen(titleElement);
-  bindTitleScreen(titleElement, {
+  await bindTitleScreen(titleElement, {
     onNewGame: () => {
       // Create fresh campaign state
       const newState = createNewCampaign();
       updateCampaignState(screenManager, newState);
-      setCurrentSaveSlot(screenManager, null);
 
       // Transition to squadron
       onStartGameplay();
     },
-    onContinue: (state: CampaignState, slot: number) => {
+    onContinue: (state: CampaignState) => {
       // Use loaded campaign state
       updateCampaignState(screenManager, state);
-      setCurrentSaveSlot(screenManager, slot);
 
       // Transition to squadron
       onStartGameplay();
     },
     onSettings: () => {
       goToSettings(screenManager);
-      setupSettingsScreen(controller, onStartGameplay);
+      void setupSettingsScreen(controller, onStartGameplay);
     },
     onReplays: () => {
       goToReplays(screenManager);
@@ -119,7 +116,7 @@ export function setupReplaysScreen(
       // Re-setup the screen we're returning to
       const currentScreen = screenManager.currentScreen;
       if (currentScreen === Screen.TITLE) {
-        setupTitleScreen(controller, onStartGameplay);
+        void setupTitleScreen(controller, onStartGameplay);
       }
     },
     onWatch: (replayId: string) => {
@@ -159,17 +156,17 @@ export function setupReplayViewer(
  * @param onStartGameplay - Callback for starting gameplay (passed through for title re-setup)
  * @param setupSquadronScreen - Optional callback to re-setup squadron when returning from settings
  */
-export function setupSettingsScreen(
+export async function setupSettingsScreen(
   controller: CampaignController,
   onStartGameplay: () => void,
   setupSquadronScreen?: (controller: CampaignController) => void,
-): void {
+): Promise<void> {
   const { screenManager } = controller;
   const settingsElement = getScreenElement(screenManager, Screen.SETTINGS);
   const comingFromTitle = screenManager.previousScreen === Screen.TITLE;
 
   renderSettingsScreen(settingsElement);
-  bindSettingsScreen(settingsElement, {
+  await bindSettingsScreen(settingsElement, {
     onBack: () => {
       // Transfer canvas back to title if needed
       if (comingFromTitle && hasBattleSimulation()) {
@@ -193,10 +190,14 @@ export function setupSettingsScreen(
       // Re-setup the screen we're returning to
       const currentScreen = screenManager.currentScreen;
       if (currentScreen === Screen.TITLE) {
-        setupTitleScreen(controller, onStartGameplay);
+        void setupTitleScreen(controller, onStartGameplay);
       } else if (currentScreen === Screen.SQUADRON && setupSquadronScreen) {
         setupSquadronScreen(controller);
       }
+    },
+    onCampaignImported: (state: CampaignState) => {
+      // Update campaign state in screen manager when imported
+      updateCampaignState(screenManager, state);
     },
   });
 

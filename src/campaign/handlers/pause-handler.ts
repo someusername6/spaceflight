@@ -9,12 +9,7 @@
  */
 
 import { pauseGame, resumeGame, stopGame } from '../../game';
-import {
-  goToSettings,
-  goToTitle,
-  Screen,
-  setCurrentSaveSlot,
-} from '../../ui/common/screens';
+import { goToSettings, goToTitle, Screen } from '../../ui/common/screens';
 import { showPauseMenu } from '../../ui/screens/pause-menu';
 import { closePopover } from '../../ui/screens/popover/state';
 import { cleanupTitleScreen, resetTitleScreen } from '../../ui/screens/title';
@@ -33,8 +28,8 @@ let escapeHandler: ((e: KeyboardEvent) => void) | null = null;
  */
 export function setupEscapeHandler(
   controller: CampaignController,
-  setupSettingsScreen: (controller: CampaignController) => void,
-  setupTitleScreen: (controller: CampaignController) => void,
+  setupSettingsScreen: (controller: CampaignController) => void | Promise<void>,
+  setupTitleScreen: (controller: CampaignController) => Promise<void>,
 ): void {
   // Remove any existing handler
   cleanupEscapeHandler();
@@ -67,12 +62,8 @@ export function setupEscapeHandler(
       // Close any open popovers before showing pause menu
       closePopover();
 
-      // Can save on pre-mission screens, not during results or mission
-      const canSave =
-        !inMission && screenManager.currentScreen !== Screen.RESULTS;
       await handlePauseMenu(
         controller,
-        canSave,
         inMission,
         setupSettingsScreen,
         setupTitleScreen,
@@ -104,32 +95,23 @@ export function cleanupEscapeHandler(): void {
  * Handle pause menu from campaign screens.
  *
  * @param controller - Campaign controller instance
- * @param canSave - Whether saving is allowed (not during mission/results)
  * @param inMission - Whether currently in a mission
  * @param setupSettingsScreen - Callback to setup settings screen
  * @param setupTitleScreen - Callback to setup title screen after quit
  */
 export async function handlePauseMenu(
   controller: CampaignController,
-  canSave: boolean,
   inMission: boolean,
-  setupSettingsScreen: (controller: CampaignController) => void,
-  setupTitleScreen: (controller: CampaignController) => void,
+  setupSettingsScreen: (controller: CampaignController) => void | Promise<void>,
+  setupTitleScreen: (controller: CampaignController) => Promise<void>,
 ): Promise<void> {
   const { screenManager } = controller;
 
-  const result = await showPauseMenu(screenManager.campaignState, canSave);
+  const result = await showPauseMenu();
 
   switch (result.action) {
     case 'resume':
       // Just close the menu, nothing to do
-      break;
-
-    case 'save':
-      if (result.saveSlot) {
-        setCurrentSaveSlot(screenManager, result.saveSlot);
-        console.log(`Game saved to slot ${result.saveSlot}`);
-      }
       break;
 
     case 'settings':
@@ -138,7 +120,7 @@ export async function handlePauseMenu(
         controller.pausedMissionForSettings = true;
       }
       goToSettings(screenManager);
-      setupSettingsScreen(controller);
+      void setupSettingsScreen(controller);
       break;
 
     case 'quit':
@@ -165,9 +147,9 @@ export async function handlePauseMenu(
       // Cleanup handlers and return to title
       cleanupEscapeHandler();
       cleanupTitleScreen();
-      resetTitleScreen();
+      void resetTitleScreen();
       goToTitle(screenManager);
-      setupTitleScreen(controller);
+      void setupTitleScreen(controller);
       break;
   }
 }

@@ -1,0 +1,86 @@
+/**
+ * Alert Modal Styles
+ * Simple modal for displaying messages to the user.
+ */
+
+/* ========================================
+   ALERT OVERLAY
+   ======================================== */
+
+.alert-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 1100; /* Above pause menu */
+  backdrop-filter: blur(4px);
+}
+
+/* Scanline overlay */
+.alert-overlay::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.15) 2px,
+    rgba(0, 0, 0, 0.15) 4px
+  );
+  pointer-events: none;
+  z-index: 100;
+}
+
+.alert-modal {
+  position: relative;
+  z-index: 10;
+  background: var(--bg-overlay);
+  border: 1px solid var(--border-color);
+  padding: var(--space-6);
+  min-width: 300px;
+  max-width: 450px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+/* ========================================
+   CONTENT
+   ======================================== */
+
+.alert-title {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: var(--font-semibold);
+  color: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.alert-message {
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.5;
+}
+
+.alert-buttons {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.alert-buttons .btn {
+  min-width: 100px;
+}

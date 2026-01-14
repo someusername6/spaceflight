@@ -4,11 +4,12 @@
 
 import type { GameAction } from '../../../input/key-bindings';
 import { renderControlsTab } from './controls';
+import { renderDataTab } from './data';
 import { renderGameplayTab } from './gameplay';
 import { renderGraphicsTab } from './graphics';
 
 /** Settings tab types */
-export type SettingsTab = 'graphics' | 'controls' | 'gameplay';
+export type SettingsTab = 'graphics' | 'controls' | 'gameplay' | 'data';
 
 /** Settings UI state */
 export interface SettingsState {
@@ -17,6 +18,7 @@ export interface SettingsState {
   showResetConfirm: boolean;
   showFpsPopover: boolean;
   showAutoaimPopover: boolean;
+  hasCampaign: boolean;
 }
 
 /** Render the reset confirmation view */
@@ -53,6 +55,10 @@ function renderTabBar(selectedTab: SettingsTab): string {
               data-tab="graphics" role="tab" aria-selected="${selectedTab === 'graphics'}">
         Graphics
       </button>
+      <button class="btn ${selectedTab === 'data' ? 'btn-primary' : ''}"
+              data-tab="data" role="tab" aria-selected="${selectedTab === 'data'}">
+        Data
+      </button>
     </nav>
   `;
 }
@@ -64,6 +70,8 @@ export function renderMainView(state: SettingsState): string {
     tabContent = renderGraphicsTab(state.showFpsPopover);
   } else if (state.selectedTab === 'gameplay') {
     tabContent = renderGameplayTab(state.showAutoaimPopover);
+  } else if (state.selectedTab === 'data') {
+    tabContent = renderDataTab(state.hasCampaign);
   } else {
     tabContent = renderControlsTab(state.listeningAction);
   }

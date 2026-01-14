@@ -107,6 +107,9 @@
 /* Pause menu modal */
 @import "./screens/pause-menu.css";
 
+/* Alert modal */
+@import "./screens/alert-modal.css";
+
 /* Sector advance modal */
 @import "./screens/sector-advance.css";
 

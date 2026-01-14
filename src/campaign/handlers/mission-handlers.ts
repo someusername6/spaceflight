@@ -6,6 +6,7 @@
  * - Game over screen with restart option
  */
 
+import { logError } from '../../core/logger';
 import type { World } from '../../core/types';
 import {
   getScreenElement,
@@ -21,6 +22,7 @@ import {
 import type { CampaignController } from '../controller-types';
 import type { SalvageResult } from '../salvage';
 import { createNewCampaign } from '../state';
+import { deleteCampaign, forceSave } from '../storage';
 import type { Contract } from '../types';
 import { setupSquadronScreen } from './campaign-handlers';
 
@@ -67,17 +69,33 @@ export function showResults(
  * @param controller - Campaign controller instance
  * @param setupContractsScreen - Callback to setup contracts screen
  */
-export function showGameOver(
+export async function showGameOver(
   controller: CampaignController,
   setupContractsScreen: (controller: CampaignController) => void,
-): void {
+): Promise<void> {
   const { screenManager } = controller;
   const gameOverElement = getScreenElement(screenManager, Screen.GAME_OVER);
 
-  createGameOverUI(gameOverElement, screenManager.campaignState, () => {
-    // Restart campaign
+  // Delete the failed campaign from storage (permadeath)
+  try {
+    await deleteCampaign();
+  } catch (error) {
+    // Log but continue - old data will be overwritten on next save
+    logError('Failed to delete campaign on game over:', error);
+  }
+
+  createGameOverUI(gameOverElement, screenManager.campaignState, async () => {
+    // Start a fresh campaign
     const newState = createNewCampaign();
     updateCampaignState(screenManager, newState);
+
+    // Save the new campaign
+    try {
+      await forceSave(newState, 'new-game-after-death');
+    } catch (error) {
+      // Log but continue - auto-save will pick it up later
+      logError('Failed to save new campaign after game over:', error);
+    }
 
     // Go to squadron screen
     goToSquadron(screenManager);

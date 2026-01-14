@@ -4,6 +4,7 @@
 
 import type { CombatStats } from '../../components/combat-stats';
 import { getComponent, queryEntities } from '../../core/ecs';
+import { logError } from '../../core/logger';
 import { createDerivedPRNG, random } from '../../core/prng';
 import type { World } from '../../core/types';
 import {
@@ -31,6 +32,7 @@ import {
   getCommanderShip,
   isGameOver,
 } from '../state';
+import { autoSave } from '../storage';
 import type { Contract } from '../types';
 import { createMissionResultOverlay } from '../utils';
 import type { MissionEndState, WaveState } from './mission-waves';
@@ -206,13 +208,16 @@ export function createMissionEndExecutor(
     );
     newState = refreshRecruits(newState, () => random(recruitRng));
 
-    // Update campaign state
+    // Update campaign state and auto-save
     updateCampaignState(screenManager, newState);
+    void autoSave(newState, 'mission-complete');
 
     // Transition to results or game over
     if (isGameOver(newState)) {
       endMission(screenManager, missionEndState.victory);
-      showGameOver(controller, setupContractsScreen);
+      showGameOver(controller, setupContractsScreen).catch((error) => {
+        logError('Error in game over handler:', error);
+      });
     } else {
       endMission(screenManager, missionEndState.victory);
       showResults(

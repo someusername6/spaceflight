@@ -36,6 +36,7 @@ import {
 } from './handlers/menu-handlers';
 import { setupEscapeHandler } from './handlers/pause-handler';
 import { createNewCampaign } from './state';
+import { forceSave, setupAutoSaveHandlers } from './storage';
 
 export type { CampaignController } from './controller-types';
 
@@ -65,7 +66,7 @@ export function startCampaign(container: HTMLElement): CampaignController {
 
   // Setup title screen with gameplay transition callback
   const onStartGameplay = () => startCampaignGameplay(controller);
-  setupTitleScreen(controller, onStartGameplay);
+  void setupTitleScreen(controller, onStartGameplay);
 
   // Show title screen initially
   goToTitle(screenManager);
@@ -82,6 +83,12 @@ function startCampaignGameplay(controller: CampaignController): void {
   // Stop title screen battle simulation (it was running in the background)
   cleanupTitleScreen();
 
+  // Setup auto-save handlers (beforeunload, visibilitychange)
+  setupAutoSaveHandlers(() => screenManager.campaignState);
+
+  // Force-save new campaign on start
+  void forceSave(screenManager.campaignState, 'campaign-started');
+
   // Create setup callbacks for handler wiring
   const setupContracts = (ctrl: CampaignController) =>
     setupContractsScreen(ctrl);
@@ -93,13 +100,13 @@ function startCampaignGameplay(controller: CampaignController): void {
       const squadronEl = getScreenElement(c.screenManager, Screen.SQUADRON);
       setupSquadronScreen(c, squadronEl, setupContracts);
     };
-    setupSettingsScreen(ctrl, onStartGameplay, reSetupSquadron);
+    void setupSettingsScreen(ctrl, onStartGameplay, reSetupSquadron);
   };
 
   // Create title screen setup for quit handler
-  const setupTitle = (ctrl: CampaignController) => {
+  const setupTitle = async (ctrl: CampaignController): Promise<void> => {
     const onStartGameplay = () => startCampaignGameplay(ctrl);
-    setupTitleScreen(ctrl, onStartGameplay);
+    await setupTitleScreen(ctrl, onStartGameplay);
   };
 
   // Setup squadron screen

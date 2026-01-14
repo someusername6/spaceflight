@@ -3,11 +3,15 @@
  */
 
 import {
+  downloadCampaign,
+  hasCampaign,
+  openCampaignFile,
+} from '../../../campaign/storage';
+import type { CampaignState } from '../../../campaign/types';
+import {
   ACTION_DISPLAY_NAMES,
   DEFAULT_BINDINGS,
-  findKeyConflict,
   type GameAction,
-  getKeyBindings,
   resetToDefaults,
   saveKeyBindings,
   setKeyBinding,
@@ -24,8 +28,16 @@ import {
   type ScreenAPI,
   type ScreenHandle,
 } from '../../framework/screen';
+import { showError, showSuccess } from '../alert-modal';
 import { positionAutoaimPopover } from './gameplay';
 import { positionFpsPopover } from './graphics';
+import {
+  cleanupKeyListener,
+  cleanupSettingsEscapeHandler,
+  setupKeyListener,
+  setupSettingsEscapeHandler,
+  startListening,
+} from './key-listener';
 import {
   renderMainView,
   renderResetConfirmView,
@@ -36,14 +48,9 @@ import {
 /** Settings screen callbacks */
 export interface SettingsScreenCallbacks {
   onBack: () => void;
+  /** Called when a campaign is imported, with the new state */
+  onCampaignImported?: (state: CampaignState) => void;
 }
-
-/**
- * Active key listener for rebinding controls.
- * Note: Cannot use api.onGlobal() because it doesn't support capture phase,
- * which is required to intercept key events before other handlers process them.
- */
-let activeKeyListener: ((e: KeyboardEvent) => void) | null = null;
 
 /** Register an outside-click handler that closes a popover when clicking outside */
 function registerOutsideClickHandler(
@@ -194,12 +201,37 @@ const SettingsScreenComponent: Screen<SettingsState, SettingsScreenCallbacks> =
         }
       });
 
+      // Export campaign button (data tab)
+      api.on('#btn-export-campaign', 'click', async () => {
+        const result = await downloadCampaign();
+        if (!result.success) {
+          await showError(result.error ?? 'Failed to export campaign');
+        }
+      });
+
+      // Import campaign button (data tab)
+      api.on('#btn-import-campaign', 'click', async () => {
+        const result = await openCampaignFile();
+        if (result === null) {
+          // User cancelled, do nothing
+          return;
+        }
+        if (result.success && result.state) {
+          // Update state and notify caller
+          api.setState({ hasCampaign: true });
+          props.onCampaignImported?.(result.state);
+          await showSuccess('Campaign imported successfully');
+        } else {
+          await showError(result.error ?? 'Failed to import campaign');
+        }
+      });
+
       // If we're in listening mode, set up the capture-phase listener
       if (state.listeningAction) {
         setupKeyListener(api, state.listeningAction);
       }
 
-      // ESC closes settings - handled via capture phase listener (see setupSettingsEscapeHandler)
+      // ESC closes settings - handled via capture phase listener
       setupSettingsEscapeHandler(state.listeningAction, props.onBack);
 
       // Re-attach battle simulation canvas after re-render (if present)
@@ -231,96 +263,6 @@ function reattachBattleCanvas(): void {
   }
 }
 
-/** Set up capture-phase key listener for rebinding */
-function setupKeyListener(
-  api: ScreenAPI<SettingsState>,
-  action: GameAction,
-): void {
-  cleanupKeyListener();
-
-  const handleKeyDown = (e: KeyboardEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    // Escape cancels rebinding
-    if (e.code === 'Escape') {
-      cleanupKeyListener();
-      api.setState({ listeningAction: null });
-      return;
-    }
-
-    // Check for conflicts
-    const conflict = findKeyConflict(e.code, action);
-    if (conflict) {
-      // Swap the keys
-      const currentKey = getKeyBindings()[action];
-      setKeyBinding(conflict, currentKey);
-    }
-
-    // Set the new binding
-    setKeyBinding(action, e.code);
-    saveKeyBindings();
-
-    cleanupKeyListener();
-    api.setState({ listeningAction: null });
-  };
-
-  activeKeyListener = handleKeyDown;
-  document.addEventListener('keydown', handleKeyDown, true);
-}
-
-/** Start listening for a key press to rebind an action */
-function startListening(
-  api: ScreenAPI<SettingsState>,
-  action: GameAction,
-): void {
-  cleanupKeyListener();
-  api.setState({ listeningAction: action });
-}
-
-/** Clean up the active key listener */
-function cleanupKeyListener(): void {
-  if (activeKeyListener) {
-    document.removeEventListener('keydown', activeKeyListener, true);
-    activeKeyListener = null;
-  }
-}
-
-/** Active ESC handler for closing settings */
-let settingsEscapeHandler: ((e: KeyboardEvent) => void) | null = null;
-
-/** Setup capture-phase ESC handler to close settings */
-function setupSettingsEscapeHandler(
-  listeningAction: GameAction | null,
-  onBack: () => void,
-): void {
-  cleanupSettingsEscapeHandler();
-
-  // Don't add ESC handler if we're in key rebinding mode (that has its own handler)
-  if (listeningAction) return;
-
-  settingsEscapeHandler = (e: KeyboardEvent) => {
-    if (e.code === 'Escape') {
-      e.preventDefault();
-      e.stopImmediatePropagation();
-      cleanupKeyListener();
-      cleanupSettingsEscapeHandler();
-      onBack();
-    }
-  };
-
-  // Use capture phase to run before global escape handler
-  document.addEventListener('keydown', settingsEscapeHandler, true);
-}
-
-/** Clean up the settings escape handler */
-function cleanupSettingsEscapeHandler(): void {
-  if (settingsEscapeHandler) {
-    document.removeEventListener('keydown', settingsEscapeHandler, true);
-    settingsEscapeHandler = null;
-  }
-}
-
 /** Screen handle for external control */
 let screenHandle: ScreenHandle<SettingsState, SettingsScreenCallbacks> | null =
   null;
@@ -334,6 +276,7 @@ export function renderSettingsScreen(element: HTMLElement): void {
     showResetConfirm: false,
     showFpsPopover: false,
     showAutoaimPopover: false,
+    hasCampaign: false,
   };
   element.innerHTML = SettingsScreenComponent.render(initialState, {
     onBack: () => {},
@@ -341,13 +284,21 @@ export function renderSettingsScreen(element: HTMLElement): void {
 }
 
 /** Bind settings screen event handlers */
-export function bindSettingsScreen(
+export async function bindSettingsScreen(
   element: HTMLElement,
   callbacks: SettingsScreenCallbacks,
-): void {
+): Promise<void> {
   // Clean up previous handle if exists
   screenHandle?.destroy();
   cleanupKeyListener();
+
+  // Check if campaign exists for data tab
+  let campaignExists = false;
+  try {
+    campaignExists = await hasCampaign();
+  } catch {
+    // Ignore errors, assume no campaign
+  }
 
   const initialState: SettingsState = {
     selectedTab: 'gameplay',
@@ -355,6 +306,7 @@ export function bindSettingsScreen(
     showResetConfirm: false,
     showFpsPopover: false,
     showAutoaimPopover: false,
+    hasCampaign: campaignExists,
   };
 
   screenHandle = createScreen(

@@ -5,13 +5,22 @@
  * - Animated battle simulation in background
  * - Game logo/title
  * - New Game button
- * - Continue button (shows save slots)
+ * - Continue button (loads active campaign directly)
  * - Settings button
  */
 
-import { deleteSave, hasSaves, loadGame } from '../../campaign/save-system';
+import {
+  clearEmergencySave,
+  deleteCampaign,
+  getCampaignMetadata,
+  hasCampaign,
+  isStorageAvailable,
+  loadCampaign,
+  recoverEmergencySave,
+  saveCampaign,
+} from '../../campaign/storage';
 import type { CampaignState } from '../../campaign/types';
-import { isStorageAvailable } from '../../replay/storage';
+import { logWarn } from '../../core/logger';
 import { TITLE_SCREEN_BATTLE } from '../../simulation/battle-configs';
 import {
   type BattleSimulation,
@@ -26,69 +35,19 @@ import {
   type ScreenHandle,
 } from '../framework/screen';
 import {
-  renderConfirmDeleteView,
+  renderConfirmOverwriteView,
   renderErrorView,
-  renderSavesView,
-} from './title-saves';
+  renderLoadingView,
+  renderMainView,
+  type TitleState,
+} from './title-render';
 
 /** Title screen callbacks */
 export interface TitleScreenProps {
   onNewGame: () => void;
-  onContinue: (state: CampaignState, slot: number) => void;
+  onContinue: (state: CampaignState) => void;
   onSettings: () => void;
   onReplays: () => void;
-}
-
-/** Current view state */
-type TitleView = 'main' | 'saves' | 'confirm-delete' | 'error';
-
-/** Title screen UI state */
-interface TitleState {
-  view: TitleView;
-  deleteSlot: number | null;
-  errorMessage: string | null;
-}
-
-/** Render main menu view */
-function renderMainView(): string {
-  const canContinue = hasSaves();
-  const hasReplayStorage = isStorageAvailable();
-
-  return `
-    <div class="title-main-view">
-      <div class="title-left-column">
-        <div class="title-logo">
-          <h1 class="title-name">Spaceflight</h1>
-          <div class="title-subtitle">Squadron Commander</div>
-        </div>
-        <div class="title-menu">
-          <button class="btn btn-title btn-primary" id="btn-new-game">
-            New Game
-          </button>
-          <button
-            class="btn btn-title"
-            id="btn-continue"
-            ${canContinue ? '' : 'disabled'}
-          >
-            Continue
-          </button>
-          <button class="btn btn-title" id="btn-settings">
-            Settings
-          </button>
-          <button
-            class="btn btn-title"
-            id="btn-replays"
-            ${hasReplayStorage ? '' : 'disabled'}
-          >
-            Replays
-          </button>
-        </div>
-      </div>
-      <div class="title-footer">
-        <span class="title-version">v${__APP_VERSION__}</span>
-      </div>
-    </div>
-  `;
 }
 
 /** Title screen component */
@@ -98,13 +57,13 @@ const TitleScreenComponent: Screen<TitleState, TitleScreenProps> = {
 
     switch (state.view) {
       case 'main':
-        content = renderMainView();
+        content = renderMainView(state);
         break;
-      case 'saves':
-        content = renderSavesView();
+      case 'loading':
+        content = renderLoadingView();
         break;
-      case 'confirm-delete':
-        content = renderConfirmDeleteView(state.deleteSlot ?? 1);
+      case 'confirm-overwrite':
+        content = renderConfirmOverwriteView(state);
         break;
       case 'error':
         content = renderErrorView(state.errorMessage ?? 'An error occurred.');
@@ -123,12 +82,38 @@ const TitleScreenComponent: Screen<TitleState, TitleScreenProps> = {
 
   bind(api: ScreenAPI<TitleState>, props: TitleScreenProps) {
     // Main menu buttons
-    api.on('#btn-new-game', 'click', () => {
-      props.onNewGame();
+    api.on('#btn-new-game', 'click', async () => {
+      const state = api.getState();
+      if (state.hasCampaign) {
+        // Show confirmation before overwriting
+        api.setState({ view: 'confirm-overwrite' });
+      } else {
+        // No existing campaign, start directly
+        props.onNewGame();
+      }
     });
 
-    api.on('#btn-continue', 'click', () => {
-      api.setState({ view: 'saves' });
+    api.on('#btn-continue', 'click', async () => {
+      api.setState({ view: 'loading' });
+
+      try {
+        const campaignState = await loadCampaign();
+        if (campaignState) {
+          api.setState({ view: 'main' });
+          props.onContinue(campaignState);
+        } else {
+          api.setState({
+            errorMessage:
+              'Failed to load campaign. The save data may be corrupted.',
+            view: 'error',
+          });
+        }
+      } catch (error) {
+        api.setState({
+          errorMessage: `Failed to load campaign: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          view: 'error',
+        });
+      }
     });
 
     api.on('#btn-settings', 'click', () => {
@@ -139,53 +124,21 @@ const TitleScreenComponent: Screen<TitleState, TitleScreenProps> = {
       props.onReplays();
     });
 
-    // Save view buttons
-    api.on('#btn-back-to-title', 'click', () => {
+    // Confirm overwrite buttons
+    api.on('#btn-confirm-cancel', 'click', () => {
       api.setState({ view: 'main' });
     });
 
-    // Load buttons
-    api.on('.btn-load', 'click', (_e, el) => {
-      const slot = parseInt(el.dataset.slot ?? '0', 10);
-      if (slot > 0) {
-        const loadedState = loadGame(slot);
-        if (loadedState) {
-          api.setState({ view: 'main' });
-          props.onContinue(loadedState, slot);
-        } else {
-          api.setState({
-            errorMessage: `Failed to load save from Slot ${slot}. The save data may be corrupted.`,
-            view: 'error',
-          });
-        }
-      }
+    api.on('#btn-confirm-new', 'click', async () => {
+      // Delete existing campaign and start new
+      await deleteCampaign();
+      api.setState({ hasCampaign: false, view: 'main' });
+      props.onNewGame();
     });
 
     // Error OK button
     api.on('#btn-error-ok', 'click', () => {
-      api.setState({ errorMessage: null, view: 'saves' });
-    });
-
-    // Delete buttons - show confirmation
-    api.on('.btn-delete', 'click', (_e, el) => {
-      const slot = parseInt(el.dataset.slot ?? '0', 10);
-      if (slot > 0) {
-        api.setState({ deleteSlot: slot, view: 'confirm-delete' });
-      }
-    });
-
-    // Confirm cancel button
-    api.on('#btn-confirm-cancel', 'click', () => {
-      api.setState({ view: 'saves', deleteSlot: null });
-    });
-
-    // Confirm delete button
-    api.on('#btn-confirm-delete', 'click', () => {
-      const currentState = api.getState();
-      if (currentState.deleteSlot) {
-        deleteSave(currentState.deleteSlot);
-        api.setState({ deleteSlot: null, view: 'saves' });
-      }
+      api.setState({ errorMessage: null, view: 'main' });
     });
 
     // Keyboard navigation
@@ -193,12 +146,10 @@ const TitleScreenComponent: Screen<TitleState, TitleScreenProps> = {
       if ((e as KeyboardEvent).code === 'Escape') {
         e.preventDefault();
         const currentState = api.getState();
-        if (currentState.view === 'saves') {
+        if (currentState.view === 'confirm-overwrite') {
           api.setState({ view: 'main' });
-        } else if (currentState.view === 'confirm-delete') {
-          api.setState({ view: 'saves', deleteSlot: null });
         } else if (currentState.view === 'error') {
-          api.setState({ errorMessage: null, view: 'saves' });
+          api.setState({ errorMessage: null, view: 'main' });
         }
       }
     });
@@ -222,13 +173,72 @@ let screenHandle: ScreenHandle<TitleState, TitleScreenProps> | null = null;
 /** Battle simulation for title background */
 let battleSimulation: BattleSimulation | null = null;
 
+/** Create initial state by checking for existing campaign */
+async function createInitialState(): Promise<TitleState> {
+  const baseState: TitleState = {
+    view: 'main',
+    hasCampaign: false,
+    campaignSector: 1,
+    campaignCredits: 0,
+    errorMessage: null,
+  };
+
+  if (!isStorageAvailable()) {
+    return baseState;
+  }
+
+  try {
+    // Check for emergency save from browser crash
+    const emergencySave = recoverEmergencySave();
+    if (emergencySave) {
+      try {
+        // Save the recovered state to IndexedDB
+        await saveCampaign(emergencySave);
+        // Only clear emergency save after successful IndexedDB save
+        clearEmergencySave();
+      } catch (error) {
+        // IndexedDB save failed - emergency save remains in localStorage
+        // for next recovery attempt. Log but continue with the recovered state.
+        logWarn('Failed to save recovered campaign to IndexedDB:', error);
+      }
+
+      return {
+        ...baseState,
+        hasCampaign: true,
+        campaignSector: emergencySave.currentSector,
+        campaignCredits: emergencySave.credits,
+      };
+    }
+
+    // Normal check for existing campaign
+    const exists = await hasCampaign();
+    if (exists) {
+      const metadata = await getCampaignMetadata();
+      if (metadata.exists) {
+        return {
+          ...baseState,
+          hasCampaign: true,
+          campaignSector: metadata.sector ?? 1,
+          campaignCredits: metadata.credits ?? 0,
+        };
+      }
+    }
+  } catch {
+    // Ignore errors, just show no campaign
+  }
+
+  return baseState;
+}
+
 /** Render and bind the title screen */
 export function renderTitleScreen(element: HTMLElement): void {
   // This is called for initial render - actual binding happens in bindTitleScreen
   // For backwards compatibility, we just set innerHTML here
   const initialState: TitleState = {
     view: 'main',
-    deleteSlot: null,
+    hasCampaign: false,
+    campaignSector: 1,
+    campaignCredits: 0,
     errorMessage: null,
   };
   element.innerHTML = TitleScreenComponent.render(initialState, {
@@ -240,10 +250,10 @@ export function renderTitleScreen(element: HTMLElement): void {
 }
 
 /** Bind title screen event handlers */
-export function bindTitleScreen(
+export async function bindTitleScreen(
   element: HTMLElement,
   callbacks: TitleScreenProps,
-): void {
+): Promise<void> {
   // Clean up previous handle if exists
   screenHandle?.destroy();
 
@@ -253,11 +263,8 @@ export function bindTitleScreen(
     battleSimulation = null;
   }
 
-  const initialState: TitleState = {
-    view: 'main',
-    deleteSlot: null,
-    errorMessage: null,
-  };
+  // Get initial state with campaign check
+  const initialState = await createInitialState();
 
   screenHandle = createScreen(
     TitleScreenComponent,
@@ -280,12 +287,9 @@ export function bindTitleScreen(
 }
 
 /** Reset title screen state (e.g., when returning from game) */
-export function resetTitleScreen(): void {
-  screenHandle?.replaceState({
-    view: 'main',
-    deleteSlot: null,
-    errorMessage: null,
-  });
+export async function resetTitleScreen(): Promise<void> {
+  const state = await createInitialState();
+  screenHandle?.replaceState(state);
 }
 
 /** Cleanup title screen (remove keyboard handler and simulation) */
