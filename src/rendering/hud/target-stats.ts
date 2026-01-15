@@ -45,23 +45,23 @@ export function createTargetStats(parent: HTMLElement): TargetStatsDisplay {
   container.className = 'target-stats';
   container.innerHTML = `
     <div class="target-camera-container"></div>
-    <div class="target-callsign">---</div>
+    <div class="target-callsign"></div>
     <div class="target-type">NO TARGET</div>
     <div class="target-row">
       <span class="target-label">DIST</span>
-      <span class="target-distance">---</span>
+      <span class="target-distance">-</span>
     </div>
     <div class="target-row">
       <span class="target-label hull-label">HULL</span>
       <div class="target-bar hull"><div class="target-bar-fill"></div></div>
-      <span class="target-bar-value">---</span>
+      <span class="target-bar-value"></span>
     </div>
     <div class="target-row shield-row">
       <span class="target-label">SHLD</span>
       <div class="target-bar shield"><div class="target-bar-fill"></div></div>
-      <span class="target-bar-value">---</span>
+      <span class="target-bar-value"></span>
     </div>
-    <div class="target-aspect">---</div>
+    <div class="target-aspect"></div>
   `;
 
   parent.appendChild(container);
@@ -103,15 +103,15 @@ export function updateTargetStats(
 
   if (target === undefined) {
     // No target selected
-    display.callsignEl.textContent = '---';
+    display.callsignEl.textContent = '';
     display.typeEl.textContent = 'NO TARGET';
-    display.distanceEl.textContent = '---';
+    display.distanceEl.textContent = '-';
     display.hullLabel.textContent = 'HULL';
     display.hullBar.style.width = '0%';
-    display.hullValue.textContent = '---';
+    display.hullValue.textContent = '';
     display.shieldBar.style.width = '0%';
-    display.shieldValue.textContent = '---';
-    display.aspectEl.textContent = '---';
+    display.shieldValue.textContent = '';
+    display.aspectEl.textContent = '';
     display.container.classList.remove('has-target');
     return;
   }
@@ -152,7 +152,7 @@ export function updateTargetStats(
     );
     display.distanceEl.textContent = formatDistance(distance);
   } else {
-    display.distanceEl.textContent = '---';
+    display.distanceEl.textContent = '-';
   }
 
   // Hull - for decoys, show lifetime countdown instead
@@ -179,7 +179,7 @@ export function updateTargetStats(
     }
   } else {
     display.hullBar.style.width = '0%';
-    display.hullValue.textContent = '---';
+    display.hullValue.textContent = '';
   }
 
   // Shields - hide row for decoys (they don't have shields)
@@ -193,7 +193,7 @@ export function updateTargetStats(
       display.shieldValue.textContent = `${Math.round(shieldPct)}%`;
     } else {
       display.shieldBar.style.width = '0%';
-      display.shieldValue.textContent = '---';
+      display.shieldValue.textContent = '';
     }
   }
 
@@ -207,7 +207,7 @@ export function updateTargetStats(
     } else if (targetPhysics) {
       targetVel = targetPhysics.velocity;
     } else {
-      display.aspectEl.textContent = '---';
+      display.aspectEl.textContent = '';
       display.aspectEl.className = 'target-aspect';
       return;
     }
@@ -221,7 +221,7 @@ export function updateTargetStats(
     display.aspectEl.textContent = formatAspect(closureRate);
     display.aspectEl.className = `target-aspect ${closureRate > 10 ? 'closing' : closureRate < -10 ? 'separating' : ''}`;
   } else {
-    display.aspectEl.textContent = '---';
+    display.aspectEl.textContent = '';
     display.aspectEl.className = 'target-aspect';
   }
 }
