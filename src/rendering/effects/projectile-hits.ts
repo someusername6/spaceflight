@@ -23,6 +23,18 @@ export const BEAM_HIT_INTERVAL = HIT_DURATION * 0.4;
 /** Particles per hit effect */
 const PARTICLES_PER_HIT = 12;
 
+/** Hit effect visual properties by category */
+const HIT_FLASH_OPACITY = 0.9;
+const HIT_PARTICLE_OPACITY = 1.0;
+const HIT_ENERGY_FLASH_SCALE = 1.5;
+const HIT_BALLISTIC_FLASH_SCALE = 1.0;
+const HIT_ENERGY_PARTICLE_SIZE = 1.5;
+const HIT_BALLISTIC_PARTICLE_SIZE = 2.0;
+const HIT_ENERGY_FLASH_EXPANSION = 3;
+const HIT_BALLISTIC_FLASH_EXPANSION = 2;
+const HIT_ENERGY_PARTICLE_SPEED = 15;
+const HIT_BALLISTIC_PARTICLE_SPEED = 10;
+
 /** Effect colors by category */
 const EFFECT_COLORS = {
   energy: {
@@ -48,6 +60,7 @@ interface HitEffect {
 /** Hit effect renderer state */
 export interface ProjectileHitRenderer {
   effects: HitEffect[];
+  pool: HitEffect[]; // Pooled effects for reuse (avoids allocation)
   flashGeometry: THREE.SphereGeometry;
   hitIdCounter: number;
 }
@@ -56,6 +69,7 @@ export interface ProjectileHitRenderer {
 export function createProjectileHitRenderer(): ProjectileHitRenderer {
   return {
     effects: [],
+    pool: [],
     flashGeometry: new THREE.SphereGeometry(1, 12, 8),
     hitIdCounter: 0,
   };
@@ -64,9 +78,12 @@ export function createProjectileHitRenderer(): ProjectileHitRenderer {
 // Reusable vector for processing pending hits
 const hitPosition = new THREE.Vector3();
 
-/** Create particle velocities for hit effect */
-function createParticleVelocities(seed: number): Float32Array {
-  const velocities = new Float32Array(PARTICLES_PER_HIT * 3);
+// Reusable colors for custom color effects (avoids allocation per effect)
+const reusableFlashColor = new THREE.Color();
+const reusableParticleColor = new THREE.Color();
+
+/** Fill array with particle velocities (random hemisphere directions) */
+function fillParticleVelocities(velocities: Float32Array, seed: number): void {
   const prng = createPRNG(seed);
 
   for (let i = 0; i < PARTICLES_PER_HIT; i++) {
@@ -79,8 +96,78 @@ function createParticleVelocities(seed: number): Float32Array {
     velocities[idx + 1] = Math.sin(phi) * Math.sin(theta);
     velocities[idx + 2] = Math.cos(phi);
   }
+}
 
-  return velocities;
+/** Hide a hit effect (for pooling - doesn't dispose) */
+function hideHitEffect(effect: HitEffect): void {
+  effect.flash.visible = false;
+  effect.particles.visible = false;
+}
+
+/** Reinitialize a pooled hit effect for reuse */
+function reinitializeHitEffect(
+  effect: HitEffect,
+  renderer: ProjectileHitRenderer,
+  position: THREE.Vector3,
+  category: ProjectileCategory,
+  gameTime: number,
+  customColor?: { r: number; g: number; b: number },
+): void {
+  // Get colors - use reusable objects for custom colors to avoid allocation
+  let flashColor: THREE.Color;
+  let particleColor: THREE.Color;
+  if (customColor) {
+    reusableFlashColor.setRGB(customColor.r, customColor.g, customColor.b);
+    reusableParticleColor.setRGB(customColor.r, customColor.g, customColor.b);
+    flashColor = reusableFlashColor;
+    particleColor = reusableParticleColor;
+  } else {
+    flashColor = EFFECT_COLORS[category].flash;
+    particleColor = EFFECT_COLORS[category].particles;
+  }
+
+  // Reset flash
+  effect.flash.position.copy(position);
+  effect.flash.scale.setScalar(
+    category === 'energy' ? HIT_ENERGY_FLASH_SCALE : HIT_BALLISTIC_FLASH_SCALE,
+  );
+  effect.flash.visible = true;
+  const flashMat = effect.flash.material as THREE.MeshBasicMaterial;
+  flashMat.color.copy(flashColor);
+  flashMat.opacity = HIT_FLASH_OPACITY;
+
+  // Reset particles
+  const particlePositions = effect.particles.geometry.attributes.position
+    ?.array as Float32Array;
+  for (let i = 0; i < PARTICLES_PER_HIT; i++) {
+    const idx = i * 3;
+    particlePositions[idx] = position.x;
+    particlePositions[idx + 1] = position.y;
+    particlePositions[idx + 2] = position.z;
+  }
+  const posAttr = effect.particles.geometry.attributes.position;
+  if (posAttr) {
+    posAttr.needsUpdate = true;
+  }
+  effect.particles.visible = true;
+  const particleMat = effect.particles.material as THREE.PointsMaterial;
+  particleMat.color.copy(particleColor);
+  particleMat.opacity = HIT_PARTICLE_OPACITY;
+  particleMat.size =
+    category === 'energy'
+      ? HIT_ENERGY_PARTICLE_SIZE
+      : HIT_BALLISTIC_PARTICLE_SIZE;
+
+  // Regenerate velocities in-place (avoids allocation)
+  fillParticleVelocities(
+    effect.particleVelocities,
+    renderer.hitIdCounter++ * 12345,
+  );
+
+  // Reset state
+  effect.startTime = gameTime;
+  effect.category = category;
+  effect.position.copy(position);
 }
 
 /** Creates a hit effect */
@@ -104,13 +191,15 @@ function createHitEffect(
   const flashMaterial = new THREE.MeshBasicMaterial({
     color: colors.flash,
     transparent: true,
-    opacity: 0.9,
+    opacity: HIT_FLASH_OPACITY,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
   const flash = new THREE.Mesh(renderer.flashGeometry.clone(), flashMaterial);
   flash.position.copy(position);
-  flash.scale.setScalar(category === 'energy' ? 1.5 : 1.0);
+  flash.scale.setScalar(
+    category === 'energy' ? HIT_ENERGY_FLASH_SCALE : HIT_BALLISTIC_FLASH_SCALE,
+  );
   scene.add(flash);
 
   // Particles
@@ -130,9 +219,12 @@ function createHitEffect(
 
   const particleMaterial = new THREE.PointsMaterial({
     color: colors.particles,
-    size: category === 'energy' ? 1.5 : 2.0,
+    size:
+      category === 'energy'
+        ? HIT_ENERGY_PARTICLE_SIZE
+        : HIT_BALLISTIC_PARTICLE_SIZE,
     transparent: true,
-    opacity: 1.0,
+    opacity: HIT_PARTICLE_OPACITY,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
@@ -141,9 +233,8 @@ function createHitEffect(
   scene.add(particles);
 
   // Random velocities
-  const particleVelocities = createParticleVelocities(
-    renderer.hitIdCounter++ * 12345,
-  );
+  const particleVelocities = new Float32Array(PARTICLES_PER_HIT * 3);
+  fillParticleVelocities(particleVelocities, renderer.hitIdCounter++ * 12345);
 
   return {
     flash,
@@ -166,22 +257,38 @@ export function updateProjectileHitRenderer(
   const gameTime = world.systemState.gameTime - TICK_SEC * (1 - alpha);
   const pendingHits = world.systemState.projectileHits.pending;
 
-  // Create effects for pending hits
+  // Create effects for pending hits (reuse from pool when available)
   // Skip stale items - they're from before a seek and would appear at wrong positions
   const maxAge = TICK_SEC * 2;
   for (const hit of pendingHits) {
     if (gameTime - hit.gameTime > maxAge) continue;
 
     hitPosition.set(hit.x, hit.y, hit.z);
-    const effect = createHitEffect(
-      renderer,
-      scene,
-      hitPosition,
-      hit.category,
-      gameTime,
-      hit.color,
-    );
-    renderer.effects.push(effect);
+
+    // Try to reuse from pool first (avoids allocation)
+    const pooled = renderer.pool.pop();
+    if (pooled) {
+      reinitializeHitEffect(
+        pooled,
+        renderer,
+        hitPosition,
+        hit.category,
+        gameTime,
+        hit.color,
+      );
+      renderer.effects.push(pooled);
+    } else {
+      // No pooled effect available, create new one
+      const effect = createHitEffect(
+        renderer,
+        scene,
+        hitPosition,
+        hit.category,
+        gameTime,
+        hit.color,
+      );
+      renderer.effects.push(effect);
+    }
   }
   pendingHits.length = 0;
 
@@ -194,30 +301,29 @@ export function updateProjectileHitRenderer(
     const progress = age / HIT_DURATION;
 
     if (progress >= 1) {
-      // Effect expired - remove
-      scene.remove(effect.flash);
-      scene.remove(effect.particles);
-      effect.flash.geometry.dispose();
-      (effect.flash.material as THREE.Material).dispose();
-      effect.particles.geometry.dispose();
-      (effect.particles.material as THREE.Material).dispose();
+      // Effect expired - return to pool for reuse
+      hideHitEffect(effect);
       renderer.effects.splice(i, 1);
+      renderer.pool.push(effect);
       continue;
     }
 
     // Update flash - expand and fade
     const flashScale =
       effect.category === 'energy'
-        ? 1.5 + progress * 3 // Energy: bigger, faster expansion
-        : 1.0 + progress * 2; // Ballistic: smaller, slower
+        ? HIT_ENERGY_FLASH_SCALE + progress * HIT_ENERGY_FLASH_EXPANSION
+        : HIT_BALLISTIC_FLASH_SCALE + progress * HIT_BALLISTIC_FLASH_EXPANSION;
     effect.flash.scale.setScalar(flashScale);
     (effect.flash.material as THREE.MeshBasicMaterial).opacity =
-      0.9 * (1 - progress);
+      HIT_FLASH_OPACITY * (1 - progress);
 
     // Update particles - fly outward
     const particlePositions = effect.particles.geometry.attributes.position
       ?.array as Float32Array;
-    const particleSpeed = effect.category === 'energy' ? 15 : 10;
+    const particleSpeed =
+      effect.category === 'energy'
+        ? HIT_ENERGY_PARTICLE_SPEED
+        : HIT_BALLISTIC_PARTICLE_SPEED;
     const particleDistance = age * particleSpeed;
 
     for (let p = 0; p < PARTICLES_PER_HIT; p++) {
@@ -239,25 +345,23 @@ export function updateProjectileHitRenderer(
     }
 
     // Fade particles
-    (effect.particles.material as THREE.PointsMaterial).opacity = 1 - progress;
+    (effect.particles.material as THREE.PointsMaterial).opacity =
+      HIT_PARTICLE_OPACITY * (1 - progress);
   }
 }
 
 /**
  * Reset projectile hit renderer state (for replay seeking).
- * Removes active effects without disposing shared geometry.
+ * Returns active effects to pool for reuse.
  */
 export function resetProjectileHitRenderer(
   renderer: ProjectileHitRenderer,
-  scene: THREE.Scene,
+  _scene: THREE.Scene,
 ): void {
+  // Return active effects to pool (don't dispose - reuse them)
   for (const effect of renderer.effects) {
-    scene.remove(effect.flash);
-    scene.remove(effect.particles);
-    effect.flash.geometry.dispose();
-    (effect.flash.material as THREE.Material).dispose();
-    effect.particles.geometry.dispose();
-    (effect.particles.material as THREE.Material).dispose();
+    hideHitEffect(effect);
+    renderer.pool.push(effect);
   }
   renderer.effects.length = 0;
 }
@@ -267,6 +371,7 @@ export function disposeProjectileHitRenderer(
   renderer: ProjectileHitRenderer,
   scene: THREE.Scene,
 ): void {
+  // Dispose active effects
   for (const effect of renderer.effects) {
     scene.remove(effect.flash);
     scene.remove(effect.particles);
@@ -276,5 +381,17 @@ export function disposeProjectileHitRenderer(
     (effect.particles.material as THREE.Material).dispose();
   }
   renderer.effects.length = 0;
+
+  // Dispose pooled effects
+  for (const effect of renderer.pool) {
+    scene.remove(effect.flash);
+    scene.remove(effect.particles);
+    effect.flash.geometry.dispose();
+    (effect.flash.material as THREE.Material).dispose();
+    effect.particles.geometry.dispose();
+    (effect.particles.material as THREE.Material).dispose();
+  }
+  renderer.pool.length = 0;
+
   renderer.flashGeometry.dispose();
 }

@@ -16,6 +16,11 @@ import { getInterpolatedPosition } from '../renderer';
 /** Flash duration in seconds */
 const FLASH_DURATION = 0.08;
 
+/** Muzzle flash visual properties */
+const MUZZLE_FLASH_OPACITY = 1.0;
+const MUZZLE_FLASH_SCALE = 1.0;
+const MUZZLE_FLASH_EXPANSION = 2;
+
 /** Flash colors by weapon type (weapon-coded, not faction-coded) */
 const WEAPON_FLASH_COLORS: Record<string, THREE.Color> = {
   // Energy weapons - match bolt color
@@ -63,6 +68,7 @@ interface BeamGlowVisual {
 /** Muzzle flash renderer state */
 export interface MuzzleFlashRenderer {
   flashes: FlashVisual[];
+  flashPool: FlashVisual[]; // Pooled flashes for reuse (avoids allocation)
   beamGlows: Map<string, BeamGlowVisual>; // Key: "${entity}-${weaponIndex}"
   flashGeometry: THREE.SphereGeometry;
   glowGeometry: THREE.SphereGeometry;
@@ -72,6 +78,7 @@ export interface MuzzleFlashRenderer {
 export function createMuzzleFlashRenderer(): MuzzleFlashRenderer {
   return {
     flashes: [],
+    flashPool: [],
     beamGlows: new Map(),
     flashGeometry: new THREE.SphereGeometry(1.5, 12, 8),
     glowGeometry: new THREE.SphereGeometry(0.8, 8, 6),
@@ -89,7 +96,7 @@ function createFlashMesh(
   const material = new THREE.MeshBasicMaterial({
     color,
     transparent: true,
-    opacity: 1.0,
+    opacity: MUZZLE_FLASH_OPACITY,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
@@ -124,6 +131,31 @@ function createBeamGlow(
   return { mesh, light };
 }
 
+/** Hide a flash visual (for pooling - doesn't dispose) */
+function hideFlashVisual(flash: FlashVisual): void {
+  flash.mesh.visible = false;
+}
+
+/** Reinitialize a pooled flash visual for reuse */
+function reinitializeFlashVisual(
+  flash: FlashVisual,
+  position: THREE.Vector3,
+  weaponName: WeaponName,
+  gameTime: number,
+): void {
+  const color = WEAPON_FLASH_COLORS[weaponName] ?? DEFAULT_FLASH_COLOR;
+
+  flash.mesh.position.copy(position);
+  flash.mesh.scale.setScalar(MUZZLE_FLASH_SCALE);
+  flash.mesh.visible = true;
+
+  const material = flash.mesh.material as THREE.MeshBasicMaterial;
+  material.color.copy(color);
+  material.opacity = MUZZLE_FLASH_OPACITY;
+
+  flash.startTime = gameTime;
+}
+
 /** Updates muzzle flash visuals */
 export function updateMuzzleFlashRenderer(
   renderer: MuzzleFlashRenderer,
@@ -136,23 +168,37 @@ export function updateMuzzleFlashRenderer(
   const gameTime = world.systemState.gameTime - TICK_SEC * (1 - alpha);
   const pendingFlashes = world.systemState.muzzleFlashes.pending;
 
-  // Create flashes from pending queue (populated by weapon spawning)
+  // Create flashes from pending queue (reuse from pool when available)
   // Skip stale items - they're from before a seek and would appear at wrong positions
   const maxAge = TICK_SEC * 2;
   for (const pending of pendingFlashes) {
     if (gameTime - pending.gameTime > maxAge) continue;
 
     flashPosition.set(pending.x, pending.y, pending.z);
-    const flash: FlashVisual = {
-      mesh: createFlashMesh(
-        renderer,
-        scene,
+
+    // Try to reuse from pool first (avoids allocation)
+    const pooled = renderer.flashPool.pop();
+    if (pooled) {
+      reinitializeFlashVisual(
+        pooled,
         flashPosition,
         pending.weaponName as WeaponName,
-      ),
-      startTime: gameTime,
-    };
-    renderer.flashes.push(flash);
+        gameTime,
+      );
+      renderer.flashes.push(pooled);
+    } else {
+      // No pooled flash available, create new one
+      const flash: FlashVisual = {
+        mesh: createFlashMesh(
+          renderer,
+          scene,
+          flashPosition,
+          pending.weaponName as WeaponName,
+        ),
+        startTime: gameTime,
+      };
+      renderer.flashes.push(flash);
+    }
   }
   pendingFlashes.length = 0;
 
@@ -165,16 +211,16 @@ export function updateMuzzleFlashRenderer(
     const progress = age / FLASH_DURATION;
 
     if (progress >= 1) {
-      // Flash expired - remove
-      scene.remove(flash.mesh);
-      flash.mesh.geometry.dispose();
-      (flash.mesh.material as THREE.Material).dispose();
+      // Flash expired - return to pool for reuse
+      hideFlashVisual(flash);
       renderer.flashes.splice(i, 1);
+      renderer.flashPool.push(flash);
     } else {
       // Update flash - expand and fade
-      const scale = 1 + progress * 2;
+      const scale = MUZZLE_FLASH_SCALE + progress * MUZZLE_FLASH_EXPANSION;
       flash.mesh.scale.setScalar(scale);
-      (flash.mesh.material as THREE.MeshBasicMaterial).opacity = 1 - progress;
+      (flash.mesh.material as THREE.MeshBasicMaterial).opacity =
+        MUZZLE_FLASH_OPACITY * (1 - progress);
     }
   }
 
@@ -263,17 +309,16 @@ function updateBeamGlows(
 
 /**
  * Reset muzzle flash renderer state (for replay seeking).
- * Clears active visuals without disposing shared resources.
+ * Returns active flashes to pool for reuse.
  */
 export function resetMuzzleFlashRenderer(
   renderer: MuzzleFlashRenderer,
-  scene: THREE.Scene,
+  _scene: THREE.Scene,
 ): void {
-  // Remove active flashes from scene
+  // Return active flashes to pool (don't dispose - reuse them)
   for (const flash of renderer.flashes) {
-    scene.remove(flash.mesh);
-    flash.mesh.geometry.dispose();
-    (flash.mesh.material as THREE.Material).dispose();
+    hideFlashVisual(flash);
+    renderer.flashPool.push(flash);
   }
   renderer.flashes.length = 0;
 
@@ -289,12 +334,21 @@ export function disposeMuzzleFlashRenderer(
   renderer: MuzzleFlashRenderer,
   scene: THREE.Scene,
 ): void {
+  // Dispose active flashes
   for (const flash of renderer.flashes) {
     scene.remove(flash.mesh);
     flash.mesh.geometry.dispose();
     (flash.mesh.material as THREE.Material).dispose();
   }
   renderer.flashes.length = 0;
+
+  // Dispose pooled flashes
+  for (const flash of renderer.flashPool) {
+    scene.remove(flash.mesh);
+    flash.mesh.geometry.dispose();
+    (flash.mesh.material as THREE.Material).dispose();
+  }
+  renderer.flashPool.length = 0;
 
   for (const glow of renderer.beamGlows.values()) {
     scene.remove(glow.mesh);
