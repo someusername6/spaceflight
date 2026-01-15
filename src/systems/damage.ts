@@ -2,10 +2,18 @@
  * Damage System - Applies damage from collisions and weapons.
  *
  * Damage flows: Shields first, then hull.
+ *
+ * Victory Protection: Once victory is achieved, allied ships become
+ * immune to damage. This prevents the frustrating scenario where
+ * the player wins but dies to in-flight projectiles.
  */
 
 import type * as THREE from 'three';
-import { areEnemies, type FactionComponent } from '../components/faction';
+import {
+  areEnemies,
+  Faction,
+  type FactionComponent,
+} from '../components/faction';
 import type { Health } from '../components/health';
 import { applyDamage } from '../components/health';
 import { recordShieldHit, type ShieldHit } from '../components/shield-hit';
@@ -13,10 +21,23 @@ import type { Shields } from '../components/shields';
 import { damageShields } from '../components/shields';
 import { getComponent, hasComponent, queryEntities } from '../core/ecs';
 import type { Entity, World } from '../core/types';
+import { MissionResult } from '../core/types';
 import type { Collision } from './collision';
 
 /** Damage dealt on ship-to-ship collision */
 const COLLISION_DAMAGE = 10;
+
+/**
+ * Check if an entity is protected from damage due to victory.
+ * Allied ships (player faction) become immune once victory is achieved.
+ */
+function isProtectedByVictory(world: World, entity: Entity): boolean {
+  if (world.systemState.mission.result !== MissionResult.Victory) {
+    return false;
+  }
+  const faction = getComponent<FactionComponent>(world, entity, 'faction');
+  return faction?.faction === Faction.Player;
+}
 
 /** Damage system - applies damage from collisions */
 export function damageSystem(world: World, _dt: number): void {
@@ -30,6 +51,9 @@ export function damageSystem(world: World, _dt: number): void {
     // and shouldn't receive "ramming" damage from ships
     if (hasComponent(world, entity, 'missile')) continue;
     if (hasComponent(world, entity, 'decoy')) continue;
+
+    // Victory protection: allied ships are immune after victory
+    if (isProtectedByVictory(world, entity)) continue;
 
     // Query guarantees these components exist
     const collision = getComponent<Collision>(
@@ -137,6 +161,11 @@ export function dealDamage(
   shieldDamageMultiplier = 1,
   hullDamageMultiplier = 1,
 ): DamageResult {
+  // Victory protection: allied ships are immune after victory
+  if (isProtectedByVictory(world, entity)) {
+    return { shieldDamage: 0, hullDamage: 0 };
+  }
+
   return applyDamageWithShields(
     world,
     entity,

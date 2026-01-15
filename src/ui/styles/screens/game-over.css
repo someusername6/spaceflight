@@ -1,26 +1,33 @@
 /**
- * Game Over Screen Styles - Campaign end state
+ * Game Over Screen Styles - Campaign end state with debrief
  */
 
 /* ========================================
-   GAME OVER SCREEN
+   GAME OVER SCREEN LAYOUT
    ======================================== */
 
 .game-over-screen {
-  justify-content: center;
-  align-items: center;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
 }
 
-.game-over-content {
+/* ========================================
+   HEADER SECTION
+   ======================================== */
+
+.game-over-header {
+  flex-shrink: 0;
   text-align: center;
-  max-width: 500px;
-  padding: var(--space-10);
+  padding: var(--space-6) var(--space-6) var(--space-4);
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), transparent);
   animation: fadeSlideIn var(--duration-slower) var(--ease-out);
 }
 
 .game-over-title {
   font-family: var(--font-display);
-  font-size: var(--text-6xl);
+  font-size: var(--text-5xl);
   font-weight: var(--font-bold);
   color: var(--color-danger);
   text-transform: uppercase;
@@ -29,7 +36,7 @@
     0 0 50px var(--color-danger-glow),
     0 0 100px var(--color-danger-glow);
   animation: gameOverFlicker var(--duration-base) ease-in-out infinite;
-  margin-bottom: var(--space-10);
+  margin-bottom: var(--space-3);
 }
 
 @keyframes gameOverFlicker {
@@ -45,66 +52,115 @@
   }
 }
 
-.game-over-stats {
-  margin-bottom: var(--space-10);
+.game-over-summary {
+  max-width: 600px;
+  margin: 0 auto;
 }
 
 .game-over-message {
   font-family: var(--font-ui);
-  font-size: var(--text-base);
-  color: var(--text-secondary);
-  margin-bottom: var(--space-7);
-  letter-spacing: var(--tracking-wide);
-}
-
-.game-over-stat {
-  display: flex;
-  justify-content: space-between;
-  padding: var(--space-4) var(--space-5);
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid var(--border-color);
-  margin-bottom: var(--space-2);
-  animation: fadeSlideIn var(--duration-slower) var(--ease-out);
-  animation-fill-mode: both;
-}
-
-.game-over-stat:nth-child(2) {
-  animation-delay: calc(var(--stagger-delay) * 2);
-}
-.game-over-stat:nth-child(3) {
-  animation-delay: calc(var(--stagger-delay) * 3);
-}
-.game-over-stat:nth-child(4) {
-  animation-delay: calc(var(--stagger-delay) * 4);
-}
-
-.game-over-stat .stat-label {
-  font-family: var(--font-ui);
   font-size: var(--text-sm);
   color: var(--text-secondary);
+  margin-bottom: var(--space-4);
   letter-spacing: var(--tracking-wide);
 }
 
-.game-over-stat .stat-value {
+/* Campaign stats row */
+.game-over-campaign-stats {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-6);
+}
+
+.game-over-campaign-stats .game-over-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-5);
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border-color);
+}
+
+.game-over-campaign-stats .stat-value {
   font-family: var(--font-display);
-  font-size: var(--text-base);
+  font-size: var(--text-xl);
   color: var(--text-primary);
 }
 
-/* Game over restart button - staggered animation */
-.game-over-content .btn {
-  animation: fadeSlideIn var(--duration-slower) var(--ease-out)
-    calc(var(--stagger-delay) * 6);
-  animation-fill-mode: both;
+.game-over-campaign-stats .stat-label {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
 }
 
 /* ========================================
-   RESPONSIVE - GAME OVER
+   DEBRIEF SECTION (SCROLLABLE)
+   ======================================== */
+
+.game-over-debrief {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4) var(--space-6);
+}
+
+/* Override debrief header for game over context */
+.game-over-debrief .debrief-section {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.game-over-debrief .debrief-header h2 {
+  font-size: var(--text-lg);
+  color: var(--color-danger);
+}
+
+.game-over-no-debrief {
+  text-align: center;
+  padding: var(--space-10);
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* ========================================
+   FOOTER SECTION
+   ======================================== */
+
+.game-over-footer {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  padding: var(--space-4) var(--space-6);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent);
+  animation: fadeSlideIn var(--duration-slower) var(--ease-out);
+}
+
+/* ========================================
+   RESPONSIVE
    ======================================== */
 
 @media (max-width: 700px) {
   .game-over-title {
-    font-size: 2.5rem;
+    font-size: 2rem;
     letter-spacing: 0.15em;
+  }
+
+  .game-over-campaign-stats {
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+
+  .game-over-campaign-stats .game-over-stat {
+    padding: var(--space-2) var(--space-4);
+  }
+
+  .game-over-campaign-stats .stat-value {
+    font-size: var(--text-lg);
+  }
+
+  .game-over-debrief {
+    padding: var(--space-2) var(--space-3);
   }
 }

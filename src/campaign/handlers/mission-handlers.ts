@@ -16,6 +16,8 @@ import {
   Screen,
   updateCampaignState,
 } from '../../ui/common/screens';
+import { collectDebriefData } from '../../ui/screens/results/debrief';
+import { showDefeatOverlay } from '../../ui/screens/results/defeat-overlay';
 import {
   createGameOverUI,
   createResultsUI,
@@ -73,7 +75,7 @@ export function showResults(
 
 /**
  * Handle non-ironman defeat by restoring from checkpoint.
- * Returns the player to the pre-mission state.
+ * Shows a brief "Mission Failed" overlay, then returns to squadron.
  *
  * @param controller - Campaign controller instance
  * @param setupContractsScreen - Callback to setup contracts screen
@@ -83,6 +85,9 @@ export async function handleNonIronmanDefeat(
   setupContractsScreen: (controller: CampaignController) => void,
 ): Promise<void> {
   const { screenManager } = controller;
+
+  // Show brief defeat overlay before returning to squadron
+  await showDefeatOverlay();
 
   // Try to restore from checkpoint
   const slotId = getActiveSlotId();
@@ -113,12 +118,17 @@ export async function handleNonIronmanDefeat(
  * Show game over screen (ironman mode only - permadeath).
  *
  * @param controller - Campaign controller instance
+ * @param world - Optional world for collecting debrief stats
  */
 export async function showGameOver(
   controller: CampaignController,
+  world?: World,
 ): Promise<void> {
   const { screenManager } = controller;
   const gameOverElement = getScreenElement(screenManager, Screen.GAME_OVER);
+
+  // Collect debrief data if world is available
+  const debriefData = world ? collectDebriefData(world) : null;
 
   // Delete the failed campaign from storage (permadeath)
   const currentSlotId = getActiveSlotId();
@@ -131,15 +141,20 @@ export async function showGameOver(
     }
   }
 
-  createGameOverUI(gameOverElement, screenManager.campaignState, async () => {
-    // Return to title screen - user can start new game or load another campaign
-    void resetTitleScreen();
-    goToTitle(screenManager);
+  createGameOverUI(
+    gameOverElement,
+    screenManager.campaignState,
+    async () => {
+      // Return to title screen - user can start new game or load another campaign
+      void resetTitleScreen();
+      goToTitle(screenManager);
 
-    // Setup title screen with gameplay callback
-    const onStartGameplay = () => startCampaignGameplay(controller);
-    await setupTitleScreen(controller, onStartGameplay);
-  });
+      // Setup title screen with gameplay callback
+      const onStartGameplay = () => startCampaignGameplay(controller);
+      await setupTitleScreen(controller, onStartGameplay);
+    },
+    debriefData,
+  );
 
   goToGameOver(screenManager);
 }

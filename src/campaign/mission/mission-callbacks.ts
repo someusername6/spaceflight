@@ -243,8 +243,8 @@ export function createMissionEndExecutor(
       const isIronman = newState.settings.ironmanMode;
 
       if (isIronman) {
-        // Ironman: permadeath - show game over screen
-        showGameOver(controller).catch((error) => {
+        // Ironman: permadeath - show game over screen with debrief
+        showGameOver(controller, game.world).catch((error) => {
           logError('Error in game over handler:', error);
         });
       } else {

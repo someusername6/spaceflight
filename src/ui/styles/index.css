@@ -120,6 +120,9 @@
 /* Alert modal */
 @import "./screens/alert-modal.css";
 
+/* Defeat overlay (non-ironman) */
+@import "./screens/defeat-overlay.css";
+
 /* Sector advance modal */
 @import "./screens/sector-advance.css";
 

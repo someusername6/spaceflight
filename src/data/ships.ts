@@ -95,7 +95,7 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     secondaryHardpoints: [{ row: 0, x: 0.5, svgX: 32, svgY: 48 }],
   },
 
-  // Fighter: Standard player craft - swept wings (mesh size: 5.18, scale: 1.83x)
+  // Fighter: Standard player craft - swept wings (mesh size: 6.56, scale: 2.32x)
   fighter: {
     hull: 90,
     shields: 65,
@@ -105,7 +105,7 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     acceleration: 50,
     turnRate: 100,
     rollRate: 150,
-    collisionRadius: 9,
+    collisionRadius: 11,
     maxHeat: 100,
     coolingRate: 18,
     afterburnerHeatRate: 40,

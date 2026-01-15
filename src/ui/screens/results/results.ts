@@ -243,36 +243,49 @@ interface GameOverState {
 interface GameOverProps {
   campaignState: CampaignState;
   onRestart: () => void;
+  debriefData: MissionDebriefData | null;
 }
 
 /** Game over screen component */
 const GameOverScreenComponent: Screen<GameOverState, GameOverProps> = {
   render(_state, props) {
-    const { campaignState } = props;
+    const { campaignState, debriefData } = props;
+
+    // Render debrief section if available
+    const debriefHtml = debriefData
+      ? renderDebrief(debriefData)
+      : '<div class="game-over-no-debrief">No combat data available</div>';
 
     return `
       <div class="results-screen game-over-screen">
-        <div class="game-over-content">
+        <div class="game-over-header">
           <h1 class="game-over-title">GAME OVER</h1>
-          <div class="game-over-stats">
-            <div class="game-over-message">Your ship was destroyed.</div>
-            <div class="game-over-stat">
-              <span class="stat-label">Final Credits</span>
-              <span class="stat-value">${campaignState.credits.toLocaleString()}</span>
-            </div>
-            <div class="game-over-stat">
-              <span class="stat-label">Missions Completed</span>
-              <span class="stat-value">${campaignState.missionCount}</span>
-            </div>
-            <div class="game-over-stat">
-              <span class="stat-label">Sector Reached</span>
-              <span class="stat-value">${campaignState.currentSector}</span>
+          <div class="game-over-summary">
+            <div class="game-over-message">Your commander was killed in action.</div>
+            <div class="game-over-campaign-stats">
+              <div class="game-over-stat">
+                <span class="stat-value">${campaignState.missionCount}</span>
+                <span class="stat-label">Missions</span>
+              </div>
+              <div class="game-over-stat">
+                <span class="stat-value">${campaignState.currentSector}</span>
+                <span class="stat-label">Sector</span>
+              </div>
+              <div class="game-over-stat">
+                <span class="stat-value">${campaignState.credits.toLocaleString()}</span>
+                <span class="stat-label">Credits</span>
+              </div>
             </div>
           </div>
+        </div>
+        <div class="game-over-debrief">
+          ${debriefHtml}
+        </div>
+        <footer class="game-over-footer">
           <button class="btn btn-xl btn-danger" id="btn-restart">
             Start New Campaign
           </button>
-        </div>
+        </footer>
       </div>
     `;
   },
@@ -293,6 +306,7 @@ export function createGameOverUI(
   element: HTMLElement,
   state: CampaignState,
   onRestart: () => void,
+  debriefData?: MissionDebriefData | null,
 ): void {
   // Clean up previous handle
   gameOverScreenHandle?.destroy();
@@ -301,6 +315,7 @@ export function createGameOverUI(
   const props: GameOverProps = {
     campaignState: state,
     onRestart,
+    debriefData: debriefData ?? null,
   };
 
   gameOverScreenHandle = createScreen(
