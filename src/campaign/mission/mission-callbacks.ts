@@ -222,8 +222,13 @@ export function createMissionEndExecutor(
     updateCampaignState(screenManager, newState);
     await autoSave(newState, 'mission-complete');
 
-    // Clean up checkpoint after mission (no longer needed)
-    if (!newState.settings.ironmanMode) {
+    // Determine if we need the checkpoint for recovery
+    const gameOver = isGameOver(newState);
+    const needsCheckpointRecovery = !newState.settings.ironmanMode && gameOver;
+
+    // Clean up checkpoint after mission (only if not needed for recovery)
+    // For non-ironman game over, handleNonIronmanDefeat will load then delete
+    if (!newState.settings.ironmanMode && !needsCheckpointRecovery) {
       const slotId = getActiveSlotId();
       if (slotId) {
         await deleteCheckpoint(slotId);
@@ -231,7 +236,7 @@ export function createMissionEndExecutor(
     }
 
     // Transition to results or game over
-    if (isGameOver(newState)) {
+    if (gameOver) {
       endMission(screenManager, missionEndState.victory);
 
       // Check if this is an ironman campaign
