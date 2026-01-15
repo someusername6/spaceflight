@@ -248,11 +248,12 @@ export function createMissionEndExecutor(
           logError('Error in game over handler:', error);
         });
       } else {
-        // Non-ironman: restore from checkpoint and return to hangar
-        handleNonIronmanDefeat(controller, setupContractsScreen).catch(
-          (error) => {
-            logError('Error in non-ironman defeat handler:', error);
-          },
+        // Non-ironman: show debrief then restore from checkpoint
+        handleNonIronmanDefeat(
+          controller,
+          setupContractsScreen,
+          contract,
+          game.world,
         );
       }
     } else {

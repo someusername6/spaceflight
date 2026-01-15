@@ -17,7 +17,6 @@ import {
   updateCampaignState,
 } from '../../ui/common/screens';
 import { collectDebriefData } from '../../ui/screens/results/debrief';
-import { showDefeatOverlay } from '../../ui/screens/results/defeat-overlay';
 import {
   createGameOverUI,
   createResultsUI,
@@ -74,44 +73,60 @@ export function showResults(
 }
 
 /**
- * Handle non-ironman defeat by restoring from checkpoint.
- * Shows a brief "Mission Failed" overlay, then returns to squadron.
+ * Handle non-ironman defeat by showing debrief then restoring from checkpoint.
+ * Shows results screen with combat stats, then returns to squadron for retry.
  *
  * @param controller - Campaign controller instance
  * @param setupContractsScreen - Callback to setup contracts screen
+ * @param contract - The contract that was attempted
+ * @param world - World reference for debrief stats extraction
  */
-export async function handleNonIronmanDefeat(
+export function handleNonIronmanDefeat(
   controller: CampaignController,
   setupContractsScreen: (controller: CampaignController) => void,
-): Promise<void> {
+  contract: Contract,
+  world: World,
+): void {
   const { screenManager } = controller;
 
-  // Show brief defeat overlay before returning to squadron
-  await showDefeatOverlay();
+  // Show results screen with debrief (no salvage on defeat)
+  const resultsElement = getScreenElement(screenManager, Screen.RESULTS);
 
-  // Try to restore from checkpoint
-  const slotId = getActiveSlotId();
-  const checkpoint = slotId ? await loadCheckpoint(slotId) : null;
+  createResultsUI(
+    resultsElement,
+    false, // victory = false
+    contract,
+    screenManager.campaignState,
+    async () => {
+      // On continue: restore checkpoint and return to squadron
+      const slotId = getActiveSlotId();
+      const checkpoint = slotId ? await loadCheckpoint(slotId) : null;
 
-  if (checkpoint && slotId) {
-    // Restore the pre-mission state
-    updateCampaignState(screenManager, checkpoint);
+      if (checkpoint && slotId) {
+        // Restore the pre-mission state
+        updateCampaignState(screenManager, checkpoint);
 
-    // Clean up checkpoint
-    await deleteCheckpoint(slotId);
+        // Clean up checkpoint
+        await deleteCheckpoint(slotId);
 
-    // Return to squadron screen (player can retry the mission)
-    goToSquadron(screenManager);
-    const squadronElement = getScreenElement(screenManager, Screen.SQUADRON);
-    setupSquadronScreen(controller, squadronElement, setupContractsScreen);
-  } else {
-    // No checkpoint available - this shouldn't happen, but if it does,
-    // fall back to game over screen (cannot proceed with dead commander)
-    logError(
-      'No checkpoint found for non-ironman defeat - falling back to game over',
-    );
-    await showGameOver(controller);
-  }
+        // Return to squadron screen (player can retry the mission)
+        goToSquadron(screenManager);
+        const squadronElement = getScreenElement(
+          screenManager,
+          Screen.SQUADRON,
+        );
+        setupSquadronScreen(controller, squadronElement, setupContractsScreen);
+      } else {
+        // No checkpoint available - fall back to game over screen
+        logError(
+          'No checkpoint found for non-ironman defeat - falling back to game over',
+        );
+        await showGameOver(controller);
+      }
+    },
+    world,
+    null, // no salvage on defeat
+  );
 }
 
 /**
