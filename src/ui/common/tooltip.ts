@@ -7,7 +7,7 @@
  */
 
 /** Global tooltip element (null - no active tooltip system creates these) */
-let tooltipElement: HTMLElement | null = null;
+const tooltipElement: HTMLElement | null = null;
 
 /** Hide tooltip */
 export function hideTooltip(): void {

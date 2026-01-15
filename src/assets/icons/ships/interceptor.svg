@@ -1,4 +1,4 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <!-- Interceptor: Pointed, aggressive - sharp delta wings -->
-  <path d="M32 4 L36 18 L58 44 L46 44 L42 58 L32 50 L22 58 L18 44 L6 44 L28 18 Z"/>
+  <!-- interceptor: Auto-generated from mesh silhouette -->
+  <path d="M32 4 L46 18 L48 31 L32 60 L16 32 L18 18 Z M5 11 L11 11 L11 53 L5 53 Z M53 11 L59 11 L59 53 L53 53 Z"/>
 </svg>
