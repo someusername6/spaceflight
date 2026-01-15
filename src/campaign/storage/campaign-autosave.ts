@@ -21,8 +21,8 @@ let saveInProgress = false;
 /** Track if another save was requested while one was in progress */
 let pendingSave: CampaignState | null = null;
 
-/** Last saved state (to detect actual changes) */
-let lastSavedJSON: string | null = null;
+/** Last saved state reference (immutable pattern means same ref = no changes) */
+let lastSavedState: CampaignState | null = null;
 
 /**
  * Trigger an auto-save of the campaign state.
@@ -38,10 +38,9 @@ export async function autoSave(
   state: CampaignState,
   reason: string,
 ): Promise<void> {
-  // Quick check: skip if state hasn't actually changed
-  const stateJSON = JSON.stringify(state);
-  if (stateJSON === lastSavedJSON) {
-    logDebug(`Auto-save skipped (no changes): ${reason}`);
+  // Quick check: same reference means no changes (immutable state pattern)
+  if (state === lastSavedState) {
+    logDebug(`Auto-save skipped (unchanged): ${reason}`);
     return;
   }
 
@@ -61,7 +60,7 @@ export async function autoSave(
       return;
     }
     await saveCampaign(state, slotId);
-    lastSavedJSON = stateJSON;
+    lastSavedState = state;
     logDebug(`Auto-saved to slot ${slotId}: ${reason}`);
   } catch (error) {
     logError(`Auto-save failed (${reason}):`, error);
@@ -92,7 +91,7 @@ export async function forceSave(
       return false;
     }
     await saveCampaign(state, slotId);
-    lastSavedJSON = JSON.stringify(state);
+    lastSavedState = state;
     logDebug(`Force-saved to slot ${slotId}: ${reason}`);
     return true;
   } catch (error) {
@@ -248,7 +247,7 @@ export function setupAutoSaveHandlers(getState: StateGetter): void {
  * Reset auto-save state (for testing or when campaign ends).
  */
 export function resetAutoSaveState(): void {
-  lastSavedJSON = null;
+  lastSavedState = null;
   pendingSave = null;
   currentStateGetter = null;
 }
