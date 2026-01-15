@@ -247,6 +247,7 @@ function createProjectileEntity(
     y: pos.y,
     z: pos.z,
     weaponName: weapon.name,
+    gameTime: world.systemState.gameTime,
   });
 
   recordShotFired(world, owner, weapon.name);

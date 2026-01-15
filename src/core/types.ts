@@ -116,6 +116,8 @@ export interface SystemState {
       category: 'energy' | 'ballistic';
       /** Optional RGB color override (for beam weapons) */
       color?: { r: number; g: number; b: number };
+      /** Game time when created - renderer skips stale items (e.g., after seeking) */
+      gameTime: number;
     }>;
   };
   /** Muzzle flash queue - weapon spawning adds, rendering consumes */
@@ -125,6 +127,8 @@ export interface SystemState {
       y: number;
       z: number;
       weaponName: string;
+      /** Game time when created - renderer skips stale items (e.g., after seeking) */
+      gameTime: number;
     }>;
   };
   /** Object pool indices - reset each frame */

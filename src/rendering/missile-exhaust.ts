@@ -11,6 +11,8 @@ import type { Transform } from '../components/transform';
 import { getComponent, queryEntities } from '../core/ecs';
 import { random } from '../core/prng';
 import type { Entity, World } from '../core/types';
+import { TICK_SEC } from '../game';
+import { getInterpolatedPosition, getInterpolatedRotation } from './renderer';
 
 /** Exhaust colors - orange/yellow flame */
 const EXHAUST_CORE_COLOR = new THREE.Color(1.0, 0.6, 0.1); // Orange-yellow
@@ -87,13 +89,16 @@ function createExhaust(
   };
 }
 
-/** Updates exhaust visuals */
+/** Updates exhaust visuals with interpolation */
 export function updateExhaustRenderer(
   renderer: ExhaustRenderer,
   scene: THREE.Scene,
   world: World,
   gameTime: number,
+  alpha = 1,
 ): void {
+  // Calculate interpolated gameTime for smooth flicker animation
+  const interpolatedGameTime = gameTime - TICK_SEC * (1 - alpha);
   seenMissiles.clear();
 
   // Update or create exhausts for missiles
@@ -114,10 +119,14 @@ export function updateExhaustRenderer(
       renderer.exhausts.set(entity, exhaust);
     }
 
+    // Use interpolated position/rotation from syncScene (falls back to current if not available)
+    const interpPos = getInterpolatedPosition(entity) ?? transform.position;
+    const interpRot = getInterpolatedRotation(entity) ?? transform.rotation;
+
     // Position exhaust behind missile
     exhaustOffset.copy(missile.direction).multiplyScalar(-1.5); // Behind missile
-    exhaust.cone.position.copy(transform.position).add(exhaustOffset);
-    exhaust.cone.quaternion.copy(transform.rotation);
+    exhaust.cone.position.copy(interpPos).add(exhaustOffset);
+    exhaust.cone.quaternion.copy(interpRot);
 
     // Position glow light
     exhaust.glow.position.copy(exhaust.cone.position);
@@ -126,8 +135,8 @@ export function updateExhaustRenderer(
     const flicker =
       0.7 +
       0.3 *
-        Math.sin(gameTime * 30 + exhaust.flickerPhase) *
-        Math.sin(gameTime * 47 + exhaust.flickerPhase * 1.3);
+        Math.sin(interpolatedGameTime * 30 + exhaust.flickerPhase) *
+        Math.sin(interpolatedGameTime * 47 + exhaust.flickerPhase * 1.3);
 
     (exhaust.cone.material as THREE.MeshBasicMaterial).opacity =
       0.6 + 0.4 * flicker;

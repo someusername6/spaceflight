@@ -8,7 +8,11 @@ import * as THREE from 'three';
 import { Line2 } from 'three/examples/jsm/lines/Line2.js';
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
-import type { World } from '../../core/types';
+import type { Transform } from '../../components/transform';
+import { getComponent } from '../../core/ecs';
+import type { Entity, World } from '../../core/types';
+import { TICK_SEC } from '../../game';
+import { getInterpolatedPosition } from '../renderer';
 import {
   generateBoltPath,
   generateBranches,
@@ -21,6 +25,7 @@ interface LightningBolt {
   branches: THREE.Vector3[][]; // Secondary branch paths
   startTime: number;
   active: boolean;
+  entityId: Entity; // For interpolation lookup
 }
 
 /** Rendered line pair (glow + core) */
@@ -84,12 +89,14 @@ export function createLightningRenderer(
 /** Create a dual-layer line (glow + core) from points */
 function createDualLayerLine(
   points: THREE.Vector3[],
+  count: number,
   isMainBolt: boolean,
   opacity: number,
 ): RenderedLine {
   // Convert points to flat array for LineGeometry
   const positions: number[] = [];
-  for (const p of points) {
+  for (let i = 0; i < count; i++) {
+    const p = points[i] as THREE.Vector3;
     positions.push(p.x, p.y, p.z);
   }
 
@@ -141,8 +148,10 @@ export function updateLightningRenderer(
   renderer: LightningRenderer,
   scene: THREE.Scene,
   world: World,
+  alpha = 1,
 ): void {
-  const gameTime = world.systemState.gameTime;
+  // Calculate interpolated gameTime for smooth animation
+  const gameTime = world.systemState.gameTime - TICK_SEC * (1 - alpha);
   const activeBeams = world.systemState.beams.activeBeams;
   const seenBolts = new Set<string>();
 
@@ -199,6 +208,7 @@ export function updateLightningRenderer(
           branches,
           startTime: gameTime,
           active: true,
+          entityId: entity,
         };
         renderer.bolts.set(key, bolt);
       } else if (bolt) {
@@ -218,14 +228,35 @@ export function updateLightningRenderer(
     }
   }
 
-  // Render all active bolts
-  renderBolts(renderer, scene, gameTime);
+  // Render all active bolts with interpolation
+  renderBolts(renderer, scene, world, gameTime);
 }
 
-/** Render all active lightning bolts */
+// Reusable vector for interpolation offset
+const interpOffset = new THREE.Vector3();
+// Reusable array for offset points
+const offsetPoints: THREE.Vector3[] = [];
+
+/** Apply interpolation offset to points, returns count of points written */
+function applyOffset(points: THREE.Vector3[], offset: THREE.Vector3): number {
+  const count = points.length;
+  // Reuse or expand array
+  while (offsetPoints.length < count) {
+    offsetPoints.push(new THREE.Vector3());
+  }
+  for (let i = 0; i < count; i++) {
+    (offsetPoints[i] as THREE.Vector3)
+      .copy(points[i] as THREE.Vector3)
+      .add(offset);
+  }
+  return count;
+}
+
+/** Render all active lightning bolts with interpolation */
 function renderBolts(
   renderer: LightningRenderer,
   scene: THREE.Scene,
+  world: World,
   gameTime: number,
 ): void {
   // Remove existing lines from scene and dispose
@@ -247,23 +278,45 @@ function renderBolts(
   for (const bolt of renderer.bolts.values()) {
     if (!bolt.active) continue;
 
+    // Calculate interpolation offset
+    const interpEntityPos = getInterpolatedPosition(bolt.entityId);
+    const transform = getComponent<Transform>(
+      world,
+      bolt.entityId,
+      'transform',
+    );
+    const hasOffset = interpEntityPos && transform;
+    if (hasOffset) {
+      interpOffset.copy(interpEntityPos).sub(transform.position);
+    } else {
+      interpOffset.set(0, 0, 0);
+    }
+
     // Calculate opacity based on age
     const age = gameTime - bolt.startTime;
     const opacity = Math.max(0, 1 - age / BOLT_FADE_TIME);
 
-    // Render main bolt
+    // Render main bolt with offset
     if (bolt.segments.length > 1) {
-      const line = createDualLayerLine(bolt.segments, true, opacity);
+      const count = hasOffset
+        ? applyOffset(bolt.segments, interpOffset)
+        : bolt.segments.length;
+      const points = hasOffset ? offsetPoints : bolt.segments;
+      const line = createDualLayerLine(points, count, true, opacity);
       scene.add(line.glow);
       scene.add(line.core);
       renderer.mainLines.push(line);
     }
 
-    // Render branches
+    // Render branches with offset
     for (const branch of bolt.branches) {
       if (branch.length < 2) continue;
 
-      const line = createDualLayerLine(branch, false, opacity);
+      const count = hasOffset
+        ? applyOffset(branch, interpOffset)
+        : branch.length;
+      const points = hasOffset ? offsetPoints : branch;
+      const line = createDualLayerLine(points, count, false, opacity);
       scene.add(line.glow);
       scene.add(line.core);
       renderer.branchLines.push(line);

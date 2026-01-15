@@ -270,6 +270,7 @@ export function applyBeamDamageAndEffects(params: BeamDamageParams): void {
       z: hitPoint.z,
       category: 'energy',
       color: { r: beam.color.r, g: beam.color.g, b: beam.color.b },
+      gameTime,
     });
     beam.lastHitEffectTime = gameTime;
   }

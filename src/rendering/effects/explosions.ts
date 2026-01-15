@@ -4,10 +4,11 @@
 
 import * as THREE from 'three';
 import type { Explosion } from '../../components/explosion';
-import { getExplosionProgress } from '../../components/explosion';
 import type { Transform } from '../../components/transform';
-import { getComponent, queryEntities } from '../../core/ecs';
+import { entityExists, getComponent, queryEntities } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
+import { TICK_SEC } from '../../game';
+import { getInterpolatedPosition } from '../renderer';
 import {
   createExplosionVisual,
   disposeExplosionVisual,
@@ -18,6 +19,9 @@ import {
 } from './explosion-visual';
 
 const seenExplosions = new Set<Entity>();
+
+// Reusable vector for interpolated explosion position
+const interpExplosionPos = new THREE.Vector3();
 
 export interface ExplosionRenderer {
   visuals: Map<Entity, ExplosionVisual>;
@@ -95,6 +99,7 @@ export function updateExplosionRenderer(
   renderer: ExplosionRenderer,
   scene: THREE.Scene,
   world: World,
+  alpha = 1,
 ): void {
   // Clear reusable Set (avoid per-frame allocations)
   seenExplosions.clear();
@@ -114,7 +119,27 @@ export function updateExplosionRenderer(
       entity,
       'transform',
     ) as Transform;
-    const progress = getExplosionProgress(explosion);
+    // Calculate interpolated progress for smooth animation
+    // Interpolate between previous age (age - TICK_SEC) and current age using alpha
+    const interpolatedAge = explosion.age - TICK_SEC * (1 - alpha);
+    const progress = Math.min(
+      1,
+      Math.max(0, interpolatedAge / explosion.maxAge),
+    );
+
+    // Get interpolated position (for explosions following source entities)
+    let renderPosition = transform.position;
+    if (
+      explosion.sourceEntity !== undefined &&
+      entityExists(world, explosion.sourceEntity)
+    ) {
+      // Use interpolated position of source entity for smooth following
+      const interpSourcePos = getInterpolatedPosition(explosion.sourceEntity);
+      if (interpSourcePos) {
+        interpExplosionPos.copy(interpSourcePos);
+        renderPosition = interpExplosionPos;
+      }
+    }
 
     let visual = renderer.visuals.get(entity);
 
@@ -125,13 +150,13 @@ export function updateExplosionRenderer(
         scene,
         entity,
         explosion,
-        transform.position,
+        renderPosition,
       );
       renderer.visuals.set(entity, visual);
     }
 
     // Update visual based on progress
-    updateExplosionVisual(visual, transform.position, explosion, progress);
+    updateExplosionVisual(visual, renderPosition, explosion, progress);
   }
 
   // Release visuals for explosions that no longer exist (return to pool)

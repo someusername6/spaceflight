@@ -38,6 +38,7 @@ function queueHitEffect(
     y: position.y,
     z: position.z,
     category,
+    gameTime: world.systemState.gameTime,
   });
 }
 

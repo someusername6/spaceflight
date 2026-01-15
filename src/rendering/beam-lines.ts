@@ -9,7 +9,10 @@ import * as THREE from 'three';
 import { Line2 } from 'three/examples/jsm/lines/Line2.js';
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
+import type { Transform } from '../components/transform';
+import { getComponent } from '../core/ecs';
 import type { ActiveBeam, Entity, World } from '../core/types';
+import { getInterpolatedPosition } from './renderer';
 
 /** Beam fade-out duration in seconds */
 const BEAM_FADE_DURATION = 0.15;
@@ -92,6 +95,40 @@ export function updateBeamLine(
   entry.line.visible = true;
 }
 
+/** Update beam line with interpolated positions */
+function updateBeamLineInterpolated(
+  entry: BeamLineEntry,
+  origin: THREE.Vector3,
+  hitPoint: THREE.Vector3,
+  beam: ActiveBeam,
+  gameTime: number,
+): void {
+  // Update geometry positions with interpolated values
+  entry.geometry.setPositions([
+    origin.x,
+    origin.y,
+    origin.z,
+    hitPoint.x,
+    hitPoint.y,
+    hitPoint.z,
+  ]);
+
+  // Calculate fade opacity
+  let opacity = 1.0;
+  if (beam.fadeStartTime !== null) {
+    const fadeAge = gameTime - beam.fadeStartTime;
+    const fadeProgress = fadeAge / BEAM_FADE_DURATION;
+    opacity = 1 - fadeProgress;
+  }
+
+  // Update material
+  entry.material.color.setHex(beam.color.getHex());
+  entry.material.opacity = opacity;
+  entry.material.linewidth = BASE_LINE_WIDTH * (beam.beamWidth ?? 1);
+  entry.material.resolution = resolution;
+  entry.line.visible = true;
+}
+
 /** Dispose of a beam line entry */
 export function disposeBeamLine(
   scene: THREE.Scene,
@@ -104,8 +141,11 @@ export function disposeBeamLine(
 
 // Reusable set for tracking seen beams
 const seenBeams = new Set<string>();
+// Reusable vectors for interpolation
+const interpOrigin = new THREE.Vector3();
+const interpHitPoint = new THREE.Vector3();
 
-/** Update all beam lines from world state */
+/** Update all beam lines from world state with interpolation */
 export function updateAllBeamLines(
   world: World,
   scene: THREE.Scene,
@@ -117,6 +157,11 @@ export function updateAllBeamLines(
 
   // Process all beams (active and fading)
   for (const [entity, beams] of activeBeams) {
+    // Get entity's current and interpolated positions for offset calculation
+    const transform = getComponent<Transform>(world, entity, 'transform');
+    const interpEntityPos = getInterpolatedPosition(entity);
+    const entityPos = transform?.position;
+
     for (const beam of beams) {
       // Skip beams with no hitPoint (not yet fired)
       if (!beam.hitPoint) continue;
@@ -140,7 +185,22 @@ export function updateAllBeamLines(
         beamLines.set(key, entry);
       }
 
-      updateBeamLine(entry, beam, gameTime);
+      // Interpolate beam positions if entity interpolation is available
+      if (interpEntityPos && entityPos) {
+        // Calculate offset: interpOrigin = beam.origin + (interpEntityPos - entityPos)
+        interpOrigin.copy(beam.origin).add(interpEntityPos).sub(entityPos);
+        // Keep hitPoint direction consistent - move it by the same offset
+        interpHitPoint.copy(beam.hitPoint).add(interpEntityPos).sub(entityPos);
+        updateBeamLineInterpolated(
+          entry,
+          interpOrigin,
+          interpHitPoint,
+          beam,
+          gameTime,
+        );
+      } else {
+        updateBeamLine(entry, beam, gameTime);
+      }
     }
   }
 

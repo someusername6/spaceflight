@@ -19,6 +19,8 @@ export const zeroVec3 = new THREE.Vector3();
 export interface TargetInfo {
   entity: Entity;
   transform: Transform;
+  /** Interpolated position for smooth rendering (falls back to transform.position) */
+  interpolatedPosition: THREE.Vector3;
   velocity: THREE.Vector3;
   mesh: THREE.Object3D | undefined;
   distance: number;
@@ -41,6 +43,7 @@ export function getTargetInfo(): TargetInfo {
     targetPool.push({
       entity: 0 as Entity,
       transform: null as unknown as Transform,
+      interpolatedPosition: new THREE.Vector3(),
       velocity: zeroVec3,
       mesh: undefined,
       distance: 0,

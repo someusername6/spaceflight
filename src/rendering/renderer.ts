@@ -3,6 +3,7 @@
  */
 
 import * as THREE from 'three';
+import { DECOY_SPEED, type Decoy } from '../components/decoy';
 import { Faction, type FactionComponent } from '../components/faction';
 import type { Missile } from '../components/missile';
 import type { Physics } from '../components/physics';
@@ -195,8 +196,13 @@ export function syncScene(renderer: Renderer, world: World, alpha = 1): void {
       entityMeshes.set(entity, mesh);
     }
 
-    // Update transform with interpolation for entities with Physics
+    // Update transform with interpolation
     const physics = getComponent<Physics>(world, entity, 'physics');
+    const missile = isMissile
+      ? getComponent<Missile>(world, entity, 'missile')
+      : null;
+    const decoy = isDecoy ? getComponent<Decoy>(world, entity, 'decoy') : null;
+
     if (physics) {
       // Use Hermite interpolation for position (smooth velocity across tick boundaries)
       hermiteInterp(
@@ -217,28 +223,47 @@ export function syncScene(renderer: Renderer, world: World, alpha = 1): void {
 
       mesh.position.copy(interpPos);
       mesh.quaternion.copy(interpRot);
+    } else if (missile) {
+      // Missiles use velocity-based interpolation (no physics component)
+      // Interpolate backward from current position: pos - direction * speed * dt * (1-alpha)
+      const backOffset = missile.speed * TICK_SEC * (1 - alpha);
+      interpPos.copy(transform.position);
+      interpPos.addScaledVector(missile.direction, -backOffset);
 
-      // Store interpolated state for ships (used by camera)
-      if (isShipEntity) {
-        let storedPos = interpolatedPositions.get(entity);
-        if (!storedPos) {
-          storedPos = new THREE.Vector3();
-          interpolatedPositions.set(entity, storedPos);
-        }
-        storedPos.copy(interpPos);
+      mesh.position.copy(interpPos);
+      mesh.quaternion.copy(transform.rotation);
+      interpRot.copy(transform.rotation);
+    } else if (decoy) {
+      // Decoys use velocity-based interpolation (similar to missiles)
+      const backOffset = DECOY_SPEED * TICK_SEC * (1 - alpha);
+      interpPos.copy(transform.position);
+      interpPos.addScaledVector(decoy.direction, -backOffset);
 
-        let storedRot = interpolatedRotations.get(entity);
-        if (!storedRot) {
-          storedRot = new THREE.Quaternion();
-          interpolatedRotations.set(entity, storedRot);
-        }
-        storedRot.copy(interpRot);
-      }
+      mesh.position.copy(interpPos);
+      mesh.quaternion.copy(transform.rotation);
+      interpRot.copy(transform.rotation);
     } else {
-      // No physics component - use current transform directly
+      // No physics, missile, or decoy - use current transform directly
       mesh.position.copy(transform.position);
       mesh.quaternion.copy(transform.rotation);
+      interpPos.copy(transform.position);
+      interpRot.copy(transform.rotation);
     }
+
+    // Store interpolated state for all entities (used by camera and effect renderers)
+    let storedPos = interpolatedPositions.get(entity);
+    if (!storedPos) {
+      storedPos = new THREE.Vector3();
+      interpolatedPositions.set(entity, storedPos);
+    }
+    storedPos.copy(interpPos);
+
+    let storedRot = interpolatedRotations.get(entity);
+    if (!storedRot) {
+      storedRot = new THREE.Quaternion();
+      interpolatedRotations.set(entity, storedRot);
+    }
+    storedRot.copy(interpRot);
   }
 
   // Remove meshes for entities that no longer exist
@@ -251,8 +276,10 @@ export function syncScene(renderer: Renderer, world: World, alpha = 1): void {
     }
   }
 
-  // Update beam lines
-  updateAllBeamLines(world, scene, beamLines, world.systemState.gameTime);
+  // Update beam lines with interpolated gameTime for smooth fade animation
+  const interpolatedGameTime =
+    world.systemState.gameTime - TICK_SEC * (1 - alpha);
+  updateAllBeamLines(world, scene, beamLines, interpolatedGameTime);
 }
 
 /** Renders the scene */

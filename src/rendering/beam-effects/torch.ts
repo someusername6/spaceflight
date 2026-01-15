@@ -7,7 +7,11 @@
  */
 
 import * as THREE from 'three';
+import type { Transform } from '../../components/transform';
+import { getComponent } from '../../core/ecs';
 import type { ActiveBeam, World } from '../../core/types';
+import { TICK_SEC } from '../../game';
+import { getInterpolatedPosition } from '../renderer';
 
 /** Torch visual parameters */
 const TORCH_BASE_WIDTH = 1.5; // Width at emitter
@@ -57,19 +61,28 @@ export function createTorchRenderer(): TorchRenderer {
 // Reusable vectors
 const direction = new THREE.Vector3();
 const quaternion = new THREE.Quaternion();
+const interpOrigin = new THREE.Vector3();
+const interpHitPoint = new THREE.Vector3();
 
-/** Update torch rendering */
+/** Update torch rendering with interpolation */
 export function updateTorchRenderer(
   renderer: TorchRenderer,
   scene: THREE.Scene,
   world: World,
+  alpha = 1,
 ): void {
-  const gameTime = world.systemState.gameTime;
+  // Calculate interpolated gameTime for smooth flicker animation
+  const gameTime = world.systemState.gameTime - TICK_SEC * (1 - alpha);
   const activeBeams = world.systemState.beams.activeBeams;
   const seenTorches = new Set<string>();
 
   // Process all torch beams
   for (const [entity, beams] of activeBeams) {
+    // Get entity's current and interpolated positions for offset calculation
+    const transform = getComponent<Transform>(world, entity, 'transform');
+    const interpEntityPos = getInterpolatedPosition(entity);
+    const entityPos = transform?.position;
+
     for (const beam of beams) {
       if (!beam.isTorch) continue;
       if (!beam.hitPoint) continue;
@@ -88,8 +101,20 @@ export function updateTorchRenderer(
         renderer.cones.set(key, cone);
       }
 
-      // Update cone position and orientation
-      updateTorchCone(cone, beam, gameTime);
+      // Calculate interpolated positions
+      if (interpEntityPos && entityPos) {
+        // Apply offset: interpPos = beamPos + (interpEntityPos - entityPos)
+        interpOrigin.copy(beam.origin).add(interpEntityPos).sub(entityPos);
+        interpHitPoint.copy(beam.hitPoint).add(interpEntityPos).sub(entityPos);
+        updateTorchConeInterpolated(
+          cone,
+          interpOrigin,
+          interpHitPoint,
+          gameTime,
+        );
+      } else {
+        updateTorchCone(cone, beam, gameTime);
+      }
     }
   }
 
@@ -148,6 +173,37 @@ function updateTorchCone(
   cone.scale.set(1, 1, length);
 
   // Apply flicker effect
+  applyTorchFlicker(cone, gameTime);
+}
+
+/** Update torch cone with interpolated positions */
+function updateTorchConeInterpolated(
+  cone: THREE.Mesh,
+  origin: THREE.Vector3,
+  hitPoint: THREE.Vector3,
+  gameTime: number,
+): void {
+  // Calculate beam direction and length
+  direction.copy(hitPoint).sub(origin);
+  const length = direction.length();
+  direction.normalize();
+
+  // Position at midpoint between origin and hitPoint
+  cone.position.copy(origin).addScaledVector(direction, length / 2);
+
+  // Orient toward target
+  quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), direction);
+  cone.quaternion.copy(quaternion);
+
+  // Scale to beam length
+  cone.scale.set(1, 1, length);
+
+  // Apply flicker effect
+  applyTorchFlicker(cone, gameTime);
+}
+
+/** Apply flicker effect to torch cone */
+function applyTorchFlicker(cone: THREE.Mesh, gameTime: number): void {
   const flicker =
     1 - TORCH_FLICKER_AMOUNT * Math.sin(gameTime * TORCH_FLICKER_SPEED);
   const material = cone.material as THREE.MeshBasicMaterial;

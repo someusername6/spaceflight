@@ -10,6 +10,7 @@ import type { Projectile, WeaponName } from '../../components/projectile';
 import type { Transform } from '../../components/transform';
 import { getComponent, queryEntities } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
+import { TICK_SEC } from '../../game';
 import {
   getWeaponVisual,
   setBoltScale,
@@ -152,11 +153,12 @@ function releaseBolt(
   renderer.pool.push(projectileBolt);
 }
 
-/** Updates trail visuals */
+/** Updates trail visuals with interpolation */
 export function updateBoltRenderer(
   renderer: BoltRenderer,
   scene: THREE.Scene,
   world: World,
+  alpha = 1,
 ): void {
   seenProjectiles.clear();
 
@@ -189,10 +191,18 @@ export function updateBoltRenderer(
       renderer.bolts.set(entity, projectileBolt);
     }
 
+    // Calculate interpolated position:
+    // prevPosition = currentPosition - direction * speed * TICK_SEC
+    // interpPosition = lerp(prevPosition, currentPosition, alpha)
+    // Simplified: currentPosition - direction * speed * TICK_SEC * (1 - alpha)
+    const backOffset = projectile.speed * TICK_SEC * (1 - alpha);
+    interpPos.copy(transform.position);
+    interpPos.addScaledVector(projectile.direction, -backOffset);
+
     // Update bolt position, orientation, and growth
     updateBolt(
       projectileBolt,
-      transform.position,
+      interpPos,
       projectile.direction,
       projectile.distanceTraveled,
     );
@@ -210,6 +220,8 @@ export function updateBoltRenderer(
 // Reusable quaternion for bolt orientation
 const boltQuat = new THREE.Quaternion();
 const boltForward = new THREE.Vector3(0, 1, 0); // Cylinder points in +Y
+// Reusable vector for interpolated position
+const interpPos = new THREE.Vector3();
 
 /** Updates a single bolt with new position, handling length growth for long projectiles */
 function updateBolt(

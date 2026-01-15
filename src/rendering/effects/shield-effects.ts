@@ -12,6 +12,7 @@ import {
 } from '../../components/shield-hit';
 import { getComponent, queryEntities } from '../../core/ecs';
 import type { World } from '../../core/types';
+import { TICK_SEC } from '../../game';
 
 /** Shield hit flash color */
 const SHIELD_COLOR = new THREE.Color(0.3, 0.7, 1.0); // Cyan-blue
@@ -72,8 +73,10 @@ export function updateShieldEffectRenderer(
   renderer: ShieldEffectRenderer,
   scene: THREE.Scene,
   world: World,
+  alpha = 1,
 ): void {
-  const gameTime = world.systemState.gameTime;
+  // Calculate interpolated gameTime for smooth animation
+  const gameTime = world.systemState.gameTime - TICK_SEC * (1 - alpha);
   activeEffects.clear();
 
   // Find all entities with shield hit tracking

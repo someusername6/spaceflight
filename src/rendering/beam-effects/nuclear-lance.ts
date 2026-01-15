@@ -7,6 +7,7 @@
 
 import * as THREE from 'three';
 import type { World } from '../../core/types';
+import { TICK_SEC } from '../../game';
 import { createBeamCylinders, updateBeamCylinders } from './nuclear-lance-beam';
 import {
   createImpactEffects,
@@ -51,8 +52,10 @@ export function updateNuclearLanceRenderer(
   renderer: NuclearLanceRenderer,
   scene: THREE.Scene,
   world: World,
+  alpha = 1,
 ): void {
-  const gameTime = world.systemState.gameTime;
+  // Calculate interpolated gameTime for smooth animation
+  const gameTime = world.systemState.gameTime - TICK_SEC * (1 - alpha);
   const activeBeams = world.systemState.beams.activeBeams;
 
   // Check for new lance shots

@@ -158,5 +158,10 @@ export function getHUDStyles(): string {
       from { opacity: 1; }
       to { opacity: 0.5; }
     }
+    /* Disable all transitions - used during discontinuities (e.g., replay seeking) */
+    #hud.no-transitions,
+    #hud.no-transitions * {
+      transition: none !important;
+    }
   `;
 }

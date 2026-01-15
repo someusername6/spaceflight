@@ -9,6 +9,7 @@ import * as THREE from 'three';
 import type { ProjectileCategory } from '../../components/projectile';
 import { createPRNG, random } from '../../core/prng';
 import type { World } from '../../core/types';
+import { TICK_SEC } from '../../game';
 
 /** Effect duration in seconds */
 const HIT_DURATION = 0.25;
@@ -159,12 +160,18 @@ export function updateProjectileHitRenderer(
   renderer: ProjectileHitRenderer,
   scene: THREE.Scene,
   world: World,
+  alpha = 1,
 ): void {
-  const gameTime = world.systemState.gameTime;
+  // Calculate interpolated gameTime for smooth animation
+  const gameTime = world.systemState.gameTime - TICK_SEC * (1 - alpha);
   const pendingHits = world.systemState.projectileHits.pending;
 
   // Create effects for pending hits
+  // Skip stale items - they're from before a seek and would appear at wrong positions
+  const maxAge = TICK_SEC * 2;
   for (const hit of pendingHits) {
+    if (gameTime - hit.gameTime > maxAge) continue;
+
     hitPosition.set(hit.x, hit.y, hit.z);
     const effect = createHitEffect(
       renderer,

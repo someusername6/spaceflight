@@ -7,7 +7,11 @@
 
 import * as THREE from 'three';
 import type { WeaponName } from '../../components/projectile';
+import type { Transform } from '../../components/transform';
+import { getComponent } from '../../core/ecs';
 import type { World } from '../../core/types';
+import { TICK_SEC } from '../../game';
+import { getInterpolatedPosition } from '../renderer';
 
 /** Flash duration in seconds */
 const FLASH_DURATION = 0.08;
@@ -40,8 +44,9 @@ const BEAM_GLOW_COLORS: Record<string, THREE.Color> = {
 };
 const DEFAULT_BEAM_GLOW = new THREE.Color(1.0, 1.0, 1.0);
 
-// Reusable vector for processing pending flashes
+// Reusable vectors for processing pending flashes and interpolation
 const flashPosition = new THREE.Vector3();
+const interpGlowPos = new THREE.Vector3();
 
 /** Flash visual state */
 interface FlashVisual {
@@ -124,12 +129,19 @@ export function updateMuzzleFlashRenderer(
   renderer: MuzzleFlashRenderer,
   scene: THREE.Scene,
   world: World,
+  alpha = 1,
 ): void {
-  const gameTime = world.systemState.gameTime;
+  // Calculate interpolated gameTime for smooth animation
+  // Interpolate between previous time (gameTime - TICK_SEC) and current using alpha
+  const gameTime = world.systemState.gameTime - TICK_SEC * (1 - alpha);
   const pendingFlashes = world.systemState.muzzleFlashes.pending;
 
   // Create flashes from pending queue (populated by weapon spawning)
+  // Skip stale items - they're from before a seek and would appear at wrong positions
+  const maxAge = TICK_SEC * 2;
   for (const pending of pendingFlashes) {
+    if (gameTime - pending.gameTime > maxAge) continue;
+
     flashPosition.set(pending.x, pending.y, pending.z);
     const flash: FlashVisual = {
       mesh: createFlashMesh(
@@ -167,19 +179,25 @@ export function updateMuzzleFlashRenderer(
   }
 
   // Update beam glows
-  updateBeamGlows(renderer, scene, world);
+  updateBeamGlows(renderer, scene, world, gameTime);
 }
 
-/** Update beam origin glows */
+/** Update beam origin glows with interpolation */
 function updateBeamGlows(
   renderer: MuzzleFlashRenderer,
   scene: THREE.Scene,
   world: World,
+  gameTime: number,
 ): void {
   const activeBeams = world.systemState.beams.activeBeams;
   const seenGlows = new Set<string>();
 
   for (const [entity, beams] of activeBeams) {
+    // Get entity's current and interpolated positions for offset calculation
+    const transform = getComponent<Transform>(world, entity, 'transform');
+    const interpEntityPos = getInterpolatedPosition(entity);
+    const entityPos = transform?.position;
+
     for (const beam of beams) {
       // Skip Nuclear Lance - has dedicated renderer with full visual effects
       if (beam.weaponName === 'Nuclear Lance') continue;
@@ -215,13 +233,20 @@ function updateBeamGlows(
         renderer.beamGlows.set(key, glow);
       }
 
-      // Update glow position
-      glow.mesh.position.copy(beam.origin);
-      glow.light.position.copy(beam.origin);
+      // Calculate interpolated glow position
+      if (interpEntityPos && entityPos) {
+        // Apply offset: interpPos = beamOrigin + (interpEntityPos - entityPos)
+        interpGlowPos.copy(beam.origin).add(interpEntityPos).sub(entityPos);
+        glow.mesh.position.copy(interpGlowPos);
+        glow.light.position.copy(interpGlowPos);
+      } else {
+        glow.mesh.position.copy(beam.origin);
+        glow.light.position.copy(beam.origin);
+      }
       glow.mesh.visible = true;
 
-      // Slight pulsing effect
-      const pulse = 0.8 + 0.2 * Math.sin(world.systemState.gameTime * 20);
+      // Slight pulsing effect (uses interpolated gameTime for smooth animation)
+      const pulse = 0.8 + 0.2 * Math.sin(gameTime * 20);
       glow.mesh.scale.setScalar(pulse);
       glow.light.intensity = 0.2 + 0.2 * pulse;
     }

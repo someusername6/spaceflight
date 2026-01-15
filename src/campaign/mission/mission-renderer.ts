@@ -120,20 +120,36 @@ export function updateMissionRenderers(
   const scene = getScene(renderer);
 
   syncScene(renderer, world, alpha);
-  updateExplosionRenderer(renderers.explosionRenderer, scene, world);
-  updateBoltRenderer(renderers.boltRenderer, scene, world);
+  updateExplosionRenderer(renderers.explosionRenderer, scene, world, alpha);
+  updateBoltRenderer(renderers.boltRenderer, scene, world, alpha);
   updateExhaustRenderer(
     renderers.exhaustRenderer,
     scene,
     world,
     world.systemState.gameTime,
+    alpha,
   );
-  updateShieldEffectRenderer(renderers.shieldEffectRenderer, scene, world);
-  updateMuzzleFlashRenderer(renderers.muzzleFlashRenderer, scene, world);
-  updateLightningRenderer(renderers.lightningRenderer, scene, world);
-  updateNuclearLanceRenderer(renderers.nuclearLanceRenderer, scene, world);
-  updateTorchRenderer(renderers.torchRenderer, scene, world);
-  updateProjectileHitRenderer(renderers.projectileHitRenderer, scene, world);
+  updateShieldEffectRenderer(
+    renderers.shieldEffectRenderer,
+    scene,
+    world,
+    alpha,
+  );
+  updateMuzzleFlashRenderer(renderers.muzzleFlashRenderer, scene, world, alpha);
+  updateLightningRenderer(renderers.lightningRenderer, scene, world, alpha);
+  updateNuclearLanceRenderer(
+    renderers.nuclearLanceRenderer,
+    scene,
+    world,
+    alpha,
+  );
+  updateTorchRenderer(renderers.torchRenderer, scene, world, alpha);
+  updateProjectileHitRenderer(
+    renderers.projectileHitRenderer,
+    scene,
+    world,
+    alpha,
+  );
 
   const player = findEntity(world, ['playerControlled', 'transform']);
   if (player !== undefined) {

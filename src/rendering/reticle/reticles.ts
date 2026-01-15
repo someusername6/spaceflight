@@ -16,6 +16,7 @@ import type {
 import { getCurrentSecondary } from '../../components/weapons';
 import { getComponent, hasComponent, queryEntities } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
+import { getInterpolatedPosition } from '../renderer';
 import {
   drawDumbfireMissileLeadIndicator,
   drawLeadIndicators,
@@ -188,6 +189,13 @@ export function updateReticles(
     const target = getTargetInfo();
     target.entity = entity;
     target.transform = transform;
+    // Use interpolated position for smooth rendering (fall back to tick position)
+    const interpPos = getInterpolatedPosition(entity);
+    if (interpPos) {
+      target.interpolatedPosition.copy(interpPos);
+    } else {
+      target.interpolatedPosition.copy(transform.position);
+    }
     target.velocity = physics?.velocity ?? zeroVec3;
     target.mesh = mesh;
     target.distance = distance;
@@ -245,12 +253,13 @@ function renderTarget(
   }
 
   // Check if target is behind camera using dot product (works at any distance)
-  toTarget.copy(target.transform.position).sub(camera.position);
+  // Use interpolated position for smooth off-screen arrow movement
+  toTarget.copy(target.interpolatedPosition).sub(camera.position);
   cameraForward.set(0, 0, -1).applyQuaternion(camera.quaternion);
   const behindCamera = toTarget.dot(cameraForward) < 0;
 
-  // Project center position to screen space
-  tempVec3.copy(target.transform.position).project(camera);
+  // Project center position to screen space (use interpolated position)
+  tempVec3.copy(target.interpolatedPosition).project(camera);
   const centerX = (tempVec3.x + 1) * 0.5 * screenWidth;
   const centerY = (1 - tempVec3.y) * 0.5 * screenHeight;
 
@@ -306,7 +315,7 @@ function renderTarget(
         screenHeight,
         playerTransform,
         playerVelocity ?? zeroVec3,
-        target.transform.position,
+        target.interpolatedPosition,
         target.velocity,
         playerWeapons,
         color,
@@ -328,7 +337,7 @@ function renderTarget(
         screenHeight,
         playerTransform,
         playerVelocity ?? zeroVec3,
-        target.transform.position,
+        target.interpolatedPosition,
         target.velocity,
         secondaryWeapons,
         color,

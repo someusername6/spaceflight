@@ -8,6 +8,7 @@ import type { Targeting } from '../../components/targeting';
 import type { Transform } from '../../components/transform';
 import { getComponent } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
+import { getInterpolatedPosition, getInterpolatedRotation } from '../renderer';
 
 /** Target camera display dimensions */
 const CAMERA_WIDTH = 160;
@@ -108,12 +109,18 @@ export function updateTargetCamera(
     return;
   }
 
+  // Use interpolated position/rotation for smooth camera movement
+  const interpPos = getInterpolatedPosition(target);
+  const interpRot = getInterpolatedRotation(target);
+  const usePos = interpPos ?? targetTransform.position;
+  const useRot = interpRot ?? targetTransform.rotation;
+
   // Position camera behind and above target
-  targetPos.copy(targetTransform.position);
+  targetPos.copy(usePos);
 
   // Get target's forward direction to position camera behind it
   offset.set(0, CAMERA_HEIGHT_OFFSET, CAMERA_DISTANCE);
-  offset.applyQuaternion(targetTransform.rotation);
+  offset.applyQuaternion(useRot);
   cameraPos.copy(targetPos).add(offset);
 
   targetCamera.camera.position.copy(cameraPos);

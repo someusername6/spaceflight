@@ -12,9 +12,13 @@ import {
   resetMissionRenderers,
   updateMissionRenderers,
 } from '../../../campaign/mission/mission-renderer';
+import { resetLeadIndicatorSmoothing } from '../../../rendering/reticle/lead-indicators';
 import { ReplayPlayback } from '../../../replay/playback';
 import type { FullReplayData } from '../../../replay/types';
 import { TICK_MS, VIEWER_SEEK_TICKS_PER_FRAME } from '../../../replay/types';
+
+/** Threshold for detecting time discontinuities (in seconds) */
+const DISCONTINUITY_THRESHOLD = 1.0;
 
 /** Callback for state updates from playback loop */
 export interface PlaybackCallbacks {
@@ -35,6 +39,12 @@ let viewerRenderers: MissionRenderers | null = null;
 let animationFrameId: number | null = null;
 let callbacks: PlaybackCallbacks | null = null;
 
+/** Track last rendered game time for discontinuity detection */
+let lastRenderedGameTime: number | null = null;
+
+/** Accumulated time for interpolation (milliseconds) */
+let accumulator = 0;
+
 /** Format time as MM:SS */
 export function formatTime(seconds: number): string {
   const mins = Math.floor(seconds / 60);
@@ -46,7 +56,7 @@ export function formatTime(seconds: number): string {
 function startPlaybackLoop(): void {
   if (animationFrameId !== null) return;
 
-  let lastTime = 0;
+  let lastFrameTime = 0;
 
   function loop(time: number) {
     animationFrameId = requestAnimationFrame(loop);
@@ -55,7 +65,7 @@ function startPlaybackLoop(): void {
 
     const state = callbacks.getState();
 
-    // Handle seeking
+    // Handle seeking - don't render during seek to avoid fast-forward visual
     if (viewerPlayback.isSeeking()) {
       try {
         const stillSeeking = viewerPlayback.processSeek(
@@ -65,6 +75,10 @@ function startPlaybackLoop(): void {
           const currentTick = viewerPlayback.getCurrentTick();
           callbacks.updateState({ seeking: false, currentTick });
           callbacks.onSeekComplete(currentTick, state.totalTicks);
+          // Reset accumulator and render target frame immediately
+          accumulator = 0;
+          lastFrameTime = time;
+          updateRendering(1); // alpha=1 to snap to exact tick position
         }
       } catch {
         // If seek processing fails, reset seeking state
@@ -73,25 +87,35 @@ function startPlaybackLoop(): void {
           viewerPlayback.getCurrentTick(),
           state.totalTicks,
         );
+        accumulator = 0;
+        lastFrameTime = time;
+        updateRendering(1);
       }
-      // Still update rendering during seek
-      updateRendering();
-      return;
+      return; // Don't render during seek
     }
 
-    // Handle playback
+    // Calculate frame delta
+    if (lastFrameTime === 0) lastFrameTime = time;
+    const frameDelta = time - lastFrameTime;
+    lastFrameTime = time;
+
+    // Handle playback with proper interpolation
     if (state.playing) {
-      if (lastTime === 0) lastTime = time;
-      const delta = time - lastTime;
+      // Add scaled time to accumulator
+      accumulator += frameDelta * state.speed;
 
-      // Apply speed
-      const ticksToProcess = Math.floor((delta * state.speed) / TICK_MS);
-
+      // Process fixed timestep ticks
+      let ticksProcessed = 0;
       let playbackEnded = false;
-      for (let i = 0; i < ticksToProcess; i++) {
+
+      while (accumulator >= TICK_MS) {
         const hasMore = viewerPlayback.tick();
+        accumulator -= TICK_MS;
+        ticksProcessed++;
+
         if (!hasMore) {
           playbackEnded = true;
+          accumulator = 0; // Clamp to end
           break;
         }
       }
@@ -101,35 +125,62 @@ function startPlaybackLoop(): void {
         callbacks.updateState({ playing: false, currentTick });
         callbacks.onPlayPauseChange(false);
         callbacks.onTimeUpdate(currentTick, state.totalTicks);
-      } else if (ticksToProcess > 0) {
-        lastTime = time;
+      } else if (ticksProcessed > 0) {
         const currentTick = viewerPlayback.getCurrentTick();
         callbacks.updateState({ currentTick });
         callbacks.onTimeUpdate(currentTick, state.totalTicks);
       }
     } else {
-      lastTime = 0;
+      // Paused - keep accumulator at 0 to show exact tick position
+      accumulator = 0;
     }
 
-    updateRendering();
+    // Calculate interpolation alpha (0-1, how far between prev and current tick)
+    const alpha = state.playing ? Math.min(accumulator / TICK_MS, 1) : 1;
+    updateRendering(alpha);
   }
 
   animationFrameId = requestAnimationFrame(loop);
 }
 
-/** Update the rendering */
-function updateRendering(): void {
+/** Update the rendering with interpolation */
+function updateRendering(alpha: number): void {
   if (!viewerRenderers || !viewerPlayback) return;
 
   const container = document.getElementById('replay-canvas');
   if (!container) return;
 
+  const world = viewerPlayback.getWorld();
+  const currentGameTime = world.systemState.gameTime;
+
+  // Detect time discontinuity (seeking, large jumps)
+  const isDiscontinuity =
+    lastRenderedGameTime !== null &&
+    Math.abs(currentGameTime - lastRenderedGameTime) > DISCONTINUITY_THRESHOLD;
+
+  if (isDiscontinuity) {
+    // Reset lead indicator smoothing so indicators snap to new positions
+    resetLeadIndicatorSmoothing();
+
+    // Temporarily disable CSS transitions on HUD
+    const hudElement = document.getElementById('hud');
+    if (hudElement) {
+      hudElement.classList.add('no-transitions');
+      // Remove class after one frame to allow subsequent transitions
+      requestAnimationFrame(() => {
+        hudElement.classList.remove('no-transitions');
+      });
+    }
+  }
+
+  lastRenderedGameTime = currentGameTime;
+
   updateMissionRenderers(
     viewerRenderers,
-    viewerPlayback.getWorld(),
+    world,
     container.clientWidth,
     container.clientHeight,
-    1,
+    alpha,
   );
 }
 
@@ -170,6 +221,8 @@ export function cleanupViewer(): void {
 
   viewerPlayback = null;
   callbacks = null;
+  lastRenderedGameTime = null;
+  accumulator = 0;
 }
 
 /**
