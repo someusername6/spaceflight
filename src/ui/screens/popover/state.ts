@@ -102,6 +102,13 @@ export function pinWeaponPopover(): void {
     document.removeEventListener('click', outsideClickListener);
   }
 
+  // Outside-click pattern: dismiss popover when clicking outside.
+  // This pattern appears in several places (ship-picker, swap popover, settings).
+  // Each location has slightly different behavior (elements to check, actions to take).
+  // Key details:
+  // - Use contains() to check if click target is inside the popover
+  // - Use setTimeout(0) to defer addEventListener, avoiding the click that opened it
+  // - Store listener reference for cleanup, or make it self-removing
   outsideClickListener = (e: MouseEvent) => {
     if (activePicker && !activePicker.contains(e.target as Node)) {
       closePopover();
