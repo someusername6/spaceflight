@@ -9,6 +9,17 @@
 
 import { logWarn } from '../../core/logger';
 
+/** Callback type for user notifications */
+type NotifyCallback = (message: string) => void;
+
+/** Configured notification callback (optional) */
+let notifyUser: NotifyCallback | null = null;
+
+/** Configure the notification callback for database events */
+export function configureDBNotifications(callback: NotifyCallback): void {
+  notifyUser = callback;
+}
+
 /** Database configuration */
 export const DB_NAME = 'spaceflight-campaign';
 export const DB_VERSION = 2; // Incremented for STORE_CHECKPOINT addition
@@ -20,6 +31,10 @@ export const STORE_CHECKPOINT = 'checkpoint';
 
 /** Timeout for database operations (ms) */
 const DB_OPEN_TIMEOUT = 3000;
+/** Extended timeout when blocked by another tab (gives onversionchange time to work) */
+const DB_BLOCKED_TIMEOUT = 10000;
+/** Delay before showing user notification about blocked state */
+const DB_BLOCKED_NOTIFY_DELAY = 2000;
 
 /** Cached database connection */
 let dbPromise: Promise<IDBDatabase> | null = null;
@@ -50,11 +65,20 @@ export function openDB(): Promise<IDBDatabase> {
     }
 
     let settled = false;
+    let blocked = false;
+    let timeoutId: ReturnType<typeof setTimeout>;
+    let notifyTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    const cleanup = () => {
+      clearTimeout(timeoutId);
+      if (notifyTimeoutId) clearTimeout(notifyTimeoutId);
+    };
 
     // Timeout to prevent hanging if IndexedDB doesn't respond
-    const timeoutId = setTimeout(() => {
+    timeoutId = setTimeout(() => {
       if (!settled) {
         settled = true;
+        cleanup();
         dbPromise = null;
         logWarn(`IndexedDB open timed out after ${DB_OPEN_TIMEOUT}ms`);
         reject(new Error('IndexedDB open timed out'));
@@ -66,7 +90,7 @@ export function openDB(): Promise<IDBDatabase> {
     request.onerror = () => {
       if (!settled) {
         settled = true;
-        clearTimeout(timeoutId);
+        cleanup();
         dbPromise = null;
         reject(request.error);
       }
@@ -75,14 +99,36 @@ export function openDB(): Promise<IDBDatabase> {
     request.onblocked = () => {
       // Another connection is preventing the upgrade
       // This can happen if another tab has the database open
+      blocked = true;
       logWarn('IndexedDB upgrade blocked - close other tabs using this app');
-      // Don't reject yet - wait for the block to clear or timeout
+
+      // Extend timeout to give onversionchange time to work in the other tab
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        if (!settled) {
+          settled = true;
+          cleanup();
+          dbPromise = null;
+          reject(
+            new Error(
+              'Database blocked by another tab. Close other tabs and try again.',
+            ),
+          );
+        }
+      }, DB_BLOCKED_TIMEOUT);
+
+      // Show user notification after a short delay (if configured)
+      notifyTimeoutId = setTimeout(() => {
+        if (!settled && blocked) {
+          notifyUser?.('Waiting for other tabs to close...');
+        }
+      }, DB_BLOCKED_NOTIFY_DELAY);
     };
 
     request.onsuccess = () => {
       if (!settled) {
         settled = true;
-        clearTimeout(timeoutId);
+        cleanup();
         const db = request.result;
 
         db.onclose = () => {

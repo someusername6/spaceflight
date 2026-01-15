@@ -18,6 +18,7 @@ import { initKeyBindings } from '../input/key-bindings';
 import { initReplayBindings } from '../input/replay-bindings';
 import { initGameSettings } from '../settings/game-settings';
 import { initInput } from '../systems/input';
+import { showWarning } from '../ui/common/notification';
 import {
   createScreenManager,
   getScreenElement,
@@ -38,6 +39,7 @@ import {
 import { setupEscapeHandler } from './handlers/pause-handler';
 import { createNewCampaign } from './state';
 import { forceSave, setupAutoSaveHandlers } from './storage';
+import { configureDBNotifications } from './storage/db-connection';
 
 export type { CampaignController } from './controller-types';
 
@@ -48,6 +50,7 @@ export function startCampaign(container: HTMLElement): CampaignController {
   initReplayBindings();
   initGameSettings();
   initInput();
+  configureDBNotifications((msg) => showWarning(msg, 5000));
 
   // Create placeholder campaign state (will be replaced by new game or load)
   const campaignState = createNewCampaign();
