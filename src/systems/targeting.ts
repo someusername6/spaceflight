@@ -182,19 +182,17 @@ function updateValidTargets(
   // Sort by distance (nearest first) - use module-level comparator
   targetCollector.sort(compareByDistance);
 
-  // Update the valid targets list (reuse array, just update length and contents)
+  // Update the valid targets list and find current target's new index in one pass
   targeting.validTargets.length = targetCollector.length;
+  let currentTargetIdx = -1;
   for (let i = 0; i < targetCollector.length; i++) {
-    targeting.validTargets[i] = (
-      targetCollector[i] as { entity: Entity }
-    ).entity;
+    const entity = (targetCollector[i] as { entity: Entity }).entity;
+    targeting.validTargets[i] = entity;
+    if (entity === targeting.currentTarget) {
+      currentTargetIdx = i;
+    }
   }
-
-  // Update target index if current target is still valid
-  if (targeting.currentTarget !== undefined) {
-    const idx = targeting.validTargets.indexOf(targeting.currentTarget);
-    targeting.targetIndex = idx;
-  }
+  targeting.targetIndex = currentTargetIdx;
 }
 
 /** Cycle through targets in the given direction */
