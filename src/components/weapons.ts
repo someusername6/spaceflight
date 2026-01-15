@@ -244,6 +244,7 @@ export function createPrimaryWeapons(
 
 /** Get effective heat per shot (accounts for bank size) */
 export function getEffectiveHeat(weapon: PrimaryWeapon): number {
+  if (weapon.bankSize <= 0) return weapon.heatPerShot;
   return weapon.heatPerShot / weapon.bankSize;
 }
 

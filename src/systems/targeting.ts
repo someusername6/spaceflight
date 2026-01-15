@@ -89,10 +89,12 @@ export function targetingSystem(world: World, _dt: number): void {
     updateValidTargets(world, entity, targeting, transform, selfFaction);
 
     // Clear target if it no longer exists or is no longer valid
+    // Note: targetIndex is updated by updateValidTargets() above, so we can use
+    // O(1) index check instead of O(n) includes() search
     if (targeting.currentTarget !== undefined) {
       if (
         !entityExists(world, targeting.currentTarget) ||
-        !targeting.validTargets.includes(targeting.currentTarget)
+        targeting.targetIndex < 0
       ) {
         clearTarget(targeting);
         // Auto-select nearest after target lost
