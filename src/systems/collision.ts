@@ -82,7 +82,11 @@ export function collisionSystem(world: World, _dt: number): void {
     collidables.push(getCollidableInfo(world, entity, transform, collision));
   }
 
-  // Check all pairs (O(n²) - fine for small entity counts)
+  // Check all pairs - O(n²) but appropriate for this game's scale:
+  // - Typical combat: 5-8 ships + 10-20 missiles = ~15-30 entities
+  // - 30 entities = 435 pair checks = <0.1ms per frame
+  // - Spatial partitioning (grid/octree) has overhead that only pays off at 100+ entities
+  // - If scaling beyond 100 collidables: profile first, then try spatial hash grid
   for (let i = 0; i < collidables.length; i++) {
     for (let j = i + 1; j < collidables.length; j++) {
       const a = collidables[i] as (typeof collidables)[0];
