@@ -40,9 +40,12 @@ import {
 } from './viewer-input';
 import {
   cleanupViewer,
+  endOrbitDrag,
   formatTime,
   initializeViewer,
   type PlaybackCallbacks,
+  startOrbitDrag,
+  updateOrbitDrag,
 } from './viewer-playback';
 
 /** Viewer screen callbacks */
@@ -205,6 +208,23 @@ const ReplayViewerComponent: Screen<ViewerState, ReplayViewerProps> = {
       const target = parseInt((el as HTMLInputElement).value, 10);
       handleTimelineSeek(api, target, uiCallbacks);
       resetControlsTimer();
+    });
+
+    // Orbit camera drag-to-rotate
+    api.on('.replay-canvas-container', 'mousedown', (e) => {
+      const s = api.getState();
+      if (s.helpModal.visible) return; // Don't start drag if modal open
+      if (startOrbitDrag(e as MouseEvent)) {
+        (e as MouseEvent).preventDefault();
+      }
+    });
+
+    api.onGlobal('mousemove', (e) => {
+      updateOrbitDrag(e as MouseEvent);
+    });
+
+    api.onGlobal('mouseup', () => {
+      endOrbitDrag();
     });
 
     // Bind help modal if visible

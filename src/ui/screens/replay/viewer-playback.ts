@@ -30,6 +30,7 @@ import {
   cameraResetToPlayer,
   cameraToggleMode,
   clearCameraStatusCache,
+  endOrbitDrag,
   getCameraMode,
   getCameraModeDisplay,
   getCameraTargetDisplay,
@@ -37,7 +38,10 @@ import {
   isViewingPlayer,
   setCameraInput,
   setViewerRefs,
+  startOrbitDrag,
   updateCameraStatus,
+  updateOrbitDrag,
+  updateViewerClasses,
 } from './viewer-camera';
 
 // Re-export camera controls for external use
@@ -46,11 +50,14 @@ export {
   cameraPrevEntity,
   cameraResetToPlayer,
   cameraToggleMode,
+  endOrbitDrag,
   getCameraMode,
   getCameraModeDisplay,
   getCameraTargetDisplay,
   setCameraInput,
+  startOrbitDrag,
   updateCameraStatus,
+  updateOrbitDrag,
 };
 
 /** Threshold for detecting time discontinuities (in seconds) */
@@ -278,6 +285,9 @@ function updateRendering(alpha: number, frameDt: number): void {
 
   // Update camera status display (mode and target may change due to lost targets)
   updateCameraStatus();
+
+  // Update viewer classes for cursor feedback
+  updateViewerClasses();
 }
 
 /** Stop the playback loop */

@@ -135,9 +135,27 @@ export function handleKeyDown(
 
   const shouldTogglePlay = isTogglePlay || isSpaceToggle;
 
-  // Reset controls timer on any key EXCEPT pause (togglePlay)
-  // This way pressing pause while controls are hidden doesn't flash them
-  if (!shouldTogglePlay) {
+  // Check if this is a camera control (should not show UI)
+  const isCameraControl =
+    isReplayAction(code, 'toggleHUD') ||
+    isReplayAction(code, 'nextShip') ||
+    isReplayAction(code, 'prevShip') ||
+    isReplayAction(code, 'resetCamera') ||
+    isReplayAction(code, 'toggleCamera') ||
+    isReplayAction(code, 'cameraUp') ||
+    isReplayAction(code, 'cameraDown') ||
+    isReplayAction(code, 'cameraLeft') ||
+    isReplayAction(code, 'cameraRight') ||
+    isReplayAction(code, 'cameraForward') ||
+    isReplayAction(code, 'cameraBack') ||
+    isReplayAction(code, 'cameraRollLeft') ||
+    isReplayAction(code, 'cameraRollRight') ||
+    isReplayAction(code, 'zoomIn') ||
+    isReplayAction(code, 'zoomOut');
+
+  // Reset controls timer only for playback controls (speed, seek, etc.)
+  // Camera controls and pause should not cause the UI to appear
+  if (!shouldTogglePlay && !isCameraControl) {
     resetControlsTimer();
   }
 

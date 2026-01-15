@@ -297,11 +297,13 @@ function updateChaseCamera(
 
 // Temporary objects for orbit rotation calculations (reused to avoid allocations)
 const orbitDeltaQuat = new THREE.Quaternion();
-const orbitAxisX = new THREE.Vector3(1, 0, 0);
-const orbitAxisY = new THREE.Vector3(0, 1, 0);
 const orbitAxisZ = new THREE.Vector3(0, 0, 1);
 const orbitUp = new THREE.Vector3();
 const orbitMatrix = new THREE.Matrix4();
+
+// Exported for mouse drag rotation in viewer-camera.ts
+export const orbitAxisX = new THREE.Vector3(1, 0, 0);
+export const orbitAxisY = new THREE.Vector3(0, 1, 0);
 
 /** Update orbit camera (rotate around entity) - quaternion-based for gimbal-lock-free rotation */
 function updateOrbitCamera(

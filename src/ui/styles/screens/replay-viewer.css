@@ -44,6 +44,16 @@
   height: 100%;
 }
 
+/* Orbit mode cursor feedback (only when controls visible) */
+.replay-viewer.camera-orbit:not(.controls-hidden) .replay-canvas-container {
+  cursor: grab;
+}
+
+.replay-viewer.camera-orbit.dragging:not(.controls-hidden)
+  .replay-canvas-container {
+  cursor: grabbing;
+}
+
 .replay-hud {
   position: absolute;
   bottom: 0;
