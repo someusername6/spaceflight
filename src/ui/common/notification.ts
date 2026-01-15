@@ -4,6 +4,8 @@
  * Shows temporary messages that auto-dismiss after a duration.
  */
 
+import { escapeHtml } from '../utils';
+
 /** Notification types */
 export type NotificationType = 'success' | 'warning' | 'error' | 'info';
 
@@ -53,7 +55,7 @@ export function showNotification(
 
   notification.innerHTML = `
     <span class="notification-icon" aria-hidden="true">${ICONS[type]}</span>
-    <span class="notification-message">${message}</span>
+    <span class="notification-message">${escapeHtml(message)}</span>
   `;
 
   containerEl.appendChild(notification);

@@ -123,6 +123,7 @@ export function updateTorchRenderer(
     if (!seenTorches.has(key)) {
       scene.remove(cone);
       cone.geometry.dispose();
+      (cone.material as THREE.Material).dispose();
       renderer.cones.delete(key);
     }
   }

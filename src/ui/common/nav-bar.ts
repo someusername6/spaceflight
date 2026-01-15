@@ -86,14 +86,44 @@ export function renderNavBar(props: NavBarProps): string {
   `;
 }
 
+/** Tracked listener for cleanup */
+interface TrackedListener {
+  element: Element;
+  event: string;
+  handler: EventListener;
+}
+
+/** Current nav bar cleanup function */
+let navBarCleanup: (() => void) | null = null;
+
+/** Cleanup previous nav bar bindings */
+export function cleanupNavBar(): void {
+  navBarCleanup?.();
+  navBarCleanup = null;
+}
+
 /** Bind navigation event handlers */
 export function bindNavBar(
   container: HTMLElement,
   onNavigate: (destination: NavDestination) => void,
   onPause?: () => void,
 ): void {
+  // Clean up previous bindings first
+  cleanupNavBar();
+
+  const listeners: TrackedListener[] = [];
+
+  const addListener = (
+    element: Element,
+    event: string,
+    handler: EventListener,
+  ): void => {
+    element.addEventListener(event, handler);
+    listeners.push({ element, event, handler });
+  };
+
   container.querySelectorAll<HTMLElement>('.nav-tab').forEach((tab) => {
-    tab.addEventListener('click', () => {
+    addListener(tab, 'click', () => {
       const dest = tab.dataset.nav as NavDestination;
       if (dest) {
         onNavigate(dest);
@@ -104,6 +134,16 @@ export function bindNavBar(
   // Bind pause button if callback provided
   if (onPause) {
     const pauseBtn = container.querySelector('.nav-pause-btn');
-    pauseBtn?.addEventListener('click', onPause);
+    if (pauseBtn) {
+      addListener(pauseBtn, 'click', onPause);
+    }
   }
+
+  // Store cleanup function
+  navBarCleanup = () => {
+    for (const { element, event, handler } of listeners) {
+      element.removeEventListener(event, handler);
+    }
+    listeners.length = 0;
+  };
 }
