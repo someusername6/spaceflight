@@ -75,6 +75,13 @@ export const SECTOR_3_EASY: Contract[] = [
       },
       {
         enemies: [
+          { archetype: 'moth', skill: 'rookie', count: 1 },
+          { archetype: 'dragonfly', skill: 'rookie', count: 2 },
+        ],
+        delay: [8, 12],
+      },
+      {
+        enemies: [
           { archetype: 'moth', skill: 'rookie', count: 2 },
           { archetype: 'dragonfly', skill: 'rookie', count: 2 },
         ],
@@ -84,13 +91,6 @@ export const SECTOR_3_EASY: Contract[] = [
         enemies: [
           { archetype: 'moth', skill: 'regular', count: 2 },
           { archetype: 'dragonfly', skill: 'regular', count: 2 },
-        ],
-        delay: [8, 12],
-      },
-      {
-        enemies: [
-          { archetype: 'moth', skill: 'regular', count: 2 },
-          { archetype: 'dragonfly', skill: 'veteran', count: 2 },
         ],
         delay: [8, 12],
       },
@@ -158,19 +158,19 @@ export const SECTOR_3_EASY: Contract[] = [
     sector: 3,
     waves: [
       {
-        enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
+        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'rocketeer', skill: 'regular', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
-        delay: [8, 12],
-      },
-      {
         enemies: [{ archetype: 'rocketeer', skill: 'veteran', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 4 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'rocketeer', skill: 'ace', count: 3 }],
         delay: [8, 12],
       },
     ],

@@ -13,19 +13,19 @@ export const SECTOR_2_HARD: Contract[] = [
     sector: 2,
     waves: [
       {
-        enemies: [{ archetype: 'phantom', skill: 'rookie', count: 2 }],
+        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'bruiser', skill: 'rookie', count: 2 }],
+        enemies: [{ archetype: 'bruiser', skill: 'regular', count: 3 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'shredder', skill: 'rookie', count: 2 }],
+        enemies: [{ archetype: 'shredder', skill: 'regular', count: 3 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
+        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
         delay: [8, 12],
       },
     ],
@@ -67,30 +67,29 @@ export const SECTOR_2_HARD: Contract[] = [
     waves: [
       {
         enemies: [
-          { archetype: 'firefly', skill: 'rookie', count: 2 },
-          { archetype: 'glowworm', skill: 'rookie', count: 1 },
+          { archetype: 'firefly', skill: 'regular', count: 2 },
+          { archetype: 'glowworm', skill: 'regular', count: 1 },
         ],
         delay: [5, 10],
       },
       {
         enemies: [
-          { archetype: 'viper', skill: 'rookie', count: 1 },
-          { archetype: 'firefly', skill: 'rookie', count: 2 },
+          { archetype: 'viper', skill: 'regular', count: 2 },
+          { archetype: 'firefly', skill: 'regular', count: 2 },
         ],
         delay: [8, 12],
       },
       {
         enemies: [
-          { archetype: 'sparkler', skill: 'rookie', count: 2 },
-          { archetype: 'viper', skill: 'rookie', count: 1 },
+          { archetype: 'sparkler', skill: 'regular', count: 2 },
+          { archetype: 'viper', skill: 'regular', count: 2 },
         ],
         delay: [8, 12],
       },
       {
         enemies: [
-          { archetype: 'sparkler', skill: 'rookie', count: 1 },
-          { archetype: 'firefly', skill: 'rookie', count: 1 },
-          { archetype: 'viper', skill: 'rookie', count: 1 },
+          { archetype: 'sparkler', skill: 'regular', count: 2 },
+          { archetype: 'firefly', skill: 'regular', count: 2 },
         ],
         delay: [8, 12],
       },
@@ -144,19 +143,19 @@ export const SECTOR_2_HARD: Contract[] = [
     sector: 2,
     waves: [
       {
-        enemies: [{ archetype: 'wasp', skill: 'rookie', count: 1 }],
+        enemies: [{ archetype: 'wasp', skill: 'regular', count: 2 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'wasp', skill: 'rookie', count: 2 }],
-        delay: [10, 15],
-      },
-      {
-        enemies: [{ archetype: 'locust', skill: 'rookie', count: 2 }],
-        delay: [10, 15],
-      },
-      {
         enemies: [{ archetype: 'wasp', skill: 'regular', count: 2 }],
+        delay: [10, 15],
+      },
+      {
+        enemies: [{ archetype: 'locust', skill: 'regular', count: 3 }],
+        delay: [10, 15],
+      },
+      {
+        enemies: [{ archetype: 'wasp', skill: 'veteran', count: 2 }],
         delay: [10, 15],
       },
     ],

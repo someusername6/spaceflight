@@ -41,19 +41,19 @@ export const SECTOR_2_EASY: Contract[] = [
     sector: 2,
     waves: [
       {
-        enemies: [{ archetype: 'bruiser', skill: 'rookie', count: 1 }],
+        enemies: [{ archetype: 'bruiser', skill: 'regular', count: 2 }],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'bruiser', skill: 'rookie', count: 1 }],
+        enemies: [{ archetype: 'bruiser', skill: 'regular', count: 2 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'bruiser', skill: 'rookie', count: 2 }],
+        enemies: [{ archetype: 'bruiser', skill: 'regular', count: 2 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'bruiser', skill: 'rookie', count: 2 }],
+        enemies: [{ archetype: 'bruiser', skill: 'veteran', count: 2 }],
         delay: [8, 12],
       },
     ],

@@ -90,24 +90,24 @@ export const SECTOR_4_MEDIUM: Contract[] = [
     sector: 4,
     waves: [
       {
-        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
+        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
         delay: [5, 10],
       },
       {
         enemies: [
-          { archetype: 'behemoth', skill: 'regular', count: 1 },
-          { archetype: 'firefly', skill: 'veteran', count: 2 },
+          { archetype: 'behemoth', skill: 'rookie', count: 1 },
+          { archetype: 'firefly', skill: 'regular', count: 2 },
         ],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
+        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
         delay: [8, 12],
       },
       {
         enemies: [
-          { archetype: 'behemoth', skill: 'veteran', count: 1 },
-          { archetype: 'dragonfly', skill: 'veteran', count: 2 },
+          { archetype: 'behemoth', skill: 'regular', count: 1 },
+          { archetype: 'dragonfly', skill: 'regular', count: 2 },
         ],
         delay: [8, 12],
       },
@@ -162,19 +162,19 @@ export const SECTOR_4_MEDIUM: Contract[] = [
     sector: 4,
     waves: [
       {
-        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
+        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
+        enemies: [{ archetype: 'phantom', skill: 'rookie', count: 2 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
+        enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'juggernaut', skill: 'regular', count: 2 }],
+        enemies: [{ archetype: 'juggernaut', skill: 'rookie', count: 1 }],
         delay: [8, 12],
       },
     ],

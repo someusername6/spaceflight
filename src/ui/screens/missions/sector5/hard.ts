@@ -13,11 +13,11 @@ export const SECTOR_5_HARD: Contract[] = [
     sector: 5,
     waves: [
       {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
+        enemies: [{ archetype: 'phantom', skill: 'ace', count: 3 }],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 3 }],
+        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 4 }],
         delay: [8, 12],
       },
       {
@@ -25,7 +25,10 @@ export const SECTOR_5_HARD: Contract[] = [
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'firefly', skill: 'ace', count: 3 }],
+        enemies: [
+          { archetype: 'firefly', skill: 'ace', count: 3 },
+          { archetype: 'phantom', skill: 'ace', count: 1 },
+        ],
         delay: [8, 12],
       },
     ],
@@ -39,11 +42,11 @@ export const SECTOR_5_HARD: Contract[] = [
     sector: 5,
     waves: [
       {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
+        enemies: [{ archetype: 'phantom', skill: 'ace', count: 3 }],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 3 }],
+        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 4 }],
         delay: [8, 12],
       },
       {
@@ -51,7 +54,10 @@ export const SECTOR_5_HARD: Contract[] = [
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'firefly', skill: 'ace', count: 3 }],
+        enemies: [
+          { archetype: 'firefly', skill: 'ace', count: 3 },
+          { archetype: 'phantom', skill: 'ace', count: 1 },
+        ],
         delay: [8, 12],
       },
     ],
@@ -91,22 +97,22 @@ export const SECTOR_5_HARD: Contract[] = [
     sector: 5,
     waves: [
       {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
+        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
         delay: [5, 10],
       },
       {
         enemies: [
-          { archetype: 'titan', skill: 'regular', count: 1 },
-          { archetype: 'dragonfly', skill: 'ace', count: 2 },
+          { archetype: 'titan', skill: 'rookie', count: 1 },
+          { archetype: 'dragonfly', skill: 'veteran', count: 2 },
         ],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 3 }],
+        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 2 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
+        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
         delay: [8, 12],
       },
     ],

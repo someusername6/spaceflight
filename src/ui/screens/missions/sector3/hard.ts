@@ -13,19 +13,19 @@ export const SECTOR_3_HARD: Contract[] = [
     sector: 3,
     waves: [
       {
-        enemies: [{ archetype: 'moth', skill: 'rookie', count: 3 }],
+        enemies: [{ archetype: 'moth', skill: 'rookie', count: 2 }],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'moth', skill: 'regular', count: 4 }],
+        enemies: [{ archetype: 'moth', skill: 'rookie', count: 3 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'moth', skill: 'regular', count: 4 }],
+        enemies: [{ archetype: 'moth', skill: 'regular', count: 3 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'moth', skill: 'regular', count: 4 }],
+        enemies: [{ archetype: 'moth', skill: 'regular', count: 3 }],
         delay: [8, 12],
       },
     ],

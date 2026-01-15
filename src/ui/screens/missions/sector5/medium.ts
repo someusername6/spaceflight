@@ -66,11 +66,11 @@ export const SECTOR_5_MEDIUM: Contract[] = [
     sector: 5,
     waves: [
       {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
+        enemies: [{ archetype: 'phantom', skill: 'ace', count: 3 }],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'behemoth', skill: 'veteran', count: 1 }],
+        enemies: [{ archetype: 'behemoth', skill: 'ace', count: 1 }],
         delay: [8, 12],
       },
       {
@@ -80,7 +80,7 @@ export const SECTOR_5_MEDIUM: Contract[] = [
       {
         enemies: [
           { archetype: 'behemoth', skill: 'ace', count: 1 },
-          { archetype: 'dragonfly', skill: 'ace', count: 2 },
+          { archetype: 'dragonfly', skill: 'ace', count: 3 },
         ],
         delay: [8, 12],
       },

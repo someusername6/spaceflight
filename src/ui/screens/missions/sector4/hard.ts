@@ -15,29 +15,29 @@ export const SECTOR_4_HARD: Contract[] = [
     waves: [
       {
         enemies: [
-          { archetype: 'juggernaut', skill: 'rookie', count: 1 },
-          { archetype: 'phantom', skill: 'regular', count: 1 },
+          { archetype: 'juggernaut', skill: 'regular', count: 1 },
+          { archetype: 'phantom', skill: 'regular', count: 2 },
         ],
         delay: [5, 10],
       },
       {
         enemies: [
-          { archetype: 'behemoth', skill: 'rookie', count: 1 },
-          { archetype: 'dragonfly', skill: 'veteran', count: 2 },
-        ],
-        delay: [8, 12],
-      },
-      {
-        enemies: [
-          { archetype: 'juggernaut', skill: 'regular', count: 1 },
-          { archetype: 'inferno', skill: 'regular', count: 2 },
-        ],
-        delay: [8, 12],
-      },
-      {
-        enemies: [
           { archetype: 'behemoth', skill: 'regular', count: 1 },
           { archetype: 'dragonfly', skill: 'veteran', count: 2 },
+        ],
+        delay: [8, 12],
+      },
+      {
+        enemies: [
+          { archetype: 'juggernaut', skill: 'veteran', count: 1 },
+          { archetype: 'inferno', skill: 'veteran', count: 2 },
+        ],
+        delay: [8, 12],
+      },
+      {
+        enemies: [
+          { archetype: 'behemoth', skill: 'veteran', count: 1 },
+          { archetype: 'dragonfly', skill: 'veteran', count: 3 },
         ],
         delay: [8, 12],
       },
@@ -52,19 +52,22 @@ export const SECTOR_4_HARD: Contract[] = [
     sector: 4,
     waves: [
       {
-        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
+        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
+        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 4 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
+        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'specter', skill: 'ace', count: 1 }],
+        enemies: [
+          { archetype: 'specter', skill: 'ace', count: 1 },
+          { archetype: 'phantom', skill: 'veteran', count: 1 },
+        ],
         delay: [8, 12],
       },
     ],
