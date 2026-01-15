@@ -3,10 +3,9 @@
  *
  * A military spacecraft CIC aesthetic with amber warning displays,
  * scan lines, angular panels, and holographic elements.
+ *
+ * Note: Google Fonts are loaded in index.html for faster initial render.
  */
-
-/* Google Fonts */
-@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=JetBrains+Mono:wght@300;400;500&family=Rajdhani:wght@400;500;600;700&display=swap");
 
 :root {
   /* ========================================
