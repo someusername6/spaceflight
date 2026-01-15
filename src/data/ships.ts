@@ -49,7 +49,6 @@ export interface ShipClassStats {
  */
 export const SHIP_CLASSES: Record<string, ShipClassStats> = {
   // Patrol: Intro enemy craft - diamond with stubby wings
-  // Base reference for proportional scaling (mesh size: 2.83)
   patrol: {
     hull: 45,
     shields: 45,
@@ -59,7 +58,7 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     acceleration: 45,
     turnRate: 80,
     rollRate: 120,
-    collisionRadius: 5, // baseline
+    collisionRadius: 4,
     maxHeat: 90,
     coolingRate: 18,
     afterburnerHeatRate: 40,
@@ -72,7 +71,7 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     secondaryHardpoints: [{ row: 0, x: 0.5, svgX: 32, svgY: 46 }],
   },
 
-  // Scout: Fast and fragile - narrow arrow shape (mesh size: 3.78, scale: 1.34x)
+  // Scout: Fast and fragile - narrow arrow shape
   scout: {
     hull: 55,
     shields: 35,
@@ -82,7 +81,7 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     acceleration: 75,
     turnRate: 120,
     rollRate: 180,
-    collisionRadius: 7,
+    collisionRadius: 4,
     maxHeat: 80,
     coolingRate: 15,
     afterburnerHeatRate: 25,
@@ -95,7 +94,7 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     secondaryHardpoints: [{ row: 0, x: 0.5, svgX: 32, svgY: 36 }],
   },
 
-  // Fighter: Standard player craft - swept wings (mesh size: 6.56, scale: 2.32x)
+  // Fighter: Standard player craft - swept wings
   fighter: {
     hull: 90,
     shields: 65,
@@ -105,7 +104,7 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     acceleration: 50,
     turnRate: 100,
     rollRate: 150,
-    collisionRadius: 11,
+    collisionRadius: 5,
     maxHeat: 100,
     coolingRate: 18,
     afterburnerHeatRate: 40,
@@ -121,7 +120,7 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     ],
   },
 
-  // Interceptor: Quick dogfighter - sharp delta wings (mesh size: 3.92, scale: 1.38x)
+  // Interceptor: Quick dogfighter - sharp delta wings
   interceptor: {
     hull: 75,
     shields: 50,
@@ -131,7 +130,7 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     acceleration: 62,
     turnRate: 110,
     rollRate: 165,
-    collisionRadius: 7,
+    collisionRadius: 5,
     maxHeat: 90,
     coolingRate: 16,
     afterburnerHeatRate: 32,
@@ -148,7 +147,7 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     ],
   },
 
-  // Striker: Heavy assault fighter - thick body with angular wings (mesh size: 8.43, scale: 2.98x)
+  // Striker: Heavy assault fighter - thick body with angular wings
   striker: {
     hull: 130,
     shields: 90,
@@ -158,7 +157,7 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     acceleration: 40,
     turnRate: 80,
     rollRate: 120,
-    collisionRadius: 15,
+    collisionRadius: 6,
     maxHeat: 150,
     coolingRate: 25,
     afterburnerHeatRate: 60,
@@ -174,7 +173,7 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     secondaryHardpoints: [{ row: 0, x: 0.5, svgX: 32, svgY: 34 }],
   },
 
-  // Bomber: Slow, missile-focused - wide wingspan (mesh size: 6.00, scale: 2.12x)
+  // Bomber: Slow, missile-focused - wide wingspan
   bomber: {
     hull: 110,
     shields: 80,
@@ -184,7 +183,7 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     acceleration: 35,
     turnRate: 75,
     rollRate: 110,
-    collisionRadius: 11,
+    collisionRadius: 7,
     maxHeat: 80,
     coolingRate: 12,
     afterburnerHeatRate: 55,
@@ -202,7 +201,7 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     ],
   },
 
-  // Defender: Tanky shield boat - bulky hexagonal shape (mesh size: 5.57, scale: 1.97x)
+  // Defender: Tanky shield boat - bulky hexagonal shape
   defender: {
     hull: 165,
     shields: 130,
@@ -212,7 +211,7 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     acceleration: 35,
     turnRate: 70,
     rollRate: 100,
-    collisionRadius: 10,
+    collisionRadius: 7,
     maxHeat: 100,
     coolingRate: 18,
     afterburnerHeatRate: 50,
@@ -231,7 +230,7 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     ],
   },
 
-  // Raider: Glass cannon - sharp angular attack shape (mesh size: 6.32, scale: 2.23x)
+  // Raider: Glass cannon - sharp angular attack shape
   raider: {
     hull: 65,
     shields: 45,
@@ -241,7 +240,7 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     acceleration: 60,
     turnRate: 110,
     rollRate: 160,
-    collisionRadius: 11,
+    collisionRadius: 5,
     maxHeat: 140,
     coolingRate: 22,
     afterburnerHeatRate: 35,
@@ -260,7 +259,7 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     ],
   },
 
-  // Sentinel: Long-range support - elongated with sensor arrays (mesh size: 4.80, scale: 1.70x)
+  // Sentinel: Long-range support - elongated with sensor arrays
   sentinel: {
     hull: 110,
     shields: 110,
@@ -270,7 +269,7 @@ export const SHIP_CLASSES: Record<string, ShipClassStats> = {
     acceleration: 45,
     turnRate: 90,
     rollRate: 130,
-    collisionRadius: 8,
+    collisionRadius: 6,
     maxHeat: 130,
     coolingRate: 22,
     afterburnerHeatRate: 45,
