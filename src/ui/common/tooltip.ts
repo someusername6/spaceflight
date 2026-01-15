@@ -64,20 +64,36 @@ export function updateTooltipPosition(e: MouseEvent): void {
   }
 }
 
-/** Bind tooltip events to an element */
+/** Cleanup function type */
+export type TooltipCleanup = () => void;
+
+/**
+ * Bind tooltip events to an element.
+ * Returns a cleanup function to remove the listeners.
+ */
 export function bindTooltip(
   element: HTMLElement,
   contentFn: () => string,
-): void {
-  element.addEventListener('mouseenter', (e) => {
+): TooltipCleanup {
+  const onEnter = (e: Event) => {
     showTooltip(contentFn(), e as MouseEvent);
-  });
+  };
 
-  element.addEventListener('mousemove', (e) => {
+  const onMove = (e: Event) => {
     updateTooltipPosition(e as MouseEvent);
-  });
+  };
 
-  element.addEventListener('mouseleave', () => {
+  const onLeave = () => {
     hideTooltip();
-  });
+  };
+
+  element.addEventListener('mouseenter', onEnter);
+  element.addEventListener('mousemove', onMove);
+  element.addEventListener('mouseleave', onLeave);
+
+  return () => {
+    element.removeEventListener('mouseenter', onEnter);
+    element.removeEventListener('mousemove', onMove);
+    element.removeEventListener('mouseleave', onLeave);
+  };
 }
