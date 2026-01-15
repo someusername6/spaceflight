@@ -163,6 +163,9 @@
   justify-content: center;
   width: 24px;
   height: 24px;
+  /* Set color to black so SVG's stroke="currentColor" resolves to black,
+     allowing the --filter-cyan to correctly convert it to cyan */
+  color: #000;
 }
 
 .load-campaign-content .slot-ship-icon svg {

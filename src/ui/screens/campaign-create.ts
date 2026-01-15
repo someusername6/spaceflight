@@ -26,43 +26,6 @@ import {
 import { escapeHtml } from '../utils';
 import { getAutoaimLabel, positionAutoaimPopover } from './settings/gameplay';
 
-/** localStorage key for campaign creation preferences */
-const CAMPAIGN_PREFS_KEY = 'spaceflight_campaign_prefs';
-
-/** Stored campaign creation preferences */
-interface CampaignCreationPrefs {
-  ironmanMode: boolean;
-}
-
-/** Load saved campaign creation preferences */
-function loadCampaignPrefs(): CampaignCreationPrefs | null {
-  try {
-    const json = localStorage.getItem(CAMPAIGN_PREFS_KEY);
-    if (!json) return null;
-    const parsed = JSON.parse(json) as unknown;
-    if (
-      parsed &&
-      typeof parsed === 'object' &&
-      'ironmanMode' in parsed &&
-      typeof (parsed as CampaignCreationPrefs).ironmanMode === 'boolean'
-    ) {
-      return parsed as CampaignCreationPrefs;
-    }
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-/** Save campaign creation preferences */
-function saveCampaignPrefs(prefs: CampaignCreationPrefs): void {
-  try {
-    localStorage.setItem(CAMPAIGN_PREFS_KEY, JSON.stringify(prefs));
-  } catch {
-    // Ignore storage errors
-  }
-}
-
 /** Campaign creation screen state */
 interface CampaignCreateState {
   commanderName: string;
@@ -132,27 +95,31 @@ const CampaignCreateScreen: Screen<CampaignCreateState, CampaignCreateProps> = {
             </div>
 
             <div class="form-group">
-              <label>Game Mode</label>
-              <div class="toggle-group">
-                <button class="toggle-btn ${state.ironmanMode ? 'active' : ''}"
-                        id="btn-ironman">
-                  Ironman
-                </button>
-                <button class="toggle-btn ${!state.ironmanMode ? 'active' : ''}"
-                        id="btn-standard">
-                  Standard
-                </button>
+              <div class="form-row">
+                <label>Game Mode</label>
+                <div class="toggle-group">
+                  <button class="toggle-btn ${!state.ironmanMode ? 'active' : ''}"
+                          id="btn-standard">
+                    Standard
+                  </button>
+                  <button class="toggle-btn ${state.ironmanMode ? 'active' : ''}"
+                          id="btn-ironman">
+                    Ironman
+                  </button>
+                </div>
               </div>
               ${ironmanWarning}
             </div>
 
             <div class="form-group">
-              <label>Aim Assist</label>
-              <div class="settings-picker-trigger-container">
-                <button class="settings-picker-trigger" id="autoaim-trigger">
-                  ${getAutoaimLabel(state.autoaimDegrees)}
-                </button>
-                ${state.showAutoaimPopover ? renderAutoaimPopover(state.autoaimDegrees) : ''}
+              <div class="form-row">
+                <label>Aim Assist</label>
+                <div class="settings-picker-trigger-container">
+                  <button class="settings-picker-trigger" id="autoaim-trigger">
+                    ${getAutoaimLabel(state.autoaimDegrees)}
+                  </button>
+                  ${state.showAutoaimPopover ? renderAutoaimPopover(state.autoaimDegrees) : ''}
+                </div>
               </div>
               <p class="form-hint">
                 Aim assist adds a margin of error to weapon targeting.
@@ -221,9 +188,6 @@ const CampaignCreateScreen: Screen<CampaignCreateState, CampaignCreateProps> = {
       const state = api.getState();
       const commanderName = state.commanderName.trim() || 'Commander';
 
-      // Save ironman preference for next time
-      saveCampaignPrefs({ ironmanMode: state.ironmanMode });
-
       props.onComplete({
         action: 'create',
         settings: {
@@ -257,9 +221,6 @@ const CampaignCreateScreen: Screen<CampaignCreateState, CampaignCreateProps> = {
         if (!state.showAutoaimPopover && !isToggleButton) {
           e.preventDefault();
           const commanderName = state.commanderName.trim() || 'Commander';
-
-          // Save ironman preference for next time
-          saveCampaignPrefs({ ironmanMode: state.ironmanMode });
 
           props.onComplete({
             action: 'create',
@@ -322,14 +283,10 @@ export function showCampaignCreateModal(
       resolve(result);
     };
 
-    // Load saved preferences (ironman mode) or use defaults
-    const savedPrefs = loadCampaignPrefs();
-
-    // Initial state uses saved preferences + current global autoaim
+    // Initial state: always default to Standard mode
     const initialState: CampaignCreateState = {
       commanderName: DEFAULT_CAMPAIGN_SETTINGS.commanderName,
-      ironmanMode:
-        savedPrefs?.ironmanMode ?? DEFAULT_CAMPAIGN_SETTINGS.ironmanMode,
+      ironmanMode: false,
       autoaimDegrees: getPlayerAutoaim(),
       showAutoaimPopover: false,
       slotId: options?.slotId ?? null,

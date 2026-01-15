@@ -4,6 +4,23 @@
  */
 
 /* ========================================
+   MODAL BACKDROP (Full-screen overlay)
+   ======================================== */
+
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-overlay);
+}
+
+/* ========================================
    MODAL CONTAINER
    ======================================== */
 
@@ -54,6 +71,18 @@
   color: var(--color-primary);
   text-transform: uppercase;
   letter-spacing: var(--tracking-wide);
+}
+
+/* Inline row layout for label + control */
+.form-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.form-row label {
+  flex-shrink: 0;
 }
 
 /* ========================================
