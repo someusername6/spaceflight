@@ -39,6 +39,7 @@ import {
 import { autoSave, deleteCheckpoint, getActiveSlotId } from '../storage';
 import type { Contract } from '../types';
 import { createMissionResultOverlay } from '../utils';
+import { disposeMissionRenderers } from './mission-renderer';
 import type { MissionEndState, WaveState } from './mission-waves';
 import { MISSION_END_DELAY, processWaveTick } from './mission-waves';
 
@@ -66,6 +67,13 @@ export function createMissionEndExecutor(
 
     // Stop the game loop
     stopGame(game);
+
+    // Clean up mission resources (WebGL contexts, etc.)
+    if (controller.missionRenderers) {
+      disposeMissionRenderers(controller.missionRenderers);
+      controller.missionRenderers = null;
+    }
+    controller.game = null;
 
     // Save replay if we were recording
     if (recorder) {
@@ -231,7 +239,7 @@ export function createMissionEndExecutor(
 
       if (isIronman) {
         // Ironman: permadeath - show game over screen
-        showGameOver(controller, setupContractsScreen).catch((error) => {
+        showGameOver(controller).catch((error) => {
           logError('Error in game over handler:', error);
         });
       } else {

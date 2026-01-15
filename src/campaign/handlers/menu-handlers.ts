@@ -11,9 +11,11 @@ import { resumeGame } from '../../game';
 import { setPlayerAutoaim } from '../../settings/game-settings';
 import {
   getScreenElement,
+  goBackFromLoadCampaign,
   goBackFromReplays,
   goBackFromReplayViewer,
   goBackFromSettings,
+  goToLoadCampaign,
   goToReplays,
   goToReplayViewer,
   goToSettings,
@@ -22,7 +24,13 @@ import {
   updateCampaignState,
 } from '../../ui/common/screens';
 import { showCampaignCreateModal } from '../../ui/screens/campaign-create';
-import { showLoadCampaignModal } from '../../ui/screens/load-campaign';
+import {
+  bindLoadCampaignScreen,
+  cleanupLoadCampaignScreen,
+  type LoadCampaignCallbacks,
+  renderLoadCampaignScreen,
+  storeBattleCanvas as storeLoadCampaignBattleCanvas,
+} from '../../ui/screens/load-campaign';
 import {
   bindReplaysScreen,
   cleanupReplaysScreen,
@@ -103,40 +111,9 @@ export async function setupTitleScreen(
 
   renderTitleScreen(titleElement);
   await bindTitleScreen(titleElement, {
-    onNewGame: async () => {
-      // Show load campaign screen (slot selection)
-      const loadResult = await showLoadCampaignModal();
-
-      if (loadResult.action === 'cancel') {
-        return; // User cancelled
-      }
-
-      if (loadResult.action === 'load') {
-        // User selected existing campaign to load
-        updateCampaignState(screenManager, loadResult.state);
-        syncAutoaimFromCampaign(loadResult.state);
-        onStartGameplay();
-        return;
-      }
-
-      // User wants to create new campaign in selected slot
-      const createResult = await showCampaignCreateModal({
-        slotId: loadResult.slotId,
-      });
-      if (createResult.action === 'cancel') {
-        return; // User cancelled creation
-      }
-
-      // Create and save new campaign
-      const slotId = createResult.slotId ?? loadResult.slotId;
-      await createAndSaveNewCampaign(
-        screenManager,
-        createResult.settings,
-        slotId,
-      );
-
-      // Transition to squadron
-      onStartGameplay();
+    onNewGame: () => {
+      goToLoadCampaign(screenManager);
+      void setupLoadCampaignScreen(controller, onStartGameplay);
     },
     onSettings: () => {
       goToSettings(screenManager);
@@ -147,6 +124,86 @@ export async function setupTitleScreen(
       setupReplaysScreen(controller, onStartGameplay);
     },
   });
+}
+
+/**
+ * Setup load campaign screen with callbacks.
+ */
+export async function setupLoadCampaignScreen(
+  controller: CampaignController,
+  onStartGameplay: () => void,
+): Promise<void> {
+  const { screenManager } = controller;
+  const loadCampaignElement = getScreenElement(
+    screenManager,
+    Screen.LOAD_CAMPAIGN,
+  );
+
+  renderLoadCampaignScreen(loadCampaignElement);
+
+  const callbacks: LoadCampaignCallbacks = {
+    onBack: () => {
+      // Transfer canvas back to title if needed
+      if (hasBattleSimulation()) {
+        const canvas = getBattleSimulationCanvas();
+        const titleBg = document.getElementById('title-battle-bg');
+        if (canvas && titleBg) {
+          titleBg.appendChild(canvas);
+        }
+      }
+
+      cleanupLoadCampaignScreen();
+      goBackFromLoadCampaign(screenManager);
+
+      // Re-setup title screen
+      void setupTitleScreen(controller, onStartGameplay);
+    },
+    onLoad: (state, _slotId) => {
+      // User loaded existing campaign
+      cleanupLoadCampaignScreen();
+      updateCampaignState(screenManager, state);
+      syncAutoaimFromCampaign(state);
+      onStartGameplay();
+    },
+    onCreate: async (slotId) => {
+      // User wants to create new campaign in selected slot
+      const createResult = await showCampaignCreateModal({ slotId });
+      if (createResult.action === 'cancel') {
+        return; // User cancelled creation
+      }
+
+      // Create and save new campaign
+      const finalSlotId = createResult.slotId ?? slotId;
+      await createAndSaveNewCampaign(
+        screenManager,
+        createResult.settings,
+        finalSlotId,
+      );
+
+      cleanupLoadCampaignScreen();
+      onStartGameplay();
+    },
+  };
+
+  await bindLoadCampaignScreen(loadCampaignElement, callbacks);
+
+  // Transfer battle simulation to load campaign background AFTER bind
+  if (hasBattleSimulation()) {
+    const canvas = getBattleSimulationCanvas();
+    const loadCampaignScreen = loadCampaignElement.querySelector(
+      '.load-campaign-screen',
+    );
+    const loadCampaignBg = loadCampaignElement.querySelector(
+      '#load-campaign-battle-bg',
+    );
+
+    if (canvas && loadCampaignScreen && loadCampaignBg) {
+      loadCampaignBg.appendChild(canvas);
+      loadCampaignScreen.classList.add('with-battle-bg');
+      // Store canvas reference so screen can re-attach after re-renders
+      storeLoadCampaignBattleCanvas(canvas);
+    }
+  }
 }
 
 /**

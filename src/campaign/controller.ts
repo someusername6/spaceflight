@@ -79,7 +79,7 @@ export function startCampaign(container: HTMLElement): CampaignController {
 }
 
 /** Start gameplay (from new game or continue) */
-function startCampaignGameplay(controller: CampaignController): void {
+export function startCampaignGameplay(controller: CampaignController): void {
   const { screenManager } = controller;
 
   // Stop title screen battle simulation (it was running in the background)

@@ -331,6 +331,8 @@ export function cleanupSettingsScreen(): void {
   cleanupSettingsEscapeHandler();
   screenHandle?.destroy();
   screenHandle = null;
+  // Clear stored canvas reference (canvas ownership returns to title screen)
+  battleCanvas = null;
 }
 
 /** Reset settings screen state (for returning to screen) */

@@ -18,6 +18,7 @@ import type { CampaignState, Contract } from '../../campaign/types';
 /** Game screen states */
 export enum Screen {
   TITLE = 'title',
+  LOAD_CAMPAIGN = 'load_campaign',
   SQUADRON = 'squadron',
   STORE = 'store',
   CONTRACTS = 'contracts',
@@ -39,6 +40,7 @@ export interface ScreenManager {
 
   // Screen elements (created lazily)
   titleElement: HTMLElement | null;
+  loadCampaignElement: HTMLElement | null;
   squadronElement: HTMLElement | null;
   storeElement: HTMLElement | null;
   contractsElement: HTMLElement | null;
@@ -69,6 +71,7 @@ export function createScreenManager(
     selectedContract: null,
     lastMissionVictory: false,
     titleElement: null,
+    loadCampaignElement: null,
     squadronElement: null,
     storeElement: null,
     contractsElement: null,
@@ -199,6 +202,19 @@ export function updateCampaignState(
 /** Transition to title screen */
 export function goToTitle(manager: ScreenManager): void {
   showScreen(manager, Screen.TITLE);
+}
+
+/** Transition to load campaign screen (remembers previous screen for back navigation) */
+export function goToLoadCampaign(manager: ScreenManager): void {
+  manager.previousScreen = manager.currentScreen;
+  showScreen(manager, Screen.LOAD_CAMPAIGN);
+}
+
+/** Return from load campaign to previous screen */
+export function goBackFromLoadCampaign(manager: ScreenManager): void {
+  const target = manager.previousScreen ?? Screen.TITLE;
+  manager.previousScreen = null;
+  showScreen(manager, target);
 }
 
 /** Transition to settings screen (remembers previous screen for back navigation) */

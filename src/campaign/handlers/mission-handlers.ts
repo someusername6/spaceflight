@@ -12,15 +12,16 @@ import {
   getScreenElement,
   goToGameOver,
   goToSquadron,
+  goToTitle,
   Screen,
   updateCampaignState,
 } from '../../ui/common/screens';
-import { showCampaignCreateModal } from '../../ui/screens/campaign-create';
-import { showLoadCampaignModal } from '../../ui/screens/load-campaign';
 import {
   createGameOverUI,
   createResultsUI,
 } from '../../ui/screens/results/results';
+import { resetTitleScreen } from '../../ui/screens/title';
+import { startCampaignGameplay } from '../controller';
 import type { CampaignController } from '../controller-types';
 import type { SalvageResult } from '../salvage';
 import {
@@ -31,10 +32,7 @@ import {
 } from '../storage';
 import type { Contract } from '../types';
 import { setupSquadronScreen } from './campaign-handlers';
-import {
-  createAndSaveNewCampaign,
-  syncAutoaimFromCampaign,
-} from './menu-handlers';
+import { setupTitleScreen } from './menu-handlers';
 
 /**
  * Show results screen after mission.
@@ -107,7 +105,7 @@ export async function handleNonIronmanDefeat(
     logError(
       'No checkpoint found for non-ironman defeat - falling back to game over',
     );
-    await showGameOver(controller, setupContractsScreen);
+    await showGameOver(controller);
   }
 }
 
@@ -115,11 +113,9 @@ export async function handleNonIronmanDefeat(
  * Show game over screen (ironman mode only - permadeath).
  *
  * @param controller - Campaign controller instance
- * @param setupContractsScreen - Callback to setup contracts screen
  */
 export async function showGameOver(
   controller: CampaignController,
-  setupContractsScreen: (controller: CampaignController) => void,
 ): Promise<void> {
   const { screenManager } = controller;
   const gameOverElement = getScreenElement(screenManager, Screen.GAME_OVER);
@@ -136,46 +132,13 @@ export async function showGameOver(
   }
 
   createGameOverUI(gameOverElement, screenManager.campaignState, async () => {
-    // Show load campaign modal for slot selection (same flow as title screen)
-    const loadResult = await showLoadCampaignModal();
+    // Return to title screen - user can start new game or load another campaign
+    void resetTitleScreen();
+    goToTitle(screenManager);
 
-    if (loadResult.action === 'cancel') {
-      // User cancelled - stay on game over screen
-      return;
-    }
-
-    if (loadResult.action === 'load') {
-      // User selected an existing campaign from another slot
-      updateCampaignState(screenManager, loadResult.state);
-      syncAutoaimFromCampaign(loadResult.state);
-      goToSquadron(screenManager);
-      const squadronElement = getScreenElement(screenManager, Screen.SQUADRON);
-      setupSquadronScreen(controller, squadronElement, setupContractsScreen);
-      return;
-    }
-
-    // User wants to create new campaign in selected slot
-    const createResult = await showCampaignCreateModal({
-      slotId: loadResult.slotId,
-    });
-
-    if (createResult.action === 'cancel') {
-      // User cancelled creation - stay on game over screen
-      return;
-    }
-
-    // Create and save new campaign
-    const slotId = createResult.slotId ?? loadResult.slotId;
-    await createAndSaveNewCampaign(
-      screenManager,
-      createResult.settings,
-      slotId,
-    );
-
-    // Go to squadron screen
-    goToSquadron(screenManager);
-    const squadronElement = getScreenElement(screenManager, Screen.SQUADRON);
-    setupSquadronScreen(controller, squadronElement, setupContractsScreen);
+    // Setup title screen with gameplay callback
+    const onStartGameplay = () => startCampaignGameplay(controller);
+    await setupTitleScreen(controller, onStartGameplay);
   });
 
   goToGameOver(screenManager);

@@ -247,12 +247,6 @@ export async function bindTitleScreen(
   // Clean up previous handle if exists
   screenHandle?.destroy();
 
-  // Clean up previous simulation if exists
-  if (battleSimulation) {
-    disposeBattleSimulation(battleSimulation);
-    battleSimulation = null;
-  }
-
   // Get initial state with campaign check
   const initialState = await createInitialState();
 
@@ -263,17 +257,20 @@ export async function bindTitleScreen(
     callbacks,
   );
 
-  // Start battle simulation in background (deferred to next frame for layout)
-  requestAnimationFrame(() => {
-    const bgContainer = document.getElementById('title-battle-bg');
-    if (bgContainer && bgContainer.clientWidth > 0) {
-      battleSimulation = createBattleSimulation(
-        bgContainer,
-        TITLE_SCREEN_BATTLE,
-      );
-      startBattleSimulation(battleSimulation);
-    }
-  });
+  // Start battle simulation in background if not already running
+  // (returning from settings keeps existing simulation, returning from gameplay creates new)
+  if (!battleSimulation) {
+    requestAnimationFrame(() => {
+      const bgContainer = document.getElementById('title-battle-bg');
+      if (bgContainer && bgContainer.clientWidth > 0) {
+        battleSimulation = createBattleSimulation(
+          bgContainer,
+          TITLE_SCREEN_BATTLE,
+        );
+        startBattleSimulation(battleSimulation);
+      }
+    });
+  }
 }
 
 /** Reset title screen state (e.g., when returning from game) */
