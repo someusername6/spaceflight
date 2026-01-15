@@ -8,6 +8,7 @@
  */
 
 import type { NavDestination } from '../../ui/common/nav-bar';
+import { showError } from '../../ui/common/notification';
 import {
   getScreenElement,
   goToContracts,
@@ -192,7 +193,9 @@ export function setupContractsScreen(controller: CampaignController): void {
           try {
             await saveCheckpoint(screenManager.campaignState, slotId);
           } catch {
-            // Non-critical - continue even if checkpoint fails
+            // Block mission start - don't risk campaign without checkpoint
+            showError('Unable to save checkpoint. Please try again.', 5000);
+            return;
           }
         }
       }
