@@ -203,7 +203,9 @@ export function setupContractsScreen(controller: CampaignController): void {
         contract.id,
       );
       updateCampaignState(screenManager, stateWithAttempt);
-      void autoSave(stateWithAttempt, 'mission-started');
+
+      // Await save before starting mission to ensure state is persisted
+      await autoSave(stateWithAttempt, 'mission-started');
 
       // Start mission with selected ships
       startMission(screenManager, contract);

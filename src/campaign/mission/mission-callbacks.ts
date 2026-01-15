@@ -50,10 +50,10 @@ export function createMissionEndExecutor(
   contract: Contract,
   missionEndState: MissionEndState,
   setupContractsScreen: (controller: CampaignController) => void,
-): () => void {
+): () => Promise<void> {
   const { screenManager } = controller;
 
-  return () => {
+  return async () => {
     controller.missionEnded = true;
 
     // Stop input recording and save replay
@@ -218,15 +218,15 @@ export function createMissionEndExecutor(
     );
     newState = refreshRecruits(newState, () => random(recruitRng));
 
-    // Update campaign state and auto-save
+    // Update campaign state and save before transitioning screens
     updateCampaignState(screenManager, newState);
-    void autoSave(newState, 'mission-complete');
+    await autoSave(newState, 'mission-complete');
 
     // Clean up checkpoint after mission (no longer needed)
     if (!newState.settings.ironmanMode) {
       const slotId = getActiveSlotId();
       if (slotId) {
-        void deleteCheckpoint(slotId);
+        await deleteCheckpoint(slotId);
       }
     }
 
@@ -271,7 +271,7 @@ export function createTickCallback(
   contract: Contract,
   waveState: WaveState,
   missionEndState: MissionEndState,
-  executeMissionEnd: () => void,
+  executeMissionEnd: () => Promise<void>,
 ): (world: World) => void {
   const TICK_SEC = 1 / 60;
 
