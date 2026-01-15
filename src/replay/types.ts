@@ -118,6 +118,8 @@ export interface ReplayMetadata {
   sector: number;
   /** Player ship archetype */
   shipType: string;
+  /** Wingmen ship classes (for squad display) */
+  wingmenShips?: string[];
   /** How the mission ended */
   outcome: ReplayOutcome;
   /** Total duration in ticks */
@@ -208,18 +210,27 @@ export interface ReplaySummary {
   outcome: ReplayOutcome;
   durationSeconds: number;
   recordedAt: number;
+  /** Player ship class for silhouette display */
+  shipType: string;
+  /** Wingmen ship classes for silhouette display */
+  wingmenShips?: string[];
 }
 
 /**
  * Convert full metadata to list summary.
  */
 export function toReplaySummary(meta: ReplayMetadata): ReplaySummary {
-  return {
+  const summary: ReplaySummary = {
     id: meta.id,
     missionName: meta.missionName,
     sector: meta.sector,
     outcome: meta.outcome,
     durationSeconds: meta.durationTicks / 60,
     recordedAt: meta.recordedAt,
+    shipType: meta.shipType,
   };
+  if (meta.wingmenShips) {
+    summary.wingmenShips = meta.wingmenShips;
+  }
+  return summary;
 }

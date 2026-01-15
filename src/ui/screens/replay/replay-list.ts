@@ -1,11 +1,11 @@
 /**
  * Replay List Screen - Browse and manage saved replays.
  *
- * Features:
- * - List saved replays with metadata (mission, outcome, duration)
- * - Watch a replay
- * - Delete replays
- * - Import/export replay files
+ * Master-detail layout:
+ * - Left panel: Compact list of replays
+ * - Right panel: Selected replay details with actions
+ *
+ * Render functions are in replay-list-render.ts to keep files under 400 lines.
  */
 
 import {
@@ -16,127 +16,24 @@ import {
   openReplayFile,
   saveReplay,
 } from '../../../replay/storage';
-import type { ReplaySummary } from '../../../replay/types';
+import type { FullReplayData } from '../../../replay/types';
 import {
   createScreen,
   type Screen,
   type ScreenAPI,
   type ScreenHandle,
 } from '../../framework/screen';
-import { escapeHtml } from '../../utils';
+import {
+  type ReplaysState,
+  renderConfirmDelete,
+  renderDetailPanel,
+  renderReplayList,
+} from './replay-list-render';
 
 /** Replays screen callbacks */
 export interface ReplaysScreenProps {
   onBack: () => void;
   onWatch?: (replayId: string) => void;
-}
-
-/** Screen state */
-interface ReplaysState {
-  replays: ReplaySummary[];
-  loading: boolean;
-  error: string | null;
-  confirmDeleteId: string | null;
-}
-
-/** Format seconds as MM:SS */
-function formatDuration(seconds: number): string {
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
-}
-
-/** Format date for display */
-function formatDate(timestamp: number): string {
-  const date = new Date(timestamp);
-  return date.toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
-
-/** Get outcome class and text */
-function getOutcomeDisplay(outcome: string): { class: string; text: string } {
-  switch (outcome) {
-    case 'victory':
-      return { class: 'replay-victory', text: 'Victory' };
-    case 'timeout':
-      return { class: 'replay-timeout', text: 'Timeout' };
-    default:
-      return { class: 'replay-defeat', text: 'Defeat' };
-  }
-}
-
-/** Render an individual replay card */
-function renderReplayCard(replay: ReplaySummary): string {
-  const outcome = getOutcomeDisplay(replay.outcome);
-
-  return `
-    <div class="replay-card" data-replay-id="${escapeHtml(replay.id)}">
-      <div class="replay-card-header">
-        <span class="replay-mission-name">${escapeHtml(replay.missionName)}</span>
-        <span class="replay-outcome ${outcome.class}">${outcome.text}</span>
-      </div>
-      <div class="replay-card-details">
-        <span class="replay-sector">Sector ${replay.sector}</span>
-        <span class="replay-duration">${formatDuration(replay.durationSeconds)}</span>
-        <span class="replay-date">${formatDate(replay.recordedAt)}</span>
-      </div>
-      <div class="replay-card-actions">
-        <button class="btn btn-small btn-primary btn-watch" data-replay-id="${escapeHtml(replay.id)}">
-          Watch
-        </button>
-        <button class="btn btn-small btn-export" data-replay-id="${escapeHtml(replay.id)}">
-          Export
-        </button>
-        <button class="btn btn-small btn-danger btn-delete-replay" data-replay-id="${escapeHtml(replay.id)}">
-          Delete
-        </button>
-      </div>
-    </div>
-  `;
-}
-
-/** Render replay list */
-function renderReplayList(state: ReplaysState): string {
-  if (state.loading) {
-    return '<div class="replay-loading">Loading replays...</div>';
-  }
-
-  if (state.error) {
-    return `<div class="replay-error">${escapeHtml(state.error)}</div>`;
-  }
-
-  if (state.replays.length === 0) {
-    return `
-      <div class="replay-empty">
-        <p>No replays saved yet.</p>
-        <p class="replay-hint">Complete missions to save replays automatically.</p>
-      </div>
-    `;
-  }
-
-  return state.replays.map((r) => renderReplayCard(r)).join('');
-}
-
-/** Render confirm delete dialog */
-function renderConfirmDelete(replayId: string): string {
-  return `
-    <div class="replay-confirm-overlay">
-      <div class="replay-confirm-dialog">
-        <h3>Delete Replay?</h3>
-        <p>This action cannot be undone.</p>
-        <div class="replay-confirm-actions">
-          <button class="btn" id="btn-cancel-delete">Cancel</button>
-          <button class="btn btn-danger" id="btn-confirm-delete" data-replay-id="${escapeHtml(replayId)}">
-            Delete
-          </button>
-        </div>
-      </div>
-    </div>
-  `;
 }
 
 /** Replays screen component */
@@ -145,16 +42,19 @@ const ReplaysScreenComponent: Screen<ReplaysState, ReplaysScreenProps> = {
     return `
       <div class="replays-screen">
         <div class="replays-header">
-          <button class="btn btn-back" id="btn-back">
-            Back
-          </button>
           <h2 class="replays-title">Replays</h2>
-          <button class="btn" id="btn-import-replay">
-            Import
-          </button>
+          <div class="replays-header-actions">
+            <button class="btn" id="btn-import-replay">Import</button>
+            <button class="btn btn-back" id="btn-back">Back</button>
+          </div>
         </div>
-        <div class="replays-list">
-          ${renderReplayList(state)}
+        <div class="replays-layout">
+          <div class="replays-list-panel">
+            ${renderReplayList(state)}
+          </div>
+          <div class="replays-detail-panel">
+            ${renderDetailPanel(state)}
+          </div>
         </div>
         ${state.confirmDeleteId ? renderConfirmDelete(state.confirmDeleteId) : ''}
       </div>
@@ -167,33 +67,56 @@ const ReplaysScreenComponent: Screen<ReplaysState, ReplaysScreenProps> = {
       props.onBack();
     });
 
-    // Watch buttons
-    api.on('.btn-watch', 'click', (_e, el) => {
+    // List item selection
+    api.on('.replay-list-item', 'click', async (_e, el) => {
+      const replayId = el.dataset.replayId;
+      if (replayId) {
+        // Clear error and show selection immediately, load full replay async
+        api.setState({
+          selectedId: replayId,
+          selectedReplay: null,
+          error: null,
+        });
+        const replay = await loadReplay(replayId);
+        // Only update if still selected (user may have clicked elsewhere)
+        if (api.getState().selectedId === replayId) {
+          api.setState({ selectedReplay: replay });
+        }
+      }
+    });
+
+    // Double-click to watch
+    api.on('.replay-list-item', 'dblclick', (_e, el) => {
       const replayId = el.dataset.replayId;
       if (replayId && props.onWatch) {
         props.onWatch(replayId);
       }
     });
 
-    // Export buttons
-    api.on('.btn-export', 'click', async (_e, el) => {
+    // Watch button (detail panel)
+    api.on('.btn-watch-detail', 'click', (_e, el) => {
       const replayId = el.dataset.replayId;
-      if (replayId) {
+      if (replayId && props.onWatch) {
+        props.onWatch(replayId);
+      }
+    });
+
+    // Export button (detail panel) - use already loaded replay
+    api.on('.btn-export-detail', 'click', async () => {
+      const state = api.getState();
+      if (state.selectedReplay) {
         try {
-          const replay = await loadReplay(replayId);
-          if (replay) {
-            await downloadReplay(replay);
-          }
+          await downloadReplay(state.selectedReplay);
         } catch (err) {
           api.setState({
-            error: `Failed to export replay: ${(err as Error).message}`,
+            error: `Failed to export: ${(err as Error).message}`,
           });
         }
       }
     });
 
-    // Delete buttons - show confirmation
-    api.on('.btn-delete-replay', 'click', (_e, el) => {
+    // Delete button (detail panel) - show confirmation
+    api.on('.btn-delete-detail', 'click', (_e, el) => {
       const replayId = el.dataset.replayId;
       if (replayId) {
         api.setState({ confirmDeleteId: replayId });
@@ -212,10 +135,18 @@ const ReplaysScreenComponent: Screen<ReplaysState, ReplaysScreenProps> = {
         try {
           await deleteReplay(replayId);
           const newReplays = await listReplays();
-          api.setState({ replays: newReplays, confirmDeleteId: null });
+          // Clear selection if deleted replay was selected
+          const state = api.getState();
+          const wasSelected = state.selectedId === replayId;
+          api.setState({
+            replays: newReplays,
+            confirmDeleteId: null,
+            selectedId: wasSelected ? null : state.selectedId,
+            selectedReplay: wasSelected ? null : state.selectedReplay,
+          });
         } catch (err) {
           api.setState({
-            error: `Failed to delete replay: ${(err as Error).message}`,
+            error: `Failed to delete: ${(err as Error).message}`,
             confirmDeleteId: null,
           });
         }
@@ -233,7 +164,7 @@ const ReplaysScreenComponent: Screen<ReplaysState, ReplaysScreenProps> = {
         }
       } catch (err) {
         api.setState({
-          error: `Failed to import replay: ${(err as Error).message}`,
+          error: `Failed to import: ${(err as Error).message}`,
         });
       }
     });
@@ -260,6 +191,8 @@ let screenHandle: ScreenHandle<ReplaysState, ReplaysScreenProps> | null = null;
 export function renderReplaysScreen(element: HTMLElement): void {
   const initialState: ReplaysState = {
     replays: [],
+    selectedId: null,
+    selectedReplay: null,
     loading: true,
     error: null,
     confirmDeleteId: null,
@@ -279,6 +212,8 @@ export function bindReplaysScreen(
 
   const initialState: ReplaysState = {
     replays: [],
+    selectedId: null,
+    selectedReplay: null,
     loading: true,
     error: null,
     confirmDeleteId: null,
@@ -291,11 +226,21 @@ export function bindReplaysScreen(
     props,
   );
 
-  // Load replays async
+  // Load replays async and auto-select first
   listReplays()
-    .then((replays) => {
+    .then(async (replays) => {
+      // Auto-select first replay if available
+      let selectedId: string | null = null;
+      let selectedReplay: FullReplayData | null = null;
+      const firstReplay = replays[0];
+      if (firstReplay) {
+        selectedId = firstReplay.id;
+        selectedReplay = (await loadReplay(selectedId)) ?? null;
+      }
       screenHandle?.replaceState({
         replays,
+        selectedId,
+        selectedReplay,
         loading: false,
         error: null,
         confirmDeleteId: null,
@@ -304,6 +249,8 @@ export function bindReplaysScreen(
     .catch((err) => {
       screenHandle?.replaceState({
         replays: [],
+        selectedId: null,
+        selectedReplay: null,
         loading: false,
         error: `Failed to load replays: ${(err as Error).message}`,
         confirmDeleteId: null,

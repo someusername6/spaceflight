@@ -138,26 +138,35 @@ export function createMissionEndExecutor(
         return;
       }
 
+      const wingmen = recorder.getWingmen();
+      const wingmenShips = wingmen.map((w) => w.loadout.shipClass);
+
+      // Build metadata (conditionally add wingmenShips for exact optional types)
+      const metadata: FullReplayData['metadata'] = {
+        id: '', // Assigned by storage
+        missionId: contract.id,
+        missionName: contract.name,
+        sector: contract.sector,
+        shipType,
+        outcome,
+        durationTicks: replayData.tickCount,
+        recordedAt: Date.now(),
+        gameVersion: __APP_VERSION__,
+        stats: { kills, damageDealt, damageTaken },
+      };
+      if (wingmenShips.length > 0) {
+        metadata.wingmenShips = wingmenShips;
+      }
+
       const fullReplay: FullReplayData = {
         version: REPLAY_VERSION,
         seed: replayData.seed,
         inputs: compressedInputs,
         inputsCompressed: compressed,
         tickCount: replayData.tickCount,
-        metadata: {
-          id: '', // Assigned by storage
-          missionId: contract.id,
-          missionName: contract.name,
-          sector: contract.sector,
-          shipType,
-          outcome,
-          durationTicks: replayData.tickCount,
-          recordedAt: Date.now(),
-          gameVersion: __APP_VERSION__,
-          stats: { kills, damageDealt, damageTaken },
-        },
+        metadata,
         playerLoadout,
-        wingmen: recorder.getWingmen(),
+        wingmen,
         playerAutoaim: recorder.getPlayerAutoaim(),
       };
 
