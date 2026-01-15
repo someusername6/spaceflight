@@ -180,47 +180,92 @@ async function bundleMeshes() {
         continue;
       }
 
-      if (primitives.length > 1) {
-        console.warn(`  ${file}: Multiple primitives found, using first only`);
-      }
+      // Merge all primitives into combined arrays
+      const allPositions = [];
+      const allNormals = [];
+      const allIndices = [];
+      let vertexOffset = 0;
+      let skipMesh = false;
 
-      const primitive = primitives[0];
+      for (const primitive of primitives) {
+        const positionAccessor = primitive.getAttribute('POSITION');
+        const normalAccessor = primitive.getAttribute('NORMAL');
+        const indicesAccessor = primitive.getIndices();
 
-      // Extract attributes
-      const positionAccessor = primitive.getAttribute('POSITION');
-      const normalAccessor = primitive.getAttribute('NORMAL');
-      const indicesAccessor = primitive.getIndices();
-
-      if (!positionAccessor) {
-        console.warn(`  ${file}: No position data, skipping`);
-        continue;
-      }
-
-      const positions = positionAccessor.getArray();
-      const normals = normalAccessor?.getArray();
-      const indices = indicesAccessor?.getArray();
-
-      // Validate geometry integrity
-      if (positions.length % 3 !== 0) {
-        console.error(`  ${file}: Position count not divisible by 3, skipping`);
-        continue;
-      }
-
-      if (normals && normals.length !== positions.length) {
-        console.error(`  ${file}: Normals count mismatch, skipping`);
-        continue;
-      }
-
-      const vertexCount = positions.length / 3;
-      if (indices) {
-        const maxIndex = Math.max(...indices);
-        if (maxIndex >= vertexCount) {
-          console.error(
-            `  ${file}: Index ${maxIndex} out of bounds (${vertexCount} vertices), skipping`,
+        if (!positionAccessor) {
+          console.warn(
+            `  ${file}: Primitive missing position data, skipping primitive`,
           );
           continue;
         }
+
+        const positions = positionAccessor.getArray();
+        const normals = normalAccessor?.getArray();
+        const indices = indicesAccessor?.getArray();
+
+        // Validate geometry integrity
+        if (positions.length % 3 !== 0) {
+          console.error(
+            `  ${file}: Position count not divisible by 3, skipping`,
+          );
+          skipMesh = true;
+          break;
+        }
+
+        if (normals && normals.length !== positions.length) {
+          console.error(`  ${file}: Normals count mismatch, skipping`);
+          skipMesh = true;
+          break;
+        }
+
+        const primVertexCount = positions.length / 3;
+        if (indices) {
+          const maxIndex = Math.max(...indices);
+          if (maxIndex >= primVertexCount) {
+            console.error(
+              `  ${file}: Index ${maxIndex} out of bounds (${primVertexCount} vertices), skipping`,
+            );
+            skipMesh = true;
+            break;
+          }
+        }
+
+        // Add positions
+        allPositions.push(...positions);
+
+        // Add normals if present
+        if (normals) {
+          allNormals.push(...normals);
+        }
+
+        // Add indices with offset adjustment
+        if (indices) {
+          for (const idx of indices) {
+            allIndices.push(idx + vertexOffset);
+          }
+        }
+
+        vertexOffset += primVertexCount;
       }
+
+      if (skipMesh) {
+        continue;
+      }
+
+      if (allPositions.length === 0) {
+        console.warn(`  ${file}: No position data extracted, skipping`);
+        continue;
+      }
+
+      const positions = new Float32Array(allPositions);
+      // Only include normals if we have exactly one per vertex (handles mixed primitive cases)
+      const normals =
+        allNormals.length === allPositions.length
+          ? new Float32Array(allNormals)
+          : null;
+      // Only include indices if we collected any
+      const indices =
+        allIndices.length > 0 ? new Uint32Array(allIndices) : null;
 
       // Compute bounding box for coordinate mapping
       let minX = Infinity,
