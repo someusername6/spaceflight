@@ -15,6 +15,7 @@
 
 import { logDebug } from '../core/logger';
 import { initKeyBindings } from '../input/key-bindings';
+import { initReplayBindings } from '../input/replay-bindings';
 import { initGameSettings } from '../settings/game-settings';
 import { initInput } from '../systems/input';
 import {
@@ -44,6 +45,7 @@ export type { CampaignController } from './controller-types';
 export function startCampaign(container: HTMLElement): CampaignController {
   // Initialize systems
   initKeyBindings();
+  initReplayBindings();
   initGameSettings();
   initInput();
 

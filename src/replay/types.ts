@@ -34,7 +34,7 @@ export const MAX_STORED_REPLAYS = 20;
 export const KEYFRAME_INTERVAL = 300;
 
 /** Available playback speed options */
-export const PLAYBACK_SPEEDS = [0.25, 0.5, 1, 2, 4] as const;
+export const PLAYBACK_SPEEDS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 4] as const;
 
 /** Maximum ticks to process per frame during seeking (default) */
 export const DEFAULT_SEEK_TICKS_PER_FRAME = 1000;

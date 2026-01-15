@@ -1,0 +1,191 @@
+/**
+ * Replay Viewer Styles
+ *
+ * Styles for the full-screen replay viewer with video-player-style controls.
+ * Extracted from replays.css to keep files under 400 lines.
+ */
+
+/* ========================================
+   REPLAY VIEWER
+   ======================================== */
+
+/* Override game-screen styles for full-screen viewer */
+.game-screen:has(.replay-viewer) {
+  padding: 0;
+  align-items: stretch;
+}
+
+.replay-viewer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  align-self: stretch;
+  background: #000;
+}
+
+.replay-viewer-loading,
+.replay-viewer-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-family: var(--font-ui);
+  color: var(--text-secondary);
+  gap: var(--space-4);
+}
+
+.replay-canvas-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.replay-hud {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: var(--space-4);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+  pointer-events: none;
+  /* Auto-hide transition */
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+/* Auto-hidden state for replay controls.
+   !important is intentional: ensures pointer-events stay disabled during
+   opacity transition and overrides .replay-controls pointer-events: auto */
+.replay-hud.controls-hidden {
+  opacity: 0;
+  pointer-events: none !important;
+}
+
+/* Hide cursor when controls are hidden */
+.replay-viewer.controls-hidden {
+  cursor: none;
+}
+
+/* Keep controls visible when mouse is over them */
+.replay-hud:hover {
+  opacity: 1;
+}
+
+.replay-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  pointer-events: auto;
+}
+
+.btn-icon {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-base);
+}
+
+.btn-play-pause {
+  width: 48px;
+  height: 48px;
+  font-size: var(--text-lg);
+}
+
+.replay-timeline-container {
+  flex: 1;
+  position: relative;
+  height: 24px;
+  cursor: pointer;
+}
+
+/* Track background */
+.replay-timeline-container::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 8px;
+  transform: translateY(-50%);
+  background: var(--bg-raised);
+  border-radius: 4px;
+}
+
+.replay-timeline {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2;
+  margin: 0;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+}
+
+.replay-timeline-progress {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: 8px;
+  transform: translateY(-50%);
+  background: var(--color-primary);
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.replay-time {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  min-width: 80px;
+  text-align: right;
+}
+
+.replay-camera-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--border-dim);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.camera-status-separator {
+  color: var(--border-color);
+}
+
+.replay-seeking {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: var(--space-4) var(--space-6);
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid var(--border-color);
+  font-family: var(--font-ui);
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+
+/* Help button in controls */
+.btn-help {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--font-bold);
+}

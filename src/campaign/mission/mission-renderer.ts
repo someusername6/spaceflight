@@ -4,6 +4,7 @@
  * Extracted from controller.ts to stay under 400 line limit.
  */
 
+import type * as THREE from 'three';
 import type { Transform } from '../../components/transform';
 import { findEntity, getComponent } from '../../core/ecs';
 import type { World } from '../../core/types';
@@ -108,6 +109,14 @@ export function createMissionRenderers(
   };
 }
 
+/** Options for updateMissionRenderers */
+export interface UpdateMissionRenderersOptions {
+  /** Skip default camera follow and render (for replay viewer with custom camera) */
+  skipCameraAndRender?: boolean;
+  /** Custom position for dust system center (defaults to player position) */
+  dustCenterPosition?: THREE.Vector3;
+}
+
 /** Update all rendering systems for a frame */
 export function updateMissionRenderers(
   renderers: MissionRenderers,
@@ -115,6 +124,7 @@ export function updateMissionRenderers(
   containerWidth: number,
   containerHeight: number,
   alpha = 1,
+  options?: UpdateMissionRenderersOptions,
 ): void {
   const { renderer } = renderers;
   const scene = getScene(renderer);
@@ -152,12 +162,25 @@ export function updateMissionRenderers(
   );
 
   const player = findEntity(world, ['playerControlled', 'transform']);
-  if (player !== undefined) {
-    followEntity(renderer, world, player);
+
+  // Update dust system based on custom position or player position
+  if (options?.dustCenterPosition) {
+    updateDustSystem(renderers.dustSystem, options.dustCenterPosition);
+  } else if (player !== undefined) {
     const transform = getComponent<Transform>(world, player, 'transform');
     if (transform) {
       updateDustSystem(renderers.dustSystem, transform.position);
     }
+  }
+
+  // Skip camera follow and render if caller wants to handle these
+  if (options?.skipCameraAndRender) {
+    return;
+  }
+
+  // Default behavior: follow player and render
+  if (player !== undefined) {
+    followEntity(renderer, world, player);
   }
 
   // Render target camera (before main render to avoid render target issues)
@@ -178,6 +201,57 @@ export function updateMissionRenderers(
     containerWidth,
     containerHeight,
   );
+}
+
+/** Options for renderMissionFrame */
+export interface RenderMissionFrameOptions {
+  /** Skip HUD rendering (for spectator mode viewing non-player ships) */
+  skipHUD?: boolean;
+}
+
+/**
+ * Complete rendering after custom camera update.
+ * Call this after updateMissionRenderers with skipCameraAndRender=true
+ * and after setting your own camera position.
+ */
+export function renderMissionFrame(
+  renderers: MissionRenderers,
+  world: World,
+  containerWidth: number,
+  containerHeight: number,
+  options?: RenderMissionFrameOptions,
+): void {
+  const { renderer } = renderers;
+  const scene = getScene(renderer);
+  const player = findEntity(world, ['playerControlled', 'transform']);
+
+  // Render target camera (before main render to avoid render target issues)
+  updateTargetCamera(
+    renderers.hud.targetCamera,
+    renderer.webglRenderer,
+    scene,
+    world,
+    player,
+  );
+
+  render(renderer);
+
+  // Skip HUD in spectator mode (viewing non-player ships)
+  if (options?.skipHUD) {
+    // Hide the HUD when viewing non-player ships
+    renderers.hud.container.style.display = 'none';
+  } else {
+    // Show and update the HUD when viewing player
+    renderers.hud.container.style.display = '';
+    updateHUD(
+      renderers.hud,
+      world,
+      renderer.camera,
+      renderer.entityMeshes,
+      containerWidth,
+      containerHeight,
+    );
+  }
 }
 
 /**

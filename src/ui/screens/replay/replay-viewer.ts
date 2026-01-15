@@ -4,11 +4,11 @@
  * Features:
  * - Play/pause/speed controls
  * - Timeline seeking
- * - Same rendering as live gameplay
+ * - Rebindable keyboard controls
+ * - Help modal for viewing/changing bindings
  */
 
 import { loadReplay } from '../../../replay/storage';
-import { PLAYBACK_SPEEDS } from '../../../replay/types';
 import {
   createScreen,
   type Screen,
@@ -16,11 +16,33 @@ import {
   type ScreenHandle,
 } from '../../framework/screen';
 import {
+  bindReplayHelpModal,
+  cleanupReplayHelpModal,
+  type ReplayHelpModalState,
+  renderReplayHelpModal,
+} from './replay-help-modal';
+import { clearDOMCache } from './viewer-dom';
+import {
+  cleanupAutoHide,
+  cycleSpeed,
+  handleKeyDown,
+  handleKeyUp,
+  handleTimelineSeek,
+  initAutoHide,
+  onPlayStateChange,
+  resetControlsTimer,
+  type UICallbacks,
+  updatePlayPauseButton,
+  updateSeekingIndicator,
+  updateSpeedButton,
+  updateTimelineUI,
+  type ViewerState,
+} from './viewer-input';
+import {
   cleanupViewer,
   formatTime,
   initializeViewer,
   type PlaybackCallbacks,
-  seekTo,
 } from './viewer-playback';
 
 /** Viewer screen callbacks */
@@ -28,73 +50,8 @@ export interface ReplayViewerProps {
   onBack: () => void;
 }
 
-/** Screen state */
-interface ViewerState {
-  loading: boolean;
-  error: string | null;
-  playing: boolean;
-  speed: number;
-  currentTick: number;
-  totalTicks: number;
-  seeking: boolean;
-}
-
-/** Update play/pause button without re-render */
-function updatePlayPauseButton(playing: boolean): void {
-  const btn = document.getElementById('btn-play-pause');
-  if (btn) {
-    btn.innerHTML = playing ? '&#10074;&#10074;' : '&#9658;';
-  }
-}
-
-/** Update speed button without re-render */
-function updateSpeedButton(speed: number): void {
-  const btn = document.getElementById('btn-speed');
-  if (btn) {
-    btn.textContent = `${speed}x`;
-  }
-}
-
-/** Update seeking indicator without re-render */
-function updateSeekingIndicator(seeking: boolean): void {
-  const hud = document.querySelector('.replay-hud');
-  if (!hud) return;
-
-  let indicator = document.querySelector('.replay-seeking');
-  if (seeking && !indicator) {
-    indicator = document.createElement('div');
-    indicator.className = 'replay-seeking';
-    indicator.textContent = 'Seeking...';
-    hud.appendChild(indicator);
-  } else if (!seeking && indicator) {
-    indicator.remove();
-  }
-}
-
-/** Update timeline UI without full re-render */
-function updateTimelineUI(currentTick: number, totalTicks: number): void {
-  const timeline = document.getElementById(
-    'replay-timeline',
-  ) as HTMLInputElement | null;
-  const progress = document.querySelector(
-    '.replay-timeline-progress',
-  ) as HTMLElement | null;
-  const timeDisplay = document.querySelector(
-    '.replay-time',
-  ) as HTMLElement | null;
-
-  if (timeline) {
-    timeline.value = String(currentTick);
-  }
-  if (progress && totalTicks > 0) {
-    progress.style.width = `${(currentTick / totalTicks) * 100}%`;
-  }
-  if (timeDisplay) {
-    const currentTime = formatTime(currentTick / 60);
-    const totalTime = formatTime(totalTicks / 60);
-    timeDisplay.textContent = `${currentTime} / ${totalTime}`;
-  }
-}
+// Re-export ViewerState for external use
+export type { ViewerState } from './viewer-types';
 
 /** Render the replay HUD overlay */
 function renderHUD(state: ViewerState): string {
@@ -102,9 +59,10 @@ function renderHUD(state: ViewerState): string {
   const totalTime = formatTime(state.totalTicks / 60);
   const progress =
     state.totalTicks > 0 ? (state.currentTick / state.totalTicks) * 100 : 0;
+  const displayStyle = state.hudVisible ? '' : 'display: none;';
 
   return `
-    <div class="replay-hud">
+    <div class="replay-hud" style="${displayStyle}">
       <div class="replay-controls">
         <button class="btn btn-icon" id="btn-back-viewer">
           <span class="icon-back">&larr;</span>
@@ -128,10 +86,37 @@ function renderHUD(state: ViewerState): string {
           <div class="replay-timeline-progress" style="width: ${progress}%"></div>
         </div>
         <span class="replay-time">${currentTime} / ${totalTime}</span>
+        <div class="replay-camera-status">
+          <span id="camera-mode-display">Chase</span>
+          <span class="camera-status-separator">|</span>
+          <span id="camera-target-display">Player</span>
+        </div>
+        <button class="btn btn-icon btn-help" id="btn-help" title="Controls (F1)">
+          ?
+        </button>
       </div>
       ${state.seeking ? '<div class="replay-seeking">Seeking...</div>' : ''}
     </div>
   `;
+}
+
+/** Update help modal without full screen re-render */
+function updateHelpModal(state: ReplayHelpModalState): void {
+  const existingModal = document.getElementById('replay-help-modal');
+  const viewer = document.querySelector('.replay-viewer');
+
+  if (state.visible) {
+    // Render or update modal
+    const modalHtml = renderReplayHelpModal(state);
+    if (existingModal) {
+      existingModal.outerHTML = modalHtml;
+    } else if (viewer) {
+      viewer.insertAdjacentHTML('beforeend', modalHtml);
+    }
+  } else {
+    // Remove modal
+    existingModal?.remove();
+  }
 }
 
 /** Replay viewer component */
@@ -160,11 +145,32 @@ const ReplayViewerComponent: Screen<ViewerState, ReplayViewerProps> = {
       <div class="replay-viewer">
         <div class="replay-canvas-container" id="replay-canvas"></div>
         ${renderHUD(state)}
+        ${renderReplayHelpModal(state.helpModal)}
       </div>
     `;
   },
 
   bind(api: ScreenAPI<ViewerState>, props: ReplayViewerProps) {
+    const state = api.getState();
+
+    // Initialize auto-hide for replay controls
+    initAutoHide(() => api.getState().playing);
+
+    // Create UI callbacks for input handlers
+    const uiCallbacks: UICallbacks = {
+      updatePlayPauseButton,
+      updateSpeedButton,
+      updateSeekingIndicator,
+      updateTimelineUI,
+      openHelpModal: () => openHelpModal(api),
+      onBack: props.onBack,
+    };
+
+    // Mouse move on viewer area resets auto-hide timer
+    api.on('.replay-viewer', 'mousemove', () => {
+      resetControlsTimer();
+    });
+
     // Back buttons
     api.on('#btn-back-viewer', 'click', () => {
       props.onBack();
@@ -174,65 +180,93 @@ const ReplayViewerComponent: Screen<ViewerState, ReplayViewerProps> = {
       props.onBack();
     });
 
-    // Play/pause - use updateState to avoid re-render (preserves canvas)
+    // Play/pause button
     api.on('#btn-play-pause', 'click', () => {
-      const state = api.getState();
-      const newPlaying = !state.playing;
+      const s = api.getState();
+      const newPlaying = !s.playing;
       api.updateState({ playing: newPlaying });
       updatePlayPauseButton(newPlaying);
+      onPlayStateChange(newPlaying);
     });
 
-    // Speed cycle - use updateState to avoid re-render
+    // Speed cycle button
     api.on('#btn-speed', 'click', () => {
-      const state = api.getState();
-      const idx = PLAYBACK_SPEEDS.indexOf(
-        state.speed as (typeof PLAYBACK_SPEEDS)[number],
-      );
-      const nextIdx = (idx + 1) % PLAYBACK_SPEEDS.length;
-      const nextSpeed = PLAYBACK_SPEEDS[nextIdx] ?? 1;
-      api.updateState({ speed: nextSpeed });
-      updateSpeedButton(nextSpeed);
+      cycleSpeed(api, updateSpeedButton);
+      resetControlsTimer();
     });
 
-    // Timeline seek - use 'input' event for immediate response on click/drag
+    // Help button
+    api.on('#btn-help', 'click', () => {
+      openHelpModal(api);
+    });
+
+    // Timeline seek
     api.on('#replay-timeline', 'input', (_e, el) => {
       const target = parseInt((el as HTMLInputElement).value, 10);
-      const state = api.getState();
-      api.updateState({ seeking: true, currentTick: target });
-      updateSeekingIndicator(true);
-      // Immediately show the target position on the timeline
-      updateTimelineUI(target, state.totalTicks);
-      const seekStarted = seekTo(target);
-      // If seek didn't start (e.g., same position), reset UI immediately
-      if (!seekStarted) {
-        api.updateState({ seeking: false });
-        updateSeekingIndicator(false);
-      }
+      handleTimelineSeek(api, target, uiCallbacks);
+      resetControlsTimer();
     });
 
-    // Keyboard shortcuts - use updateState to avoid re-render
+    // Bind help modal if visible
+    if (state.helpModal.visible) {
+      bindHelpModalHandlers(api);
+    }
+
+    // Keyboard shortcuts
     api.onGlobal('keydown', (e) => {
-      const ke = e as KeyboardEvent;
-      if (ke.code === 'Space') {
-        e.preventDefault();
-        const state = api.getState();
-        const newPlaying = !state.playing;
-        api.updateState({ playing: newPlaying });
-        updatePlayPauseButton(newPlaying);
-      } else if (ke.code === 'Escape') {
-        e.preventDefault();
-        props.onBack();
-      }
+      handleKeyDown(e as KeyboardEvent, api, uiCallbacks);
+    });
+
+    api.onGlobal('keyup', (e) => {
+      handleKeyUp(e as KeyboardEvent, api);
     });
   },
 };
 
+/** Open help modal */
+function openHelpModal(api: ScreenAPI<ViewerState>): void {
+  api.updateState({
+    helpModal: { visible: true, listeningAction: null },
+  });
+  updateHelpModal({ visible: true, listeningAction: null });
+  bindHelpModalHandlers(api);
+}
+
+/** Close help modal */
+function closeHelpModal(api: ScreenAPI<ViewerState>): void {
+  cleanupReplayHelpModal();
+  api.updateState({
+    helpModal: { visible: false, listeningAction: null },
+  });
+  updateHelpModal({ visible: false, listeningAction: null });
+  // Reset auto-hide timer so controls don't hide immediately after closing modal
+  resetControlsTimer();
+}
+
+/** Bind help modal event handlers */
+function bindHelpModalHandlers(api: ScreenAPI<ViewerState>): void {
+  bindReplayHelpModal(
+    () => closeHelpModal(api),
+    (modalState) => {
+      const state = api.getState();
+      const newHelpModal = { ...state.helpModal, ...modalState };
+      api.updateState({ helpModal: newHelpModal });
+      // Re-render modal to show updated bindings
+      updateHelpModal(newHelpModal);
+      // Re-bind after re-render
+      if (newHelpModal.visible) {
+        requestAnimationFrame(() => bindHelpModalHandlers(api));
+      }
+    },
+  );
+}
+
 /** Screen handle for external access */
 let screenHandle: ScreenHandle<ViewerState, ReplayViewerProps> | null = null;
 
-/** Render the replay viewer screen */
-export function renderReplayViewer(element: HTMLElement): void {
-  const initialState: ViewerState = {
+/** Initial state factory */
+function createInitialState(): ViewerState {
+  return {
     loading: true,
     error: null,
     playing: false,
@@ -240,7 +274,14 @@ export function renderReplayViewer(element: HTMLElement): void {
     currentTick: 0,
     totalTicks: 0,
     seeking: false,
+    hudVisible: true,
+    helpModal: { visible: false, listeningAction: null },
   };
+}
+
+/** Render the replay viewer screen */
+export function renderReplayViewer(element: HTMLElement): void {
+  const initialState = createInitialState();
   element.innerHTML = ReplayViewerComponent.render(initialState, {
     onBack: () => {},
   });
@@ -255,15 +296,7 @@ export function bindReplayViewer(
   // Clean up previous viewer
   cleanupReplayViewer();
 
-  const initialState: ViewerState = {
-    loading: true,
-    error: null,
-    playing: false,
-    speed: 1,
-    currentTick: 0,
-    totalTicks: 0,
-    seeking: false,
-  };
+  const initialState = createInitialState();
 
   screenHandle = createScreen(
     ReplayViewerComponent,
@@ -286,18 +319,14 @@ export function bindReplayViewer(
 
       // Update state with replay info
       screenHandle?.replaceState({
+        ...initialState,
         loading: false,
-        error: null,
-        playing: false,
-        speed: 1,
-        currentTick: 0,
         totalTicks: replay.tickCount,
-        seeking: false,
       });
 
       // Initialize viewer after render
       requestAnimationFrame(() => {
-        if (!screenHandle) return; // User navigated away
+        if (!screenHandle) return;
         const container = document.getElementById('replay-canvas');
         if (container) {
           try {
@@ -307,9 +336,13 @@ export function bindReplayViewer(
                   playing: false,
                   speed: 1,
                   totalTicks: 0,
+                  hudVisible: true,
                 },
               updateState: (updates) => screenHandle?.updateState(updates),
-              onPlayPauseChange: updatePlayPauseButton,
+              onPlayPauseChange: (playing) => {
+                updatePlayPauseButton(playing);
+                onPlayStateChange(playing);
+              },
               onSeekComplete: (tick, total) => {
                 updateSeekingIndicator(false);
                 updateTimelineUI(tick, total);
@@ -319,13 +352,9 @@ export function bindReplayViewer(
             initializeViewer(replay, container, callbacks);
           } catch (err) {
             screenHandle?.replaceState({
+              ...initialState,
               loading: false,
               error: `Failed to initialize replay: ${(err as Error).message}`,
-              playing: false,
-              speed: 1,
-              currentTick: 0,
-              totalTicks: 0,
-              seeking: false,
             });
           }
         }
@@ -342,7 +371,10 @@ export function bindReplayViewer(
 
 /** Clean up replay viewer */
 export function cleanupReplayViewer(): void {
+  cleanupAutoHide();
+  cleanupReplayHelpModal();
   cleanupViewer();
+  clearDOMCache();
   screenHandle?.destroy();
   screenHandle = null;
 }

@@ -9,6 +9,8 @@ import {
   createMissionRenderers,
   disposeMissionRenderers,
   type MissionRenderers,
+  type RenderMissionFrameOptions,
+  renderMissionFrame,
   resetMissionRenderers,
   updateMissionRenderers,
 } from '../../../campaign/mission/mission-renderer';
@@ -16,13 +18,52 @@ import { resetLeadIndicatorSmoothing } from '../../../rendering/reticle/lead-ind
 import { ReplayPlayback } from '../../../replay/playback';
 import type { FullReplayData } from '../../../replay/types';
 import { TICK_MS, VIEWER_SEEK_TICKS_PER_FRAME } from '../../../replay/types';
+import {
+  type CameraInput,
+  createCameraState,
+  type ReplayCameraState,
+  updateCamera,
+} from './replay-camera';
+import {
+  cameraNextEntity,
+  cameraPrevEntity,
+  cameraResetToPlayer,
+  cameraToggleMode,
+  clearCameraStatusCache,
+  getCameraMode,
+  getCameraModeDisplay,
+  getCameraTargetDisplay,
+  getCameraTargetPosition,
+  isViewingPlayer,
+  setCameraInput,
+  setViewerRefs,
+  updateCameraStatus,
+} from './viewer-camera';
+
+// Re-export camera controls for external use
+export {
+  cameraNextEntity,
+  cameraPrevEntity,
+  cameraResetToPlayer,
+  cameraToggleMode,
+  getCameraMode,
+  getCameraModeDisplay,
+  getCameraTargetDisplay,
+  setCameraInput,
+  updateCameraStatus,
+};
 
 /** Threshold for detecting time discontinuities (in seconds) */
 const DISCONTINUITY_THRESHOLD = 1.0;
 
 /** Callback for state updates from playback loop */
 export interface PlaybackCallbacks {
-  getState: () => { playing: boolean; speed: number; totalTicks: number };
+  getState: () => {
+    playing: boolean;
+    speed: number;
+    totalTicks: number;
+    hudVisible: boolean;
+  };
   updateState: (updates: {
     playing?: boolean;
     currentTick?: number;
@@ -45,6 +86,23 @@ let lastRenderedGameTime: number | null = null;
 /** Accumulated time for interpolation (milliseconds) */
 let accumulator = 0;
 
+/** Camera state */
+let cameraState: ReplayCameraState | null = null;
+
+/** Current camera input state (updated by replay-viewer.ts) */
+const cameraInput: CameraInput = {
+  up: false,
+  down: false,
+  left: false,
+  right: false,
+  forward: false,
+  back: false,
+  rollLeft: false,
+  rollRight: false,
+  zoomIn: false,
+  zoomOut: false,
+};
+
 /** Format time as MM:SS */
 export function formatTime(seconds: number): string {
   const mins = Math.floor(seconds / 60);
@@ -65,6 +123,11 @@ function startPlaybackLoop(): void {
 
     const state = callbacks.getState();
 
+    // Calculate frame delta first (needed for camera even during seek)
+    if (lastFrameTime === 0) lastFrameTime = time;
+    const frameDelta = time - lastFrameTime;
+    lastFrameTime = time;
+
     // Handle seeking - don't render during seek to avoid fast-forward visual
     if (viewerPlayback.isSeeking()) {
       try {
@@ -77,8 +140,7 @@ function startPlaybackLoop(): void {
           callbacks.onSeekComplete(currentTick, state.totalTicks);
           // Reset accumulator and render target frame immediately
           accumulator = 0;
-          lastFrameTime = time;
-          updateRendering(1); // alpha=1 to snap to exact tick position
+          updateRendering(1, frameDelta); // alpha=1 to snap to exact tick position
         }
       } catch {
         // If seek processing fails, reset seeking state
@@ -88,16 +150,10 @@ function startPlaybackLoop(): void {
           state.totalTicks,
         );
         accumulator = 0;
-        lastFrameTime = time;
-        updateRendering(1);
+        updateRendering(1, frameDelta);
       }
       return; // Don't render during seek
     }
-
-    // Calculate frame delta
-    if (lastFrameTime === 0) lastFrameTime = time;
-    const frameDelta = time - lastFrameTime;
-    lastFrameTime = time;
 
     // Handle playback with proper interpolation
     if (state.playing) {
@@ -137,15 +193,15 @@ function startPlaybackLoop(): void {
 
     // Calculate interpolation alpha (0-1, how far between prev and current tick)
     const alpha = state.playing ? Math.min(accumulator / TICK_MS, 1) : 1;
-    updateRendering(alpha);
+    updateRendering(alpha, frameDelta);
   }
 
   animationFrameId = requestAnimationFrame(loop);
 }
 
 /** Update the rendering with interpolation */
-function updateRendering(alpha: number): void {
-  if (!viewerRenderers || !viewerPlayback) return;
+function updateRendering(alpha: number, frameDt: number): void {
+  if (!viewerRenderers || !viewerPlayback || !cameraState) return;
 
   const container = document.getElementById('replay-canvas');
   if (!container) return;
@@ -175,13 +231,53 @@ function updateRendering(alpha: number): void {
 
   lastRenderedGameTime = currentGameTime;
 
+  const containerWidth = container.clientWidth;
+  const containerHeight = container.clientHeight;
+
+  // Get target position for dust system (follows viewed entity, not player)
+  const dustCenter = getCameraTargetPosition(cameraState, world);
+
+  // Update scene and effects, but skip camera follow and render
+  // so we can use our custom replay camera
   updateMissionRenderers(
     viewerRenderers,
     world,
-    container.clientWidth,
-    container.clientHeight,
+    containerWidth,
+    containerHeight,
     alpha,
+    dustCenter
+      ? { skipCameraAndRender: true, dustCenterPosition: dustCenter }
+      : { skipCameraAndRender: true },
   );
+
+  // Update camera based on replay camera mode
+  const dt = frameDt / 1000; // Convert ms to seconds
+  updateCamera(
+    cameraState,
+    viewerRenderers.renderer.camera,
+    world,
+    cameraInput,
+    dt,
+  );
+
+  // Skip HUD if: not viewing player, OR user pressed H to hide
+  const viewingPlayer = isViewingPlayer();
+  const hudVisible = callbacks?.getState().hudVisible ?? true;
+  const renderOptions: RenderMissionFrameOptions = {
+    skipHUD: !viewingPlayer || !hudVisible,
+  };
+
+  // Now render the frame with our custom camera position
+  renderMissionFrame(
+    viewerRenderers,
+    world,
+    containerWidth,
+    containerHeight,
+    renderOptions,
+  );
+
+  // Update camera status display (mode and target may change due to lost targets)
+  updateCameraStatus();
 }
 
 /** Stop the playback loop */
@@ -206,6 +302,12 @@ export function initializeViewer(
   // Create renderers
   viewerRenderers = createMissionRenderers(container, replay.seed);
 
+  // Create camera state
+  cameraState = createCameraState();
+
+  // Set refs for viewer-camera module
+  setViewerRefs(cameraState, viewerPlayback, cameraInput);
+
   // Start playback loop
   startPlaybackLoop();
 }
@@ -213,6 +315,10 @@ export function initializeViewer(
 /** Clean up viewer resources */
 export function cleanupViewer(): void {
   stopPlaybackLoop();
+
+  // Clear viewer-camera refs and cache
+  setViewerRefs(null, null, null);
+  clearCameraStatusCache();
 
   if (viewerRenderers) {
     disposeMissionRenderers(viewerRenderers);
@@ -223,6 +329,19 @@ export function cleanupViewer(): void {
   callbacks = null;
   lastRenderedGameTime = null;
   accumulator = 0;
+  cameraState = null;
+
+  // Reset camera input
+  cameraInput.up = false;
+  cameraInput.down = false;
+  cameraInput.left = false;
+  cameraInput.right = false;
+  cameraInput.forward = false;
+  cameraInput.back = false;
+  cameraInput.rollLeft = false;
+  cameraInput.rollRight = false;
+  cameraInput.zoomIn = false;
+  cameraInput.zoomOut = false;
 }
 
 /**

@@ -1,0 +1,43 @@
+/**
+ * Replay Help Modal Styles
+ *
+ * Styles for the replay controls help modal overlay.
+ * Extracted from replays.css to keep files under 400 lines.
+ */
+
+/* ========================================
+   REPLAY HELP MODAL
+   ======================================== */
+
+.replay-help-modal {
+  z-index: 200; /* Above other HUD elements */
+}
+
+.replay-help-dialog {
+  width: 100%;
+  max-width: 600px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.replay-help-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 var(--space-4);
+  margin: 0 calc(-1 * var(--space-4));
+}
+
+/* Use settings tab header style */
+.replay-help-content .settings-tab-header {
+  position: sticky;
+  top: 0;
+  background: var(--bg-overlay);
+  z-index: 1;
+  margin-bottom: var(--space-3);
+}
+
+/* Ensure bindings list has proper spacing */
+.replay-help-content .bindings-list {
+  padding-bottom: var(--space-4);
+}

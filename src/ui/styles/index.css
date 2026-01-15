@@ -125,3 +125,5 @@
 
 /* Replays screen */
 @import "./screens/replays.css";
+@import "./screens/replay-viewer.css";
+@import "./screens/replay-help-modal.css";

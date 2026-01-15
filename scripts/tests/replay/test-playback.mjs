@@ -167,7 +167,14 @@ describe('ReplayPlayback', () => {
     const replay = createTestReplayData(12345, inputs);
     const playback = new ReplayPlayback(replay);
 
+    // YouTube-style speeds: [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 4]
     assert.strictEqual(playback.getSpeed(), 1, 'Should start at 1x');
+
+    playback.cycleSpeed();
+    assert.strictEqual(playback.getSpeed(), 1.25, 'Should cycle to 1.25x');
+
+    playback.cycleSpeed();
+    assert.strictEqual(playback.getSpeed(), 1.5, 'Should cycle to 1.5x');
 
     playback.cycleSpeed();
     assert.strictEqual(playback.getSpeed(), 2, 'Should cycle to 2x');
