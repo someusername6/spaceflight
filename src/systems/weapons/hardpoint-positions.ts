@@ -129,3 +129,56 @@ export function getHardpointWorldPosition(
 
   return true;
 }
+
+/**
+ * Get local offset for a primary weapon hardpoint (for muzzle flash tracking).
+ *
+ * Returns a plain object that can be stored and used later with any transform.
+ * The offset is in the ship's local coordinate system.
+ *
+ * @param shipClassName - Ship class name (e.g., 'fighter', 'bomber')
+ * @param bankIndex - Which weapon bank (0-indexed)
+ * @param forwardOffset - Additional forward offset from ship center
+ * @returns Local offset object { x, y, z } or null if data unavailable
+ */
+export function getHardpointLocalOffset(
+  shipClassName: string,
+  bankIndex: number,
+  forwardOffset: number,
+): { x: number; y: number; z: number } | null {
+  // Get ship class data (hardpoints)
+  const shipClass = SHIP_CLASSES[shipClassName];
+  if (!shipClass || !shipClass.primaryHardpoints) {
+    return null;
+  }
+
+  // Get hardpoint for this bank
+  const hardpoints = shipClass.primaryHardpoints;
+  const hardpoint = hardpoints[bankIndex];
+  if (!hardpoint) {
+    return null;
+  }
+
+  // Get geometry data (bounds)
+  if (!isShipClass(shipClassName)) {
+    return null;
+  }
+
+  const geometry = SHIP_GEOMETRIES[shipClassName];
+
+  // Compute local offset from SVG coordinates
+  const offset = svgToLocalOffset(
+    hardpoint.svgX,
+    hardpoint.svgY,
+    geometry.bounds,
+    geometry.svgBounds,
+  );
+
+  // Return as plain object with forward offset applied
+  // Note: offset.x = right, offset.z = backward (needs negation + forwardOffset)
+  return {
+    x: offset.x,
+    y: 0,
+    z: -offset.z + forwardOffset,
+  };
+}

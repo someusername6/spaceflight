@@ -25,7 +25,10 @@ import { getArchetype } from '../../factories/ship';
 import { createCollision } from '../collision';
 import { getForward } from '../physics';
 import { recordShotFired } from '../stats';
-import { getHardpointWorldPosition } from './hardpoint-positions';
+import {
+  getHardpointLocalOffset,
+  getHardpointWorldPosition,
+} from './hardpoint-positions';
 
 /** Spawn offset from ship center */
 const PROJECTILE_SPAWN_OFFSET = 3;
@@ -204,6 +207,32 @@ function buildProjectileOptions(
   return Object.keys(options).length > 0 ? options : undefined;
 }
 
+/**
+ * Compute fallback local offset for muzzle flash when hardpoint data unavailable.
+ * Uses the same lateral distribution as calculateBankOffset.
+ */
+function computeFallbackLocalOffset(
+  bankIndex: number,
+  totalBanks: number,
+  forwardOffset: number,
+): { x: number; y: number; z: number } {
+  // For single bank, no lateral offset
+  if (totalBanks <= 1) {
+    return { x: 0, y: 0, z: forwardOffset };
+  }
+
+  // Distribute banks: 0=left, 1=right, 2=far-left, 3=far-right, etc.
+  const pairIndex = Math.floor(bankIndex / 2);
+  const isRight = bankIndex % 2 === 1;
+  const lateralOffset = BANK_LATERAL_OFFSET * (pairIndex + 1);
+
+  return {
+    x: isRight ? lateralOffset : -lateralOffset,
+    y: 0,
+    z: forwardOffset,
+  };
+}
+
 /** Create and add projectile entity with all components */
 function createProjectileEntity(
   world: World,
@@ -212,6 +241,10 @@ function createProjectileEntity(
   direction: THREE.Vector3,
   weapon: ProjectileWeaponInfo,
   ownerFaction: FactionComponent | undefined,
+  shipClassName: string | undefined,
+  bankIndex: number,
+  totalBanks: number,
+  forwardOffset: number,
   target?: Entity,
 ): void {
   const projectile = createEntity(world);
@@ -241,11 +274,17 @@ function createProjectileEntity(
     addComponent(world, projectile, createFaction(ownerFaction.faction));
   }
 
-  // Queue muzzle flash at spawn position
+  // Queue muzzle flash with entity reference and local offset
+  // The renderer will compute world position from entity's interpolated transform
+  const localOffset = shipClassName
+    ? getHardpointLocalOffset(shipClassName, bankIndex, forwardOffset)
+    : null;
+
   world.systemState.muzzleFlashes.pending.push({
-    x: pos.x,
-    y: pos.y,
-    z: pos.z,
+    entity: owner,
+    localOffset:
+      localOffset ??
+      computeFallbackLocalOffset(bankIndex, totalBanks, forwardOffset),
     weaponName: weapon.name,
     gameTime: world.systemState.gameTime,
   });
@@ -269,6 +308,7 @@ export function spawnProjectile(
   target?: Entity,
 ): void {
   const forward = getForward(ownerTransform);
+  const shipClassName = getShipClassName(world, owner);
   getWeaponSpawnPosition(
     spawnPos,
     world,
@@ -286,6 +326,10 @@ export function spawnProjectile(
     forward,
     weapon,
     ownerFaction,
+    shipClassName,
+    bankIndex,
+    totalBanks,
+    PROJECTILE_SPAWN_OFFSET,
     target,
   );
 }
@@ -304,6 +348,7 @@ export function spawnProjectileWithAimError(
   target?: Entity,
 ): void {
   const forward = getForward(ownerTransform);
+  const shipClassName = getShipClassName(world, owner);
   getWeaponSpawnPosition(
     spawnPos,
     world,
@@ -335,6 +380,10 @@ export function spawnProjectileWithAimError(
     direction,
     weapon,
     ownerFaction,
+    shipClassName,
+    bankIndex,
+    totalBanks,
+    PROJECTILE_SPAWN_OFFSET,
     target,
   );
 }

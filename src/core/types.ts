@@ -123,9 +123,10 @@ export interface SystemState {
   /** Muzzle flash queue - weapon spawning adds, rendering consumes */
   muzzleFlashes: {
     pending: Array<{
-      x: number;
-      y: number;
-      z: number;
+      /** Entity that fired (for interpolated position tracking) */
+      entity: Entity;
+      /** Local offset from entity origin (in entity's local space) */
+      localOffset: { x: number; y: number; z: number };
       weaponName: string;
       /** Game time when created - renderer skips stale items (e.g., after seeking) */
       gameTime: number;
