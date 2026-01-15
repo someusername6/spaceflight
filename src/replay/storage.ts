@@ -17,7 +17,7 @@
 import { logWarn } from '../core/logger';
 import { compressJSON, decompressJSON, isCompressionSupported } from './gzip';
 import type { FullReplayData, ReplaySummary, StoredReplay } from './types';
-import { MAX_STORED_REPLAYS, toReplaySummary } from './types';
+import { MAX_STORED_REPLAYS, REPLAY_VERSION, toReplaySummary } from './types';
 
 // Re-export file operations from storage-files
 export {
@@ -200,6 +200,7 @@ export async function saveReplay(replay: FullReplayData): Promise<string> {
  * Load a replay by ID.
  * Automatically decompresses if stored in compressed format.
  * Returns null if not found.
+ * @throws Error if replay version is incompatible.
  */
 export async function loadReplay(id: string): Promise<FullReplayData | null> {
   const db = await openDB();
@@ -215,13 +216,24 @@ export async function loadReplay(id: string): Promise<FullReplayData | null> {
 
   if (!stored) return null;
 
-  // New format: compressed data
+  // Get replay data (decompress if needed)
+  let replay: FullReplayData | null;
   if (stored.compressedData) {
-    return decompressJSON<FullReplayData>(stored.compressedData);
+    replay = await decompressJSON<FullReplayData>(stored.compressedData);
+  } else {
+    replay = stored.data ?? null;
   }
 
-  // Legacy format: uncompressed data
-  return stored.data ?? null;
+  if (!replay) return null;
+
+  // Version check - reject incompatible versions
+  if (replay.version !== REPLAY_VERSION) {
+    throw new Error(
+      `Replay version ${replay.version} is not supported (expected ${REPLAY_VERSION})`,
+    );
+  }
+
+  return replay;
 }
 
 /**
