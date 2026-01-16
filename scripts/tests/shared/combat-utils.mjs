@@ -2,6 +2,7 @@
  * Shared utilities for combat simulation tests.
  */
 
+import { random } from '../../../src/core/prng.ts';
 import { aiSystem } from '../../../src/systems/ai/ai.ts';
 import { aimErrorSystem } from '../../../src/systems/aim-error.ts';
 import { cleanupSystem } from '../../../src/systems/cleanup.ts';
@@ -42,9 +43,13 @@ export const ARCHETYPES = [
   'lancerRed', // Sentinel chassis + red lasers, close range high DPS
 ];
 
-/** Spawn position jitter to break determinism (±10m) */
-export function jitter() {
-  return (Math.random() - 0.5) * 20;
+/**
+ * Spawn position jitter (±10m) to prevent perfect alignment.
+ * @param {import('../../../src/core/prng.ts').PRNGState} [prng] - Optional seeded PRNG for reproducibility
+ */
+export function jitter(prng) {
+  const r = prng ? random(prng) : Math.random();
+  return (r - 0.5) * 20;
 }
 
 // ============================================================================

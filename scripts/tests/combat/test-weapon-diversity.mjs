@@ -14,6 +14,7 @@ import assert from 'node:assert';
 import { describe, it } from 'node:test';
 import { Quaternion, Vector3 } from 'three';
 import { createWorld, getComponent } from '../../../src/core/ecs.ts';
+import { createPRNG } from '../../../src/core/prng.ts';
 import { Faction } from '../../../src/core/types.ts';
 import { createAIShip } from '../../../src/factories/ship.ts';
 import {
@@ -43,16 +44,16 @@ describe('Weapon Damage Diversity', () => {
 
   for (const archetype of ARCHETYPES) {
     for (let run = 0; run < RUNS_PER_TEST; run++) {
-      const world = createWorld(
-        run * 3000 + ARCHETYPES.indexOf(archetype) * 100,
-      );
+      const seed = run * 3000 + ARCHETYPES.indexOf(archetype) * 100;
+      const world = createWorld(seed);
+      const jitterPrng = createPRNG(seed + 0x7fffffff); // Separate PRNG for jitter
       initCombatStats(world);
 
       const shipA = createAIShip(
         world,
         archetype,
         Faction.Player,
-        new Vector3(jitter(), jitter(), jitter()),
+        new Vector3(jitter(jitterPrng), jitter(jitterPrng), jitter(jitterPrng)),
         new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), Math.PI),
         'regular',
       );
@@ -61,7 +62,11 @@ describe('Weapon Damage Diversity', () => {
         world,
         'interceptor',
         Faction.Enemy,
-        new Vector3(jitter(), jitter(), 500 + jitter()),
+        new Vector3(
+          jitter(jitterPrng),
+          jitter(jitterPrng),
+          500 + jitter(jitterPrng),
+        ),
         new Quaternion(),
         'regular',
       );
@@ -136,16 +141,16 @@ describe('Weapon Damage Diversity', () => {
     archetypeDamage[archetype] = { projectile: 0, beam: 0, missile: 0 };
 
     for (let run = 0; run < RUNS_PER_TEST; run++) {
-      const world = createWorld(
-        run * 4000 + ARCHETYPES.indexOf(archetype) * 100,
-      );
+      const seed = run * 4000 + ARCHETYPES.indexOf(archetype) * 100;
+      const world = createWorld(seed);
+      const jitterPrng = createPRNG(seed + 0x7fffffff); // Separate PRNG for jitter
       initCombatStats(world);
 
       const shipA = createAIShip(
         world,
         archetype,
         Faction.Player,
-        new Vector3(jitter(), jitter(), jitter()),
+        new Vector3(jitter(jitterPrng), jitter(jitterPrng), jitter(jitterPrng)),
         new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), Math.PI),
         'regular',
       );
@@ -154,7 +159,11 @@ describe('Weapon Damage Diversity', () => {
         world,
         'defender', // Use defender as target (tanky, survives longer for more data)
         Faction.Enemy,
-        new Vector3(jitter(), jitter(), 500 + jitter()),
+        new Vector3(
+          jitter(jitterPrng),
+          jitter(jitterPrng),
+          500 + jitter(jitterPrng),
+        ),
         new Quaternion(),
         'regular',
       );
