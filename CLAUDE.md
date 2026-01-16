@@ -1,5 +1,9 @@
 # Claude Code Rules for This Project
 
+## Workflow Rules
+
+- **NEVER commit without explicit approval** - Do not run `git commit` unless the user explicitly asks you to commit. This applies even after context compaction.
+
 ## Game Overview
 
 **Spaceflight** is a space dogfight roguelike. Players command a squadron through procedurally generated sectors, taking contracts (missions) to earn credits and salvage. Combat is real-time 3D with an ECS architecture. The title screen renders a live battle simulation in the background.
