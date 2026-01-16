@@ -35,7 +35,7 @@ export function getHUDStyles(): string {
     }
     .match-speed-indicator {
       position: absolute;
-      bottom: 145px;
+      bottom: 170px;
       left: 50%;
       transform: translateX(-50%);
       font-size: 14px;
