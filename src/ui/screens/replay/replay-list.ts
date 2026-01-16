@@ -24,6 +24,7 @@ import {
   type ScreenHandle,
 } from '../../framework/screen';
 import {
+  type DetailTab,
   type ReplaysState,
   renderConfirmDelete,
   renderDetailPanel,
@@ -45,7 +46,7 @@ const ReplaysScreenComponent: Screen<ReplaysState, ReplaysScreenProps> = {
           <h2 class="replays-title">Replays</h2>
           <div class="replays-header-actions">
             <button class="btn" id="btn-import-replay">Import</button>
-            <button class="btn btn-back" id="btn-back">Back</button>
+            <button class="btn" id="btn-back">Back</button>
           </div>
         </div>
         <div class="replays-layout">
@@ -98,6 +99,14 @@ const ReplaysScreenComponent: Screen<ReplaysState, ReplaysScreenProps> = {
       const replayId = el.dataset.replayId;
       if (replayId && props.onWatch) {
         props.onWatch(replayId);
+      }
+    });
+
+    // Tab switching
+    api.on('.replay-tab', 'click', (_e, el) => {
+      const tab = el.dataset.tab as DetailTab | undefined;
+      if (tab) {
+        api.setState({ selectedTab: tab });
       }
     });
 
@@ -193,6 +202,7 @@ export function renderReplaysScreen(element: HTMLElement): void {
     replays: [],
     selectedId: null,
     selectedReplay: null,
+    selectedTab: 'deploy',
     loading: true,
     error: null,
     confirmDeleteId: null,
@@ -214,6 +224,7 @@ export function bindReplaysScreen(
     replays: [],
     selectedId: null,
     selectedReplay: null,
+    selectedTab: 'deploy',
     loading: true,
     error: null,
     confirmDeleteId: null,
@@ -241,6 +252,7 @@ export function bindReplaysScreen(
         replays,
         selectedId,
         selectedReplay,
+        selectedTab: 'deploy',
         loading: false,
         error: null,
         confirmDeleteId: null,
@@ -251,6 +263,7 @@ export function bindReplaysScreen(
         replays: [],
         selectedId: null,
         selectedReplay: null,
+        selectedTab: 'deploy',
         loading: false,
         error: `Failed to load replays: ${(err as Error).message}`,
         confirmDeleteId: null,

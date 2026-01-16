@@ -2,8 +2,6 @@
  * Mission Callbacks - game loop callbacks for mission execution.
  */
 
-import type { CombatStats } from '../../components/combat-stats';
-import { getComponent, queryEntities } from '../../core/ecs';
 import { logError, logWarn } from '../../core/logger';
 import { createDerivedPRNG, random } from '../../core/prng';
 import type { World } from '../../core/types';
@@ -14,13 +12,13 @@ import {
   resetMissionState,
   stopGame,
 } from '../../game';
-import { encodeRLE } from '../../replay/compression';
+import { buildReplayData } from '../../replay/replay-builder';
 import { saveReplay } from '../../replay/storage';
-import type { FullReplayData, ReplayOutcome } from '../../replay/types';
-import { REPLAY_VERSION } from '../../replay/types';
+import type { FullReplayData } from '../../replay/types';
 import { stopRecording } from '../../systems/input';
 import { finalizeMatchStats } from '../../systems/stats';
 import { endMission, updateCampaignState } from '../../ui/common/screens';
+import { collectDebriefData } from '../../ui/screens/results/debrief';
 import type { CampaignController } from '../controller-types';
 import {
   handleNonIronmanDefeat,
@@ -62,6 +60,9 @@ export function createMissionEndExecutor(
     // Finalize match stats before stopping
     finalizeMatchStats(game.world);
 
+    // Collect debrief data while world is still available
+    const debriefData = collectDebriefData(game.world);
+
     // Extract remaining ammo from all player ships before stopping
     const ammoData = extractAmmoFromWorld(game.world);
 
@@ -75,104 +76,23 @@ export function createMissionEndExecutor(
     }
     controller.game = null;
 
-    // Save replay if we were recording
+    // Build replay data if we were recording (save happens after salvage calc)
+    let fullReplay: FullReplayData | null = null;
     if (recorder) {
-      const replayData = recorder.getReplayData();
-      const matchStats = game.world.systemState.matchStats;
-
-      // Get player ship class from campaign state
       const playerShip = getCommanderShip(screenManager.campaignState);
       const shipType = playerShip?.shipClass ?? 'fighter';
 
-      // Calculate stats - first try living player, then check destroyed ships
-      let kills = 0;
-      let damageDealt = 0;
-      let damageTaken = 0;
-      let foundLivingPlayer = false;
-
-      // Query living player entity for stats (player survived)
-      for (const entity of queryEntities(game.world, [
-        'playerControlled',
-        'combatStats',
-      ])) {
-        const stats = getComponent<CombatStats>(
-          game.world,
-          entity,
-          'combatStats',
-        );
-        if (stats) {
-          kills = stats.kills;
-          damageDealt = stats.damageDealt;
-          damageTaken = stats.damageReceived;
-          foundLivingPlayer = true;
-          break; // Only one player
-        }
-      }
-
-      // If player died, get stats from destroyed ships record
-      if (!foundLivingPlayer && matchStats) {
-        for (const record of matchStats.destroyedShips) {
-          if (record.wasPlayer) {
-            kills = record.stats.kills;
-            damageDealt = record.stats.damageDealt;
-            damageTaken = record.stats.damageReceived;
-            break;
-          }
-        }
-      }
-
-      // Determine outcome
-      const outcome: ReplayOutcome = missionEndState.victory
-        ? 'victory'
-        : 'defeat';
-
-      // RLE compress inputs
-      const { data: compressedInputs, compressed } = encodeRLE(
-        replayData.inputs,
-      );
-
-      // Build full replay data with deployment loadouts for deterministic reconstruction
-      const playerLoadout = recorder.getPlayerLoadout();
-      if (!playerLoadout) {
-        logWarn('[Replay] No player loadout captured, skipping replay save');
-        return;
-      }
-
-      const wingmen = recorder.getWingmen();
-      const wingmenShips = wingmen.map((w) => w.loadout.shipClass);
-
-      // Build metadata (conditionally add wingmenShips for exact optional types)
-      const metadata: FullReplayData['metadata'] = {
-        id: '', // Assigned by storage
-        missionId: contract.id,
-        missionName: contract.name,
-        sector: contract.sector,
+      fullReplay = buildReplayData({
+        recorder,
+        world: game.world,
+        contract: {
+          id: contract.id,
+          name: contract.name,
+          sector: contract.sector,
+        },
         shipType,
-        outcome,
-        durationTicks: replayData.tickCount,
-        recordedAt: Date.now(),
-        gameVersion: __APP_VERSION__,
-        stats: { kills, damageDealt, damageTaken },
-      };
-      if (wingmenShips.length > 0) {
-        metadata.wingmenShips = wingmenShips;
-      }
-
-      const fullReplay: FullReplayData = {
-        version: REPLAY_VERSION,
-        seed: replayData.seed,
-        inputs: compressedInputs,
-        inputsCompressed: compressed,
-        tickCount: replayData.tickCount,
-        metadata,
-        playerLoadout,
-        wingmen,
-        playerAutoaim: recorder.getPlayerAutoaim(),
-      };
-
-      // Save to IndexedDB (async, fire and forget)
-      saveReplay(fullReplay).catch((err) => {
-        logWarn('[Replay] Failed to save replay:', err);
+        victory: missionEndState.victory,
+        debriefData,
       });
     }
 
@@ -217,6 +137,34 @@ export function createMissionEndExecutor(
         random(salvageRng),
       );
       newState = applySalvage(newState, salvageResult);
+    }
+
+    // Add salvage data to replay and save (now that salvage is calculated)
+    if (fullReplay) {
+      // Add salvage data (null on defeat, object on victory with salvage)
+      if (salvageResult) {
+        fullReplay.salvageData = {
+          scrap: { ...salvageResult.scrap },
+          weapons: salvageResult.weapons.map((w) => ({
+            weaponType: w.weaponType,
+            category: w.category,
+            count: w.count,
+          })),
+          ammo: salvageResult.ammo.map((a) => ({
+            weaponType: a.weaponType,
+            count: a.count,
+          })),
+          totalValue: salvageResult.totalValue,
+        };
+      } else {
+        // No salvage (defeat or no ships destroyed)
+        fullReplay.salvageData = null;
+      }
+
+      // Save to IndexedDB (async, fire and forget)
+      saveReplay(fullReplay).catch((err) => {
+        logWarn('[Replay] Failed to save replay:', err);
+      });
     }
 
     // Refresh available recruits after each mission (derived PRNG for determinism)

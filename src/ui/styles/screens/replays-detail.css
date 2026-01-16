@@ -5,6 +5,8 @@
  * Imported by replays.css
  */
 
+@import "./replays-tabs.css";
+
 /* ========================================
    DETAIL PANEL CONTAINER
    ======================================== */
@@ -96,76 +98,7 @@
 }
 
 /* ========================================
-   INFO ROWS
-   ======================================== */
-
-.replay-detail-info {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.replay-detail-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--space-2) 0;
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.replay-detail-label {
-  font-family: var(--font-ui);
-  font-size: var(--text-xs);
-  color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-wider);
-}
-
-.replay-detail-value {
-  font-family: var(--font-ui);
-  font-size: var(--text-sm);
-  color: var(--text-primary);
-}
-
-/* ========================================
-   STATS GRID
-   ======================================== */
-
-.replay-detail-stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-3);
-  padding: var(--space-4);
-  background: var(--bg-base);
-  border: 1px solid var(--border-subtle);
-}
-
-.replay-detail-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: var(--space-1);
-}
-
-.replay-stat-value {
-  font-family: var(--font-display);
-  font-size: var(--text-xl);
-  font-weight: var(--font-semibold);
-  color: var(--color-primary);
-  text-shadow: 0 0 6px var(--color-primary-glow);
-}
-
-.replay-stat-label {
-  font-family: var(--font-ui);
-  font-size: var(--text-2xs);
-  color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-wider);
-}
-
-/* ========================================
-   LOADOUT SECTION
+   LOADOUT SECTION (used by Deploy tab)
    ======================================== */
 
 .replay-detail-loadout {
@@ -345,7 +278,7 @@
 }
 
 @media (max-width: 600px) {
-  .replay-detail-stats {
+  .replay-loadout-list {
     grid-template-columns: 1fr;
   }
 }

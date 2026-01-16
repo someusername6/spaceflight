@@ -290,11 +290,28 @@
 @media (max-width: 850px) {
   .replays-layout {
     grid-template-columns: 1fr;
-    grid-template-rows: 1fr 1fr;
+    grid-template-rows: auto 1fr;
+    overflow-y: auto;
   }
 
   .replays-list-panel {
     min-height: 0;
+    max-height: 180px;
+    overflow-y: auto;
+  }
+
+  /* Compact list items in stacked layout */
+  .replay-list-item {
+    padding: var(--space-2);
+    gap: var(--space-1);
+  }
+
+  .replay-list-ships {
+    display: none;
+  }
+
+  .replays-detail-panel {
+    min-height: 400px;
   }
 }
 

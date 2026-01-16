@@ -6,7 +6,7 @@
  */
 
 import { isValidPlayerAutoaim } from '../settings/game-settings';
-import { REPLAY_VERSION } from './types';
+import { MIN_REPLAY_VERSION, REPLAY_VERSION } from './types';
 
 /**
  * Validate basic replay structure.
@@ -22,14 +22,15 @@ export function validateReplayStructure(
 
 /**
  * Validate replay version.
+ * Accepts replays between MIN_REPLAY_VERSION and REPLAY_VERSION.
  */
 export function validateVersion(replay: Record<string, unknown>): void {
   if (typeof replay.version !== 'number') {
     throw new Error('Invalid replay: missing version');
   }
-  if (replay.version !== REPLAY_VERSION) {
+  if (replay.version < MIN_REPLAY_VERSION || replay.version > REPLAY_VERSION) {
     throw new Error(
-      `Replay version ${replay.version} is not supported (expected ${REPLAY_VERSION})`,
+      `Replay version ${replay.version} is not supported (supported: ${MIN_REPLAY_VERSION}-${REPLAY_VERSION})`,
     );
   }
 }

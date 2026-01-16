@@ -6,8 +6,11 @@
 
 import type { PlayerAutoaim } from '../settings/game-settings';
 
-/** Replay format version */
-export const REPLAY_VERSION = 1;
+/** Current replay format version - bump when changing FullReplayData structure */
+export const REPLAY_VERSION = 2;
+
+/** Minimum supported replay version for loading */
+export const MIN_REPLAY_VERSION = 1;
 
 /** Simulation tick rate in Hz */
 export const TICK_RATE = 60;
@@ -104,6 +107,85 @@ export interface ReplayWingman {
 }
 
 /**
+ * Per-weapon statistics for replay debrief display.
+ * Mirrors WeaponStats from combat-stats.ts but as a plain interface for storage.
+ */
+export interface ReplayWeaponStats {
+  weaponName: string;
+  category: 'projectile' | 'beam' | 'missile' | 'decoy';
+  shotsFired: number;
+  shotsOnTarget: number;
+  timeFired: number;
+  timeOnTarget: number;
+  isPulseBeam: boolean;
+  ammoCarried: number;
+  missilesLaunched: number;
+  missilesHit: number;
+  missilesSeduced: number;
+  decoysCarried: number;
+  decoysDeployed: number;
+  missilesSeducedByDecoy: number;
+  damageDealt: number;
+}
+
+/**
+ * Per-pilot debrief data for replay display.
+ * Mirrors PilotDebriefData from debrief.ts.
+ */
+export interface ReplayPilotDebrief {
+  callsign: string;
+  archetype: string;
+  isPlayer: boolean;
+  isKIA: boolean;
+  kills: number;
+  assists: number;
+  damageDealt: number;
+  damageReceived: number;
+  hullRemaining: number;
+  hullMax: number;
+  /** Seconds into mission when destroyed (null if survived) */
+  timeOfDeath: number | null;
+  weaponStats: ReplayWeaponStats[];
+}
+
+/**
+ * Debrief data stored in replay for post-mission display.
+ */
+export interface ReplayDebriefData {
+  /** Mission duration in seconds */
+  missionDuration: number;
+  /** All pilots (player and wingmen) with their combat stats */
+  pilots: ReplayPilotDebrief[];
+}
+
+/** Stored weapon from salvage */
+export interface ReplaySalvageWeapon {
+  weaponType: string;
+  category: 'primary' | 'secondary';
+  count: number;
+}
+
+/** Stored ammo from salvage */
+export interface ReplaySalvageAmmo {
+  weaponType: string;
+  count: number;
+}
+
+/**
+ * Salvage data stored in replay for post-mission display.
+ */
+export interface ReplaySalvageData {
+  /** Scrap per ship class */
+  scrap: Record<string, number>;
+  /** Weapons recovered */
+  weapons: ReplaySalvageWeapon[];
+  /** Ammo recovered */
+  ammo: ReplaySalvageAmmo[];
+  /** Estimated total value */
+  totalValue: number;
+}
+
+/**
  * Replay metadata stored with each recording.
  * Contains enough info to display in list and reconstruct mission.
  */
@@ -141,8 +223,8 @@ export interface ReplayMetadata {
  * This is what gets saved to storage and exported to files.
  */
 export interface FullReplayData {
-  /** Format version */
-  version: typeof REPLAY_VERSION;
+  /** Format version (1 = original, 2 = added debrief/salvage) */
+  version: number;
   /** World seed for deterministic reconstruction */
   seed: number;
   /** Input bitmasks (possibly RLE-compressed) */
@@ -159,6 +241,10 @@ export interface FullReplayData {
   wingmen: ReplayWingman[];
   /** Player autoaim setting at recording time (affects projectile aim) */
   playerAutoaim: PlayerAutoaim;
+  /** Debrief data (v2+, optional for backwards compat with v1 replays) */
+  debriefData?: ReplayDebriefData;
+  /** Salvage data (v2+, optional - null on defeat, undefined for v1 replays) */
+  salvageData?: ReplaySalvageData | null;
 }
 
 /** Base fields shared by all stored replay formats */

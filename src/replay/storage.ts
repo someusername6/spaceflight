@@ -17,7 +17,12 @@
 import { logWarn } from '../core/logger';
 import { compressJSON, decompressJSON, isCompressionSupported } from './gzip';
 import type { FullReplayData, ReplaySummary, StoredReplay } from './types';
-import { MAX_STORED_REPLAYS, REPLAY_VERSION, toReplaySummary } from './types';
+import {
+  MAX_STORED_REPLAYS,
+  MIN_REPLAY_VERSION,
+  REPLAY_VERSION,
+  toReplaySummary,
+} from './types';
 
 // Re-export file operations from storage-files
 export {
@@ -227,9 +232,9 @@ export async function loadReplay(id: string): Promise<FullReplayData | null> {
   if (!replay) return null;
 
   // Version check - reject incompatible versions
-  if (replay.version !== REPLAY_VERSION) {
+  if (replay.version < MIN_REPLAY_VERSION || replay.version > REPLAY_VERSION) {
     throw new Error(
-      `Replay version ${replay.version} is not supported (expected ${REPLAY_VERSION})`,
+      `Replay version ${replay.version} is not supported (supported: ${MIN_REPLAY_VERSION}-${REPLAY_VERSION})`,
     );
   }
 
