@@ -6,32 +6,6 @@ import type { Contract } from '../types';
 
 export const SECTOR_3_HARD: Contract[] = [
   {
-    id: 's3-riders-on-the-storm',
-    name: 'Riders on the Storm',
-    description: 'Survive the storm. Ace Moths with lightning cannons.',
-    difficulty: 'hard',
-    sector: 3,
-    waves: [
-      {
-        enemies: [{ archetype: 'moth', skill: 'rookie', count: 2 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'moth', skill: 'rookie', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'moth', skill: 'regular', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'moth', skill: 'regular', count: 3 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 4015,
-  },
-  {
     id: 's3-das-boot',
     name: 'Das Boot',
     description: 'Heavy ordnance incoming. Beetles with torpedo launchers.',
@@ -55,33 +29,7 @@ export const SECTOR_3_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 5425,
-  },
-  {
-    id: 's3-break-on-through',
-    name: 'Break on Through',
-    description: 'Break through enemy lines. Fireants and Phantoms defend.',
-    difficulty: 'hard',
-    sector: 3,
-    waves: [
-      {
-        enemies: [{ archetype: 'phantom', skill: 'rookie', count: 2 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'fireant', skill: 'ace', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 5436,
+    reward: 4840,
   },
   {
     id: 's3-hammer-to-fall',
@@ -108,7 +56,59 @@ export const SECTOR_3_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 5529,
+    reward: 5133,
+  },
+  {
+    id: 's3-break-on-through',
+    name: 'Break on Through',
+    description: 'Break through enemy lines. Fireants and Phantoms defend.',
+    difficulty: 'hard',
+    sector: 3,
+    waves: [
+      {
+        enemies: [{ archetype: 'phantom', skill: 'rookie', count: 2 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'fireant', skill: 'ace', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 5244,
+  },
+  {
+    id: 's3-riders-on-the-storm',
+    name: 'Riders on the Storm',
+    description: 'Survive the storm. Ace Moths with lightning cannons.',
+    difficulty: 'hard',
+    sector: 3,
+    waves: [
+      {
+        enemies: [{ archetype: 'moth', skill: 'veteran', count: 3 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'moth', skill: 'veteran', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'moth', skill: 'ace', count: 4 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'moth', skill: 'ace', count: 3 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 5567,
   },
   {
     id: 's3-the-final-countdown',
@@ -134,6 +134,6 @@ export const SECTOR_3_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 6087,
+    reward: 6210,
   },
 ];

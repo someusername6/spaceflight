@@ -30,33 +30,7 @@ export const SECTOR_1_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 1657,
-  },
-  {
-    id: 's1-stray-scout-strut',
-    name: 'Stray Scout Strut',
-    description: 'Destroy scout patrol. Light craft in large numbers.',
-    difficulty: 'easy',
-    sector: 1,
-    waves: [
-      {
-        enemies: [{ archetype: 'ember', skill: 'rookie', count: 3 }],
-        delay: [3, 5],
-      },
-      {
-        enemies: [{ archetype: 'gnat', skill: 'rookie', count: 4 }],
-        delay: [4, 6],
-      },
-      {
-        enemies: [{ archetype: 'ember', skill: 'regular', count: 3 }],
-        delay: [4, 6],
-      },
-      {
-        enemies: [{ archetype: 'gnat', skill: 'regular', count: 4 }],
-        delay: [4, 6],
-      },
-    ],
-    reward: 1671,
+    reward: 1561,
   },
   {
     id: 's1-ion-maiden',
@@ -82,7 +56,33 @@ export const SECTOR_1_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 1815,
+    reward: 2138,
+  },
+  {
+    id: 's1-stray-scout-strut',
+    name: 'Stray Scout Strut',
+    description: 'Destroy scout patrol. Light craft in large numbers.',
+    difficulty: 'easy',
+    sector: 1,
+    waves: [
+      {
+        enemies: [{ archetype: 'ember', skill: 'rookie', count: 3 }],
+        delay: [3, 5],
+      },
+      {
+        enemies: [{ archetype: 'gnat', skill: 'rookie', count: 4 }],
+        delay: [4, 6],
+      },
+      {
+        enemies: [{ archetype: 'ember', skill: 'regular', count: 3 }],
+        delay: [4, 6],
+      },
+      {
+        enemies: [{ archetype: 'gnat', skill: 'regular', count: 4 }],
+        delay: [4, 6],
+      },
+    ],
+    reward: 2158,
   },
   {
     id: 's1-praying-for-time',
@@ -108,6 +108,6 @@ export const SECTOR_1_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 2169,
+    reward: 2619,
   },
 ];

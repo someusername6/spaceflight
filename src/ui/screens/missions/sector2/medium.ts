@@ -14,23 +14,50 @@ export const SECTOR_2_MEDIUM: Contract[] = [
     sector: 2,
     waves: [
       {
-        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
+        enemies: [{ archetype: 'phantom', skill: 'rookie', count: 2 }],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'shredder', skill: 'regular', count: 2 }],
+        enemies: [{ archetype: 'shredder', skill: 'rookie', count: 2 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'phantom', skill: 'regular', count: 3 }],
+        enemies: [{ archetype: 'phantom', skill: 'rookie', count: 3 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'shredder', skill: 'regular', count: 3 }],
+        enemies: [{ archetype: 'shredder', skill: 'rookie', count: 3 }],
         delay: [8, 12],
       },
     ],
-    reward: 3059,
+    reward: 2860,
+  },
+  {
+    id: 's2-dart-side-of-the-moon',
+    name: 'Dart Side of the Moon',
+    description:
+      'Face interceptors. Phantoms with green lasers and dart missiles.',
+    difficulty: 'medium',
+    sector: 2,
+    waves: [
+      {
+        enemies: [{ archetype: 'phantom', skill: 'rookie', count: 2 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'phantom', skill: 'rookie', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'phantom', skill: 'rookie', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 3315,
   },
   {
     id: 's2-heavy-metal-queen',
@@ -56,7 +83,34 @@ export const SECTOR_2_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3151,
+    reward: 3581,
+  },
+  {
+    id: 's2-backup-singers',
+    name: 'Backup Singers',
+    description:
+      'Destroy reinforced patrol. Fireflies, Dragonflies, and Locusts.',
+    difficulty: 'medium',
+    sector: 2,
+    waves: [
+      {
+        enemies: [{ archetype: 'firefly', skill: 'regular', count: 2 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'locust', skill: 'regular', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 3791,
   },
   {
     id: 's2-fangs-for-the-memories',
@@ -74,7 +128,7 @@ export const SECTOR_2_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'viper', skill: 'rookie', count: 2 }],
+        enemies: [{ archetype: 'viper', skill: 'regular', count: 2 }],
         delay: [8, 12],
       },
       {
@@ -82,60 +136,6 @@ export const SECTOR_2_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3551,
-  },
-  {
-    id: 's2-dart-side-of-the-moon',
-    name: 'Dart Side of the Moon',
-    description:
-      'Face interceptors. Phantoms with green lasers and dart missiles.',
-    difficulty: 'medium',
-    sector: 2,
-    waves: [
-      {
-        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'regular', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 3700,
-  },
-  {
-    id: 's2-backup-singers',
-    name: 'Backup Singers',
-    description:
-      'Destroy reinforced patrol. Fireflies, Dragonflies, and Locusts.',
-    difficulty: 'medium',
-    sector: 2,
-    waves: [
-      {
-        enemies: [{ archetype: 'firefly', skill: 'rookie', count: 2 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'locust', skill: 'rookie', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'firefly', skill: 'rookie', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'rookie', count: 3 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 4274,
+    reward: 4094,
   },
 ];

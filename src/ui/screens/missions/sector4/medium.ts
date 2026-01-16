@@ -41,7 +41,109 @@ export const SECTOR_4_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3430,
+    reward: 4849,
+  },
+  {
+    id: 's4-atomic',
+    name: 'Atomic',
+    description:
+      'Nuclear threat detected. Juggernauts with nuke payloads inbound.',
+    difficulty: 'medium',
+    sector: 4,
+    waves: [
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [
+          { archetype: 'juggernaut', skill: 'regular', count: 1 },
+          { archetype: 'phantom', skill: 'veteran', count: 1 },
+        ],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'juggernaut', skill: 'veteran', count: 1 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 5392,
+  },
+  {
+    id: 's4-b-52s',
+    name: 'B-52s',
+    description:
+      'Intercept bomber wing. Behemoths with heavy ordnance inbound.',
+    difficulty: 'medium',
+    sector: 4,
+    waves: [
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [
+          { archetype: 'behemoth', skill: 'rookie', count: 1 },
+          { archetype: 'firefly', skill: 'veteran', count: 2 },
+        ],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [
+          { archetype: 'behemoth', skill: 'regular', count: 1 },
+          { archetype: 'dragonfly', skill: 'regular', count: 2 },
+        ],
+        delay: [8, 12],
+      },
+    ],
+    reward: 5413,
+  },
+  {
+    id: 's4-rock-you-like-a-hurricane',
+    name: 'Rock You Like a Hurricane',
+    description:
+      'Clear sniper position. Scorpions and Sparklers lighting up the void.',
+    difficulty: 'medium',
+    sector: 4,
+    waves: [
+      {
+        enemies: [
+          { archetype: 'scorpion', skill: 'rookie', count: 1 },
+          { archetype: 'sparkler', skill: 'rookie', count: 1 },
+        ],
+        delay: [5, 10],
+      },
+      {
+        enemies: [
+          { archetype: 'scorpion', skill: 'rookie', count: 1 },
+          { archetype: 'sparkler', skill: 'rookie', count: 1 },
+        ],
+        delay: [8, 12],
+      },
+      {
+        enemies: [
+          { archetype: 'scorpion', skill: 'rookie', count: 1 },
+          { archetype: 'sparkler', skill: 'rookie', count: 1 },
+        ],
+        delay: [8, 12],
+      },
+      {
+        enemies: [
+          { archetype: 'scorpion', skill: 'rookie', count: 1 },
+          { archetype: 'sparkler', skill: 'rookie', count: 1 },
+        ],
+        delay: [8, 12],
+      },
+    ],
+    reward: 5634,
   },
   {
     id: 's4-clash-of-the-titans',
@@ -79,106 +181,7 @@ export const SECTOR_4_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 6339,
-  },
-  {
-    id: 's4-b-52s',
-    name: 'B-52s',
-    description:
-      'Intercept bomber wing. Behemoths with heavy ordnance inbound.',
-    difficulty: 'medium',
-    sector: 4,
-    waves: [
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [
-          { archetype: 'behemoth', skill: 'rookie', count: 1 },
-          { archetype: 'firefly', skill: 'regular', count: 2 },
-        ],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [
-          { archetype: 'behemoth', skill: 'regular', count: 1 },
-          { archetype: 'dragonfly', skill: 'regular', count: 2 },
-        ],
-        delay: [8, 12],
-      },
-    ],
-    reward: 6439,
-  },
-  {
-    id: 's4-rock-you-like-a-hurricane',
-    name: 'Rock You Like a Hurricane',
-    description:
-      'Clear sniper position. Scorpions and Sparklers lighting up the void.',
-    difficulty: 'medium',
-    sector: 4,
-    waves: [
-      {
-        enemies: [
-          { archetype: 'scorpion', skill: 'rookie', count: 1 },
-          { archetype: 'sparkler', skill: 'rookie', count: 2 },
-        ],
-        delay: [5, 10],
-      },
-      {
-        enemies: [
-          { archetype: 'scorpion', skill: 'rookie', count: 1 },
-          { archetype: 'sparkler', skill: 'rookie', count: 2 },
-        ],
-        delay: [8, 12],
-      },
-      {
-        enemies: [
-          { archetype: 'scorpion', skill: 'regular', count: 1 },
-          { archetype: 'sparkler', skill: 'rookie', count: 2 },
-        ],
-        delay: [8, 12],
-      },
-      {
-        enemies: [
-          { archetype: 'scorpion', skill: 'regular', count: 1 },
-          { archetype: 'sparkler', skill: 'rookie', count: 2 },
-        ],
-        delay: [8, 12],
-      },
-    ],
-    reward: 6642,
-  },
-  {
-    id: 's4-atomic',
-    name: 'Atomic',
-    description:
-      'Nuclear threat detected. Juggernauts with nuke payloads inbound.',
-    difficulty: 'medium',
-    sector: 4,
-    waves: [
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'rookie', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'juggernaut', skill: 'rookie', count: 1 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 6775,
+    reward: 5664,
   },
   {
     id: 's4-brothers-in-arms',
@@ -204,6 +207,6 @@ export const SECTOR_4_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 7027,
+    reward: 6282,
   },
 ];

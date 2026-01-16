@@ -30,33 +30,7 @@ export const SECTOR_3_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3298,
-  },
-  {
-    id: 's3-war-pigs',
-    name: 'War Pigs',
-    description: 'Destroy enemy formation. Fireflies and Dragonflies.',
-    difficulty: 'easy',
-    sector: 3,
-    waves: [
-      {
-        enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 3443,
+    reward: 2960,
   },
   {
     id: 's3-ride-the-lightning',
@@ -82,8 +56,8 @@ export const SECTOR_3_EASY: Contract[] = [
       },
       {
         enemies: [
-          { archetype: 'moth', skill: 'rookie', count: 2 },
-          { archetype: 'dragonfly', skill: 'rookie', count: 2 },
+          { archetype: 'moth', skill: 'regular', count: 2 },
+          { archetype: 'dragonfly', skill: 'regular', count: 2 },
         ],
         delay: [8, 12],
       },
@@ -95,7 +69,34 @@ export const SECTOR_3_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3543,
+    reward: 3280,
+  },
+  {
+    id: 's3-three-dog-night',
+    name: 'Three Dog Night',
+    description:
+      'Destroy enemy squadron. Fireflies, Dragonflies, and Rocketeers.',
+    difficulty: 'easy',
+    sector: 3,
+    waves: [
+      {
+        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'rocketeer', skill: 'veteran', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'rocketeer', skill: 'ace', count: 3 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 3725,
   },
   {
     id: 's3-light-my-fire',
@@ -121,7 +122,7 @@ export const SECTOR_3_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3943,
+    reward: 3859,
   },
   {
     id: 's3-danger-zone',
@@ -131,7 +132,7 @@ export const SECTOR_3_EASY: Contract[] = [
     sector: 3,
     waves: [
       {
-        enemies: [{ archetype: 'phantom', skill: 'rookie', count: 2 }],
+        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
         delay: [5, 10],
       },
       {
@@ -139,41 +140,40 @@ export const SECTOR_3_EASY: Contract[] = [
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'phantom', skill: 'rookie', count: 2 }],
+        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'wasp', skill: 'regular', count: 2 }],
+        enemies: [{ archetype: 'wasp', skill: 'veteran', count: 2 }],
         delay: [8, 12],
       },
     ],
-    reward: 3982,
+    reward: 3920,
   },
   {
-    id: 's3-three-dog-night',
-    name: 'Three Dog Night',
-    description:
-      'Destroy enemy squadron. Fireflies, Dragonflies, and Rocketeers.',
+    id: 's3-war-pigs',
+    name: 'War Pigs',
+    description: 'Destroy enemy formation. Fireflies and Dragonflies.',
     difficulty: 'easy',
     sector: 3,
     waves: [
       {
-        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
+        enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'rocketeer', skill: 'veteran', count: 3 }],
+        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 4 }],
+        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'rocketeer', skill: 'ace', count: 3 }],
+        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
         delay: [8, 12],
       },
     ],
-    reward: 3993,
+    reward: 3987,
   },
 ];

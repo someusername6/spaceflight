@@ -30,7 +30,34 @@ export const SECTOR_4_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3609,
+    reward: 4182,
+  },
+  {
+    id: 's4-strike-a-pose',
+    name: 'Strike a Pose',
+    description:
+      'Destroy strike force. Phantoms with Fireflies and Dragonflies.',
+    difficulty: 'easy',
+    sector: 4,
+    waves: [
+      {
+        enemies: [{ archetype: 'phantom', skill: 'rookie', count: 2 }],
+        delay: [4, 8],
+      },
+      {
+        enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
+        delay: [6, 10],
+      },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
+        delay: [6, 10],
+      },
+      {
+        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
+        delay: [6, 10],
+      },
+    ],
+    reward: 4457,
   },
   {
     id: 's4-fortunate-son',
@@ -69,34 +96,7 @@ export const SECTOR_4_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 4318,
-  },
-  {
-    id: 's4-watchtower',
-    name: 'Watchtower',
-    description:
-      'Destroy incoming hostiles. Wasps, Dragonflies, and Fireflies.',
-    difficulty: 'easy',
-    sector: 4,
-    waves: [
-      {
-        enemies: [{ archetype: 'wasp', skill: 'regular', count: 2 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'wasp', skill: 'veteran', count: 2 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 4979,
+    reward: 4608,
   },
   {
     id: 's4-the-distance',
@@ -134,33 +134,33 @@ export const SECTOR_4_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 5630,
+    reward: 5756,
   },
   {
-    id: 's4-strike-a-pose',
-    name: 'Strike a Pose',
+    id: 's4-watchtower',
+    name: 'Watchtower',
     description:
-      'Destroy strike force. Phantoms with Fireflies and Dragonflies.',
+      'Destroy incoming hostiles. Wasps, Dragonflies, and Fireflies.',
     difficulty: 'easy',
     sector: 4,
     waves: [
       {
-        enemies: [{ archetype: 'phantom', skill: 'rookie', count: 2 }],
-        delay: [4, 8],
-      },
-      {
-        enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
-        delay: [6, 10],
+        enemies: [{ archetype: 'wasp', skill: 'regular', count: 2 }],
+        delay: [5, 10],
       },
       {
         enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
-        delay: [6, 10],
+        delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
-        delay: [6, 10],
+        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'wasp', skill: 'veteran', count: 2 }],
+        delay: [8, 12],
       },
     ],
-    reward: 6333,
+    reward: 5882,
   },
 ];

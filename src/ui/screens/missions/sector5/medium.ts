@@ -6,31 +6,43 @@ import type { Contract } from '../types';
 
 export const SECTOR_5_MEDIUM: Contract[] = [
   {
-    id: 's5-another-brick-in-the-wall',
-    name: 'Another Brick in the Wall',
+    id: 's5-convoy',
+    name: 'Convoy',
     description:
-      'Break the iron wall. Ace Phantoms, Dragonflies, and Fireflies.',
+      'Intercept nuclear convoy. Juggernauts with nuke payloads and ace escorts.',
     difficulty: 'medium',
     sector: 5,
     waves: [
       {
-        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
+        enemies: [
+          { archetype: 'juggernaut', skill: 'regular', count: 1 },
+          { archetype: 'phantom', skill: 'regular', count: 2 },
+        ],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 3 }],
+        enemies: [
+          { archetype: 'juggernaut', skill: 'regular', count: 1 },
+          { archetype: 'dragonfly', skill: 'regular', count: 2 },
+        ],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
+        enemies: [
+          { archetype: 'juggernaut', skill: 'veteran', count: 1 },
+          { archetype: 'phantom', skill: 'regular', count: 2 },
+        ],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'firefly', skill: 'ace', count: 3 }],
+        enemies: [
+          { archetype: 'juggernaut', skill: 'veteran', count: 1 },
+          { archetype: 'dragonfly', skill: 'veteran', count: 2 },
+        ],
         delay: [8, 12],
       },
     ],
-    reward: 7949,
+    reward: 6708,
   },
   {
     id: 's5-every-breath-you-take',
@@ -56,7 +68,34 @@ export const SECTOR_5_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 7981,
+    reward: 8200,
+  },
+  {
+    id: 's5-another-brick-in-the-wall',
+    name: 'Another Brick in the Wall',
+    description:
+      'Break the iron wall. Ace Phantoms, Dragonflies, and Fireflies.',
+    difficulty: 'medium',
+    sector: 5,
+    waves: [
+      {
+        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'firefly', skill: 'ace', count: 3 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 8967,
   },
   {
     id: 's5-flight-of-the-valkyries',
@@ -70,7 +109,7 @@ export const SECTOR_5_MEDIUM: Contract[] = [
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'behemoth', skill: 'ace', count: 1 }],
+        enemies: [{ archetype: 'behemoth', skill: 'veteran', count: 1 }],
         delay: [8, 12],
       },
       {
@@ -80,38 +119,11 @@ export const SECTOR_5_MEDIUM: Contract[] = [
       {
         enemies: [
           { archetype: 'behemoth', skill: 'ace', count: 1 },
-          { archetype: 'dragonfly', skill: 'ace', count: 3 },
+          { archetype: 'dragonfly', skill: 'veteran', count: 3 },
         ],
         delay: [8, 12],
       },
     ],
-    reward: 8117,
-  },
-  {
-    id: 's5-convoy',
-    name: 'Convoy',
-    description:
-      'Intercept nuclear convoy. Juggernaut with nuke payload and ace escorts.',
-    difficulty: 'medium',
-    sector: 5,
-    waves: [
-      {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'juggernaut', skill: 'veteran', count: 1 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 9200,
+    reward: 10587,
   },
 ];

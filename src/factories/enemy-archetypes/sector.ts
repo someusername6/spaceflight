@@ -100,13 +100,13 @@ export const S2_ARCHETYPES: Record<string, EnemyShipStats> = {
 
   // Scout with starburst missiles - area denial
   sparkler: createArchetype('scout', {
-    playstyle: 'beam', // Beam weapon - constant defensive thresholds
+    playstyle: 'projectile', // Flak burst damage
     primaryWeapons: [
-      { name: 'greenLaser', size: 1 },
-      { name: 'greenLaser', size: 1 },
+      { name: 'flak', size: 1 },
+      { name: 'flak', size: 1 },
     ],
     secondaryWeapons: [{ name: 'starburst', count: 6, size: 1 }],
-    preferredCombatRange: 500,
+    preferredCombatRange: 400,
   }),
 };
 

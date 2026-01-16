@@ -8,7 +8,7 @@
  * S2: dragonfly (pulse, dart), stinger (ion, seeker, dart), firefly (redLaser, dart),
  *     viper (greenLaser, seeker, decoy), locust (pulse, cluster),
  *     phantom (greenLaser, dart, seeker, decoy), bruiser (slugCannon, dart),
- *     shredder (flak, seeker, decoy), sparkler (greenLaser, starburst)
+ *     shredder (flak, seeker, decoy), sparkler (flak, starburst)
  *
  * S2 weapon coverage required:
  * - Primaries: greenLaser, slugCannon, flak

@@ -6,62 +6,33 @@ import type { Contract } from '../types';
 
 export const SECTOR_5_HARD: Contract[] = [
   {
-    id: 's5-wont-back-down',
-    name: "Won't Back Down",
-    description: 'Make your final stand. Four waves of ace fighters.',
+    id: 's5-godzilla',
+    name: 'Godzilla',
+    description: 'Stop the titan. Heavy railgun striker with ace escorts.',
     difficulty: 'hard',
     sector: 5,
     waves: [
       {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 3 }],
+        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 4 }],
+        enemies: [
+          { archetype: 'titan', skill: 'regular', count: 1 },
+          { archetype: 'dragonfly', skill: 'veteran', count: 2 },
+        ],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 3 }],
         delay: [8, 12],
       },
       {
         enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
         delay: [8, 12],
       },
-      {
-        enemies: [
-          { archetype: 'firefly', skill: 'ace', count: 3 },
-          { archetype: 'phantom', skill: 'ace', count: 1 },
-        ],
-        delay: [8, 12],
-      },
     ],
-    reward: 9811,
-  },
-  {
-    id: 's5-dont-stop-me-now',
-    name: "Don't Stop Me Now",
-    description: 'Destroy the armada. Ace Phantoms and Dragonflies.',
-    difficulty: 'hard',
-    sector: 5,
-    waves: [
-      {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 3 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 4 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [
-          { archetype: 'firefly', skill: 'ace', count: 3 },
-          { archetype: 'phantom', skill: 'ace', count: 1 },
-        ],
-        delay: [8, 12],
-      },
-    ],
-    reward: 9811,
+    reward: 10159,
   },
   {
     id: 's5-the-end',
@@ -87,36 +58,7 @@ export const SECTOR_5_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 10560,
-  },
-  {
-    id: 's5-godzilla',
-    name: 'Godzilla',
-    description: 'Stop the titan. Heavy railgun striker with ace escorts.',
-    difficulty: 'hard',
-    sector: 5,
-    waves: [
-      {
-        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [
-          { archetype: 'titan', skill: 'rookie', count: 1 },
-          { archetype: 'dragonfly', skill: 'veteran', count: 2 },
-        ],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 11187,
+    reward: 11150,
   },
   {
     id: 's5-ghost-town',
@@ -148,6 +90,60 @@ export const SECTOR_5_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 11977,
+    reward: 11734,
+  },
+  {
+    id: 's5-wont-back-down',
+    name: "Won't Back Down",
+    description:
+      'Make your final stand. Ace Beetles with plasma and torpedoes.',
+    difficulty: 'hard',
+    sector: 5,
+    waves: [
+      {
+        enemies: [{ archetype: 'beetle', skill: 'ace', count: 1 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'beetle', skill: 'ace', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'beetle', skill: 'ace', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'beetle', skill: 'ace', count: 1 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 11801,
+  },
+  {
+    id: 's5-dont-stop-me-now',
+    name: "Don't Stop Me Now",
+    description:
+      'Survive the fireworks. Ace Sparklers with flak and starbursts.',
+    difficulty: 'hard',
+    sector: 5,
+    waves: [
+      {
+        enemies: [{ archetype: 'sparkler', skill: 'ace', count: 1 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'sparkler', skill: 'ace', count: 1 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'sparkler', skill: 'ace', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'sparkler', skill: 'ace', count: 2 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 12145,
   },
 ];

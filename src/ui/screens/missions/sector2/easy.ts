@@ -30,7 +30,33 @@ export const SECTOR_2_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 2571,
+    reward: 2787,
+  },
+  {
+    id: 's2-running-down-a-dream',
+    name: 'Running Down a Dream',
+    description: 'Intercept raider force. Fireflies, Stingers, and Locusts.',
+    difficulty: 'easy',
+    sector: 2,
+    waves: [
+      {
+        enemies: [{ archetype: 'firefly', skill: 'rookie', count: 2 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'locust', skill: 'rookie', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'firefly', skill: 'rookie', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'stinger', skill: 'rookie', count: 3 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 3040,
   },
   {
     id: 's2-the-bruiser-brothers',
@@ -57,7 +83,7 @@ export const SECTOR_2_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 2587,
+    reward: 3259,
   },
   {
     id: 's2-starman',
@@ -71,72 +97,19 @@ export const SECTOR_2_EASY: Contract[] = [
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'sparkler', skill: 'rookie', count: 2 }],
+        enemies: [{ archetype: 'sparkler', skill: 'rookie', count: 1 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'sparkler', skill: 'rookie', count: 2 }],
+        enemies: [{ archetype: 'sparkler', skill: 'regular', count: 1 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'sparkler', skill: 'regular', count: 2 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 2811,
-  },
-  {
-    id: 's2-running-down-a-dream',
-    name: 'Running Down a Dream',
-    description: 'Intercept raider force. Fireflies, Stingers, and Locusts.',
-    difficulty: 'easy',
-    sector: 2,
-    waves: [
-      {
-        enemies: [{ archetype: 'firefly', skill: 'rookie', count: 2 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'locust', skill: 'rookie', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'firefly', skill: 'rookie', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'stinger', skill: 'rookie', count: 3 }],
+        enemies: [{ archetype: 'sparkler', skill: 'regular', count: 1 }],
         delay: [8, 12],
       },
     ],
-    reward: 3150,
-  },
-  {
-    id: 's2-borderline',
-    name: 'Borderline',
-    description:
-      'Engage contested space. Fireflies, Dragonflies, and Stingers.',
-    difficulty: 'easy',
-    sector: 2,
-    waves: [
-      {
-        enemies: [{ archetype: 'firefly', skill: 'rookie', count: 2 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'rookie', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'stinger', skill: 'rookie', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'firefly', skill: 'regular', count: 4 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 3238,
+    reward: 3316,
   },
   {
     id: 's2-locust-hocus-pocus',
@@ -163,6 +136,33 @@ export const SECTOR_2_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3561,
+    reward: 3333,
+  },
+  {
+    id: 's2-borderline',
+    name: 'Borderline',
+    description:
+      'Engage contested space. Fireflies, Dragonflies, and Stingers.',
+    difficulty: 'easy',
+    sector: 2,
+    waves: [
+      {
+        enemies: [{ archetype: 'firefly', skill: 'rookie', count: 2 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'rookie', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'stinger', skill: 'rookie', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'firefly', skill: 'regular', count: 4 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 3452,
   },
 ];

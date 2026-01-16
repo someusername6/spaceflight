@@ -6,32 +6,6 @@ import type { Contract } from '../types';
 
 export const SECTOR_2_HARD: Contract[] = [
   {
-    id: 's2-the-predator-polka',
-    name: 'The Predator Polka',
-    description: 'Face formation. Phantoms, Bruisers, and Shredders together.',
-    difficulty: 'hard',
-    sector: 2,
-    waves: [
-      {
-        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'bruiser', skill: 'regular', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'shredder', skill: 'regular', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 3518,
-  },
-  {
     id: 's2-fight-for-your-right',
     name: 'Fight for Your Right',
     description: 'Hold contested zone. Shredders lead the flak screen.',
@@ -55,7 +29,33 @@ export const SECTOR_2_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 4251,
+    reward: 3523,
+  },
+  {
+    id: 's2-the-predator-polka',
+    name: 'The Predator Polka',
+    description: 'Face formation. Phantoms, Bruisers, and Shredders together.',
+    difficulty: 'hard',
+    sector: 2,
+    waves: [
+      {
+        enemies: [{ archetype: 'phantom', skill: 'rookie', count: 2 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'bruiser', skill: 'regular', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'shredder', skill: 'regular', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 3612,
   },
   {
     id: 's2-blinded-by-the-light',
@@ -67,34 +67,34 @@ export const SECTOR_2_HARD: Contract[] = [
     waves: [
       {
         enemies: [
-          { archetype: 'firefly', skill: 'regular', count: 2 },
-          { archetype: 'glowworm', skill: 'regular', count: 1 },
+          { archetype: 'firefly', skill: 'rookie', count: 2 },
+          { archetype: 'glowworm', skill: 'rookie', count: 1 },
         ],
         delay: [5, 10],
       },
       {
         enemies: [
-          { archetype: 'viper', skill: 'regular', count: 2 },
-          { archetype: 'firefly', skill: 'regular', count: 2 },
+          { archetype: 'viper', skill: 'rookie', count: 2 },
+          { archetype: 'firefly', skill: 'rookie', count: 1 },
         ],
         delay: [8, 12],
       },
       {
         enemies: [
-          { archetype: 'sparkler', skill: 'regular', count: 2 },
-          { archetype: 'viper', skill: 'regular', count: 2 },
+          { archetype: 'glowworm', skill: 'rookie', count: 1 },
+          { archetype: 'viper', skill: 'rookie', count: 2 },
         ],
         delay: [8, 12],
       },
       {
         enemies: [
-          { archetype: 'sparkler', skill: 'regular', count: 2 },
-          { archetype: 'firefly', skill: 'regular', count: 2 },
+          { archetype: 'glowworm', skill: 'rookie', count: 1 },
+          { archetype: 'firefly', skill: 'rookie', count: 2 },
         ],
         delay: [8, 12],
       },
     ],
-    reward: 4624,
+    reward: 3685,
   },
   {
     id: 's2-disco-inferno',
@@ -133,7 +133,7 @@ export const SECTOR_2_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 4627,
+    reward: 3937,
   },
   {
     id: 's2-buzz-aldrin',
@@ -143,22 +143,22 @@ export const SECTOR_2_HARD: Contract[] = [
     sector: 2,
     waves: [
       {
-        enemies: [{ archetype: 'wasp', skill: 'regular', count: 2 }],
+        enemies: [{ archetype: 'wasp', skill: 'rookie', count: 2 }],
         delay: [8, 12],
       },
       {
+        enemies: [{ archetype: 'wasp', skill: 'rookie', count: 2 }],
+        delay: [10, 15],
+      },
+      {
+        enemies: [{ archetype: 'locust', skill: 'rookie', count: 3 }],
+        delay: [10, 15],
+      },
+      {
         enemies: [{ archetype: 'wasp', skill: 'regular', count: 2 }],
         delay: [10, 15],
       },
-      {
-        enemies: [{ archetype: 'locust', skill: 'regular', count: 3 }],
-        delay: [10, 15],
-      },
-      {
-        enemies: [{ archetype: 'wasp', skill: 'veteran', count: 2 }],
-        delay: [10, 15],
-      },
     ],
-    reward: 4862,
+    reward: 5322,
   },
 ];
