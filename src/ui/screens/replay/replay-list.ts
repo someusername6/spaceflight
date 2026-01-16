@@ -45,13 +45,17 @@ const ReplaysScreenComponent: Screen<ReplaysState, ReplaysScreenProps> = {
         <div class="replays-header">
           <h2 class="replays-title">Replays</h2>
           <div class="replays-header-actions">
-            <button class="btn" id="btn-import-replay">Import</button>
             <button class="btn" id="btn-back">Back</button>
           </div>
         </div>
         <div class="replays-layout">
           <div class="replays-list-panel">
-            ${renderReplayList(state)}
+            <div class="replays-list-scroll">
+              ${renderReplayList(state)}
+            </div>
+            <div class="replays-list-actions">
+              <button class="btn" id="btn-import-replay">Import</button>
+            </div>
           </div>
           <div class="replays-detail-panel">
             ${renderDetailPanel(state)}
