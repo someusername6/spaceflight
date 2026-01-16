@@ -5,9 +5,6 @@
  */
 
 import * as THREE from 'three';
-import { Line2 } from 'three/examples/jsm/lines/Line2.js';
-import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
-import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 import type { Transform } from '../../components/transform';
 import { getComponent } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
@@ -18,6 +15,16 @@ import {
   generateBranches,
   generateOffTargetEnd,
 } from './lightning-bolt';
+import {
+  acquireLine,
+  disposeRenderedLine,
+  type RenderedLine,
+  releaseLine,
+  updateRenderedLine,
+} from './lightning-lines';
+
+// Re-export setLightningResolution for external use
+export { setLightningResolution } from './lightning-lines';
 
 /** Lightning bolt visual state */
 interface LightningBolt {
@@ -28,44 +35,20 @@ interface LightningBolt {
   entityId: Entity; // For interpolation lookup
 }
 
-/** Rendered line pair (glow + core) */
-interface RenderedLine {
-  glow: Line2;
-  core: Line2;
-  glowGeometry: LineGeometry;
-  coreGeometry: LineGeometry;
-}
-
 /** Lightning renderer state */
 export interface LightningRenderer {
   bolts: Map<string, LightningBolt>;
+  /** Currently visible main bolt lines */
   mainLines: RenderedLine[];
+  /** Currently visible branch lines */
   branchLines: RenderedLine[];
+  /** Pool of inactive main bolt lines (for reuse) */
+  mainPool: RenderedLine[];
+  /** Pool of inactive branch lines (for reuse) */
+  branchPool: RenderedLine[];
+  /** Scene reference for pool management */
+  scene: THREE.Scene | null;
 }
-
-// Module-level resolution (set by renderer on init and resize)
-const resolution = new THREE.Vector2(1, 1);
-
-/** Update resolution for lightning line materials */
-export function setLightningResolution(width: number, height: number): void {
-  resolution.set(width, height);
-}
-
-// Colors
-const GLOW_COLOR = 0x6688ff; // Blue-white glow
-const CORE_COLOR = 0xffffff; // Bright white core
-const BRANCH_GLOW_COLOR = 0x5577dd; // Slightly dimmer blue for branches
-
-// Line widths (in pixels)
-const MAIN_GLOW_WIDTH = 8;
-const MAIN_CORE_WIDTH = 2.5;
-const BRANCH_GLOW_WIDTH = 5;
-const BRANCH_CORE_WIDTH = 1.5;
-
-// Opacity
-const GLOW_OPACITY = 0.35;
-const CORE_OPACITY = 1.0;
-const BRANCH_OPACITY_SCALE = 0.7; // Branches are dimmer
 
 // Generation parameters
 const BOLT_SUBDIVISIONS = 5;
@@ -75,6 +58,12 @@ const BOLT_FADE_TIME = 0.05;
 const OFF_TARGET_RANGE = 120;
 const OFF_TARGET_CHAOS = 0.35;
 
+// Reusable Set for tracking seen bolts (avoids per-frame allocation)
+const seenBolts = new Set<string>();
+
+// Reusable vector for endpoint (avoids allocation on pulse)
+const reusableEndPoint = new THREE.Vector3();
+
 /** Creates the lightning renderer */
 export function createLightningRenderer(
   _scene: THREE.Scene,
@@ -83,64 +72,10 @@ export function createLightningRenderer(
     bolts: new Map(),
     mainLines: [],
     branchLines: [],
+    mainPool: [],
+    branchPool: [],
+    scene: null,
   };
-}
-
-/** Create a dual-layer line (glow + core) from points */
-function createDualLayerLine(
-  points: THREE.Vector3[],
-  count: number,
-  isMainBolt: boolean,
-  opacity: number,
-): RenderedLine {
-  // Convert points to flat array for LineGeometry
-  const positions: number[] = [];
-  for (let i = 0; i < count; i++) {
-    const p = points[i] as THREE.Vector3;
-    positions.push(p.x, p.y, p.z);
-  }
-
-  // Glow layer (wide, dim, additive)
-  const glowGeometry = new LineGeometry();
-  glowGeometry.setPositions(positions);
-
-  const glowMaterial = new LineMaterial({
-    color: isMainBolt ? GLOW_COLOR : BRANCH_GLOW_COLOR,
-    linewidth: isMainBolt ? MAIN_GLOW_WIDTH : BRANCH_GLOW_WIDTH,
-    opacity: GLOW_OPACITY * opacity * (isMainBolt ? 1.0 : BRANCH_OPACITY_SCALE),
-    transparent: true,
-    resolution,
-    depthWrite: false,
-  });
-  glowMaterial.blending = THREE.AdditiveBlending;
-
-  const glow = new Line2(glowGeometry, glowMaterial);
-
-  // Core layer (thin, bright, additive)
-  const coreGeometry = new LineGeometry();
-  coreGeometry.setPositions(positions);
-
-  const coreMaterial = new LineMaterial({
-    color: CORE_COLOR,
-    linewidth: isMainBolt ? MAIN_CORE_WIDTH : BRANCH_CORE_WIDTH,
-    opacity: CORE_OPACITY * opacity * (isMainBolt ? 1.0 : BRANCH_OPACITY_SCALE),
-    transparent: true,
-    resolution,
-    depthWrite: false,
-  });
-  coreMaterial.blending = THREE.AdditiveBlending;
-
-  const core = new Line2(coreGeometry, coreMaterial);
-
-  return { glow, core, glowGeometry, coreGeometry };
-}
-
-/** Dispose of a rendered line pair */
-function disposeRenderedLine(line: RenderedLine): void {
-  line.glowGeometry.dispose();
-  line.coreGeometry.dispose();
-  (line.glow.material as LineMaterial).dispose();
-  (line.core.material as LineMaterial).dispose();
 }
 
 /** Update lightning rendering */
@@ -153,7 +88,9 @@ export function updateLightningRenderer(
   // Calculate interpolated gameTime for smooth animation
   const gameTime = world.systemState.gameTime - TICK_SEC * (1 - alpha);
   const activeBeams = world.systemState.beams.activeBeams;
-  const seenBolts = new Set<string>();
+
+  // Clear reusable Set (avoids per-frame allocation)
+  seenBolts.clear();
 
   // Update active lightning bolts
   for (const [entity, beams] of activeBeams) {
@@ -184,7 +121,7 @@ export function updateLightningRenderer(
               OFF_TARGET_RANGE,
               world.renderPrng,
             )
-          : beam.hitPoint.clone();
+          : reusableEndPoint.copy(beam.hitPoint);
 
         const segments = generateBoltPath(
           beam.origin,
@@ -259,20 +196,19 @@ function renderBolts(
   world: World,
   gameTime: number,
 ): void {
-  // Remove existing lines from scene and dispose
+  // Store scene reference
+  renderer.scene = scene;
+
+  // Release all currently visible lines back to pool
   for (const line of renderer.mainLines) {
-    scene.remove(line.glow);
-    scene.remove(line.core);
-    disposeRenderedLine(line);
+    releaseLine(renderer.mainPool, line);
   }
-  renderer.mainLines = [];
+  renderer.mainLines.length = 0;
 
   for (const line of renderer.branchLines) {
-    scene.remove(line.glow);
-    scene.remove(line.core);
-    disposeRenderedLine(line);
+    releaseLine(renderer.branchPool, line);
   }
-  renderer.branchLines = [];
+  renderer.branchLines.length = 0;
 
   // Render all active bolts
   for (const bolt of renderer.bolts.values()) {
@@ -302,9 +238,8 @@ function renderBolts(
         ? applyOffset(bolt.segments, interpOffset)
         : bolt.segments.length;
       const points = hasOffset ? offsetPoints : bolt.segments;
-      const line = createDualLayerLine(points, count, true, opacity);
-      scene.add(line.glow);
-      scene.add(line.core);
+      const line = acquireLine(renderer.mainPool, scene, true);
+      updateRenderedLine(line, points, count, opacity, true);
       renderer.mainLines.push(line);
     }
 
@@ -316,9 +251,8 @@ function renderBolts(
         ? applyOffset(branch, interpOffset)
         : branch.length;
       const points = hasOffset ? offsetPoints : branch;
-      const line = createDualLayerLine(points, count, false, opacity);
-      scene.add(line.glow);
-      scene.add(line.core);
+      const line = acquireLine(renderer.branchPool, scene, false);
+      updateRenderedLine(line, points, count, opacity, false);
       renderer.branchLines.push(line);
     }
   }
@@ -326,12 +260,32 @@ function renderBolts(
 
 /**
  * Reset lightning renderer state (for replay seeking).
- * Removes all active bolts and lines.
+ * Hides all lines and returns them to pool, clears active bolts.
  */
 export function resetLightningRenderer(
   renderer: LightningRenderer,
+  _scene: THREE.Scene,
+): void {
+  // Release visible lines back to pool (don't dispose - keep for reuse)
+  for (const line of renderer.mainLines) {
+    releaseLine(renderer.mainPool, line);
+  }
+  renderer.mainLines.length = 0;
+
+  for (const line of renderer.branchLines) {
+    releaseLine(renderer.branchPool, line);
+  }
+  renderer.branchLines.length = 0;
+
+  renderer.bolts.clear();
+}
+
+/** Dispose of lightning renderer resources (full cleanup) */
+export function disposeLightningRenderer(
+  renderer: LightningRenderer,
   scene: THREE.Scene,
 ): void {
+  // Dispose visible lines
   for (const line of renderer.mainLines) {
     scene.remove(line.glow);
     scene.remove(line.core);
@@ -346,13 +300,21 @@ export function resetLightningRenderer(
   }
   renderer.branchLines = [];
 
-  renderer.bolts.clear();
-}
+  // Dispose pooled lines
+  for (const line of renderer.mainPool) {
+    scene.remove(line.glow);
+    scene.remove(line.core);
+    disposeRenderedLine(line);
+  }
+  renderer.mainPool = [];
 
-/** Dispose of lightning renderer resources */
-export function disposeLightningRenderer(
-  renderer: LightningRenderer,
-  scene: THREE.Scene,
-): void {
-  resetLightningRenderer(renderer, scene);
+  for (const line of renderer.branchPool) {
+    scene.remove(line.glow);
+    scene.remove(line.core);
+    disposeRenderedLine(line);
+  }
+  renderer.branchPool = [];
+
+  renderer.bolts.clear();
+  renderer.scene = null;
 }
