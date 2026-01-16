@@ -4,12 +4,15 @@
  * Extracted from mission-callbacks.ts to keep files under 400 lines.
  */
 
-import type { CombatStats } from '../components/combat-stats';
+import type { CombatStats, WeaponStats } from '../components/combat-stats';
 import { getComponent, queryEntities } from '../core/ecs';
 import { logWarn } from '../core/logger';
 import type { World } from '../core/types';
 import type { InputRecorder } from '../input/input-recorder';
-import type { DebriefData } from '../ui/screens/results/debrief';
+import type {
+  MissionDebriefData,
+  PilotDebriefData,
+} from '../ui/screens/results/debrief';
 import { encodeRLE } from './compression';
 import type { FullReplayData, ReplayDebriefData, ReplayOutcome } from './types';
 import { REPLAY_VERSION } from './types';
@@ -28,7 +31,7 @@ export interface ReplayBuildParams {
   contract: ReplayContractInfo;
   shipType: string;
   victory: boolean;
-  debriefData: DebriefData;
+  debriefData: MissionDebriefData;
 }
 
 /** Build full replay data from mission state */
@@ -108,7 +111,7 @@ export function buildReplayData(
   // Convert debrief data to replay format
   const replayDebriefData: ReplayDebriefData = {
     missionDuration: debriefData.missionDuration,
-    pilots: debriefData.pilots.map((p) => ({
+    pilots: debriefData.pilots.map((p: PilotDebriefData) => ({
       callsign: p.callsign,
       archetype: p.archetype,
       isPlayer: p.isPlayer,
@@ -120,7 +123,7 @@ export function buildReplayData(
       hullRemaining: p.hullRemaining,
       hullMax: p.hullMax,
       timeOfDeath: p.timeOfDeath,
-      weaponStats: p.weaponStats.map((w) => ({
+      weaponStats: p.weaponStats.map((w: WeaponStats) => ({
         weaponName: w.weaponName,
         category: w.category,
         shotsFired: w.shotsFired,
