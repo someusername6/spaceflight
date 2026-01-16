@@ -100,7 +100,7 @@ export const S2_ARCHETYPES: Record<string, EnemyShipStats> = {
 
   // Scout with starburst missiles - area denial
   sparkler: createArchetype('scout', {
-    playstyle: 'projectile', // Flak burst damage
+    playstyle: 'brawler', // Flak burst damage
     primaryWeapons: [
       { name: 'flak', size: 1 },
       { name: 'flak', size: 1 },
