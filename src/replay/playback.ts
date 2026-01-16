@@ -10,7 +10,6 @@
 
 import type { WaveState } from '../campaign/mission/mission-waves';
 import type { Contract } from '../campaign/types';
-import type { PlayerControlled } from '../components/player';
 import { getComponent, queryEntities } from '../core/ecs';
 import type { World } from '../core/types';
 import { SIMULATION_SYSTEMS } from '../game';
@@ -121,11 +120,7 @@ export class ReplayPlayback {
   private simulateTick(): void {
     // Apply input for current tick to player entity
     for (const entity of queryEntities(this.world, ['playerControlled'])) {
-      const player = getComponent<PlayerControlled>(
-        this.world,
-        entity,
-        'playerControlled',
-      );
+      const player = getComponent(this.world, entity, 'playerControlled');
       if (player) {
         this.inputPlayer.applyInputForTick(this.currentTick, player.input);
       }

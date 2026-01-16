@@ -4,14 +4,9 @@
  * Shows per-pilot cards with kills, assists, damage, and weapon breakdowns.
  */
 
-import type {
-  CombatStats,
-  WeaponStats,
-} from '../../../components/combat-stats';
+import type { WeaponStats } from '../../../components/combat-stats';
 import { snapshotStats } from '../../../components/combat-stats';
-import { Faction, type FactionComponent } from '../../../components/faction';
-import type { Health } from '../../../components/health';
-import type { ShipIdentity } from '../../../components/ship-identity';
+import { Faction } from '../../../components/faction';
 import { getComponent, hasComponent, queryEntities } from '../../../core/ecs';
 import type { World } from '../../../core/types';
 import { getShipIconPath, iconErrorHandler } from '../../ship/viewer';
@@ -69,12 +64,12 @@ export function collectDebriefData(world: World): MissionDebriefData {
 
   // Add surviving player faction ships
   for (const entity of queryEntities(world, ['shipIdentity', 'combatStats'])) {
-    const faction = getComponent<FactionComponent>(world, entity, 'faction');
+    const faction = getComponent(world, entity, 'faction');
     if (!faction || faction.faction !== Faction.Player) continue;
 
-    const identity = getComponent<ShipIdentity>(world, entity, 'shipIdentity');
-    const combatStats = getComponent<CombatStats>(world, entity, 'combatStats');
-    const health = getComponent<Health>(world, entity, 'health');
+    const identity = getComponent(world, entity, 'shipIdentity');
+    const combatStats = getComponent(world, entity, 'combatStats');
+    const health = getComponent(world, entity, 'health');
 
     if (!identity || !combatStats || !health) continue;
 

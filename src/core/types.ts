@@ -5,7 +5,12 @@
 // Three.js types used in interfaces (import first for use, then re-export)
 import type { Color, Vector3 as Vec3 } from 'three';
 
+import type { ComponentType } from './component-registry';
+
 export { Euler, Quaternion, Vector3 } from 'three';
+
+// Re-export component registry types for consumers
+export type { ComponentRegistry, ComponentType } from './component-registry';
 
 /** Entity is just a numeric ID */
 export type Entity = number;
@@ -20,14 +25,6 @@ export interface ComponentBase {
 
 /** System function signature - pure function operating on world state */
 export type SystemFn = (world: World, dt: number) => void;
-
-/**
- * Component type names for querying.
- * Note: Using `string` instead of a literal union type is a known limitation.
- * A future improvement could define: type ComponentType = 'transform' | 'health' | ...
- * This would provide compile-time checking but requires updating all component files.
- */
-export type ComponentType = string;
 
 /** Map of component type to component data for an entity */
 export type ComponentMap = Map<ComponentType, ComponentBase>;

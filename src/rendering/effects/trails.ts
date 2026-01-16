@@ -6,8 +6,7 @@
  */
 
 import * as THREE from 'three';
-import type { Projectile, WeaponName } from '../../components/projectile';
-import type { Transform } from '../../components/transform';
+import type { WeaponName } from '../../components/projectile';
 import { getComponent, queryEntities } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
 import { TICK_SEC } from '../../game';
@@ -166,16 +165,8 @@ export function updateBoltRenderer(
   for (const entity of queryEntities(world, ['projectile', 'transform'])) {
     seenProjectiles.add(entity);
 
-    const projectile = getComponent<Projectile>(
-      world,
-      entity,
-      'projectile',
-    ) as Projectile;
-    const transform = getComponent<Transform>(
-      world,
-      entity,
-      'transform',
-    ) as Transform;
+    const projectile = getComponent(world, entity, 'projectile')!;
+    const transform = getComponent(world, entity, 'transform')!;
 
     let projectileBolt = renderer.bolts.get(entity);
 

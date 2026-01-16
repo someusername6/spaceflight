@@ -17,9 +17,6 @@ import type { AimError } from '../../components/aim-error';
 import { applyAimError } from '../../components/aim-error';
 import type { FactionComponent } from '../../components/faction';
 import type { Heat } from '../../components/heat';
-import type { Missile } from '../../components/missile';
-import type { Physics } from '../../components/physics';
-import type { Shields } from '../../components/shields';
 import type { Transform } from '../../components/transform';
 import type {
   PrimaryWeapons,
@@ -59,14 +56,10 @@ export function handleAIPrimaryWeapons(
   if (ai.target === null || !entityExists(world, ai.target)) return;
 
   // Get target information for weapon selection
-  const targetTransform = getComponent<Transform>(
-    world,
-    ai.target,
-    'transform',
-  );
+  const targetTransform = getComponent(world, ai.target, 'transform');
   if (!targetTransform) return;
 
-  const targetShields = getComponent<Shields>(world, ai.target, 'shields');
+  const targetShields = getComponent(world, ai.target, 'shields');
 
   // Calculate distance and firing angle
   const distance = transform.position.distanceTo(targetTransform.position);
@@ -83,7 +76,7 @@ export function handleAIPrimaryWeapons(
   );
 
   // Get aim error if present (makes AI imperfect)
-  const aimError = getComponent<AimError>(world, entity, 'aimError');
+  const aimError = getComponent(world, entity, 'aimError');
 
   // Set link mode based on selection
   if (selection.mode === 'linked') {
@@ -143,14 +136,10 @@ export function handleAISecondaryWeapons(
   if (timeSinceFire < fastestFireRate) return;
 
   // Get target information for missile selection
-  const targetTransform = getComponent<Transform>(
-    world,
-    ai.target,
-    'transform',
-  );
+  const targetTransform = getComponent(world, ai.target, 'transform');
   if (!targetTransform) return;
 
-  const targetPhysics = getComponent<Physics>(world, ai.target, 'physics');
+  const targetPhysics = getComponent(world, ai.target, 'physics');
   const targetSpeed = targetPhysics?.velocity.length() ?? 0;
   const distance = transform.position.distanceTo(targetTransform.position);
   const isLocked = weapons.lockProgress >= 1;
@@ -203,7 +192,7 @@ export function handleAISecondaryWeapons(
   // For dumbfire missiles (turnRate === 0), calculate lead intercept
   // Dumbfire rockets use aim error - rookies miss more often
   if (weapon.turnRate === 0) {
-    const ownerPhysics = getComponent<Physics>(world, entity, 'physics');
+    const ownerPhysics = getComponent(world, entity, 'physics');
     const interceptPoint = calculateInterceptPoint(
       transform.position,
       ownerPhysics?.velocity ?? tempZeroVec,
@@ -253,7 +242,7 @@ function getFastestMissileFireRate(weapons: SecondaryWeapons): number {
 /** Check if any missiles are targeting this entity */
 function hasIncomingMissiles(world: World, entity: Entity): boolean {
   for (const missileEntity of queryEntities(world, ['missile'])) {
-    const missile = getComponent<Missile>(world, missileEntity, 'missile');
+    const missile = getComponent(world, missileEntity, 'missile');
     if (missile?.target === entity) return true;
   }
   return false;

@@ -3,12 +3,9 @@
  */
 
 import { type AIControlled, AIState } from '../../components/ai';
-import { Faction, type FactionComponent } from '../../components/faction';
-import type { Health } from '../../components/health';
+import { Faction } from '../../components/faction';
 import { isDead } from '../../components/health';
-import type { Heat } from '../../components/heat';
 import type { Physics } from '../../components/physics';
-import type { Shields } from '../../components/shields';
 import type { Transform } from '../../components/transform';
 import { entityExists, getComponent, queryEntities } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
@@ -43,14 +40,14 @@ export function aiSystem(world: World, dt: number): void {
     'faction',
   ])) {
     // Skip dead or dying entities (they freeze during death animation)
-    const health = getComponent<Health>(world, entity, 'health');
+    const health = getComponent(world, entity, 'health');
     if (health && isDead(health)) continue;
 
     // Query guarantees these components exist
-    const ai = getComponent(world, entity, 'aiControlled') as AIControlled;
-    const transform = getComponent(world, entity, 'transform') as Transform;
-    const physics = getComponent(world, entity, 'physics') as Physics;
-    const faction = getComponent(world, entity, 'faction') as FactionComponent;
+    const ai = getComponent(world, entity, 'aiControlled')!;
+    const transform = getComponent(world, entity, 'transform')!;
+    const physics = getComponent(world, entity, 'physics')!;
+    const faction = getComponent(world, entity, 'faction')!;
 
     // Reset inputs each frame (behaviors will set them as needed)
     ai.input.pitch = 0;
@@ -64,8 +61,8 @@ export function aiSystem(world: World, dt: number): void {
     ai.stateTimer += dt;
 
     // Get shields and heat for state transitions
-    const shields = getComponent<Shields>(world, entity, 'shields');
-    const heat = getComponent<Heat>(world, entity, 'heat');
+    const shields = getComponent(world, entity, 'shields');
+    const heat = getComponent(world, entity, 'heat');
 
     // Check for emergency transitions (can happen from any combat state)
     if (ai.state === AIState.Pursue || ai.state === AIState.Engage) {
@@ -145,11 +142,7 @@ function updatePursue(
     return;
   }
 
-  const targetTransform = getComponent<Transform>(
-    world,
-    ai.target,
-    'transform',
-  );
+  const targetTransform = getComponent(world, ai.target, 'transform');
   if (!targetTransform) {
     ai.target = null;
     ai.state = AIState.Idle;
@@ -204,11 +197,7 @@ function updateEngage(
     return;
   }
 
-  const targetTransform = getComponent<Transform>(
-    world,
-    ai.target,
-    'transform',
-  );
+  const targetTransform = getComponent(world, ai.target, 'transform');
   if (!targetTransform) {
     ai.target = null;
     ai.state = AIState.Idle;

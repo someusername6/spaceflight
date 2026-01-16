@@ -4,9 +4,7 @@
  * Automatically switches between combatants for dynamic viewing.
  */
 
-import type { FactionComponent } from '../components/faction';
 import { Faction } from '../components/faction';
-import type { Health } from '../components/health';
 import { isDead } from '../components/health';
 import { getComponent, isShip, queryEntities } from '../core/ecs';
 import { createPRNG, type PRNGState, random, randomInt } from '../core/prng';
@@ -41,12 +39,8 @@ function getLivingShips(world: World, faction: Faction): Entity[] {
   for (const entity of queryEntities(world, ['faction', 'health'])) {
     if (!isShip(world, entity)) continue;
 
-    const factionComp = getComponent<FactionComponent>(
-      world,
-      entity,
-      'faction',
-    );
-    const health = getComponent<Health>(world, entity, 'health');
+    const factionComp = getComponent(world, entity, 'faction');
+    const health = getComponent(world, entity, 'health');
 
     if (factionComp?.faction === faction && health && !isDead(health)) {
       ships.push(entity);
@@ -61,7 +55,7 @@ function getAllLivingShips(world: World): Entity[] {
   for (const entity of queryEntities(world, ['health'])) {
     if (!isShip(world, entity)) continue;
 
-    const health = getComponent<Health>(world, entity, 'health');
+    const health = getComponent(world, entity, 'health');
     if (health && !isDead(health)) {
       ships.push(entity);
     }
@@ -73,7 +67,7 @@ function getAllLivingShips(world: World): Entity[] {
 function isFollowedEntityValid(camera: BattleCamera, world: World): boolean {
   if (camera.followedEntity === null) return false;
 
-  const health = getComponent<Health>(world, camera.followedEntity, 'health');
+  const health = getComponent(world, camera.followedEntity, 'health');
   return health !== undefined && !isDead(health);
 }
 

@@ -4,7 +4,7 @@
  * Extracted from mission-callbacks.ts to keep files under 400 lines.
  */
 
-import type { CombatStats, WeaponStats } from '../components/combat-stats';
+import type { WeaponStats } from '../components/combat-stats';
 import { getComponent, queryEntities } from '../core/ecs';
 import { logWarn } from '../core/logger';
 import type { World } from '../core/types';
@@ -53,7 +53,7 @@ export function buildReplayData(
     'playerControlled',
     'combatStats',
   ])) {
-    const stats = getComponent<CombatStats>(world, entity, 'combatStats');
+    const stats = getComponent(world, entity, 'combatStats');
     if (stats) {
       kills = stats.kills;
       damageDealt = stats.damageDealt;

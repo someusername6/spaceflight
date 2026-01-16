@@ -107,11 +107,7 @@ export function findNearestDecoy(
   let nearestDistance = DECOY_SEDUCE_RANGE;
 
   for (const entity of queryEntities(world, ['decoy', 'transform'])) {
-    const transform = getComponent<Transform>(
-      world,
-      entity,
-      'transform',
-    ) as Transform;
+    const transform = getComponent(world, entity, 'transform')!;
 
     toDecoy.copy(transform.position).sub(missilePosition);
     const distance = toDecoy.length();

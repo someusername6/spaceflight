@@ -4,16 +4,9 @@
  */
 
 import * as THREE from 'three';
-import type { Collision } from '../../components/collision';
-import type { FactionComponent } from '../../components/faction';
-import type {
-  Projectile,
-  ProjectileCategory,
-} from '../../components/projectile';
+import type { ProjectileCategory } from '../../components/projectile';
 import { isExpired } from '../../components/projectile';
-import type { Shields } from '../../components/shields';
 import { ionizeShields } from '../../components/shields';
-import type { Transform } from '../../components/transform';
 import {
   entityExists,
   getComponent,
@@ -53,16 +46,8 @@ export function projectileSystem(world: World, dt: number): void {
 
   for (const entity of queryEntities(world, ['projectile', 'transform'])) {
     // Query guarantees these components exist
-    const projectile = getComponent<Projectile>(
-      world,
-      entity,
-      'projectile',
-    ) as Projectile;
-    const transform = getComponent<Transform>(
-      world,
-      entity,
-      'transform',
-    ) as Transform;
+    const projectile = getComponent(world, entity, 'projectile')!;
+    const transform = getComponent(world, entity, 'transform')!;
 
     // === Gyrojet-style acceleration ===
     if (
@@ -97,7 +82,7 @@ export function projectileSystem(world: World, dt: number): void {
         // Target died - stop tracking
         projectile.trackingTarget = undefined;
       } else {
-        const targetTransform = getComponent<Transform>(
+        const targetTransform = getComponent(
           world,
           projectile.trackingTarget,
           'transform',
@@ -148,11 +133,7 @@ export function projectileSystem(world: World, dt: number): void {
     // Check for flak explosion (closest-approach detonation)
     // Detonates when: A. within flak radius, and B. distance starts increasing (past closest point)
     if (projectile.flakRadius !== undefined && projectile.shrapnelCount) {
-      const projectileFaction = getComponent<FactionComponent>(
-        world,
-        entity,
-        'faction',
-      );
+      const projectileFaction = getComponent(world, entity, 'faction');
 
       // Find closest enemy distance (includes missiles for point-defense)
       const closestDistance = findClosestEnemyDistance(
@@ -201,7 +182,7 @@ export function projectileSystem(world: World, dt: number): void {
     }
 
     // Check for collisions with ships (non-projectile entities)
-    const collision = getComponent<Collision>(world, entity, 'collision');
+    const collision = getComponent(world, entity, 'collision');
     if (collision && collision.collidedWith.length > 0) {
       for (const other of collision.collidedWith) {
         // Skip entities that no longer exist (stale collision data)
@@ -229,7 +210,7 @@ export function projectileSystem(world: World, dt: number): void {
 
         // Apply ionization effect if projectile has ionize flag
         if (projectile.ionize) {
-          const targetShields = getComponent<Shields>(world, other, 'shields');
+          const targetShields = getComponent(world, other, 'shields');
           if (targetShields) {
             ionizeShields(targetShields, world.systemState.gameTime);
           }
@@ -275,11 +256,7 @@ export function projectileSystem(world: World, dt: number): void {
 
         // If flak projectile, spawn shrapnel on direct impact
         if (projectile.flakRadius !== undefined && projectile.shrapnelCount) {
-          const projectileFaction = getComponent<FactionComponent>(
-            world,
-            entity,
-            'faction',
-          );
+          const projectileFaction = getComponent(world, entity, 'faction');
           spawnShrapnel(
             world,
             transform.position,

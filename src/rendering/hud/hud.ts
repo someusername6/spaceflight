@@ -3,14 +3,8 @@
  */
 
 import type { Camera } from 'three';
-import type { Health } from '../../components/health';
-import type { Heat } from '../../components/heat';
 import { getHeatPercentCapped } from '../../components/heat';
-import type { Physics } from '../../components/physics';
-import type { PlayerControlled } from '../../components/player';
-import type { Shields } from '../../components/shields';
 import { isIonized } from '../../components/shields';
-import type { Transform } from '../../components/transform';
 import { findEntity, getComponent } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
 import {
@@ -237,8 +231,8 @@ export function updateHUD(
   updateTargetStats(hud.targetStats, world, player);
   updateAlliedDisplay(hud.alliedDisplay, world, player);
 
-  const playerTransform = getComponent<Transform>(world, player, 'transform');
-  const playerPhysics = getComponent<Physics>(world, player, 'physics');
+  const playerTransform = getComponent(world, player, 'transform');
+  const playerPhysics = getComponent(world, player, 'physics');
   updateReticles(
     hud.reticleCanvas,
     world,
@@ -255,18 +249,14 @@ export function updateHUD(
 /** Update player status bars */
 function updatePlayerStatus(hud: HUD, world: World, player: Entity): void {
   // Update match speed indicator
-  const playerComp = getComponent<PlayerControlled>(
-    world,
-    player,
-    'playerControlled',
-  );
+  const playerComp = getComponent(world, player, 'playerControlled');
   if (playerComp) {
     hud.matchSpeedIndicator.style.display = playerComp.matchSpeed
       ? 'block'
       : 'none';
   }
 
-  const physics = getComponent<Physics>(world, player, 'physics');
+  const physics = getComponent(world, player, 'physics');
   if (physics) {
     const actualSpeed = physics.velocity.length();
     const afterburnerMax = physics.maxSpeed * physics.afterburnerMultiplier;
@@ -301,7 +291,7 @@ function updatePlayerStatus(hud: HUD, world: World, player: Entity): void {
     hud.throttleMarker.style.left = `${Math.min(throttlePct, 100)}%`;
   }
 
-  const health = getComponent<Health>(world, player, 'health');
+  const health = getComponent(world, player, 'health');
   if (health) {
     const pct = (health.hull / health.maxHull) * 100;
     updateSegmentedBar(hud.hullSegments, pct);
@@ -311,7 +301,7 @@ function updatePlayerStatus(hud: HUD, world: World, player: Entity): void {
     hud.hullContainer.classList.toggle('critical', pct < 25);
   }
 
-  const shields = getComponent<Shields>(world, player, 'shields');
+  const shields = getComponent(world, player, 'shields');
   if (shields) {
     const pct = (shields.current / shields.max) * 100;
     updateSegmentedBar(hud.shieldSegments, pct);
@@ -324,7 +314,7 @@ function updatePlayerStatus(hud: HUD, world: World, player: Entity): void {
     hud.shieldContainer.classList.toggle('ionized', ionized);
   }
 
-  const heat = getComponent<Heat>(world, player, 'heat');
+  const heat = getComponent(world, player, 'heat');
   if (heat) {
     // Cap display at 100% (actual heat can exceed max from Torch weapon)
     const pct = getHeatPercentCapped(heat) * 100;

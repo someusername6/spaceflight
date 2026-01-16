@@ -9,7 +9,6 @@ import * as THREE from 'three';
 import { Line2 } from 'three/examples/jsm/lines/Line2.js';
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
-import type { Transform } from '../components/transform';
 import { getComponent } from '../core/ecs';
 import type { ActiveBeam, Entity, World } from '../core/types';
 import { getInterpolatedPosition } from './renderer';
@@ -158,7 +157,7 @@ export function updateAllBeamLines(
   // Process all beams (active and fading)
   for (const [entity, beams] of activeBeams) {
     // Get entity's current and interpolated positions for offset calculation
-    const transform = getComponent<Transform>(world, entity, 'transform');
+    const transform = getComponent(world, entity, 'transform');
     const interpEntityPos = getInterpolatedPosition(entity);
     const entityPos = transform?.position;
 

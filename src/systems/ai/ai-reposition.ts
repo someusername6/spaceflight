@@ -74,11 +74,7 @@ export function updateReposition(
     return;
   }
 
-  const targetTransform = getComponent<Transform>(
-    world,
-    ai.target,
-    'transform',
-  );
+  const targetTransform = getComponent(world, ai.target, 'transform');
   if (!targetTransform) {
     ai.target = null;
     ai.state = AIState.Idle;

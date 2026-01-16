@@ -2,9 +2,7 @@
  * Explosion System - Updates explosion age and removes finished explosions.
  */
 
-import type { Explosion } from '../components/explosion';
 import { isExplosionFinished } from '../components/explosion';
-import type { Transform } from '../components/transform';
 import {
   entityExists,
   getComponent,
@@ -18,23 +16,15 @@ import type { World } from '../core/types';
 export function explosionSystem(world: World, dt: number): void {
   for (const entity of queryEntities(world, ['explosion', 'transform'])) {
     // Query guarantees these components exist
-    const explosion = getComponent<Explosion>(
-      world,
-      entity,
-      'explosion',
-    ) as Explosion;
-    const transform = getComponent<Transform>(
-      world,
-      entity,
-      'transform',
-    ) as Transform;
+    const explosion = getComponent(world, entity, 'explosion')!;
+    const transform = getComponent(world, entity, 'transform')!;
 
     // Follow source entity if it still exists (for coasting dying ships)
     if (
       explosion.sourceEntity !== undefined &&
       entityExists(world, explosion.sourceEntity)
     ) {
-      const sourceTransform = getComponent<Transform>(
+      const sourceTransform = getComponent(
         world,
         explosion.sourceEntity,
         'transform',

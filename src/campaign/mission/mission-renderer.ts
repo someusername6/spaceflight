@@ -5,7 +5,6 @@
  */
 
 import type * as THREE from 'three';
-import type { Transform } from '../../components/transform';
 import { findEntity, getComponent } from '../../core/ecs';
 import type { World } from '../../core/types';
 import {
@@ -167,7 +166,7 @@ export function updateMissionRenderers(
   if (options?.dustCenterPosition) {
     updateDustSystem(renderers.dustSystem, options.dustCenterPosition);
   } else if (player !== undefined) {
-    const transform = getComponent<Transform>(world, player, 'transform');
+    const transform = getComponent(world, player, 'transform');
     if (transform) {
       updateDustSystem(renderers.dustSystem, transform.position);
     }

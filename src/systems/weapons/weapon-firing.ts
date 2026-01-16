@@ -7,7 +7,6 @@ import type { AimError } from '../../components/aim-error';
 import type { FactionComponent } from '../../components/faction';
 import type { Heat } from '../../components/heat';
 import { addHeat } from '../../components/heat';
-import type { Physics } from '../../components/physics';
 import type { Transform } from '../../components/transform';
 import type { PrimaryWeapon, PrimaryWeapons } from '../../components/weapons';
 import {
@@ -95,9 +94,9 @@ export function fireWeaponsByLinkMode(
   let targetVelocity = tempZeroVec;
   let ownerVelocity = tempZeroVec;
   if (target && entityExists(world, target)) {
-    targetTransform = getComponent<Transform>(world, target, 'transform');
-    const targetPhysics = getComponent<Physics>(world, target, 'physics');
-    const ownerPhysics = getComponent<Physics>(world, entity, 'physics');
+    targetTransform = getComponent(world, target, 'transform');
+    const targetPhysics = getComponent(world, target, 'physics');
+    const ownerPhysics = getComponent(world, entity, 'physics');
     if (targetPhysics) targetVelocity = targetPhysics.velocity;
     if (ownerPhysics) ownerVelocity = ownerPhysics.velocity;
   }

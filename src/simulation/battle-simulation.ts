@@ -6,9 +6,7 @@
  */
 
 import * as THREE from 'three';
-import type { FactionComponent } from '../components/faction';
 import { Faction } from '../components/faction';
-import type { Health } from '../components/health';
 import { isDead } from '../components/health';
 import type { Transform } from '../components/transform';
 import { getComponent, isShip, queryEntities } from '../core/ecs';
@@ -171,12 +169,8 @@ function countLivingByFaction(world: World, faction: Faction): number {
   for (const entity of queryEntities(world, ['faction', 'health'])) {
     if (!isShip(world, entity)) continue;
 
-    const factionComp = getComponent<FactionComponent>(
-      world,
-      entity,
-      'faction',
-    );
-    const health = getComponent<Health>(world, entity, 'health');
+    const factionComp = getComponent(world, entity, 'faction');
+    const health = getComponent(world, entity, 'health');
 
     if (factionComp?.faction === faction && health && !isDead(health)) {
       count++;
@@ -292,7 +286,7 @@ function updateRender(sim: BattleSimulation, alpha: number): void {
   // Update camera following
   const followed = updateBattleCamera(camera, world, 1 / 60);
   if (followed !== null) {
-    const transform = getComponent<Transform>(world, followed, 'transform');
+    const transform = getComponent(world, followed, 'transform');
     if (transform) {
       // Use interpolated position/rotation for camera (same as what's rendered)
       const interpPos = getInterpolatedPosition(followed);

@@ -5,7 +5,6 @@
  */
 
 import {
-  type CombatStats,
   getOrCreateWeaponStats,
   type WeaponStats,
 } from '../components/combat-stats';
@@ -20,7 +19,7 @@ export function recordShotFired(
   category: WeaponStats['category'] = 'projectile',
   isPulseBeam = false,
 ): void {
-  const stats = getComponent<CombatStats>(world, source, 'combatStats');
+  const stats = getComponent(world, source, 'combatStats');
   if (stats) {
     const weaponStats = getOrCreateWeaponStats(
       stats,
@@ -40,7 +39,7 @@ export function recordShotHit(
   category: WeaponStats['category'] = 'projectile',
   isPulseBeam = false,
 ): void {
-  const stats = getComponent<CombatStats>(world, source, 'combatStats');
+  const stats = getComponent(world, source, 'combatStats');
   if (stats) {
     const weaponStats = getOrCreateWeaponStats(
       stats,
@@ -58,7 +57,7 @@ export function recordShrapnelHit(
   source: Entity,
   weaponName: string,
 ): void {
-  const stats = getComponent<CombatStats>(world, source, 'combatStats');
+  const stats = getComponent(world, source, 'combatStats');
   if (stats) {
     const weaponStats = getOrCreateWeaponStats(stats, weaponName, 'projectile');
     weaponStats.shrapnelHitsOnTarget++;
@@ -72,7 +71,7 @@ export function recordBeamFired(
   weaponName: string,
   dt: number,
 ): void {
-  const stats = getComponent<CombatStats>(world, source, 'combatStats');
+  const stats = getComponent(world, source, 'combatStats');
   if (stats) {
     const weaponStats = getOrCreateWeaponStats(stats, weaponName, 'beam');
     weaponStats.timeFired += dt;
@@ -86,7 +85,7 @@ export function recordBeamHit(
   weaponName: string,
   dt: number,
 ): void {
-  const stats = getComponent<CombatStats>(world, source, 'combatStats');
+  const stats = getComponent(world, source, 'combatStats');
   if (stats) {
     const weaponStats = getOrCreateWeaponStats(stats, weaponName, 'beam');
     weaponStats.timeOnTarget += dt;
@@ -99,7 +98,7 @@ export function recordMissileLaunched(
   source: Entity,
   missileName: string,
 ): void {
-  const stats = getComponent<CombatStats>(world, source, 'combatStats');
+  const stats = getComponent(world, source, 'combatStats');
   if (stats) {
     const weaponStats = getOrCreateWeaponStats(stats, missileName, 'missile');
     weaponStats.missilesLaunched++;
@@ -112,7 +111,7 @@ export function recordMissileHit(
   source: Entity,
   missileName: string,
 ): void {
-  const stats = getComponent<CombatStats>(world, source, 'combatStats');
+  const stats = getComponent(world, source, 'combatStats');
   if (stats) {
     const weaponStats = getOrCreateWeaponStats(stats, missileName, 'missile');
     weaponStats.missilesHit++;
@@ -127,11 +126,7 @@ export function recordMissileSeduced(
   decoyOwner: Entity,
 ): void {
   // Record on missile owner's stats
-  const missileStats = getComponent<CombatStats>(
-    world,
-    missileOwner,
-    'combatStats',
-  );
+  const missileStats = getComponent(world, missileOwner, 'combatStats');
   if (missileStats) {
     const weaponStats = getOrCreateWeaponStats(
       missileStats,
@@ -142,11 +137,7 @@ export function recordMissileSeduced(
   }
 
   // Record on decoy owner's stats
-  const decoyStats = getComponent<CombatStats>(
-    world,
-    decoyOwner,
-    'combatStats',
-  );
+  const decoyStats = getComponent(world, decoyOwner, 'combatStats');
   if (decoyStats) {
     const weaponStats = getOrCreateWeaponStats(decoyStats, 'Decoy', 'decoy');
     weaponStats.missilesSeducedByDecoy++;
@@ -155,7 +146,7 @@ export function recordMissileSeduced(
 
 /** Record decoy deployed */
 export function recordDecoyDeployed(world: World, source: Entity): void {
-  const stats = getComponent<CombatStats>(world, source, 'combatStats');
+  const stats = getComponent(world, source, 'combatStats');
   if (stats) {
     const weaponStats = getOrCreateWeaponStats(stats, 'Decoy', 'decoy');
     weaponStats.decoysDeployed++;

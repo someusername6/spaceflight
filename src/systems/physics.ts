@@ -3,18 +3,12 @@
  */
 
 import { Euler, Quaternion, Vector3 } from 'three';
-import type { AIControlled } from '../components/ai';
-import type { Health } from '../components/health';
 import { isDead } from '../components/health';
-import type { Heat } from '../components/heat';
 import {
   AFTERBURNER_LOCK_THRESHOLD,
   AFTERBURNER_UNLOCK_THRESHOLD,
   getHeatPercent,
 } from '../components/heat';
-import type { Physics } from '../components/physics';
-import type { PlayerControlled } from '../components/player';
-import type { Targeting } from '../components/targeting';
 import type { Transform } from '../components/transform';
 import { entityExists, getComponent, queryEntities } from '../core/ecs';
 import type { World } from '../core/types';
@@ -38,12 +32,8 @@ function moveToward(current: number, target: number, maxDelta: number): number {
 export function physicsSystem(world: World, dt: number): void {
   for (const entity of queryEntities(world, ['transform', 'physics'])) {
     // Query guarantees these components exist
-    const transform = getComponent<Transform>(
-      world,
-      entity,
-      'transform',
-    ) as Transform;
-    const physics = getComponent<Physics>(world, entity, 'physics') as Physics;
+    const transform = getComponent(world, entity, 'transform')!;
+    const physics = getComponent(world, entity, 'physics')!;
 
     // Save current state for render interpolation (before any updates)
     physics.prevPosition.copy(transform.position);
@@ -51,7 +41,7 @@ export function physicsSystem(world: World, dt: number): void {
     physics.prevVelocity.copy(physics.velocity);
 
     // Dead or dying entities coast with current velocity (no control input)
-    const health = getComponent<Health>(world, entity, 'health');
+    const health = getComponent(world, entity, 'health');
     if (health && isDead(health)) {
       // Just update position, no control
       transform.position.addScaledVector(physics.velocity, dt);
@@ -59,12 +49,8 @@ export function physicsSystem(world: World, dt: number): void {
     }
 
     // Get control input (either from player or AI)
-    const player = getComponent<PlayerControlled>(
-      world,
-      entity,
-      'playerControlled',
-    );
-    const ai = getComponent<AIControlled>(world, entity, 'aiControlled');
+    const player = getComponent(world, entity, 'playerControlled');
+    const ai = getComponent(world, entity, 'aiControlled');
 
     let pitchInput = 0;
     let yawInput = 0;
@@ -98,7 +84,7 @@ export function physicsSystem(world: World, dt: number): void {
       flightAssist.prevInput.toggleMatchSpeed = player.input.toggleMatchSpeed;
 
       // Get targeting info for match speed
-      const targeting = getComponent<Targeting>(world, entity, 'targeting');
+      const targeting = getComponent(world, entity, 'targeting');
       const hasValidTarget =
         targeting?.currentTarget !== undefined &&
         entityExists(world, targeting.currentTarget);
@@ -157,7 +143,7 @@ export function physicsSystem(world: World, dt: number): void {
     // Calculate afterburner max speed
     const afterburnerMaxSpeed =
       physics.maxSpeed * physics.afterburnerMultiplier;
-    const heat = getComponent<Heat>(world, entity, 'heat');
+    const heat = getComponent(world, entity, 'heat');
 
     // Afterburner heat lockout with hysteresis (prevents oscillation)
     if (heat) {
@@ -211,7 +197,7 @@ export function physicsSystem(world: World, dt: number): void {
     } else if (player?.matchSpeed && !manualThrottleInput) {
       // Match speed mode: adjust throttle to maintain distance to target
       physics.isAfterburning = false;
-      const targeting = getComponent<Targeting>(world, entity, 'targeting');
+      const targeting = getComponent(world, entity, 'targeting');
       if (targeting?.currentTarget !== undefined) {
         // Detect target change and reset distance tracking
         if (targeting.currentTarget !== player.prevMatchSpeedTarget) {
@@ -219,7 +205,7 @@ export function physicsSystem(world: World, dt: number): void {
           player.prevMatchSpeedTarget = targeting.currentTarget;
         }
 
-        const targetTransform = getComponent<Transform>(
+        const targetTransform = getComponent(
           world,
           targeting.currentTarget,
           'transform',

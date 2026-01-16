@@ -10,10 +10,7 @@
  */
 
 import * as THREE from 'three';
-import type { FactionComponent } from '../../components/faction';
-import type { Health } from '../../components/health';
 import { isDead } from '../../components/health';
-import type { Targeting } from '../../components/targeting';
 import type { Transform } from '../../components/transform';
 import { getComponent, hasComponent, queryEntities } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
@@ -139,13 +136,9 @@ export function updateRadar(
   ctx.stroke();
 
   // Get player transform and faction
-  const playerTransform = getComponent<Transform>(world, player, 'transform');
-  const playerFaction = getComponent<FactionComponent>(
-    world,
-    player,
-    'faction',
-  );
-  const targeting = getComponent<Targeting>(world, player, 'targeting');
+  const playerTransform = getComponent(world, player, 'transform');
+  const playerFaction = getComponent(world, player, 'faction');
+  const targeting = getComponent(world, player, 'targeting');
   if (!playerTransform || !playerFaction) return;
 
   // Compute inverse quaternion for ship-local transformation
@@ -172,11 +165,11 @@ export function updateRadar(
     if (hasComponent(world, entity, 'projectile')) continue;
     if (hasComponent(world, entity, 'missile')) continue;
 
-    const health = getComponent<Health>(world, entity, 'health');
+    const health = getComponent(world, entity, 'health');
     if (!health || isDead(health)) continue;
 
-    const transform = getComponent<Transform>(world, entity, 'transform');
-    const faction = getComponent<FactionComponent>(world, entity, 'faction');
+    const transform = getComponent(world, entity, 'transform');
+    const faction = getComponent(world, entity, 'faction');
     if (!transform || !faction) continue;
 
     // Transform to ship-local coordinates (full 6DOF)
@@ -270,10 +263,10 @@ function drawMissiles(
     'missile',
     'health',
   ])) {
-    const health = getComponent<Health>(world, entity, 'health');
+    const health = getComponent(world, entity, 'health');
     if (!health || isDead(health)) continue;
 
-    const transform = getComponent<Transform>(world, entity, 'transform');
+    const transform = getComponent(world, entity, 'transform');
     if (!transform) continue;
 
     // Transform to ship-local coordinates

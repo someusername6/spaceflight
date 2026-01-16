@@ -1,11 +1,8 @@
 /** Missile System - Handles missile tracking, movement, and hits. */
 
 import * as THREE from 'three';
-import { DECOY_SEDUCE_CHANCE, type Decoy } from '../../components/decoy';
-import type { FactionComponent } from '../../components/faction';
-import type { Missile } from '../../components/missile';
+import { DECOY_SEDUCE_CHANCE } from '../../components/decoy';
 import { isMissileExpired } from '../../components/missile';
-import type { Transform } from '../../components/transform';
 import {
   entityExists,
   getComponent,
@@ -15,7 +12,6 @@ import {
 } from '../../core/ecs';
 import { random } from '../../core/prng';
 import { type Entity, NO_ENTITY, type World } from '../../core/types';
-import type { Collision } from '../collision';
 import { dealDamage } from '../damage';
 import { recordDamage, recordMissileHit, recordMissileSeduced } from '../stats';
 import {
@@ -49,12 +45,8 @@ export function missileSystem(world: World, dt: number): void {
 
   for (const entity of queryEntities(world, ['missile', 'transform'])) {
     // Query guarantees these components exist
-    const missile = getComponent<Missile>(world, entity, 'missile') as Missile;
-    const transform = getComponent<Transform>(
-      world,
-      entity,
-      'transform',
-    ) as Transform;
+    const missile = getComponent(world, entity, 'missile')!;
+    const transform = getComponent(world, entity, 'transform')!;
 
     // Check for decoy seduction (any missile with turnRate can be seduced)
     if (
@@ -66,7 +58,7 @@ export function missileSystem(world: World, dt: number): void {
         // Seduction chance check - only roll once per (missile, decoy) pair
         if (random(world.prng) < DECOY_SEDUCE_CHANCE) {
           // Get decoy owner for stat tracking
-          const decoy = getComponent<Decoy>(world, nearestDecoy, 'decoy');
+          const decoy = getComponent(world, nearestDecoy, 'decoy');
           const decoyOwner = decoy?.owner;
 
           missile.target = nearestDecoy;
@@ -92,7 +84,7 @@ export function missileSystem(world: World, dt: number): void {
     // Update tracking if we have a target
     if (missile.target !== undefined && missile.turnRate > 0) {
       if (entityExists(world, missile.target)) {
-        const targetTransform = getComponent<Transform>(
+        const targetTransform = getComponent(
           world,
           missile.target,
           'transform',
@@ -119,11 +111,7 @@ export function missileSystem(world: World, dt: number): void {
     // Check for AoE proximity detonation (closest-approach logic)
     // Detonates when: A. within AoE radius, and B. distance starts increasing (past closest point)
     if (missile.aoeRadius > 0) {
-      const missileFaction = getComponent<FactionComponent>(
-        world,
-        entity,
-        'faction',
-      );
+      const missileFaction = getComponent(world, entity, 'faction');
 
       // Find closest enemy distance (excludes missiles/projectiles for nukes)
       const closestDistance = findClosestEnemyDistance(
@@ -178,11 +166,7 @@ export function missileSystem(world: World, dt: number): void {
 
     // Check for shrapnel proximity detonation (Starburst-like missiles)
     if (missile.flakRadius && missile.flakRadius > 0 && missile.shrapnelCount) {
-      const missileFaction = getComponent<FactionComponent>(
-        world,
-        entity,
-        'faction',
-      );
+      const missileFaction = getComponent(world, entity, 'faction');
 
       // Find closest enemy distance
       const closestDistance = findClosestEnemyDistance(
@@ -250,7 +234,7 @@ export function missileSystem(world: World, dt: number): void {
           transform.position,
           missile.aoeRadius,
           missile.owner,
-          getComponent<FactionComponent>(world, entity, 'faction'),
+          getComponent(world, entity, 'faction'),
         );
 
         if (hasEnemiesInRange) {
@@ -283,7 +267,7 @@ export function missileSystem(world: World, dt: number): void {
     }
 
     // Check for collisions
-    const collision = getComponent<Collision>(world, entity, 'collision');
+    const collision = getComponent(world, entity, 'collision');
     if (collision && collision.collidedWith.length > 0) {
       for (const other of collision.collidedWith) {
         // Skip owner collision until missile clears safe distance

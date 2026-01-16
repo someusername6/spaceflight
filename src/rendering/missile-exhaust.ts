@@ -6,8 +6,6 @@
  */
 
 import * as THREE from 'three';
-import type { Missile } from '../components/missile';
-import type { Transform } from '../components/transform';
 import { getComponent, queryEntities } from '../core/ecs';
 import { random } from '../core/prng';
 import type { Entity, World } from '../core/types';
@@ -105,12 +103,8 @@ export function updateExhaustRenderer(
   for (const entity of queryEntities(world, ['missile', 'transform'])) {
     seenMissiles.add(entity);
 
-    const missile = getComponent<Missile>(world, entity, 'missile') as Missile;
-    const transform = getComponent<Transform>(
-      world,
-      entity,
-      'transform',
-    ) as Transform;
+    const missile = getComponent(world, entity, 'missile')!;
+    const transform = getComponent(world, entity, 'transform')!;
 
     let exhaust = renderer.exhausts.get(entity);
 

@@ -7,7 +7,6 @@
 
 import * as THREE from 'three';
 import type { WeaponName } from '../../components/projectile';
-import type { Transform } from '../../components/transform';
 import { entityExists, getComponent } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
 import { TICK_SEC } from '../../game';
@@ -157,7 +156,7 @@ function computeFlashWorldPosition(
 
   if (!interpPos || !interpRot) {
     // Fallback to current transform if interpolation not available
-    const transform = getComponent<Transform>(world, entity, 'transform');
+    const transform = getComponent(world, entity, 'transform');
     if (!transform) return false;
 
     // Transform local offset to world space

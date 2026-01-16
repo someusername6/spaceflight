@@ -3,9 +3,7 @@
  */
 
 import { Quaternion, Vector3 } from 'three';
-import type { FactionComponent } from '../../components/faction';
 import { getEnemyCallsignPrefix } from '../../components/ship-identity';
-import type { Transform } from '../../components/transform';
 import { getComponent, isShip, queryEntities } from '../../core/ecs';
 import type { PRNGState } from '../../core/prng';
 import { randomRange, randomUnitVector } from '../../core/prng';
@@ -74,9 +72,9 @@ function getAlliedPositions(world: World): Vector3[] {
   const positions: Vector3[] = [];
   for (const entity of queryEntities(world, ['faction', 'transform'])) {
     if (!isShip(world, entity)) continue;
-    const faction = getComponent<FactionComponent>(world, entity, 'faction');
+    const faction = getComponent(world, entity, 'faction');
     if (faction?.faction !== Faction.Player) continue;
-    const transform = getComponent<Transform>(world, entity, 'transform');
+    const transform = getComponent(world, entity, 'transform');
     if (transform) {
       positions.push(transform.position.clone());
     }

@@ -3,7 +3,6 @@
  */
 
 import * as THREE from 'three';
-import type { Heat } from '../../components/heat';
 import { addHeat } from '../../components/heat';
 import type { Transform } from '../../components/transform';
 import type { PrimaryWeapon } from '../../components/weapons';
@@ -61,11 +60,7 @@ export function fireContinuousBeam(
     ? baseAutoaim + getPlayerAutoaimBonus(world)
     : baseAutoaim;
   if (effectiveAutoaim > 0 && targetEntity !== undefined) {
-    const targetTransform = getComponent<Transform>(
-      world,
-      targetEntity,
-      'transform',
-    );
+    const targetTransform = getComponent(world, targetEntity, 'transform');
     if (targetTransform) {
       // Calculate direction to target
       targetDirection.copy(targetTransform.position).sub(rayOrigin).normalize();
@@ -123,7 +118,7 @@ export function fireContinuousBeam(
       beam.pulseActive = true;
       shouldDealDamage = true;
       // Add heat per pulse (need to get heat component)
-      const heat = getComponent<Heat>(world, owner, 'heat');
+      const heat = getComponent(world, owner, 'heat');
       if (heat) {
         const heatPerPulse = getEffectiveHeat(weapon);
         if (!addHeat(heat, heatPerPulse)) {

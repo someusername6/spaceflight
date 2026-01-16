@@ -16,7 +16,6 @@ import type {
   WeaponName,
 } from '../../components/projectile';
 import { createProjectile } from '../../components/projectile';
-import type { ShipIdentity } from '../../components/ship-identity';
 import type { Transform } from '../../components/transform';
 import { createTransform } from '../../components/transform';
 import { addComponent, createEntity, getComponent } from '../../core/ecs';
@@ -49,7 +48,7 @@ const toIntercept = new THREE.Vector3();
  * Returns undefined if entity has no shipIdentity or archetype has no ship class.
  */
 function getShipClassName(world: World, entity: Entity): string | undefined {
-  const identity = getComponent<ShipIdentity>(world, entity, 'shipIdentity');
+  const identity = getComponent(world, entity, 'shipIdentity');
   if (!identity) return undefined;
 
   const archetype = getArchetype(identity.archetype);

@@ -3,13 +3,7 @@
  * Performance: Caches DOM elements and only updates when values change.
  */
 
-import type { Heat } from '../../components/heat';
-import type { Targeting } from '../../components/targeting';
-import type {
-  PrimaryWeapon,
-  PrimaryWeapons,
-  SecondaryWeapons,
-} from '../../components/weapons';
+import type { PrimaryWeapon } from '../../components/weapons';
 import {
   getCurrentLinkMode,
   getWeaponIndicesForCurrentMode,
@@ -128,14 +122,10 @@ export function updateWeaponDisplay(
   world: World,
   player: Entity,
 ): void {
-  const primary = getComponent<PrimaryWeapons>(world, player, 'primaryWeapons');
-  const secondary = getComponent<SecondaryWeapons>(
-    world,
-    player,
-    'secondaryWeapons',
-  );
-  const heat = getComponent<Heat>(world, player, 'heat');
-  const targeting = getComponent<Targeting>(world, player, 'targeting');
+  const primary = getComponent(world, player, 'primaryWeapons');
+  const secondary = getComponent(world, player, 'secondaryWeapons');
+  const heat = getComponent(world, player, 'heat');
+  const targeting = getComponent(world, player, 'targeting');
 
   // Update primary weapons
   if (primary && primary.weapons.length > 0) {

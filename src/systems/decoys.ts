@@ -6,9 +6,7 @@
  */
 
 import * as THREE from 'three';
-import type { Decoy } from '../components/decoy';
 import { DECOY_SPEED, isDecoyExpired } from '../components/decoy';
-import type { Transform } from '../components/transform';
 import {
   getComponent,
   hasComponent,
@@ -16,7 +14,6 @@ import {
   removeEntity,
 } from '../core/ecs';
 import type { Entity, World } from '../core/types';
-import type { Collision } from './collision';
 import { dealDamage } from './damage';
 
 // Reusable vectors (avoid per-frame allocations)
@@ -29,12 +26,8 @@ export function decoySystem(world: World, dt: number): void {
 
   for (const entity of queryEntities(world, ['decoy', 'transform'])) {
     // Query guarantees these components exist
-    const decoy = getComponent<Decoy>(world, entity, 'decoy') as Decoy;
-    const transform = getComponent<Transform>(
-      world,
-      entity,
-      'transform',
-    ) as Transform;
+    const decoy = getComponent(world, entity, 'decoy')!;
+    const transform = getComponent(world, entity, 'transform')!;
 
     // Update lifetime
     decoy.timeRemaining -= dt;
@@ -53,7 +46,7 @@ export function decoySystem(world: World, dt: number): void {
     transform.rotation.copy(tempQuat);
 
     // Check for collisions with missiles
-    const collision = getComponent<Collision>(world, entity, 'collision');
+    const collision = getComponent(world, entity, 'collision');
     if (collision && collision.collidedWith.length > 0) {
       for (const other of collision.collidedWith) {
         if (other === decoy.owner) continue;

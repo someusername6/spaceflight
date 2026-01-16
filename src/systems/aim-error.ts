@@ -11,14 +11,10 @@
  */
 
 import * as THREE from 'three';
-import type { AIControlled } from '../components/ai';
-import type { AimError } from '../components/aim-error';
 import {
   updateAimError,
   updateEffectiveMaxError,
 } from '../components/aim-error';
-import type { Physics } from '../components/physics';
-import type { Transform } from '../components/transform';
 import { entityExists, getComponent, queryEntities } from '../core/ecs';
 import type { World } from '../core/types';
 
@@ -67,26 +63,18 @@ export function calculateAngularVelocity(
 export function aimErrorSystem(world: World, dt: number): void {
   for (const entity of queryEntities(world, ['aimError'])) {
     // Query guarantees this component exists
-    const aimError = getComponent<AimError>(
-      world,
-      entity,
-      'aimError',
-    ) as AimError;
+    const aimError = getComponent(world, entity, 'aimError')!;
 
     // Get AI component to find target for angular velocity calculation
-    const ai = getComponent<AIControlled>(world, entity, 'aiControlled');
-    const transform = getComponent<Transform>(world, entity, 'transform');
+    const ai = getComponent(world, entity, 'aiControlled');
+    const transform = getComponent(world, entity, 'transform');
 
     let angularVelocity = 0;
 
     // Calculate angular velocity if we have a valid target
     if (ai?.target && entityExists(world, ai.target) && transform) {
-      const targetTransform = getComponent<Transform>(
-        world,
-        ai.target,
-        'transform',
-      );
-      const targetPhysics = getComponent<Physics>(world, ai.target, 'physics');
+      const targetTransform = getComponent(world, ai.target, 'transform');
+      const targetPhysics = getComponent(world, ai.target, 'physics');
 
       if (targetTransform && targetPhysics) {
         angularVelocity = calculateAngularVelocity(

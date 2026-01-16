@@ -8,7 +8,6 @@ import * as THREE from 'three';
 import {
   getActiveHits,
   SHIELD_HIT_DURATION,
-  type ShieldHit,
 } from '../../components/shield-hit';
 import { getComponent, queryEntities } from '../../core/ecs';
 import type { World } from '../../core/types';
@@ -81,11 +80,7 @@ export function updateShieldEffectRenderer(
 
   // Find all entities with shield hit tracking
   for (const entity of queryEntities(world, ['shieldHit'])) {
-    const shieldHit = getComponent<ShieldHit>(
-      world,
-      entity,
-      'shieldHit',
-    ) as ShieldHit;
+    const shieldHit = getComponent(world, entity, 'shieldHit')!;
 
     const hits = getActiveHits(shieldHit, gameTime);
 

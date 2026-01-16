@@ -3,12 +3,8 @@
  */
 
 import * as THREE from 'three';
-import { DECOY_SPEED, type Decoy } from '../components/decoy';
-import { Faction, type FactionComponent } from '../components/faction';
-import type { Missile } from '../components/missile';
-import type { Physics } from '../components/physics';
-import type { ShipIdentity } from '../components/ship-identity';
-import type { Transform } from '../components/transform';
+import { DECOY_SPEED } from '../components/decoy';
+import { Faction } from '../components/faction';
 import { getComponent, hasComponent, isShip, queryEntities } from '../core/ecs';
 import type { Entity, World } from '../core/types';
 import { getArchetype } from '../factories/ship';
@@ -163,29 +159,21 @@ export function syncScene(renderer: Renderer, world: World, alpha = 1): void {
 
     seenEntities.add(entity);
     // Query guarantees this component exists
-    const transform = getComponent<Transform>(
-      world,
-      entity,
-      'transform',
-    ) as Transform;
-    const faction = getComponent<FactionComponent>(world, entity, 'faction');
+    const transform = getComponent(world, entity, 'transform')!;
+    const faction = getComponent(world, entity, 'faction');
 
     let mesh = entityMeshes.get(entity);
 
     if (!mesh) {
       // Create appropriate mesh based on entity type
       if (isMissile) {
-        const missile = getComponent<Missile>(world, entity, 'missile');
+        const missile = getComponent(world, entity, 'missile');
         mesh = createMissileMesh(missile?.missileType ?? 'seeker');
       } else if (isDecoy) {
         mesh = createDecoyMesh(faction?.faction ?? Faction.Neutral);
       } else {
         // Get ship class from identity -> archetype -> shipClassName
-        const identity = getComponent<ShipIdentity>(
-          world,
-          entity,
-          'shipIdentity',
-        );
+        const identity = getComponent(world, entity, 'shipIdentity');
         const archetype = identity
           ? getArchetype(identity.archetype)
           : undefined;
@@ -197,11 +185,9 @@ export function syncScene(renderer: Renderer, world: World, alpha = 1): void {
     }
 
     // Update transform with interpolation
-    const physics = getComponent<Physics>(world, entity, 'physics');
-    const missile = isMissile
-      ? getComponent<Missile>(world, entity, 'missile')
-      : null;
-    const decoy = isDecoy ? getComponent<Decoy>(world, entity, 'decoy') : null;
+    const physics = getComponent(world, entity, 'physics');
+    const missile = isMissile ? getComponent(world, entity, 'missile') : null;
+    const decoy = isDecoy ? getComponent(world, entity, 'decoy') : null;
 
     if (physics) {
       // Use Hermite interpolation for position (smooth velocity across tick boundaries)
@@ -293,7 +279,7 @@ export function followEntity(
   world: World,
   entity: Entity,
 ): void {
-  const transform = getComponent<Transform>(world, entity, 'transform');
+  const transform = getComponent(world, entity, 'transform');
   if (!transform) return;
 
   const { camera } = renderer;

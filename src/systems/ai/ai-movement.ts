@@ -162,9 +162,8 @@ export function aimToward(
   dt = 1 / 60,
 ): void {
   // Use provided components or fetch them
-  const w =
-    weapons ?? getComponent<PrimaryWeapons>(world, entity, 'primaryWeapons');
-  const e = aimError ?? getComponent<AimError>(world, entity, 'aimError');
+  const w = weapons ?? getComponent(world, entity, 'primaryWeapons');
+  const e = aimError ?? getComponent(world, entity, 'aimError');
 
   if (w?.hasOnlyBeams && e) {
     // For beam-ONLY ships: apply aim error, then track toward perceived target

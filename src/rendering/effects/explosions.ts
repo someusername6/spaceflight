@@ -4,7 +4,6 @@
 
 import * as THREE from 'three';
 import type { Explosion } from '../../components/explosion';
-import type { Transform } from '../../components/transform';
 import { entityExists, getComponent, queryEntities } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
 import { TICK_SEC } from '../../game';
@@ -109,16 +108,8 @@ export function updateExplosionRenderer(
     seenExplosions.add(entity);
 
     // Query guarantees these components exist
-    const explosion = getComponent<Explosion>(
-      world,
-      entity,
-      'explosion',
-    ) as Explosion;
-    const transform = getComponent<Transform>(
-      world,
-      entity,
-      'transform',
-    ) as Transform;
+    const explosion = getComponent(world, entity, 'explosion')!;
+    const transform = getComponent(world, entity, 'transform')!;
     // Calculate interpolated progress for smooth animation
     // Interpolate between previous age (age - TICK_SEC) and current age using alpha
     const interpolatedAge = explosion.age - TICK_SEC * (1 - alpha);

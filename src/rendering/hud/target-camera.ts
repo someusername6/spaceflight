@@ -4,8 +4,6 @@
  */
 
 import * as THREE from 'three';
-import type { Targeting } from '../../components/targeting';
-import type { Transform } from '../../components/transform';
 import { getComponent } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
 import { getInterpolatedPosition, getInterpolatedRotation } from '../renderer';
@@ -95,7 +93,7 @@ export function updateTargetCamera(
     return;
   }
 
-  const targeting = getComponent<Targeting>(world, player, 'targeting');
+  const targeting = getComponent(world, player, 'targeting');
   const target = targeting?.currentTarget;
 
   if (target === undefined) {
@@ -103,7 +101,7 @@ export function updateTargetCamera(
     return;
   }
 
-  const targetTransform = getComponent<Transform>(world, target, 'transform');
+  const targetTransform = getComponent(world, target, 'transform');
   if (!targetTransform) {
     clearTargetCamera(targetCamera);
     return;

@@ -5,12 +5,7 @@
  * and maintains lock-on progress for missiles.
  */
 
-import {
-  areEnemies,
-  Faction,
-  type FactionComponent,
-} from '../components/faction';
-import type { Health } from '../components/health';
+import { areEnemies, Faction } from '../components/faction';
 import { isDead } from '../components/health';
 import type { PlayerControlled } from '../components/player';
 import type { Targeting } from '../components/targeting';
@@ -66,22 +61,14 @@ export function targetingSystem(world: World, _dt: number): void {
     'transform',
   ])) {
     // Query guarantees these components exist
-    const player = getComponent<PlayerControlled>(
+    const player = getComponent(
       world,
       entity,
       'playerControlled',
     ) as PlayerControlled;
-    const targeting = getComponent<Targeting>(
-      world,
-      entity,
-      'targeting',
-    ) as Targeting;
-    const transform = getComponent<Transform>(
-      world,
-      entity,
-      'transform',
-    ) as Transform;
-    const faction = getComponent<FactionComponent>(world, entity, 'faction');
+    const targeting = getComponent(world, entity, 'targeting')!;
+    const transform = getComponent(world, entity, 'transform')!;
+    const faction = getComponent(world, entity, 'faction');
 
     const selfFaction = faction?.faction ?? Faction.Player;
 
@@ -159,23 +146,15 @@ function updateValidTargets(
     if (!isShip && !isDecoy) continue;
 
     // Skip dead or dying entities
-    const otherHealth = getComponent<Health>(world, other, 'health');
+    const otherHealth = getComponent(world, other, 'health');
     if (otherHealth && isDead(otherHealth)) continue;
 
-    const otherFaction = getComponent<FactionComponent>(
-      world,
-      other,
-      'faction',
-    );
+    const otherFaction = getComponent(world, other, 'faction');
     if (!otherFaction || !areEnemies(selfFaction, otherFaction.faction))
       continue;
 
     // Query guarantees transform component exists
-    const otherTransform = getComponent<Transform>(
-      world,
-      other,
-      'transform',
-    ) as Transform;
+    const otherTransform = getComponent(world, other, 'transform')!;
     const distance = selfTransform.position.distanceTo(otherTransform.position);
 
     targetCollector.push(getTargetCollectorInfo(world, other, distance));

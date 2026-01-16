@@ -3,12 +3,7 @@
  * Position: top-left corner
  */
 
-import type { FactionComponent } from '../../components/faction';
-import type { Health } from '../../components/health';
 import { isDead } from '../../components/health';
-import type { Shields } from '../../components/shields';
-import type { ShipIdentity } from '../../components/ship-identity';
-import type { Transform } from '../../components/transform';
 import { getComponent, hasComponent, queryEntities } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
 import { Faction } from '../../core/types';
@@ -86,7 +81,7 @@ export function updateAlliedDisplay(
   world: World,
   player: Entity,
 ): void {
-  const playerTransform = getComponent<Transform>(world, player, 'transform');
+  const playerTransform = getComponent(world, player, 'transform');
 
   // Collect allied ships
   allies.length = 0;
@@ -101,15 +96,15 @@ export function updateAlliedDisplay(
     if (entity === player) continue;
     if (hasComponent(world, entity, 'playerControlled')) continue;
 
-    const faction = getComponent<FactionComponent>(world, entity, 'faction');
+    const faction = getComponent(world, entity, 'faction');
     if (!faction || faction.faction !== Faction.Player) continue;
 
-    const health = getComponent<Health>(world, entity, 'health');
+    const health = getComponent(world, entity, 'health');
     if (!health || isDead(health)) continue;
 
-    const identity = getComponent<ShipIdentity>(world, entity, 'shipIdentity');
-    const shields = getComponent<Shields>(world, entity, 'shields');
-    const transform = getComponent<Transform>(world, entity, 'transform');
+    const identity = getComponent(world, entity, 'shipIdentity');
+    const shields = getComponent(world, entity, 'shields');
+    const transform = getComponent(world, entity, 'transform');
 
     const hullPct = (health.hull / health.maxHull) * 100;
     const shieldPct = shields ? (shields.current / shields.max) * 100 : 0;

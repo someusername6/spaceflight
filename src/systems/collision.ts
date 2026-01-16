@@ -55,11 +55,7 @@ export function collisionSystem(world: World, _dt: number): void {
   // Clear previous frame's collisions
   for (const entity of queryEntities(world, ['collision'])) {
     // Query guarantees this component exists
-    const collision = getComponent<Collision>(
-      world,
-      entity,
-      'collision',
-    ) as Collision;
+    const collision = getComponent(world, entity, 'collision')!;
     collision.collidedWith.length = 0; // Clear without allocation
   }
 
@@ -69,16 +65,8 @@ export function collisionSystem(world: World, _dt: number): void {
 
   for (const entity of queryEntities(world, ['transform', 'collision'])) {
     // Query guarantees these components exist
-    const transform = getComponent<Transform>(
-      world,
-      entity,
-      'transform',
-    ) as Transform;
-    const collision = getComponent<Collision>(
-      world,
-      entity,
-      'collision',
-    ) as Collision;
+    const transform = getComponent(world, entity, 'transform')!;
+    const collision = getComponent(world, entity, 'collision')!;
     collidables.push(getCollidableInfo(world, entity, transform, collision));
   }
 
@@ -106,13 +94,13 @@ export function collisionSystem(world: World, _dt: number): void {
 
 /** Check if entity collided with anything this frame */
 export function hasCollision(world: World, entity: Entity): boolean {
-  const collision = getComponent<Collision>(world, entity, 'collision');
+  const collision = getComponent(world, entity, 'collision');
   return collision !== undefined && collision.collidedWith.length > 0;
 }
 
 /** Get entities this entity collided with */
 export function getCollisions(world: World, entity: Entity): Entity[] {
-  const collision = getComponent<Collision>(world, entity, 'collision');
+  const collision = getComponent(world, entity, 'collision');
   return collision?.collidedWith ?? [];
 }
 

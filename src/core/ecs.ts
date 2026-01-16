@@ -8,6 +8,7 @@
  * - World holds all state
  */
 
+import type { ComponentRegistry } from './component-registry';
 import { createPRNG } from './prng';
 import type {
   ComponentBase,
@@ -122,18 +123,32 @@ export function addComponent<T extends ComponentBase>(
   if (!entityComponents) {
     throw new Error(`Entity ${entity} does not exist`);
   }
-  entityComponents.set(component.type, component);
+  // Cast is safe: component.type comes from ComponentBase which has the correct literal type
+  entityComponents.set(component.type as ComponentType, component);
 }
 
-/** Gets a component from an entity (returns undefined if not present) */
-export function getComponent<T extends ComponentBase>(
+/**
+ * Gets a component from an entity (returns undefined if not present).
+ * Return type is automatically inferred from the component type string.
+ *
+ * @example
+ * const transform = getComponent(world, entity, 'transform');
+ * // transform is typed as Transform | undefined
+ *
+ * @example
+ * const health = getComponent(world, entity, 'health');
+ * if (health) {
+ *   console.log(health.hull); // TypeScript knows this is Health
+ * }
+ */
+export function getComponent<K extends ComponentType>(
   world: World,
   entity: Entity,
-  type: ComponentType,
-): T | undefined {
+  type: K,
+): ComponentRegistry[K] | undefined {
   const entityComponents = world.components.get(entity);
   if (!entityComponents) return undefined;
-  return entityComponents.get(type) as T | undefined;
+  return entityComponents.get(type) as ComponentRegistry[K] | undefined;
 }
 
 /** Checks if an entity has a specific component */
@@ -155,8 +170,8 @@ export function hasComponents(
 ): boolean {
   const entityComponents = world.components.get(entity);
   if (!entityComponents) return false;
-  for (let i = 0; i < types.length; i++) {
-    if (!entityComponents.has(types[i] as ComponentType)) return false;
+  for (const type of types) {
+    if (!entityComponents.has(type)) return false;
   }
   return true;
 }

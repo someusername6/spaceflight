@@ -4,17 +4,7 @@
  */
 
 import * as THREE from 'three';
-import {
-  DECOY_LIFETIME,
-  DECOY_SPEED,
-  type Decoy,
-} from '../../components/decoy';
-import type { Health } from '../../components/health';
-import type { Physics } from '../../components/physics';
-import type { Shields } from '../../components/shields';
-import type { ShipIdentity } from '../../components/ship-identity';
-import type { Targeting } from '../../components/targeting';
-import type { Transform } from '../../components/transform';
+import { DECOY_LIFETIME, DECOY_SPEED } from '../../components/decoy';
 import { getComponent, hasComponent } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
 import { requireElement } from './dom-utils';
@@ -95,7 +85,7 @@ export function updateTargetStats(
   world: World,
   player: Entity,
 ): void {
-  const targeting = getComponent<Targeting>(world, player, 'targeting');
+  const targeting = getComponent(world, player, 'targeting');
   const target = targeting?.currentTarget;
 
   if (target === undefined) {
@@ -116,19 +106,17 @@ export function updateTargetStats(
   display.container.classList.add('has-target');
 
   // Get target components
-  const identity = getComponent<ShipIdentity>(world, target, 'shipIdentity');
-  const health = getComponent<Health>(world, target, 'health');
-  const shields = getComponent<Shields>(world, target, 'shields');
-  const targetTransform = getComponent<Transform>(world, target, 'transform');
-  const targetPhysics = getComponent<Physics>(world, target, 'physics');
-  const playerTransform = getComponent<Transform>(world, player, 'transform');
-  const playerPhysics = getComponent<Physics>(world, player, 'physics');
+  const identity = getComponent(world, target, 'shipIdentity');
+  const health = getComponent(world, target, 'health');
+  const shields = getComponent(world, target, 'shields');
+  const targetTransform = getComponent(world, target, 'transform');
+  const targetPhysics = getComponent(world, target, 'physics');
+  const playerTransform = getComponent(world, player, 'transform');
+  const playerPhysics = getComponent(world, player, 'physics');
 
   // Check if target is a decoy
   const isDecoy = hasComponent(world, target, 'decoy');
-  const decoy = isDecoy
-    ? getComponent<Decoy>(world, target, 'decoy')
-    : undefined;
+  const decoy = isDecoy ? getComponent(world, target, 'decoy') : undefined;
 
   // Callsign and type
   if (isDecoy) {

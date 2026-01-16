@@ -4,12 +4,9 @@
  */
 
 import * as THREE from 'three';
-import type { Heat } from '../../components/heat';
 import { injectExternalHeat } from '../../components/heat';
-import type { Shields } from '../../components/shields';
 import { ionizeShields } from '../../components/shields';
-import type { Transform } from '../../components/transform';
-import type { PrimaryWeapon, PrimaryWeapons } from '../../components/weapons';
+import type { PrimaryWeapon } from '../../components/weapons';
 import { entityExists, getComponent } from '../../core/ecs';
 import type { ActiveBeam, Entity, World } from '../../core/types';
 import { BEAM_HIT_INTERVAL } from '../../rendering/effects/projectile-hits';
@@ -163,14 +160,10 @@ export function updateFadingBeams(
   for (const [entity, beams] of activeBeams) {
     // Get entity's current transform (if it still exists)
     if (!entityExists(world, entity)) continue;
-    const transform = getComponent<Transform>(world, entity, 'transform');
+    const transform = getComponent(world, entity, 'transform');
     if (!transform) continue;
 
-    const weapons = getComponent<PrimaryWeapons>(
-      world,
-      entity,
-      'primaryWeapons',
-    );
+    const weapons = getComponent(world, entity, 'primaryWeapons');
     const totalBanks = weapons?.weapons.length ?? 1;
 
     for (const beam of beams) {
@@ -242,7 +235,7 @@ export function applyBeamDamageAndEffects(params: BeamDamageParams): void {
 
   // Apply ionization effect (for future ion beams)
   if (weapon.ionize) {
-    const targetShields = getComponent<Shields>(world, target, 'shields');
+    const targetShields = getComponent(world, target, 'shields');
     if (targetShields) {
       ionizeShields(targetShields, gameTime);
     }
@@ -250,7 +243,7 @@ export function applyBeamDamageAndEffects(params: BeamDamageParams): void {
 
   // Apply heat injection (Torch weapon)
   if (weapon.heatInjection) {
-    const targetHeat = getComponent<Heat>(world, target, 'heat');
+    const targetHeat = getComponent(world, target, 'heat');
     if (targetHeat) {
       // heatInjection is per-second rate, damage is already scaled by dt
       // Scale heat injection proportionally

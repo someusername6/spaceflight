@@ -87,11 +87,7 @@ export function updateEvade(
 
   // Distance-flee (kiting) ships: return to ENGAGE when distance regained
   if (isKitingShip(ai) && ai.target && entityExists(world, ai.target)) {
-    const targetTransform = getComponent<Transform>(
-      world,
-      ai.target,
-      'transform',
-    );
+    const targetTransform = getComponent(world, ai.target, 'transform');
     if (targetTransform) {
       const distance = transform.position.distanceTo(targetTransform.position);
       const returnRange = ai.preferredCombatRange ?? profile.engageRange;
@@ -119,11 +115,7 @@ export function updateEvade(
 
   // Calculate escape direction and turn
   if (ai.target && entityExists(world, ai.target)) {
-    const targetTransform = getComponent<Transform>(
-      world,
-      ai.target,
-      'transform',
-    );
+    const targetTransform = getComponent(world, ai.target, 'transform');
     if (targetTransform) {
       // Direction away from target
       toTarget.copy(transform.position).sub(targetTransform.position);
@@ -192,11 +184,7 @@ export function updateRegroup(
 
   // Regroup behavior: fly away from target in a large loop
   if (ai.target && entityExists(world, ai.target)) {
-    const targetTransform = getComponent<Transform>(
-      world,
-      ai.target,
-      'transform',
-    );
+    const targetTransform = getComponent(world, ai.target, 'transform');
     if (targetTransform) {
       // Turn away from target with slight curve (looping maneuver)
       toTarget.copy(transform.position).sub(targetTransform.position);

@@ -8,7 +8,6 @@
  */
 
 import * as THREE from 'three';
-import type { Transform } from '../../../components/transform';
 import { getComponent, queryEntities } from '../../../core/ecs';
 import type { Entity, World } from '../../../core/types';
 import {
@@ -201,7 +200,7 @@ function getTargetPosition(entity: Entity, world: World): THREE.Vector3 | null {
   const interpPos = getInterpolatedPosition(entity);
   if (interpPos) return interpPos;
 
-  const transform = getComponent<Transform>(world, entity, 'transform');
+  const transform = getComponent(world, entity, 'transform');
   return transform?.position ?? null;
 }
 
@@ -213,7 +212,7 @@ function getTargetRotation(
   const interpRot = getInterpolatedRotation(entity);
   if (interpRot) return interpRot;
 
-  const transform = getComponent<Transform>(world, entity, 'transform');
+  const transform = getComponent(world, entity, 'transform');
   return transform?.rotation ?? null;
 }
 

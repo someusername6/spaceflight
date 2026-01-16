@@ -6,7 +6,6 @@
  */
 
 import * as THREE from 'three';
-import type { Transform } from '../../../components/transform';
 import { getComponent, hasComponent } from '../../../core/ecs';
 import type { World } from '../../../core/types';
 import { getInterpolatedPosition } from '../../../rendering/renderer';
@@ -144,11 +143,7 @@ export function getCameraTargetPosition(
   if (interpPos) return interpPos;
 
   // Fall back to transform position
-  const transform = getComponent<Transform>(
-    world,
-    state.targetEntity,
-    'transform',
-  );
+  const transform = getComponent(world, state.targetEntity, 'transform');
   return transform?.position ?? null;
 }
 

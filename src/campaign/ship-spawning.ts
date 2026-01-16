@@ -10,7 +10,6 @@ import { createCombatStats } from '../components/combat-stats';
 import { createFaction } from '../components/faction';
 import { createHealth } from '../components/health';
 import { createHeat } from '../components/heat';
-import type { Physics } from '../components/physics';
 import {
   createPhysics,
   INITIAL_SPAWN_SPEED,
@@ -22,7 +21,6 @@ import { createShields } from '../components/shields';
 import { createShipIdentity } from '../components/ship-identity';
 import { createTargeting } from '../components/targeting';
 import { createTransform } from '../components/transform';
-import type { PrimaryWeapons, SecondaryWeapons } from '../components/weapons';
 import {
   addComponent,
   createEntity,
@@ -86,7 +84,7 @@ export function spawnPlayerFromCampaign(
   );
 
   // Set initial velocity in forward direction
-  const physics = getComponent<Physics>(world, entity, 'physics');
+  const physics = getComponent(world, entity, 'physics');
   if (physics) {
     setInitialVelocity(physics, shipRotation, INITIAL_SPAWN_SPEED);
   }
@@ -169,7 +167,7 @@ export function spawnWingmanFromCampaign(
   );
 
   // Set initial velocity in forward direction
-  const physics = getComponent<Physics>(world, entity, 'physics');
+  const physics = getComponent(world, entity, 'physics');
   if (physics) {
     setInitialVelocity(physics, shipRotation, INITIAL_SPAWN_SPEED);
   }
@@ -242,9 +240,7 @@ export function extractAmmoFromWorld(world: World): ExtractedAmmo[] {
 
   // Query all entities with shipIdentity
   for (const entity of queryEntities(world, ['shipIdentity'])) {
-    const identity = getComponent<
-      import('../components/ship-identity').ShipIdentity
-    >(world, entity, 'shipIdentity');
+    const identity = getComponent(world, entity, 'shipIdentity');
     if (!identity?.campaignShipId) continue;
 
     const extracted: ExtractedAmmo = {
@@ -254,11 +250,7 @@ export function extractAmmoFromWorld(world: World): ExtractedAmmo[] {
     };
 
     // Extract primary ammo
-    const primaries = getComponent<PrimaryWeapons>(
-      world,
-      entity,
-      'primaryWeapons',
-    );
+    const primaries = getComponent(world, entity, 'primaryWeapons');
     if (primaries) {
       for (let i = 0; i < primaries.weapons.length; i++) {
         const weapon = primaries.weapons[i];
@@ -269,11 +261,7 @@ export function extractAmmoFromWorld(world: World): ExtractedAmmo[] {
     }
 
     // Extract secondary ammo
-    const secondaries = getComponent<SecondaryWeapons>(
-      world,
-      entity,
-      'secondaryWeapons',
-    );
+    const secondaries = getComponent(world, entity, 'secondaryWeapons');
     if (secondaries) {
       for (let i = 0; i < secondaries.weapons.length; i++) {
         const weapon = secondaries.weapons[i];

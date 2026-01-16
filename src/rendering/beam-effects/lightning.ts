@@ -5,7 +5,6 @@
  */
 
 import * as THREE from 'three';
-import type { Transform } from '../../components/transform';
 import { getComponent } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
 import { TICK_SEC } from '../../game';
@@ -216,11 +215,7 @@ function renderBolts(
 
     // Calculate interpolation offset
     const interpEntityPos = getInterpolatedPosition(bolt.entityId);
-    const transform = getComponent<Transform>(
-      world,
-      bolt.entityId,
-      'transform',
-    );
+    const transform = getComponent(world, bolt.entityId, 'transform');
     const hasOffset = interpEntityPos && transform;
     if (hasOffset) {
       interpOffset.copy(interpEntityPos).sub(transform.position);

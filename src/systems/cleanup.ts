@@ -4,11 +4,8 @@
 
 import * as THREE from 'three';
 import { createExplosion } from '../components/explosion';
-import type { FactionComponent } from '../components/faction';
 import { Faction } from '../components/faction';
-import type { Health } from '../components/health';
 import { isDead } from '../components/health';
-import type { Transform } from '../components/transform';
 import { createTransform } from '../components/transform';
 import {
   addComponent,
@@ -20,7 +17,6 @@ import {
   removeEntity,
 } from '../core/ecs';
 import type { World } from '../core/types';
-import type { Collision } from './collision';
 import { handleShipDeath } from './stats';
 
 /**
@@ -45,7 +41,7 @@ export function cleanupSystem(world: World, dt: number): void {
   // Handle dead entities
   for (const entity of queryEntities(world, ['health'])) {
     // Query guarantees this component exists
-    const health = getComponent<Health>(world, entity, 'health') as Health;
+    const health = getComponent(world, entity, 'health')!;
 
     if (!isDead(health)) continue;
 
@@ -75,11 +71,11 @@ export function cleanupSystem(world: World, dt: number): void {
 
 /** Spawns an explosion at the entity's position */
 function spawnExplosion(world: World, entity: number): void {
-  const transform = getComponent<Transform>(world, entity, 'transform');
+  const transform = getComponent(world, entity, 'transform');
   if (!transform) return;
 
-  const collision = getComponent<Collision>(world, entity, 'collision');
-  const faction = getComponent<FactionComponent>(world, entity, 'faction');
+  const collision = getComponent(world, entity, 'collision');
+  const faction = getComponent(world, entity, 'faction');
 
   // Explosion size based on ship collision radius
   const size = collision?.radius ?? 5;

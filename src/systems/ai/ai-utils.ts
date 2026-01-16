@@ -3,12 +3,8 @@
  */
 
 import { type AIControlled, AIState } from '../../components/ai';
-import {
-  areEnemies,
-  type Faction,
-  type FactionComponent,
-} from '../../components/faction';
-import { type Health, isDead } from '../../components/health';
+import { areEnemies, type Faction } from '../../components/faction';
+import { isDead } from '../../components/health';
 import type { Transform } from '../../components/transform';
 import { getComponent, queryEntities } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
@@ -18,11 +14,7 @@ export function countEngagingTarget(world: World, target: Entity): number {
   let count = 0;
   for (const entity of queryEntities(world, ['aiControlled'])) {
     // Query guarantees this component exists
-    const ai = getComponent<AIControlled>(
-      world,
-      entity,
-      'aiControlled',
-    ) as AIControlled;
+    const ai = getComponent(world, entity, 'aiControlled')!;
     if (ai.state === AIState.Engage && ai.target === target) {
       count++;
     }
@@ -55,7 +47,7 @@ export function findNearestThreatToPlayer(
   const player = findPlayer(world);
   if (!player) return null;
 
-  const selfTransform = getComponent<Transform>(world, self, 'transform');
+  const selfTransform = getComponent(world, self, 'transform');
   if (!selfTransform) return null;
 
   let nearestThreat: Entity | null = null;
@@ -67,27 +59,19 @@ export function findNearestThreatToPlayer(
     'faction',
     'health',
   ])) {
-    const entityFaction = getComponent<FactionComponent>(
-      world,
-      entity,
-      'faction',
-    );
+    const entityFaction = getComponent(world, entity, 'faction');
     if (!entityFaction || !areEnemies(selfFaction, entityFaction.faction))
       continue;
 
-    const health = getComponent<Health>(world, entity, 'health');
+    const health = getComponent(world, entity, 'health');
     if (!health || isDead(health)) continue;
 
     // Check if this enemy is targeting the player
-    const ai = getComponent<AIControlled>(
-      world,
-      entity,
-      'aiControlled',
-    ) as AIControlled;
+    const ai = getComponent(world, entity, 'aiControlled')!;
     if (ai.target !== player) continue;
     if (ai.state !== AIState.Pursue && ai.state !== AIState.Engage) continue;
 
-    const entityTransform = getComponent<Transform>(
+    const entityTransform = getComponent(
       world,
       entity,
       'transform',
@@ -112,7 +96,7 @@ export function findNearestEnemy(
   let nearest: Entity | null = null;
   let nearestDist = Infinity;
 
-  const selfTransform = getComponent<Transform>(world, self, 'transform');
+  const selfTransform = getComponent(world, self, 'transform');
   if (!selfTransform) return null;
 
   for (const other of queryEntities(world, [
@@ -123,23 +107,15 @@ export function findNearestEnemy(
     if (other === self) continue;
 
     // Skip dead or dying enemies
-    const otherHealth = getComponent<Health>(world, other, 'health');
+    const otherHealth = getComponent(world, other, 'health');
     if (otherHealth && isDead(otherHealth)) continue;
 
-    const otherFaction = getComponent<FactionComponent>(
-      world,
-      other,
-      'faction',
-    );
+    const otherFaction = getComponent(world, other, 'faction');
     if (!otherFaction || !areEnemies(selfFaction, otherFaction.faction))
       continue;
 
     // Query guarantees transform component exists
-    const otherTransform = getComponent<Transform>(
-      world,
-      other,
-      'transform',
-    ) as Transform;
+    const otherTransform = getComponent(world, other, 'transform')!;
     const dist = selfTransform.position.distanceTo(otherTransform.position);
 
     if (dist < nearestDist) {

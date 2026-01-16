@@ -3,11 +3,8 @@
  */
 
 import * as THREE from 'three';
-import { Faction, type FactionComponent } from '../../components/faction';
-import type { Health } from '../../components/health';
+import { Faction } from '../../components/faction';
 import { isDead } from '../../components/health';
-import type { Physics } from '../../components/physics';
-import type { Targeting } from '../../components/targeting';
 import type { Transform } from '../../components/transform';
 import type {
   PrimaryWeapons,
@@ -121,7 +118,7 @@ export function updateReticles(
   // Draw center crosshair (fixed aiming point)
   drawCenterCrosshair(ctx, screenWidth, screenHeight);
 
-  const targeting = getComponent<Targeting>(world, player, 'targeting');
+  const targeting = getComponent(world, player, 'targeting');
   const currentTarget = targeting?.currentTarget;
 
   // Reset lead indicator smoothing when target changes (snap to new target)
@@ -131,18 +128,10 @@ export function updateReticles(
   }
 
   // Get player's weapons for lead calculation
-  const playerWeapons = getComponent<PrimaryWeapons>(
-    world,
-    player,
-    'primaryWeapons',
-  );
+  const playerWeapons = getComponent(world, player, 'primaryWeapons');
 
   // Get lock-on progress for secondary weapons
-  const secondaryWeapons = getComponent<SecondaryWeapons>(
-    world,
-    player,
-    'secondaryWeapons',
-  );
+  const secondaryWeapons = getComponent(world, player, 'secondaryWeapons');
   const lockProgress = secondaryWeapons?.lockProgress ?? 0;
   const lockTarget = secondaryWeapons?.lockTarget;
 
@@ -163,21 +152,13 @@ export function updateReticles(
     if (hasComponent(world, entity, 'projectile')) continue;
 
     // Skip dead or dying entities (no reticle drawn for them)
-    const health = getComponent<Health>(world, entity, 'health');
+    const health = getComponent(world, entity, 'health');
     if (health && isDead(health)) continue;
 
     // Query guarantees these components exist
-    const transform = getComponent<Transform>(
-      world,
-      entity,
-      'transform',
-    ) as Transform;
-    const faction = getComponent<FactionComponent>(
-      world,
-      entity,
-      'faction',
-    ) as FactionComponent;
-    const physics = getComponent<Physics>(world, entity, 'physics');
+    const transform = getComponent(world, entity, 'transform')!;
+    const faction = getComponent(world, entity, 'faction')!;
+    const physics = getComponent(world, entity, 'physics');
     const mesh = entityMeshes.get(entity);
     const distance =
       playerTransform?.position.distanceTo(transform.position) ?? 0;

@@ -4,13 +4,10 @@
  */
 
 import type * as THREE from 'three';
-import { type AIControlled, AIState } from '../../components/ai';
-import type { Health } from '../../components/health';
+import { AIState } from '../../components/ai';
 import { isDead } from '../../components/health';
 import type { Heat } from '../../components/heat';
 import { addHeat } from '../../components/heat';
-import type { PlayerControlled } from '../../components/player';
-import type { Targeting } from '../../components/targeting';
 import type { Transform } from '../../components/transform';
 import type { PrimaryWeapons } from '../../components/weapons';
 import {
@@ -55,26 +52,18 @@ export function beamSystem(world: World, dt: number): void {
     'heat',
   ])) {
     // Skip dead or dying entities (can't fire while exploding)
-    const health = getComponent<Health>(world, entity, 'health');
+    const health = getComponent(world, entity, 'health');
     if (health && isDead(health)) continue;
 
     // Query guarantees these components exist
-    const transform = getComponent<Transform>(
-      world,
-      entity,
-      'transform',
-    ) as Transform;
-    const weapons = getComponent<PrimaryWeapons>(
+    const transform = getComponent(world, entity, 'transform')!;
+    const weapons = getComponent(
       world,
       entity,
       'primaryWeapons',
     ) as PrimaryWeapons;
-    const heat = getComponent<Heat>(world, entity, 'heat') as Heat;
-    const player = getComponent<PlayerControlled>(
-      world,
-      entity,
-      'playerControlled',
-    );
+    const heat = getComponent(world, entity, 'heat')!;
+    const player = getComponent(world, entity, 'playerControlled');
 
     // Check if firing and calculate beam direction
     let isFiring = false;
@@ -87,12 +76,12 @@ export function beamSystem(world: World, dt: number): void {
       if (isFiring) {
         beamDirection = getForward(transform);
         // Get player's current target for autoaim
-        const targeting = getComponent<Targeting>(world, entity, 'targeting');
+        const targeting = getComponent(world, entity, 'targeting');
         targetEntity = targeting?.currentTarget;
       }
     } else {
       // AI fires beams when engaging with valid target
-      const ai = getComponent<AIControlled>(world, entity, 'aiControlled');
+      const ai = getComponent(world, entity, 'aiControlled');
       if (
         ai &&
         ai.state === AIState.Engage &&

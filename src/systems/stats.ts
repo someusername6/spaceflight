@@ -6,17 +6,13 @@
  */
 
 import {
-  type CombatStats,
   type DestroyedShipRecord,
   getOrCreateWeaponStats,
   type SalvageableShip,
   snapshotStats,
   type WeaponStats,
 } from '../components/combat-stats';
-import { Faction, type FactionComponent } from '../components/faction';
-import type { Health } from '../components/health';
-import type { ShipIdentity } from '../components/ship-identity';
-import type { PrimaryWeapons, SecondaryWeapons } from '../components/weapons';
+import { Faction } from '../components/faction';
 import { getComponent, hasComponent } from '../core/ecs';
 import type { Entity, World } from '../core/types';
 import { getMissileKeyFromName } from '../data/missiles';
@@ -87,7 +83,7 @@ export function recordDamage(
   const matchStats = getMatchStats(world);
 
   // Update source's damage dealt
-  const sourceStats = getComponent<CombatStats>(world, source, 'combatStats');
+  const sourceStats = getComponent(world, source, 'combatStats');
   if (sourceStats) {
     sourceStats.damageDealt += amount;
     const weaponStats = getOrCreateWeaponStats(
@@ -100,7 +96,7 @@ export function recordDamage(
   }
 
   // Update target's damage received
-  const targetStats = getComponent<CombatStats>(world, target, 'combatStats');
+  const targetStats = getComponent(world, target, 'combatStats');
   if (targetStats) {
     targetStats.damageReceived += amount;
   }
@@ -122,15 +118,11 @@ export function recordDamage(
 
 /** Initialize weapon ammo counts on ship (call after creating ship) */
 export function initWeaponAmmoCounts(world: World, entity: Entity): void {
-  const stats = getComponent<CombatStats>(world, entity, 'combatStats');
+  const stats = getComponent(world, entity, 'combatStats');
   if (!stats) return;
 
   // Track primary weapon ammo (finite ammo weapons)
-  const primaryWeapons = getComponent<PrimaryWeapons>(
-    world,
-    entity,
-    'primaryWeapons',
-  );
+  const primaryWeapons = getComponent(world, entity, 'primaryWeapons');
   if (primaryWeapons) {
     for (const weapon of primaryWeapons.weapons) {
       if (weapon && weapon.ammo !== undefined) {
@@ -146,11 +138,7 @@ export function initWeaponAmmoCounts(world: World, entity: Entity): void {
 
   // Track secondary weapon ammo (missiles and decoys)
   // For multi-projectile missiles, ammoCarried represents total missiles, not shots
-  const secondaryWeapons = getComponent<SecondaryWeapons>(
-    world,
-    entity,
-    'secondaryWeapons',
-  );
+  const secondaryWeapons = getComponent(world, entity, 'secondaryWeapons');
   if (secondaryWeapons) {
     for (const weapon of secondaryWeapons.weapons) {
       if (!weapon) continue;
@@ -180,20 +168,12 @@ export function handleShipDeath(world: World, entity: Entity): void {
   const gameTime = world.systemState.gameTime;
 
   // Get ship info
-  const identity = getComponent<ShipIdentity>(world, entity, 'shipIdentity');
-  const health = getComponent<Health>(world, entity, 'health');
-  const faction = getComponent<FactionComponent>(world, entity, 'faction');
-  const combatStats = getComponent<CombatStats>(world, entity, 'combatStats');
-  const primaryWeapons = getComponent<PrimaryWeapons>(
-    world,
-    entity,
-    'primaryWeapons',
-  );
-  const secondaryWeapons = getComponent<SecondaryWeapons>(
-    world,
-    entity,
-    'secondaryWeapons',
-  );
+  const identity = getComponent(world, entity, 'shipIdentity');
+  const health = getComponent(world, entity, 'health');
+  const faction = getComponent(world, entity, 'faction');
+  const combatStats = getComponent(world, entity, 'combatStats');
+  const primaryWeapons = getComponent(world, entity, 'primaryWeapons');
+  const secondaryWeapons = getComponent(world, entity, 'secondaryWeapons');
 
   if (!identity || !health) return;
 
@@ -203,7 +183,7 @@ export function handleShipDeath(world: World, entity: Entity): void {
 
   // Award kill to killer (including posthumous kills if killer already died)
   if (killer !== undefined) {
-    const killerStats = getComponent<CombatStats>(world, killer, 'combatStats');
+    const killerStats = getComponent(world, killer, 'combatStats');
     if (killerStats) {
       killerStats.kills++;
     } else {
@@ -221,11 +201,7 @@ export function handleShipDeath(world: World, entity: Entity): void {
   if (damageSources) {
     for (const source of damageSources) {
       if (source !== killer) {
-        const sourceStats = getComponent<CombatStats>(
-          world,
-          source,
-          'combatStats',
-        );
+        const sourceStats = getComponent(world, source, 'combatStats');
         if (sourceStats) {
           sourceStats.assists++;
         } else {

@@ -3,10 +3,7 @@
  */
 
 import * as THREE from 'three';
-import type { Collision } from '../../components/collision';
-import type { Health } from '../../components/health';
 import { isDead } from '../../components/health';
-import type { Transform } from '../../components/transform';
 import { getComponent, hasComponent, queryEntities } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
 
@@ -83,20 +80,12 @@ export function findBeamHit(
     if (hasComponent(world, other, 'missile')) continue;
 
     // Skip dead or dying targets (already exploding)
-    const otherHealth = getComponent<Health>(world, other, 'health');
+    const otherHealth = getComponent(world, other, 'health');
     if (otherHealth && isDead(otherHealth)) continue;
 
     // Query guarantees these components exist
-    const otherTransform = getComponent<Transform>(
-      world,
-      other,
-      'transform',
-    ) as Transform;
-    const collision = getComponent<Collision>(
-      world,
-      other,
-      'collision',
-    ) as Collision;
+    const otherTransform = getComponent(world, other, 'transform')!;
+    const collision = getComponent(world, other, 'collision')!;
 
     // Simple sphere intersection test
     const distance = rayIntersectsSphere(
@@ -151,19 +140,11 @@ export function findAllBeamHits(
     if (hasComponent(world, other, 'missile')) continue;
 
     // Skip dead or dying targets (already exploding)
-    const otherHealth = getComponent<Health>(world, other, 'health');
+    const otherHealth = getComponent(world, other, 'health');
     if (otherHealth && isDead(otherHealth)) continue;
 
-    const otherTransform = getComponent<Transform>(
-      world,
-      other,
-      'transform',
-    ) as Transform;
-    const collision = getComponent<Collision>(
-      world,
-      other,
-      'collision',
-    ) as Collision;
+    const otherTransform = getComponent(world, other, 'transform')!;
+    const collision = getComponent(world, other, 'collision')!;
 
     const distance = rayIntersectsSphere(
       rayOrigin,

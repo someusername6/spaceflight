@@ -9,20 +9,13 @@
  */
 
 import type * as THREE from 'three';
-import {
-  areEnemies,
-  Faction,
-  type FactionComponent,
-} from '../components/faction';
-import type { Health } from '../components/health';
+import { areEnemies, Faction } from '../components/faction';
 import { applyDamage } from '../components/health';
-import { recordShieldHit, type ShieldHit } from '../components/shield-hit';
-import type { Shields } from '../components/shields';
+import { recordShieldHit } from '../components/shield-hit';
 import { damageShields } from '../components/shields';
 import { getComponent, hasComponent, queryEntities } from '../core/ecs';
 import type { Entity, World } from '../core/types';
 import { MissionResult } from '../core/types';
-import type { Collision } from './collision';
 
 /** Damage dealt on ship-to-ship collision */
 const COLLISION_DAMAGE = 10;
@@ -35,7 +28,7 @@ function isProtectedByVictory(world: World, entity: Entity): boolean {
   if (world.systemState.mission.result !== MissionResult.Victory) {
     return false;
   }
-  const faction = getComponent<FactionComponent>(world, entity, 'faction');
+  const faction = getComponent(world, entity, 'faction');
   return faction?.faction === Faction.Player;
 }
 
@@ -56,23 +49,11 @@ export function damageSystem(world: World, _dt: number): void {
     if (isProtectedByVictory(world, entity)) continue;
 
     // Query guarantees these components exist
-    const collision = getComponent<Collision>(
-      world,
-      entity,
-      'collision',
-    ) as Collision;
-    const faction = getComponent<FactionComponent>(
-      world,
-      entity,
-      'faction',
-    ) as FactionComponent;
+    const collision = getComponent(world, entity, 'collision')!;
+    const faction = getComponent(world, entity, 'faction')!;
 
     for (const other of collision.collidedWith) {
-      const otherFaction = getComponent<FactionComponent>(
-        world,
-        other,
-        'faction',
-      );
+      const otherFaction = getComponent(world, other, 'faction');
 
       // Only damage from enemies (or if no faction)
       if (otherFaction && !areEnemies(faction.faction, otherFaction.faction)) {
@@ -102,8 +83,8 @@ function applyDamageWithShields(
   shieldDamageMultiplier = 1,
   hullDamageMultiplier = 1,
 ): DamageResult {
-  const shields = getComponent<Shields>(world, entity, 'shields');
-  const health = getComponent<Health>(world, entity, 'health');
+  const shields = getComponent(world, entity, 'shields');
+  const health = getComponent(world, entity, 'health');
 
   let remaining = amount;
   let shieldDamage = 0;
@@ -129,7 +110,7 @@ function applyDamageWithShields(
 
     // Record shield hit for visual effects
     if (shieldDamage > 0 && hitPosition) {
-      const shieldHit = getComponent<ShieldHit>(world, entity, 'shieldHit');
+      const shieldHit = getComponent(world, entity, 'shieldHit');
       if (shieldHit) {
         recordShieldHit(
           shieldHit,

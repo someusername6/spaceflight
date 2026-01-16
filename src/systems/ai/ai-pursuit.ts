@@ -6,10 +6,8 @@
  */
 
 import type { AIControlled } from '../../components/ai';
-import type { AimError } from '../../components/aim-error';
 import type { Physics } from '../../components/physics';
 import type { Transform } from '../../components/transform';
-import type { PrimaryWeapons } from '../../components/weapons';
 import { getComponent } from '../../core/ecs';
 import { calculateInterceptPoint } from '../../core/lead-calculation';
 import type { Entity, World } from '../../core/types';
@@ -23,7 +21,7 @@ import {
 
 /** Get projectile speed from entity's primary weapons (first projectile weapon) */
 export function getProjectileSpeed(world: World, entity: Entity): number {
-  const weapons = getComponent<PrimaryWeapons>(world, entity, 'primaryWeapons');
+  const weapons = getComponent(world, entity, 'primaryWeapons');
   if (weapons) {
     for (const weapon of weapons.weapons) {
       if (weapon && weapon.category !== 'beam') {
@@ -50,19 +48,15 @@ export function pursueTarget(
   const { toTarget, leadPoint } = tempVectors;
 
   // ai.target is checked by caller before calling pursueTarget
-  const targetTransform = getComponent<Transform>(
-    world,
-    ai.target as Entity,
-    'transform',
-  );
+  const targetTransform = getComponent(world, ai.target as Entity, 'transform');
   if (!targetTransform) {
     ai.target = null;
     return;
   }
 
   // Fetch components once for reuse
-  const weapons = getComponent<PrimaryWeapons>(world, entity, 'primaryWeapons');
-  const aimError = getComponent<AimError>(world, entity, 'aimError');
+  const weapons = getComponent(world, entity, 'primaryWeapons');
+  const aimError = getComponent(world, entity, 'aimError');
 
   // When closing urgently, aim directly at target (closes distance vs circling)
   let aimPoint = targetTransform.position;
@@ -72,11 +66,7 @@ export function pursueTarget(
 
   if (needsLead) {
     // Get target velocity for lead calculation
-    const targetPhysics = getComponent<Physics>(
-      world,
-      ai.target as Entity,
-      'physics',
-    );
+    const targetPhysics = getComponent(world, ai.target as Entity, 'physics');
 
     // Skip lead if target moving erratically (high angular velocity)
     const highAngularVelocity =
@@ -122,26 +112,18 @@ export function maintainDistanceEngage(
 ): void {
   const { toTarget, leadPoint } = tempVectors;
 
-  const targetTransform = getComponent<Transform>(
-    world,
-    ai.target as Entity,
-    'transform',
-  );
+  const targetTransform = getComponent(world, ai.target as Entity, 'transform');
   if (!targetTransform) return;
 
   // Fetch components once for reuse
-  const weapons = getComponent<PrimaryWeapons>(world, entity, 'primaryWeapons');
-  const aimError = getComponent<AimError>(world, entity, 'aimError');
+  const weapons = getComponent(world, entity, 'primaryWeapons');
+  const aimError = getComponent(world, entity, 'aimError');
 
   let aimPoint = targetTransform.position;
 
   // Only calculate lead for ships with projectile weapons (beams are hitscan)
   if (weapons && !weapons.hasOnlyBeams) {
-    const targetPhysics = getComponent<Physics>(
-      world,
-      ai.target as Entity,
-      'physics',
-    );
+    const targetPhysics = getComponent(world, ai.target as Entity, 'physics');
 
     if (targetPhysics) {
       const projectileSpeed = getProjectileSpeed(world, entity);

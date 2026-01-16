@@ -4,8 +4,7 @@
  * Slice 1: Simple destroy all enemies / player death.
  */
 
-import { Faction, type FactionComponent } from '../components/faction';
-import type { Health } from '../components/health';
+import { Faction } from '../components/faction';
 import { isDead } from '../components/health';
 import { countEntities, getComponent, queryEntities } from '../core/ecs';
 import type { World } from '../core/types';
@@ -59,12 +58,8 @@ export function countLivingEnemyShips(world: World): number {
     'shipIdentity',
   ])) {
     // Query guarantees these components exist
-    const health = getComponent<Health>(world, entity, 'health') as Health;
-    const faction = getComponent<FactionComponent>(
-      world,
-      entity,
-      'faction',
-    ) as FactionComponent;
+    const health = getComponent(world, entity, 'health')!;
+    const faction = getComponent(world, entity, 'faction')!;
     if (isDead(health)) continue;
     if (faction.faction === Faction.Enemy) {
       count++;

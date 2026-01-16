@@ -24,7 +24,6 @@ import { createCombatStats } from '../components/combat-stats';
 import { createFaction } from '../components/faction';
 import { createHealth } from '../components/health';
 import { createHeat } from '../components/heat';
-import type { Physics } from '../components/physics';
 import {
   createPhysics,
   INITIAL_SPAWN_SPEED,
@@ -95,7 +94,7 @@ function spawnPlayerFromReplayLoadout(
     }),
   );
 
-  const physics = getComponent<Physics>(world, entity, 'physics');
+  const physics = getComponent(world, entity, 'physics');
   if (physics) {
     setInitialVelocity(physics, rotation, INITIAL_SPAWN_SPEED);
   }
@@ -179,7 +178,7 @@ function spawnWingmanFromReplayLoadout(
     }),
   );
 
-  const physics = getComponent<Physics>(world, entity, 'physics');
+  const physics = getComponent(world, entity, 'physics');
   if (physics) {
     setInitialVelocity(physics, rotation, INITIAL_SPAWN_SPEED);
   }

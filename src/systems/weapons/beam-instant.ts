@@ -157,11 +157,7 @@ function fireInstantBeam(
     ? baseAutoaim + getPlayerAutoaimBonus(world)
     : baseAutoaim;
   if (effectiveAutoaim > 0 && targetEntity !== undefined) {
-    const targetTransform = getComponent<Transform>(
-      world,
-      targetEntity,
-      'transform',
-    );
+    const targetTransform = getComponent(world, targetEntity, 'transform');
     if (targetTransform) {
       // Calculate direction to target
       targetDirection.copy(targetTransform.position).sub(rayOrigin).normalize();

@@ -7,7 +7,6 @@
  * 3. Playback: reads from recorded data (for replays)
  */
 
-import type { PlayerControlled } from '../components/player';
 import { getComponent, queryEntities } from '../core/ecs';
 import type { InputState, World } from '../core/types';
 import { encodeInput } from '../input/input-encoding';
@@ -197,11 +196,7 @@ function readLiveInput(input: InputState): void {
 /** Input system - updates player input state each frame */
 export function inputSystem(world: World, _dt: number): void {
   for (const entity of queryEntities(world, ['playerControlled'])) {
-    const player = getComponent<PlayerControlled>(
-      world,
-      entity,
-      'playerControlled',
-    );
+    const player = getComponent(world, entity, 'playerControlled');
     if (!player) continue;
 
     const input = player.input;

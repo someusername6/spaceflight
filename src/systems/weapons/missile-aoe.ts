@@ -7,9 +7,6 @@
 import * as THREE from 'three';
 import type { FactionComponent } from '../../components/faction';
 import { areEnemies } from '../../components/faction';
-import type { Health } from '../../components/health';
-import type { Projectile } from '../../components/projectile';
-import type { Transform } from '../../components/transform';
 import {
   getComponent,
   hasComponent,
@@ -84,12 +81,8 @@ export function dealAoeDamage(
     // Note: missiles AND projectiles CAN be damaged by AoE (e.g., nuke clearing the area)
 
     // Query guarantees these components exist
-    const transform = getComponent<Transform>(
-      world,
-      entity,
-      'transform',
-    ) as Transform;
-    const health = getComponent<Health>(world, entity, 'health') as Health;
+    const transform = getComponent(world, entity, 'transform')!;
+    const health = getComponent(world, entity, 'health')!;
 
     // Skip dead entities
     if (health.hull <= 0) continue;
@@ -160,20 +153,12 @@ export function findClosestEnemyDistance(
     if (hasComponent(world, entity, 'missile')) continue; // Always skip, handled below
 
     // Check faction - only consider enemies (non-faction entities cannot trigger detonation)
-    const entityFaction = getComponent<FactionComponent>(
-      world,
-      entity,
-      'faction',
-    );
+    const entityFaction = getComponent(world, entity, 'faction');
     if (!ownerFaction || !entityFaction) continue;
     if (!areEnemies(ownerFaction.faction, entityFaction.faction)) continue;
 
-    const transform = getComponent<Transform>(
-      world,
-      entity,
-      'transform',
-    ) as Transform;
-    const health = getComponent<Health>(world, entity, 'health') as Health;
+    const transform = getComponent(world, entity, 'transform')!;
+    const health = getComponent(world, entity, 'health')!;
 
     // Skip dead entities
     if (health.hull <= 0) continue;
@@ -192,19 +177,11 @@ export function findClosestEnemyDistance(
       if (entity === owner) continue;
 
       // Check faction - only consider enemy missiles (non-faction cannot trigger)
-      const entityFaction = getComponent<FactionComponent>(
-        world,
-        entity,
-        'faction',
-      );
+      const entityFaction = getComponent(world, entity, 'faction');
       if (!ownerFaction || !entityFaction) continue;
       if (!areEnemies(ownerFaction.faction, entityFaction.faction)) continue;
 
-      const transform = getComponent<Transform>(
-        world,
-        entity,
-        'transform',
-      ) as Transform;
+      const transform = getComponent(world, entity, 'transform')!;
 
       aoeTempVec.copy(transform.position).sub(center);
       const distance = aoeTempVec.length();
@@ -232,11 +209,7 @@ export function checkForEnemiesInRange(
     if (hasComponent(world, entity, 'missile')) continue;
 
     // Check faction - only count enemies
-    const entityFaction = getComponent<FactionComponent>(
-      world,
-      entity,
-      'faction',
-    );
+    const entityFaction = getComponent(world, entity, 'faction');
     if (missileFaction && entityFaction) {
       if (!areEnemies(missileFaction.faction, entityFaction.faction)) {
         continue;
@@ -244,12 +217,8 @@ export function checkForEnemiesInRange(
     }
 
     // Query guarantees transform component exists
-    const transform = getComponent<Transform>(
-      world,
-      entity,
-      'transform',
-    ) as Transform;
-    const health = getComponent<Health>(world, entity, 'health') as Health;
+    const transform = getComponent(world, entity, 'transform')!;
+    const health = getComponent(world, entity, 'health')!;
 
     // Skip dead entities
     if (health.hull <= 0) continue;
@@ -275,19 +244,11 @@ export function destroyProjectilesInRadius(
   const toDestroy: Entity[] = [];
 
   for (const entity of queryEntities(world, ['projectile', 'transform'])) {
-    const projectile = getComponent<Projectile>(
-      world,
-      entity,
-      'projectile',
-    ) as Projectile;
+    const projectile = getComponent(world, entity, 'projectile')!;
     // Don't destroy owner's projectiles
     if (projectile.owner === owner) continue;
 
-    const transform = getComponent<Transform>(
-      world,
-      entity,
-      'transform',
-    ) as Transform;
+    const transform = getComponent(world, entity, 'transform')!;
 
     aoeTempVec.copy(transform.position).sub(center);
     const distance = aoeTempVec.length();

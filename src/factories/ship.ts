@@ -14,7 +14,6 @@ import { createSecondaryWeaponFromDef } from '../components/missile';
 import {
   createPhysics,
   INITIAL_SPAWN_SPEED,
-  type Physics,
   setInitialVelocity,
 } from '../components/physics';
 import { createPlayerControlled } from '../components/player';
@@ -128,7 +127,7 @@ export function createPlayerShip(
   );
 
   // Set initial velocity in forward direction
-  const physics = getComponent<Physics>(world, entity, 'physics');
+  const physics = getComponent(world, entity, 'physics');
   if (physics) {
     setInitialVelocity(physics, shipRotation, INITIAL_SPAWN_SPEED);
   }
@@ -210,7 +209,7 @@ export function createAIShip(
   );
 
   // Set initial velocity in forward direction
-  const physics = getComponent<Physics>(world, entity, 'physics');
+  const physics = getComponent(world, entity, 'physics');
   if (physics) {
     setInitialVelocity(physics, shipRotation, INITIAL_SPAWN_SPEED);
   }
