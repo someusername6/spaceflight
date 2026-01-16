@@ -168,9 +168,15 @@ const ContractsScreenComponent: Screen<ContractsState, ContractsProps> = {
 
     // Pool counter showing completed missions (no total shown for replayability)
     const completedCount = campaignState.sectorMissionsCompleted;
+    const completedText =
+      completedCount === 0
+        ? 'No contracts completed'
+        : completedCount === 1
+          ? '1 contract completed'
+          : `${completedCount} contracts completed`;
     const poolCounter = isReplayMode
       ? '<div class="contracts-pool-counter replay">Replay mode (50% rewards)</div>'
-      : `<div class="contracts-pool-counter">${completedCount} contracts completed</div>`;
+      : `<div class="contracts-pool-counter">${completedText}</div>`;
 
     // Refresh button
     const refreshButton = `
