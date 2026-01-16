@@ -135,13 +135,19 @@ function renderPilotCard(pilot: ReplayPilotDebrief): string {
       : '';
 
   const svg = getShipSvgInline(pilot.archetype);
+  const youBadge = pilot.isPlayer
+    ? '<span class="replay-pilot-badge">You</span>'
+    : '';
 
   return `
-    <div class="replay-pilot-card ${pilot.isPlayer ? 'player' : 'wingman'} ${pilot.isKIA ? 'kia' : ''}">
+    <div class="replay-pilot-card ${pilot.isKIA ? 'kia' : ''}">
       <div class="replay-pilot-header">
         <div class="replay-pilot-icon">${svg}</div>
         <div class="replay-pilot-info">
-          <span class="replay-pilot-callsign">${escapeHtml(pilot.callsign)}</span>
+          <div class="replay-pilot-name-row">
+            <span class="replay-pilot-callsign">${escapeHtml(pilot.callsign)}</span>
+            ${youBadge}
+          </div>
           <span class="replay-pilot-archetype">${capitalize(pilot.archetype)}</span>
         </div>
         <div class="replay-pilot-status ${statusClass}">
