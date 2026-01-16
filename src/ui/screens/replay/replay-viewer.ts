@@ -22,6 +22,7 @@ import {
   renderReplayHelpModal,
 } from './replay-help-modal';
 import { clearDOMCache } from './viewer-dom';
+import { renderHUD } from './viewer-hud';
 import {
   cleanupAutoHide,
   cycleSpeed,
@@ -41,7 +42,6 @@ import {
 import {
   cleanupViewer,
   endOrbitDrag,
-  formatTime,
   initializeViewer,
   type PlaybackCallbacks,
   startOrbitDrag,
@@ -55,53 +55,6 @@ export interface ReplayViewerProps {
 
 // Re-export ViewerState for external use
 export type { ViewerState } from './viewer-types';
-
-/** Render the replay HUD overlay */
-function renderHUD(state: ViewerState): string {
-  const currentTime = formatTime(state.currentTick / 60);
-  const totalTime = formatTime(state.totalTicks / 60);
-  const progress =
-    state.totalTicks > 0 ? (state.currentTick / state.totalTicks) * 100 : 0;
-  const displayStyle = state.hudVisible ? '' : 'display: none;';
-
-  return `
-    <div class="replay-hud" style="${displayStyle}">
-      <div class="replay-controls">
-        <button class="btn btn-icon" id="btn-back-viewer">
-          <span class="icon-back">&larr;</span>
-        </button>
-        <button class="btn btn-icon btn-play-pause" id="btn-play-pause">
-          ${state.playing ? '&#10074;&#10074;' : '&#9658;'}
-        </button>
-        <button class="btn btn-icon" id="btn-speed">
-          ${state.speed}x
-        </button>
-        <div class="replay-timeline-container">
-          <input
-            type="range"
-            class="replay-timeline"
-            id="replay-timeline"
-            min="0"
-            max="${state.totalTicks}"
-            value="${state.currentTick}"
-            ${state.seeking ? 'disabled' : ''}
-          />
-          <div class="replay-timeline-progress" style="width: ${progress}%"></div>
-        </div>
-        <span class="replay-time">${currentTime} / ${totalTime}</span>
-        <div class="replay-camera-status">
-          <span id="camera-mode-display">Chase</span>
-          <span class="camera-status-separator">|</span>
-          <span id="camera-target-display">Player</span>
-        </div>
-        <button class="btn btn-icon btn-help" id="btn-help" title="Controls (F1)">
-          ?
-        </button>
-      </div>
-      ${state.seeking ? '<div class="replay-seeking">Seeking...</div>' : ''}
-    </div>
-  `;
-}
 
 /** Update help modal without full screen re-render */
 function updateHelpModal(state: ReplayHelpModalState): void {

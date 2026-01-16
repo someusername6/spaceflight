@@ -87,9 +87,28 @@
 
 .replay-controls {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: var(--space-3);
   pointer-events: auto;
+}
+
+/* Row 1: Timeline and time display */
+.replay-controls-timeline {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* Row 2: Buttons and camera status */
+.replay-controls-buttons {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* Spacer pushes camera status and help to the right */
+.replay-controls-spacer {
+  flex: 1;
 }
 
 .btn-icon {
@@ -106,6 +125,17 @@
   width: 48px;
   height: 48px;
   font-size: var(--text-lg);
+}
+
+/* Speed button - auto-width to fit content */
+.btn-speed {
+  height: 40px;
+  min-width: 40px;
+  padding: 0 var(--space-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-sm);
 }
 
 .replay-timeline-container {
@@ -160,6 +190,8 @@
   color: var(--text-secondary);
   min-width: 80px;
   text-align: right;
+  padding: var(--space-1) var(--space-2);
+  background: rgba(0, 0, 0, 0.5);
 }
 
 .replay-camera-status {
