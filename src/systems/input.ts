@@ -38,8 +38,17 @@ const replayState = {
 export function initInput(): void {
   // Create handlers that can be removed later
   eventHandlers.keydown = (e: KeyboardEvent) => {
+    // Don't track keys or prevent defaults when interacting with form controls
+    const target = e.target as HTMLElement;
+    const isFormControl =
+      target.tagName === 'INPUT' ||
+      target.tagName === 'TEXTAREA' ||
+      target.tagName === 'BUTTON' ||
+      target.isContentEditable;
+    if (isFormControl) return;
+
     pressedKeys.add(e.code);
-    // Prevent browser defaults for game keys
+    // Prevent browser defaults for game keys (e.g., arrow keys scrolling)
     const bindings = getKeyBindings();
     if (Object.values(bindings).includes(e.code)) {
       e.preventDefault();
