@@ -16,11 +16,19 @@ export interface ScreenAPI<State> {
   /** Delegate event to elements matching selector within the screen */
   on(selector: string, event: string, handler: EventHandler): void;
 
+  /**
+   * Bind event directly to elements matching selector (no delegation).
+   * Use this for events that don't bubble (mouseenter, mouseleave, etc.)
+   */
+  onDirect(selector: string, event: string, handler: EventHandler): void;
+
   /** Bind event directly to the root element */
   onRoot(event: string, handler: (e: Event) => void): void;
 
-  /** Bind event to document (auto-cleaned on unmount) */
-  onGlobal(event: string, handler: (e: Event) => void): void;
+  /** Bind event to document (auto-cleaned on unmount)
+   * @param capture - Use capture phase (default: false)
+   */
+  onGlobal(event: string, handler: (e: Event) => void, capture?: boolean): void;
 
   /** Update state and trigger re-render */
   setState(partial: Partial<State>): void;
@@ -89,8 +97,17 @@ export function createScreen<S, P>(
   // Direct listeners for cleanup
   const rootListeners: Array<{ event: string; handler: (e: Event) => void }> =
     [];
-  const globalListeners: Array<{ event: string; handler: (e: Event) => void }> =
-    [];
+  const globalListeners: Array<{
+    event: string;
+    handler: (e: Event) => void;
+    capture: boolean;
+  }> = [];
+  // Direct element listeners (for non-bubbling events like mouseenter/mouseleave)
+  const directListeners: Array<{
+    element: HTMLElement;
+    event: string;
+    handler: (e: Event) => void;
+  }> = [];
 
   /** Create the API object for bind() */
   const createAPI = (): ScreenAPI<S> => ({
@@ -122,14 +139,23 @@ export function createScreen<S, P>(
       delegations.get(event)?.set(selector, handler);
     },
 
+    onDirect(selector, event, handler) {
+      const elements = element.querySelectorAll<HTMLElement>(selector);
+      for (const el of elements) {
+        const wrappedHandler = (e: Event) => handler(e, el);
+        el.addEventListener(event, wrappedHandler);
+        directListeners.push({ element: el, event, handler: wrappedHandler });
+      }
+    },
+
     onRoot(event, handler) {
       element.addEventListener(event, handler);
       rootListeners.push({ event, handler });
     },
 
-    onGlobal(event, handler) {
-      document.addEventListener(event, handler);
-      globalListeners.push({ event, handler });
+    onGlobal(event, handler, capture = false) {
+      document.addEventListener(event, handler, capture);
+      globalListeners.push({ event, handler, capture });
     },
 
     setState(partial) {
@@ -150,22 +176,38 @@ export function createScreen<S, P>(
     },
   });
 
-  /** Clear all registered handlers (but keep delegation listeners) */
-  const clearHandlers = () => {
-    // Clear handler maps (delegation listeners stay attached)
+  /**
+   * Clear registered handlers before re-render or destroy.
+   *
+   * @param fullCleanup - If true, explicitly remove direct listeners (for destroy).
+   *   On re-render, innerHTML replacement orphans child elements anyway, so
+   *   removeEventListener is unnecessary - we just clear references for GC.
+   */
+  const clearHandlers = (fullCleanup = false) => {
+    // Clear handler maps (delegation listeners stay attached to root)
     delegations.forEach((map) => {
       map.clear();
     });
 
-    // Remove root listeners
+    // Direct listeners are bound to child elements that get destroyed by innerHTML.
+    // On re-render: just clear references (elements are orphaned anyway)
+    // On destroy: explicitly remove for completeness
+    if (fullCleanup) {
+      for (const { element: el, event, handler } of directListeners) {
+        el.removeEventListener(event, handler);
+      }
+    }
+    directListeners.length = 0;
+
+    // Root listeners must always be removed (root element persists across renders)
     for (const { event, handler } of rootListeners) {
       element.removeEventListener(event, handler);
     }
     rootListeners.length = 0;
 
-    // Remove global listeners
-    for (const { event, handler } of globalListeners) {
-      document.removeEventListener(event, handler);
+    // Global listeners must always be removed (document persists)
+    for (const { event, handler, capture } of globalListeners) {
+      document.removeEventListener(event, handler, capture);
     }
     globalListeners.length = 0;
   };
@@ -179,7 +221,7 @@ export function createScreen<S, P>(
 
   /** Full cleanup including delegation listeners */
   const destroy = () => {
-    clearHandlers();
+    clearHandlers(true); // Full cleanup: explicitly remove direct listeners
 
     // Remove delegation listeners
     for (const [event, listener] of delegationListeners) {

@@ -161,7 +161,12 @@ function refreshAfterAmmoChange(
         main: {
           ...currentState.main,
           visibility: 'pinned',
-          content: { ...content, weapon: freshWeapon },
+          content: {
+            type: 'primary' as const,
+            weapon: freshWeapon,
+            shipId: content.shipId,
+            slotIndex: content.slotIndex,
+          },
         },
       });
     }
@@ -173,7 +178,12 @@ function refreshAfterAmmoChange(
         main: {
           ...currentState.main,
           visibility: 'pinned',
-          content: { ...content, weapon: freshWeapon },
+          content: {
+            type: 'secondary' as const,
+            weapon: freshWeapon,
+            shipId: content.shipId,
+            slotIndex: content.slotIndex,
+          },
         },
       });
     } else {

@@ -12,6 +12,7 @@ import type { Transform } from '../../components/transform';
 import { getComponent, hasComponent, queryEntities } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
 import { Faction } from '../../core/types';
+import { requireElement } from './dom-utils';
 
 /** Maximum allies to display */
 const MAX_ALLIES_SHOWN = 5;
@@ -54,14 +55,10 @@ export function createAlliedDisplay(parent: HTMLElement): AlliedDisplay {
 
     allyElements.push({
       row,
-      callsign: row.querySelector('.ally-callsign') as HTMLElement,
-      hullBar: row.querySelector(
-        '.ally-bar.hull .ally-bar-fill',
-      ) as HTMLElement,
-      shieldBar: row.querySelector(
-        '.ally-bar.shield .ally-bar-fill',
-      ) as HTMLElement,
-      distance: row.querySelector('.ally-distance') as HTMLElement,
+      callsign: requireElement(row, '.ally-callsign'),
+      hullBar: requireElement(row, '.ally-bar.hull .ally-bar-fill'),
+      shieldBar: requireElement(row, '.ally-bar.shield .ally-bar-fill'),
+      distance: requireElement(row, '.ally-distance'),
     });
   }
 

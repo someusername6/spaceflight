@@ -17,6 +17,7 @@ import type { Targeting } from '../../components/targeting';
 import type { Transform } from '../../components/transform';
 import { getComponent, hasComponent } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
+import { requireElement } from './dom-utils';
 
 /** Target stats display state */
 export interface TargetStatsDisplay {
@@ -68,27 +69,23 @@ export function createTargetStats(parent: HTMLElement): TargetStatsDisplay {
 
   return {
     container,
-    cameraContainer: container.querySelector(
-      '.target-camera-container',
-    ) as HTMLElement,
-    callsignEl: container.querySelector('.target-callsign') as HTMLElement,
-    typeEl: container.querySelector('.target-type') as HTMLElement,
-    distanceEl: container.querySelector('.target-distance') as HTMLElement,
-    hullLabel: container.querySelector('.hull-label') as HTMLElement,
-    hullBar: container.querySelector(
-      '.target-bar.hull .target-bar-fill',
-    ) as HTMLElement,
-    hullValue: container.querySelector(
+    cameraContainer: requireElement(container, '.target-camera-container'),
+    callsignEl: requireElement(container, '.target-callsign'),
+    typeEl: requireElement(container, '.target-type'),
+    distanceEl: requireElement(container, '.target-distance'),
+    hullLabel: requireElement(container, '.hull-label'),
+    hullBar: requireElement(container, '.target-bar.hull .target-bar-fill'),
+    hullValue: requireElement(
+      container,
       '.target-bar.hull + .target-bar-value',
-    ) as HTMLElement,
-    shieldRow: container.querySelector('.shield-row') as HTMLElement,
-    shieldBar: container.querySelector(
-      '.target-bar.shield .target-bar-fill',
-    ) as HTMLElement,
-    shieldValue: container.querySelector(
+    ),
+    shieldRow: requireElement(container, '.shield-row'),
+    shieldBar: requireElement(container, '.target-bar.shield .target-bar-fill'),
+    shieldValue: requireElement(
+      container,
       '.target-bar.shield + .target-bar-value',
-    ) as HTMLElement,
-    aspectEl: container.querySelector('.target-aspect') as HTMLElement,
+    ),
+    aspectEl: requireElement(container, '.target-aspect'),
   };
 }
 

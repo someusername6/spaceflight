@@ -215,8 +215,8 @@ const SquadronScreenComponent: Screen<SquadronState, SquadronProps> = {
       initShipConnectors(viewer);
     }
 
-    // Bind navigation bar
-    bindNavBar(element, onNavigate);
+    // Bind navigation bar (uses Screen framework's event delegation)
+    bindNavBar(api, onNavigate);
 
     // Bind viewer tabs
     bindViewerTabs(element, (tab) => {

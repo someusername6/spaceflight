@@ -65,6 +65,13 @@ const QUICK_TESTS = [
   'replay/test-storage.mjs',
   'replay/test-storage-compression.mjs',
   'systems/test-input-replay.mjs',
+
+  // UI framework and component tests
+  'rendering/test-hud-dom-utils.mjs',
+  'ui/framework/test-screen-framework.mjs',
+  'ui/framework/test-screen-state.mjs',
+  'ui/common/test-nav-bar.mjs',
+  'ui/screens/test-ship-picker.mjs',
 ];
 
 // Balance/simulation tests - run multiple fights, take longer

@@ -18,6 +18,7 @@ import type { Transform } from '../../components/transform';
 import { getComponent, hasComponent, queryEntities } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
 import { Faction } from '../../core/types';
+import { require2DContext } from './dom-utils';
 
 /** Radar display state */
 export interface RadarDisplay {
@@ -71,7 +72,7 @@ export function createRadar(parent: HTMLElement): RadarDisplay {
 
   parent.appendChild(container);
 
-  const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
+  const ctx = require2DContext(canvas);
 
   return { canvas, ctx };
 }

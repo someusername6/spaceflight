@@ -2,9 +2,11 @@
  * Global Navigation Bar - Shared navigation across Hangar, Store, Contracts
  *
  * Provides consistent top-level navigation with sector/credits display.
+ * Integrates with the Screen framework for automatic event cleanup.
  */
 
 import { MAX_SECTOR } from '../../campaign/types';
+import type { ScreenAPI } from '../framework/screen';
 
 /** Navigation destinations */
 export type NavDestination = 'squadron' | 'store' | 'contracts';
@@ -86,64 +88,31 @@ export function renderNavBar(props: NavBarProps): string {
   `;
 }
 
-/** Tracked listener for cleanup */
-interface TrackedListener {
-  element: Element;
-  event: string;
-  handler: EventListener;
-}
-
-/** Current nav bar cleanup function */
-let navBarCleanup: (() => void) | null = null;
-
-/** Cleanup previous nav bar bindings */
-export function cleanupNavBar(): void {
-  navBarCleanup?.();
-  navBarCleanup = null;
-}
-
-/** Bind navigation event handlers */
-export function bindNavBar(
-  container: HTMLElement,
+/**
+ * Bind navigation event handlers using the Screen framework.
+ * Events are automatically cleaned up when the parent screen re-renders.
+ *
+ * @param api - The ScreenAPI from the parent screen's bind function
+ * @param onNavigate - Callback for navigation tab clicks
+ * @param onPause - Optional callback for pause button clicks
+ */
+export function bindNavBar<S>(
+  api: ScreenAPI<S>,
   onNavigate: (destination: NavDestination) => void,
   onPause?: () => void,
 ): void {
-  // Clean up previous bindings first
-  cleanupNavBar();
-
-  const listeners: TrackedListener[] = [];
-
-  const addListener = (
-    element: Element,
-    event: string,
-    handler: EventListener,
-  ): void => {
-    element.addEventListener(event, handler);
-    listeners.push({ element, event, handler });
-  };
-
-  container.querySelectorAll<HTMLElement>('.nav-tab').forEach((tab) => {
-    addListener(tab, 'click', () => {
-      const dest = tab.dataset.nav as NavDestination;
-      if (dest) {
-        onNavigate(dest);
-      }
-    });
+  // Navigation tabs - use event delegation for automatic cleanup
+  api.on('.nav-tab', 'click', (_e, el) => {
+    const dest = el.dataset.nav as NavDestination;
+    if (dest) {
+      onNavigate(dest);
+    }
   });
 
-  // Bind pause button if callback provided
+  // Pause button
   if (onPause) {
-    const pauseBtn = container.querySelector('.nav-pause-btn');
-    if (pauseBtn) {
-      addListener(pauseBtn, 'click', onPause);
-    }
+    api.on('.nav-pause-btn', 'click', () => {
+      onPause();
+    });
   }
-
-  // Store cleanup function
-  navBarCleanup = () => {
-    for (const { element, event, handler } of listeners) {
-      element.removeEventListener(event, handler);
-    }
-    listeners.length = 0;
-  };
 }

@@ -31,6 +31,7 @@ import {
   getAlliedDisplayStyles,
   updateAlliedDisplay,
 } from './allied-hud';
+import { requireElement } from './dom-utils';
 import { getHUDStyles, HUD_STYLE_ID } from './hud-styles';
 import {
   createRadar,
@@ -190,35 +191,30 @@ export function createHUD(parent: HTMLElement): HUD {
   };
 
   // These elements are created in createStatusBarHTML above
+  // Use requireElement for safe querying with meaningful errors
   return {
     container,
-    speedFill: container.querySelector('.speed-fill') as HTMLElement,
-    afterburnerFill: container.querySelector(
-      '.afterburner-fill',
-    ) as HTMLElement,
-    maxSpeedTick: container.querySelector('.max-speed-tick') as HTMLElement,
-    speedValue: container.querySelector('.speed-value') as HTMLElement,
-    throttleMarker: container.querySelector('.throttle-marker') as HTMLElement,
+    speedFill: requireElement(container, '.speed-fill'),
+    afterburnerFill: requireElement(container, '.afterburner-fill'),
+    maxSpeedTick: requireElement(container, '.max-speed-tick'),
+    speedValue: requireElement(container, '.speed-value'),
+    throttleMarker: requireElement(container, '.throttle-marker'),
     shieldSegments,
     hullSegments,
     heatSegments,
-    shieldContainer: container.querySelector(
-      '.shield-container',
-    ) as HTMLElement,
-    hullContainer: container.querySelector('.hull-container') as HTMLElement,
-    heatContainer: container.querySelector('.heat-container') as HTMLElement,
-    hullValue: container.querySelector('.hull-value') as HTMLElement,
-    shieldValue: container.querySelector('.shield-value') as HTMLElement,
-    heatValue: container.querySelector('.heat-value') as HTMLElement,
+    shieldContainer: requireElement(container, '.shield-container'),
+    hullContainer: requireElement(container, '.hull-container'),
+    heatContainer: requireElement(container, '.heat-container'),
+    hullValue: requireElement(container, '.hull-value'),
+    shieldValue: requireElement(container, '.shield-value'),
+    heatValue: requireElement(container, '.heat-value'),
     reticleCanvas,
     weaponDisplay,
     radarDisplay,
     targetStats,
     targetCamera,
     alliedDisplay,
-    matchSpeedIndicator: container.querySelector(
-      '.match-speed-indicator',
-    ) as HTMLElement,
+    matchSpeedIndicator: requireElement(container, '.match-speed-indicator'),
     dispose,
   };
 }

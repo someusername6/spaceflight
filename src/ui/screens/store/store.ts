@@ -74,13 +74,8 @@ const StoreScreenComponent: Screen<StoreState, StoreProps> = {
     const state = api.getState();
     const { onNavigate, onStateUpdate } = props;
 
-    // Bind navigation bar
-    // Note: bindNavBar uses addEventListener directly, so we query for this
-    // screen's element to avoid finding hidden screens' nav bars
-    const screenEl = document.querySelector<HTMLElement>('#screen-store');
-    if (screenEl) {
-      bindNavBar(screenEl, onNavigate);
-    }
+    // Bind navigation bar (uses Screen framework's event delegation)
+    bindNavBar(api, onNavigate);
 
     // Category buttons
     api.on('[data-cat]', 'click', (_e, el) => {

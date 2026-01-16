@@ -3,6 +3,8 @@
  *
  * Displays available ships (empty active ships and stored ships) using
  * the same visual style as the ship card buttons in pilot-viewer.
+ *
+ * Converted to use Screen framework for automatic event cleanup.
  */
 
 import {
@@ -11,16 +13,36 @@ import {
   unassignPilot,
 } from '../../campaign/loadout';
 import type { CampaignState } from '../../campaign/types';
+import type { Screen, ScreenHandle } from '../framework/screen';
+import { createScreen } from '../framework/screen';
 import { getShipIconPath, iconErrorHandler } from '../ship/viewer';
 
-/** Currently active ship picker element */
-let activeShipPicker: HTMLElement | null = null;
+/** Ship picker state */
+interface ShipPickerState {
+  pilotId: string;
+  currentShipId: string;
+  campaignState: CampaignState;
+}
+
+/** Ship picker props */
+interface ShipPickerProps {
+  onStateUpdate: (newState: CampaignState) => void;
+  onClose: () => void;
+}
+
+/** Currently active ship picker handle and container */
+let activeHandle: ScreenHandle<ShipPickerState, ShipPickerProps> | null = null;
+let activeContainer: HTMLElement | null = null;
 
 /** Close any open ship picker */
 export function closeShipPicker(): void {
-  if (activeShipPicker) {
-    activeShipPicker.remove();
-    activeShipPicker = null;
+  if (activeHandle) {
+    activeHandle.destroy();
+    activeHandle = null;
+  }
+  if (activeContainer) {
+    activeContainer.remove();
+    activeContainer = null;
   }
 }
 
@@ -65,104 +87,147 @@ function groupStoredShipsByClass(
   }));
 }
 
-/** Render ship picker content */
-function renderShipPickerContent(
-  currentShipId: string,
-  state: CampaignState,
-): string {
-  const emptyShips = state.ships.filter(
-    (s) => s.pilot === null && s.id !== currentShipId,
-  );
-  const storedShips = state.storedShips;
+/** The ship picker screen definition */
+const ShipPickerScreen: Screen<ShipPickerState, ShipPickerProps> = {
+  render(state, _props) {
+    const { currentShipId, campaignState } = state;
+    const emptyShips = campaignState.ships.filter(
+      (s) => s.pilot === null && s.id !== currentShipId,
+    );
+    const storedShips = campaignState.storedShips;
 
-  const scrollableSections: string[] = [];
+    const scrollableSections: string[] = [];
 
-  // Empty active ships section
-  if (emptyShips.length > 0) {
-    const shipCards = emptyShips
-      .map((ship) =>
-        renderShipCard(
-          ship.shipClass,
-          `data-action="swap-to-ship" data-ship-id="${ship.id}"`,
-        ),
-      )
-      .join('');
+    // Empty active ships section
+    if (emptyShips.length > 0) {
+      const shipCards = emptyShips
+        .map((ship) =>
+          renderShipCard(
+            ship.shipClass,
+            `data-action="swap-to-ship" data-ship-id="${ship.id}"`,
+          ),
+        )
+        .join('');
 
-    scrollableSections.push(`
-      <div class="ship-picker-section">
-        <div class="ship-picker-section-label">Available Ships</div>
-        <div class="ship-picker-grid">${shipCards}</div>
+      scrollableSections.push(`
+        <div class="ship-picker-section">
+          <div class="ship-picker-section-label">Available Ships</div>
+          <div class="ship-picker-grid">${shipCards}</div>
+        </div>
+      `);
+    }
+
+    // Stored ships section (grouped by ship class)
+    if (storedShips.length > 0) {
+      const groupedShips = groupStoredShipsByClass(storedShips);
+      const shipCards = groupedShips
+        .map((group) =>
+          renderShipCard(
+            group.shipClass,
+            `data-action="swap-to-stored-ship" data-stored-ship-index="${group.firstIndex}"`,
+            group.count,
+          ),
+        )
+        .join('');
+
+      scrollableSections.push(`
+        <div class="ship-picker-section">
+          <div class="ship-picker-section-label">Stored Ships</div>
+          <div class="ship-picker-grid">${shipCards}</div>
+        </div>
+      `);
+    }
+
+    // No options message (if no ships available)
+    if (emptyShips.length === 0 && storedShips.length === 0) {
+      scrollableSections.push(`
+        <div class="ship-picker-empty">
+          No other ships available
+        </div>
+      `);
+    }
+
+    // Scrollable content area + sticky unassign footer
+    return `
+      <div class="ship-picker-content">
+        ${scrollableSections.join('')}
       </div>
-    `);
-  }
-
-  // Stored ships section (grouped by ship class)
-  if (storedShips.length > 0) {
-    const groupedShips = groupStoredShipsByClass(storedShips);
-    const shipCards = groupedShips
-      .map((group) =>
-        renderShipCard(
-          group.shipClass,
-          `data-action="swap-to-stored-ship" data-stored-ship-index="${group.firstIndex}"`,
-          group.count,
-        ),
-      )
-      .join('');
-
-    scrollableSections.push(`
-      <div class="ship-picker-section">
-        <div class="ship-picker-section-label">Stored Ships</div>
-        <div class="ship-picker-grid">${shipCards}</div>
+      <div class="ship-picker-footer">
+        <button class="btn btn-danger ship-picker-unassign" data-action="unassign">
+          Unassign Pilot
+        </button>
       </div>
-    `);
-  }
+    `;
+  },
 
-  // No options message (if no ships available)
-  if (emptyShips.length === 0 && storedShips.length === 0) {
-    scrollableSections.push(`
-      <div class="ship-picker-empty">
-        No other ships available
-      </div>
-    `);
-  }
+  bind(api, props) {
+    const { onStateUpdate, onClose } = props;
 
-  // Scrollable content area + sticky unassign footer
-  return `
-    <div class="ship-picker-content">
-      ${scrollableSections.join('')}
-    </div>
-    <div class="ship-picker-footer">
-      <button class="btn btn-danger ship-picker-unassign" data-action="unassign">
-        Unassign Pilot
-      </button>
-    </div>
-  `;
-}
+    // Handle action buttons
+    api.on('[data-action]', 'click', (e, el) => {
+      e.stopPropagation();
+      const state = api.getState();
+      const action = el.dataset.action;
+      let newState = state.campaignState;
 
-/** Show ship picker popover */
-export function showShipPicker(
-  triggerElement: HTMLElement,
-  pilotId: string,
-  currentShipId: string,
-  state: CampaignState,
-  onStateUpdate: (newState: CampaignState) => void,
-  onRerender: () => void,
-): void {
-  closeShipPicker();
+      switch (action) {
+        case 'swap-to-ship': {
+          const shipId = el.dataset.shipId;
+          if (shipId) {
+            newState = swapPilotToShip(
+              state.campaignState,
+              state.pilotId,
+              shipId,
+            );
+          }
+          break;
+        }
+        case 'swap-to-stored-ship': {
+          const storedShipIndex = parseInt(
+            el.dataset.storedShipIndex ?? '-1',
+            10,
+          );
+          if (storedShipIndex >= 0) {
+            newState = swapPilotToStoredShip(
+              state.campaignState,
+              state.currentShipId,
+              storedShipIndex,
+            );
+          }
+          break;
+        }
+        case 'unassign': {
+          newState = unassignPilot(state.campaignState, state.currentShipId);
+          break;
+        }
+      }
 
-  const picker = document.createElement('div');
-  picker.className = 'ship-picker';
-  picker.innerHTML = renderShipPickerContent(currentShipId, state);
+      if (newState !== state.campaignState) {
+        onStateUpdate(newState);
+      }
+      onClose();
+    });
 
-  // Position relative to trigger
-  const triggerRect = triggerElement.getBoundingClientRect();
-  picker.style.position = 'fixed';
-  picker.style.zIndex = '1000';
+    // Close on outside click
+    // Use requestAnimationFrame to defer registration until after the current
+    // click event has finished processing, ensuring the triggering click doesn't
+    // immediately close the picker. The listener is still tracked for cleanup.
+    requestAnimationFrame(() => {
+      // Check if we're still mounted (handle destroyed before rAF fires)
+      if (!activeContainer) return;
 
-  document.body.appendChild(picker);
-  activeShipPicker = picker;
+      api.onGlobal('click', (e) => {
+        const container = activeContainer;
+        if (container && !container.contains(e.target as Node)) {
+          onClose();
+        }
+      });
+    });
+  },
+};
 
-  // Position after adding to DOM (so we can measure)
+/** Position picker relative to trigger element */
+function positionPicker(picker: HTMLElement, triggerRect: DOMRect): void {
   const pickerRect = picker.getBoundingClientRect();
   const padding = 12;
 
@@ -189,63 +254,49 @@ export function showShipPicker(
 
   picker.style.left = `${left}px`;
   picker.style.top = `${top}px`;
+}
 
-  // Bind events
-  picker.querySelectorAll<HTMLElement>('[data-action]').forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const action = btn.dataset.action;
-      let newState = state;
+/** Show ship picker popover */
+export function showShipPicker(
+  triggerElement: HTMLElement,
+  pilotId: string,
+  currentShipId: string,
+  state: CampaignState,
+  onStateUpdate: (newState: CampaignState) => void,
+  onRerender: () => void,
+): void {
+  closeShipPicker();
 
-      switch (action) {
-        case 'swap-to-ship': {
-          const shipId = btn.dataset.shipId;
-          if (shipId) {
-            newState = swapPilotToShip(state, pilotId, shipId);
-          }
-          break;
-        }
-        case 'swap-to-stored-ship': {
-          const storedShipIndex = parseInt(
-            btn.dataset.storedShipIndex ?? '-1',
-            10,
-          );
-          if (storedShipIndex >= 0) {
-            newState = swapPilotToStoredShip(
-              state,
-              currentShipId,
-              storedShipIndex,
-            );
-          }
-          break;
-        }
-        case 'unassign': {
-          newState = unassignPilot(state, currentShipId);
-          break;
-        }
-      }
+  // Create container
+  const container = document.createElement('div');
+  container.className = 'ship-picker';
+  container.style.position = 'fixed';
+  container.style.zIndex = '1000';
 
-      if (newState !== state) {
-        onStateUpdate(newState);
-      }
-      closeShipPicker();
-      onRerender();
-    });
-  });
+  document.body.appendChild(container);
+  activeContainer = container;
 
-  // Close on outside click
-  const closeOnOutsideClick = (e: MouseEvent) => {
-    if (activeShipPicker && !activeShipPicker.contains(e.target as Node)) {
-      closeShipPicker();
-      document.removeEventListener('click', closeOnOutsideClick);
-    }
-  };
-  setTimeout(() => {
-    document.addEventListener('click', closeOnOutsideClick);
-  }, 0);
+  // Create screen handle
+  const handle = createScreen(
+    ShipPickerScreen,
+    container,
+    { pilotId, currentShipId, campaignState: state },
+    {
+      onStateUpdate,
+      onClose: () => {
+        closeShipPicker();
+        onRerender();
+      },
+    },
+  );
+  activeHandle = handle;
+
+  // Position after adding to DOM (so we can measure)
+  const triggerRect = triggerElement.getBoundingClientRect();
+  positionPicker(container, triggerRect);
 }
 
 /** Check if ship picker is currently open */
 export function isShipPickerOpen(): boolean {
-  return activeShipPicker !== null;
+  return activeContainer !== null;
 }

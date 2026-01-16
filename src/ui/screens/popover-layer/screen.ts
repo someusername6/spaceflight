@@ -123,23 +123,20 @@ export const PopoverLayerScreen: Screen<PopoverLayerState, PopoverLayerProps> =
 // ============================================================================
 
 function bindMouseTracking(api: ScreenAPI<PopoverLayerState>): void {
-  const root = api.getRoot();
-  const popovers = root.querySelectorAll<HTMLElement>('.weapon-popover');
+  // Use onDirect for non-bubbling events (mouseenter/mouseleave)
+  // This ensures proper cleanup through the Screen framework
+  api.onDirect('.weapon-popover', 'mouseenter', () => {
+    api.updateState({ isMouseOverPopover: true });
+    cancelCloseTimeout(api);
+  });
 
-  for (const popover of popovers) {
-    popover.addEventListener('mouseenter', () => {
-      api.updateState({ isMouseOverPopover: true });
-      cancelCloseTimeout(api);
-    });
-
-    popover.addEventListener('mouseleave', () => {
-      api.updateState({ isMouseOverPopover: false });
-      const currentState = api.getState();
-      if (currentState.main?.visibility !== 'pinned') {
-        scheduleClose(api);
-      }
-    });
-  }
+  api.onDirect('.weapon-popover', 'mouseleave', () => {
+    api.updateState({ isMouseOverPopover: false });
+    const currentState = api.getState();
+    if (currentState.main?.visibility !== 'pinned') {
+      scheduleClose(api);
+    }
+  });
 }
 
 function bindClickToPin(api: ScreenAPI<PopoverLayerState>): void {

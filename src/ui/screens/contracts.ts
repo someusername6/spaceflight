@@ -224,8 +224,8 @@ const ContractsScreenComponent: Screen<ContractsState, ContractsProps> = {
       props;
     const currentSector = props.campaignState.currentSector;
 
-    // Bind navigation bar
-    bindNavBar(api.getRoot(), onNavigate);
+    // Bind navigation bar (uses Screen framework's event delegation)
+    bindNavBar(api, onNavigate);
 
     // Contract list item clicks (selection toggle)
     api.on('.contract-list-item', 'click', (_e, el) => {
