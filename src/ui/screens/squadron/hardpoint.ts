@@ -7,17 +7,21 @@
  */
 
 import { getSlot } from '../../../campaign/slot-array';
-import type { CampaignState } from '../../../campaign/types';
-import type { ScreenAPI } from '../../framework/screen';
+import type {
+  EquippedPrimary,
+  EquippedSecondary,
+} from '../../../campaign/types';
+import { getBankSize } from '../popover/equip';
 import {
-  hideWeaponPopoverIfNotPinned,
-  pinWeaponPopover,
-  setChangeWeaponHandler,
-  showWeaponPicker,
-  showWeaponPopover,
-  showWeaponSwapPicker,
-} from '../popover/equip';
-import type { SquadronProps, SquadronState } from './bind-events';
+  closePopovers,
+  hidePopoverIfNotPinned,
+  pinCurrentPopover,
+  showEmptySlotPicker,
+  showPrimaryWeaponPopover,
+  showSecondaryWeaponPopover,
+  updatePopoverCampaignState,
+} from '../popover-layer';
+import type { SquadronProps } from './bind-events';
 
 /** Tracked listener for cleanup */
 interface TrackedListener {
@@ -33,12 +37,12 @@ let hardpointCleanup: (() => void) | null = null;
 export function destroyHardpointListeners(): void {
   hardpointCleanup?.();
   hardpointCleanup = null;
+  closePopovers();
 }
 
 /** Bind hardpoint slot interactions */
 export function bindHardpointEvents(
   element: HTMLElement,
-  api: ScreenAPI<SquadronState>,
   props: SquadronProps,
 ): void {
   // Clean up previous listeners to prevent stale closures
@@ -62,18 +66,8 @@ export function bindHardpointEvents(
     listeners.length = 0;
   };
 
-  // Set up the change weapon handler for popovers
-  setChangeWeaponHandler(showWeaponSwapPicker);
-
-  // Helper to update campaign state
-  const onStateChange = (newState: CampaignState) => {
-    if (props.onStateUpdate) {
-      props.onStateUpdate(newState);
-    }
-  };
-
-  // Helper to trigger re-render
-  const rerender = () => api.setState({});
+  // Update popover layer with current campaign state
+  updatePopoverCampaignState(props.campaignState);
 
   element.querySelectorAll<HTMLElement>('.schematic-slot').forEach((el) => {
     const slotType = el.dataset.type as 'primary' | 'secondary';
@@ -96,51 +90,57 @@ export function bindHardpointEvents(
 
       // Hover: show popover preview
       addListener(el, 'mouseenter', () => {
-        showWeaponPopover(
-          el,
-          props.campaignState,
-          shipId,
-          slotType,
-          slotIndex,
-          weapon,
-          onStateChange,
-          rerender,
-        );
+        if (slotType === 'primary') {
+          showPrimaryWeaponPopover(
+            el,
+            weapon as EquippedPrimary,
+            shipId,
+            slotIndex,
+            false,
+          );
+        } else {
+          showSecondaryWeaponPopover(
+            el,
+            weapon as EquippedSecondary,
+            shipId,
+            slotIndex,
+            false,
+          );
+        }
       });
 
       // Click: pin the popover
       addListener(el, 'click', (e) => {
         e.stopPropagation();
-        pinWeaponPopover();
+        pinCurrentPopover();
       });
 
       // Leave: hide only if not pinned
       addListener(el, 'mouseleave', () => {
-        hideWeaponPopoverIfNotPinned();
+        hidePopoverIfNotPinned();
       });
     } else {
       // Empty slot: hover to preview, click to pin
       addListener(el, 'mouseenter', () => {
-        showWeaponPicker(
-          el,
+        // Get bank size for this specific slot from ship archetype
+        const bankSize = getBankSize(
           props.campaignState,
           shipId,
           slotType,
           slotIndex,
-          onStateChange,
-          rerender,
         );
+        showEmptySlotPicker(el, slotType, shipId, slotIndex, [bankSize], false);
       });
 
       // Click: pin the picker
       addListener(el, 'click', (e) => {
         e.stopPropagation();
-        pinWeaponPopover();
+        pinCurrentPopover();
       });
 
       // Leave: hide only if not pinned
       addListener(el, 'mouseleave', () => {
-        hideWeaponPopoverIfNotPinned();
+        hidePopoverIfNotPinned();
       });
     }
   });

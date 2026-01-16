@@ -18,7 +18,7 @@ import type { CampaignState } from '../../../campaign/types';
 import type { NavDestination } from '../../common/nav-bar';
 import { showNotification } from '../../common/notification';
 import type { ScreenAPI } from '../../framework/screen';
-import { closeWeaponPicker } from '../popover/equip';
+import { closePopovers } from '../popover-layer';
 import { showShipPicker } from '../ship-picker';
 import { bindHardpointEvents } from './hardpoint';
 import type { ListSelection } from './list';
@@ -75,7 +75,7 @@ export function bindSquadronEvents(
       const newSelection: ListSelection = isSelected
         ? { type: 'none', id: null }
         : { type: 'deployed', id: shipId };
-      closeWeaponPicker();
+      closePopovers();
       api.setState({ selection: newSelection, activeTab: 'loadout' });
     }
   });
@@ -261,7 +261,7 @@ export function bindSquadronEvents(
   });
 
   // Hardpoint events (uses non-bubbling events, needs special handling)
-  bindHardpointEvents(element, api, props);
+  bindHardpointEvents(element, props);
 
   // Weapon badge tooltip positioning (fixed positioning needs JS)
   const TOOLTIP_OFFSET = 12; // Matches --space-3

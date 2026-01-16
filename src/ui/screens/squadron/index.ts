@@ -31,6 +31,7 @@ import {
   destroyShipConnectors,
   initShipConnectors,
 } from '../../ship/connectors';
+import { mountPopoverLayer, unmountPopoverLayer } from '../popover-layer';
 import { renderPilotViewer } from '../roster/pilot-viewer';
 import { renderRecruitViewer } from '../roster/recruit-viewer';
 import { closeShipPicker } from '../ship-picker';
@@ -273,6 +274,16 @@ export function createSquadronUI(
     props,
   );
 
+  // Mount popover layer for weapon management
+  mountPopoverLayer(
+    () => props.campaignState,
+    (newState) => {
+      if (wrappedOnStateUpdate) {
+        wrappedOnStateUpdate(newState);
+      }
+    },
+  );
+
   // UI object with methods using closures
   const ui: SquadronUI = {
     element,
@@ -287,6 +298,7 @@ export function createSquadronUI(
     destroy() {
       destroyHardpointListeners();
       destroyViewerTabListeners();
+      unmountPopoverLayer();
       screenHandle?.destroy();
     },
   };

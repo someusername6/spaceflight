@@ -11,7 +11,7 @@
 import { pauseGame, resumeGame, stopGame } from '../../game';
 import { goToSettings, goToTitle, Screen } from '../../ui/common/screens';
 import { showPauseMenu } from '../../ui/screens/pause-menu';
-import { closePopover } from '../../ui/screens/popover/state';
+import { closePopovers } from '../../ui/screens/popover-layer';
 import { cleanupTitleScreen, resetTitleScreen } from '../../ui/screens/title';
 import type { CampaignController } from '../controller-types';
 import { disposeMissionRenderers } from '../mission/mission-renderer';
@@ -68,7 +68,7 @@ export function setupEscapeHandler(
       }
 
       // Close any open popovers before showing pause menu
-      closePopover();
+      closePopovers();
 
       pauseMenuOpen = true;
       try {
