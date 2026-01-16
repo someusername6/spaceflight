@@ -8,7 +8,10 @@
  */
 
 import { resumeGame } from '../../game';
-import { setPlayerAutoaim } from '../../settings/game-settings';
+import {
+  type PlayerAutoaim,
+  setPlayerAutoaim,
+} from '../../settings/game-settings';
 import {
   getScreenElement,
   goBackFromLoadCampaign,
@@ -319,6 +322,21 @@ export async function setupSettingsScreen(
     onCampaignImported: (state: CampaignState) => {
       // Update campaign state in screen manager when imported
       updateCampaignState(screenManager, state);
+    },
+    onAutoaimChanged: (degrees: PlayerAutoaim) => {
+      // Sync autoaim change to campaign state (for non-ironman campaigns)
+      // This ensures the value persists when campaign is saved
+      const currentState = screenManager.campaignState;
+      if (currentState && !currentState.settings.ironmanMode) {
+        const newState = {
+          ...currentState,
+          settings: {
+            ...currentState.settings,
+            autoaimDegrees: degrees,
+          },
+        };
+        updateCampaignState(screenManager, newState);
+      }
     },
   });
 

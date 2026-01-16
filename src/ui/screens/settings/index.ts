@@ -4,8 +4,8 @@
 
 import {
   downloadCampaign,
-  getCampaignMetadata,
-  hasCampaign,
+  getActiveSlotId,
+  getSlotMetadata,
   openCampaignFile,
 } from '../../../campaign/storage';
 import type { CampaignState } from '../../../campaign/types';
@@ -51,6 +51,8 @@ export interface SettingsScreenCallbacks {
   onBack: () => void;
   /** Called when a campaign is imported, with the new state */
   onCampaignImported?: (state: CampaignState) => void;
+  /** Called when autoaim is changed (for syncing to campaign state) */
+  onAutoaimChanged?: (degrees: PlayerAutoaim) => void;
 }
 
 /** Register an outside-click handler that closes a popover when clicking outside */
@@ -130,9 +132,12 @@ const SettingsScreenComponent: Screen<SettingsState, SettingsScreenCallbacks> =
           const value = Number.parseInt(fps, 10) as FrameRateCap;
           setFrameRateCap(value);
           api.setState({ showFpsPopover: false });
-        } else if (autoaim !== undefined) {
+        } else if (autoaim !== undefined && !state.ironmanCampaign) {
+          // Only allow autoaim changes for non-ironman campaigns
+          // (UI should be locked, but this is belt-and-suspenders protection)
           const value = Number.parseFloat(autoaim) as PlayerAutoaim;
           setPlayerAutoaim(value);
+          props.onAutoaimChanged?.(value);
           api.setState({ showAutoaimPopover: false });
         }
       });
@@ -294,13 +299,16 @@ export async function bindSettingsScreen(
   screenHandle?.destroy();
   cleanupKeyListener();
 
-  // Check if campaign exists and if it's ironman
+  // Check if there's an active campaign and if it's ironman
+  // Must use getActiveSlotId() to get the CURRENTLY LOADED campaign,
+  // not just any existing campaign (which getCampaignMetadata would return)
   let campaignExists = false;
   let isIronman = false;
   try {
-    campaignExists = await hasCampaign();
-    if (campaignExists) {
-      const metadata = await getCampaignMetadata();
+    const activeSlotId = getActiveSlotId();
+    if (activeSlotId) {
+      const metadata = await getSlotMetadata(activeSlotId);
+      campaignExists = metadata.exists;
       isIronman = metadata.ironmanMode ?? false;
     }
   } catch {
