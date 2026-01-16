@@ -103,7 +103,7 @@ const ReplaysScreenComponent: Screen<ReplaysState, ReplaysScreenProps> = {
     });
 
     // Tab switching
-    api.on('.replay-tab', 'click', (_e, el) => {
+    api.on('.replay-detail-tabs .btn', 'click', (_e, el) => {
       const tab = el.dataset.tab as DetailTab | undefined;
       if (tab) {
         api.setState({ selectedTab: tab });

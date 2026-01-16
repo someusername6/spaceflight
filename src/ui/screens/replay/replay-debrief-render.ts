@@ -178,14 +178,11 @@ export function renderDebriefTab(replay: FullReplayData): string {
     `;
   }
 
-  const { missionDuration, pilots } = replay.debriefData;
+  const { pilots } = replay.debriefData;
   const pilotCards = pilots.map((p) => renderPilotCard(p)).join('');
 
   return `
     <div class="replay-tab-content replay-debrief-tab">
-      <div class="replay-debrief-header">
-        <span class="duration">Duration: ${formatTime(missionDuration)}</span>
-      </div>
       <div class="replay-pilot-cards">
         ${pilotCards}
       </div>

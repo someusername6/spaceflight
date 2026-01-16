@@ -159,11 +159,11 @@ function renderTabs(selectedTab: DetailTab): string {
   ];
 
   return `
-    <div class="replay-detail-tabs">
+    <div class="replay-detail-tabs" role="tablist">
       ${tabs
         .map(
           (tab) => `
-        <button class="replay-tab ${tab.id === selectedTab ? 'active' : ''}" data-tab="${tab.id}">
+        <button class="btn ${tab.id === selectedTab ? 'btn-primary' : ''}" data-tab="${tab.id}" role="tab" aria-selected="${tab.id === selectedTab}">
           ${tab.label}
         </button>
       `,
@@ -214,14 +214,13 @@ export function renderDetailPanel(state: ReplaysState): string {
   return `
     <div class="replay-detail-content">
       <div class="replay-detail-header">
-        <h3 class="replay-detail-mission">${escapeHtml(meta.missionName)}</h3>
-        <span class="replay-detail-outcome ${outcome.class}">${outcome.text}</span>
-      </div>
-
-      <div class="replay-detail-info-bar">
-        <span>S${meta.sector}</span>
-        <span>${formatDuration(durationSecs)}</span>
-        <span>${formatDateLong(meta.recordedAt)}</span>
+        <div class="replay-detail-title-row">
+          <h3 class="replay-detail-mission">${escapeHtml(meta.missionName)}</h3>
+          <span class="replay-detail-outcome ${outcome.class}">${outcome.text}</span>
+        </div>
+        <div class="replay-detail-meta">
+          S${meta.sector} &middot; ${formatDuration(durationSecs)} &middot; ${formatDateLong(meta.recordedAt)}
+        </div>
       </div>
 
       ${renderTabs(state.selectedTab)}
