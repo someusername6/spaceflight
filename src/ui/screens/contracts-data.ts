@@ -43,6 +43,7 @@ const REPLAY_REWARD_MULTIPLIER = 0.5;
  * @param count - Number of contracts to show (default 4)
  * @param completedIds - IDs of already completed missions to exclude
  * @param refreshCount - Number of times contracts have been refreshed (for variation)
+ * @param excludeIds - IDs of contracts to exclude (e.g., currently shown contracts during refresh)
  */
 export function generateContracts(
   sector: number,
@@ -51,6 +52,7 @@ export function generateContracts(
   count = 4,
   completedIds: string[] = [],
   refreshCount = 0,
+  excludeIds: string[] = [],
 ): GeneratedContracts {
   // Get all missions for this sector that haven't been completed
   const allSectorMissions = getMissionsForSector(sector);
@@ -61,7 +63,11 @@ export function generateContracts(
   const isReplayMode = available.length === 0;
 
   // Use full pool if in replay mode, otherwise use available missions
-  const pool = isReplayMode ? allSectorMissions : available;
+  // Also exclude any specified IDs (e.g., currently shown contracts during refresh)
+  const basePool = isReplayMode ? allSectorMissions : available;
+  const filteredPool = basePool.filter((m) => !excludeIds.includes(m.id));
+  // Fall back to basePool if exclusions leave nothing (edge case: sector has exactly `count` missions)
+  const pool = filteredPool.length > 0 ? filteredPool : basePool;
 
   // Use derived PRNG for deterministic selection (prevents save scumming)
   // Include refreshCount in seed so refreshing gives different results

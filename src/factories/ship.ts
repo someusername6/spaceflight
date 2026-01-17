@@ -10,6 +10,7 @@ import { createCombatStats } from '../components/combat-stats';
 import { createFaction } from '../components/faction';
 import { createHealth } from '../components/health';
 import { createHeat } from '../components/heat';
+import { createHullCollider } from '../components/hull-collider';
 import { createSecondaryWeaponFromDef } from '../components/missile';
 import {
   createPhysics,
@@ -34,6 +35,7 @@ import type { Entity, World } from '../core/types';
 import { Faction } from '../core/types';
 import { getProfileForPlaystyle, type ProfileName } from '../data/ai-profiles';
 import { getWeaponStats } from '../data/weapons';
+import { SHIP_GEOMETRIES, type ShipClass } from '../rendering/ship-geometries';
 import { initWeaponAmmoCounts } from '../systems/stats';
 import { validateArchetypeLoadout } from './archetype-validation';
 import { ENEMY_ARCHETYPES } from './enemy-archetypes/index';
@@ -83,6 +85,43 @@ function calculatePreferredCombatRange(stats: ShipStats): number {
 
 // Re-export for backwards compatibility
 export { SHIP_ARCHETYPES } from './ship-archetypes';
+
+/**
+ * Add hull collider to a ship entity if geometry data exists.
+ * Uses ship class name to look up hull planes and volume.
+ *
+ * @param world - ECS world
+ * @param entity - Entity to add collider to
+ * @param shipClassName - Ship class name (must match a key in SHIP_GEOMETRIES)
+ * @param useHullForWeapons - If true, use hull for projectile/missile detection (large ships only)
+ */
+export function addHullColliderFromClass(
+  world: World,
+  entity: Entity,
+  shipClassName: string,
+  useHullForWeapons = false,
+): void {
+  // Check if ship class has hull data
+  if (!(shipClassName in SHIP_GEOMETRIES)) {
+    return; // No geometry data, skip hull collider
+  }
+
+  const geometry = SHIP_GEOMETRIES[shipClassName as ShipClass];
+  if (!geometry.hull) {
+    return; // No hull data for this geometry
+  }
+
+  addComponent(
+    world,
+    entity,
+    createHullCollider(
+      geometry.hull,
+      geometry.hullBoundingRadius,
+      geometry.hullVolume,
+      useHullForWeapons,
+    ),
+  );
+}
 
 /** Creates a player-controlled ship */
 export function createPlayerShip(
@@ -155,6 +194,7 @@ export function createPlayerShip(
   }
 
   addComponent(world, entity, createCollision(stats.collisionRadius));
+  addHullColliderFromClass(world, entity, stats.shipClassName, false);
 
   // Add combat stats tracking
   addComponent(world, entity, createCombatStats());
@@ -263,6 +303,7 @@ export function createAIShip(
   }
 
   addComponent(world, entity, createCollision(stats.collisionRadius * 1.5)); // AI has larger hitbox
+  addHullColliderFromClass(world, entity, stats.shipClassName, false);
 
   // Add combat stats tracking
   addComponent(world, entity, createCombatStats());

@@ -11,6 +11,7 @@ import { aiSystem } from './systems/ai/ai';
 import { aimErrorSystem } from './systems/aim-error';
 import { cleanupSystem } from './systems/cleanup';
 import { collisionSystem } from './systems/collision';
+import { collisionResponseSystem } from './systems/collision-response';
 import { convoyAutopilotSystem } from './systems/convoy-autopilot';
 import { damageSystem } from './systems/damage';
 import { decoySystem } from './systems/decoys';
@@ -54,13 +55,14 @@ export const TICK_SEC = 1 / TICK_RATE;
  * 9. projectiles - Move projectiles (separate from ship physics)
  * 10. missiles - Move missiles with tracking (after projectiles)
  * 11. decoys - Move decoys, destroy missiles on contact
- * 12. collision - Detect collisions after movement
- * 13. damage - Apply damage from collisions/projectiles/missiles
- * 14. shields - Regenerate shields after damage delay
- * 15. heat - Cool down weapon heat
- * 16. cleanup - Remove dead entities, spawn explosions
- * 17. explosions - Update explosion effects
- * 18. mission - Check win/lose after cleanup
+ * 12. collision - Detect collisions
+ * 13. collisionResponse - Push colliding ships apart (impulse response)
+ * 14. damage - Apply damage from collisions/projectiles/missiles
+ * 15. shields - Regenerate shields after damage delay
+ * 16. heat - Cool down weapon heat
+ * 17. cleanup - Remove dead entities, spawn explosions
+ * 18. explosions - Update explosion effects
+ * 19. mission - Check win/lose after cleanup
  */
 /**
  * Simulation systems (without input handling).
@@ -79,12 +81,13 @@ export const SIMULATION_SYSTEMS: SystemFn[] = [
   missileSystem, // 9. Move missiles with tracking (decoy seduction here)
   decoySystem, // 10. Move decoys, destroy missiles on contact
   collisionSystem, // 11. Detect collisions
-  damageSystem, // 12. Apply damage
-  shieldSystem, // 13. Regenerate shields
-  heatSystem, // 14. Cool heat
-  cleanupSystem, // 15. Remove dead entities, spawn explosions
-  explosionSystem, // 16. Update explosion effects
-  missionSystem, // 17. Check win/lose
+  collisionResponseSystem, // 12. Push colliding ships apart
+  damageSystem, // 13. Apply damage
+  shieldSystem, // 14. Regenerate shields
+  heatSystem, // 15. Cool heat
+  cleanupSystem, // 16. Remove dead entities, spawn explosions
+  explosionSystem, // 17. Update explosion effects
+  missionSystem, // 18. Check win/lose
 ];
 
 /** Full system order including input (for live gameplay) */

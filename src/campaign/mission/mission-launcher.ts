@@ -5,7 +5,7 @@
 import { Quaternion, Vector3 } from 'three';
 import { logDebug, logError } from '../../core/logger';
 import { deriveKey } from '../../core/prng';
-import { getConvoyInitialSpeed } from '../../factories/convoy-ship';
+import { getConvoyMaxSpeed } from '../../factories/convoy-ship';
 import { createGame, startGame } from '../../game';
 import { InputRecorder } from '../../input/input-recorder';
 import type { ReplayWingman } from '../../replay/types';
@@ -108,9 +108,9 @@ export function launchMission(
     ? new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), Math.PI)
     : undefined;
 
-  // For escort missions, match initial speed with convoy ships
+  // For escort missions, all ships start at convoy max speed so formation stays together
   const escortInitialSpeed = isEscortMission
-    ? getConvoyInitialSpeed(contract.escortData!.convoyType)
+    ? getConvoyMaxSpeed(contract.escortData!.convoyType)
     : undefined;
 
   if (playerShip) {

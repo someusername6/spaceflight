@@ -16,7 +16,10 @@ import { logDebug } from '../../core/logger';
 import { randomRange } from '../../core/prng';
 import type { Entity, World } from '../../core/types';
 import { Faction } from '../../core/types';
-import { createConvoyShipEntity } from '../../factories/convoy-ship';
+import {
+  createConvoyShipEntity,
+  getConvoyCollisionRadius,
+} from '../../factories/convoy-ship';
 import { createEnemyShip } from '../../factories/ship';
 import { type Game, TICK_SEC } from '../../game';
 import { getConvoyCentroid } from '../../systems/ai/ai-utils';
@@ -45,6 +48,13 @@ export function setFactionBehaviorMode(
   }
 }
 
+/** Wingman spawn X offset (from mission-launcher.ts) */
+const WINGMAN_X_OFFSET = 20;
+/** Approximate wingman collision radius */
+const WINGMAN_COLLISION_RADIUS = 5;
+/** Safety margin between collision boundaries */
+const SPAWN_SAFETY_MARGIN = 10;
+
 /** Spawn convoy ships in formation alongside player/wingmen */
 export function spawnConvoyShips(
   world: World,
@@ -52,11 +62,16 @@ export function spawnConvoyShips(
   escapeZonePosition: Vector3,
 ): Entity[] {
   const entities: Entity[] = [];
-  const spacing = 60; // meters between convoy ships
+  const convoyRadius = getConvoyCollisionRadius(escortData.convoyType);
 
-  // Spawn convoy at Z=0 alongside player, with X offset to avoid wingmen (who are at ±20m)
-  // Place convoy ships further out on X axis: starting at ±50m
-  const baseXOffset = 50;
+  // Calculate spacing to avoid overlap:
+  // - Wingmen are at X=±20m with ~5m radius (outer edge at ~25m)
+  // - Convoy ships need center offset of: wingman_edge + convoy_radius + margin
+  const wingmanOuterEdge = WINGMAN_X_OFFSET + WINGMAN_COLLISION_RADIUS;
+  const baseXOffset = wingmanOuterEdge + convoyRadius + SPAWN_SAFETY_MARGIN;
+
+  // Spacing between convoy ships: 2 * convoy_radius + margin
+  const spacing = convoyRadius * 2 + SPAWN_SAFETY_MARGIN;
 
   for (let i = 0; i < escortData.convoySize; i++) {
     // Alternate left/right, spreading outward from base offset
@@ -65,11 +80,16 @@ export function spawnConvoyShips(
     const xOffset = side * (baseXOffset + rank * spacing);
     const position = new Vector3(xOffset, 0, 0);
 
+    // Each ship gets a destination that maintains their X offset
+    // This prevents convoy ships from converging and colliding
+    const shipDestination = escapeZonePosition.clone();
+    shipDestination.x = xOffset;
+
     const entity = createConvoyShipEntity(
       world,
       escortData.convoyType,
       position,
-      escapeZonePosition,
+      shipDestination,
       escortData.escapeZoneRadius,
       i,
     );
@@ -208,6 +228,8 @@ export function setupEscortMission(
     escortData.convoySize,
     escortData.spawnInterval,
     escortData.maxConcurrentEnemies,
+    escortData.initialSpawnCount,
+    escortData.spawnBatchSize,
   );
 
   logDebug('[ESCORT] Mission setup complete - enemies will spawn after delay');

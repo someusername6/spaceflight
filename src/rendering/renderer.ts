@@ -173,11 +173,13 @@ export function syncScene(renderer: Renderer, world: World, alpha = 1): void {
         mesh = createDecoyMesh(faction?.faction ?? Faction.Neutral);
       } else {
         // Get ship class from identity -> archetype -> shipClassName
+        // Falls back to using identity.archetype directly for convoy ships
+        // (transport/freighter aren't in archetype registry but have meshes)
         const identity = getComponent(world, entity, 'shipIdentity');
         const archetype = identity
           ? getArchetype(identity.archetype)
           : undefined;
-        const shipClass = archetype?.shipClassName;
+        const shipClass = archetype?.shipClassName ?? identity?.archetype;
         mesh = createShipMesh(faction?.faction ?? Faction.Neutral, shipClass);
       }
       scene.add(mesh);

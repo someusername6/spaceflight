@@ -23,6 +23,7 @@ import type { Explosion } from '../components/explosion';
 import type { FactionComponent } from '../components/faction';
 import type { Health } from '../components/health';
 import type { Heat } from '../components/heat';
+import type { HullCollider } from '../components/hull-collider';
 import type { Missile } from '../components/missile';
 import type { Physics } from '../components/physics';
 import type { PlayerControlled } from '../components/player';
@@ -49,6 +50,7 @@ export interface ComponentRegistry {
   physics: Physics;
   health: Health;
   collision: Collision;
+  hullCollider: HullCollider;
   faction: FactionComponent;
 
   // Control components

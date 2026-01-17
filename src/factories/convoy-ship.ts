@@ -18,29 +18,38 @@ import { createTransform } from '../components/transform';
 import { addComponent, createEntity } from '../core/ecs';
 import type { Entity, World } from '../core/types';
 import { Faction } from '../core/types';
+import { addHullColliderFromClass } from './ship';
 
-/** Stats for convoy freighter ships */
+/**
+ * Stats for convoy freighter ships (medium cargo hauler).
+ * Compared to fighters: slower, less maneuverable, but tougher.
+ * Reference: Fighter has hull=90, shields=65, maxSpeed=125, turnRate=100°/s
+ */
 const CONVOY_FREIGHTER_STATS = {
-  maxSpeed: 120,
-  acceleration: 25,
-  turnRate: 0.3,
-  rollRate: 0.2,
-  hull: 150,
-  shields: 80,
-  shieldRegen: 4,
+  maxSpeed: 70, // Slower than all fighters (slowest fighter: 90)
+  acceleration: 20,
+  turnRate: 45, // Degrees/sec - sluggish compared to fighters (70-120)
+  rollRate: 60, // Degrees/sec
+  hull: 200, // ~2x fighter
+  shields: 100, // ~1.5x fighter
+  shieldRegen: 6,
   shieldDelay: 3,
   collisionRadius: 20,
 };
 
-/** Stats for convoy transport ships (larger, slower) */
+/**
+ * Stats for convoy transport ships (large cargo hauler).
+ * Very slow and unwieldy, but heavily armored.
+ * Reference: Defender (tankiest fighter) has hull=165, shields=130
+ */
 const CONVOY_TRANSPORT_STATS = {
-  maxSpeed: 80,
-  acceleration: 15,
-  turnRate: 0.2,
-  rollRate: 0.15,
-  hull: 300,
-  shields: 150,
-  shieldRegen: 6,
+  maxSpeed: 55, // Very slow - lumbering cargo ship
+  acceleration: 12,
+  turnRate: 30, // Degrees/sec - very sluggish
+  rollRate: 40, // Degrees/sec
+  hull: 450, // ~3x defender, ~5x fighter
+  shields: 250, // ~2x defender, ~4x fighter
+  shieldRegen: 8,
   shieldDelay: 4,
   collisionRadius: 35,
 };
@@ -57,10 +66,16 @@ function getConvoyStats(shipType: ConvoyShipType) {
   }
 }
 
-/** Get initial speed for convoy ships (for matching player/wingmen speed) */
-export function getConvoyInitialSpeed(shipType: ConvoyShipType): number {
+/** Get max speed for convoy ships (for matching player/wingmen initial speed) */
+export function getConvoyMaxSpeed(shipType: ConvoyShipType): number {
   const stats = getConvoyStats(shipType);
-  return stats.maxSpeed * 0.5;
+  return stats.maxSpeed;
+}
+
+/** Get collision radius for convoy ships (for spawn spacing calculations) */
+export function getConvoyCollisionRadius(shipType: ConvoyShipType): number {
+  const stats = getConvoyStats(shipType);
+  return stats.collisionRadius;
 }
 
 /**
@@ -99,7 +114,7 @@ export function createConvoyShipEntity(
       acceleration: stats.acceleration,
       turnRate: stats.turnRate,
       rollRate: stats.rollRate,
-      initialSpeed: getConvoyInitialSpeed(shipType),
+      initialSpeed: stats.maxSpeed, // Start at max speed to match player/wingmen
     }),
   );
 
@@ -119,6 +134,10 @@ export function createConvoyShipEntity(
   addComponent(world, entity, createShipIdentity(shipType, callsign));
 
   addComponent(world, entity, createCollision(stats.collisionRadius));
+
+  // Add hull collider for ship-ship collision and weapon detection
+  // Large convoy ships use hull for everything (useHullForWeapons = true)
+  addHullColliderFromClass(world, entity, shipType, true);
 
   // Convoy-specific components
   addComponent(world, entity, createConvoyShip(index));

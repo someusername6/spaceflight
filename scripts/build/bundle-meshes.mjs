@@ -12,102 +12,18 @@
  * Writes to src/rendering/ship-geometries.ts
  */
 
-import { access, readdir, readFile, writeFile } from 'node:fs/promises';
+import { access, readdir, writeFile } from 'node:fs/promises';
 import { NodeIO } from '@gltf-transform/core';
+import {
+  computeBoundingRadius,
+  computeConvexHull,
+  computeHullVolume,
+} from './hull-utils.mjs';
+import { extractSvgBounds } from './svg-utils.mjs';
 
 const MESH_DIR = 'src/assets/meshes';
 const SVG_DIR = 'src/assets/icons/ships';
 const OUTPUT_FILE = 'src/rendering/ship-geometries.ts';
-
-/**
- * Parse an SVG path and extract the bounding box of its content.
- * Handles M, L, H, V, Z commands (absolute only - our SVGs use these).
- */
-function parseSvgPathBounds(pathData) {
-  let minX = Infinity,
-    maxX = -Infinity;
-  let minY = Infinity,
-    maxY = -Infinity;
-  let currentX = 0,
-    currentY = 0;
-
-  // Tokenize path: split on commands while keeping command letters
-  const tokens = pathData.match(/[MLHVZ]|[-]?\d+\.?\d*/gi) || [];
-  let i = 0;
-
-  while (i < tokens.length) {
-    const token = tokens[i].toUpperCase();
-
-    if (token === 'M' || token === 'L') {
-      // Move/Line: two coordinates follow
-      currentX = parseFloat(tokens[++i]);
-      currentY = parseFloat(tokens[++i]);
-      minX = Math.min(minX, currentX);
-      maxX = Math.max(maxX, currentX);
-      minY = Math.min(minY, currentY);
-      maxY = Math.max(maxY, currentY);
-    } else if (token === 'H') {
-      // Horizontal line: one X coordinate
-      currentX = parseFloat(tokens[++i]);
-      minX = Math.min(minX, currentX);
-      maxX = Math.max(maxX, currentX);
-    } else if (token === 'V') {
-      // Vertical line: one Y coordinate
-      currentY = parseFloat(tokens[++i]);
-      minY = Math.min(minY, currentY);
-      maxY = Math.max(maxY, currentY);
-    } else if (token === 'Z') {
-      // Close path - no coordinates
-    } else if (!Number.isNaN(parseFloat(token))) {
-      // Implicit lineto (coordinates without command letter)
-      currentX = parseFloat(token);
-      currentY = parseFloat(tokens[++i]);
-      minX = Math.min(minX, currentX);
-      maxX = Math.max(maxX, currentX);
-      minY = Math.min(minY, currentY);
-      maxY = Math.max(maxY, currentY);
-    }
-    i++;
-  }
-
-  if (!Number.isFinite(minX)) {
-    return null;
-  }
-
-  return { minX, maxX, minY, maxY };
-}
-
-/**
- * Read an SVG file and extract combined bounding box from all paths.
- */
-async function extractSvgBounds(svgPath) {
-  try {
-    const content = await readFile(svgPath, 'utf-8');
-
-    // Extract all path d attributes
-    const pathMatches = content.matchAll(/<path[^>]*d="([^"]+)"/g);
-    let combinedBounds = null;
-
-    for (const match of pathMatches) {
-      const pathBounds = parseSvgPathBounds(match[1]);
-      if (!pathBounds) continue;
-
-      if (!combinedBounds) {
-        combinedBounds = { ...pathBounds };
-      } else {
-        // Expand bounds to include this path
-        combinedBounds.minX = Math.min(combinedBounds.minX, pathBounds.minX);
-        combinedBounds.maxX = Math.max(combinedBounds.maxX, pathBounds.maxX);
-        combinedBounds.minY = Math.min(combinedBounds.minY, pathBounds.minY);
-        combinedBounds.maxY = Math.max(combinedBounds.maxY, pathBounds.maxY);
-      }
-    }
-
-    return combinedBounds;
-  } catch {
-    return null;
-  }
-}
 
 /**
  * Convert a TypedArray to a string representation for embedding in JS.
@@ -287,21 +203,46 @@ async function bundleMeshes() {
         console.warn(`  ${file}: No matching SVG found at ${svgPath}`);
       }
 
+      // Compute convex hull for collision detection
+      // Use hash of ship class name as seed for deterministic jitter
+      const seed = shipClass
+        .split('')
+        .reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 0);
+      const hull = computeConvexHull(Array.from(positions), seed);
+      const hullVolume = computeHullVolume(hull);
+      const hullBoundingRadius = computeBoundingRadius(hull);
+
+      // Extract hull planes for runtime collision (compact representation)
+      const hullPlanes = hull
+        ? hull.planes.map((p) => ({
+            nx: p.normal[0],
+            ny: p.normal[1],
+            nz: p.normal[2],
+            d: p.distance,
+          }))
+        : null;
+
       geometries[shipClass] = {
         positions: Array.from(positions),
         normals: normals ? Array.from(normals) : null,
         indices: indices ? Array.from(indices) : null,
         bounds: { minX, maxX, minZ, maxZ },
         svgBounds: svgBounds,
+        hull: hullPlanes,
+        hullVolume,
+        hullBoundingRadius,
       };
 
       const posCount = positions.length / 3;
       const idxCount = indices ? indices.length : 0;
+      const hullInfo = hull
+        ? `hull: ${hull.planes.length} faces, vol: ${hullVolume.toFixed(1)}`
+        : 'no hull';
       const svgInfo = svgBounds
         ? `svg: ${svgBounds.minX}-${svgBounds.maxX} x ${svgBounds.minY}-${svgBounds.maxY}`
         : 'no svg';
       console.log(
-        `  ${file}: ${posCount} vertices, ${idxCount} indices (${svgInfo})`,
+        `  ${file}: ${posCount} vertices, ${idxCount} indices (${hullInfo}, ${svgInfo})`,
       );
     } catch (error) {
       console.error(`  ${file}: Failed to parse -`, error.message);
@@ -342,6 +283,20 @@ export interface SvgBounds {
   maxY: number;
 }
 
+/**
+ * A plane in the convex hull (normal + distance from origin).
+ *
+ * Note: This type is intentionally duplicated from hull-collider.ts to avoid
+ * circular dependencies (ship-geometries.ts is imported by rendering code,
+ * hull-collider.ts is imported by ECS code). Both definitions are identical.
+ */
+export interface HullPlane {
+  nx: number;
+  ny: number;
+  nz: number;
+  d: number;
+}
+
 /** Raw geometry data for a ship mesh */
 export interface ShipGeometryData {
   positions: number[];
@@ -349,6 +304,12 @@ export interface ShipGeometryData {
   indices: number[] | null;
   bounds: MeshBounds;
   svgBounds: SvgBounds | null;
+  /** Convex hull face planes for collision detection */
+  hull: HullPlane[] | null;
+  /** Volume of convex hull (for mass derivation) */
+  hullVolume: number;
+  /** Bounding radius of hull (for fast early-out checks) */
+  hullBoundingRadius: number;
 }
 
 /** Embedded geometry data for all ship classes */
@@ -358,6 +319,7 @@ export const SHIP_GEOMETRIES: Record<ShipClass, ShipGeometryData> = {\n`;
     const geo = geometries[shipClass];
     const b = geo.bounds;
     const s = geo.svgBounds;
+    const h = geo.hull;
     output += `  ${shipClass}: {\n`;
     output += `    positions: ${typedArrayToString(geo.positions)},\n`;
     output += `    normals: ${geo.normals ? typedArrayToString(geo.normals) : 'null'},\n`;
@@ -368,6 +330,20 @@ export const SHIP_GEOMETRIES: Record<ShipClass, ShipGeometryData> = {\n`;
     } else {
       output += `    svgBounds: null,\n`;
     }
+    // Hull data for collision
+    if (h) {
+      const hullStr = h
+        .map(
+          (p) =>
+            `{nx:${p.nx.toFixed(6).replace(/\.?0+$/, '')},ny:${p.ny.toFixed(6).replace(/\.?0+$/, '')},nz:${p.nz.toFixed(6).replace(/\.?0+$/, '')},d:${p.d.toFixed(6).replace(/\.?0+$/, '')}}`,
+        )
+        .join(',');
+      output += `    hull: [${hullStr}],\n`;
+    } else {
+      output += `    hull: null,\n`;
+    }
+    output += `    hullVolume: ${geo.hullVolume.toFixed(4)},\n`;
+    output += `    hullBoundingRadius: ${geo.hullBoundingRadius.toFixed(4)},\n`;
     output += `  },\n`;
   }
 

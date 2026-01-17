@@ -101,6 +101,10 @@ export interface EscortMissionData {
   enemyPool: ContractEnemy[];
   /** Maximum concurrent enemies (prevents performance issues) */
   maxConcurrentEnemies: number;
+  /** Enemies to spawn when initial delay ends (default: 2) */
+  initialSpawnCount?: number;
+  /** Enemies to spawn per interval when below max (default: 1) */
+  spawnBatchSize?: number;
 }
 
 /** A contract (mission) available to accept */

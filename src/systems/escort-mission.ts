@@ -48,7 +48,18 @@ export interface EscortMissionState {
   completed: boolean;
   /** Initial delay before first enemies spawn */
   initialSpawnDelay: number;
+  /** Enemies to spawn when initial delay ends */
+  initialSpawnCount: number;
+  /** Enemies to spawn per interval */
+  spawnBatchSize: number;
+  /** Whether initial spawn has occurred */
+  initialSpawnDone: boolean;
 }
+
+/** Default enemies to spawn when initial delay ends */
+const DEFAULT_INITIAL_SPAWN_COUNT = 2;
+/** Default enemies to spawn per interval */
+const DEFAULT_SPAWN_BATCH_SIZE = 1;
 
 /** Create initial escort mission state */
 export function createEscortMissionState(
@@ -58,6 +69,8 @@ export function createEscortMissionState(
   convoySize: number,
   spawnInterval: number,
   maxConcurrentEnemies: number,
+  initialSpawnCount = DEFAULT_INITIAL_SPAWN_COUNT,
+  spawnBatchSize = DEFAULT_SPAWN_BATCH_SIZE,
 ): EscortMissionState {
   return {
     active: true,
@@ -74,6 +87,9 @@ export function createEscortMissionState(
     maxConcurrentEnemies,
     completed: false,
     initialSpawnDelay: INITIAL_SPAWN_DELAY,
+    initialSpawnCount: Math.min(initialSpawnCount, maxConcurrentEnemies),
+    spawnBatchSize: Math.max(1, spawnBatchSize),
+    initialSpawnDone: false,
   };
 }
 
@@ -182,6 +198,7 @@ export function processEscortMissionTick(
 
   // Check defeat: all convoy destroyed
   if (state.aliveConvoy === 0) {
+    state.convoyInZone = 0; // No survivors
     state.completed = true;
     world.systemState.mission.result = MissionResult.Defeat;
     return true;
@@ -226,15 +243,33 @@ export function processEscortMissionTick(
   // Enemy spawning (with initial delay before first enemies appear)
   if (state.initialSpawnDelay > 0) {
     state.initialSpawnDelay -= dt;
+  } else if (!state.initialSpawnDone) {
+    // Initial spawn: spawn a batch when delay first ends
+    state.initialSpawnDone = true;
+    const currentEnemies = countLivingEnemies(world);
+    const toSpawn = Math.min(
+      state.initialSpawnCount,
+      state.maxConcurrentEnemies - currentEnemies,
+    );
+    for (let i = 0; i < toSpawn; i++) {
+      spawnEnemy();
+    }
+    if (toSpawn > 0) stateChanged = true;
   } else {
     state.timeSinceSpawn += dt;
 
-    // Only check enemy count when spawn interval has elapsed (avoid counting every tick)
+    // Spawn up to batchSize enemies per interval (respecting max)
     if (state.timeSinceSpawn >= state.spawnInterval) {
       const currentEnemies = countLivingEnemies(world);
-      if (currentEnemies < state.maxConcurrentEnemies) {
+      const toSpawn = Math.min(
+        state.spawnBatchSize,
+        state.maxConcurrentEnemies - currentEnemies,
+      );
+      if (toSpawn > 0) {
         state.timeSinceSpawn = 0;
-        spawnEnemy();
+        for (let i = 0; i < toSpawn; i++) {
+          spawnEnemy();
+        }
         stateChanged = true;
       }
     }

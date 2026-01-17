@@ -31,6 +31,7 @@ import type { Entity, World } from '../core/types';
 import { Faction } from '../core/types';
 import { getProfileForPlaystyle, type ProfileName } from '../data/ai-profiles';
 import { SHIP_CLASSES } from '../data/ships';
+import { addHullColliderFromClass } from '../factories/ship';
 import type {
   ReplayPrimaryWeapon,
   ReplaySecondaryWeapon,
@@ -123,6 +124,7 @@ export function spawnPlayerFromCampaign(
   }
 
   addComponent(world, entity, createCollision(stats.collisionRadius));
+  addHullColliderFromClass(world, entity, ship.shipClass, false);
   addComponent(world, entity, createCombatStats());
   initWeaponAmmoCounts(world, entity);
 
@@ -225,6 +227,7 @@ export function spawnWingmanFromCampaign(
   }
 
   addComponent(world, entity, createCollision(stats.collisionRadius * 1.5));
+  addHullColliderFromClass(world, entity, ship.shipClass, false);
   addComponent(world, entity, createCombatStats());
   initWeaponAmmoCounts(world, entity);
 
