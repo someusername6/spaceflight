@@ -55,6 +55,16 @@ const SHIPS_PER_ROW = 3;
 /** Z spacing between rows (front ships jump first) */
 const ROW_Z_SPACING = 100;
 
+/**
+ * Starting Z offset for convoy (ahead of player spawn at Z=0).
+ * Must be large enough that all convoy rows stay ahead of player/wingmen.
+ * With ROW_Z_SPACING=100 and SHIPS_PER_ROW=3:
+ *   - 6 ships = 2 rows, back row at Z=200
+ *   - 9 ships = 3 rows, back row at Z=100
+ *   - Player at Z=0, wingmen at Z=-15 to Z=-55
+ */
+const CONVOY_START_Z = 300;
+
 /** Spawn convoy ships in formation that fits inside the waypoint structure */
 export function spawnConvoyShips(
   world: World,
@@ -90,8 +100,9 @@ export function spawnConvoyShips(
       xOffset = halfIndex * xSpacing;
     }
 
-    // Z offset: back rows start further back (they'll arrive and jump later)
-    const zOffset = -row * ROW_Z_SPACING;
+    // Z offset: front row starts at CONVOY_START_Z, back rows further back
+    // (they'll arrive and jump later)
+    const zOffset = CONVOY_START_Z - row * ROW_Z_SPACING;
 
     const position = new Vector3(xOffset, 0, zOffset);
 

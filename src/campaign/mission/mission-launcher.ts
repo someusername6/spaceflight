@@ -131,13 +131,14 @@ export function launchMission(
     });
   }
 
-  // Spawn deployed wingmen in tight symmetric formation near player
+  // Spawn deployed wingmen in symmetric formation near player
+  // Spacing wide enough to avoid immediate collisions
   // Track positions for replay reconstruction
   const replayWingmen: ReplayWingman[] = [];
   wingmen.forEach((wingman, index) => {
     const side = index % 2 === 0 ? 1 : -1;
-    const xOffset = 20 * side; // 20m left/right
-    const zRelative = -10 - Math.floor(index / 2) * 15; // Staggered rows behind player
+    const xOffset = 30 * side; // 30m left/right (wider than convoy X spacing)
+    const zRelative = -15 - Math.floor(index / 2) * 20; // Staggered rows behind player
     const zPosition = playerSpawnZ + zRelative;
     spawnWingmanFromCampaign(
       game.world,

@@ -15,6 +15,10 @@ import {
   getInterpolatedRotation,
 } from '../../../rendering/renderer';
 import { updateFreeCamera } from './camera-free';
+import { orbitAxisX, orbitAxisY, updateOrbitCamera } from './camera-orbit';
+
+// Re-export orbit axis vectors for viewer-camera.ts
+export { orbitAxisX, orbitAxisY };
 
 /** Camera mode */
 export enum CameraMode {
@@ -39,6 +43,10 @@ export interface ReplayCameraState {
   /** Distance from target */
   orbitDistance: number;
 
+  // Chase mode state
+  /** Chase camera distance multiplier (1.0 = default offset) */
+  chaseDistance: number;
+
   // Free camera state
   freePosition: THREE.Vector3;
   freeRotation: THREE.Euler;
@@ -48,15 +56,31 @@ export interface ReplayCameraState {
 }
 
 /** Camera movement speeds */
-const ORBIT_ROTATE_SPEED = 2.0; // radians per second
-const ORBIT_ZOOM_SPEED = 50; // units per second
+const CHASE_ZOOM_SPEED = 1.0; // multiplier per second
 const ROLL_SPEED = 2.0; // radians per second
 
-/** Orbit constraints */
+/** Orbit distance constraints (used for default distance calculation) */
 const MIN_ORBIT_DISTANCE = 10;
 const MAX_ORBIT_DISTANCE = 200;
 
-/** Chase camera offset */
+/** Chase camera constraints */
+const MIN_CHASE_DISTANCE = 0.5; // multiplier (half default distance)
+const MAX_CHASE_DISTANCE = 4.0; // multiplier (4x default distance)
+const DEFAULT_CHASE_DISTANCE = 1.0;
+
+/** Default orbit distance */
+const DEFAULT_ORBIT_DISTANCE = 50;
+
+/** Base ship radius used for distance scaling (typical fighter size) */
+const BASE_SHIP_RADIUS = 5;
+
+/** Multiplier for orbit distance based on ship size */
+const ORBIT_DISTANCE_MULTIPLIER = 8; // orbit distance = radius * multiplier
+
+/** Multiplier for chase distance based on ship size ratio */
+const CHASE_DISTANCE_MULTIPLIER = 0.15; // chase multiplier scales with size ratio
+
+/** Chase camera base offset (scaled by chaseDistance) */
 const CHASE_OFFSET = new THREE.Vector3(0, 5, 20);
 
 /** Input state for camera controls */
@@ -81,11 +105,44 @@ export function createCameraState(): ReplayCameraState {
     entityList: [],
     entityIndex: 0,
     orbitRotation: new THREE.Quaternion(), // Identity = looking from +Z toward origin
-    orbitDistance: 50,
+    orbitDistance: DEFAULT_ORBIT_DISTANCE,
+    chaseDistance: DEFAULT_CHASE_DISTANCE,
     freePosition: new THREE.Vector3(0, 50, 100),
     freeRotation: new THREE.Euler(0, 0, 0, 'YXZ'),
     roll: 0,
   };
+}
+
+/** Get entity's bounding radius from hull collider, or default for fighters */
+function getEntityRadius(world: World, entity: Entity): number {
+  const hull = getComponent(world, entity, 'hullCollider');
+  return hull?.boundingRadius ?? BASE_SHIP_RADIUS;
+}
+
+/** Get default camera distances for an entity based on its mesh size */
+function getDefaultDistances(
+  world: World,
+  entity: Entity,
+): { orbit: number; chase: number } {
+  const radius = getEntityRadius(world, entity);
+  const sizeRatio = radius / BASE_SHIP_RADIUS;
+
+  // Orbit distance scales with ship size
+  const orbitDist = Math.min(
+    MAX_ORBIT_DISTANCE,
+    Math.max(MIN_ORBIT_DISTANCE, radius * ORBIT_DISTANCE_MULTIPLIER),
+  );
+
+  // Chase distance multiplier scales with size ratio (larger ships = zoom out more)
+  const chaseDist = Math.min(
+    MAX_CHASE_DISTANCE,
+    Math.max(
+      DEFAULT_CHASE_DISTANCE,
+      1 + (sizeRatio - 1) * CHASE_DISTANCE_MULTIPLIER,
+    ),
+  );
+
+  return { orbit: orbitDist, chase: chaseDist };
 }
 
 /** Update entity list from world (call when entities change) */
@@ -127,7 +184,7 @@ export function updateEntityList(state: ReplayCameraState, world: World): void {
 }
 
 /** Cycle to next entity */
-export function nextEntity(state: ReplayCameraState): void {
+export function nextEntity(state: ReplayCameraState, world: World): void {
   if (state.entityList.length === 0) return;
 
   state.entityIndex = (state.entityIndex + 1) % state.entityList.length;
@@ -140,10 +197,17 @@ export function nextEntity(state: ReplayCameraState): void {
 
   // Reset orbit rotation when switching entities
   state.orbitRotation.identity();
+
+  // Set default distances based on target ship size
+  if (state.targetEntity !== null) {
+    const defaults = getDefaultDistances(world, state.targetEntity);
+    state.orbitDistance = defaults.orbit;
+    state.chaseDistance = defaults.chase;
+  }
 }
 
 /** Cycle to previous entity */
-export function prevEntity(state: ReplayCameraState): void {
+export function prevEntity(state: ReplayCameraState, world: World): void {
   if (state.entityList.length === 0) return;
 
   state.entityIndex =
@@ -157,15 +221,29 @@ export function prevEntity(state: ReplayCameraState): void {
 
   // Reset orbit rotation when switching entities
   state.orbitRotation.identity();
+
+  // Set default distances based on target ship size
+  if (state.targetEntity !== null) {
+    const defaults = getDefaultDistances(world, state.targetEntity);
+    state.orbitDistance = defaults.orbit;
+    state.chaseDistance = defaults.chase;
+  }
 }
 
 /** Reset camera to player */
-export function resetToPlayer(state: ReplayCameraState): void {
+export function resetToPlayer(state: ReplayCameraState, world: World): void {
   state.mode = CameraMode.Chase;
   state.entityIndex = 0;
   state.targetEntity = state.entityList[0] ?? null;
   state.orbitRotation.identity();
   state.roll = 0;
+
+  // Set default distances based on player ship size
+  if (state.targetEntity !== null) {
+    const defaults = getDefaultDistances(world, state.targetEntity);
+    state.orbitDistance = defaults.orbit;
+    state.chaseDistance = defaults.chase;
+  }
 }
 
 /** Toggle camera mode (chase -> orbit -> free -> chase) */
@@ -254,7 +332,7 @@ export function updateCamera(
 
   switch (state.mode) {
     case CameraMode.Chase:
-      updateChaseCamera(state, camera, world);
+      updateChaseCamera(state, camera, world, input, dt);
       break;
     case CameraMode.Orbit:
       updateOrbitCamera(state, camera, world, input, dt);
@@ -265,11 +343,13 @@ export function updateCamera(
   }
 }
 
-/** Update chase camera (follow behind entity) */
+/** Update chase camera (follow behind entity with zoom) */
 function updateChaseCamera(
   state: ReplayCameraState,
   camera: THREE.Camera,
   world: World,
+  input: CameraInput,
+  dt: number,
 ): void {
   if (state.targetEntity === null) return;
 
@@ -278,8 +358,18 @@ function updateChaseCamera(
 
   if (!targetPos || !targetRot) return;
 
-  // Calculate camera position behind entity
-  tempOffset.copy(CHASE_OFFSET);
+  // Update chase distance from zoom input (zoomIn/zoomOut or forward/back keys)
+  const zoomIn = input.zoomIn || input.forward;
+  const zoomOut = input.zoomOut || input.back;
+  if (zoomIn) state.chaseDistance -= CHASE_ZOOM_SPEED * dt;
+  if (zoomOut) state.chaseDistance += CHASE_ZOOM_SPEED * dt;
+  state.chaseDistance = Math.max(
+    MIN_CHASE_DISTANCE,
+    Math.min(MAX_CHASE_DISTANCE, state.chaseDistance),
+  );
+
+  // Calculate camera position behind entity (offset scaled by chase distance)
+  tempOffset.copy(CHASE_OFFSET).multiplyScalar(state.chaseDistance);
   tempOffset.applyQuaternion(targetRot);
   camera.position.copy(targetPos).add(tempOffset);
 
@@ -291,73 +381,5 @@ function updateChaseCamera(
     camera.quaternion.setFromEuler(tempEuler);
   } else {
     camera.quaternion.copy(targetRot);
-  }
-}
-
-// Temporary objects for orbit rotation calculations (reused to avoid allocations)
-const orbitDeltaQuat = new THREE.Quaternion();
-const orbitAxisZ = new THREE.Vector3(0, 0, 1);
-const orbitUp = new THREE.Vector3();
-const orbitMatrix = new THREE.Matrix4();
-
-// Exported for mouse drag rotation in viewer-camera.ts
-export const orbitAxisX = new THREE.Vector3(1, 0, 0);
-export const orbitAxisY = new THREE.Vector3(0, 1, 0);
-
-/** Update orbit camera (rotate around entity) - quaternion-based for gimbal-lock-free rotation */
-function updateOrbitCamera(
-  state: ReplayCameraState,
-  camera: THREE.Camera,
-  world: World,
-  input: CameraInput,
-  dt: number,
-): void {
-  if (state.targetEntity === null) return;
-
-  const targetPos = getTargetPosition(state.targetEntity, world);
-  if (!targetPos) return;
-
-  // Apply rotation from input using quaternions (no gimbal lock)
-  // Horizontal rotation (around world Y axis)
-  if (input.left || input.right) {
-    const yawAmount = (input.left ? 1 : -1) * ORBIT_ROTATE_SPEED * dt;
-    orbitDeltaQuat.setFromAxisAngle(orbitAxisY, yawAmount);
-    state.orbitRotation.premultiply(orbitDeltaQuat);
-  }
-
-  // Vertical rotation (around local X axis)
-  if (input.up || input.down) {
-    const pitchAmount = (input.up ? 1 : -1) * ORBIT_ROTATE_SPEED * dt;
-    orbitDeltaQuat.setFromAxisAngle(orbitAxisX, pitchAmount);
-    state.orbitRotation.multiply(orbitDeltaQuat);
-  }
-
-  // Normalize to prevent drift
-  state.orbitRotation.normalize();
-
-  // Update distance from zoom input
-  if (input.zoomIn) state.orbitDistance -= ORBIT_ZOOM_SPEED * dt;
-  if (input.zoomOut) state.orbitDistance += ORBIT_ZOOM_SPEED * dt;
-  state.orbitDistance = Math.max(
-    MIN_ORBIT_DISTANCE,
-    Math.min(MAX_ORBIT_DISTANCE, state.orbitDistance),
-  );
-
-  // Calculate camera position: start at (0, 0, distance), rotate by orbit quaternion
-  tempOffset.set(0, 0, state.orbitDistance);
-  tempOffset.applyQuaternion(state.orbitRotation);
-  camera.position.copy(targetPos).add(tempOffset);
-
-  // Calculate up vector from orbit rotation (prevents lookAt flip at poles)
-  orbitUp.set(0, 1, 0).applyQuaternion(state.orbitRotation);
-
-  // Build camera matrix manually with custom up vector
-  orbitMatrix.lookAt(camera.position, targetPos, orbitUp);
-  camera.quaternion.setFromRotationMatrix(orbitMatrix);
-
-  // Apply roll around local Z axis (camera's forward)
-  if (state.roll !== 0) {
-    orbitDeltaQuat.setFromAxisAngle(orbitAxisZ, state.roll);
-    camera.quaternion.multiply(orbitDeltaQuat);
   }
 }

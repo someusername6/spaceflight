@@ -53,17 +53,23 @@ export function setCameraInput(key: keyof CameraInput, pressed: boolean): void {
 
 /** Cycle to next entity */
 export function cameraNextEntity(): void {
-  if (cameraStateRef) nextEntity(cameraStateRef);
+  if (cameraStateRef && playbackRef) {
+    nextEntity(cameraStateRef, playbackRef.getWorld());
+  }
 }
 
 /** Cycle to previous entity */
 export function cameraPrevEntity(): void {
-  if (cameraStateRef) prevEntity(cameraStateRef);
+  if (cameraStateRef && playbackRef) {
+    prevEntity(cameraStateRef, playbackRef.getWorld());
+  }
 }
 
 /** Reset camera to player */
 export function cameraResetToPlayer(): void {
-  if (cameraStateRef) resetToPlayer(cameraStateRef);
+  if (cameraStateRef && playbackRef) {
+    resetToPlayer(cameraStateRef, playbackRef.getWorld());
+  }
 }
 
 /** Toggle camera mode */

@@ -50,6 +50,7 @@ import type { Entity, World } from '../core/types';
 import { Faction } from '../core/types';
 import { getProfileForPlaystyle, type ProfileName } from '../data/ai-profiles';
 import { SHIP_CLASSES } from '../data/ships';
+import { addHullColliderFromClass } from '../factories/ship';
 import {
   type EscortMissionState,
   processEscortMissionTick,
@@ -143,6 +144,7 @@ function spawnPlayerFromReplayLoadout(
   }
 
   addComponent(world, entity, createCollision(stats.collisionRadius));
+  addHullColliderFromClass(world, entity, loadout.shipClass, false);
   addComponent(world, entity, createCombatStats());
   initWeaponAmmoCounts(world, entity);
 
@@ -237,6 +239,7 @@ function spawnWingmanFromReplayLoadout(
   }
 
   addComponent(world, entity, createCollision(stats.collisionRadius * 1.5));
+  addHullColliderFromClass(world, entity, loadout.shipClass, false);
   addComponent(world, entity, createCombatStats());
   initWeaponAmmoCounts(world, entity);
 
