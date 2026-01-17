@@ -3,6 +3,11 @@
  *
  * Convoy ships have no combat AI - they just fly toward the escape zone.
  * This system sets control inputs that physics processes.
+ *
+ * Braking is based on Z distance to the waypoint (not 3D distance) so that:
+ * - All ships stop at exactly the waypoint's Z coordinate
+ * - Ships in back rows arrive later since they start further back
+ * - Ships maintain their X offset while braking
  */
 
 import { Quaternion, Vector3 } from 'three';
@@ -85,18 +90,20 @@ export function convoyAutopilotSystem(world: World, _dt: number): void {
       continue;
     }
 
-    // Calculate distance to destination (escape zone center)
-    const distance = transform.position.distanceTo(autopilot.destination);
+    // Use Z distance for braking (not 3D distance) so all ships stop at waypoint Z
+    // This ensures back row ships arrive later since they start further back
+    const zDistanceToDestination =
+      autopilot.destination.z - transform.position.z;
 
-    // Braking strategy:
-    // - Full brake when very close to stop at destination
+    // Braking strategy based on Z distance to waypoint:
+    // - Full brake when very close to stop at waypoint Z
     // - Gradual slowdown in approach zone
     // - Full speed outside approach zone
     // Full brake distance is slightly larger than charge radius so ships stop in time
     const fullBrakeDistance = JUMP_CHARGE_RADIUS + 10;
 
-    if (distance < fullBrakeDistance) {
-      // Very close: full brake to stop
+    if (zDistanceToDestination < fullBrakeDistance) {
+      // Very close to waypoint Z: full brake to stop
       autopilot.input.pitch = 0;
       autopilot.input.yaw = 0;
       autopilot.input.accelerate = false;
@@ -104,13 +111,13 @@ export function convoyAutopilotSystem(world: World, _dt: number): void {
       continue;
     }
 
-    if (distance < autopilot.escapeZoneRadius) {
-      // Approach zone: slow down but don't stop
-      // Target speed proportional to distance (faster when further)
-      const targetSpeed = Math.max(
-        10,
-        (distance / autopilot.escapeZoneRadius) * physics.maxSpeed,
-      );
+    if (zDistanceToDestination < autopilot.escapeZoneRadius) {
+      // Approach zone: slow down proportionally to Z distance
+      // Target speed scales linearly from min speed at brake distance to max speed at zone edge
+      const approachProgress =
+        (zDistanceToDestination - fullBrakeDistance) /
+        (autopilot.escapeZoneRadius - fullBrakeDistance);
+      const targetSpeed = Math.max(10, approachProgress * physics.maxSpeed);
       autopilot.input.pitch = 0;
       autopilot.input.yaw = 0;
       autopilot.input.accelerate = physics.currentSpeed < targetSpeed - 5;

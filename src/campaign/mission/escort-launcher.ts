@@ -49,8 +49,8 @@ export function setFactionBehaviorMode(
   }
 }
 
-/** Maximum ships per row (side by side) */
-const SHIPS_PER_ROW = 3;
+/** Maximum ships per row (side by side) for large convoys */
+const MAX_SHIPS_PER_ROW = 3;
 
 /** Z spacing between rows (front ships jump first) */
 const ROW_Z_SPACING = 100;
@@ -58,12 +58,66 @@ const ROW_Z_SPACING = 100;
 /**
  * Starting Z offset for convoy (ahead of player spawn at Z=0).
  * Must be large enough that all convoy rows stay ahead of player/wingmen.
- * With ROW_Z_SPACING=100 and SHIPS_PER_ROW=3:
+ * With ROW_Z_SPACING=100:
+ *   - 5 ships = 2 rows, back row at Z=200
  *   - 6 ships = 2 rows, back row at Z=200
  *   - 9 ships = 3 rows, back row at Z=100
  *   - Player at Z=0, wingmen at Z=-15 to Z=-55
  */
 const CONVOY_START_Z = 300;
+
+/**
+ * Get row distribution for convoy formation.
+ * Small convoys use wedge formations (fewer ships in front, more in back).
+ * Larger convoys fill rows of 3.
+ */
+function getRowDistribution(convoySize: number): number[] {
+  switch (convoySize) {
+    case 1:
+      return [1];
+    case 2:
+      return [2];
+    case 3:
+      return [1, 2]; // Wedge: 1 leader, 2 wingmen behind
+    case 4:
+      return [2, 2]; // Even split
+    case 5:
+      return [2, 3]; // 2 front, 3 back
+    default: {
+      // 6+ ships: fill rows of MAX_SHIPS_PER_ROW
+      const rows: number[] = [];
+      let remaining = convoySize;
+      while (remaining > 0) {
+        const inThisRow = Math.min(MAX_SHIPS_PER_ROW, remaining);
+        rows.push(inThisRow);
+        remaining -= inThisRow;
+      }
+      return rows;
+    }
+  }
+}
+
+/**
+ * Calculate X offset for a ship within a centered row.
+ * Ships are evenly spaced and centered around X=0.
+ */
+function getXOffsetInRow(
+  posInRow: number,
+  shipsInRow: number,
+  xSpacing: number,
+): number {
+  if (shipsInRow === 1) {
+    return 0;
+  }
+  if (shipsInRow % 2 === 1) {
+    // Odd number: center ship at 0, others spread out
+    const centerIndex = Math.floor(shipsInRow / 2);
+    return (posInRow - centerIndex) * xSpacing;
+  }
+  // Even number: straddle the center
+  const halfIndex = posInRow - shipsInRow / 2 + 0.5;
+  return halfIndex * xSpacing;
+}
 
 /** Spawn convoy ships in formation that fits inside the waypoint structure */
 export function spawnConvoyShips(
@@ -77,49 +131,38 @@ export function spawnConvoyShips(
   // X spacing between ships in same row
   const xSpacing = convoyRadius * 2 + 10;
 
-  for (let i = 0; i < escortData.convoySize; i++) {
-    // Arrange in rows: first SHIPS_PER_ROW ships in front row, rest in back rows
-    const row = Math.floor(i / SHIPS_PER_ROW);
-    const posInRow = i % SHIPS_PER_ROW;
-    const shipsInThisRow = Math.min(
-      SHIPS_PER_ROW,
-      escortData.convoySize - row * SHIPS_PER_ROW,
-    );
+  // Get row distribution for this convoy size
+  const rowDistribution = getRowDistribution(escortData.convoySize);
 
-    // X offset: center the row, alternate left/right from center
-    // For odd count: 0, -1, +1 pattern. For even: -0.5, +0.5, -1.5, +1.5 pattern
-    let xOffset: number;
-    if (shipsInThisRow % 2 === 1) {
-      // Odd number: center ship at 0, others alternate
-      const centerIndex = Math.floor(shipsInThisRow / 2);
-      const offsetFromCenter = posInRow - centerIndex;
-      xOffset = offsetFromCenter * xSpacing;
-    } else {
-      // Even number: no center ship, straddle the center
-      const halfIndex = posInRow - shipsInThisRow / 2 + 0.5;
-      xOffset = halfIndex * xSpacing;
+  let shipIndex = 0;
+  for (let row = 0; row < rowDistribution.length; row++) {
+    const shipsInThisRow = rowDistribution[row]!;
+
+    for (let posInRow = 0; posInRow < shipsInThisRow; posInRow++) {
+      const xOffset = getXOffsetInRow(posInRow, shipsInThisRow, xSpacing);
+
+      // Z offset: front row starts at CONVOY_START_Z, back rows further back
+      // (they'll arrive and jump later)
+      const zOffset = CONVOY_START_Z - row * ROW_Z_SPACING;
+
+      const position = new Vector3(xOffset, 0, zOffset);
+
+      // Destination maintains X offset (straight path, no turning)
+      const shipDestination = escapeZonePosition.clone();
+      shipDestination.x = xOffset;
+
+      const entity = createConvoyShipEntity(
+        world,
+        escortData.convoyType,
+        position,
+        shipDestination,
+        escortData.escapeZoneRadius,
+        shipIndex,
+        escortData.jumpChargeTime,
+      );
+      entities.push(entity);
+      shipIndex++;
     }
-
-    // Z offset: front row starts at CONVOY_START_Z, back rows further back
-    // (they'll arrive and jump later)
-    const zOffset = CONVOY_START_Z - row * ROW_Z_SPACING;
-
-    const position = new Vector3(xOffset, 0, zOffset);
-
-    // Destination maintains X offset (straight path, no turning)
-    const shipDestination = escapeZonePosition.clone();
-    shipDestination.x = xOffset;
-
-    const entity = createConvoyShipEntity(
-      world,
-      escortData.convoyType,
-      position,
-      shipDestination,
-      escortData.escapeZoneRadius,
-      i,
-      escortData.jumpChargeTime,
-    );
-    entities.push(entity);
   }
 
   return entities;

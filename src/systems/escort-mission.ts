@@ -183,13 +183,15 @@ function updateConvoyShips(
     const distance = transform.position.distanceTo(state.escapeZonePosition);
     const isInZone = distance <= state.escapeZoneRadius;
 
-    // For charge zone, check distance to convoy's own destination (accounts for X offset)
-    // This ensures ships charge when near THEIR stopping point, not the zone center
+    // For charge zone, check Z distance to waypoint (not 3D distance)
+    // This ensures ships charge when they reach the waypoint Z coordinate,
+    // regardless of their X offset. Back row ships charge later since they
+    // start further back and take longer to reach the waypoint Z.
     const autopilot = getComponent(world, entity, 'convoyAutopilot');
-    const distToDestination = autopilot
-      ? transform.position.distanceTo(autopilot.destination)
-      : distance;
-    const isInChargeZone = distToDestination <= JUMP_CHARGE_RADIUS;
+    const zDistToWaypoint = autopilot
+      ? autopilot.destination.z - transform.position.z
+      : state.escapeZonePosition.z - transform.position.z;
+    const isInChargeZone = zDistToWaypoint <= JUMP_CHARGE_RADIUS;
 
     convoyShip.inEscapeZone = isInZone;
 
