@@ -238,7 +238,23 @@ export async function loadReplay(id: string): Promise<FullReplayData | null> {
     );
   }
 
+  // Migrate older versions to current format
+  migrateReplay(replay);
+
   return replay;
+}
+
+/**
+ * Migrate replay data from older versions to current format.
+ * Modifies the replay in place.
+ */
+function migrateReplay(replay: FullReplayData): void {
+  // v1-2 -> v3: Add missionType field (defaults to 'elimination')
+  if (replay.version < 3) {
+    if (!replay.metadata.missionType) {
+      replay.metadata.missionType = 'elimination';
+    }
+  }
 }
 
 /**

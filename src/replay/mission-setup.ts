@@ -11,12 +11,17 @@ import {
   createSecondaryWeaponsFromReplay,
 } from '../campaign/campaign-weapons';
 import {
+  setFactionBehaviorMode,
+  setupEscortMission,
+  spawnEscortEnemy,
+} from '../campaign/mission/escort-launcher';
+import {
   createWaveState,
   initializeFirstWave,
   processWaveTick,
   type WaveState,
 } from '../campaign/mission/mission-waves';
-import type { Contract } from '../campaign/types';
+import type { Contract, MissionType } from '../campaign/types';
 import { createAIControlled } from '../components/ai';
 import { createAimError } from '../components/aim-error';
 import { createCollision } from '../components/collision';
@@ -45,6 +50,10 @@ import type { Entity, World } from '../core/types';
 import { Faction } from '../core/types';
 import { getProfileForPlaystyle, type ProfileName } from '../data/ai-profiles';
 import { SHIP_CLASSES } from '../data/ships';
+import {
+  type EscortMissionState,
+  processEscortMissionTick,
+} from '../systems/escort-mission';
 import { initMatchStats, initWeaponAmmoCounts } from '../systems/stats';
 import { getAllMissions } from '../ui/screens/contracts-data';
 import type { ReplayShipLoadout, ReplayWingman } from './types';
@@ -239,8 +248,12 @@ function spawnWingmanFromReplayLoadout(
  */
 export interface ReplayWorldSetup {
   world: World;
-  waveState: WaveState;
   mission: Contract;
+  missionType: MissionType;
+  /** Wave state for elimination missions */
+  waveState?: WaveState;
+  /** Escort state for escort missions */
+  escortState?: EscortMissionState;
 }
 
 /**
@@ -253,6 +266,7 @@ export function setupReplayWorld(
   playerLoadout: ReplayShipLoadout,
   wingmen: ReplayWingman[],
   playerAutoaim: number,
+  missionType?: MissionType,
 ): ReplayWorldSetup {
   // Find mission definition
   const mission = findMissionById(missionId);
@@ -291,11 +305,26 @@ export function setupReplayWorld(
     );
   }
 
-  // Initialize wave state (shared with live gameplay for determinism)
-  const waveState = createWaveState(mission.waves.length);
-  initializeFirstWave(world, waveState, mission.waves);
+  // Determine mission type (from replay metadata or contract, defaults to elimination)
+  const effectiveMissionType =
+    missionType ?? mission.missionType ?? 'elimination';
 
-  return { world, waveState, mission };
+  if (effectiveMissionType === 'escort' && mission.escortData) {
+    // Set wingmen to defensive mode (same as live gameplay)
+    setFactionBehaviorMode(world, Faction.Player, 'defensive');
+
+    // Setup escort mission (spawns convoy, initial enemies)
+    const escortState = setupEscortMission(world, mission);
+
+    return { world, mission, missionType: 'escort', escortState };
+  }
+
+  // Default: elimination mission with wave-based spawning
+  const waves = mission.waves ?? [];
+  const waveState = createWaveState(waves.length);
+  initializeFirstWave(world, waveState, waves);
+
+  return { world, mission, missionType: 'elimination', waveState };
 }
 
 /**
@@ -313,10 +342,40 @@ export function tickReplayWaves(
 }
 
 /**
- * Check if the replay mission is complete.
+ * Process escort mission logic during replay tick.
+ * Uses shared processEscortMissionTick for determinism with live gameplay.
+ */
+export function tickReplayEscort(
+  world: World,
+  escortState: EscortMissionState,
+  mission: Contract,
+  dt: number,
+): void {
+  if (!mission.escortData) return;
+
+  const escortData = mission.escortData;
+  const escapeZonePosition = escortState.escapeZonePosition.clone();
+
+  // Use shared escort tick logic (identical to live gameplay)
+  processEscortMissionTick(world, escortState, dt, () => {
+    spawnEscortEnemy(world, escortData, escapeZonePosition);
+  });
+}
+
+/**
+ * Check if the replay mission is complete (elimination missions).
  */
 export function isReplayMissionComplete(waveState: WaveState): boolean {
   return (
     waveState.waveCleared && waveState.currentWave >= waveState.totalWaves - 1
   );
+}
+
+/**
+ * Check if the escort replay mission is complete.
+ */
+export function isReplayEscortComplete(
+  escortState: EscortMissionState,
+): boolean {
+  return escortState.completed;
 }

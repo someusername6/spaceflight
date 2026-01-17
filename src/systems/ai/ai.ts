@@ -2,6 +2,7 @@
  * AI System - State machine and behavior for AI-controlled ships.
  */
 
+import type { Vector3 } from 'three';
 import { type AIControlled, AIState } from '../../components/ai';
 import { Faction } from '../../components/faction';
 import { isDead } from '../../components/health';
@@ -17,13 +18,20 @@ import {
   updateEvade,
   updateRegroup,
 } from './ai-behaviors';
-import { CLOSE_URGENTLY_THRESHOLD, isKitingShip } from './ai-movement';
+import {
+  CLOSE_URGENTLY_THRESHOLD,
+  isKitingShip,
+  setRotationInputs,
+} from './ai-movement';
 import { maintainDistanceEngage, pursueTarget } from './ai-pursuit';
 import { shouldReposition, updateReposition } from './ai-reposition';
 import {
   countEngagingTarget,
+  findNearestConvoyShip,
   findNearestEnemy,
+  findNearestThreatToConvoy,
   findNearestThreatToPlayer,
+  getConvoyCentroid,
   isPlayer,
   setAITarget,
 } from './ai-utils';
@@ -31,8 +39,16 @@ import {
 // Re-export for backwards compatibility
 export { findNearestEnemy, setAITarget, pursueTarget };
 
+/** Distance at which defensive ships disengage from combat to follow convoy (meters) */
+const DEFENSIVE_DISENGAGE_DISTANCE = 600;
+/** Distance at which defensive ships start moving toward convoy (meters) */
+const DEFENSIVE_FOLLOW_DISTANCE = 300;
+
 /** AI system - updates AI state and movement */
 export function aiSystem(world: World, dt: number): void {
+  // Cache convoy centroid once per tick (used by defensive wingmen and convoy-hunters)
+  const convoyCentroid = getConvoyCentroid(world);
+
   for (const entity of queryEntities(world, [
     'aiControlled',
     'transform',
@@ -66,6 +82,17 @@ export function aiSystem(world: World, dt: number): void {
 
     // Check for emergency transitions (can happen from any combat state)
     if (ai.state === AIState.Pursue || ai.state === AIState.Engage) {
+      // Defensive ships must disengage if convoy is too far ahead
+      if (ai.behaviorMode === 'defensive' && convoyCentroid) {
+        const distToConvoy = transform.position.distanceTo(convoyCentroid);
+        if (distToConvoy > DEFENSIVE_DISENGAGE_DISTANCE) {
+          // Disengage and follow convoy
+          ai.target = null;
+          ai.state = AIState.Idle;
+          ai.stateTimer = 0;
+        }
+      }
+
       if (shouldRegroup(shields, heat, ai.profile)) {
         ai.state = AIState.Regroup;
         ai.stateTimer = 0;
@@ -78,7 +105,14 @@ export function aiSystem(world: World, dt: number): void {
     // Run state machine
     switch (ai.state) {
       case AIState.Idle:
-        updateIdle(world, entity, ai, faction.faction);
+        updateIdle(
+          world,
+          entity,
+          ai,
+          faction.faction,
+          transform,
+          convoyCentroid,
+        );
         break;
       case AIState.Pursue:
         updatePursue(world, entity, ai, transform, physics, dt);
@@ -99,29 +133,83 @@ export function aiSystem(world: World, dt: number): void {
   }
 }
 
-/** Idle state - look for enemies */
+/** Idle state - look for enemies based on behavior mode */
 function updateIdle(
   world: World,
   entity: Entity,
   ai: AIControlled,
   faction: Faction,
+  transform: Transform,
+  convoyCentroid: Vector3 | null,
 ): void {
   let target: Entity | null = null;
+  const mode = ai.behaviorMode ?? 'standard';
 
-  // Wingmen (Faction.Player) prioritize enemies threatening the player
-  if (faction === Faction.Player) {
-    target = findNearestThreatToPlayer(world, entity, faction);
-  }
+  // Target selection based on behavior mode
+  switch (mode) {
+    case 'convoy-hunter':
+      // Enemies: prioritize convoy ships, fall back to player squadron
+      target = findNearestConvoyShip(world, entity);
+      if (target === null) {
+        target = findNearestEnemy(world, entity, faction);
+      }
+      break;
 
-  // Fall back to nearest enemy if no threat found (or for enemies)
-  if (target === null) {
-    target = findNearestEnemy(world, entity, faction);
+    case 'defensive': {
+      // Wingmen: prioritize threats near convoy, stay close
+      const distToConvoy = convoyCentroid
+        ? transform.position.distanceTo(convoyCentroid)
+        : Infinity;
+
+      // If convoy is too far ahead, don't engage - follow the convoy
+      if (distToConvoy > DEFENSIVE_DISENGAGE_DISTANCE) {
+        target = null;
+        break;
+      }
+
+      target = findNearestThreatToConvoy(
+        world,
+        entity,
+        faction,
+        convoyCentroid,
+      );
+      if (target === null) {
+        // Fall back to threats to player if no convoy threats
+        target = findNearestThreatToPlayer(world, entity, faction);
+      }
+      break;
+    }
+
+    default:
+      // Standard behavior: wingmen protect player, enemies attack nearest
+      if (faction === Faction.Player) {
+        target = findNearestThreatToPlayer(world, entity, faction);
+      }
+      if (target === null) {
+        target = findNearestEnemy(world, entity, faction);
+      }
+      break;
   }
 
   if (target !== null) {
     ai.target = target;
     ai.state = AIState.Pursue;
     ai.stateTimer = 0;
+    return;
+  }
+
+  // No target found - defensive ships should follow the convoy
+  if (mode === 'defensive' && convoyCentroid) {
+    const distanceToConvoy = transform.position.distanceTo(convoyCentroid);
+    // Follow convoy if too far away
+    if (distanceToConvoy > DEFENSIVE_FOLLOW_DISTANCE) {
+      const direction = convoyCentroid
+        .clone()
+        .sub(transform.position)
+        .normalize();
+      setRotationInputs(ai, transform, direction);
+      ai.input.accelerate = true;
+    }
   }
 }
 

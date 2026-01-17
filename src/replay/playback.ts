@@ -9,21 +9,25 @@
  */
 
 import type { WaveState } from '../campaign/mission/mission-waves';
-import type { Contract } from '../campaign/types';
+import type { Contract, MissionType } from '../campaign/types';
 import { getComponent, queryEntities } from '../core/ecs';
 import type { World } from '../core/types';
 import { SIMULATION_SYSTEMS } from '../game';
 import { InputPlayer } from '../input/input-recorder';
+import type { EscortMissionState } from '../systems/escort-mission';
 import { decodeRLE } from './compression';
 import {
+  isReplayEscortComplete,
   isReplayMissionComplete,
   setupReplayWorld,
+  tickReplayEscort,
   tickReplayWaves,
 } from './mission-setup';
 import type { FullReplayData, PlaybackState, ReplayMetadata } from './types';
 import {
   DEFAULT_SEEK_TICKS_PER_FRAME,
   PLAYBACK_SPEEDS,
+  TICK_RATE,
   TICK_SEC,
 } from './types';
 
@@ -37,8 +41,10 @@ export class ReplayPlayback {
   private replay: FullReplayData;
   private inputs: number[];
   private world: World;
-  private waveState: WaveState;
   private mission: Contract;
+  private missionType: MissionType;
+  private waveState: WaveState | null = null;
+  private escortState: EscortMissionState | null = null;
   private inputPlayer: InputPlayer;
   private currentTick: number = 0;
   private playbackSpeed: number = 1;
@@ -59,32 +65,38 @@ export class ReplayPlayback {
     this.inputPlayer = new InputPlayer(this.inputs);
 
     // Set up mission from replay metadata
-    const { world, waveState, mission } = setupReplayWorld(
+    const setup = setupReplayWorld(
       replay.seed,
       replay.metadata.missionId,
       replay.playerLoadout,
       replay.wingmen,
       replay.playerAutoaim,
+      replay.metadata.missionType,
     );
-    this.world = world;
-    this.waveState = waveState;
-    this.mission = mission;
+    this.world = setup.world;
+    this.mission = setup.mission;
+    this.missionType = setup.missionType;
+    this.waveState = setup.waveState ?? null;
+    this.escortState = setup.escortState ?? null;
   }
 
   /**
    * Reinitialize world for seeking.
    */
   private reinitializeWorld(): void {
-    const { world, waveState, mission } = setupReplayWorld(
+    const setup = setupReplayWorld(
       this.replay.seed,
       this.replay.metadata.missionId,
       this.replay.playerLoadout,
       this.replay.wingmen,
       this.replay.playerAutoaim,
+      this.replay.metadata.missionType,
     );
-    this.world = world;
-    this.waveState = waveState;
-    this.mission = mission;
+    this.world = setup.world;
+    this.mission = setup.mission;
+    this.missionType = setup.missionType;
+    this.waveState = setup.waveState ?? null;
+    this.escortState = setup.escortState ?? null;
     this.currentTick = 0;
   }
 
@@ -104,11 +116,9 @@ export class ReplayPlayback {
 
     this.simulateTick();
 
-    // Check for mission complete
-    if (isReplayMissionComplete(this.waveState)) {
-      // Don't immediately end - let explosions settle
-      // The viewer can check isReplayMissionComplete if needed
-    }
+    // Check for mission complete (based on mission type)
+    // Don't immediately end - let explosions settle
+    // The viewer can check isComplete() if needed
 
     return true;
   }
@@ -134,8 +144,12 @@ export class ReplayPlayback {
       system(this.world, TICK_SEC);
     }
 
-    // Process wave spawning
-    tickReplayWaves(this.world, this.waveState, this.mission, TICK_SEC);
+    // Process mission-specific logic (wave spawning or escort)
+    if (this.missionType === 'escort' && this.escortState) {
+      tickReplayEscort(this.world, this.escortState, this.mission, TICK_SEC);
+    } else if (this.waveState) {
+      tickReplayWaves(this.world, this.waveState, this.mission, TICK_SEC);
+    }
 
     this.currentTick++;
   }
@@ -269,11 +283,11 @@ export class ReplayPlayback {
   }
 
   getCurrentTimeSeconds(): number {
-    return this.currentTick / 60;
+    return this.currentTick / TICK_RATE;
   }
 
   getTotalTimeSeconds(): number {
-    return this.replay.tickCount / 60;
+    return this.replay.tickCount / TICK_RATE;
   }
 
   getProgressPercent(): number {
@@ -286,6 +300,12 @@ export class ReplayPlayback {
   }
 
   isComplete(): boolean {
-    return isReplayMissionComplete(this.waveState);
+    if (this.missionType === 'escort' && this.escortState) {
+      return isReplayEscortComplete(this.escortState);
+    }
+    if (this.waveState) {
+      return isReplayMissionComplete(this.waveState);
+    }
+    return false;
   }
 }

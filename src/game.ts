@@ -11,6 +11,7 @@ import { aiSystem } from './systems/ai/ai';
 import { aimErrorSystem } from './systems/aim-error';
 import { cleanupSystem } from './systems/cleanup';
 import { collisionSystem } from './systems/collision';
+import { convoyAutopilotSystem } from './systems/convoy-autopilot';
 import { damageSystem } from './systems/damage';
 import { decoySystem } from './systems/decoys';
 import { explosionSystem } from './systems/explosions';
@@ -44,21 +45,22 @@ export const TICK_SEC = 1 / TICK_RATE;
  * Order rationale:
  * 1. input - Read player intent first
  * 2. targeting - Process target selection from input
- * 3. ai - AI decisions based on current state
- * 4. aimError - Update AI aim drift (before weapons fire)
- * 5. weapons - Handle firing, spawn projectiles/missiles
- * 6. physics - Apply movement from input/AI (rotation must be applied before beams)
- * 7. beams - Handle continuous beam damage (uses current frame's transform)
- * 8. projectiles - Move projectiles (separate from ship physics)
- * 9. missiles - Move missiles with tracking (after projectiles)
- * 10. decoys - Move decoys, destroy missiles on contact
- * 11. collision - Detect collisions after movement
- * 12. damage - Apply damage from collisions/projectiles/missiles
- * 13. shields - Regenerate shields after damage delay
- * 14. heat - Cool down weapon heat
- * 15. cleanup - Remove dead entities, spawn explosions
- * 16. explosions - Update explosion effects
- * 17. mission - Check win/lose after cleanup
+ * 3. convoyAutopilot - Move convoy ships toward escape zone (before AI)
+ * 4. ai - AI decisions based on current state
+ * 5. aimError - Update AI aim drift (before weapons fire)
+ * 6. weapons - Handle firing, spawn projectiles/missiles
+ * 7. physics - Apply movement from input/AI (rotation must be applied before beams)
+ * 8. beams - Handle continuous beam damage (uses current frame's transform)
+ * 9. projectiles - Move projectiles (separate from ship physics)
+ * 10. missiles - Move missiles with tracking (after projectiles)
+ * 11. decoys - Move decoys, destroy missiles on contact
+ * 12. collision - Detect collisions after movement
+ * 13. damage - Apply damage from collisions/projectiles/missiles
+ * 14. shields - Regenerate shields after damage delay
+ * 15. heat - Cool down weapon heat
+ * 16. cleanup - Remove dead entities, spawn explosions
+ * 17. explosions - Update explosion effects
+ * 18. mission - Check win/lose after cleanup
  */
 /**
  * Simulation systems (without input handling).
@@ -67,21 +69,22 @@ export const TICK_SEC = 1 / TICK_RATE;
  */
 export const SIMULATION_SYSTEMS: SystemFn[] = [
   targetingSystem, // 1. Process target selection
-  aiSystem, // 2. AI decision making
-  aimErrorSystem, // 3. Update aim drift
-  weaponSystem, // 4. Handle firing (projectiles)
-  physicsSystem, // 5. Apply movement (rotation must be applied before beams)
-  beamSystem, // 6. Handle beam damage (uses current frame's transform)
-  projectileSystem, // 7. Move projectiles
-  missileSystem, // 8. Move missiles with tracking (decoy seduction here)
-  decoySystem, // 9. Move decoys, destroy missiles on contact
-  collisionSystem, // 10. Detect collisions
-  damageSystem, // 11. Apply damage
-  shieldSystem, // 12. Regenerate shields
-  heatSystem, // 13. Cool heat
-  cleanupSystem, // 14. Remove dead entities, spawn explosions
-  explosionSystem, // 15. Update explosion effects
-  missionSystem, // 16. Check win/lose
+  convoyAutopilotSystem, // 2. Convoy ship movement (before AI)
+  aiSystem, // 3. AI decision making
+  aimErrorSystem, // 4. Update aim drift
+  weaponSystem, // 5. Handle firing (projectiles)
+  physicsSystem, // 6. Apply movement (rotation must be applied before beams)
+  beamSystem, // 7. Handle beam damage (uses current frame's transform)
+  projectileSystem, // 8. Move projectiles
+  missileSystem, // 9. Move missiles with tracking (decoy seduction here)
+  decoySystem, // 10. Move decoys, destroy missiles on contact
+  collisionSystem, // 11. Detect collisions
+  damageSystem, // 12. Apply damage
+  shieldSystem, // 13. Regenerate shields
+  heatSystem, // 14. Cool heat
+  cleanupSystem, // 15. Remove dead entities, spawn explosions
+  explosionSystem, // 16. Update explosion effects
+  missionSystem, // 17. Check win/lose
 ];
 
 /** Full system order including input (for live gameplay) */

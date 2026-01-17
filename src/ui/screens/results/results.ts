@@ -31,6 +31,12 @@ interface ResultsState {
   selectedTab: ResultsTab;
 }
 
+/** Escort mission results for display */
+export interface EscortResultsDisplay {
+  convoySurvived: number;
+  convoyTotal: number;
+}
+
 /** Results screen props */
 interface ResultsProps {
   victory: boolean;
@@ -39,6 +45,10 @@ interface ResultsProps {
   debriefData: MissionDebriefData | null;
   salvage: SalvageResult | null;
   onContinue: () => void;
+  /** Actual reward earned (with multipliers applied) */
+  earnedReward: number | undefined;
+  /** Convoy survival results for escort missions */
+  escortResults: EscortResultsDisplay | undefined;
 }
 
 /** Legacy UI interface for backwards compatibility */
@@ -100,12 +110,30 @@ function renderRewards(
   victory: boolean,
   contract: Contract | null,
   salvage: SalvageResult | null,
+  earnedReward?: number,
+  escortResults?: EscortResultsDisplay,
 ): string {
   const titleClass = victory ? 'victory' : 'defeat';
   const titleText = victory ? 'VICTORY' : 'DEFEAT';
 
-  // Contract reward section
-  const baseReward = victory && contract ? contract.reward : 0;
+  // Use actual earned reward if provided, otherwise fall back to contract base
+  const displayReward =
+    earnedReward ?? (victory && contract ? contract.reward : 0);
+
+  // Escort mission details
+  const escortHtml = escortResults
+    ? `
+      <div class="rewards-escort-details">
+        <span class="escort-survival">Convoy: ${escortResults.convoySurvived}/${escortResults.convoyTotal} survived</span>
+        ${
+          escortResults.convoySurvived < escortResults.convoyTotal
+            ? `<span class="escort-penalty">(${Math.round((escortResults.convoySurvived / escortResults.convoyTotal) * 100)}% reward)</span>`
+            : ''
+        }
+      </div>
+    `
+    : '';
+
   const contractRewardHtml = contract
     ? `
       <div class="rewards-contract">
@@ -115,8 +143,9 @@ function renderRewards(
         </div>
         <div class="rewards-contract-details">
           <div class="rewards-contract-name">${contract.name}</div>
+          ${escortHtml}
           <div class="rewards-contract-amount ${victory ? 'earned' : 'failed'}">
-            ${victory ? `+${baseReward.toLocaleString()} cr` : 'Mission Failed'}
+            ${victory ? `+${displayReward.toLocaleString()} cr` : 'Mission Failed'}
           </div>
         </div>
       </div>
@@ -138,7 +167,15 @@ function renderRewards(
 /** Results screen component */
 const ResultsScreenComponent: Screen<ResultsState, ResultsProps> = {
   render(state, props) {
-    const { victory, contract, campaignState, debriefData, salvage } = props;
+    const {
+      victory,
+      contract,
+      campaignState,
+      debriefData,
+      salvage,
+      earnedReward,
+      escortResults,
+    } = props;
 
     const tabBar = renderResultsTabBar(
       state.selectedTab,
@@ -152,7 +189,13 @@ const ResultsScreenComponent: Screen<ResultsState, ResultsProps> = {
         ? debriefData
           ? renderDebrief(debriefData)
           : '<div class="empty-state-panel">No debrief data available</div>'
-        : renderRewards(victory, contract, salvage);
+        : renderRewards(
+            victory,
+            contract,
+            salvage,
+            earnedReward,
+            escortResults,
+          );
 
     const buttonText = victory ? 'Return to Hangar' : 'Continue';
 
@@ -204,6 +247,8 @@ export function createResultsUI(
   onContinue: () => void,
   world?: World,
   salvage?: SalvageResult | null,
+  earnedReward?: number,
+  escortResults?: EscortResultsDisplay,
 ): ResultsUI {
   // Clean up previous handle
   resultsScreenHandle?.destroy();
@@ -217,6 +262,8 @@ export function createResultsUI(
     debriefData,
     salvage: salvage ?? null,
     onContinue,
+    earnedReward,
+    escortResults,
   };
 
   resultsScreenHandle = createScreen(

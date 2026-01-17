@@ -17,6 +17,7 @@ import type { AIControlled } from '../components/ai';
 import type { AimError } from '../components/aim-error';
 import type { Collision } from '../components/collision';
 import type { CombatStats } from '../components/combat-stats';
+import type { ConvoyAutopilot, ConvoyShip } from '../components/convoy';
 import type { Decoy } from '../components/decoy';
 import type { Explosion } from '../components/explosion';
 import type { FactionComponent } from '../components/faction';
@@ -72,6 +73,10 @@ export interface ComponentRegistry {
   shields: Shields;
   shieldHit: ShieldHit;
   combatStats: CombatStats;
+
+  // Convoy components (escort missions)
+  convoyShip: ConvoyShip;
+  convoyAutopilot: ConvoyAutopilot;
 }
 
 /** All valid component type strings (derived from registry keys) */

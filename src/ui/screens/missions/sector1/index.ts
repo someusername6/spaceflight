@@ -24,11 +24,13 @@
 
 import type { Contract } from '../types';
 import { SECTOR_1_EASY } from './easy';
+import { SECTOR_1_ESCORT } from './escort';
 import { SECTOR_1_HARD } from './hard';
 import { SECTOR_1_MEDIUM } from './medium';
 
 export const SECTOR_1_MISSIONS: Contract[] = [
   ...SECTOR_1_EASY,
+  ...SECTOR_1_ESCORT,
   ...SECTOR_1_MEDIUM,
   ...SECTOR_1_HARD,
 ];

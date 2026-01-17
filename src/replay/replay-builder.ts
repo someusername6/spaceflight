@@ -22,6 +22,7 @@ export interface ReplayContractInfo {
   id: string;
   name: string;
   sector: number;
+  missionType?: 'elimination' | 'escort';
 }
 
 /** Parameters for building replay data */
@@ -106,6 +107,9 @@ export function buildReplayData(
   };
   if (wingmenShips.length > 0) {
     metadata.wingmenShips = wingmenShips;
+  }
+  if (contract.missionType && contract.missionType !== 'elimination') {
+    metadata.missionType = contract.missionType;
   }
 
   // Convert debrief data to replay format

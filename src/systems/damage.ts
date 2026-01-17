@@ -21,11 +21,13 @@ import { MissionResult } from '../core/types';
 const COLLISION_DAMAGE = 10;
 
 /**
- * Check if an entity is protected from damage due to victory.
- * Allied ships (player faction) become immune once victory is achieved.
+ * Check if an entity is protected from damage due to mission end.
+ * Allied ships (player faction) become immune once victory or defeat is achieved.
+ * This prevents frustrating deaths to in-flight projectiles after the outcome is determined.
  */
-function isProtectedByVictory(world: World, entity: Entity): boolean {
-  if (world.systemState.mission.result !== MissionResult.Victory) {
+function isProtectedByMissionEnd(world: World, entity: Entity): boolean {
+  const result = world.systemState.mission.result;
+  if (result === MissionResult.InProgress) {
     return false;
   }
   const faction = getComponent(world, entity, 'faction');
@@ -46,7 +48,7 @@ export function damageSystem(world: World, _dt: number): void {
     if (hasComponent(world, entity, 'decoy')) continue;
 
     // Victory protection: allied ships are immune after victory
-    if (isProtectedByVictory(world, entity)) continue;
+    if (isProtectedByMissionEnd(world, entity)) continue;
 
     // Query guarantees these components exist
     const collision = getComponent(world, entity, 'collision')!;
@@ -143,7 +145,7 @@ export function dealDamage(
   hullDamageMultiplier = 1,
 ): DamageResult {
   // Victory protection: allied ships are immune after victory
-  if (isProtectedByVictory(world, entity)) {
+  if (isProtectedByMissionEnd(world, entity)) {
     return { shieldDamage: 0, hullDamage: 0 };
   }
 

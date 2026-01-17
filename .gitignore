@@ -32,3 +32,6 @@ spaceflight-*.zip
 
 # Generated files (created by build scripts)
 src/rendering/ship-geometries.ts
+
+# Test output
+balance-test-results.txt

@@ -3,10 +3,12 @@
  */
 
 import { random } from '../../../src/core/prng.ts';
+import { TICK_RATE, TICK_SEC } from '../../../src/game.ts';
 import { aiSystem } from '../../../src/systems/ai/ai.ts';
 import { aimErrorSystem } from '../../../src/systems/aim-error.ts';
 import { cleanupSystem } from '../../../src/systems/cleanup.ts';
 import { collisionSystem } from '../../../src/systems/collision.ts';
+import { convoyAutopilotSystem } from '../../../src/systems/convoy-autopilot.ts';
 import { damageSystem } from '../../../src/systems/damage.ts';
 import { decoySystem } from '../../../src/systems/decoys.ts';
 import { explosionSystem } from '../../../src/systems/explosions.ts';
@@ -20,11 +22,10 @@ import { projectileSystem } from '../../../src/systems/weapons/projectiles.ts';
 import { weaponSystem } from '../../../src/systems/weapons/weapons.ts';
 
 // ============================================================================
-// Constants
+// Constants (re-exported from game.ts for convenience)
 // ============================================================================
 
-export const TICK_RATE = 60;
-export const TICK_SEC = 1 / TICK_RATE;
+export { TICK_RATE, TICK_SEC };
 
 /** All ship archetypes (base + variants) */
 export const ARCHETYPES = [
@@ -58,6 +59,7 @@ export function jitter(prng) {
 
 /** Combat systems in execution order */
 export const SYSTEMS = [
+  convoyAutopilotSystem, // Runs before AI (convoy ships steer toward destination)
   targetingSystem,
   aiSystem,
   aimErrorSystem,

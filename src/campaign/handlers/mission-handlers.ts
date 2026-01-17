@@ -20,6 +20,7 @@ import { collectDebriefData } from '../../ui/screens/results/debrief';
 import {
   createGameOverUI,
   createResultsUI,
+  type EscortResultsDisplay,
 } from '../../ui/screens/results/results';
 import { resetTitleScreen } from '../../ui/screens/title';
 import { startCampaignGameplay } from '../controller';
@@ -44,6 +45,8 @@ import { setupTitleScreen } from './menu-handlers';
  * @param setupContractsScreen - Callback to setup contracts screen
  * @param world - Optional world reference for stats extraction
  * @param salvage - Optional salvage results from the mission
+ * @param earnedReward - Actual reward earned (with multipliers applied)
+ * @param escortResults - Convoy survival results for escort missions
  */
 export function showResults(
   controller: CampaignController,
@@ -52,6 +55,8 @@ export function showResults(
   setupContractsScreen: (controller: CampaignController) => void,
   world?: World,
   salvage?: SalvageResult | null,
+  earnedReward?: number,
+  escortResults?: EscortResultsDisplay,
 ): void {
   const { screenManager } = controller;
   const resultsElement = getScreenElement(screenManager, Screen.RESULTS);
@@ -69,6 +74,8 @@ export function showResults(
     },
     world,
     salvage,
+    earnedReward,
+    escortResults,
   );
 }
 

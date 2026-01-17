@@ -82,14 +82,20 @@ export function createMissionEndExecutor(
       const playerShip = getCommanderShip(screenManager.campaignState);
       const shipType = playerShip?.shipClass ?? 'fighter';
 
-      fullReplay = buildReplayData({
-        recorder,
-        world: game.world,
-        contract: {
+      const contractInfo: import('../../replay/replay-builder').ReplayContractInfo =
+        {
           id: contract.id,
           name: contract.name,
           sector: contract.sector,
-        },
+        };
+      if (contract.missionType) {
+        contractInfo.missionType = contract.missionType;
+      }
+
+      fullReplay = buildReplayData({
+        recorder,
+        world: game.world,
+        contract: contractInfo,
         shipType,
         victory: missionEndState.victory,
         debriefData,
@@ -111,7 +117,11 @@ export function createMissionEndExecutor(
     }
 
     // Base reward (victory only) - salvage is now items, not credits
-    const baseReward = missionEndState.victory ? contract.reward : 0;
+    // For escort missions, reward is scaled by convoy survival rate
+    const rewardMultiplier = missionEndState.rewardMultiplier ?? 1;
+    const baseReward = missionEndState.victory
+      ? Math.round(contract.reward * rewardMultiplier)
+      : 0;
 
     let newState = applyMissionResults(
       screenManager.campaignState,
@@ -125,8 +135,14 @@ export function createMissionEndExecutor(
     newState = applyAmmoUsage(newState, ammoData);
 
     // Calculate and apply item-based salvage from all destroyed ships
+    // Skip salvage for escort missions - no time to collect wreckage while escorting
     let salvageResult: ReturnType<typeof calculateSalvage> | null = null;
-    if (matchStats && matchStats.salvageableShips.length > 0) {
+    const isEscortMission = contract.missionType === 'escort';
+    if (
+      !isEscortMission &&
+      matchStats &&
+      matchStats.salvageableShips.length > 0
+    ) {
       // Use derived PRNG for deterministic salvage (prevents save scumming)
       const salvageRng = createDerivedPRNG(
         newState.seed,
@@ -222,6 +238,8 @@ export function createMissionEndExecutor(
         setupContractsScreen,
         game.world,
         salvageResult,
+        baseReward,
+        missionEndState.escortResults,
       );
     }
   };

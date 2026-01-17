@@ -80,6 +80,29 @@ export interface StoredShip {
   shipClass: string; // 'interceptor', 'striker', etc.
 }
 
+/** Mission types supported by the game */
+export type MissionType = 'elimination' | 'escort';
+
+/** Escort mission specific data */
+export interface EscortMissionData {
+  /** Number of NPC convoy ships to protect */
+  convoySize: number;
+  /** Ship type for convoy ships ('freighter' or 'transport') */
+  convoyType: 'freighter' | 'transport';
+  /** Distance from start to escape zone (meters) */
+  escapeZoneDistance: number;
+  /** Radius of escape zone trigger (meters) */
+  escapeZoneRadius: number;
+  /** Time to charge jump drive once in zone (seconds) */
+  jumpChargeTime: number;
+  /** Seconds between enemy spawns */
+  spawnInterval: number;
+  /** Enemy pool for continuous spawning */
+  enemyPool: ContractEnemy[];
+  /** Maximum concurrent enemies (prevents performance issues) */
+  maxConcurrentEnemies: number;
+}
+
 /** A contract (mission) available to accept */
 export interface Contract {
   id: string;
@@ -88,8 +111,12 @@ export interface Contract {
   difficulty: 'easy' | 'medium' | 'hard';
   /** Sector this mission belongs to (1-5) */
   sector: number;
-  /** Waves of enemies - each wave spawns when the previous is cleared */
-  waves: ContractWave[];
+  /** Mission type - defaults to 'elimination' for backward compatibility */
+  missionType?: MissionType;
+  /** Waves of enemies - required for elimination missions, optional for escort */
+  waves?: ContractWave[];
+  /** Escort mission data - required when missionType === 'escort' */
+  escortData?: EscortMissionData;
   reward: number; // credits
 }
 

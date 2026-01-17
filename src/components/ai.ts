@@ -32,6 +32,9 @@ export interface AIInput {
   afterburner: boolean;
 }
 
+/** AI behavior modes for different tactical situations */
+export type AIBehaviorMode = 'standard' | 'defensive' | 'convoy-hunter';
+
 export interface AIControlled extends ComponentBase {
   readonly type: 'aiControlled';
   state: AIState;
@@ -55,6 +58,13 @@ export interface AIControlled extends ComponentBase {
    * AI returns to ENGAGE when distance exceeds preferredCombatRange.
    */
   fleeDistance?: number;
+  /**
+   * Behavior mode for targeting decisions:
+   * - 'standard': Normal targeting (wingmen protect player, enemies attack nearest)
+   * - 'defensive': Stay near convoy, only engage nearby threats
+   * - 'convoy-hunter': Prioritize convoy ships over combat targets
+   */
+  behaviorMode?: AIBehaviorMode;
 }
 
 /** Creates an AIControlled component with a profile */

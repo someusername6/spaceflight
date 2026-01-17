@@ -29,7 +29,8 @@ export function missionSystem(world: World, _dt: number): void {
   }
 
   // Check for no living enemy ships remaining (victory)
-  if (countLivingEnemyShips(world) === 0) {
+  // Skip this check for escort missions - they have different win conditions
+  if (!mission.isEscortMission && countLivingEnemyShips(world) === 0) {
     mission.result = MissionResult.Victory;
   }
 }

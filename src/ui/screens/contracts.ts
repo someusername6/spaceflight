@@ -62,7 +62,8 @@ export { generateContracts };
 
 /** Count total enemies across all waves */
 function countTotalEnemies(contract: Contract): number {
-  return contract.waves.reduce(
+  const waves = contract.waves ?? [];
+  return waves.reduce(
     (total, wave) => total + wave.enemies.reduce((sum, e) => sum + e.count, 0),
     0,
   );
@@ -98,11 +99,11 @@ function renderContractListItem(
   `;
 }
 
-/** Render contract detail panel */
-function renderContractDetail(contract: Contract, canLaunch: boolean): string {
-  // Summarize enemies across all waves
+/** Render hostiles section for wave-based missions */
+function renderWaveHostiles(contract: Contract): string {
+  const waves = contract.waves ?? [];
   const enemyCounts = new Map<string, number>();
-  for (const wave of contract.waves) {
+  for (const wave of waves) {
     for (const enemy of wave.enemies) {
       const key = `${enemy.archetype}`;
       enemyCounts.set(key, (enemyCounts.get(key) ?? 0) + enemy.count);
@@ -113,12 +114,57 @@ function renderContractDetail(contract: Contract, canLaunch: boolean): string {
     .join('');
 
   const totalEnemies = countTotalEnemies(contract);
-  const waveCount = contract.waves.length;
+  const waveCount = waves.length;
+
+  return `
+    <div class="contract-detail-section">
+      <div class="detail-section-label">HOSTILES</div>
+      <div class="contract-enemies">${enemyList}</div>
+      <div class="contract-waves">${totalEnemies} total in ${waveCount} waves</div>
+    </div>
+  `;
+}
+
+/** Render mission info for escort missions */
+function renderEscortInfo(contract: Contract): string {
+  const escort = contract.escortData!;
+  const enemyTypes = escort.enemyPool
+    .map((e) => e.archetype)
+    .filter((v, i, a) => a.indexOf(v) === i) // unique
+    .join(', ');
+
+  return `
+    <div class="contract-detail-section">
+      <div class="detail-section-label">ESCORT MISSION</div>
+      <div class="escort-info">
+        <div class="escort-entry">Convoy: ${escort.convoySize} ships</div>
+        <div class="escort-entry">Distance: ${(escort.escapeZoneDistance / 1000).toFixed(1)} km to jump point</div>
+        <div class="escort-entry">Jump charge: ${escort.jumpChargeTime}s</div>
+      </div>
+    </div>
+    <div class="contract-detail-section">
+      <div class="detail-section-label">THREAT</div>
+      <div class="contract-enemies">
+        <div class="enemy-entry">Continuous spawns: ${enemyTypes}</div>
+        <div class="enemy-entry">Max concurrent: ${escort.maxConcurrentEnemies}</div>
+      </div>
+      <div class="contract-waves">Reward scales with convoy survival</div>
+    </div>
+  `;
+}
+
+/** Render contract detail panel */
+function renderContractDetail(contract: Contract, canLaunch: boolean): string {
+  const isEscort = contract.missionType === 'escort' && contract.escortData;
 
   // Accept button or commander warning (hard block)
   const acceptButton = canLaunch
     ? `<button class="btn btn-large btn-success" id="btn-accept-mission">ACCEPT MISSION</button>`
     : `<button class="btn btn-warning btn-goto-squadron">⚠ ASSIGN COMMANDER IN SQUADRON</button>`;
+
+  const missionInfo = isEscort
+    ? renderEscortInfo(contract)
+    : renderWaveHostiles(contract);
 
   return `
     <div class="contract-detail">
@@ -129,13 +175,7 @@ function renderContractDetail(contract: Contract, canLaunch: boolean): string {
         </span>
       </div>
       <div class="contract-detail-desc">${contract.description}</div>
-      <div class="contract-detail-section">
-        <div class="detail-section-label">HOSTILES</div>
-        <div class="contract-enemies">
-          ${enemyList}
-        </div>
-        <div class="contract-waves">${totalEnemies} total in ${waveCount} waves</div>
-      </div>
+      ${missionInfo}
       <div class="contract-actions">
         <div class="contract-reward-price">${contract.reward.toLocaleString()}<span class="currency">cr</span></div>
         ${acceptButton}

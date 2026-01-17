@@ -26,6 +26,10 @@ export interface MissionEndState {
   pending: boolean;
   delayRemaining: number;
   victory: boolean;
+  /** Reward multiplier for escort missions (based on convoy survival) */
+  rewardMultiplier?: number;
+  /** Convoy results for escort missions */
+  escortResults?: { convoySurvived: number; convoyTotal: number };
 }
 
 /** Delay before transitioning to results screen (seconds) */
@@ -240,6 +244,7 @@ export function processWaveTick(
   dt: number,
 ): WaveTickResult {
   const result: WaveTickResult = { waveSpawned: false };
+  const waves = mission.waves ?? [];
   const enemyCount = countLivingEnemyShips(world);
 
   // Check if current wave is cleared
@@ -249,7 +254,7 @@ export function processWaveTick(
 
     if (nextWaveIndex < waveState.totalWaves) {
       // Set delay for next wave
-      const nextWave = mission.waves[nextWaveIndex];
+      const nextWave = waves[nextWaveIndex];
       if (nextWave) {
         waveState.delayRemaining = calculateWaveDelay(
           nextWave.delay,
@@ -272,7 +277,7 @@ export function processWaveTick(
       waveState.waveCleared = false;
       waveState.delayRemaining = 0;
 
-      const nextWave = mission.waves[waveState.currentWave];
+      const nextWave = waves[waveState.currentWave];
       if (nextWave) {
         spawnWave(world, nextWave, waveState.currentWave);
         result.waveSpawned = true;

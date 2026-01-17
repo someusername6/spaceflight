@@ -2,9 +2,10 @@
  * Mission Launcher - Handles mission initialization and game setup.
  */
 
-import { Vector3 } from 'three';
+import { Quaternion, Vector3 } from 'three';
 import { logDebug, logError } from '../../core/logger';
 import { deriveKey } from '../../core/prng';
+import { getConvoyInitialSpeed } from '../../factories/convoy-ship';
 import { createGame, startGame } from '../../game';
 import { InputRecorder } from '../../input/input-recorder';
 import type { ReplayWingman } from '../../replay/types';
@@ -20,6 +21,11 @@ import {
 } from '../ship-spawning';
 import { getCommanderShip, getWingmanShips } from '../state';
 import type { Contract } from '../types';
+import {
+  createEscortMissionEndCallback,
+  createEscortTickCallback,
+  setupEscortMission,
+} from './escort-launcher';
 import {
   createMissionEndCallback,
   createMissionEndExecutor,
@@ -91,8 +97,30 @@ export function launchMission(
   // Filter wingmen to only deployed ships
   const wingmen = allWingmen.filter((w) => deployedIdSet.has(w.id));
 
+  // For escort missions, spawn at origin facing escape zone (positive Z)
+  const isEscortMission =
+    contract.missionType === 'escort' && contract.escortData;
+  const playerSpawnZ = 0;
+
+  // Rotation to face positive Z (toward escape zone for escort missions)
+  // Default Three.js forward is -Z, so rotate 180° around Y to face +Z
+  const escortRotation = isEscortMission
+    ? new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), Math.PI)
+    : undefined;
+
+  // For escort missions, match initial speed with convoy ships
+  const escortInitialSpeed = isEscortMission
+    ? getConvoyInitialSpeed(contract.escortData!.convoyType)
+    : undefined;
+
   if (playerShip) {
-    spawnPlayerFromCampaign(game.world, playerShip, new Vector3(0, 0, 0));
+    spawnPlayerFromCampaign(
+      game.world,
+      playerShip,
+      new Vector3(0, 0, playerSpawnZ),
+      escortRotation,
+      escortInitialSpeed,
+    );
   } else {
     // This should never happen - squad selection should prevent it
     logError('[Mission] No commander ship found!', {
@@ -109,16 +137,19 @@ export function launchMission(
   wingmen.forEach((wingman, index) => {
     const side = index % 2 === 0 ? 1 : -1;
     const xOffset = 20 * side; // 20m left/right
-    const zOffset = -10 - Math.floor(index / 2) * 15; // Staggered rows behind
+    const zRelative = -10 - Math.floor(index / 2) * 15; // Staggered rows behind player
+    const zPosition = playerSpawnZ + zRelative;
     spawnWingmanFromCampaign(
       game.world,
       wingman,
-      new Vector3(xOffset, 0, zOffset),
+      new Vector3(xOffset, 0, zPosition),
+      escortRotation,
+      escortInitialSpeed,
     );
     // Capture wingman loadout, position, pilot name and skill for replay
     const replayWingman: ReplayWingman = {
       loadout: shipToReplayLoadout(wingman),
-      position: { x: xOffset, y: 0, z: zOffset },
+      position: { x: xOffset, y: 0, z: zPosition },
     };
     if (wingman.pilot?.name) {
       replayWingman.pilotName = wingman.pilot.name;
@@ -140,23 +171,8 @@ export function launchMission(
   // Initialize match stats for debrief
   initMatchStats(game.world);
 
-  // Wave state for tracking progress
-  const waveState = createWaveState(contract.waves.length);
-
-  // Mission end state for delayed transition
+  // Mission end state for delayed transition (shared by all mission types)
   const missionEndState = createMissionEndState();
-
-  // Handle first wave - spawn immediately or after delay (shared with replay)
-  initializeFirstWave(game.world, waveState, contract.waves);
-  if (waveState.delayRemaining > 0) {
-    logDebug(
-      `[WAVE ${performance.now().toFixed(0)}ms] First wave in ${waveState.delayRemaining.toFixed(1)}s`,
-    );
-  } else {
-    logDebug(
-      `[WAVE ${performance.now().toFixed(0)}ms] Wave 1/${waveState.totalWaves} spawned`,
-    );
-  }
 
   // Set render callback with alpha for interpolation
   game.onRender = (world, alpha) => {
@@ -169,7 +185,7 @@ export function launchMission(
     );
   };
 
-  // Create callbacks for mission management
+  // Create mission end executor (shared by all mission types)
   const executeMissionEnd = createMissionEndExecutor(
     controller,
     game,
@@ -178,32 +194,78 @@ export function launchMission(
     setupContractsScreen,
   );
 
-  game.onTick = createTickCallback(
-    controller,
-    game,
-    contract,
-    waveState,
-    missionEndState,
-    executeMissionEnd,
-  );
+  // Branch based on mission type
+  const missionType = contract.missionType ?? 'elimination';
 
-  game.onMissionEnd = createMissionEndCallback(
-    controller,
-    waveState,
-    missionEndState,
-  );
+  if (missionType === 'escort' && contract.escortData) {
+    // === ESCORT MISSION ===
+    const escortState = setupEscortMission(game.world, contract);
+
+    game.onTick = createEscortTickCallback(
+      controller,
+      game,
+      contract,
+      escortState,
+      missionEndState,
+      executeMissionEnd,
+    );
+
+    game.onMissionEnd = createEscortMissionEndCallback(
+      controller,
+      escortState,
+      missionEndState,
+    );
+
+    logDebug(
+      `[MISSION ${performance.now().toFixed(0)}ms] Escort mission started: ${contract.name}`,
+    );
+    logDebug(
+      `[MISSION ${performance.now().toFixed(0)}ms] ${contract.escortData.convoySize} convoy ships to protect`,
+    );
+  } else {
+    // === ELIMINATION MISSION (default) ===
+    const waves = contract.waves ?? [];
+    const waveState = createWaveState(waves.length);
+
+    // Handle first wave - spawn immediately or after delay (shared with replay)
+    initializeFirstWave(game.world, waveState, waves);
+    if (waveState.delayRemaining > 0) {
+      logDebug(
+        `[WAVE ${performance.now().toFixed(0)}ms] First wave in ${waveState.delayRemaining.toFixed(1)}s`,
+      );
+    } else {
+      logDebug(
+        `[WAVE ${performance.now().toFixed(0)}ms] Wave 1/${waveState.totalWaves} spawned`,
+      );
+    }
+
+    game.onTick = createTickCallback(
+      controller,
+      game,
+      contract,
+      waveState,
+      missionEndState,
+      executeMissionEnd,
+    );
+
+    game.onMissionEnd = createMissionEndCallback(
+      controller,
+      waveState,
+      missionEndState,
+    );
+
+    const totalEnemies = waves.reduce(
+      (sum, w) => sum + w.enemies.reduce((s, e) => s + e.count, 0),
+      0,
+    );
+    logDebug(
+      `[MISSION ${performance.now().toFixed(0)}ms] Mission started: ${contract.name}`,
+    );
+    logDebug(
+      `[MISSION ${performance.now().toFixed(0)}ms] ${totalEnemies} enemies across ${waves.length} waves`,
+    );
+  }
 
   // Start the game
   startGame(game);
-
-  const totalEnemies = contract.waves.reduce(
-    (sum, w) => sum + w.enemies.reduce((s, e) => s + e.count, 0),
-    0,
-  );
-  logDebug(
-    `[MISSION ${performance.now().toFixed(0)}ms] Mission started: ${contract.name}`,
-  );
-  logDebug(
-    `[MISSION ${performance.now().toFixed(0)}ms] ${totalEnemies} enemies across ${contract.waves.length} waves`,
-  );
 }

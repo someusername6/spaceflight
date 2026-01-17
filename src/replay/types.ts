@@ -7,7 +7,7 @@
 import type { PlayerAutoaim } from '../settings/game-settings';
 
 /** Current replay format version - bump when changing FullReplayData structure */
-export const REPLAY_VERSION = 2;
+export const REPLAY_VERSION = 3;
 
 /** Minimum supported replay version for loading */
 export const MIN_REPLAY_VERSION = 1;
@@ -198,6 +198,8 @@ export interface ReplayMetadata {
   missionName: string;
   /** Sector number (1-5) */
   sector: number;
+  /** Mission type - 'elimination' or 'escort' (defaults to 'elimination' for v1-2 replays) */
+  missionType?: 'elimination' | 'escort';
   /** Player ship archetype */
   shipType: string;
   /** Wingmen ship classes (for squad display) */

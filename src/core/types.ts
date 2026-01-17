@@ -99,6 +99,8 @@ export interface SystemState {
   /** Mission system state */
   mission: {
     result: MissionResult;
+    /** True for escort missions - disables standard "no enemies = victory" check */
+    isEscortMission: boolean;
   };
   /** Ship identity state - callsign counters per prefix */
   shipIdentity: {

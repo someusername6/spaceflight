@@ -50,6 +50,7 @@ export function spawnPlayerFromCampaign(
   ship: OwnedShip,
   position?: Vector3,
   rotation?: Quaternion,
+  initialSpeed?: number,
 ): Entity {
   const stats = SHIP_CLASSES[ship.shipClass];
   if (!stats) {
@@ -58,6 +59,7 @@ export function spawnPlayerFromCampaign(
 
   const entity = createEntity(world);
   const shipRotation = rotation ?? new Quaternion();
+  const spawnSpeed = initialSpeed ?? INITIAL_SPAWN_SPEED;
 
   addComponent(
     world,
@@ -79,14 +81,14 @@ export function spawnPlayerFromCampaign(
       turnRate: stats.turnRate,
       rollRate: stats.rollRate,
       afterburnerHeatRate: stats.afterburnerHeatRate,
-      initialSpeed: INITIAL_SPAWN_SPEED,
+      initialSpeed: spawnSpeed,
     }),
   );
 
   // Set initial velocity in forward direction
   const physics = getComponent(world, entity, 'physics');
   if (physics) {
-    setInitialVelocity(physics, shipRotation, INITIAL_SPAWN_SPEED);
+    setInitialVelocity(physics, shipRotation, spawnSpeed);
   }
 
   addComponent(world, entity, createHealth(stats.hull, stats.hull));
@@ -133,6 +135,7 @@ export function spawnWingmanFromCampaign(
   ship: OwnedShip,
   position?: Vector3,
   rotation?: Quaternion,
+  initialSpeed?: number,
 ): Entity {
   const stats = SHIP_CLASSES[ship.shipClass];
   if (!stats) {
@@ -141,6 +144,7 @@ export function spawnWingmanFromCampaign(
 
   const entity = createEntity(world);
   const shipRotation = rotation ?? new Quaternion();
+  const spawnSpeed = initialSpeed ?? INITIAL_SPAWN_SPEED;
 
   addComponent(
     world,
@@ -162,14 +166,14 @@ export function spawnWingmanFromCampaign(
       turnRate: stats.turnRate,
       rollRate: stats.rollRate,
       afterburnerHeatRate: stats.afterburnerHeatRate,
-      initialSpeed: INITIAL_SPAWN_SPEED,
+      initialSpeed: spawnSpeed,
     }),
   );
 
   // Set initial velocity in forward direction
   const physics = getComponent(world, entity, 'physics');
   if (physics) {
-    setInitialVelocity(physics, shipRotation, INITIAL_SPAWN_SPEED);
+    setInitialVelocity(physics, shipRotation, spawnSpeed);
   }
 
   addComponent(world, entity, createHealth(stats.hull, stats.hull));

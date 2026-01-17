@@ -7,6 +7,12 @@ import { isDead } from '../../components/health';
 import { getComponent, hasComponent, queryEntities } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
 import { Faction } from '../../core/types';
+import {
+  type ConvoyDisplay,
+  createConvoyDisplay,
+  getConvoyDisplayStyles,
+  updateConvoyDisplay,
+} from './convoy-hud';
 import { requireElement } from './dom-utils';
 
 /** Maximum allies to display */
@@ -16,6 +22,7 @@ const MAX_ALLIES_SHOWN = 5;
 export interface AlliedDisplay {
   container: HTMLElement;
   allyElements: AllyElement[];
+  convoyDisplay: ConvoyDisplay;
 }
 
 /** Single ally row elements */
@@ -57,9 +64,12 @@ export function createAlliedDisplay(parent: HTMLElement): AlliedDisplay {
     });
   }
 
+  // Create convoy display (for escort missions)
+  const convoyDisplay = createConvoyDisplay(container);
+
   parent.appendChild(container);
 
-  return { container, allyElements };
+  return { container, allyElements, convoyDisplay };
 }
 
 /** Ally info for sorting */
@@ -155,6 +165,12 @@ export function updateAlliedDisplay(
       el.row.style.display = 'none';
     }
   }
+
+  // Update convoy display (for escort missions)
+  const hasConvoy = updateConvoyDisplay(display.convoyDisplay, world);
+  if (hasConvoy) {
+    display.container.classList.add('has-allies');
+  }
 }
 
 /** Format distance for display */
@@ -234,5 +250,6 @@ export function getAlliedDisplayStyles(): string {
       color: #080;
       text-align: right;
     }
+    ${getConvoyDisplayStyles()}
   `;
 }

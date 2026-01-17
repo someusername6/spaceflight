@@ -102,6 +102,15 @@ export function physicsSystem(world: World, dt: number): void {
       accelerating = ai.input.accelerate;
       decelerating = ai.input.decelerate;
       afterburner = ai.input.afterburner;
+    } else {
+      // Check for convoy autopilot (simple movement for escort ships)
+      const convoyAutopilot = getComponent(world, entity, 'convoyAutopilot');
+      if (convoyAutopilot) {
+        pitchInput = convoyAutopilot.input.pitch;
+        yawInput = convoyAutopilot.input.yaw;
+        accelerating = convoyAutopilot.input.accelerate;
+        decelerating = convoyAutopilot.input.decelerate;
+      }
     }
 
     // Calculate target angular velocity from input
