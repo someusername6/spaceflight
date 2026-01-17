@@ -2,7 +2,7 @@
  * Free Camera Mode
  *
  * Detached camera with full movement control for replay viewing.
- * Extracted from replay-camera.ts to keep files under 400 lines.
+ * Uses quaternion-based rotation for gimbal-lock-free movement.
  */
 
 import * as THREE from 'three';
@@ -17,37 +17,45 @@ const FREE_ROTATE_SPEED = 1.5;
 // Reusable objects to avoid allocations
 const tempOffset = new THREE.Vector3();
 const tempQuat = new THREE.Quaternion();
-const tempEuler = new THREE.Euler();
+const deltaQuat = new THREE.Quaternion();
 
-/** Update free camera (full movement control) */
+// Rotation axes
+const axisX = new THREE.Vector3(1, 0, 0);
+const axisY = new THREE.Vector3(0, 1, 0);
+const axisZ = new THREE.Vector3(0, 0, 1);
+
+/** Update free camera (full movement control) - quaternion-based for gimbal-lock-free rotation */
 export function updateFreeCamera(
   state: ReplayCameraState,
   camera: THREE.Camera,
   input: CameraInput,
   dt: number,
 ): void {
-  // Update rotation from input
-  if (input.left) state.freeRotation.y += FREE_ROTATE_SPEED * dt;
-  if (input.right) state.freeRotation.y -= FREE_ROTATE_SPEED * dt;
-  if (input.up) state.freeRotation.x += FREE_ROTATE_SPEED * dt;
-  if (input.down) state.freeRotation.x -= FREE_ROTATE_SPEED * dt;
+  // Apply rotation from input using quaternions (no gimbal lock)
+  // Horizontal rotation (around world Y axis)
+  if (input.left || input.right) {
+    const yawAmount = (input.left ? 1 : -1) * FREE_ROTATE_SPEED * dt;
+    deltaQuat.setFromAxisAngle(axisY, yawAmount);
+    state.freeRotation.premultiply(deltaQuat);
+  }
 
-  // Clamp pitch to avoid flipping
-  state.freeRotation.x = Math.max(
-    -Math.PI / 2 + 0.1,
-    Math.min(Math.PI / 2 - 0.1, state.freeRotation.x),
-  );
+  // Vertical rotation (around local X axis)
+  if (input.up || input.down) {
+    const pitchAmount = (input.up ? -1 : 1) * FREE_ROTATE_SPEED * dt;
+    deltaQuat.setFromAxisAngle(axisX, pitchAmount);
+    state.freeRotation.multiply(deltaQuat);
+  }
 
-  // Apply rotation
-  tempQuat.setFromEuler(state.freeRotation);
+  // Normalize to prevent drift
+  state.freeRotation.normalize();
 
-  // Calculate movement direction
+  // Calculate movement direction (forward/back in camera's local space)
   tempOffset.set(0, 0, 0);
   if (input.forward) tempOffset.z -= FREE_MOVE_SPEED * dt;
   if (input.back) tempOffset.z += FREE_MOVE_SPEED * dt;
 
-  // Apply rotation to movement
-  tempOffset.applyQuaternion(tempQuat);
+  // Apply rotation to movement direction
+  tempOffset.applyQuaternion(state.freeRotation);
 
   // Update position
   state.freePosition.add(tempOffset);
@@ -55,12 +63,13 @@ export function updateFreeCamera(
   // Apply to camera
   camera.position.copy(state.freePosition);
 
-  // Apply roll
+  // Apply rotation with optional roll
   if (state.roll !== 0) {
-    tempEuler.copy(state.freeRotation);
-    tempEuler.z = state.roll;
-    camera.quaternion.setFromEuler(tempEuler);
-  } else {
+    tempQuat.copy(state.freeRotation);
+    deltaQuat.setFromAxisAngle(axisZ, state.roll);
+    tempQuat.multiply(deltaQuat);
     camera.quaternion.copy(tempQuat);
+  } else {
+    camera.quaternion.copy(state.freeRotation);
   }
 }

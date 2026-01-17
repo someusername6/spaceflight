@@ -17,7 +17,7 @@ const ORBIT_ZOOM_SPEED = 50; // units per second
 
 /** Orbit constraints */
 const MIN_ORBIT_DISTANCE = 10;
-const MAX_ORBIT_DISTANCE = 200;
+const MAX_ORBIT_DISTANCE = 500;
 
 // Temporary objects for orbit rotation calculations (reused to avoid allocations)
 const orbitDeltaQuat = new THREE.Quaternion();

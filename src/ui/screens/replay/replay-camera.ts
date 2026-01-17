@@ -47,9 +47,9 @@ export interface ReplayCameraState {
   /** Chase camera distance multiplier (1.0 = default offset) */
   chaseDistance: number;
 
-  // Free camera state
+  // Free camera state (quaternion-based for gimbal-lock-free rotation)
   freePosition: THREE.Vector3;
-  freeRotation: THREE.Euler;
+  freeRotation: THREE.Quaternion;
 
   // Camera roll (applies to all modes)
   roll: number;
@@ -61,11 +61,11 @@ const ROLL_SPEED = 2.0; // radians per second
 
 /** Orbit distance constraints (used for default distance calculation) */
 const MIN_ORBIT_DISTANCE = 10;
-const MAX_ORBIT_DISTANCE = 200;
+const MAX_ORBIT_DISTANCE = 500;
 
 /** Chase camera constraints */
 const MIN_CHASE_DISTANCE = 0.5; // multiplier (half default distance)
-const MAX_CHASE_DISTANCE = 4.0; // multiplier (4x default distance)
+const MAX_CHASE_DISTANCE = 10.0; // multiplier (10x default distance)
 const DEFAULT_CHASE_DISTANCE = 1.0;
 
 /** Default orbit distance */
@@ -108,7 +108,7 @@ export function createCameraState(): ReplayCameraState {
     orbitDistance: DEFAULT_ORBIT_DISTANCE,
     chaseDistance: DEFAULT_CHASE_DISTANCE,
     freePosition: new THREE.Vector3(0, 50, 100),
-    freeRotation: new THREE.Euler(0, 0, 0, 'YXZ'),
+    freeRotation: new THREE.Quaternion(),
     roll: 0,
   };
 }
@@ -313,17 +313,13 @@ export function updateCamera(
   // If target was lost while in chase/orbit mode, switch to free camera
   if (state.targetEntity === null && state.mode !== CameraMode.Free) {
     state.mode = CameraMode.Free;
-    // Capture current camera position
+    // Capture current camera position and orientation
     state.freePosition.copy(camera.position);
-    // Decompose camera orientation into free camera format (pitch, yaw + separate roll)
+    // Extract roll from camera, store pitch/yaw in quaternion without roll
     tempEuler.setFromQuaternion(camera.quaternion, 'YXZ');
-    state.freeRotation.x = Math.max(
-      -Math.PI / 2 + 0.1,
-      Math.min(Math.PI / 2 - 0.1, tempEuler.x),
-    );
-    state.freeRotation.y = tempEuler.y;
-    state.freeRotation.z = 0;
     state.roll = tempEuler.z;
+    tempEuler.z = 0;
+    state.freeRotation.setFromEuler(tempEuler);
   }
 
   // Handle roll (applies to all modes)
