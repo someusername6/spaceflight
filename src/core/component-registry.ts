@@ -24,6 +24,7 @@ import type { FactionComponent } from '../components/faction';
 import type { Health } from '../components/health';
 import type { Heat } from '../components/heat';
 import type { HullCollider } from '../components/hull-collider';
+import type { HyperspaceJump } from '../components/hyperspace-jump';
 import type { Missile } from '../components/missile';
 import type { Physics } from '../components/physics';
 import type { PlayerControlled } from '../components/player';
@@ -31,6 +32,7 @@ import type { Projectile } from '../components/projectile';
 import type { ShieldHit } from '../components/shield-hit';
 import type { Shields } from '../components/shields';
 import type { ShipIdentity } from '../components/ship-identity';
+import type { Structure } from '../components/structure';
 import type { Targeting } from '../components/targeting';
 import type { Transform } from '../components/transform';
 import type { PrimaryWeapons, SecondaryWeapons } from '../components/weapons';
@@ -79,6 +81,12 @@ export interface ComponentRegistry {
   // Convoy components (escort missions)
   convoyShip: ConvoyShip;
   convoyAutopilot: ConvoyAutopilot;
+
+  // Structure components
+  structure: Structure;
+
+  // Effect components
+  hyperspaceJump: HyperspaceJump;
 }
 
 /** All valid component type strings (derived from registry keys) */

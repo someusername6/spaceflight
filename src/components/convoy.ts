@@ -15,14 +15,26 @@ export interface ConvoyShip extends ComponentBase {
   index: number;
   /** Whether this ship has reached the escape zone */
   inEscapeZone: boolean;
+  /** Progress of individual jump charge (0 to 1) - starts charging when in zone */
+  jumpChargeProgress: number;
+  /** Time required to complete jump charge (seconds) */
+  jumpChargeTime: number;
+  /** Whether this ship has started its hyperspace jump */
+  jumpInitiated: boolean;
 }
 
 /** Create a ConvoyShip component */
-export function createConvoyShip(index: number): ConvoyShip {
+export function createConvoyShip(
+  index: number,
+  jumpChargeTime: number,
+): ConvoyShip {
   return {
     type: 'convoyShip',
     index,
     inEscapeZone: false,
+    jumpChargeProgress: 0,
+    jumpChargeTime,
+    jumpInitiated: false,
   };
 }
 

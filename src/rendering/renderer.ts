@@ -21,6 +21,7 @@ import {
   createDecoyMesh,
   createMissileMesh,
   createShipMesh,
+  createStructureMesh,
 } from './mesh-factory';
 import {
   generateSkyboxTexture,
@@ -154,8 +155,9 @@ export function syncScene(renderer: Renderer, world: World, alpha = 1): void {
     const isMissile = hasComponent(world, entity, 'missile');
     const isDecoy = hasComponent(world, entity, 'decoy');
     const isShipEntity = isShip(world, entity);
+    const isStructure = hasComponent(world, entity, 'structure');
 
-    if (!isMissile && !isDecoy && !isShipEntity) continue;
+    if (!isMissile && !isDecoy && !isShipEntity && !isStructure) continue;
 
     seenEntities.add(entity);
     // Query guarantees this component exists
@@ -171,6 +173,9 @@ export function syncScene(renderer: Renderer, world: World, alpha = 1): void {
         mesh = createMissileMesh(missile?.missileType ?? 'seeker');
       } else if (isDecoy) {
         mesh = createDecoyMesh(faction?.faction ?? Faction.Neutral);
+      } else if (isStructure) {
+        const structure = getComponent(world, entity, 'structure');
+        mesh = createStructureMesh(structure?.structureType ?? 'waypoint');
       } else {
         // Get ship class from identity -> archetype -> shipClassName
         // Falls back to using identity.archetype directly for convoy ships

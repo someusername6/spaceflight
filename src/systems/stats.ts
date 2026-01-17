@@ -238,7 +238,11 @@ export function handleShipDeath(world: World, entity: Entity): void {
     matchStats.destroyedShips.push(record);
   }
 
-  // Record ALL ships for salvage (enemies and allies)
+  // Record ships for salvage (enemies and allies, but NOT convoy ships)
+  // Convoy ships are non-combatants - no weapons or equipment to salvage
+  const isConvoyShip = hasComponent(world, entity, 'convoyShip');
+  if (isConvoyShip) return;
+
   // Use shipClassName from archetype (not archetype name) for correct price lookup
   const archetypeStats = getArchetype(identity.archetype);
   const shipClass = archetypeStats?.shipClassName ?? identity.archetype;

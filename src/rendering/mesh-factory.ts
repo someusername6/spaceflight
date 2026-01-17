@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { Faction } from '../components/faction';
 import type { MissileType } from '../components/missile';
+import type { StructureType } from '../components/structure';
 import { SHIP_MODEL_SCALE } from './constants';
 import { SHIP_GEOMETRIES, type ShipClass } from './ship-geometries';
 
@@ -183,4 +184,42 @@ export function createDecoyMesh(faction: Faction): THREE.Group {
   );
   group.add(inner, outer);
   return group;
+}
+
+/** Structure type to mesh class mapping */
+const STRUCTURE_MESH_CLASSES: Record<StructureType, ShipClass | null> = {
+  waypoint: 'waypoint',
+  obstacle: null,
+};
+
+/** Neutral gray color for structures */
+const STRUCTURE_COLOR = 0x8888aa;
+
+/**
+ * Creates a structure mesh.
+ * Uses embedded geometry if available, otherwise falls back to simple shape.
+ * @param structureType - Type of structure to create
+ */
+export function createStructureMesh(structureType: StructureType): THREE.Mesh {
+  const meshClass = STRUCTURE_MESH_CLASSES[structureType];
+  const material = new THREE.MeshPhongMaterial({
+    color: STRUCTURE_COLOR,
+    emissive: 0x222244,
+    emissiveIntensity: 0.5,
+  });
+
+  // Try to use embedded geometry
+  if (meshClass && isShipClass(meshClass)) {
+    const geometry = getShipGeometry(meshClass).clone();
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.scale.setScalar(SHIP_MODEL_SCALE);
+    // Models created in top-down view (nose pointing +Y in Blender)
+    // Rotate -90° on X to point nose forward (-Z in game)
+    mesh.rotation.x = -Math.PI / 2;
+    return mesh;
+  }
+
+  // Fallback to simple box for obstacles
+  const geometry = new THREE.BoxGeometry(10, 10, 10);
+  return new THREE.Mesh(geometry, material);
 }

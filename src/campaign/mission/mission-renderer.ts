@@ -32,6 +32,12 @@ import {
   updateExplosionRenderer,
 } from '../../rendering/effects/explosions';
 import {
+  createJumpEffectRenderer,
+  disposeJumpEffectRenderer,
+  resetJumpEffectRenderer,
+  updateJumpEffectRenderer,
+} from '../../rendering/effects/jump-effect';
+import {
   createMuzzleFlashRenderer,
   resetMuzzleFlashRenderer,
   updateMuzzleFlashRenderer,
@@ -73,6 +79,7 @@ export interface MissionRenderers {
   renderer: ReturnType<typeof createRenderer>;
   dustSystem: ReturnType<typeof createDustSystem>;
   explosionRenderer: ReturnType<typeof createExplosionRenderer>;
+  jumpEffectRenderer: ReturnType<typeof createJumpEffectRenderer>;
   boltRenderer: ReturnType<typeof createBoltRenderer>;
   exhaustRenderer: ReturnType<typeof createExhaustRenderer>;
   shieldEffectRenderer: ReturnType<typeof createShieldEffectRenderer>;
@@ -96,6 +103,7 @@ export function createMissionRenderers(
     renderer,
     dustSystem: createDustSystem(scene),
     explosionRenderer: createExplosionRenderer(),
+    jumpEffectRenderer: createJumpEffectRenderer(),
     boltRenderer: createBoltRenderer(),
     exhaustRenderer: createExhaustRenderer(),
     shieldEffectRenderer: createShieldEffectRenderer(),
@@ -130,6 +138,13 @@ export function updateMissionRenderers(
 
   syncScene(renderer, world, alpha);
   updateExplosionRenderer(renderers.explosionRenderer, scene, world, alpha);
+  updateJumpEffectRenderer(
+    renderers.jumpEffectRenderer,
+    scene,
+    world,
+    renderer.entityMeshes,
+    alpha,
+  );
   updateBoltRenderer(renderers.boltRenderer, scene, world, alpha);
   updateExhaustRenderer(
     renderers.exhaustRenderer,
@@ -265,6 +280,7 @@ export function resetMissionRenderers(renderers: MissionRenderers): void {
   resetMuzzleFlashRenderer(renderers.muzzleFlashRenderer, scene);
   resetBoltRenderer(renderers.boltRenderer);
   resetExplosionRenderer(renderers.explosionRenderer);
+  resetJumpEffectRenderer(renderers.jumpEffectRenderer);
   resetExhaustRenderer(renderers.exhaustRenderer, scene);
   resetShieldEffectRenderer(renderers.shieldEffectRenderer, scene);
   resetProjectileHitRenderer(renderers.projectileHitRenderer, scene);
@@ -279,6 +295,9 @@ export function disposeMissionRenderers(renderers: MissionRenderers): void {
 
   // Dispose bolt renderer (shared geometries and pooled bolts)
   disposeBoltRenderer(renderers.boltRenderer, scene);
+
+  // Dispose jump effect renderer (cached geometries)
+  disposeJumpEffectRenderer(renderers.jumpEffectRenderer, scene);
 
   // Dispose main renderer (handles WebGL context, beam lines, etc.)
   disposeRenderer(renderers.renderer);

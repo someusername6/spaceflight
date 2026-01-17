@@ -11,6 +11,7 @@ import { isDead } from '../components/health';
 import type { Transform } from '../components/transform';
 import { getComponent, queryEntities } from '../core/ecs';
 import type { World } from '../core/types';
+import { JUMP_CHARGE_RADIUS } from './escort-mission';
 
 // Reusable vectors to avoid allocations
 const toDestination = new Vector3();
@@ -87,13 +88,33 @@ export function convoyAutopilotSystem(world: World, _dt: number): void {
     // Calculate distance to destination (escape zone center)
     const distance = transform.position.distanceTo(autopilot.destination);
 
-    // If within escape zone, actively brake to stop
-    if (distance < autopilot.escapeZoneRadius) {
+    // Braking strategy:
+    // - Full brake when very close to stop at destination
+    // - Gradual slowdown in approach zone
+    // - Full speed outside approach zone
+    // Full brake distance is slightly larger than charge radius so ships stop in time
+    const fullBrakeDistance = JUMP_CHARGE_RADIUS + 10;
+
+    if (distance < fullBrakeDistance) {
+      // Very close: full brake to stop
       autopilot.input.pitch = 0;
       autopilot.input.yaw = 0;
       autopilot.input.accelerate = false;
-      // Decelerate until stopped
-      autopilot.input.decelerate = physics.currentSpeed > 5;
+      autopilot.input.decelerate = physics.currentSpeed > 0.5;
+      continue;
+    }
+
+    if (distance < autopilot.escapeZoneRadius) {
+      // Approach zone: slow down but don't stop
+      // Target speed proportional to distance (faster when further)
+      const targetSpeed = Math.max(
+        10,
+        (distance / autopilot.escapeZoneRadius) * physics.maxSpeed,
+      );
+      autopilot.input.pitch = 0;
+      autopilot.input.yaw = 0;
+      autopilot.input.accelerate = physics.currentSpeed < targetSpeed - 5;
+      autopilot.input.decelerate = physics.currentSpeed > targetSpeed + 5;
       continue;
     }
 

@@ -17,6 +17,7 @@ import { damageSystem } from './systems/damage';
 import { decoySystem } from './systems/decoys';
 import { explosionSystem } from './systems/explosions';
 import { heatSystem } from './systems/heat';
+import { hyperspaceJumpSystem } from './systems/hyperspace-jump';
 // Systems (in execution order)
 import { inputSystem } from './systems/input';
 import {
@@ -87,7 +88,8 @@ export const SIMULATION_SYSTEMS: SystemFn[] = [
   heatSystem, // 15. Cool heat
   cleanupSystem, // 16. Remove dead entities, spawn explosions
   explosionSystem, // 17. Update explosion effects
-  missionSystem, // 18. Check win/lose
+  hyperspaceJumpSystem, // 18. Update hyperspace jump animations
+  missionSystem, // 19. Check win/lose
 ];
 
 /** Full system order including input (for live gameplay) */

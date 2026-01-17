@@ -7,7 +7,11 @@
  */
 
 import { Quaternion, Vector3 } from 'three';
-import type { HullCollider, HullPlane } from '../components/hull-collider';
+import type {
+  HullCollider,
+  HullPlane,
+  SubHull,
+} from '../components/hull-collider';
 
 /**
  * Result of a hull collision test.
@@ -70,6 +74,44 @@ function worldToLocal(
 }
 
 /**
+ * Test sphere against a set of planes (internal helper).
+ * Returns penetration depth and closest plane, or null if no collision.
+ */
+function testSphereVsPlanes(
+  localPoint: Vector3,
+  sphereRadius: number,
+  hullScale: number,
+  planes: HullPlane[],
+): { penetration: number; plane: HullPlane } | null {
+  let minPenetration = Infinity;
+  let closestPlane: HullPlane | null = null;
+
+  for (const plane of planes) {
+    // Signed distance from point to plane
+    const signedDist =
+      plane.nx * localPoint.x +
+      plane.ny * localPoint.y +
+      plane.nz * localPoint.z -
+      plane.d;
+
+    // Penetration = how far sphere extends past this plane
+    // Positive = sphere penetrates past plane
+    const penetration = sphereRadius / hullScale - signedDist;
+
+    if (penetration < minPenetration) {
+      minPenetration = penetration;
+      closestPlane = plane;
+    }
+  }
+
+  if (minPenetration <= 0 || !closestPlane) {
+    return null;
+  }
+
+  return { penetration: minPenetration, plane: closestPlane };
+}
+
+/**
  * Transform a local-space normal to world space.
  */
 function localNormalToWorld(
@@ -84,6 +126,9 @@ function localNormalToWorld(
 
 /**
  * Test if a sphere collides with a convex hull.
+ *
+ * For compound hulls (with subHulls), tests each sub-hull and returns
+ * the deepest penetration collision.
  *
  * @param sphereCenter - Center of sphere in world space
  * @param sphereRadius - Radius of sphere
@@ -120,39 +165,79 @@ export function testSphereVsHull(
     _localPoint.divideScalar(hullScale);
   }
 
-  // Find the plane with maximum signed distance to sphere center
-  // If this distance is > sphereRadius, sphere is outside hull
-  let minPenetration = Infinity;
-  let closestPlane: HullPlane | null = null;
-
-  for (const plane of hull.planes) {
-    // Signed distance from point to plane
-    const signedDist =
-      plane.nx * _localPoint.x +
-      plane.ny * _localPoint.y +
-      plane.nz * _localPoint.z -
-      plane.d;
-
-    // Penetration = how far sphere extends past this plane
-    // Positive = sphere penetrates past plane
-    const penetration = sphereRadius / hullScale - signedDist;
-
-    if (penetration < minPenetration) {
-      minPenetration = penetration;
-      closestPlane = plane;
-    }
+  // Handle compound hulls with sub-hulls
+  if (hull.subHulls && hull.subHulls.length > 0) {
+    return testSphereVsSubHulls(
+      sphereRadius,
+      hull.subHulls,
+      hullRotation,
+      hullScale,
+      _localPoint,
+    );
   }
 
-  if (minPenetration <= 0 || !closestPlane) {
-    // Sphere is outside hull
-    _noCollisionResult.penetration = minPenetration;
+  // Standard single hull test
+  const result = testSphereVsPlanes(
+    _localPoint,
+    sphereRadius,
+    hullScale,
+    hull.planes,
+  );
+
+  if (!result) {
+    _noCollisionResult.penetration = -1;
     return _noCollisionResult;
   }
 
   // Collision! Return penetration and normal
-  _normal.set(closestPlane.nx, closestPlane.ny, closestPlane.nz);
+  _normal.set(result.plane.nx, result.plane.ny, result.plane.nz);
   localNormalToWorld(_normal, hullRotation, _collisionResult.normal);
-  _collisionResult.penetration = minPenetration * hullScale; // Scale back to world units
+  _collisionResult.penetration = result.penetration * hullScale;
+
+  return _collisionResult;
+}
+
+/**
+ * Test sphere against compound hull with multiple sub-hulls.
+ * Returns the deepest penetration collision among all sub-hulls.
+ *
+ * Note: We test against all sub-hulls without per-sub-hull early-out because
+ * sub-hulls may be offset from the parent hull's origin. The outer bounding
+ * sphere check in testSphereVsHull already provides coarse culling.
+ */
+function testSphereVsSubHulls(
+  sphereRadius: number,
+  subHulls: SubHull[],
+  hullRotation: Quaternion,
+  hullScale: number,
+  localPoint: Vector3,
+): HullCollisionResult {
+  let deepestPenetration = -Infinity;
+  let deepestPlane: HullPlane | null = null;
+
+  for (const subHull of subHulls) {
+    const result = testSphereVsPlanes(
+      localPoint,
+      sphereRadius,
+      hullScale,
+      subHull.planes,
+    );
+
+    if (result && result.penetration > deepestPenetration) {
+      deepestPenetration = result.penetration;
+      deepestPlane = result.plane;
+    }
+  }
+
+  if (deepestPenetration <= 0 || !deepestPlane) {
+    _noCollisionResult.penetration = deepestPenetration;
+    return _noCollisionResult;
+  }
+
+  // Collision with deepest sub-hull
+  _normal.set(deepestPlane.nx, deepestPlane.ny, deepestPlane.nz);
+  localNormalToWorld(_normal, hullRotation, _collisionResult.normal);
+  _collisionResult.penetration = deepestPenetration * hullScale;
 
   return _collisionResult;
 }
@@ -169,6 +254,9 @@ const _hullVsHullResult: HullCollisionResult = {
  *
  * This is a simplified version that checks face normals as potential separating axes.
  * For a full SAT implementation, we'd also check edge cross products.
+ *
+ * For compound hulls (with subHulls), each sub-hull is tested individually.
+ * Compound hulls cannot be approximated as spheres - only simple hulls can.
  *
  * @param hullA - First hull collider
  * @param posA - First hull position
@@ -202,27 +290,47 @@ export function testHullVsHull(
     return _noCollisionResult;
   }
 
-  // For ship-vs-ship, we approximate by treating each hull's center as a sphere
-  // and testing against the opposing hull. This is faster than full SAT.
-  const radiusA = hullA.boundingRadius * scaleA * HULL_APPROXIMATION_FACTOR;
-  const radiusB = hullB.boundingRadius * scaleB * HULL_APPROXIMATION_FACTOR;
+  // Compound hulls (with subHulls) cannot be approximated as spheres.
+  // Only test an entity as a sphere if it has a simple (non-compound) hull.
+  const aIsCompound = hullA.subHulls && hullA.subHulls.length > 0;
+  const bIsCompound = hullB.subHulls && hullB.subHulls.length > 0;
 
-  // Test A's center against B's hull
-  const resultAvsB = testSphereVsHull(posA, radiusA, hullB, posB, rotB, scaleB);
-  if (resultAvsB.collided) {
-    // Copy to our result to avoid returning shared _collisionResult
-    _hullVsHullResult.penetration = resultAvsB.penetration;
-    _hullVsHullResult.normal.copy(resultAvsB.normal);
-    return _hullVsHullResult;
+  // Test A's center against B's hull (B may have sub-hulls, handled by testSphereVsHull)
+  // Only if A is a simple hull that can be approximated as a sphere
+  if (!aIsCompound) {
+    const radiusA = hullA.boundingRadius * scaleA * HULL_APPROXIMATION_FACTOR;
+    const resultAvsB = testSphereVsHull(
+      posA,
+      radiusA,
+      hullB,
+      posB,
+      rotB,
+      scaleB,
+    );
+    if (resultAvsB.collided) {
+      _hullVsHullResult.penetration = resultAvsB.penetration;
+      _hullVsHullResult.normal.copy(resultAvsB.normal);
+      return _hullVsHullResult;
+    }
   }
 
-  // Test B's center against A's hull
-  const resultBvsA = testSphereVsHull(posB, radiusB, hullA, posA, rotA, scaleA);
-  if (resultBvsA.collided) {
-    // Copy and flip normal since we tested B against A
-    _hullVsHullResult.penetration = resultBvsA.penetration;
-    _hullVsHullResult.normal.copy(resultBvsA.normal).negate();
-    return _hullVsHullResult;
+  // Test B's center against A's hull (A may have sub-hulls, handled by testSphereVsHull)
+  // Only if B is a simple hull that can be approximated as a sphere
+  if (!bIsCompound) {
+    const radiusB = hullB.boundingRadius * scaleB * HULL_APPROXIMATION_FACTOR;
+    const resultBvsA = testSphereVsHull(
+      posB,
+      radiusB,
+      hullA,
+      posA,
+      rotA,
+      scaleA,
+    );
+    if (resultBvsA.collided) {
+      _hullVsHullResult.penetration = resultBvsA.penetration;
+      _hullVsHullResult.normal.copy(resultBvsA.normal).negate();
+      return _hullVsHullResult;
+    }
   }
 
   return _noCollisionResult;

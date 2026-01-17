@@ -135,14 +135,9 @@ export function createMissionEndExecutor(
     newState = applyAmmoUsage(newState, ammoData);
 
     // Calculate and apply item-based salvage from all destroyed ships
-    // Skip salvage for escort missions - no time to collect wreckage while escorting
+    // (Convoy ships are excluded from salvage in the stats system)
     let salvageResult: ReturnType<typeof calculateSalvage> | null = null;
-    const isEscortMission = contract.missionType === 'escort';
-    if (
-      !isEscortMission &&
-      matchStats &&
-      matchStats.salvageableShips.length > 0
-    ) {
+    if (matchStats && matchStats.salvageableShips.length > 0) {
       // Use derived PRNG for deterministic salvage (prevents save scumming)
       const salvageRng = createDerivedPRNG(
         newState.seed,

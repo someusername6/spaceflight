@@ -8,11 +8,13 @@ import { aiSystem } from '../../../src/systems/ai/ai.ts';
 import { aimErrorSystem } from '../../../src/systems/aim-error.ts';
 import { cleanupSystem } from '../../../src/systems/cleanup.ts';
 import { collisionSystem } from '../../../src/systems/collision.ts';
+import { collisionResponseSystem } from '../../../src/systems/collision-response.ts';
 import { convoyAutopilotSystem } from '../../../src/systems/convoy-autopilot.ts';
 import { damageSystem } from '../../../src/systems/damage.ts';
 import { decoySystem } from '../../../src/systems/decoys.ts';
 import { explosionSystem } from '../../../src/systems/explosions.ts';
 import { heatSystem } from '../../../src/systems/heat.ts';
+import { hyperspaceJumpSystem } from '../../../src/systems/hyperspace-jump.ts';
 import { physicsSystem } from '../../../src/systems/physics.ts';
 import { shieldSystem } from '../../../src/systems/shields.ts';
 import { targetingSystem } from '../../../src/systems/targeting.ts';
@@ -70,11 +72,13 @@ export const SYSTEMS = [
   missileSystem,
   decoySystem,
   collisionSystem,
+  collisionResponseSystem, // Push colliding ships apart
   damageSystem,
   shieldSystem,
   heatSystem,
   cleanupSystem,
   explosionSystem,
+  hyperspaceJumpSystem, // Update hyperspace jump animations
 ];
 
 // ============================================================================

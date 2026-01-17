@@ -130,3 +130,166 @@ export function computeBoundingRadius(hull) {
 
   return Math.sqrt(maxDistSq);
 }
+
+/**
+ * Union-Find data structure for grouping triangles by connectivity.
+ */
+class UnionFind {
+  constructor(size) {
+    this.parent = Array.from({ length: size }, (_, i) => i);
+    this.rank = new Array(size).fill(0);
+  }
+
+  find(x) {
+    if (this.parent[x] !== x) {
+      this.parent[x] = this.find(this.parent[x]); // Path compression
+    }
+    return this.parent[x];
+  }
+
+  union(x, y) {
+    const rootX = this.find(x);
+    const rootY = this.find(y);
+    if (rootX === rootY) return;
+
+    // Union by rank
+    if (this.rank[rootX] < this.rank[rootY]) {
+      this.parent[rootX] = rootY;
+    } else if (this.rank[rootX] > this.rank[rootY]) {
+      this.parent[rootY] = rootX;
+    } else {
+      this.parent[rootY] = rootX;
+      this.rank[rootX]++;
+    }
+  }
+}
+
+/**
+ * Hash a vertex position for deduplication.
+ * Uses fixed precision to handle floating point tolerance.
+ */
+function hashVertex(x, y, z) {
+  const precision = 1e-6;
+  const rx = Math.round(x / precision);
+  const ry = Math.round(y / precision);
+  const rz = Math.round(z / precision);
+  return `${rx},${ry},${rz}`;
+}
+
+/**
+ * Decompose a mesh into connected components.
+ *
+ * Uses Union-Find to group triangles that share vertices.
+ * Each component is returned as a separate set of positions/indices.
+ *
+ * @param indices - Triangle indices (triplets)
+ * @param positions - Flat array of vertex positions [x,y,z,x,y,z,...]
+ * @returns Array of components, each with positions and indices
+ */
+export function decomposeIntoConnectedComponents(indices, positions) {
+  if (!indices || indices.length === 0) {
+    return [{ positions: Array.from(positions), indices: null }];
+  }
+
+  const numTriangles = indices.length / 3;
+  const numVertices = positions.length / 3;
+
+  // Build vertex position to canonical index mapping
+  // This handles duplicate vertices at the same position
+  const vertexToCanonical = new Map();
+  const canonicalIndices = [];
+
+  for (let i = 0; i < numVertices; i++) {
+    const x = positions[i * 3];
+    const y = positions[i * 3 + 1];
+    const z = positions[i * 3 + 2];
+    const hash = hashVertex(x, y, z);
+
+    if (!vertexToCanonical.has(hash)) {
+      vertexToCanonical.set(hash, i);
+    }
+    canonicalIndices.push(vertexToCanonical.get(hash));
+  }
+
+  // Union-Find over triangles
+  const uf = new UnionFind(numTriangles);
+
+  // Build edge-to-triangle mapping
+  const edgeToTriangle = new Map();
+
+  function edgeKey(a, b) {
+    const ca = canonicalIndices[a];
+    const cb = canonicalIndices[b];
+    return ca < cb ? `${ca}-${cb}` : `${cb}-${ca}`;
+  }
+
+  for (let t = 0; t < numTriangles; t++) {
+    const i0 = indices[t * 3];
+    const i1 = indices[t * 3 + 1];
+    const i2 = indices[t * 3 + 2];
+
+    const edges = [edgeKey(i0, i1), edgeKey(i1, i2), edgeKey(i2, i0)];
+
+    for (const edge of edges) {
+      if (edgeToTriangle.has(edge)) {
+        const otherTriangle = edgeToTriangle.get(edge);
+        uf.union(t, otherTriangle);
+      } else {
+        edgeToTriangle.set(edge, t);
+      }
+    }
+  }
+
+  // Group triangles by component
+  const componentMap = new Map();
+  for (let t = 0; t < numTriangles; t++) {
+    const root = uf.find(t);
+    if (!componentMap.has(root)) {
+      componentMap.set(root, []);
+    }
+    componentMap.get(root).push(t);
+  }
+
+  // Build output components
+  const components = [];
+  for (const triangles of componentMap.values()) {
+    // Collect unique vertices used by this component
+    const vertexSet = new Set();
+    for (const t of triangles) {
+      vertexSet.add(indices[t * 3]);
+      vertexSet.add(indices[t * 3 + 1]);
+      vertexSet.add(indices[t * 3 + 2]);
+    }
+
+    // Create new vertex array and index mapping
+    const oldToNew = new Map();
+    const newPositions = [];
+    let newIndex = 0;
+
+    for (const oldIdx of vertexSet) {
+      oldToNew.set(oldIdx, newIndex++);
+      newPositions.push(
+        positions[oldIdx * 3],
+        positions[oldIdx * 3 + 1],
+        positions[oldIdx * 3 + 2],
+      );
+    }
+
+    // Remap indices
+    const newIndices = [];
+    for (const t of triangles) {
+      newIndices.push(
+        oldToNew.get(indices[t * 3]),
+        oldToNew.get(indices[t * 3 + 1]),
+        oldToNew.get(indices[t * 3 + 2]),
+      );
+    }
+
+    components.push({
+      positions: newPositions,
+      indices: newIndices,
+    });
+  }
+
+  return components;
+}

@@ -15,11 +15,13 @@
 
 import type { Contract } from '../types';
 import { SECTOR_3_EASY } from './easy';
+import { SECTOR_3_ESCORT } from './escort';
 import { SECTOR_3_HARD } from './hard';
 import { SECTOR_3_MEDIUM } from './medium';
 
 export const SECTOR_3_MISSIONS: Contract[] = [
   ...SECTOR_3_EASY,
+  ...SECTOR_3_ESCORT,
   ...SECTOR_3_MEDIUM,
   ...SECTOR_3_HARD,
 ];

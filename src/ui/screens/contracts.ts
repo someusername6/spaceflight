@@ -196,17 +196,6 @@ const ContractsScreenComponent: Screen<ContractsState, ContractsProps> = {
 /** Screen handle for external control */
 let screenHandle: ScreenHandle<ContractsState, ContractsProps> | null = null;
 
-/** Contract IDs to exclude on next generation (used during refresh) */
-let excludeOnNextRefresh: string[] = [];
-
-/**
- * Set contract IDs to exclude when generating the next contract list.
- * Used during refresh to avoid showing the same contracts.
- */
-export function setExcludeOnNextRefresh(ids: string[]): void {
-  excludeOnNextRefresh = ids;
-}
-
 /**
  * Get the IDs of currently displayed contracts.
  * Returns empty array if no contracts screen is active.
@@ -214,7 +203,7 @@ export function setExcludeOnNextRefresh(ids: string[]): void {
 export function getCurrentContractIds(): string[] {
   if (!screenHandle) return [];
   const props = screenHandle.getProps();
-  return props?.contracts.map((c) => c.id) ?? [];
+  return props.contracts.map((c: Contract) => c.id);
 }
 
 /** Create contracts UI */

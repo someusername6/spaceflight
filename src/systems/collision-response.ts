@@ -13,7 +13,7 @@
  */
 
 import { Vector3 } from 'three';
-import { getComponent } from '../core/ecs';
+import { getComponent, hasComponent } from '../core/ecs';
 import type { World } from '../core/types';
 import { hullCollisions } from './collision';
 
@@ -44,25 +44,18 @@ export function collisionResponseSystem(world: World, _dt: number): void {
     const hullA = getComponent(world, collision.entityA, 'hullCollider');
     const hullB = getComponent(world, collision.entityB, 'hullCollider');
 
-    if (
-      !transformA ||
-      !transformB ||
-      !physicsA ||
-      !physicsB ||
-      !hullA ||
-      !hullB
-    ) {
+    if (!transformA || !transformB || !hullA || !hullB) {
       continue;
     }
 
-    // Get masses for weighting (heavier objects move less)
-    const massA = hullA.mass;
-    const massB = hullB.mass;
-    const totalMass = massA + massB;
-    if (totalMass === 0) continue;
+    // Check if either entity is a structure (immovable)
+    const isStructureA = hasComponent(world, collision.entityA, 'structure');
+    const isStructureB = hasComponent(world, collision.entityB, 'structure');
 
-    const massRatioA = massB / totalMass; // A moves more if B is heavier
-    const massRatioB = massA / totalMass; // B moves more if A is heavier
+    // Skip if both are structures (they can overlap)
+    if (isStructureA && isStructureB) {
+      continue;
+    }
 
     // Use center-to-center direction for stable separation
     _separationDir.copy(transformB.position).sub(transformA.position);
@@ -74,8 +67,62 @@ export function collisionResponseSystem(world: World, _dt: number): void {
       _separationDir.divideScalar(dist);
     }
 
-    // === STEP 1: Position Correction ===
     const correction = collision.penetration + SEPARATION_GAP;
+
+    // Handle structure vs non-structure (structure is immovable)
+    if (isStructureA) {
+      // Only entity B moves (full correction)
+      if (!physicsB) continue;
+
+      // Position correction (only B moves)
+      transformB.position.addScaledVector(_separationDir, correction);
+
+      // Velocity sliding (only B)
+      const velBTowardA = -physicsB.velocity.dot(_separationDir);
+      if (velBTowardA > 0) {
+        physicsB.velocity.addScaledVector(_separationDir, velBTowardA);
+      }
+
+      // Separation velocity (only B)
+      const separationSpeed =
+        collision.penetration * SEPARATION_VELOCITY_FACTOR;
+      physicsB.velocity.addScaledVector(_separationDir, separationSpeed);
+      continue;
+    }
+
+    if (isStructureB) {
+      // Only entity A moves (full correction)
+      if (!physicsA) continue;
+
+      // Position correction (only A moves)
+      transformA.position.addScaledVector(_separationDir, -correction);
+
+      // Velocity sliding (only A)
+      const velATowardB = physicsA.velocity.dot(_separationDir);
+      if (velATowardB > 0) {
+        physicsA.velocity.addScaledVector(_separationDir, -velATowardB);
+      }
+
+      // Separation velocity (only A)
+      const separationSpeed =
+        collision.penetration * SEPARATION_VELOCITY_FACTOR;
+      physicsA.velocity.addScaledVector(_separationDir, -separationSpeed);
+      continue;
+    }
+
+    // Standard ship-vs-ship collision response
+    if (!physicsA || !physicsB) continue;
+
+    // Get masses for weighting (heavier objects move less)
+    const massA = hullA.mass;
+    const massB = hullB.mass;
+    const totalMass = massA + massB;
+    if (totalMass === 0) continue;
+
+    const massRatioA = massB / totalMass; // A moves more if B is heavier
+    const massRatioB = massA / totalMass; // B moves more if A is heavier
+
+    // === STEP 1: Position Correction ===
     transformA.position.addScaledVector(
       _separationDir,
       -correction * massRatioA,

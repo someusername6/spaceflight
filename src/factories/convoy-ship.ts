@@ -41,15 +41,18 @@ const CONVOY_FREIGHTER_STATS = {
  * Stats for convoy transport ships (large cargo hauler).
  * Very slow and unwieldy, but heavily armored.
  * Reference: Defender (tankiest fighter) has hull=165, shields=130
+ *
+ * Tuned for ~65-85% win rate across all sectors. Higher durability compensates
+ * for AI limitations (can't dodge well) and continuous enemy spawns over ~180s.
  */
 const CONVOY_TRANSPORT_STATS = {
   maxSpeed: 55, // Very slow - lumbering cargo ship
   acceleration: 12,
   turnRate: 30, // Degrees/sec - very sluggish
   rollRate: 40, // Degrees/sec
-  hull: 450, // ~3x defender, ~5x fighter
-  shields: 250, // ~2x defender, ~4x fighter
-  shieldRegen: 8,
+  hull: 600, // ~4x defender - high to survive sustained attacks
+  shields: 300, // ~2.3x defender - regenerates during lulls in combat
+  shieldRegen: 10,
   shieldDelay: 4,
   collisionRadius: 35,
 };
@@ -91,6 +94,7 @@ export function createConvoyShipEntity(
   destination: Vector3,
   escapeZoneRadius: number,
   index: number,
+  jumpChargeTime: number,
 ): Entity {
   const stats = getConvoyStats(shipType);
   const entity = createEntity(world);
@@ -140,7 +144,7 @@ export function createConvoyShipEntity(
   addHullColliderFromClass(world, entity, shipType, true);
 
   // Convoy-specific components
-  addComponent(world, entity, createConvoyShip(index));
+  addComponent(world, entity, createConvoyShip(index, jumpChargeTime));
   addComponent(
     world,
     entity,
@@ -162,6 +166,7 @@ export function spawnConvoyFormation(
   startPosition: Vector3,
   destination: Vector3,
   escapeZoneRadius: number,
+  jumpChargeTime: number,
   spacing: number = 60,
 ): Entity[] {
   const entities: Entity[] = [];
@@ -183,6 +188,7 @@ export function spawnConvoyFormation(
       destination,
       escapeZoneRadius,
       i,
+      jumpChargeTime,
     );
     entities.push(entity);
   }

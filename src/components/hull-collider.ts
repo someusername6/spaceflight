@@ -16,6 +16,12 @@ export interface HullPlane {
   d: number;
 }
 
+/** Sub-hull for compound collision (connected components of a structure) */
+export interface SubHull {
+  planes: HullPlane[];
+  boundingRadius: number;
+}
+
 /** Hull collider component - convex hull for collision detection */
 export interface HullCollider extends ComponentBase {
   readonly type: 'hullCollider';
@@ -31,6 +37,11 @@ export interface HullCollider extends ComponentBase {
   mass: number;
   /** If true, use hull for projectile/missile detection (large ships only) */
   useHullForWeapons: boolean;
+  /**
+   * Sub-hulls for compound collision (structures with disconnected parts).
+   * If present, collision tests iterate each sub-hull separately.
+   */
+  subHulls?: SubHull[];
 }
 
 /**
@@ -53,5 +64,29 @@ export function createHullCollider(
     boundingRadius,
     mass: volume, // Volume directly used as mass - larger ships are heavier
     useHullForWeapons,
+  };
+}
+
+/**
+ * Creates a compound HullCollider with sub-hulls for structures.
+ * Used for meshes with disconnected parts (like waypoint beams).
+ *
+ * @param subHulls - Array of sub-hulls (each with planes and boundingRadius)
+ * @param totalBoundingRadius - Bounding radius of entire structure
+ * @param totalVolume - Total volume (used as mass, typically very large for structures)
+ */
+export function createCompoundHullCollider(
+  subHulls: SubHull[],
+  totalBoundingRadius: number,
+  totalVolume: number,
+): HullCollider {
+  // The main planes array is empty for compound hulls - we only use subHulls
+  return {
+    type: 'hullCollider',
+    planes: [],
+    boundingRadius: totalBoundingRadius,
+    mass: totalVolume,
+    useHullForWeapons: false,
+    subHulls,
   };
 }

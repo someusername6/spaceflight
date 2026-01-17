@@ -9,14 +9,34 @@
  * - Victory/defeat conditions
  */
 
-import type { Vector3 } from 'three';
+import { Vector3 } from 'three';
 import { isDead } from '../components/health';
-import { getComponent, queryEntities } from '../core/ecs';
-import type { World } from '../core/types';
+import { createHyperspaceJump } from '../components/hyperspace-jump';
+import {
+  addComponent,
+  getComponent,
+  hasComponent,
+  queryEntities,
+} from '../core/ecs';
+import type { Entity, World } from '../core/types';
 import { Faction, MissionResult } from '../core/types';
 
 /** Fixed delay before enemies start spawning (seconds) */
 const INITIAL_SPAWN_DELAY = 10;
+
+/**
+ * Radius within which convoy ships can charge their hyperspace jump.
+ * Ships enter the larger escape zone (for braking), but only start charging
+ * when within this smaller radius of their destination.
+ * This ensures ships jump from near the waypoint, not from the zone edge.
+ *
+ * At 50m, ships charge while nearly stopped at their destination.
+ * convoy-autopilot.ts uses JUMP_CHARGE_RADIUS + 10 as its full brake distance.
+ * Together this gives ~185s mission duration for the standard distance formula.
+ *
+ * @internal Used by convoy-autopilot.ts - change both together if adjusting.
+ */
+export const JUMP_CHARGE_RADIUS = 50;
 
 /** Escort mission runtime state */
 export interface EscortMissionState {
@@ -36,6 +56,8 @@ export interface EscortMissionState {
   aliveConvoy: number;
   /** Convoy ships in escape zone */
   convoyInZone: number;
+  /** Convoy ships that have completed their hyperspace jump */
+  escapedConvoy: number;
   /** Player is in escape zone */
   playerInZone: boolean;
   /** Enemy spawn interval (seconds) */
@@ -81,6 +103,7 @@ export function createEscortMissionState(
     totalConvoy: convoySize,
     aliveConvoy: convoySize,
     convoyInZone: 0,
+    escapedConvoy: 0,
     playerInZone: false,
     spawnInterval,
     timeSinceSpawn: 0,
@@ -103,9 +126,41 @@ function countLivingConvoy(world: World): number {
   return count;
 }
 
-/** Count convoy ships in escape zone */
-function countConvoyInZone(world: World, state: EscortMissionState): number {
-  let count = 0;
+/**
+ * Initiate hyperspace jump for a convoy ship.
+ * Adds the hyperspaceJump component which triggers the visual effect and removal.
+ */
+function initiateConvoyJump(world: World, entity: Entity): void {
+  const transform = getComponent(world, entity, 'transform');
+  if (!transform) return;
+
+  // Compute forward direction from rotation (forward is -Z in local space)
+  const direction = new Vector3(0, 0, -1).applyQuaternion(transform.rotation);
+
+  // Add hyperspace jump component
+  addComponent(
+    world,
+    entity,
+    createHyperspaceJump(direction, world.systemState.gameTime),
+  );
+}
+
+/**
+ * Update convoy ship states and count ships in escape zone.
+ * Returns object with in-zone count and number of NEW jumps initiated this frame.
+ *
+ * Note: escapedConvoy is a persistent counter maintained by the caller.
+ * This function only returns how many NEW ships initiated jumps this frame,
+ * so the caller can increment the persistent counter.
+ */
+function updateConvoyShips(
+  world: World,
+  state: EscortMissionState,
+  dt: number,
+): { inZone: number; newJumps: number } {
+  let inZone = 0;
+  let newJumps = 0;
+
   for (const entity of queryEntities(world, [
     'convoyShip',
     'transform',
@@ -114,19 +169,56 @@ function countConvoyInZone(world: World, state: EscortMissionState): number {
     const health = getComponent(world, entity, 'health')!;
     if (isDead(health)) continue;
 
+    const convoyShip = getComponent(world, entity, 'convoyShip')!;
+
+    // Ships already jumping or jumped - skip (they're already counted in escapedConvoy)
+    if (
+      convoyShip.jumpInitiated ||
+      hasComponent(world, entity, 'hyperspaceJump')
+    ) {
+      continue;
+    }
+
     const transform = getComponent(world, entity, 'transform')!;
     const distance = transform.position.distanceTo(state.escapeZonePosition);
-    if (distance <= state.escapeZoneRadius) {
-      count++;
+    const isInZone = distance <= state.escapeZoneRadius;
 
-      // Mark convoy ship as in zone (for UI/feedback)
-      const convoyShip = getComponent(world, entity, 'convoyShip');
-      if (convoyShip) {
-        convoyShip.inEscapeZone = true;
+    // For charge zone, check distance to convoy's own destination (accounts for X offset)
+    // This ensures ships charge when near THEIR stopping point, not the zone center
+    const autopilot = getComponent(world, entity, 'convoyAutopilot');
+    const distToDestination = autopilot
+      ? transform.position.distanceTo(autopilot.destination)
+      : distance;
+    const isInChargeZone = distToDestination <= JUMP_CHARGE_RADIUS;
+
+    convoyShip.inEscapeZone = isInZone;
+
+    if (isInZone) {
+      inZone++;
+
+      // Only charge when within the smaller charge zone (near waypoint center)
+      if (isInChargeZone && convoyShip.jumpChargeTime > 0) {
+        convoyShip.jumpChargeProgress += dt / convoyShip.jumpChargeTime;
+
+        // Initiate hyperspace jump when charge completes
+        if (convoyShip.jumpChargeProgress >= 1) {
+          convoyShip.jumpChargeProgress = 1;
+          convoyShip.jumpInitiated = true;
+          initiateConvoyJump(world, entity);
+          newJumps++;
+        }
       }
+      // Ships in zone but not in charge zone: maintain charge (no decay)
+    } else {
+      // Decay charge when outside escape zone entirely
+      convoyShip.jumpChargeProgress = Math.max(
+        0,
+        convoyShip.jumpChargeProgress - dt * CHARGE_DECAY_RATE,
+      );
     }
   }
-  return count;
+
+  return { inZone, newJumps };
 }
 
 /** Check if player is in escape zone (only actual player, not wingmen) */
@@ -191,54 +283,52 @@ export function processEscortMissionTick(
 
   let stateChanged = false;
 
-  // Count convoy
-  const prevAlive = state.aliveConvoy;
-  state.aliveConvoy = countLivingConvoy(world);
-  if (state.aliveConvoy !== prevAlive) stateChanged = true;
-
-  // Check defeat: all convoy destroyed
-  if (state.aliveConvoy === 0) {
-    state.convoyInZone = 0; // No survivors
-    state.completed = true;
-    world.systemState.mission.result = MissionResult.Defeat;
-    return true;
-  }
-
-  // Check defeat: player dead
+  // Check defeat: player dead (check first, before convoy updates)
   if (isPlayerDead(world)) {
     state.completed = true;
     world.systemState.mission.result = MissionResult.Defeat;
     return true;
   }
 
-  // Check positions
+  // Check player position
   const prevPlayerInZone = state.playerInZone;
   state.playerInZone = isPlayerInZone(world, state);
-  state.convoyInZone = countConvoyInZone(world, state);
   if (state.playerInZone !== prevPlayerInZone) stateChanged = true;
 
-  // Jump charge logic
-  const prevCharge = state.jumpChargeProgress;
-  if (state.playerInZone && state.convoyInZone > 0) {
-    // Charging: player + at least one convoy in zone
-    state.jumpChargeProgress += dt / state.jumpChargeTime;
-
-    if (state.jumpChargeProgress >= 1) {
-      // Victory!
-      state.jumpChargeProgress = 1;
-      state.completed = true;
-      world.systemState.mission.result = MissionResult.Victory;
-      return true;
-    }
-  } else {
-    // Not charging: decay progress
-    state.jumpChargeProgress = Math.max(
-      0,
-      state.jumpChargeProgress - dt * CHARGE_DECAY_RATE,
-    );
-  }
-  if (Math.abs(state.jumpChargeProgress - prevCharge) > 0.001)
+  // Update individual convoy ship states and jump charges
+  // This must happen BEFORE the defeat check so we count new escapes
+  const prevConvoyInZone = state.convoyInZone;
+  const prevEscaped = state.escapedConvoy;
+  const convoyStatus = updateConvoyShips(world, state, dt);
+  state.convoyInZone = convoyStatus.inZone;
+  // Increment persistent escaped count (never decrements)
+  state.escapedConvoy += convoyStatus.newJumps;
+  if (
+    state.convoyInZone !== prevConvoyInZone ||
+    state.escapedConvoy !== prevEscaped
+  ) {
     stateChanged = true;
+  }
+
+  // Count living convoy (entities still in world, not yet jumped)
+  const prevAlive = state.aliveConvoy;
+  state.aliveConvoy = countLivingConvoy(world);
+  if (state.aliveConvoy !== prevAlive) stateChanged = true;
+
+  // Check end conditions when all convoy ships are gone
+  if (state.aliveConvoy === 0) {
+    state.convoyInZone = 0;
+    state.completed = true;
+
+    if (state.escapedConvoy > 0) {
+      // Victory: at least one convoy escaped
+      world.systemState.mission.result = MissionResult.Victory;
+    } else {
+      // Defeat: all convoy destroyed, none escaped
+      world.systemState.mission.result = MissionResult.Defeat;
+    }
+    return true;
+  }
 
   // Enemy spawning (with initial delay before first enemies appear)
   if (state.initialSpawnDelay > 0) {
@@ -278,13 +368,18 @@ export function processEscortMissionTick(
   return stateChanged;
 }
 
-/** Get reward multiplier based on convoy survival */
+/** Get reward multiplier based on convoy escape success */
 export function getEscortRewardMultiplier(state: EscortMissionState): number {
   if (state.totalConvoy === 0) return 0;
-  return state.convoyInZone / state.totalConvoy;
+  return state.escapedConvoy / state.totalConvoy;
 }
 
-/** Get surviving convoy count (those that reached escape zone) */
+/** Get escaped convoy count (those that completed hyperspace jump) */
+export function getEscapedConvoyCount(state: EscortMissionState): number {
+  return state.escapedConvoy;
+}
+
+/** Get surviving convoy count (those that reached escape zone - alias for compatibility) */
 export function getSurvivingConvoyCount(state: EscortMissionState): number {
-  return state.convoyInZone;
+  return state.escapedConvoy;
 }

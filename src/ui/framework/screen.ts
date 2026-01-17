@@ -74,6 +74,9 @@ export interface ScreenHandle<State, Props> {
   /** Update props and re-render */
   setProps(props: Props): void;
 
+  /** Get current props */
+  getProps(): Props;
+
   /** Cleanup all event listeners and unmount */
   destroy(): void;
 }
@@ -256,6 +259,10 @@ export function createScreen<S, P>(
     setProps(newProps) {
       props = newProps;
       render();
+    },
+
+    getProps() {
+      return props;
     },
 
     destroy,

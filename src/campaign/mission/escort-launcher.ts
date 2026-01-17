@@ -21,6 +21,7 @@ import {
   getConvoyCollisionRadius,
 } from '../../factories/convoy-ship';
 import { createEnemyShip } from '../../factories/ship';
+import { createWaypointEntity } from '../../factories/waypoint';
 import { type Game, TICK_SEC } from '../../game';
 import { getConvoyCentroid } from '../../systems/ai/ai-utils';
 import {
@@ -48,14 +49,13 @@ export function setFactionBehaviorMode(
   }
 }
 
-/** Wingman spawn X offset (from mission-launcher.ts) */
-const WINGMAN_X_OFFSET = 20;
-/** Approximate wingman collision radius */
-const WINGMAN_COLLISION_RADIUS = 5;
-/** Safety margin between collision boundaries */
-const SPAWN_SAFETY_MARGIN = 10;
+/** Maximum ships per row (side by side) */
+const SHIPS_PER_ROW = 3;
 
-/** Spawn convoy ships in formation alongside player/wingmen */
+/** Z spacing between rows (front ships jump first) */
+const ROW_Z_SPACING = 100;
+
+/** Spawn convoy ships in formation that fits inside the waypoint structure */
 export function spawnConvoyShips(
   world: World,
   escortData: EscortMissionData,
@@ -64,24 +64,38 @@ export function spawnConvoyShips(
   const entities: Entity[] = [];
   const convoyRadius = getConvoyCollisionRadius(escortData.convoyType);
 
-  // Calculate spacing to avoid overlap:
-  // - Wingmen are at X=±20m with ~5m radius (outer edge at ~25m)
-  // - Convoy ships need center offset of: wingman_edge + convoy_radius + margin
-  const wingmanOuterEdge = WINGMAN_X_OFFSET + WINGMAN_COLLISION_RADIUS;
-  const baseXOffset = wingmanOuterEdge + convoyRadius + SPAWN_SAFETY_MARGIN;
-
-  // Spacing between convoy ships: 2 * convoy_radius + margin
-  const spacing = convoyRadius * 2 + SPAWN_SAFETY_MARGIN;
+  // X spacing between ships in same row
+  const xSpacing = convoyRadius * 2 + 10;
 
   for (let i = 0; i < escortData.convoySize; i++) {
-    // Alternate left/right, spreading outward from base offset
-    const side = i % 2 === 0 ? 1 : -1;
-    const rank = Math.floor(i / 2);
-    const xOffset = side * (baseXOffset + rank * spacing);
-    const position = new Vector3(xOffset, 0, 0);
+    // Arrange in rows: first SHIPS_PER_ROW ships in front row, rest in back rows
+    const row = Math.floor(i / SHIPS_PER_ROW);
+    const posInRow = i % SHIPS_PER_ROW;
+    const shipsInThisRow = Math.min(
+      SHIPS_PER_ROW,
+      escortData.convoySize - row * SHIPS_PER_ROW,
+    );
 
-    // Each ship gets a destination that maintains their X offset
-    // This prevents convoy ships from converging and colliding
+    // X offset: center the row, alternate left/right from center
+    // For odd count: 0, -1, +1 pattern. For even: -0.5, +0.5, -1.5, +1.5 pattern
+    let xOffset: number;
+    if (shipsInThisRow % 2 === 1) {
+      // Odd number: center ship at 0, others alternate
+      const centerIndex = Math.floor(shipsInThisRow / 2);
+      const offsetFromCenter = posInRow - centerIndex;
+      xOffset = offsetFromCenter * xSpacing;
+    } else {
+      // Even number: no center ship, straddle the center
+      const halfIndex = posInRow - shipsInThisRow / 2 + 0.5;
+      xOffset = halfIndex * xSpacing;
+    }
+
+    // Z offset: back rows start further back (they'll arrive and jump later)
+    const zOffset = -row * ROW_Z_SPACING;
+
+    const position = new Vector3(xOffset, 0, zOffset);
+
+    // Destination maintains X offset (straight path, no turning)
     const shipDestination = escapeZonePosition.clone();
     shipDestination.x = xOffset;
 
@@ -92,6 +106,7 @@ export function spawnConvoyShips(
       shipDestination,
       escortData.escapeZoneRadius,
       i,
+      escortData.jumpChargeTime,
     );
     entities.push(entity);
   }
@@ -216,6 +231,10 @@ export function setupEscortMission(
     `[ESCORT] Spawned ${convoyEntities.length} convoy ships heading to escape zone`,
   );
 
+  // Spawn waypoint structure at escape zone
+  createWaypointEntity(world, escapeZonePosition);
+  logDebug('[ESCORT] Spawned waypoint structure at escape zone');
+
   // Set wingmen to defensive mode
   setFactionBehaviorMode(world, Faction.Player, 'defensive');
   logDebug('[ESCORT] Set wingmen to defensive mode');
@@ -278,23 +297,24 @@ export function createEscortMissionEndCallback(
   return () => {
     if (missionEndState.pending) return; // Already ending
 
+    // Victory if at least one convoy ship escaped (completed hyperspace jump)
     missionEndState.victory =
-      escortState.completed && escortState.jumpChargeProgress >= 1;
+      escortState.completed && escortState.escapedConvoy > 0;
     missionEndState.pending = true;
     missionEndState.delayRemaining = MISSION_END_DELAY;
 
     // Calculate reward multiplier based on convoy survival
-    // Surviving convoy = those in escape zone when jump completed
+    // escapedConvoy = ships that completed hyperspace jump
     if (escortState.totalConvoy > 0) {
       missionEndState.rewardMultiplier =
-        escortState.convoyInZone / escortState.totalConvoy;
+        escortState.escapedConvoy / escortState.totalConvoy;
     } else {
       missionEndState.rewardMultiplier = 0;
     }
 
     // Store escort results for display
     missionEndState.escortResults = {
-      convoySurvived: escortState.convoyInZone,
+      convoySurvived: escortState.escapedConvoy,
       convoyTotal: escortState.totalConvoy,
     };
 
