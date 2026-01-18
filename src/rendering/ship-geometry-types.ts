@@ -4,21 +4,7 @@
  */
 
 /** Valid ship class names (generated from GLB filenames) */
-export type ShipClass =
-  | 'bomber'
-  | 'defender'
-  | 'fighter'
-  | 'interceptor'
-  | 'military'
-  | 'mining'
-  | 'patrol'
-  | 'raider'
-  | 'refinery'
-  | 'scout'
-  | 'sentinel'
-  | 'striker'
-  | 'transport'
-  | 'waypoint';
+export type ShipClass = 'bomber' | 'defender' | 'fighter' | 'interceptor' | 'military' | 'mining' | 'patrol' | 'raider' | 'refinery' | 'scout' | 'sentinel' | 'striker' | 'transport' | 'waypoint';
 
 /** Mesh bounding box (X and Z extents for hardpoint mapping) */
 export interface MeshBounds {

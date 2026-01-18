@@ -19,7 +19,9 @@ import {
   computeBoundingRadius,
   computeConvexHull,
   computeHullVolume,
+  decomposeIntoConnectedComponents,
   decomposeWithCoACD,
+  isMeshConvex,
 } from './hull-utils.mjs';
 import { extractSvgBounds } from './svg-utils.mjs';
 
@@ -207,50 +209,98 @@ async function bundleMeshes() {
       let subHulls = null;
 
       if (isStructure && indices) {
-        // Use CoACD (Collision-Aware Convex Decomposition) for proper handling
-        // of non-convex geometry like rings with holes
-        try {
-          console.log(`    Running CoACD convex decomposition...`);
-          const convexParts = await decomposeWithCoACD(
-            Array.from(positions),
-            Array.from(indices),
-          );
+        // First decompose into connected components (separate objects in the mesh)
+        const components = decomposeIntoConnectedComponents(
+          Array.from(indices),
+          Array.from(positions),
+        );
+        console.log(`    Found ${components.length} connected component(s)`);
 
-          if (convexParts.length > 0) {
+        subHulls = [];
+
+        for (let ci = 0; ci < components.length; ci++) {
+          const component = components[ci];
+          const componentSeed = seed + ci * 100;
+
+          // Test if this component is already convex
+          const isConvex = isMeshConvex(component.positions, componentSeed);
+
+          if (isConvex) {
+            // Component is convex - compute hull directly (no CoACD needed)
+            const hull = computeConvexHull(component.positions, componentSeed);
+            if (hull) {
+              const planes = hull.planes.map((p) => ({
+                nx: p.normal[0],
+                ny: p.normal[1],
+                nz: p.normal[2],
+                d: p.distance,
+              }));
+              const boundingRadius = computeBoundingRadius(hull);
+
+              subHulls.push({ planes, boundingRadius });
+              console.log(
+                `      Component ${ci + 1}: CONVEX - ${hull.planes.length} hull faces, radius: ${boundingRadius.toFixed(2)}`,
+              );
+            }
+          } else {
+            // Component is non-convex - run CoACD to decompose it
             console.log(
-              `    Decomposed into ${convexParts.length} convex parts`,
+              `      Component ${ci + 1}: NON-CONVEX - running CoACD...`,
             );
-            subHulls = [];
+            try {
+              const convexParts = await decomposeWithCoACD(
+                component.positions,
+                component.indices,
+              );
 
-            for (let ci = 0; ci < convexParts.length; ci++) {
-              const part = convexParts[ci];
-              const partSeed = seed + ci;
-              const partHull = computeConvexHull(part.positions, partSeed);
+              for (let pi = 0; pi < convexParts.length; pi++) {
+                const part = convexParts[pi];
+                const partSeed = componentSeed + pi;
+                const partHull = computeConvexHull(part.positions, partSeed);
 
-              if (partHull) {
-                const partPlanes = partHull.planes.map((p) => ({
+                if (partHull) {
+                  const partPlanes = partHull.planes.map((p) => ({
+                    nx: p.normal[0],
+                    ny: p.normal[1],
+                    nz: p.normal[2],
+                    d: p.distance,
+                  }));
+                  const partBoundingRadius = computeBoundingRadius(partHull);
+
+                  subHulls.push({
+                    planes: partPlanes,
+                    boundingRadius: partBoundingRadius,
+                  });
+
+                  console.log(
+                    `        CoACD part ${pi + 1}/${convexParts.length}: ${partHull.planes.length} hull faces, radius: ${partBoundingRadius.toFixed(2)}`,
+                  );
+                }
+              }
+            } catch (err) {
+              console.warn(`      CoACD failed: ${err.message}`);
+              // Fallback: use convex hull of the component anyway
+              const hull = computeConvexHull(
+                component.positions,
+                componentSeed,
+              );
+              if (hull) {
+                const planes = hull.planes.map((p) => ({
                   nx: p.normal[0],
                   ny: p.normal[1],
                   nz: p.normal[2],
                   d: p.distance,
                 }));
-                const partBoundingRadius = computeBoundingRadius(partHull);
-
                 subHulls.push({
-                  planes: partPlanes,
-                  boundingRadius: partBoundingRadius,
+                  planes,
+                  boundingRadius: computeBoundingRadius(hull),
                 });
-
-                console.log(
-                  `      Part ${ci + 1}: ${partHull.planes.length} hull faces, radius: ${partBoundingRadius.toFixed(2)}`,
-                );
               }
             }
           }
-        } catch (err) {
-          console.warn(`    CoACD failed: ${err.message}`);
-          console.warn(`    Falling back to single convex hull`);
         }
+
+        console.log(`    Total sub-hulls: ${subHulls.length}`);
       }
 
       const hull = computeConvexHull(Array.from(positions), seed);

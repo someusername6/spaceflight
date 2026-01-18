@@ -128,6 +128,68 @@ export function computeConvexHull(positions, seed = 12345) {
 }
 
 /**
+ * Test if a mesh is convex by checking if all unique vertex positions lie on its convex hull.
+ *
+ * A mesh is convex if every unique vertex position is a vertex of the convex hull.
+ * This handles duplicate vertices (same position, different normals/UVs) correctly.
+ *
+ * @param positions - Flat array of vertex positions [x,y,z,x,y,z,...]
+ * @param seed - Seed for deterministic jitter
+ * @returns true if all unique mesh positions are on the convex hull (mesh is convex)
+ */
+export function isMeshConvex(positions, seed = 12345) {
+  const numVertices = positions.length / 3;
+  if (numVertices < 4) return true; // Degenerate cases are "convex"
+
+  // Build unique positions map (handles duplicate vertices)
+  const uniquePositions = new Map(); // hash -> index in uniquePoints
+  const uniquePoints = [];
+
+  for (let i = 0; i < numVertices; i++) {
+    const x = positions[i * 3];
+    const y = positions[i * 3 + 1];
+    const z = positions[i * 3 + 2];
+    const hash = hashVertex(x, y, z);
+
+    if (!uniquePositions.has(hash)) {
+      uniquePositions.set(hash, uniquePoints.length);
+      uniquePoints.push([x, y, z]);
+    }
+  }
+
+  const numUniquePositions = uniquePoints.length;
+  if (numUniquePositions < 4) return true;
+
+  // Add jitter (same as computeConvexHull)
+  const random = createSeededRandom(seed);
+  const jitter = 1e-8;
+  const jitteredPoints = uniquePoints.map((p) => [
+    p[0] + (random() - 0.5) * jitter,
+    p[1] + (random() - 0.5) * jitter,
+    p[2] + (random() - 0.5) * jitter,
+  ]);
+
+  // Compute convex hull faces
+  let faces;
+  try {
+    faces = convexHull(jitteredPoints, true);
+  } catch {
+    return false; // Can't determine, assume non-convex
+  }
+
+  // Collect all unique positions used in hull faces
+  const hullPositions = new Set();
+  for (const face of faces) {
+    hullPositions.add(face[0]);
+    hullPositions.add(face[1]);
+    hullPositions.add(face[2]);
+  }
+
+  // If all unique positions are on the hull, mesh is convex
+  return hullPositions.size === numUniquePositions;
+}
+
+/**
  * Compute volume of convex hull using the divergence theorem.
  * Sum of signed tetrahedron volumes from origin to each face.
  */
