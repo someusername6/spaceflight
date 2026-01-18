@@ -92,9 +92,20 @@ export function collectDebriefData(world: World): MissionDebriefData {
     });
   }
 
-  // Sort: Player first, then by kills, then by damage dealt
+  // Sort: Player first, then non-reinforcement by kills/damage, reinforcements last
+  // Reinforcement ships have callsigns starting with "Rescue"
   pilots.sort((a, b) => {
+    // Player always first
     if (a.isPlayer !== b.isPlayer) return a.isPlayer ? -1 : 1;
+
+    // Reinforcements go last (callsign starts with "Rescue")
+    const aIsReinforcement = a.callsign.startsWith('Rescue');
+    const bIsReinforcement = b.callsign.startsWith('Rescue');
+    if (aIsReinforcement !== bIsReinforcement) {
+      return aIsReinforcement ? 1 : -1;
+    }
+
+    // Within each group, sort by kills then damage
     if (a.kills !== b.kills) return b.kills - a.kills;
     return b.damageDealt - a.damageDealt;
   });

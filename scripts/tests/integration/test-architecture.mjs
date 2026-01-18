@@ -99,6 +99,9 @@ describe('Architecture', () => {
 
     for (const dir of dirs) {
       for (const file of getTypeScriptFiles(dir)) {
+        // Skip auto-generated geometry files (excluded from check-file-size.sh too)
+        if (path.basename(file).startsWith('ship-geometry-')) continue;
+
         const content = fs.readFileSync(file, 'utf8');
         const lineCount = content.split('\n').length;
         if (lineCount > 400) {

@@ -14,6 +14,12 @@ import {
   updateConvoyDisplay,
 } from './convoy-hud';
 import { requireElement } from './dom-utils';
+import {
+  createStationDisplay,
+  getStationDisplayStyles,
+  type StationDisplay,
+  updateStationDisplay,
+} from './station-hud';
 
 /** Maximum allies to display */
 const MAX_ALLIES_SHOWN = 5;
@@ -23,6 +29,7 @@ export interface AlliedDisplay {
   container: HTMLElement;
   allyElements: AllyElement[];
   convoyDisplay: ConvoyDisplay;
+  stationDisplay: StationDisplay;
 }
 
 /** Single ally row elements */
@@ -67,9 +74,12 @@ export function createAlliedDisplay(parent: HTMLElement): AlliedDisplay {
   // Create convoy display (for escort missions)
   const convoyDisplay = createConvoyDisplay(container);
 
+  // Create station display (for station defense missions)
+  const stationDisplay = createStationDisplay(container);
+
   parent.appendChild(container);
 
-  return { container, allyElements, convoyDisplay };
+  return { container, allyElements, convoyDisplay, stationDisplay };
 }
 
 /** Ally info for sorting */
@@ -105,6 +115,9 @@ export function updateAlliedDisplay(
     // Skip player
     if (entity === player) continue;
     if (hasComponent(world, entity, 'playerControlled')) continue;
+
+    // Skip structures (stations are displayed separately)
+    if (hasComponent(world, entity, 'structure')) continue;
 
     const faction = getComponent(world, entity, 'faction');
     if (!faction || faction.faction !== Faction.Player) continue;
@@ -171,6 +184,12 @@ export function updateAlliedDisplay(
   if (hasConvoy) {
     display.container.classList.add('has-allies');
   }
+
+  // Update station display (for station defense missions)
+  const hasStation = updateStationDisplay(display.stationDisplay, world);
+  if (hasStation) {
+    display.container.classList.add('has-allies');
+  }
 }
 
 /** Format distance for display */
@@ -191,7 +210,7 @@ export function getAlliedDisplayStyles(): string {
       background: rgba(0, 0, 0, 0.6);
       border: 1px solid #080;
       padding: 8px 10px;
-      min-width: 140px;
+      width: 220px;
       opacity: 0.6;
       transition: opacity 0.2s;
     }
@@ -251,5 +270,6 @@ export function getAlliedDisplayStyles(): string {
       text-align: right;
     }
     ${getConvoyDisplayStyles()}
+    ${getStationDisplayStyles()}
   `;
 }

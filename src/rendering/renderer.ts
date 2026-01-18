@@ -175,7 +175,10 @@ export function syncScene(renderer: Renderer, world: World, alpha = 1): void {
         mesh = createDecoyMesh(faction?.faction ?? Faction.Neutral);
       } else if (isStructure) {
         const structure = getComponent(world, entity, 'structure');
-        mesh = createStructureMesh(structure?.structureType ?? 'waypoint');
+        mesh = createStructureMesh(
+          structure?.structureType ?? 'waypoint',
+          structure?.stationType,
+        );
       } else {
         // Get ship class from identity -> archetype -> shipClassName
         // Falls back to using identity.archetype directly for convoy ships

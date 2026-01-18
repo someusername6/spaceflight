@@ -204,6 +204,9 @@ export function getConvoyCentroid(world: World): Vector3 | null {
 /** Maximum distance from convoy for defensive wingmen to engage */
 const MAX_DEFENSIVE_RANGE = 800;
 
+/** Maximum distance from station for station-defense wingmen to engage */
+const MAX_STATION_DEFENSE_RANGE = 1000;
+
 /**
  * Find nearest enemy that is threatening the convoy (for defensive wingmen).
  * Only returns enemies within MAX_DEFENSIVE_RANGE of convoy centroid.
@@ -244,6 +247,91 @@ export function findNearestThreatToConvoy(
     if (distToConvoy > MAX_DEFENSIVE_RANGE) continue;
 
     // Find nearest to self among convoy threats
+    const distToSelf = selfTransform.position.distanceTo(
+      otherTransform.position,
+    );
+    if (distToSelf < nearestDist) {
+      nearestDist = distToSelf;
+      nearest = other;
+    }
+  }
+
+  return nearest;
+}
+
+/**
+ * Find the station entity (for station defense missions).
+ * Stations are Player faction structures with structureType 'station'.
+ */
+export function findStation(world: World): Entity | null {
+  for (const entity of queryEntities(world, ['structure', 'transform'])) {
+    const structure = getComponent(world, entity, 'structure');
+    if (structure?.structureType !== 'station') continue;
+
+    // Check it's not destroyed
+    const health = getComponent(world, entity, 'health');
+    if (health && isDead(health)) continue;
+
+    return entity;
+  }
+  return null;
+}
+
+/**
+ * Get the station position (for station defense missions).
+ * Returns null if no living station exists.
+ */
+export function getStationPosition(world: World): Vector3 | null {
+  const station = findStation(world);
+  if (!station) return null;
+
+  const transform = getComponent(world, station, 'transform');
+  if (!transform) return null;
+
+  // Return a copy to avoid mutation issues
+  return _returnCentroid.copy(transform.position);
+}
+
+/**
+ * Find nearest enemy that is threatening the station (for station-defense wingmen).
+ * Only returns enemies within MAX_STATION_DEFENSE_RANGE of station.
+ *
+ * @param stationPosition - Pre-computed station position (pass to avoid redundant lookup)
+ */
+export function findNearestThreatToStation(
+  world: World,
+  self: Entity,
+  selfFaction: Faction,
+  stationPosition: Vector3 | null,
+): Entity | null {
+  if (!stationPosition) return null;
+
+  const selfTransform = getComponent(world, self, 'transform');
+  if (!selfTransform) return null;
+
+  let nearest: Entity | null = null;
+  let nearestDist = Infinity;
+
+  for (const other of queryEntities(world, [
+    'aiControlled',
+    'transform',
+    'faction',
+    'health',
+  ])) {
+    const otherFaction = getComponent(world, other, 'faction');
+    if (!otherFaction || !areEnemies(selfFaction, otherFaction.faction))
+      continue;
+
+    const health = getComponent(world, other, 'health');
+    if (health && isDead(health)) continue;
+
+    const otherTransform = getComponent(world, other, 'transform')!;
+
+    // Only consider enemies near the station
+    const distToStation = otherTransform.position.distanceTo(stationPosition);
+    if (distToStation > MAX_STATION_DEFENSE_RANGE) continue;
+
+    // Find nearest to self among station threats
     const distToSelf = selfTransform.position.distanceTo(
       otherTransform.position,
     );

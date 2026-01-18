@@ -40,6 +40,11 @@ import {
   createWaveState,
   initializeFirstWave,
 } from './mission-waves';
+import {
+  createStationDefenseMissionEndCallback,
+  createStationDefenseTickCallback,
+  setupStationDefenseMission,
+} from './station-defense-launcher';
 
 /** Callback type for contracts screen setup */
 export type SetupContractsCallback = (controller: CampaignController) => void;
@@ -100,7 +105,17 @@ export function launchMission(
   // For escort missions, spawn at origin facing escape zone (positive Z)
   const isEscortMission =
     contract.missionType === 'escort' && contract.escortData;
-  const playerSpawnZ = 0;
+  const isStationDefense =
+    contract.missionType === 'station-defense' && contract.stationDefenseData;
+
+  // Calculate player spawn position
+  // Station defense: 1500m from station, facing station
+  // Other missions: spawn at origin
+  let playerSpawnZ = 0;
+  if (isStationDefense) {
+    const stationZ = contract.stationDefenseData!.stationDistance;
+    playerSpawnZ = stationZ + 1500; // 1500m behind station (more positive Z)
+  }
 
   // Rotation to face positive Z (toward escape zone for escort missions)
   // Default Three.js forward is -Z, so rotate 180° around Y to face +Z
@@ -222,6 +237,36 @@ export function launchMission(
     );
     logDebug(
       `[MISSION ${performance.now().toFixed(0)}ms] ${contract.escortData.convoySize} convoy ships to protect`,
+    );
+  } else if (missionType === 'station-defense' && contract.stationDefenseData) {
+    // === STATION DEFENSE MISSION ===
+    const stationState = setupStationDefenseMission(game.world, contract);
+
+    game.onTick = createStationDefenseTickCallback(
+      controller,
+      game,
+      contract,
+      stationState,
+      missionEndState,
+      executeMissionEnd,
+    );
+
+    game.onMissionEnd = createStationDefenseMissionEndCallback(
+      controller,
+      game,
+      stationState,
+      missionEndState,
+    );
+
+    const totalEnemies = contract.stationDefenseData.waves.reduce(
+      (sum, w) => sum + w.enemies.reduce((s, e) => s + e.count, 0),
+      0,
+    );
+    logDebug(
+      `[MISSION ${performance.now().toFixed(0)}ms] Station defense mission started: ${contract.name}`,
+    );
+    logDebug(
+      `[MISSION ${performance.now().toFixed(0)}ms] ${totalEnemies} enemies across ${contract.stationDefenseData.waves.length} waves`,
     );
   } else {
     // === ELIMINATION MISSION (default) ===

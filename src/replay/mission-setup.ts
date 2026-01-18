@@ -7,10 +7,6 @@
 
 import { Quaternion, Vector3 } from 'three';
 import {
-  createPrimaryWeaponsFromReplay,
-  createSecondaryWeaponsFromReplay,
-} from '../campaign/campaign-weapons';
-import {
   setFactionBehaviorMode,
   setupEscortMission,
   spawnEscortEnemy,
@@ -21,42 +17,28 @@ import {
   processWaveTick,
   type WaveState,
 } from '../campaign/mission/mission-waves';
+import {
+  setupStationDefenseMission,
+  spawnReinforcementForReplay,
+} from '../campaign/mission/station-defense-launcher';
 import type { Contract, MissionType } from '../campaign/types';
-import { createAIControlled } from '../components/ai';
-import { createAimError } from '../components/aim-error';
-import { createCollision } from '../components/collision';
-import { createCombatStats } from '../components/combat-stats';
-import { createFaction } from '../components/faction';
-import { createHealth } from '../components/health';
-import { createHeat } from '../components/heat';
-import {
-  createPhysics,
-  INITIAL_SPAWN_SPEED,
-  setInitialVelocity,
-} from '../components/physics';
-import { createPlayerControlled } from '../components/player';
-import { createShieldHit } from '../components/shield-hit';
-import { createShields } from '../components/shields';
-import { createShipIdentity } from '../components/ship-identity';
-import { createTargeting } from '../components/targeting';
-import { createTransform } from '../components/transform';
-import {
-  addComponent,
-  createEntity,
-  createWorld,
-  getComponent,
-} from '../core/ecs';
-import type { Entity, World } from '../core/types';
+import { createWorld } from '../core/ecs';
+import type { World } from '../core/types';
 import { Faction } from '../core/types';
-import { getProfileForPlaystyle, type ProfileName } from '../data/ai-profiles';
-import { SHIP_CLASSES } from '../data/ships';
-import { addHullColliderFromClass } from '../factories/ship';
 import {
   type EscortMissionState,
   processEscortMissionTick,
 } from '../systems/escort-mission';
-import { initMatchStats, initWeaponAmmoCounts } from '../systems/stats';
+import {
+  processStationDefenseMissionTick,
+  type StationDefenseMissionState,
+} from '../systems/station-defense';
+import { initMatchStats } from '../systems/stats';
 import { getAllMissions } from '../ui/screens/contracts-data';
+import {
+  spawnPlayerFromReplayLoadout,
+  spawnWingmanFromReplayLoadout,
+} from './replay-ship-spawning';
 import type { ReplayShipLoadout, ReplayWingman } from './types';
 
 /**
@@ -66,184 +48,6 @@ import type { ReplayShipLoadout, ReplayWingman } from './types';
 export function findMissionById(missionId: string): Contract | null {
   const allMissions = getAllMissions();
   return allMissions.find((m) => m.id === missionId) ?? null;
-}
-
-/**
- * Spawn player ship from replay loadout data.
- * Uses exact weapon configuration from the recorded replay.
- */
-function spawnPlayerFromReplayLoadout(
-  world: World,
-  loadout: ReplayShipLoadout,
-  position: Vector3,
-  rotation: Quaternion,
-): Entity {
-  const stats = SHIP_CLASSES[loadout.shipClass];
-  if (!stats) {
-    throw new Error(`Unknown ship class: ${loadout.shipClass}`);
-  }
-
-  const entity = createEntity(world);
-
-  addComponent(
-    world,
-    entity,
-    createTransform(position.x, position.y, position.z, rotation),
-  );
-
-  addComponent(
-    world,
-    entity,
-    createPhysics({
-      maxSpeed: stats.maxSpeed,
-      acceleration: stats.acceleration,
-      turnRate: stats.turnRate,
-      rollRate: stats.rollRate,
-      afterburnerHeatRate: stats.afterburnerHeatRate,
-      initialSpeed: INITIAL_SPAWN_SPEED,
-    }),
-  );
-
-  const physics = getComponent(world, entity, 'physics');
-  if (physics) {
-    setInitialVelocity(physics, rotation, INITIAL_SPAWN_SPEED);
-  }
-
-  addComponent(world, entity, createHealth(stats.hull, stats.hull));
-  addComponent(
-    world,
-    entity,
-    createShields(stats.shields, stats.shieldRegen, stats.shieldDelay),
-  );
-  addComponent(world, entity, createShieldHit());
-  addComponent(world, entity, createFaction(Faction.Player));
-  addComponent(world, entity, createPlayerControlled());
-  addComponent(
-    world,
-    entity,
-    createShipIdentity(loadout.shipClass, 'Commander'),
-  );
-  addComponent(world, entity, createTargeting());
-  addComponent(world, entity, createHeat(stats.maxHeat, stats.coolingRate));
-
-  // Use exact weapons from replay loadout
-  if (loadout.primaryWeapons.length > 0) {
-    addComponent(
-      world,
-      entity,
-      createPrimaryWeaponsFromReplay(loadout.primaryWeapons),
-    );
-  }
-
-  if (loadout.secondaryWeapons.length > 0) {
-    addComponent(
-      world,
-      entity,
-      createSecondaryWeaponsFromReplay(loadout.secondaryWeapons),
-    );
-  }
-
-  addComponent(world, entity, createCollision(stats.collisionRadius));
-  addHullColliderFromClass(world, entity, loadout.shipClass, false);
-  addComponent(world, entity, createCombatStats());
-  initWeaponAmmoCounts(world, entity);
-
-  return entity;
-}
-
-/**
- * Spawn wingman from replay loadout data.
- * Uses exact weapon configuration from the recorded replay.
- */
-function spawnWingmanFromReplayLoadout(
-  world: World,
-  loadout: ReplayShipLoadout,
-  position: Vector3,
-  rotation: Quaternion,
-  pilotName?: string,
-  pilotSkill?: string,
-): Entity {
-  const stats = SHIP_CLASSES[loadout.shipClass];
-  if (!stats) {
-    throw new Error(`Unknown ship class: ${loadout.shipClass}`);
-  }
-
-  const entity = createEntity(world);
-
-  addComponent(
-    world,
-    entity,
-    createTransform(position.x, position.y, position.z, rotation),
-  );
-
-  addComponent(
-    world,
-    entity,
-    createPhysics({
-      maxSpeed: stats.maxSpeed,
-      acceleration: stats.acceleration,
-      turnRate: stats.turnRate,
-      rollRate: stats.rollRate,
-      afterburnerHeatRate: stats.afterburnerHeatRate,
-      initialSpeed: INITIAL_SPAWN_SPEED,
-    }),
-  );
-
-  const physics = getComponent(world, entity, 'physics');
-  if (physics) {
-    setInitialVelocity(physics, rotation, INITIAL_SPAWN_SPEED);
-  }
-
-  addComponent(world, entity, createHealth(stats.hull, stats.hull));
-  addComponent(
-    world,
-    entity,
-    createShields(stats.shields, stats.shieldRegen, stats.shieldDelay),
-  );
-  addComponent(world, entity, createShieldHit());
-  addComponent(world, entity, createFaction(Faction.Player));
-
-  // Callsign for UI display - use pilot name if available, otherwise generic 'Wingman'
-  const callsign = pilotName ?? 'Wingman';
-  addComponent(world, entity, createShipIdentity(loadout.shipClass, callsign));
-
-  // AI setup - use pilot skill from replay or default to regular
-  // Note: Component order matches live gameplay (ship-spawning.ts)
-  const profileName = (pilotSkill ?? 'regular') as ProfileName;
-  const profile = getProfileForPlaystyle(profileName, 'brawler');
-  const preferredRange = Math.floor(600 * profile.combatRangeMultiplier);
-  addComponent(
-    world,
-    entity,
-    createAIControlled(profile, preferredRange, undefined),
-  );
-  addComponent(world, entity, createAimError(world.prng, profile));
-
-  addComponent(world, entity, createHeat(stats.maxHeat, stats.coolingRate));
-
-  // Use exact weapons from replay loadout
-  if (loadout.primaryWeapons.length > 0) {
-    addComponent(
-      world,
-      entity,
-      createPrimaryWeaponsFromReplay(loadout.primaryWeapons),
-    );
-  }
-
-  if (loadout.secondaryWeapons.length > 0) {
-    addComponent(
-      world,
-      entity,
-      createSecondaryWeaponsFromReplay(loadout.secondaryWeapons),
-    );
-  }
-
-  addComponent(world, entity, createCollision(stats.collisionRadius * 1.5));
-  addHullColliderFromClass(world, entity, loadout.shipClass, false);
-  addComponent(world, entity, createCombatStats());
-  initWeaponAmmoCounts(world, entity);
-
-  return entity;
 }
 
 /**
@@ -257,6 +61,8 @@ export interface ReplayWorldSetup {
   waveState?: WaveState;
   /** Escort state for escort missions */
   escortState?: EscortMissionState;
+  /** Station defense state for station defense missions */
+  stationState?: StationDefenseMissionState;
 }
 
 /**
@@ -286,8 +92,17 @@ export function setupReplayWorld(
   // Initialize match stats (for damage tracking)
   initMatchStats(world);
 
-  // Spawn player at origin facing -Z
-  const playerPos = new Vector3(0, 0, 0);
+  // Calculate player spawn position
+  // Station defense: 1500m from station, facing station
+  // Other missions: spawn at origin
+  let playerSpawnZ = 0;
+  if (mission.stationDefenseData) {
+    const stationZ = mission.stationDefenseData.stationDistance;
+    playerSpawnZ = stationZ + 1500;
+  }
+
+  // Spawn player facing -Z
+  const playerPos = new Vector3(0, 0, playerSpawnZ);
   const playerRot = new Quaternion();
   spawnPlayerFromReplayLoadout(world, playerLoadout, playerPos, playerRot);
 
@@ -320,6 +135,16 @@ export function setupReplayWorld(
     const escortState = setupEscortMission(world, mission);
 
     return { world, mission, missionType: 'escort', escortState };
+  }
+
+  if (
+    effectiveMissionType === 'station-defense' &&
+    mission.stationDefenseData
+  ) {
+    // Setup station defense mission (spawns station, initializes waves)
+    const stationState = setupStationDefenseMission(world, mission);
+
+    return { world, mission, missionType: 'station-defense', stationState };
   }
 
   // Default: elimination mission with wave-based spawning
@@ -381,4 +206,38 @@ export function isReplayEscortComplete(
   escortState: EscortMissionState,
 ): boolean {
   return escortState.completed;
+}
+
+/**
+ * Process station defense mission logic during replay tick.
+ * Uses shared processStationDefenseMissionTick for determinism with live gameplay.
+ */
+export function tickReplayStationDefense(
+  world: World,
+  stationState: StationDefenseMissionState,
+  mission: Contract,
+  dt: number,
+): void {
+  if (!mission.stationDefenseData) return;
+
+  const stationDefenseData = mission.stationDefenseData;
+
+  // Use shared station defense tick logic (identical to live gameplay)
+  processStationDefenseMissionTick(world, stationState, mission, dt, () =>
+    spawnReinforcementForReplay(
+      world,
+      stationState.stationPosition,
+      stationDefenseData.reinforcementPool,
+      stationState.reinforcementsSpawned,
+    ),
+  );
+}
+
+/**
+ * Check if the station defense replay mission is complete.
+ */
+export function isReplayStationDefenseComplete(
+  stationState: StationDefenseMissionState,
+): boolean {
+  return stationState.completed;
 }

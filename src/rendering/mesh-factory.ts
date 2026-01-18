@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { Faction } from '../components/faction';
 import type { MissileType } from '../components/missile';
 import type { StructureType } from '../components/structure';
+import type { StationType } from '../data/stations';
 import { SHIP_MODEL_SCALE } from './constants';
 import { SHIP_GEOMETRIES, type ShipClass } from './ship-geometries';
 
@@ -186,10 +187,11 @@ export function createDecoyMesh(faction: Faction): THREE.Group {
   return group;
 }
 
-/** Structure type to mesh class mapping */
+/** Structure type to mesh class mapping (non-station structures) */
 const STRUCTURE_MESH_CLASSES: Record<StructureType, ShipClass | null> = {
   waypoint: 'waypoint',
   obstacle: null,
+  station: null, // Stations use stationType for mesh selection
 };
 
 /** Neutral gray color for structures */
@@ -199,9 +201,20 @@ const STRUCTURE_COLOR = 0x8888aa;
  * Creates a structure mesh.
  * Uses embedded geometry if available, otherwise falls back to simple shape.
  * @param structureType - Type of structure to create
+ * @param stationType - For stations: which station variant mesh to use
  */
-export function createStructureMesh(structureType: StructureType): THREE.Mesh {
-  const meshClass = STRUCTURE_MESH_CLASSES[structureType];
+export function createStructureMesh(
+  structureType: StructureType,
+  stationType?: StationType,
+): THREE.Mesh {
+  // For stations, use the stationType as the mesh class
+  let meshClass: ShipClass | null;
+  if (structureType === 'station' && stationType) {
+    meshClass = stationType as ShipClass; // 'mining', 'refinery', 'military'
+  } else {
+    meshClass = STRUCTURE_MESH_CLASSES[structureType];
+  }
+
   const material = new THREE.MeshPhongMaterial({
     color: STRUCTURE_COLOR,
     emissive: 0x222244,

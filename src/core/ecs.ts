@@ -55,7 +55,7 @@ export function createWorld(seed: number = 0): World {
       },
       mission: {
         result: MissionResult.InProgress,
-        isEscortMission: false,
+        missionType: 'elimination',
       },
       shipIdentity: {
         callsignCounters: {},

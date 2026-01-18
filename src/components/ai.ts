@@ -33,7 +33,12 @@ export interface AIInput {
 }
 
 /** AI behavior modes for different tactical situations */
-export type AIBehaviorMode = 'standard' | 'defensive' | 'convoy-hunter';
+export type AIBehaviorMode =
+  | 'standard'
+  | 'defensive'
+  | 'convoy-hunter'
+  | 'station-hunter'
+  | 'station-defense';
 
 export interface AIControlled extends ComponentBase {
   readonly type: 'aiControlled';
@@ -63,6 +68,8 @@ export interface AIControlled extends ComponentBase {
    * - 'standard': Normal targeting (wingmen protect player, enemies attack nearest)
    * - 'defensive': Stay near convoy, only engage nearby threats
    * - 'convoy-hunter': Prioritize convoy ships over combat targets
+   * - 'station-hunter': Prioritize station over combat targets
+   * - 'station-defense': Stay near station, protect it from threats
    */
   behaviorMode?: AIBehaviorMode;
 }

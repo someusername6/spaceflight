@@ -35,6 +35,10 @@ export default defineConfig({
       output: {
         manualChunks: {
           three: ['three'],
+          'geometry-ships': ['./src/rendering/ship-geometry-ships.ts'],
+          'geometry-structures': [
+            './src/rendering/ship-geometry-structures.ts',
+          ],
         },
       },
     },

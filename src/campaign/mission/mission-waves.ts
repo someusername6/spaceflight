@@ -26,10 +26,16 @@ export interface MissionEndState {
   pending: boolean;
   delayRemaining: number;
   victory: boolean;
-  /** Reward multiplier for escort missions (based on convoy survival) */
+  /** Reward multiplier (based on mission-specific objectives) */
   rewardMultiplier?: number;
   /** Convoy results for escort missions */
   escortResults?: { convoySurvived: number; convoyTotal: number };
+  /** Station defense results */
+  stationDefenseResults?: {
+    stationHealthPercent: number;
+    reinforcementsArrived: boolean;
+    reinforcementsSpawned: number;
+  };
 }
 
 /** Delay before transitioning to results screen (seconds) */
@@ -68,8 +74,24 @@ export function calculateWaveDelay(
   return randomRange(prng, delay[0], delay[1]);
 }
 
-/** Minimum spawn distance from allied ships */
+/** Minimum spawn distance from allied ships (non-station-defense) */
 const MIN_SPAWN_DISTANCE = 2000;
+
+/** Spawn distance from station for station defense missions */
+const STATION_DEFENSE_SPAWN_DISTANCE = 3000;
+
+/** Get station position if one exists in the world */
+function getStationPosition(world: World): Vector3 | null {
+  for (const entity of queryEntities(world, ['structure', 'transform'])) {
+    const structure = getComponent(world, entity, 'structure');
+    if (structure?.structureType !== 'station') continue;
+    const transform = getComponent(world, entity, 'transform');
+    if (transform) {
+      return transform.position.clone();
+    }
+  }
+  return null;
+}
 
 /** Get positions of all allied (player faction) ships */
 function getAlliedPositions(world: World): Vector3[] {
@@ -86,9 +108,20 @@ function getAlliedPositions(world: World): Vector3[] {
   return positions;
 }
 
-/** Calculate spawn center: MIN_SPAWN_DISTANCE from furthest ally in random direction */
+/** Calculate spawn center: position for enemy wave to spawn */
 function calculateSpawnCenter(world: World, allies: Vector3[]): Vector3 {
-  // Fallback to origin if no allies (shouldn't happen)
+  const stationPos = getStationPosition(world);
+
+  // Station defense: spawn at fixed distance from station in random direction
+  if (stationPos) {
+    const dir = randomUnitVector(world.prng);
+    const direction = new Vector3(dir.x, dir.y, dir.z);
+    return stationPos
+      .clone()
+      .addScaledVector(direction, STATION_DEFENSE_SPAWN_DISTANCE);
+  }
+
+  // Non-station missions: spawn at distance from allies
   if (allies.length === 0) {
     return new Vector3(0, 0, -MIN_SPAWN_DISTANCE);
   }
@@ -108,28 +141,30 @@ function calculateSpawnCenter(world: World, allies: Vector3[]): Vector3 {
     }
   }
 
-  // Spawn MIN_SPAWN_DISTANCE beyond that ally in the chosen direction
+  // Spawn at distance from furthest ally in that direction
   return furthestAlly.clone().addScaledVector(direction, MIN_SPAWN_DISTANCE);
 }
 
-/** Calculate rotation to face from spawn point toward allied centroid */
+/** Calculate rotation to face from spawn point toward a target */
 function calculateFacingRotation(
   spawnCenter: Vector3,
-  allies: Vector3[],
+  target: Vector3,
 ): Quaternion {
-  // Calculate centroid of allies
+  // Direction from spawn to target
+  const toTarget = target.clone().sub(spawnCenter).normalize();
+
+  // Default forward is -Z, rotate to face target
+  const forward = new Vector3(0, 0, -1);
+  return new Quaternion().setFromUnitVectors(forward, toTarget);
+}
+
+/** Calculate centroid of allied positions */
+function calculateAlliedCentroid(allies: Vector3[]): Vector3 {
   const centroid = new Vector3();
   for (const pos of allies) {
     centroid.add(pos);
   }
-  centroid.divideScalar(allies.length);
-
-  // Direction from spawn to centroid
-  const toAllies = centroid.clone().sub(spawnCenter).normalize();
-
-  // Default forward is -Z, rotate to face allies
-  const forward = new Vector3(0, 0, -1);
-  return new Quaternion().setFromUnitVectors(forward, toAllies);
+  return centroid.divideScalar(allies.length);
 }
 
 /** Spawn a wave of enemies in tight formation */
@@ -143,11 +178,19 @@ export function spawnWave(
 
   // Get allied positions and calculate spawn center
   const allies = getAlliedPositions(world);
+  const stationPos = getStationPosition(world);
   const spawnCenter = calculateSpawnCenter(world, allies);
-  const facing =
-    allies.length > 0
-      ? calculateFacingRotation(spawnCenter, allies)
-      : undefined;
+
+  // Face toward station if present, otherwise toward allied centroid
+  let facing: Quaternion | undefined;
+  if (stationPos) {
+    facing = calculateFacingRotation(spawnCenter, stationPos);
+  } else if (allies.length > 0) {
+    facing = calculateFacingRotation(
+      spawnCenter,
+      calculateAlliedCentroid(allies),
+    );
+  }
 
   // Spawn enemies in tight formation around spawn center
   // 20m spacing perpendicular to facing direction, ±5m vertical variation

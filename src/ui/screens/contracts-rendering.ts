@@ -97,21 +97,80 @@ export function renderEscortInfo(contract: Contract): string {
   `;
 }
 
+/** Render mission info for station defense missions */
+export function renderStationDefenseInfo(contract: Contract): string {
+  const defense = contract.stationDefenseData!;
+  const waves = defense.waves;
+
+  // Count enemy types across waves
+  const enemyCounts = new Map<string, number>();
+  for (const wave of waves) {
+    for (const enemy of wave.enemies) {
+      enemyCounts.set(
+        enemy.archetype,
+        (enemyCounts.get(enemy.archetype) ?? 0) + enemy.count,
+      );
+    }
+  }
+  const enemyList = Array.from(enemyCounts.entries())
+    .map(([type, count]) => `<div class="enemy-entry">${count}× ${type}</div>`)
+    .join('');
+  const totalEnemies = Array.from(enemyCounts.values()).reduce(
+    (a, b) => a + b,
+    0,
+  );
+
+  // Station type display name
+  const stationType = defense.stationType ?? 'mining';
+  const stationName = `${stationType.charAt(0).toUpperCase()}${stationType.slice(1)} Station`;
+
+  // Reinforcement info
+  const reinforcementTypes = defense.reinforcementPool
+    .map((e) => e.archetype)
+    .filter((v, i, a) => a.indexOf(v) === i)
+    .join(', ');
+
+  return `
+    <div class="contract-detail-section">
+      <div class="detail-section-label">STATION DEFENSE</div>
+      <div class="escort-info">
+        <div class="escort-entry">Defend: ${stationName}</div>
+        <div class="escort-entry">Reinforcements: ${defense.reinforcementCount} ships (${reinforcementTypes})</div>
+      </div>
+    </div>
+    <div class="contract-detail-section">
+      <div class="detail-section-label">HOSTILES</div>
+      <div class="contract-enemies">${enemyList}</div>
+      <div class="contract-waves">${totalEnemies} total in ${waves.length} waves</div>
+    </div>
+    <div class="contract-detail-section">
+      <div class="contract-waves">Reward scales with station health</div>
+    </div>
+  `;
+}
+
 /** Render contract detail panel */
 export function renderContractDetail(
   contract: Contract,
   canLaunch: boolean,
 ): string {
   const isEscort = contract.missionType === 'escort' && contract.escortData;
+  const isStationDefense =
+    contract.missionType === 'station-defense' && contract.stationDefenseData;
 
   // Accept button or commander warning (hard block)
   const acceptButton = canLaunch
     ? `<button class="btn btn-large btn-success" id="btn-accept-mission">ACCEPT MISSION</button>`
     : `<button class="btn btn-warning btn-goto-squadron">⚠ ASSIGN COMMANDER IN SQUADRON</button>`;
 
-  const missionInfo = isEscort
-    ? renderEscortInfo(contract)
-    : renderWaveHostiles(contract);
+  let missionInfo: string;
+  if (isEscort) {
+    missionInfo = renderEscortInfo(contract);
+  } else if (isStationDefense) {
+    missionInfo = renderStationDefenseInfo(contract);
+  } else {
+    missionInfo = renderWaveHostiles(contract);
+  }
 
   return `
     <div class="contract-detail">

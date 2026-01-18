@@ -6,7 +6,7 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!!**/dist"]
+    "includes": ["**", "!!**/dist", "!!src/rendering/ship-geometry-*.ts"]
   },
   "formatter": {
     "enabled": true,

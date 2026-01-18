@@ -5,8 +5,8 @@
 MAX_LINES=400
 FAILED=0
 
-# Check TypeScript files in src/
-for file in $(find src -name "*.ts" 2>/dev/null); do
+# Check TypeScript files in src/ (excluding auto-generated geometry files)
+for file in $(find src -name "*.ts" 2>/dev/null | grep -v "ship-geometry-"); do
   lines=$(wc -l < "$file")
   if [ "$lines" -gt "$MAX_LINES" ]; then
     echo "ERROR: $file has $lines lines (max $MAX_LINES)"

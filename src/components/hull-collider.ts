@@ -74,11 +74,13 @@ export function createHullCollider(
  * @param subHulls - Array of sub-hulls (each with planes and boundingRadius)
  * @param totalBoundingRadius - Bounding radius of entire structure
  * @param totalVolume - Total volume (used as mass, typically very large for structures)
+ * @param useHullForWeapons - Use hull for projectile detection (default: false)
  */
 export function createCompoundHullCollider(
   subHulls: SubHull[],
   totalBoundingRadius: number,
   totalVolume: number,
+  useHullForWeapons = false,
 ): HullCollider {
   // The main planes array is empty for compound hulls - we only use subHulls
   return {
@@ -86,7 +88,7 @@ export function createCompoundHullCollider(
     planes: [],
     boundingRadius: totalBoundingRadius,
     mass: totalVolume,
-    useHullForWeapons: false,
+    useHullForWeapons,
     subHulls,
   };
 }

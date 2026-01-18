@@ -1,9 +1,15 @@
 /**
  * Convex hull computation utilities for mesh bundling.
  * Computes hull planes, volume, and bounding radius.
+ *
+ * For non-convex meshes (like rings with holes), uses CoACD via Python
+ * for proper convex decomposition.
  */
 
 import convexHull from 'incremental-convex-hull';
+
+// Re-export CoACD decomposition from separate module
+export { decomposeWithCoACD } from './coacd-decompose.mjs';
 
 /**
  * Simple seeded PRNG (mulberry32) for deterministic jitter.
@@ -58,6 +64,19 @@ export function computeConvexHull(positions, seed = 12345) {
     return null;
   }
 
+  // Compute centroid for normal direction validation
+  let cx = 0,
+    cy = 0,
+    cz = 0;
+  for (const p of originalPoints) {
+    cx += p[0];
+    cy += p[1];
+    cz += p[2];
+  }
+  cx /= originalPoints.length;
+  cy /= originalPoints.length;
+  cz /= originalPoints.length;
+
   // Convert faces to planes using ORIGINAL points (not jittered)
   const planes = [];
   for (const face of faces) {
@@ -68,15 +87,36 @@ export function computeConvexHull(positions, seed = 12345) {
     // Compute face normal (cross product of edges)
     const e1 = [p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2]];
     const e2 = [p2[0] - p0[0], p2[1] - p0[1], p2[2] - p0[2]];
-    const nx = e1[1] * e2[2] - e1[2] * e2[1];
-    const ny = e1[2] * e2[0] - e1[0] * e2[2];
-    const nz = e1[0] * e2[1] - e1[1] * e2[0];
+    let nx = e1[1] * e2[2] - e1[2] * e2[1];
+    let ny = e1[2] * e2[0] - e1[0] * e2[2];
+    let nz = e1[0] * e2[1] - e1[1] * e2[0];
 
     // Normalize
     const len = Math.sqrt(nx * nx + ny * ny + nz * nz);
     if (len < 1e-10) continue; // Degenerate face
 
-    const normal = [nx / len, ny / len, nz / len];
+    nx /= len;
+    ny /= len;
+    nz /= len;
+
+    // Ensure normal points outward (away from centroid)
+    // Vector from centroid to face center
+    const faceCenterX = (p0[0] + p1[0] + p2[0]) / 3;
+    const faceCenterY = (p0[1] + p1[1] + p2[1]) / 3;
+    const faceCenterZ = (p0[2] + p1[2] + p2[2]) / 3;
+    const toCenterX = faceCenterX - cx;
+    const toCenterY = faceCenterY - cy;
+    const toCenterZ = faceCenterZ - cz;
+
+    // If normal points toward centroid, flip it
+    const dot = nx * toCenterX + ny * toCenterY + nz * toCenterZ;
+    if (dot < 0) {
+      nx = -nx;
+      ny = -ny;
+      nz = -nz;
+    }
+
+    const normal = [nx, ny, nz];
 
     // Distance from origin (dot product of normal with any point on face)
     const distance = normal[0] * p0[0] + normal[1] * p0[1] + normal[2] * p0[2];

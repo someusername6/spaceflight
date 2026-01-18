@@ -4,6 +4,7 @@
  * Interfaces and constants for the replay recording and playback system.
  */
 
+import type { MissionType } from '../campaign/types';
 import type { PlayerAutoaim } from '../settings/game-settings';
 
 /** Current replay format version - bump when changing FullReplayData structure */
@@ -198,8 +199,8 @@ export interface ReplayMetadata {
   missionName: string;
   /** Sector number (1-5) */
   sector: number;
-  /** Mission type - 'elimination' or 'escort' (defaults to 'elimination' for v1-2 replays) */
-  missionType?: 'elimination' | 'escort';
+  /** Mission type (defaults to 'elimination' for v1-2 replays) */
+  missionType?: MissionType;
   /** Player ship archetype */
   shipType: string;
   /** Wingmen ship classes (for squad display) */

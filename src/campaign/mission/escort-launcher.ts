@@ -270,7 +270,7 @@ export function setupEscortMission(
   }
 
   // Mark as escort mission (disables standard "no enemies = victory" check)
-  world.systemState.mission.isEscortMission = true;
+  world.systemState.mission.missionType = 'escort';
 
   // Calculate escape zone position
   const escapeZonePosition = new Vector3(0, 0, escortData.escapeZoneDistance);

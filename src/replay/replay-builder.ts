@@ -4,6 +4,7 @@
  * Extracted from mission-callbacks.ts to keep files under 400 lines.
  */
 
+import type { MissionType } from '../campaign/types';
 import type { WeaponStats } from '../components/combat-stats';
 import { getComponent, queryEntities } from '../core/ecs';
 import { logWarn } from '../core/logger';
@@ -22,7 +23,7 @@ export interface ReplayContractInfo {
   id: string;
   name: string;
   sector: number;
-  missionType?: 'elimination' | 'escort';
+  missionType?: MissionType;
 }
 
 /** Parameters for building replay data */

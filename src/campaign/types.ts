@@ -81,7 +81,7 @@ export interface StoredShip {
 }
 
 /** Mission types supported by the game */
-export type MissionType = 'elimination' | 'escort';
+export type MissionType = 'elimination' | 'escort' | 'station-defense';
 
 /** Escort mission specific data */
 export interface EscortMissionData {
@@ -107,6 +107,28 @@ export interface EscortMissionData {
   spawnBatchSize?: number;
 }
 
+/** Station defense mission specific data */
+export interface StationDefenseMissionData {
+  /** Station type (affects stats and display name) - defaults to 'mining' */
+  stationType?: 'mining' | 'refinery' | 'military';
+  /** Station hull health pool (overrides type default if specified) */
+  stationHealth?: number;
+  /** Station shield pool (overrides type default if specified) */
+  stationShields?: number;
+  /** Station position (Z distance from player spawn, negative = behind player) */
+  stationDistance: number;
+  /** Enemy waves before reinforcements */
+  waves: ContractWave[];
+  /** Time until reinforcements (seconds), or null for health-based trigger only */
+  reinforcementTime: number | null;
+  /** Station health threshold to trigger reinforcements (0-1) */
+  reinforcementHealthThreshold: number;
+  /** Number of reinforcement ships */
+  reinforcementCount: number;
+  /** Reinforcement ship archetypes */
+  reinforcementPool: ContractEnemy[];
+}
+
 /** A contract (mission) available to accept */
 export interface Contract {
   id: string;
@@ -121,6 +143,8 @@ export interface Contract {
   waves?: ContractWave[];
   /** Escort mission data - required when missionType === 'escort' */
   escortData?: EscortMissionData;
+  /** Station defense data - required when missionType === 'station-defense' */
+  stationDefenseData?: StationDefenseMissionData;
   reward: number; // credits
 }
 

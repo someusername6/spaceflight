@@ -119,7 +119,7 @@ export function runEscortMission(mission, seed, sector) {
 
   // Initialize mission state
   world.systemState.mission = {
-    isEscortMission: true,
+    missionType: 'escort',
     result: MissionResult.InProgress,
   };
 

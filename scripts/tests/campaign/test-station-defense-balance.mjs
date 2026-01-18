@@ -1,15 +1,16 @@
 /**
- * Escort Mission Balance Test
+ * Station Defense Mission Balance Test
  *
- * Simulates escort missions using the SAME code path as live gameplay:
- * - Uses mission definitions from src/ui/screens/missions/sector{1-5}/escort.ts
- * - Uses setupEscortMission and processEscortMissionTick
+ * Simulates station defense missions using the SAME code path as live gameplay:
+ * - Uses mission definitions from src/ui/screens/missions/sector{1-5}/station-defense.ts
+ * - Uses setupStationDefenseMission and processStationDefenseMissionTick
  * - Spawns wingmen using sector-specific loadouts
  *
  * Results show:
  * - Win/loss rate
- * - Average convoy survival
+ * - Average station health remaining
  * - Average wingman survival
+ * - Reinforcement arrival timing
  * - Mission duration
  */
 
@@ -17,10 +18,9 @@ import assert from 'node:assert';
 import { describe, it } from 'node:test';
 import { Quaternion, Vector3 } from 'three';
 import {
-  setFactionBehaviorMode,
-  setupEscortMission,
-  spawnEscortEnemy,
-} from '../../../src/campaign/mission/escort-launcher.ts';
+  setupStationDefenseMission,
+  spawnReinforcementForReplay,
+} from '../../../src/campaign/mission/station-defense-launcher.ts';
 import { isDead } from '../../../src/components/health.ts';
 import {
   addComponent,
@@ -30,12 +30,8 @@ import {
 } from '../../../src/core/ecs.ts';
 import { Faction, MissionResult } from '../../../src/core/types.ts';
 import { createAIShip } from '../../../src/factories/ship.ts';
-import { processEscortMissionTick } from '../../../src/systems/escort-mission.ts';
-import { SECTOR_1_ESCORT } from '../../../src/ui/screens/missions/sector1/escort.ts';
-import { SECTOR_2_ESCORT } from '../../../src/ui/screens/missions/sector2/escort.ts';
-import { SECTOR_3_ESCORT } from '../../../src/ui/screens/missions/sector3/escort.ts';
-import { SECTOR_4_ESCORT } from '../../../src/ui/screens/missions/sector4/escort.ts';
-import { SECTOR_5_ESCORT } from '../../../src/ui/screens/missions/sector5/escort.ts';
+import { processStationDefenseMissionTick } from '../../../src/systems/station-defense.ts';
+import { SECTOR_1_STATION_DEFENSE } from '../../../src/ui/screens/missions/sector1/station-defense.ts';
 import {
   initCombatStats,
   SYSTEMS,
@@ -44,17 +40,16 @@ import {
 } from '../shared/combat-utils.mjs';
 import { SECTOR_LOADOUTS } from '../shared/mission-simulation.mjs';
 
-// All escort missions by sector
-const ALL_ESCORT_MISSIONS = [
-  ...SECTOR_1_ESCORT,
-  ...SECTOR_2_ESCORT,
-  ...SECTOR_3_ESCORT,
-  ...SECTOR_4_ESCORT,
-  ...SECTOR_5_ESCORT,
+// All station defense missions by sector
+const ALL_STATION_DEFENSE_MISSIONS = [
+  ...SECTOR_1_STATION_DEFENSE,
+  // Add more sectors as they're created:
+  // ...SECTOR_2_STATION_DEFENSE,
+  // ...SECTOR_3_STATION_DEFENSE,
 ];
 
 // ============================================================================
-// Escort Mission Simulation
+// Station Defense Mission Simulation
 // ============================================================================
 
 const DEFAULT_MAX_SIMULATION_TIME = 300;
@@ -65,49 +60,47 @@ const DEFAULT_MAX_SIMULATION_TIME = 300;
 function countEntities(world) {
   let playerTeam = 0;
   let enemies = 0;
-  let enemiesDead = 0;
-  let convoyAlive = 0;
-  let convoyTotal = 0;
+  let stationAlive = false;
+  let stationHealth = 0;
+  let stationMaxHealth = 0;
 
   // Count ships only (exclude missiles and decoys by requiring shipIdentity)
-  for (const entity of queryEntities(world, [
-    'faction',
-    'health',
-    'shipIdentity',
-  ])) {
+  for (const entity of queryEntities(world, ['faction', 'health'])) {
     const faction = getComponent(world, entity, 'faction');
     const health = getComponent(world, entity, 'health');
-    const convoyShip = getComponent(world, entity, 'convoyShip');
+    const structure = getComponent(world, entity, 'structure');
 
-    if (convoyShip) {
-      convoyTotal++;
-      if (!isDead(health)) convoyAlive++;
+    if (structure?.structureType === 'station') {
+      stationAlive = !isDead(health);
+      stationHealth = health.hull;
+      stationMaxHealth = health.maxHull;
     } else if (faction.faction === Faction.Player) {
-      if (!isDead(health)) playerTeam++;
+      const identity = getComponent(world, entity, 'shipIdentity');
+      if (identity && !isDead(health)) playerTeam++;
     } else if (faction.faction === Faction.Enemy) {
-      if (!isDead(health)) enemies++;
-      else enemiesDead++;
+      const identity = getComponent(world, entity, 'shipIdentity');
+      if (identity && !isDead(health)) enemies++;
     }
   }
 
-  return { playerTeam, enemies, enemiesDead, convoyAlive, convoyTotal };
+  return { playerTeam, enemies, stationAlive, stationHealth, stationMaxHealth };
 }
 
 /**
- * Run a single escort mission simulation.
+ * Run a single station defense mission simulation.
  *
  * Uses the SAME code path as live gameplay:
- * - setupEscortMission spawns convoy ships and creates escort state
- * - processEscortMissionTick handles enemy spawning with initial delay
+ * - setupStationDefenseMission spawns station and creates mission state
+ * - processStationDefenseMissionTick handles wave spawning and reinforcements
  */
-function runEscortMission(mission, seed, sector, options = {}) {
+function runStationDefenseMission(mission, seed, sector, options = {}) {
   const maxSimulationTime =
     options.maxSimulationTime ?? DEFAULT_MAX_SIMULATION_TIME;
   const maxTicks = maxSimulationTime * TICK_RATE;
-  const escortData = mission.escortData;
+  const stationDefenseData = mission.stationDefenseData;
 
-  if (!escortData) {
-    throw new Error('Mission is not an escort mission');
+  if (!stationDefenseData) {
+    throw new Error('Mission is not a station defense mission');
   }
 
   const world = createWorld(seed);
@@ -115,11 +108,11 @@ function runEscortMission(mission, seed, sector, options = {}) {
 
   // Initialize mission state (same as live game)
   world.systemState.mission = {
-    missionType: 'escort',
+    missionType: 'station-defense',
     result: MissionResult.InProgress,
   };
 
-  // Spawn sector-specific player loadout (near convoy starting position)
+  // Spawn sector-specific player loadout (near station)
   // First ship gets playerControlled component so missionSystem doesn't trigger immediate defeat
   const loadout = SECTOR_LOADOUTS[sector] || SECTOR_LOADOUTS[1];
   loadout.forEach((ship, i) => {
@@ -128,7 +121,7 @@ function runEscortMission(mission, seed, sector, options = {}) {
       world,
       ship.archetype,
       Faction.Player,
-      new Vector3(x, 0, 100), // Start near convoy
+      new Vector3(x, 0, 0), // Start in front of station
       new Quaternion(),
       ship.skill,
     );
@@ -138,26 +131,19 @@ function runEscortMission(mission, seed, sector, options = {}) {
     }
   });
 
-  // Setup escort mission (spawns convoy, creates state with initial spawn delay)
+  // Setup station defense mission (spawns station, creates state with initial waves)
   // This is the SAME function used in live gameplay
-  const escortState = setupEscortMission(world, mission);
-
-  // Set wingmen to defensive mode (same as live gameplay)
-  setFactionBehaviorMode(world, Faction.Player, 'defensive');
-
-  const escapeZonePosition = new Vector3(0, 0, escortData.escapeZoneDistance);
+  const stationState = setupStationDefenseMission(world, mission);
 
   const metrics = {
     winner: null,
     timeToComplete: 0,
     playerTeamRemaining: 0,
-    convoyRemaining: 0,
-    convoyTotal: escortData.convoySize,
-    convoyInZone: 0,
-    convoyEscaped: 0,
-    jumpChargeProgress: 0,
+    stationHealthRemaining: 0,
+    stationHealthPercent: 0,
+    reinforcementsArrived: false,
+    reinforcementsSpawned: 0,
     timeout: false,
-    _lastEnemyCount: 0,
   };
 
   for (let tick = 0; tick < maxTicks; tick++) {
@@ -168,58 +154,68 @@ function runEscortMission(mission, seed, sector, options = {}) {
       system(world, TICK_SEC);
     }
 
-    // Process escort mission logic (spawning with initial delay, zone detection, jump charge)
+    // Process station defense mission logic (waves, reinforcements)
     // This is the SAME function used in live gameplay
-    let spawnedThisTick = 0;
-    processEscortMissionTick(world, escortState, TICK_SEC, () => {
-      spawnEscortEnemy(world, escortData, escapeZonePosition);
-      spawnedThisTick++;
-    });
-    if (spawnedThisTick > 0 && options.debug) {
-      console.log(`    -> Spawned ${spawnedThisTick} enemies at tick ${tick}`);
-    }
+    processStationDefenseMissionTick(
+      world,
+      stationState,
+      mission,
+      TICK_SEC,
+      () =>
+        spawnReinforcementForReplay(
+          world,
+          stationState.stationPosition,
+          stationDefenseData.reinforcementPool,
+          stationState.reinforcementsSpawned,
+        ),
+    );
 
     // Update metrics
     const counts = countEntities(world);
     metrics.playerTeamRemaining = counts.playerTeam;
-    metrics.convoyRemaining = counts.convoyAlive;
-    metrics.convoyInZone = escortState.convoyInZone;
-    metrics.jumpChargeProgress = escortState.jumpChargeProgress;
+    metrics.stationHealthRemaining = counts.stationHealth;
+    metrics.stationHealthPercent =
+      counts.stationMaxHealth > 0
+        ? (counts.stationHealth / counts.stationMaxHealth) * 100
+        : 0;
+    metrics.reinforcementsArrived = stationState.reinforcementsArrived;
+    metrics.reinforcementsSpawned = stationState.reinforcementsSpawned;
 
-    // Debug: log periodically, and log whenever enemy count changes unexpectedly
+    // Debug: log periodically
     if (options.debug) {
       if (tick < 3 || tick % 500 === 0) {
         console.log(
-          `  Tick ${tick} (${(tick / TICK_RATE).toFixed(0)}s): convoy=${counts.convoyAlive}, escaped=${escortState.escapedConvoy}, inZone=${escortState.convoyInZone}, player=${counts.playerTeam}, enemies=${counts.enemies} (dead=${counts.enemiesDead}), playerInZone=${escortState.playerInZone}`,
+          `  Tick ${tick} (${(tick / TICK_RATE).toFixed(0)}s): station=${counts.stationAlive ? 'alive' : 'dead'} (${metrics.stationHealthPercent.toFixed(0)}%), player=${counts.playerTeam}, enemies=${counts.enemies}, reinforced=${stationState.reinforcementsArrived}`,
         );
       }
-      // Track unexpected enemy count changes
-      if (
-        tick > 0 &&
-        counts.enemies !== metrics._lastEnemyCount &&
-        spawnedThisTick === 0
-      ) {
-        console.log(
-          `    !! Enemy count changed from ${metrics._lastEnemyCount} to ${counts.enemies} without spawn at tick ${tick}`,
-        );
-      }
-      metrics._lastEnemyCount = counts.enemies;
     }
 
-    // Check mission completion (uses same logic as live game)
-    if (world.systemState.mission.result === MissionResult.Victory) {
-      metrics.winner = 'player';
-      metrics.timeToComplete = (tick + 1) / TICK_RATE;
-      metrics.convoyEscaped = escortState.escapedConvoy;
-      break;
-    }
-
-    if (world.systemState.mission.result === MissionResult.Defeat) {
+    // Check defeat: station destroyed or all players dead
+    if (!counts.stationAlive) {
       metrics.winner = 'enemy';
       metrics.timeToComplete = (tick + 1) / TICK_RATE;
       if (options.debug) {
+        console.log(`  DEFEAT: Station destroyed at tick ${tick}`);
+      }
+      break;
+    }
+
+    if (counts.playerTeam === 0) {
+      metrics.winner = 'enemy';
+      metrics.timeToComplete = (tick + 1) / TICK_RATE;
+      if (options.debug) {
+        console.log(`  DEFEAT: All players dead at tick ${tick}`);
+      }
+      break;
+    }
+
+    // Check victory: all waves spawned, reinforcements arrived, all enemies dead
+    if (stationState.completed && counts.enemies === 0) {
+      metrics.winner = 'player';
+      metrics.timeToComplete = (tick + 1) / TICK_RATE;
+      if (options.debug) {
         console.log(
-          `  DEFEAT at tick ${tick}: convoy=${counts.convoyAlive}, escaped=${escortState.escapedConvoy}`,
+          `  VICTORY at tick ${tick}: station=${metrics.stationHealthPercent.toFixed(0)}%`,
         );
       }
       break;
@@ -229,8 +225,9 @@ function runEscortMission(mission, seed, sector, options = {}) {
   if (!metrics.winner) {
     metrics.timeout = true;
     metrics.timeToComplete = maxSimulationTime;
-    // Timeout = loss (didn't complete jump)
-    metrics.winner = 'enemy';
+    // Timeout with station alive = partial victory, count as win
+    const counts = countEntities(world);
+    metrics.winner = counts.stationAlive ? 'player' : 'enemy';
   }
 
   return metrics;
@@ -239,16 +236,17 @@ function runEscortMission(mission, seed, sector, options = {}) {
 /**
  * Run multiple trials and aggregate results.
  */
-function runEscortTrials(mission, sector, runs) {
+function runStationDefenseTrials(mission, sector, runs) {
   const results = [];
   for (let i = 0; i < runs; i++) {
     const seed = 12345 + i * 7919 + mission.id.charCodeAt(0) * 13;
     // Debug first run only
-    results.push(runEscortMission(mission, seed, sector, { debug: i === 0 }));
+    results.push(
+      runStationDefenseMission(mission, seed, sector, { debug: i === 0 }),
+    );
   }
 
   const wins = results.filter((r) => r.winner === 'player');
-  const convoyTotal = mission.escortData.convoySize;
 
   return {
     runs,
@@ -263,45 +261,40 @@ function runEscortTrials(mission, sector, runs) {
       wins.length > 0
         ? wins.reduce((s, r) => s + r.playerTeamRemaining, 0) / wins.length
         : 0,
-    avgConvoySurvivors:
+    avgStationHealth:
       wins.length > 0
-        ? wins.reduce((s, r) => s + r.convoyEscaped, 0) / wins.length
+        ? wins.reduce((s, r) => s + r.stationHealthPercent, 0) / wins.length
         : 0,
-    avgConvoySurvivalRate:
-      wins.length > 0
-        ? (wins.reduce((s, r) => s + r.convoyEscaped, 0) /
-            wins.length /
-            convoyTotal) *
-          100
-        : 0,
+    reinforcementRate:
+      (results.filter((r) => r.reinforcementsArrived).length / results.length) *
+      100,
     timeouts: results.filter((r) => r.timeout).length,
     results,
   };
 }
 
 // ============================================================================
-// Test Escort Missions (using live game mission definitions)
+// Test Station Defense Missions (using live game mission definitions)
 // ============================================================================
 
 const TRIALS = 50;
 
 // Parse command-line arguments for filtering missions
-// Usage: npx tsx test-escort-balance.mjs [mission-id...]
+// Usage: npx tsx test-station-defense-balance.mjs [mission-id...]
 // Examples:
-//   npx tsx test-escort-balance.mjs s1-supply-run s1-convoy-defense
-//   npx tsx test-escort-balance.mjs s5-wraith-hunt
+//   npx tsx test-station-defense-balance.mjs s1-station-defense-1
 const args = process.argv.slice(2);
 const filterMissions = args.length > 0 ? args : null;
 
 // Filter missions if specific IDs provided
 const missionsToTest = filterMissions
-  ? ALL_ESCORT_MISSIONS.filter((m) => filterMissions.includes(m.id))
-  : ALL_ESCORT_MISSIONS;
+  ? ALL_STATION_DEFENSE_MISSIONS.filter((m) => filterMissions.includes(m.id))
+  : ALL_STATION_DEFENSE_MISSIONS;
 
 if (filterMissions && missionsToTest.length === 0) {
   console.error(`No missions found matching: ${filterMissions.join(', ')}`);
   console.error('Available mission IDs:');
-  for (const m of ALL_ESCORT_MISSIONS) {
+  for (const m of ALL_STATION_DEFENSE_MISSIONS) {
     console.error(`  ${m.id}`);
   }
   process.exit(1);
@@ -313,11 +306,11 @@ if (filterMissions) {
   );
 }
 
-describe('Escort Mission Balance', () => {
+describe('Station Defense Mission Balance', () => {
   // Test filtered or all missions
   for (const mission of missionsToTest) {
     it(`S${mission.sector} ${mission.name} (${mission.difficulty}) balance check`, () => {
-      const results = runEscortTrials(mission, mission.sector, TRIALS);
+      const results = runStationDefenseTrials(mission, mission.sector, TRIALS);
 
       console.log(
         `\n=== S${mission.sector} ${mission.name} (${mission.difficulty}) ===`,
@@ -330,14 +323,14 @@ describe('Escort Mission Balance', () => {
         `Avg Player Survivors: ${results.avgPlayerSurvivors.toFixed(1)}`,
       );
       console.log(
-        `Avg Convoy Survivors: ${results.avgConvoySurvivors.toFixed(1)}/${mission.escortData.convoySize}`,
+        `Avg Station Health: ${results.avgStationHealth.toFixed(1)}%`,
       );
       console.log(
-        `Avg Convoy Survival Rate: ${results.avgConvoySurvivalRate.toFixed(1)}%`,
+        `Reinforcement Arrival Rate: ${results.reinforcementRate.toFixed(1)}%`,
       );
       console.log(`Timeouts: ${results.timeouts}`);
 
-      // Balance targets
+      // Balance targets (same as other mission types)
       const targets = {
         easy: { minWin: 75, maxWin: 95 },
         medium: { minWin: 60, maxWin: 80 },
