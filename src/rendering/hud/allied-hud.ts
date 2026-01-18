@@ -55,8 +55,8 @@ export function createAlliedDisplay(parent: HTMLElement): AlliedDisplay {
     row.innerHTML = `
       <span class="ally-callsign">---</span>
       <div class="ally-bars">
-        <div class="ally-bar hull"><div class="ally-bar-fill"></div></div>
         <div class="ally-bar shield"><div class="ally-bar-fill"></div></div>
+        <div class="ally-bar hull"><div class="ally-bar-fill"></div></div>
       </div>
       <span class="ally-distance">---</span>
     `;

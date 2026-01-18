@@ -42,13 +42,13 @@ export function createStationDisplay(container: HTMLElement): StationDisplay {
     <div class="station-name">---</div>
     <div class="station-bars">
       <div class="station-bar-row">
-        <span class="station-bar-label">HULL</span>
-        <div class="station-bar hull"><div class="station-bar-fill"></div></div>
+        <span class="station-bar-label">SHLD</span>
+        <div class="station-bar shield"><div class="station-bar-fill"></div></div>
         <span class="station-bar-text">---</span>
       </div>
       <div class="station-bar-row">
-        <span class="station-bar-label">SHLD</span>
-        <div class="station-bar shield"><div class="station-bar-fill"></div></div>
+        <span class="station-bar-label">HULL</span>
+        <div class="station-bar hull"><div class="station-bar-fill"></div></div>
         <span class="station-bar-text">---</span>
       </div>
     </div>
@@ -63,12 +63,12 @@ export function createStationDisplay(container: HTMLElement): StationDisplay {
     hullBar: requireElement(section, '.station-bar.hull .station-bar-fill'),
     hullText: requireElement(
       section,
-      '.station-bar-row:first-child .station-bar-text',
+      '.station-bar-row:last-child .station-bar-text',
     ),
     shieldBar: requireElement(section, '.station-bar.shield .station-bar-fill'),
     shieldText: requireElement(
       section,
-      '.station-bar-row:last-child .station-bar-text',
+      '.station-bar-row:first-child .station-bar-text',
     ),
     statusLabel: requireElement(section, '.station-status'),
   };

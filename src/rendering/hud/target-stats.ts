@@ -42,14 +42,14 @@ export function createTargetStats(parent: HTMLElement): TargetStatsDisplay {
       <span class="target-label">DIST</span>
       <span class="target-distance">-</span>
     </div>
-    <div class="target-row">
-      <span class="target-label hull-label">HULL</span>
-      <div class="target-bar hull"><div class="target-bar-fill"></div></div>
-      <span class="target-bar-value"></span>
-    </div>
     <div class="target-row shield-row">
       <span class="target-label">SHLD</span>
       <div class="target-bar shield"><div class="target-bar-fill"></div></div>
+      <span class="target-bar-value"></span>
+    </div>
+    <div class="target-row">
+      <span class="target-label hull-label">HULL</span>
+      <div class="target-bar hull"><div class="target-bar-fill"></div></div>
       <span class="target-bar-value"></span>
     </div>
     <div class="target-aspect"></div>

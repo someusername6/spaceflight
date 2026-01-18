@@ -54,8 +54,8 @@ export function createConvoyDisplay(container: HTMLElement): ConvoyDisplay {
     row.innerHTML = `
       <span class="convoy-label">---</span>
       <div class="ally-bars">
-        <div class="ally-bar hull"><div class="ally-bar-fill"></div></div>
         <div class="ally-bar shield"><div class="ally-bar-fill"></div></div>
+        <div class="ally-bar hull"><div class="ally-bar-fill"></div></div>
       </div>
       <span class="convoy-status">---</span>
     `;
