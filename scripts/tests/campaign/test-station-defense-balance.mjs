@@ -32,6 +32,10 @@ import { Faction, MissionResult } from '../../../src/core/types.ts';
 import { createAIShip } from '../../../src/factories/ship.ts';
 import { processStationDefenseMissionTick } from '../../../src/systems/station-defense.ts';
 import { SECTOR_1_STATION_DEFENSE } from '../../../src/ui/screens/missions/sector1/station-defense.ts';
+import { SECTOR_2_STATION_DEFENSE } from '../../../src/ui/screens/missions/sector2/station-defense.ts';
+import { SECTOR_3_STATION_DEFENSE } from '../../../src/ui/screens/missions/sector3/station-defense.ts';
+import { SECTOR_4_STATION_DEFENSE } from '../../../src/ui/screens/missions/sector4/station-defense.ts';
+import { SECTOR_5_STATION_DEFENSE } from '../../../src/ui/screens/missions/sector5/station-defense.ts';
 import {
   initCombatStats,
   SYSTEMS,
@@ -43,9 +47,10 @@ import { SECTOR_LOADOUTS } from '../shared/mission-simulation.mjs';
 // All station defense missions by sector
 const ALL_STATION_DEFENSE_MISSIONS = [
   ...SECTOR_1_STATION_DEFENSE,
-  // Add more sectors as they're created:
-  // ...SECTOR_2_STATION_DEFENSE,
-  // ...SECTOR_3_STATION_DEFENSE,
+  ...SECTOR_2_STATION_DEFENSE,
+  ...SECTOR_3_STATION_DEFENSE,
+  ...SECTOR_4_STATION_DEFENSE,
+  ...SECTOR_5_STATION_DEFENSE,
 ];
 
 // ============================================================================

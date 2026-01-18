@@ -1,112 +1,121 @@
 /**
  * Sector 1: Station Defense Missions
- * Defend mining stations from pirate raiders until reinforcements arrive.
- *
- * Station defense missions have:
- * - Large station with health/shields to protect
- * - Wave-based enemy spawns with escalating difficulty
- * - Reinforcements arrive after time OR when station health is low
- * - Reward scales with remaining station health
+ * Defend stations from pirate raiders until reinforcements arrive.
  *
  * Sector 1 enemies: gnat, ember, shocker, mantis (rookie/regular skill)
+ * Sector 1 wingmen: 4x regular fighters
+ *
+ * Station types: mining (balanced), refinery (high hull), military (high shields + initial allies)
  */
 
 import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_1_STATION_DEFENSE: Contract[] = [
   {
-    id: 's1-orbital-defense',
-    name: 'Orbital Defense',
+    id: 's1-mining-outpost',
+    name: 'Mining Outpost',
     description:
-      'Defend the mining station from pirate raiders until reinforcements arrive.',
-    difficulty: 'medium',
+      'Defend the mining station from rookie pirates until reinforcements arrive.',
+    difficulty: 'easy',
     sector: 1,
     missionType: 'station-defense',
     stationDefenseData: {
       stationType: 'mining',
-      stationDistance: -400, // Behind player spawn (negative Z, player faces -Z)
+      stationDistance: -400,
       waves: [
         {
-          enemies: [{ archetype: 'gnat', skill: 'rookie', count: 3 }],
-          delay: 10,
+          enemies: [{ archetype: 'gnat', skill: 'rookie', count: 2 }],
+          delay: 15,
         },
         {
-          enemies: [{ archetype: 'ember', skill: 'rookie', count: 2 }],
-          delay: 25,
-        },
-        {
-          enemies: [
-            { archetype: 'gnat', skill: 'regular', count: 2 },
-            { archetype: 'ember', skill: 'rookie', count: 2 },
-          ],
-          delay: 30,
-        },
-        {
-          enemies: [{ archetype: 'shocker', skill: 'rookie', count: 2 }],
-          delay: 35,
+          enemies: [{ archetype: 'gnat', skill: 'rookie', count: 2 }],
+          delay: 55,
         },
       ],
-      reinforcementTime: null, // Reinforcements arrive after final wave spawns
-      reinforcementHealthThreshold: 0.25, // Or when station below 25% health
+      reinforcementTime: null,
+      reinforcementHealthThreshold: 0.4,
       reinforcementCount: 4,
       reinforcementPool: [
         { archetype: 'fighter', skill: 'regular', count: 1 },
         { archetype: 'interceptor', skill: 'regular', count: 1 },
       ],
     },
-    reward: 3500,
+    reward: 3000,
   },
   {
-    id: 's1-station-siege',
-    name: 'Station Siege',
+    id: 's1-refinery-siege',
+    name: 'Refinery Siege',
     description:
-      'Heavy pirate assault on refinery station. Hold until the cavalry arrives.',
-    difficulty: 'hard',
+      'Ion-armed shockers are targeting the refinery. Hold until backup arrives.',
+    difficulty: 'medium',
     sector: 1,
     missionType: 'station-defense',
     stationDefenseData: {
       stationType: 'refinery',
-      stationDistance: -350, // Behind player spawn (negative Z, player faces -Z)
+      stationDistance: -350,
       waves: [
         {
-          enemies: [
-            { archetype: 'gnat', skill: 'rookie', count: 2 },
-            { archetype: 'ember', skill: 'rookie', count: 2 },
-          ],
+          enemies: [{ archetype: 'gnat', skill: 'rookie', count: 2 }],
+          delay: 12,
+        },
+        {
+          enemies: [{ archetype: 'ember', skill: 'rookie', count: 2 }],
+          delay: 40,
+        },
+        {
+          enemies: [{ archetype: 'gnat', skill: 'rookie', count: 2 }],
+          delay: 65,
+        },
+      ],
+      reinforcementTime: null,
+      reinforcementHealthThreshold: 0.3,
+      reinforcementCount: 4,
+      reinforcementPool: [
+        { archetype: 'fighter', skill: 'regular', count: 1 },
+        { archetype: 'interceptor', skill: 'regular', count: 1 },
+      ],
+    },
+    reward: 6725,
+  },
+  {
+    id: 's1-defense-platform',
+    name: 'Defense Platform',
+    description:
+      'Heavy pirate assault on military outpost. Mantis fighters deploying decoys.',
+    difficulty: 'hard',
+    sector: 1,
+    missionType: 'station-defense',
+    stationDefenseData: {
+      stationType: 'military',
+      stationDistance: -300,
+      initialAllies: [{ archetype: 'fighter', skill: 'regular', count: 2 }],
+      waves: [
+        {
+          enemies: [{ archetype: 'gnat', skill: 'rookie', count: 2 }],
           delay: 10,
         },
         {
-          enemies: [{ archetype: 'mantis', skill: 'rookie', count: 2 }],
-          delay: 20,
-        },
-        {
-          enemies: [
-            { archetype: 'shocker', skill: 'regular', count: 2 },
-            { archetype: 'gnat', skill: 'regular', count: 2 },
-          ],
-          delay: 25,
-        },
-        {
-          enemies: [
-            { archetype: 'ember', skill: 'regular', count: 2 },
-            { archetype: 'mantis', skill: 'rookie', count: 2 },
-          ],
-          delay: 30,
-        },
-        {
-          enemies: [{ archetype: 'shocker', skill: 'regular', count: 3 }],
+          enemies: [{ archetype: 'ember', skill: 'rookie', count: 2 }],
           delay: 35,
         },
+        {
+          enemies: [{ archetype: 'shocker', skill: 'rookie', count: 2 }],
+          delay: 60,
+        },
+        {
+          enemies: [{ archetype: 'gnat', skill: 'regular', count: 2 }],
+          delay: 85,
+        },
       ],
-      reinforcementTime: null, // Reinforcements arrive after final wave spawns
-      reinforcementHealthThreshold: 0.2, // Or when station below 20% health
-      reinforcementCount: 5,
+      reinforcementTime: null,
+      reinforcementHealthThreshold: 0.25,
+      reinforcementCount: 4,
       reinforcementPool: [
         { archetype: 'fighter', skill: 'veteran', count: 1 },
         { archetype: 'interceptor', skill: 'regular', count: 1 },
         { archetype: 'striker', skill: 'regular', count: 1 },
       ],
     },
-    reward: 5500,
+    reward: 11119,
   },
 ];

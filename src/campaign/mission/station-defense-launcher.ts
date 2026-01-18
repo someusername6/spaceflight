@@ -41,6 +41,10 @@ const REINFORCEMENT_SPAWN_DISTANCE = 500;
 /** Maximum spawn distance from station for reinforcements */
 const REINFORCEMENT_SPAWN_DISTANCE_MAX = 800;
 
+/** Initial allies spawn closer to station */
+const INITIAL_ALLY_SPAWN_DISTANCE = 150;
+const INITIAL_ALLY_SPAWN_DISTANCE_MAX = 250;
+
 /**
  * Set behavior mode for all ships of a faction.
  * Used to set wingmen to station-defense mode.
@@ -69,6 +73,76 @@ export function setEnemiesToStationHunter(world: World): void {
 }
 
 /**
+ * Spawn an allied ship near the station.
+ * Used for both initial allies and reinforcements.
+ */
+function spawnAllyNearStation(
+  world: World,
+  stationPosition: Vector3,
+  spec: ContractEnemy,
+  index: number,
+  callsignPrefix: string,
+  minDistance: number,
+  maxDistance: number,
+): Entity {
+  // Spawn at random position around station (toward player side, +Z)
+  // Full 360 degree spread for natural distribution
+  const angle = randomRange(world.prng, 0, Math.PI * 2);
+  const distance = randomRange(world.prng, minDistance, maxDistance);
+
+  const spawnX = stationPosition.x + Math.sin(angle) * distance;
+  const spawnZ = stationPosition.z + Math.cos(angle) * distance;
+  const spawnY = randomRange(world.prng, -30, 30);
+
+  const spawnPos = new Vector3(spawnX, spawnY, spawnZ);
+
+  // Face toward enemies (default forward is -Z)
+  const rotation = new Quaternion();
+
+  const entity = createAIShip(
+    world,
+    spec.archetype,
+    Faction.Player,
+    spawnPos,
+    rotation,
+    spec.skill,
+    callsignPrefix,
+  );
+
+  // Set to station-defense mode
+  const ai = getComponent(world, entity, 'aiControlled');
+  if (ai) {
+    ai.behaviorMode = 'station-defense';
+  }
+
+  logDebug(
+    `[STATION DEFENSE] ${callsignPrefix} ${index + 1} spawned: ${spec.archetype}`,
+  );
+
+  return entity;
+}
+
+/**
+ * Spawn an initial ally near the station (garrison).
+ */
+export function spawnInitialAlly(
+  world: World,
+  stationPosition: Vector3,
+  spec: ContractEnemy,
+  index: number,
+): Entity {
+  return spawnAllyNearStation(
+    world,
+    stationPosition,
+    spec,
+    index,
+    'Garrison',
+    INITIAL_ALLY_SPAWN_DISTANCE,
+    INITIAL_ALLY_SPAWN_DISTANCE_MAX,
+  );
+}
+
+/**
  * Spawn a reinforcement ship near the station.
  * Exported for replay support.
  */
@@ -86,48 +160,15 @@ export function spawnReinforcementForReplay(
   );
   const spec = reinforcementPool[poolIndex] as ContractEnemy;
 
-  // Spawn at random position around station (away from typical enemy spawn direction)
-  // Enemies spawn away from station, so reinforcements spawn between station and enemies
-  const angle = randomRange(world.prng, -Math.PI / 2, Math.PI / 2); // 180 degrees facing away from station
-  const distance = randomRange(
-    world.prng,
+  return spawnAllyNearStation(
+    world,
+    stationPosition,
+    spec,
+    reinforcementIndex,
+    'Rescue',
     REINFORCEMENT_SPAWN_DISTANCE,
     REINFORCEMENT_SPAWN_DISTANCE_MAX,
   );
-
-  const spawnX = stationPosition.x + Math.sin(angle) * distance;
-  const spawnZ = stationPosition.z + Math.cos(angle) * distance;
-  const spawnY = randomRange(world.prng, -50, 50);
-
-  const spawnPos = new Vector3(spawnX, spawnY, spawnZ);
-
-  // Face toward enemies (default forward is -Z which is toward enemies)
-  const rotation = new Quaternion();
-
-  // Use reinforcement callsign prefix
-  const callsignPrefix = 'Rescue';
-
-  const entity = createAIShip(
-    world,
-    spec.archetype,
-    Faction.Player,
-    spawnPos,
-    rotation,
-    spec.skill,
-    callsignPrefix,
-  );
-
-  // Set reinforcement to station-defense mode
-  const ai = getComponent(world, entity, 'aiControlled');
-  if (ai) {
-    ai.behaviorMode = 'station-defense';
-  }
-
-  logDebug(
-    `[STATION DEFENSE] Reinforcement ${reinforcementIndex + 1} spawned: ${spec.archetype}`,
-  );
-
-  return entity;
 }
 
 /** Setup station defense mission (called from mission launcher) */
@@ -192,6 +233,20 @@ export function setupStationDefenseMission(
   setFactionBehaviorMode(world, Faction.Player, 'station-defense');
   logDebug('[STATION DEFENSE] Set wingmen to station-defense mode');
 
+  // Spawn initial allies (for military stations)
+  const initialAllies = stationDefenseData.initialAllies ?? [];
+  let allyIndex = 0;
+  for (const spec of initialAllies) {
+    for (let i = 0; i < spec.count; i++) {
+      spawnInitialAlly(world, stationPosition, spec, allyIndex);
+      allyIndex++;
+    }
+  }
+  if (initialAllies.length > 0) {
+    const totalInitial = initialAllies.reduce((sum, s) => sum + s.count, 0);
+    logDebug(`[STATION DEFENSE] Spawned ${totalInitial} initial allies`);
+  }
+
   // Handle first wave - spawn immediately or after delay
   const waves = stationDefenseData.waves;
   const firstWave = waves[0];
@@ -229,7 +284,10 @@ export function createStationDefenseTickCallback(
   missionEndState: MissionEndState,
   executeMissionEnd: () => Promise<void>,
 ): (world: World) => void {
-  const stationDefenseData = contract.stationDefenseData!;
+  const stationDefenseData = contract.stationDefenseData;
+  if (!stationDefenseData) {
+    throw new Error('Station defense mission requires stationDefenseData');
+  }
 
   return (world: World) => {
     // Skip if mission already ended

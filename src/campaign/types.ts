@@ -127,6 +127,8 @@ export interface StationDefenseMissionData {
   reinforcementCount: number;
   /** Reinforcement ship archetypes */
   reinforcementPool: ContractEnemy[];
+  /** Initial allied ships present at mission start (for military stations) */
+  initialAllies?: ContractEnemy[];
 }
 
 /** A contract (mission) available to accept */

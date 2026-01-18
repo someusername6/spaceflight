@@ -19,10 +19,12 @@ import { SECTOR_4_EASY } from './easy';
 import { SECTOR_4_ESCORT } from './escort';
 import { SECTOR_4_HARD } from './hard';
 import { SECTOR_4_MEDIUM } from './medium';
+import { SECTOR_4_STATION_DEFENSE } from './station-defense';
 
 export const SECTOR_4_MISSIONS: Contract[] = [
   ...SECTOR_4_EASY,
   ...SECTOR_4_ESCORT,
+  ...SECTOR_4_STATION_DEFENSE,
   ...SECTOR_4_MEDIUM,
   ...SECTOR_4_HARD,
 ];
