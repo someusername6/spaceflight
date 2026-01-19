@@ -21,15 +21,19 @@
 import assert from 'node:assert';
 import { describe, it } from 'node:test';
 import { SECTOR_1_AMBUSH } from '../../../src/ui/screens/missions/sector1/ambush.ts';
+import { SECTOR_2_AMBUSH } from '../../../src/ui/screens/missions/sector2/ambush.ts';
+import { SECTOR_3_AMBUSH } from '../../../src/ui/screens/missions/sector3/ambush.ts';
+import { SECTOR_4_AMBUSH } from '../../../src/ui/screens/missions/sector4/ambush.ts';
+import { SECTOR_5_AMBUSH } from '../../../src/ui/screens/missions/sector5/ambush.ts';
 import { runAmbushTrials } from '../shared/ambush-simulation.mjs';
 
-// All ambush missions by sector (add more sectors as they're created)
+// All ambush missions by sector
 const ALL_AMBUSH_MISSIONS = [
   ...SECTOR_1_AMBUSH,
-  // ...SECTOR_2_AMBUSH,
-  // ...SECTOR_3_AMBUSH,
-  // ...SECTOR_4_AMBUSH,
-  // ...SECTOR_5_AMBUSH,
+  ...SECTOR_2_AMBUSH,
+  ...SECTOR_3_AMBUSH,
+  ...SECTOR_4_AMBUSH,
+  ...SECTOR_5_AMBUSH,
 ];
 
 const TRIALS = 50;

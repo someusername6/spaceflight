@@ -1,0 +1,97 @@
+/**
+ * Sector 3: Ambush Missions (target rates by difficulty)
+ * - Easy: 75-95% win rate, 75-90% squad survival
+ * - Medium: 60-80% win rate, 60-75% squad survival
+ * - Hard: 45-65% win rate, 45-60% squad survival
+ *
+ * Convoy interception missions - attack enemy convoy protected by escorts.
+ * Victory: All convoy destroyed or stopped (no escorts nearby + player nearby)
+ * Defeat: Any convoy escapes OR player dies
+ *
+ * Reward calculation:
+ * - Stopped convoy: 100% credit (cargo captured intact)
+ * - Destroyed convoy: 50% credit (cargo lost)
+ *
+ * Sector 3 enemies: rocketeer, moth, firefly, dragonfly, fireant, phantom, wasp, beetle
+ * Sector 3 wingmen: veteran interceptor, regular interceptor, 2x regular defender
+ * Escort roles: aggressive (proactive engagement) vs defensive (reactive only)
+ */
+
+import type { Contract } from '../types';
+
+export const SECTOR_3_AMBUSH: Contract[] = [
+  {
+    id: 's3-warzone-intercept',
+    name: 'Warzone Intercept',
+    description:
+      'Intercept supply convoy in the warzone. Rocketeer escorts incoming.',
+    difficulty: 'easy',
+    sector: 3,
+    missionType: 'ambush',
+    ambushData: {
+      convoySize: 2,
+      convoyType: 'transport',
+      convoyStartDistance: 800,
+      escapeZoneDistance: 9100,
+      escapeZoneRadius: 300,
+      convoyStopDistance: 400,
+      // Easy: 3 defensive moths + 2 aggressive rocketeers (regular)
+      escorts: [
+        { archetype: 'moth', skill: 'regular', count: 3, role: 'defensive' },
+        {
+          archetype: 'rocketeer',
+          skill: 'regular',
+          count: 2,
+          role: 'aggressive',
+        },
+      ],
+    },
+    reward: 6800,
+  },
+  {
+    id: 's3-lightning-strike',
+    name: 'Lightning Strike',
+    description:
+      'Hit convoy with moth escorts. Watch for lightning at close range.',
+    difficulty: 'medium',
+    sector: 3,
+    missionType: 'ambush',
+    ambushData: {
+      convoySize: 2,
+      convoyType: 'transport',
+      convoyStartDistance: 850,
+      escapeZoneDistance: 9050,
+      escapeZoneRadius: 300,
+      convoyStopDistance: 400,
+      // Medium: 3 defensive moths + 4 aggressive wasps (regular)
+      escorts: [
+        { archetype: 'moth', skill: 'regular', count: 3, role: 'defensive' },
+        { archetype: 'wasp', skill: 'regular', count: 4, role: 'aggressive' },
+      ],
+    },
+    reward: 9200,
+  },
+  {
+    id: 's3-heat-wave',
+    name: 'Heat Wave',
+    description:
+      'Heavy convoy with Fireant escorts. Torch beams will cook you at range.',
+    difficulty: 'hard',
+    sector: 3,
+    missionType: 'ambush',
+    ambushData: {
+      convoySize: 2,
+      convoyType: 'transport',
+      convoyStartDistance: 900,
+      escapeZoneDistance: 9000,
+      escapeZoneRadius: 350,
+      convoyStopDistance: 400,
+      // Hard: 3 defensive fireants + 4 aggressive wasps (veteran)
+      escorts: [
+        { archetype: 'fireant', skill: 'veteran', count: 3, role: 'defensive' },
+        { archetype: 'wasp', skill: 'veteran', count: 4, role: 'aggressive' },
+      ],
+    },
+    reward: 11500,
+  },
+];

@@ -15,6 +15,7 @@
  */
 
 import type { Contract } from '../types';
+import { SECTOR_4_AMBUSH } from './ambush';
 import { SECTOR_4_EASY } from './easy';
 import { SECTOR_4_ESCORT } from './escort';
 import { SECTOR_4_HARD } from './hard';
@@ -25,6 +26,7 @@ export const SECTOR_4_MISSIONS: Contract[] = [
   ...SECTOR_4_EASY,
   ...SECTOR_4_ESCORT,
   ...SECTOR_4_STATION_DEFENSE,
+  ...SECTOR_4_AMBUSH,
   ...SECTOR_4_MEDIUM,
   ...SECTOR_4_HARD,
 ];

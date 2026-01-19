@@ -35,13 +35,10 @@ export const SECTOR_1_AMBUSH: Contract[] = [
       escapeZoneDistance: 9300, // (180 - 10) * 55 m/s transport speed
       escapeZoneRadius: 300,
       convoyStopDistance: 400,
-      // Easy: light escort - player should overwhelm quickly
-      // 2 aggressive rookie mantis engage player (gives some combat pressure)
-      // 1 defensive gnat stays near convoy
-      // Grid search (50 trials): 82% win, 77% survival - both within target
+      // Easy: 2 defensive gnats + 1 aggressive mantis
       escorts: [
-        { archetype: 'gnat', skill: 'rookie', count: 1, role: 'defensive' },
-        { archetype: 'mantis', skill: 'rookie', count: 2, role: 'aggressive' },
+        { archetype: 'gnat', skill: 'rookie', count: 2, role: 'defensive' },
+        { archetype: 'mantis', skill: 'rookie', count: 1, role: 'aggressive' },
       ],
     },
     reward: 4200,
@@ -84,12 +81,10 @@ export const SECTOR_1_AMBUSH: Contract[] = [
       escapeZoneDistance: 9100, // (180 - 12) * 55 m/s transport speed
       escapeZoneRadius: 350,
       convoyStopDistance: 400,
-      // Hard: 1 defensive ember + mixed aggressive wasps
-      // Grid search (50 trials): 58% win, 59% survival - both within target
+      // Hard: 2 defensive gnats + 4 aggressive wasps (veteran)
       escorts: [
-        { archetype: 'ember', skill: 'regular', count: 1, role: 'defensive' },
-        { archetype: 'wasp', skill: 'veteran', count: 2, role: 'aggressive' },
-        { archetype: 'wasp', skill: 'ace', count: 1, role: 'aggressive' },
+        { archetype: 'gnat', skill: 'rookie', count: 2, role: 'defensive' },
+        { archetype: 'wasp', skill: 'veteran', count: 4, role: 'aggressive' },
       ],
     },
     reward: 8200,
