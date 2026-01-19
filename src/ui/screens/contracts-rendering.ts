@@ -43,7 +43,7 @@ export function renderContractListItem(
   `;
 }
 
-/** Render hostiles section for wave-based missions */
+/** Render hostiles section for wave-based (elimination) missions */
 export function renderWaveHostiles(contract: Contract): string {
   const waves = contract.waves ?? [];
   const enemyCounts = new Map<string, number>();
@@ -61,6 +61,12 @@ export function renderWaveHostiles(contract: Contract): string {
   const waveCount = waves.length;
 
   return `
+    <div class="contract-detail-section">
+      <div class="detail-section-label">ELIMINATION</div>
+      <div class="mission-info">
+        <div class="mission-entry">Objective: Destroy all hostiles</div>
+      </div>
+    </div>
     <div class="contract-detail-section">
       <div class="detail-section-label">HOSTILES</div>
       <div class="contract-enemies">${enemyList}</div>
@@ -81,10 +87,11 @@ export function renderEscortInfo(contract: Contract): string {
   return `
     <div class="contract-detail-section">
       <div class="detail-section-label">ESCORT MISSION</div>
-      <div class="escort-info">
-        <div class="escort-entry">Convoy: ${escort.convoySize} ships</div>
-        <div class="escort-entry">Distance: ${(escort.escapeZoneDistance / 1000).toFixed(1)} km to jump point</div>
-        <div class="escort-entry">Jump charge: ${escort.jumpChargeTime}s</div>
+      <div class="mission-info">
+        <div class="mission-entry">Convoy: ${escort.convoySize} ships</div>
+        <div class="mission-entry">Distance: ${(escort.escapeZoneDistance / 1000).toFixed(1)} km to jump point</div>
+        <div class="mission-entry">Jump charge: ${escort.jumpChargeTime}s</div>
+        <div class="mission-entry">Objective: Escort at least one convoy ship to safety</div>
       </div>
     </div>
     <div class="contract-detail-section">
@@ -111,10 +118,10 @@ export function renderAmbushInfo(contract: Contract): string {
   return `
     <div class="contract-detail-section">
       <div class="detail-section-label">AMBUSH MISSION</div>
-      <div class="escort-info">
-        <div class="escort-entry">Targets: ${ambush.convoySize} ${ambush.convoyType} ships</div>
-        <div class="escort-entry">Objective: Stop or destroy all convoy ships</div>
-        <div class="escort-entry">Defeat if: Convoy escapes or commander dies</div>
+      <div class="mission-info">
+        <div class="mission-entry">Targets: ${ambush.convoySize} ${ambush.convoyType} ships</div>
+        <div class="mission-entry">Objective: Stop or destroy all convoy ships</div>
+        <div class="mission-entry">Defeat if: Any convoy ship escapes</div>
       </div>
     </div>
     <div class="contract-detail-section">
@@ -164,9 +171,10 @@ export function renderStationDefenseInfo(contract: Contract): string {
   return `
     <div class="contract-detail-section">
       <div class="detail-section-label">STATION DEFENSE</div>
-      <div class="escort-info">
-        <div class="escort-entry">Defend: ${stationName}</div>
-        <div class="escort-entry">Reinforcements: ${defense.reinforcementCount} ships (${reinforcementTypes})</div>
+      <div class="mission-info">
+        <div class="mission-entry">Objective: Defend station until reinforcements arrive</div>
+        <div class="mission-entry">Defend: ${stationName}</div>
+        <div class="mission-entry">Reinforcements: ${defense.reinforcementCount} ships (${reinforcementTypes})</div>
       </div>
     </div>
     <div class="contract-detail-section">
