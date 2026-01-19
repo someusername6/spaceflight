@@ -22,6 +22,7 @@ import {
   createGameOverUI,
   createResultsUI,
   type EscortResultsDisplay,
+  type StationDefenseResultsDisplay,
 } from '../../ui/screens/results/results';
 import { resetTitleScreen } from '../../ui/screens/title';
 import { startCampaignGameplay } from '../controller';
@@ -49,6 +50,7 @@ import { setupTitleScreen } from './menu-handlers';
  * @param earnedReward - Actual reward earned (with multipliers applied)
  * @param escortResults - Convoy survival results for escort missions
  * @param ambushResults - Convoy results for ambush missions
+ * @param stationDefenseResults - Station defense results
  */
 export function showResults(
   controller: CampaignController,
@@ -60,6 +62,7 @@ export function showResults(
   earnedReward?: number,
   escortResults?: EscortResultsDisplay,
   ambushResults?: AmbushResultsDisplay,
+  stationDefenseResults?: StationDefenseResultsDisplay,
 ): void {
   const { screenManager } = controller;
   const resultsElement = getScreenElement(screenManager, Screen.RESULTS);
@@ -80,6 +83,7 @@ export function showResults(
     earnedReward,
     escortResults,
     ambushResults,
+    stationDefenseResults,
   );
 }
 

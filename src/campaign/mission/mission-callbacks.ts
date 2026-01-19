@@ -236,6 +236,7 @@ export function createMissionEndExecutor(
         baseReward,
         missionEndState.escortResults,
         missionEndState.ambushResults,
+        missionEndState.stationDefenseResults,
       );
     }
   };
