@@ -65,72 +65,7 @@ export const SECTOR_5_STATION_DEFENSE: Contract[] = [
         { archetype: 'sentinel', skill: 'ace', count: 1 },
       ],
     },
-    reward: 4072,
-  },
-  {
-    id: 's5-omega-refinery',
-    name: 'Omega Refinery',
-    description:
-      'Wraith with nuclear lance targeting the refinery. Critical threat level.',
-    difficulty: 'medium',
-    sector: 5,
-    missionType: 'station-defense',
-    stationDefenseData: {
-      playerThreatRatio: 0.5,
-      stationType: 'refinery',
-      stationDistance: -350,
-      waves: [
-        {
-          enemies: [
-            { archetype: 'wraith', skill: 'ace', count: 5 },
-            { archetype: 'scorpion', skill: 'ace', count: 5 },
-            { archetype: 'phantom', skill: 'ace', count: 5 },
-          ],
-          delay: 2,
-        },
-        {
-          enemies: [
-            { archetype: 'wraith', skill: 'ace', count: 5 },
-            { archetype: 'scorpion', skill: 'ace', count: 5 },
-            { archetype: 'dragonfly', skill: 'ace', count: 5 },
-          ],
-          delay: 5,
-        },
-        {
-          enemies: [
-            { archetype: 'wraith', skill: 'ace', count: 5 },
-            { archetype: 'scorpion', skill: 'ace', count: 5 },
-            { archetype: 'phantom', skill: 'ace', count: 5 },
-          ],
-          delay: 8,
-        },
-        {
-          enemies: [
-            { archetype: 'wraith', skill: 'ace', count: 5 },
-            { archetype: 'scorpion', skill: 'ace', count: 5 },
-            { archetype: 'dragonfly', skill: 'ace', count: 5 },
-          ],
-          delay: 11,
-        },
-        {
-          enemies: [
-            { archetype: 'wraith', skill: 'ace', count: 4 },
-            { archetype: 'scorpion', skill: 'ace', count: 4 },
-            { archetype: 'phantom', skill: 'ace', count: 4 },
-          ],
-          delay: 14,
-        },
-      ],
-      reinforcementTime: null,
-      reinforcementHealthThreshold: 0.15,
-      reinforcementCount: 5,
-      reinforcementPool: [
-        { archetype: 'striker', skill: 'ace', count: 1 },
-        { archetype: 'defender', skill: 'ace', count: 1 },
-        { archetype: 'sentinel', skill: 'ace', count: 1 },
-      ],
-    },
-    reward: 16758,
+    reward: 14123,
   },
   {
     id: 's5-last-bastion',
@@ -201,6 +136,71 @@ export const SECTOR_5_STATION_DEFENSE: Contract[] = [
         { archetype: 'sentinel', skill: 'ace', count: 1 },
       ],
     },
-    reward: 22068,
+    reward: 19394,
+  },
+  {
+    id: 's5-omega-refinery',
+    name: 'Omega Refinery',
+    description:
+      'Wraith with nuclear lance targeting the refinery. Critical threat level.',
+    difficulty: 'medium',
+    sector: 5,
+    missionType: 'station-defense',
+    stationDefenseData: {
+      playerThreatRatio: 0.5,
+      stationType: 'refinery',
+      stationDistance: -350,
+      waves: [
+        {
+          enemies: [
+            { archetype: 'wraith', skill: 'ace', count: 5 },
+            { archetype: 'scorpion', skill: 'ace', count: 5 },
+            { archetype: 'phantom', skill: 'ace', count: 5 },
+          ],
+          delay: 2,
+        },
+        {
+          enemies: [
+            { archetype: 'wraith', skill: 'ace', count: 5 },
+            { archetype: 'scorpion', skill: 'ace', count: 5 },
+            { archetype: 'dragonfly', skill: 'ace', count: 5 },
+          ],
+          delay: 5,
+        },
+        {
+          enemies: [
+            { archetype: 'wraith', skill: 'ace', count: 5 },
+            { archetype: 'scorpion', skill: 'ace', count: 5 },
+            { archetype: 'phantom', skill: 'ace', count: 5 },
+          ],
+          delay: 8,
+        },
+        {
+          enemies: [
+            { archetype: 'wraith', skill: 'ace', count: 5 },
+            { archetype: 'scorpion', skill: 'ace', count: 5 },
+            { archetype: 'dragonfly', skill: 'ace', count: 5 },
+          ],
+          delay: 11,
+        },
+        {
+          enemies: [
+            { archetype: 'wraith', skill: 'ace', count: 4 },
+            { archetype: 'scorpion', skill: 'ace', count: 4 },
+            { archetype: 'phantom', skill: 'ace', count: 4 },
+          ],
+          delay: 14,
+        },
+      ],
+      reinforcementTime: null,
+      reinforcementHealthThreshold: 0.15,
+      reinforcementCount: 5,
+      reinforcementPool: [
+        { archetype: 'striker', skill: 'ace', count: 1 },
+        { archetype: 'defender', skill: 'ace', count: 1 },
+        { archetype: 'sentinel', skill: 'ace', count: 1 },
+      ],
+    },
+    reward: 20463,
   },
 ];

@@ -39,7 +39,7 @@ export const SECTOR_5_ESCORT: Contract[] = [
       initialSpawnCount: 3,
       spawnBatchSize: 1,
     },
-    reward: 6352,
+    reward: 9148,
   },
   {
     id: 's5-railgun-run',
@@ -65,7 +65,7 @@ export const SECTOR_5_ESCORT: Contract[] = [
       initialSpawnCount: 4,
       spawnBatchSize: 1,
     },
-    reward: 14152,
+    reward: 17994,
   },
   {
     id: 's5-wraith-hunt',
@@ -92,6 +92,6 @@ export const SECTOR_5_ESCORT: Contract[] = [
       initialSpawnCount: 3,
       spawnBatchSize: 1,
     },
-    reward: 23706,
+    reward: 22268,
   },
 ];

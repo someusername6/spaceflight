@@ -39,7 +39,7 @@ export const SECTOR_4_ESCORT: Contract[] = [
       initialSpawnCount: 3,
       spawnBatchSize: 1,
     },
-    reward: 3989,
+    reward: 4053,
   },
   {
     id: 's4-sniper-alley',
@@ -65,7 +65,7 @@ export const SECTOR_4_ESCORT: Contract[] = [
       initialSpawnCount: 3,
       spawnBatchSize: 1,
     },
-    reward: 10079,
+    reward: 14286,
   },
   {
     id: 's4-phantom-strike',
@@ -92,6 +92,6 @@ export const SECTOR_4_ESCORT: Contract[] = [
       initialSpawnCount: 3,
       spawnBatchSize: 1,
     },
-    reward: 13039,
+    reward: 14733,
   },
 ];

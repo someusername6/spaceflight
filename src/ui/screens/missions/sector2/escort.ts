@@ -39,7 +39,7 @@ export const SECTOR_2_ESCORT: Contract[] = [
       initialSpawnCount: 4,
       spawnBatchSize: 1,
     },
-    reward: 3839,
+    reward: 3641,
   },
   {
     id: 's2-cluster-run',
@@ -65,7 +65,7 @@ export const SECTOR_2_ESCORT: Contract[] = [
       initialSpawnCount: 4,
       spawnBatchSize: 1,
     },
-    reward: 5826,
+    reward: 9320,
   },
   {
     id: 's2-heavy-escort',
@@ -92,6 +92,6 @@ export const SECTOR_2_ESCORT: Contract[] = [
       initialSpawnCount: 3,
       spawnBatchSize: 1,
     },
-    reward: 10494,
+    reward: 11873,
   },
 ];

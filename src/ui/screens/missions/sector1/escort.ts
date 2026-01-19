@@ -39,7 +39,7 @@ export const SECTOR_1_ESCORT: Contract[] = [
       initialSpawnCount: 2,
       spawnBatchSize: 1,
     },
-    reward: 1898,
+    reward: 3489,
   },
   {
     id: 's1-supply-run',
@@ -66,7 +66,7 @@ export const SECTOR_1_ESCORT: Contract[] = [
       initialSpawnCount: 4,
       spawnBatchSize: 1,
     },
-    reward: 7764,
+    reward: 7795,
   },
   {
     id: 's1-convoy-defense',
@@ -93,6 +93,6 @@ export const SECTOR_1_ESCORT: Contract[] = [
       initialSpawnCount: 4,
       spawnBatchSize: 1,
     },
-    reward: 17576,
+    reward: 9455,
   },
 ];

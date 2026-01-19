@@ -57,60 +57,7 @@ export const SECTOR_2_STATION_DEFENSE: Contract[] = [
         { archetype: 'interceptor', skill: 'regular', count: 1 },
       ],
     },
-    reward: 8067,
-  },
-  {
-    id: 's2-fuel-depot',
-    name: 'Fuel Depot',
-    description:
-      'Locusts with cluster missiles targeting the refinery. Bruiser support incoming.',
-    difficulty: 'medium',
-    sector: 2,
-    missionType: 'station-defense',
-    stationDefenseData: {
-      playerThreatRatio: 0.25,
-      stationType: 'refinery',
-      stationDistance: -350,
-      waves: [
-        {
-          enemies: [
-            { archetype: 'firefly', skill: 'regular', count: 5 },
-            { archetype: 'dragonfly', skill: 'regular', count: 5 },
-          ],
-          delay: 5,
-        },
-        {
-          enemies: [
-            { archetype: 'stinger', skill: 'regular', count: 5 },
-            { archetype: 'locust', skill: 'regular', count: 4 },
-          ],
-          delay: 20,
-        },
-        {
-          enemies: [
-            { archetype: 'dragonfly', skill: 'veteran', count: 5 },
-            { archetype: 'bruiser', skill: 'regular', count: 3 },
-          ],
-          delay: 35,
-        },
-        {
-          enemies: [
-            { archetype: 'firefly', skill: 'veteran', count: 4 },
-            { archetype: 'stinger', skill: 'veteran', count: 4 },
-          ],
-          delay: 50,
-        },
-      ],
-      reinforcementTime: null,
-      reinforcementHealthThreshold: 0.35,
-      reinforcementCount: 4,
-      reinforcementPool: [
-        { archetype: 'fighter', skill: 'veteran', count: 1 },
-        { archetype: 'interceptor', skill: 'regular', count: 1 },
-        { archetype: 'defender', skill: 'regular', count: 1 },
-      ],
-    },
-    reward: 16194,
+    reward: 2273,
   },
   {
     id: 's2-garrison-alpha',
@@ -171,6 +118,59 @@ export const SECTOR_2_STATION_DEFENSE: Contract[] = [
         { archetype: 'defender', skill: 'regular', count: 1 },
       ],
     },
-    reward: 20406,
+    reward: 9147,
+  },
+  {
+    id: 's2-fuel-depot',
+    name: 'Fuel Depot',
+    description:
+      'Locusts with cluster missiles targeting the refinery. Bruiser support incoming.',
+    difficulty: 'medium',
+    sector: 2,
+    missionType: 'station-defense',
+    stationDefenseData: {
+      playerThreatRatio: 0.25,
+      stationType: 'refinery',
+      stationDistance: -350,
+      waves: [
+        {
+          enemies: [
+            { archetype: 'firefly', skill: 'regular', count: 5 },
+            { archetype: 'dragonfly', skill: 'regular', count: 5 },
+          ],
+          delay: 5,
+        },
+        {
+          enemies: [
+            { archetype: 'stinger', skill: 'regular', count: 5 },
+            { archetype: 'locust', skill: 'regular', count: 4 },
+          ],
+          delay: 20,
+        },
+        {
+          enemies: [
+            { archetype: 'dragonfly', skill: 'veteran', count: 5 },
+            { archetype: 'bruiser', skill: 'regular', count: 3 },
+          ],
+          delay: 35,
+        },
+        {
+          enemies: [
+            { archetype: 'firefly', skill: 'veteran', count: 4 },
+            { archetype: 'stinger', skill: 'veteran', count: 4 },
+          ],
+          delay: 50,
+        },
+      ],
+      reinforcementTime: null,
+      reinforcementHealthThreshold: 0.35,
+      reinforcementCount: 4,
+      reinforcementPool: [
+        { archetype: 'fighter', skill: 'veteran', count: 1 },
+        { archetype: 'interceptor', skill: 'regular', count: 1 },
+        { archetype: 'defender', skill: 'regular', count: 1 },
+      ],
+    },
+    reward: 11111,
   },
 ];
