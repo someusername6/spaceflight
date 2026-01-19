@@ -99,8 +99,8 @@ export const SECTOR_4_EASY: Contract[] = [
     reward: 4608,
   },
   {
-    id: 's4-the-distance',
-    name: 'The Distance',
+    id: 's4-scope-creep',
+    name: 'Scope Creep',
     description: 'Engage sniper patrol. Scorpions with railguns at long range.',
     difficulty: 'easy',
     sector: 4,

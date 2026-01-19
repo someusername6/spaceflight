@@ -21,8 +21,8 @@ import type { Contract } from '../types';
 
 export const SECTOR_5_AMBUSH: Contract[] = [
   {
-    id: 's5-endless-hunt',
-    name: 'Endless Hunt',
+    id: 's5-no-quarter',
+    name: 'No Quarter',
     description:
       'Intercept convoy beyond the frontier. Ace Phantom escorts await.',
     difficulty: 'easy',
@@ -54,8 +54,8 @@ export const SECTOR_5_AMBUSH: Contract[] = [
     reward: 4807,
   },
   {
-    id: 's5-wraith-convoy',
-    name: 'Wraith Convoy',
+    id: 's5-black-flag',
+    name: 'Black Flag',
     description:
       'Hit convoy escorted by a Wraith. Nuclear lance carrier guards the cargo.',
     difficulty: 'medium',
@@ -82,8 +82,8 @@ export const SECTOR_5_AMBUSH: Contract[] = [
     reward: 8871,
   },
   {
-    id: 's5-titan-guard',
-    name: 'Titan Guard',
+    id: 's5-goliath',
+    name: 'Goliath',
     description:
       'Heavy convoy with Titan escort. Railgun striker guards the prize.',
     difficulty: 'hard',

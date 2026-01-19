@@ -16,8 +16,8 @@ import type { Contract } from '../types';
 
 export const SECTOR_3_ESCORT: Contract[] = [
   {
-    id: 's3-lightning-run',
-    name: 'Lightning Run',
+    id: 's3-thunder-road',
+    name: 'Thunder Road',
     description:
       'Escort convoy through electric storm. Moths and Dragonflies on intercept.',
     difficulty: 'easy',
@@ -42,8 +42,8 @@ export const SECTOR_3_ESCORT: Contract[] = [
     reward: 5089,
   },
   {
-    id: 's3-rocket-gauntlet',
-    name: 'Rocket Gauntlet',
+    id: 's3-rockets-red-glare',
+    name: "Rocket's Red Glare",
     description:
       'Navigate through rocket fire. Rocketeers and Fireflies attacking the convoy.',
     difficulty: 'medium',

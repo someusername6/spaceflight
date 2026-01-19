@@ -15,8 +15,8 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_2_STATION_DEFENSE: Contract[] = [
   {
-    id: 's2-asteroid-base',
-    name: 'Asteroid Base',
+    id: 's2-heavy-metal',
+    name: 'Heavy Metal',
     description:
       'Defend mining station from raider scouts. Fireflies and Dragonflies inbound.',
     difficulty: 'easy',
@@ -60,8 +60,8 @@ export const SECTOR_2_STATION_DEFENSE: Contract[] = [
     reward: 1810,
   },
   {
-    id: 's2-garrison-alpha',
-    name: 'Garrison Alpha',
+    id: 's2-blood-money',
+    name: 'Blood Money',
     description:
       'Heavy raider assault on military garrison. Sparklers with starburst missiles.',
     difficulty: 'hard',
@@ -121,8 +121,8 @@ export const SECTOR_2_STATION_DEFENSE: Contract[] = [
     reward: 7458,
   },
   {
-    id: 's2-fuel-depot',
-    name: 'Fuel Depot',
+    id: 's2-tinderbox',
+    name: 'Tinderbox',
     description:
       'Locusts with cluster missiles targeting the refinery. Bruiser support incoming.',
     difficulty: 'medium',

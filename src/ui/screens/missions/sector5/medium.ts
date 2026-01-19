@@ -6,8 +6,8 @@ import type { Contract } from '../types';
 
 export const SECTOR_5_MEDIUM: Contract[] = [
   {
-    id: 's5-convoy',
-    name: 'Convoy',
+    id: 's5-nuclear-express',
+    name: 'Nuclear Express',
     description:
       'Intercept nuclear convoy. Juggernauts with nuke payloads and ace escorts.',
     difficulty: 'medium',

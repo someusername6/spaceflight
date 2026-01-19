@@ -15,8 +15,8 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_1_STATION_DEFENSE: Contract[] = [
   {
-    id: 's1-defense-platform',
-    name: 'Defense Platform',
+    id: 's1-the-rock',
+    name: 'The Rock',
     description:
       'Heavy pirate assault on military outpost. Mantis fighters deploying decoys.',
     difficulty: 'hard',
@@ -69,8 +69,8 @@ export const SECTOR_1_STATION_DEFENSE: Contract[] = [
     reward: 6325,
   },
   {
-    id: 's1-mining-outpost',
-    name: 'Mining Outpost',
+    id: 's1-easy-pickings',
+    name: 'Easy Pickings',
     description:
       'Defend the mining station from rookie pirates until reinforcements arrive.',
     difficulty: 'easy',
@@ -109,8 +109,8 @@ export const SECTOR_1_STATION_DEFENSE: Contract[] = [
     reward: 6628,
   },
   {
-    id: 's1-refinery-siege',
-    name: 'Refinery Siege',
+    id: 's1-burn-notice',
+    name: 'Burn Notice',
     description:
       'Ion-armed shockers are targeting the refinery. Hold until backup arrives.',
     difficulty: 'medium',

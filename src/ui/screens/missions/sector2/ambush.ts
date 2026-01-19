@@ -21,8 +21,8 @@ import type { Contract } from '../types';
 
 export const SECTOR_2_AMBUSH: Contract[] = [
   {
-    id: 's2-freighter-snatch',
-    name: 'Freighter Snatch',
+    id: 's2-quick-draw',
+    name: 'Quick Draw',
     description:
       'Intercept cargo convoy in contested space. Light escort protection expected.',
     difficulty: 'easy',
@@ -54,8 +54,8 @@ export const SECTOR_2_AMBUSH: Contract[] = [
     reward: 2041,
   },
   {
-    id: 's2-merchant-raid',
-    name: 'Merchant Raid',
+    id: 's2-five-finger-discount',
+    name: 'Five Finger Discount',
     description:
       'Raid merchant convoy with mixed escort wing. Watch for cluster missiles.',
     difficulty: 'medium',
@@ -82,8 +82,8 @@ export const SECTOR_2_AMBUSH: Contract[] = [
     reward: 3661,
   },
   {
-    id: 's2-contested-cargo',
-    name: 'Contested Cargo',
+    id: 's2-high-noon',
+    name: 'High Noon',
     description:
       'Heavy convoy with veteran escorts. Phantoms and Bruisers guard the prize.',
     difficulty: 'hard',

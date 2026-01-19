@@ -16,8 +16,8 @@ import type { Contract } from '../types';
 
 export const SECTOR_2_ESCORT: Contract[] = [
   {
-    id: 's2-border-crossing',
-    name: 'Border Crossing',
+    id: 's2-the-crossing',
+    name: 'The Crossing',
     description:
       'Escort freighters through contested space. Fireflies and Dragonflies patrolling.',
     difficulty: 'easy',
@@ -42,8 +42,8 @@ export const SECTOR_2_ESCORT: Contract[] = [
     reward: 3641,
   },
   {
-    id: 's2-cluster-run',
-    name: 'Cluster Run',
+    id: 's2-death-blossom',
+    name: 'Death Blossom',
     description:
       'Protect convoy from missile boats. Locusts with cluster missiles inbound.',
     difficulty: 'medium',
@@ -68,8 +68,8 @@ export const SECTOR_2_ESCORT: Contract[] = [
     reward: 9320,
   },
   {
-    id: 's2-heavy-escort',
-    name: 'Heavy Escort',
+    id: 's2-slugfest',
+    name: 'Slugfest',
     description:
       'Defend against heavy assault. Bruisers and Stingers targeting the convoy.',
     difficulty: 'hard',

@@ -86,8 +86,8 @@ export const SECTOR_2_EASY: Contract[] = [
     reward: 3259,
   },
   {
-    id: 's2-starman',
-    name: 'Starman',
+    id: 's2-starburst',
+    name: 'Starburst',
     description: 'Survive area denial. Sparklers with starburst missiles.',
     difficulty: 'easy',
     sector: 2,

@@ -21,8 +21,8 @@ import type { Contract } from '../types';
 
 export const SECTOR_3_AMBUSH: Contract[] = [
   {
-    id: 's3-warzone-intercept',
-    name: 'Warzone Intercept',
+    id: 's3-into-the-fire',
+    name: 'Into the Fire',
     description:
       'Intercept supply convoy in the warzone. Rocketeer escorts incoming.',
     difficulty: 'easy',
@@ -49,8 +49,8 @@ export const SECTOR_3_AMBUSH: Contract[] = [
     reward: 2441,
   },
   {
-    id: 's3-lightning-strike',
-    name: 'Lightning Strike',
+    id: 's3-blitz',
+    name: 'Blitz',
     description:
       'Hit convoy with moth escorts. Watch for lightning at close range.',
     difficulty: 'medium',
@@ -72,8 +72,8 @@ export const SECTOR_3_AMBUSH: Contract[] = [
     reward: 4592,
   },
   {
-    id: 's3-heat-wave',
-    name: 'Heat Wave',
+    id: 's3-backdraft',
+    name: 'Backdraft',
     description:
       'Heavy convoy with Fireant escorts. Torch beams will cook you at range.',
     difficulty: 'hard',

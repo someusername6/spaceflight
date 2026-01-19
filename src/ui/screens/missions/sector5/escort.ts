@@ -16,8 +16,8 @@ import type { Contract } from '../types';
 
 export const SECTOR_5_ESCORT: Contract[] = [
   {
-    id: 's5-ace-corridor',
-    name: 'Ace Corridor',
+    id: 's5-the-gauntlet',
+    name: 'The Gauntlet',
     description:
       'Escort convoy through elite space. Ace Phantoms and Dragonflies on patrol.',
     difficulty: 'easy',
@@ -42,8 +42,8 @@ export const SECTOR_5_ESCORT: Contract[] = [
     reward: 9148,
   },
   {
-    id: 's5-railgun-run',
-    name: 'Railgun Run',
+    id: 's5-iron-curtain',
+    name: 'Iron Curtain',
     description:
       'Navigate sniper gauntlet. Scorpions with ace Dragonfly support.',
     difficulty: 'medium',
@@ -68,8 +68,8 @@ export const SECTOR_5_ESCORT: Contract[] = [
     reward: 17994,
   },
   {
-    id: 's5-wraith-hunt',
-    name: 'Wraith Hunt',
+    id: 's5-the-abyss',
+    name: 'The Abyss',
     description:
       'Survive nuclear lance carrier. A Wraith with Phantom escorts.',
     difficulty: 'hard',

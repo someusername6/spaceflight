@@ -15,8 +15,8 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_3_STATION_DEFENSE: Contract[] = [
   {
-    id: 's3-ore-processing',
-    name: 'Ore Processing',
+    id: 's3-dead-weight',
+    name: 'Dead Weight',
     description:
       'Rocketeers targeting the mining station. Intercept accelerating rounds.',
     difficulty: 'easy',
@@ -67,8 +67,8 @@ export const SECTOR_3_STATION_DEFENSE: Contract[] = [
     reward: 9714,
   },
   {
-    id: 's3-forward-base',
-    name: 'Forward Base',
+    id: 's3-hot-zone',
+    name: 'Hot Zone',
     description:
       'Coordinated assault on military forward base. Moths and veteran rocketeers.',
     difficulty: 'hard',
@@ -142,8 +142,8 @@ export const SECTOR_3_STATION_DEFENSE: Contract[] = [
     reward: 10508,
   },
   {
-    id: 's3-power-station',
-    name: 'Power Station',
+    id: 's3-arc-flash',
+    name: 'Arc Flash',
     description:
       'Moths with chain lightning targeting the refinery. High energy threat.',
     difficulty: 'medium',

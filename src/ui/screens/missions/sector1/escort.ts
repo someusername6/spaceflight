@@ -16,8 +16,8 @@ import type { Contract } from '../types';
 
 export const SECTOR_1_ESCORT: Contract[] = [
   {
-    id: 's1-safe-passage',
-    name: 'Safe Passage',
+    id: 's1-sitting-ducks',
+    name: 'Sitting Ducks',
     description:
       'Escort transport convoy to jump point. Light resistance from rookie scouts.',
     difficulty: 'easy',
@@ -42,8 +42,8 @@ export const SECTOR_1_ESCORT: Contract[] = [
     reward: 3489,
   },
   {
-    id: 's1-supply-run',
-    name: 'Supply Run',
+    id: 's1-shock-value',
+    name: 'Shock Value',
     description:
       'Defend supply transports. Ion-armed Shockers hunting our cargo ships.',
     difficulty: 'medium',
@@ -69,8 +69,8 @@ export const SECTOR_1_ESCORT: Contract[] = [
     reward: 7795,
   },
   {
-    id: 's1-convoy-defense',
-    name: 'Convoy Defense',
+    id: 's1-shell-game',
+    name: 'Shell Game',
     description:
       'Heavy transport convoy under attack. Mantis fighters with decoy countermeasures.',
     difficulty: 'hard',

@@ -15,8 +15,8 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_4_STATION_DEFENSE: Contract[] = [
   {
-    id: 's4-deep-core-mine',
-    name: 'Deep Core Mine',
+    id: 's4-dark-matter',
+    name: 'Dark Matter',
     description:
       'Phantom infiltrators targeting the mining station. Torpedoes inbound.',
     difficulty: 'easy',
@@ -67,8 +67,8 @@ export const SECTOR_4_STATION_DEFENSE: Contract[] = [
     reward: 6488,
   },
   {
-    id: 's4-command-station',
-    name: 'Command Station',
+    id: 's4-omega-point',
+    name: 'Omega Point',
     description:
       'Elite phantom strike on command station. Ace pilots with torpedo support.',
     difficulty: 'hard',
@@ -134,8 +134,8 @@ export const SECTOR_4_STATION_DEFENSE: Contract[] = [
     reward: 14408,
   },
   {
-    id: 's4-fusion-plant',
-    name: 'Fusion Plant',
+    id: 's4-chain-reaction',
+    name: 'Chain Reaction',
     description:
       'Veteran phantom squadron targeting the refinery. Heavy torpedo threat.',
     difficulty: 'medium',

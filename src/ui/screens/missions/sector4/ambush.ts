@@ -21,8 +21,8 @@ import type { Contract } from '../types';
 
 export const SECTOR_4_AMBUSH: Contract[] = [
   {
-    id: 's4-core-intercept',
-    name: 'Core Intercept',
+    id: 's4-clean-sweep',
+    name: 'Clean Sweep',
     description:
       'Intercept supply convoy in core systems. Phantom escorts are no joke.',
     difficulty: 'easy',
@@ -54,8 +54,8 @@ export const SECTOR_4_AMBUSH: Contract[] = [
     reward: 4344,
   },
   {
-    id: 's4-inferno-run',
-    name: 'Inferno Run',
+    id: 's4-hellfire',
+    name: 'Hellfire',
     description:
       'Raid convoy with Inferno escorts. Heat injection will overwhelm shields.',
     difficulty: 'medium',
@@ -77,8 +77,8 @@ export const SECTOR_4_AMBUSH: Contract[] = [
     reward: 6109,
   },
   {
-    id: 's4-sniper-gauntlet',
-    name: 'Sniper Gauntlet',
+    id: 's4-long-shot',
+    name: 'Long Shot',
     description:
       'Heavy convoy with Scorpion escorts. Railgun fire at extreme range.',
     difficulty: 'hard',

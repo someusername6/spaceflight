@@ -15,8 +15,8 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_5_STATION_DEFENSE: Contract[] = [
   {
-    id: 's5-frontier-station',
-    name: 'Frontier Station',
+    id: 's5-edge-of-night',
+    name: 'Edge of Night',
     description:
       'Scorpion snipers targeting the mining station. Railgun fire from range.',
     difficulty: 'easy',
@@ -68,8 +68,8 @@ export const SECTOR_5_STATION_DEFENSE: Contract[] = [
     reward: 17711,
   },
   {
-    id: 's5-omega-refinery',
-    name: 'Omega Refinery',
+    id: 's5-meltdown',
+    name: 'Meltdown',
     description:
       'Wraith with nuclear lance targeting the refinery. Critical threat level.',
     difficulty: 'medium',
@@ -133,8 +133,8 @@ export const SECTOR_5_STATION_DEFENSE: Contract[] = [
     reward: 21528,
   },
   {
-    id: 's5-last-bastion',
-    name: 'Last Bastion',
+    id: 's5-final-stand',
+    name: 'Final Stand',
     description:
       'Massive elite assault on final military outpost. Wraiths, Scorpions, and ace pilots.',
     difficulty: 'hard',

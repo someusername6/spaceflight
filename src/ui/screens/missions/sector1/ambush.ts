@@ -21,8 +21,8 @@ import type { Contract } from '../types';
 
 export const SECTOR_1_AMBUSH: Contract[] = [
   {
-    id: 's1-supply-interdiction',
-    name: 'Supply Interdiction',
+    id: 's1-jackpot',
+    name: 'Jackpot',
     description:
       'Intercept enemy supply convoy. Light escort protection - ideal for first ambush.',
     difficulty: 'easy',
@@ -44,8 +44,8 @@ export const SECTOR_1_AMBUSH: Contract[] = [
     reward: 1409,
   },
   {
-    id: 's1-cargo-heist',
-    name: 'Cargo Heist',
+    id: 's1-smash-and-grab',
+    name: 'Smash and Grab',
     description:
       'Raid enemy cargo convoy. Mixed escorts with ion-armed Shockers.',
     difficulty: 'medium',
@@ -67,8 +67,8 @@ export const SECTOR_1_AMBUSH: Contract[] = [
     reward: 3073,
   },
   {
-    id: 's1-convoy-raid',
-    name: 'Convoy Raid',
+    id: 's1-fools-gold',
+    name: "Fool's Gold",
     description:
       'Heavy enemy transport convoy with experienced escort wing. Expect strong resistance.',
     difficulty: 'hard',

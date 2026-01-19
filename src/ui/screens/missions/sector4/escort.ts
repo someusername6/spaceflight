@@ -16,8 +16,8 @@ import type { Contract } from '../types';
 
 export const SECTOR_4_ESCORT: Contract[] = [
   {
-    id: 's4-heat-corridor',
-    name: 'Heat Corridor',
+    id: 's4-burning-chrome',
+    name: 'Burning Chrome',
     description:
       'Escort convoy through hot zone. Infernos with heat beams on patrol.',
     difficulty: 'easy',
@@ -42,8 +42,8 @@ export const SECTOR_4_ESCORT: Contract[] = [
     reward: 4053,
   },
   {
-    id: 's4-sniper-alley',
-    name: 'Sniper Alley',
+    id: 's4-crosshairs',
+    name: 'Crosshairs',
     description:
       'Navigate sniper territory. Scorpions with railguns targeting cargo ships.',
     difficulty: 'medium',
@@ -68,8 +68,8 @@ export const SECTOR_4_ESCORT: Contract[] = [
     reward: 14286,
   },
   {
-    id: 's4-phantom-strike',
-    name: 'Phantom Strike',
+    id: 's4-ghost-protocol',
+    name: 'Ghost Protocol',
     description:
       'Defend against elite assault. Phantoms with Dragonfly support.',
     difficulty: 'hard',
