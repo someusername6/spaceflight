@@ -23,6 +23,9 @@ Permadeath: If the commander's ship is destroyed, the campaign ends.
 | New system | `src/systems/` → add to `SYSTEM_ORDER` in `src/game.ts` |
 | Campaign flow | `src/campaign/controller.ts` → `src/campaign/handlers/` |
 | Game settings | `src/settings/game-settings.ts` |
+| Add a mission | `src/ui/screens/missions/sector*/` (see Mission Types below) |
+| Mission launcher | `src/campaign/mission/*-launcher.ts` |
+| Mission types | `src/campaign/types.ts` (Contract, MissionType, mission data interfaces) |
 
 ## Status Verification (MANDATORY)
 
@@ -78,6 +81,68 @@ When working in these areas, read the source for patterns:
 - **ECS patterns**: `src/core/ecs.ts`
 - **State mutations**: `src/campaign/loadout.ts` (immutable update pattern)
 - **Replay system**: `src/replay/` (see Replay Determinism below)
+
+## Mission Types
+
+Four mission types exist, each with distinct victory/defeat conditions and reward structures:
+
+| Type | Victory | Defeat | Reward |
+|------|---------|--------|--------|
+| `elimination` | All enemies destroyed | Commander dies | Fixed 100% |
+| `escort` | ≥1 convoy escapes | All convoy destroyed OR commander dies | % convoy survived |
+| `station-defense` | Station survives | Station destroyed OR commander dies | % station hull |
+| `ambush` | All convoy neutralized | Any convoy escapes OR commander dies | 100% stopped, 50% destroyed |
+
+### Adding a New Mission of Existing Type
+
+1. Create contract in `src/ui/screens/missions/sector{N}/{type}.ts`
+2. Export from `src/ui/screens/missions/sector{N}/index.ts`
+3. Follow existing patterns for difficulty balance targets
+
+### Creating a New Mission Type
+
+Required changes:
+
+1. **Types** (`src/campaign/types.ts`):
+   - Add to `MissionType` union
+   - Create `{Type}MissionData` interface
+   - Add optional `{type}Data` field to `Contract`
+
+2. **Launcher** (`src/campaign/mission/{type}-launcher.ts`):
+   - `launch{Type}Mission(world, contract, campaignState)` - spawns entities
+   - Handle win/lose detection and reward calculation
+   - Set `missionEndState.rewardMultiplier` if reward scales
+
+3. **Mission Launcher** (`src/campaign/mission/mission-launcher.ts`):
+   - Add case in `launchMission()` to call your launcher
+
+4. **Contract Rendering** (`src/ui/screens/contracts-rendering.ts`):
+   - Add `render{Type}Info(contract)` function
+   - Add case in `renderContractDetail()` to display mission info
+
+5. **Results Display** (`src/ui/screens/results/results.ts`):
+   - Add `{Type}ResultsDisplay` interface if needed
+   - Update `renderRewards()` to show mission-specific results
+
+6. **Mission Handlers** (`src/campaign/handlers/mission-handlers.ts`):
+   - Add results parameter to `showResults()` if needed
+
+7. **Mission Callbacks** (`src/campaign/mission/mission-callbacks.ts`):
+   - Pass mission results to `showResults()`
+
+8. **Replay** (`src/replay/`):
+   - If mission type affects replay, update `types.ts` and `mission-setup.ts`
+
+9. **Missions** (`src/ui/screens/missions/sector*/`):
+   - Create `{type}.ts` files for each sector with contracts
+
+### Balance Targets by Difficulty
+
+| Difficulty | Win Rate | Wingman Survival (on wins) |
+|------------|----------|----------------------------|
+| Easy | 80-90% | 3.0-3.5 of 4 |
+| Medium | 70-80% | 2.5-3.0 of 4 |
+| Hard | 60-70% | 2.0-2.5 of 4 |
 
 ## Replay Determinism (CRITICAL)
 
