@@ -72,13 +72,27 @@ async function bundleMeshes() {
         continue;
       }
 
-      if (meshes.length > 1) {
+      // Structure meshes may have multiple meshes (pre-separated subhulls)
+      const STRUCTURE_MESHES = new Set([
+        'waypoint',
+        'mining',
+        'refinery',
+        'military',
+      ]);
+      const isStructure = STRUCTURE_MESHES.has(shipClass);
+
+      // For non-structures with multiple meshes, warn and use first only
+      if (meshes.length > 1 && !isStructure) {
         console.warn(`  ${file}: Multiple meshes found, using first only`);
       }
 
-      // Get first mesh, first primitive
-      const mesh = meshes[0];
-      const primitives = mesh.listPrimitives();
+      // Collect primitives from all meshes (for structures) or just first (for ships)
+      const meshesToProcess = isStructure ? meshes : [meshes[0]];
+      const allPrimitives = [];
+      for (const mesh of meshesToProcess) {
+        allPrimitives.push(...mesh.listPrimitives());
+      }
+      const primitives = allPrimitives;
 
       if (primitives.length === 0) {
         console.warn(`  ${file}: No primitives found, skipping`);
@@ -199,22 +213,36 @@ async function bundleMeshes() {
         .reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 0);
 
       // Structure meshes need convex decomposition to handle holes/concavities
-      const STRUCTURE_MESHES = new Set([
-        'waypoint',
-        'mining',
-        'refinery',
-        'military',
-      ]);
-      const isStructure = STRUCTURE_MESHES.has(shipClass);
       let subHulls = null;
 
       if (isStructure && indices) {
-        // First decompose into connected components (separate objects in the mesh)
-        const components = decomposeIntoConnectedComponents(
-          Array.from(indices),
-          Array.from(positions),
-        );
-        console.log(`    Found ${components.length} connected component(s)`);
+        // Check if we have multiple meshes (pre-separated subhulls from modeling)
+        // or need to decompose a single mesh into connected components
+        let components;
+        if (meshes.length > 1) {
+          // Multiple meshes in file - treat each mesh as a separate component
+          console.log(`    Found ${meshes.length} separate mesh(es) in file`);
+          components = [];
+          for (const mesh of meshes) {
+            for (const primitive of mesh.listPrimitives()) {
+              const posAccessor = primitive.getAttribute('POSITION');
+              const idxAccessor = primitive.getIndices();
+              if (posAccessor && idxAccessor) {
+                components.push({
+                  positions: Array.from(posAccessor.getArray()),
+                  indices: Array.from(idxAccessor.getArray()),
+                });
+              }
+            }
+          }
+        } else {
+          // Single mesh - decompose into connected components
+          components = decomposeIntoConnectedComponents(
+            Array.from(indices),
+            Array.from(positions),
+          );
+          console.log(`    Found ${components.length} connected component(s)`);
+        }
 
         subHulls = [];
 
