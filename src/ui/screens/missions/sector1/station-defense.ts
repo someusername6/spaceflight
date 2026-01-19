@@ -15,6 +15,60 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_1_STATION_DEFENSE: Contract[] = [
   {
+    id: 's1-defense-platform',
+    name: 'Defense Platform',
+    description:
+      'Heavy pirate assault on military outpost. Mantis fighters deploying decoys.',
+    difficulty: 'hard',
+    sector: 1,
+    missionType: 'station-defense',
+    stationDefenseData: {
+      playerThreatRatio: 0.85,
+      stationType: 'military',
+      stationDistance: -300,
+      initialAllies: [{ archetype: 'fighter', skill: 'regular', count: 2 }],
+      waves: [
+        {
+          enemies: [{ archetype: 'gnat', skill: 'veteran', count: 5 }],
+          delay: 3,
+        },
+        {
+          enemies: [{ archetype: 'ember', skill: 'veteran', count: 5 }],
+          delay: 10,
+        },
+        {
+          enemies: [{ archetype: 'shocker', skill: 'veteran', count: 5 }],
+          delay: 17,
+        },
+        {
+          enemies: [{ archetype: 'mantis', skill: 'veteran', count: 5 }],
+          delay: 24,
+        },
+        {
+          enemies: [{ archetype: 'gnat', skill: 'veteran', count: 5 }],
+          delay: 31,
+        },
+        {
+          enemies: [{ archetype: 'ember', skill: 'veteran', count: 5 }],
+          delay: 38,
+        },
+        {
+          enemies: [{ archetype: 'shocker', skill: 'veteran', count: 5 }],
+          delay: 45,
+        },
+      ],
+      reinforcementTime: null,
+      reinforcementHealthThreshold: 0.2,
+      reinforcementCount: 4,
+      reinforcementPool: [
+        { archetype: 'fighter', skill: 'veteran', count: 1 },
+        { archetype: 'interceptor', skill: 'regular', count: 1 },
+        { archetype: 'striker', skill: 'regular', count: 1 },
+      ],
+    },
+    reward: 6325,
+  },
+  {
     id: 's1-mining-outpost',
     name: 'Mining Outpost',
     description:
@@ -52,7 +106,7 @@ export const SECTOR_1_STATION_DEFENSE: Contract[] = [
         { archetype: 'interceptor', skill: 'regular', count: 1 },
       ],
     },
-    reward: 6079,
+    reward: 6628,
   },
   {
     id: 's1-refinery-siege',
@@ -96,60 +150,6 @@ export const SECTOR_1_STATION_DEFENSE: Contract[] = [
         { archetype: 'interceptor', skill: 'regular', count: 1 },
       ],
     },
-    reward: 8423,
-  },
-  {
-    id: 's1-defense-platform',
-    name: 'Defense Platform',
-    description:
-      'Heavy pirate assault on military outpost. Mantis fighters deploying decoys.',
-    difficulty: 'hard',
-    sector: 1,
-    missionType: 'station-defense',
-    stationDefenseData: {
-      playerThreatRatio: 0.85,
-      stationType: 'military',
-      stationDistance: -300,
-      initialAllies: [{ archetype: 'fighter', skill: 'regular', count: 2 }],
-      waves: [
-        {
-          enemies: [{ archetype: 'gnat', skill: 'veteran', count: 6 }],
-          delay: 3,
-        },
-        {
-          enemies: [{ archetype: 'ember', skill: 'veteran', count: 6 }],
-          delay: 10,
-        },
-        {
-          enemies: [{ archetype: 'shocker', skill: 'veteran', count: 6 }],
-          delay: 17,
-        },
-        {
-          enemies: [{ archetype: 'mantis', skill: 'veteran', count: 6 }],
-          delay: 24,
-        },
-        {
-          enemies: [{ archetype: 'gnat', skill: 'veteran', count: 6 }],
-          delay: 31,
-        },
-        {
-          enemies: [{ archetype: 'ember', skill: 'veteran', count: 6 }],
-          delay: 38,
-        },
-        {
-          enemies: [{ archetype: 'shocker', skill: 'veteran', count: 6 }],
-          delay: 45,
-        },
-      ],
-      reinforcementTime: null,
-      reinforcementHealthThreshold: 0.2,
-      reinforcementCount: 4,
-      reinforcementPool: [
-        { archetype: 'fighter', skill: 'veteran', count: 1 },
-        { archetype: 'interceptor', skill: 'regular', count: 1 },
-        { archetype: 'striker', skill: 'regular', count: 1 },
-      ],
-    },
-    reward: 8778,
+    reward: 7541,
   },
 ];

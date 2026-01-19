@@ -65,78 +65,7 @@ export const SECTOR_5_STATION_DEFENSE: Contract[] = [
         { archetype: 'sentinel', skill: 'ace', count: 1 },
       ],
     },
-    reward: 14123,
-  },
-  {
-    id: 's5-last-bastion',
-    name: 'Last Bastion',
-    description:
-      'Massive elite assault on final military outpost. Wraiths, Scorpions, and ace pilots.',
-    difficulty: 'hard',
-    sector: 5,
-    missionType: 'station-defense',
-    stationDefenseData: {
-      playerThreatRatio: 0.6,
-      stationType: 'military',
-      stationDistance: -300,
-      waves: [
-        {
-          enemies: [
-            { archetype: 'phantom', skill: 'ace', count: 7 },
-            { archetype: 'dragonfly', skill: 'ace', count: 7 },
-          ],
-          delay: 2,
-        },
-        {
-          enemies: [
-            { archetype: 'wraith', skill: 'ace', count: 3 },
-            { archetype: 'scorpion', skill: 'ace', count: 3 },
-            { archetype: 'phantom', skill: 'ace', count: 5 },
-          ],
-          delay: 7,
-        },
-        {
-          enemies: [
-            { archetype: 'phantom', skill: 'ace', count: 6 },
-            { archetype: 'dragonfly', skill: 'ace', count: 6 },
-          ],
-          delay: 12,
-        },
-        {
-          enemies: [
-            { archetype: 'wraith', skill: 'ace', count: 4 },
-            { archetype: 'scorpion', skill: 'ace', count: 3 },
-            { archetype: 'phantom', skill: 'ace', count: 5 },
-          ],
-          delay: 17,
-        },
-        {
-          enemies: [
-            { archetype: 'wraith', skill: 'ace', count: 3 },
-            { archetype: 'phantom', skill: 'ace', count: 6 },
-            { archetype: 'dragonfly', skill: 'ace', count: 6 },
-          ],
-          delay: 22,
-        },
-        {
-          enemies: [
-            { archetype: 'scorpion', skill: 'ace', count: 3 },
-            { archetype: 'wraith', skill: 'ace', count: 3 },
-            { archetype: 'phantom', skill: 'ace', count: 5 },
-          ],
-          delay: 27,
-        },
-      ],
-      reinforcementTime: null,
-      reinforcementHealthThreshold: 0.2,
-      reinforcementCount: 5,
-      reinforcementPool: [
-        { archetype: 'striker', skill: 'ace', count: 1 },
-        { archetype: 'defender', skill: 'ace', count: 1 },
-        { archetype: 'sentinel', skill: 'ace', count: 1 },
-      ],
-    },
-    reward: 19394,
+    reward: 17711,
   },
   {
     id: 's5-omega-refinery',
@@ -201,6 +130,77 @@ export const SECTOR_5_STATION_DEFENSE: Contract[] = [
         { archetype: 'sentinel', skill: 'ace', count: 1 },
       ],
     },
-    reward: 20463,
+    reward: 21528,
+  },
+  {
+    id: 's5-last-bastion',
+    name: 'Last Bastion',
+    description:
+      'Massive elite assault on final military outpost. Wraiths, Scorpions, and ace pilots.',
+    difficulty: 'hard',
+    sector: 5,
+    missionType: 'station-defense',
+    stationDefenseData: {
+      playerThreatRatio: 0.6,
+      stationType: 'military',
+      stationDistance: -300,
+      waves: [
+        {
+          enemies: [
+            { archetype: 'phantom', skill: 'ace', count: 5 },
+            { archetype: 'dragonfly', skill: 'ace', count: 5 },
+          ],
+          delay: 2,
+        },
+        {
+          enemies: [
+            { archetype: 'wraith', skill: 'ace', count: 2 },
+            { archetype: 'scorpion', skill: 'ace', count: 2 },
+            { archetype: 'phantom', skill: 'ace', count: 3 },
+          ],
+          delay: 7,
+        },
+        {
+          enemies: [
+            { archetype: 'phantom', skill: 'ace', count: 4 },
+            { archetype: 'dragonfly', skill: 'ace', count: 4 },
+          ],
+          delay: 12,
+        },
+        {
+          enemies: [
+            { archetype: 'wraith', skill: 'ace', count: 2 },
+            { archetype: 'scorpion', skill: 'ace', count: 2 },
+            { archetype: 'phantom', skill: 'ace', count: 4 },
+          ],
+          delay: 17,
+        },
+        {
+          enemies: [
+            { archetype: 'wraith', skill: 'ace', count: 2 },
+            { archetype: 'phantom', skill: 'ace', count: 4 },
+            { archetype: 'dragonfly', skill: 'ace', count: 4 },
+          ],
+          delay: 22,
+        },
+        {
+          enemies: [
+            { archetype: 'scorpion', skill: 'ace', count: 2 },
+            { archetype: 'wraith', skill: 'ace', count: 2 },
+            { archetype: 'phantom', skill: 'ace', count: 3 },
+          ],
+          delay: 27,
+        },
+      ],
+      reinforcementTime: null,
+      reinforcementHealthThreshold: 0.2,
+      reinforcementCount: 5,
+      reinforcementPool: [
+        { archetype: 'striker', skill: 'ace', count: 1 },
+        { archetype: 'defender', skill: 'ace', count: 1 },
+        { archetype: 'sentinel', skill: 'ace', count: 1 },
+      ],
+    },
+    reward: 31908,
   },
 ];

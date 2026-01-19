@@ -64,74 +64,7 @@ export const SECTOR_3_STATION_DEFENSE: Contract[] = [
         { archetype: 'defender', skill: 'regular', count: 1 },
       ],
     },
-    reward: 8133,
-  },
-  {
-    id: 's3-power-station',
-    name: 'Power Station',
-    description:
-      'Moths with chain lightning targeting the refinery. High energy threat.',
-    difficulty: 'medium',
-    sector: 3,
-    missionType: 'station-defense',
-    stationDefenseData: {
-      playerThreatRatio: 0.25,
-      stationType: 'refinery',
-      stationDistance: -350,
-      waves: [
-        {
-          enemies: [
-            { archetype: 'dragonfly', skill: 'veteran', count: 8 },
-            { archetype: 'rocketeer', skill: 'veteran', count: 7 },
-          ],
-          delay: 3,
-        },
-        {
-          enemies: [
-            { archetype: 'moth', skill: 'veteran', count: 6 },
-            { archetype: 'fireant', skill: 'veteran', count: 8 },
-          ],
-          delay: 9,
-        },
-        {
-          enemies: [
-            { archetype: 'rocketeer', skill: 'veteran', count: 7 },
-            { archetype: 'beetle', skill: 'veteran', count: 6 },
-          ],
-          delay: 15,
-        },
-        {
-          enemies: [
-            { archetype: 'moth', skill: 'veteran', count: 7 },
-            { archetype: 'dragonfly', skill: 'veteran', count: 8 },
-          ],
-          delay: 21,
-        },
-        {
-          enemies: [
-            { archetype: 'moth', skill: 'veteran', count: 7 },
-            { archetype: 'rocketeer', skill: 'veteran', count: 7 },
-          ],
-          delay: 27,
-        },
-        {
-          enemies: [
-            { archetype: 'beetle', skill: 'veteran', count: 5 },
-            { archetype: 'fireant', skill: 'veteran', count: 6 },
-          ],
-          delay: 33,
-        },
-      ],
-      reinforcementTime: null,
-      reinforcementHealthThreshold: 0.25,
-      reinforcementCount: 4,
-      reinforcementPool: [
-        { archetype: 'interceptor', skill: 'veteran', count: 1 },
-        { archetype: 'defender', skill: 'regular', count: 1 },
-        { archetype: 'striker', skill: 'regular', count: 1 },
-      ],
-    },
-    reward: 11284,
+    reward: 9714,
   },
   {
     id: 's3-forward-base',
@@ -206,6 +139,73 @@ export const SECTOR_3_STATION_DEFENSE: Contract[] = [
         { archetype: 'striker', skill: 'regular', count: 1 },
       ],
     },
-    reward: 12176,
+    reward: 10508,
+  },
+  {
+    id: 's3-power-station',
+    name: 'Power Station',
+    description:
+      'Moths with chain lightning targeting the refinery. High energy threat.',
+    difficulty: 'medium',
+    sector: 3,
+    missionType: 'station-defense',
+    stationDefenseData: {
+      playerThreatRatio: 0.25,
+      stationType: 'refinery',
+      stationDistance: -350,
+      waves: [
+        {
+          enemies: [
+            { archetype: 'dragonfly', skill: 'veteran', count: 8 },
+            { archetype: 'rocketeer', skill: 'veteran', count: 7 },
+          ],
+          delay: 3,
+        },
+        {
+          enemies: [
+            { archetype: 'moth', skill: 'veteran', count: 6 },
+            { archetype: 'fireant', skill: 'veteran', count: 8 },
+          ],
+          delay: 9,
+        },
+        {
+          enemies: [
+            { archetype: 'rocketeer', skill: 'veteran', count: 7 },
+            { archetype: 'beetle', skill: 'veteran', count: 6 },
+          ],
+          delay: 15,
+        },
+        {
+          enemies: [
+            { archetype: 'moth', skill: 'veteran', count: 7 },
+            { archetype: 'dragonfly', skill: 'veteran', count: 8 },
+          ],
+          delay: 21,
+        },
+        {
+          enemies: [
+            { archetype: 'moth', skill: 'veteran', count: 7 },
+            { archetype: 'rocketeer', skill: 'veteran', count: 7 },
+          ],
+          delay: 27,
+        },
+        {
+          enemies: [
+            { archetype: 'beetle', skill: 'veteran', count: 5 },
+            { archetype: 'fireant', skill: 'veteran', count: 6 },
+          ],
+          delay: 33,
+        },
+      ],
+      reinforcementTime: null,
+      reinforcementHealthThreshold: 0.25,
+      reinforcementCount: 4,
+      reinforcementPool: [
+        { archetype: 'interceptor', skill: 'veteran', count: 1 },
+        { archetype: 'defender', skill: 'regular', count: 1 },
+        { archetype: 'striker', skill: 'regular', count: 1 },
+      ],
+    },
+    reward: 13609,
   },
 ];
