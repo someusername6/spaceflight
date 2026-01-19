@@ -33,6 +33,8 @@ type AdvanceModalState = Record<string, never>;
 /** Modal props */
 interface AdvanceModalProps extends ModalProps<SectorAdvanceResult> {
   currentSector: number;
+  advanceCost: number;
+  playerCredits: number;
 }
 
 /** Get sector name for display */
@@ -43,11 +45,12 @@ function getSectorName(sector: number): string {
 /** Sector advance modal screen component */
 const SectorAdvanceModalScreen: Screen<AdvanceModalState, AdvanceModalProps> = {
   render(_state, props) {
-    const { currentSector } = props;
+    const { currentSector, advanceCost, playerCredits } = props;
     const targetSector = currentSector + 1;
     const targetName = getSectorName(targetSector);
     const targetThreat = SECTOR_THREAT_LEVELS[targetSector] ?? 'Unknown';
     const isEndless = targetSector >= MAX_SECTOR;
+    const creditsAfter = playerCredits - advanceCost;
 
     return `
       <div class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="advance-title">
@@ -65,6 +68,16 @@ const SectorAdvanceModalScreen: Screen<AdvanceModalState, AdvanceModalProps> = {
               <span class="advance-value advance-skills">${targetThreat}</span>
             </div>
 
+            <div class="advance-cost">
+              <span class="advance-label">Cost</span>
+              <span class="advance-value advance-credits">${advanceCost.toLocaleString()} cr</span>
+            </div>
+
+            <div class="advance-balance">
+              <span class="advance-label">After</span>
+              <span class="advance-value">${creditsAfter.toLocaleString()} cr remaining</span>
+            </div>
+
             ${isEndless ? '<div class="advance-endless-note">Endless mode - no further sectors</div>' : ''}
           </div>
 
@@ -77,7 +90,7 @@ const SectorAdvanceModalScreen: Screen<AdvanceModalState, AdvanceModalProps> = {
           <div class="modal-buttons">
             <button class="btn btn-large" id="btn-advance-cancel">Cancel</button>
             <button class="btn btn-large btn-primary" id="btn-advance-confirm">
-              Advance to Sector ${targetSector}
+              Pay ${advanceCost.toLocaleString()} cr
             </button>
           </div>
         </div>
@@ -109,16 +122,20 @@ const SectorAdvanceModalScreen: Screen<AdvanceModalState, AdvanceModalProps> = {
 /**
  * Show the sector advance confirmation modal.
  * @param currentSector - Current sector number (1-4)
+ * @param advanceCost - Cost in credits to advance
+ * @param playerCredits - Player's current credits
  * @returns Promise resolving to whether the user confirmed
  */
 export function showSectorAdvanceModal(
   currentSector: number,
+  advanceCost: number,
+  playerCredits: number,
 ): Promise<SectorAdvanceResult> {
   const initialState: AdvanceModalState = {};
 
   return showModal<AdvanceModalState, AdvanceModalProps, SectorAdvanceResult>(
     SectorAdvanceModalScreen,
     initialState,
-    { currentSector },
+    { currentSector, advanceCost, playerCredits },
   );
 }

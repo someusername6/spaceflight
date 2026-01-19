@@ -277,14 +277,19 @@ export function isGameOver(state: CampaignState): boolean {
   return !isCommanderAssigned(state);
 }
 
-/** Advance to the next sector (resets sector mission count, restocks store) */
+/** Advance to the next sector (resets sector mission count, restocks store, deducts cost) */
 export function advanceSector(state: CampaignState): CampaignState {
   if (state.currentSector >= MAX_SECTOR) {
     return state; // Already at max sector
   }
+  const cost = getSectorAdvanceCost(state.currentSector);
+  if (state.credits < cost) {
+    return state; // Can't afford to advance
+  }
   const newSector = state.currentSector + 1;
   return {
     ...state,
+    credits: state.credits - cost,
     currentSector: newSector,
     sectorMissionsCompleted: 0,
     contractRefreshCount: 0,
@@ -293,8 +298,13 @@ export function advanceSector(state: CampaignState): CampaignState {
 }
 
 /** Get the cost to refresh contracts (scales with sector) */
-export function getContractRefreshCost(_sector: number): number {
-  return 1; // TODO: restore to 500 * sector after playtesting
+export function getContractRefreshCost(sector: number): number {
+  return 50 * sector;
+}
+
+/** Get the cost to advance to the next sector */
+export function getSectorAdvanceCost(sector: number): number {
+  return 1000 * sector;
 }
 
 /** Refresh available contracts (increment refresh counter, deduct cost) */

@@ -4,6 +4,7 @@
 
 import {
   getContractRefreshCost,
+  getSectorAdvanceCost,
   isCommanderAssigned,
 } from '../../campaign/state';
 import {
@@ -42,6 +43,8 @@ interface ContractsProps {
   isReplayMode: boolean;
   /** Refresh cost for current sector */
   refreshCost: number;
+  /** Cost to advance to next sector */
+  advanceCost: number;
   onNavigate: (destination: NavDestination) => void;
   onAccept: (contract: Contract) => void;
   onAdvanceSector: () => void;
@@ -67,11 +70,18 @@ export { generateContracts };
 /** Contracts screen component */
 const ContractsScreenComponent: Screen<ContractsState, ContractsProps> = {
   render(state, props) {
-    const { campaignState, contracts, isReplayMode, refreshCost, onNavigate } =
-      props;
+    const {
+      campaignState,
+      contracts,
+      isReplayMode,
+      refreshCost,
+      advanceCost,
+      onNavigate,
+    } = props;
     const currentSector = campaignState.currentSector;
     const canAdvance = currentSector < MAX_SECTOR;
     const canAffordRefresh = campaignState.credits >= refreshCost;
+    const canAffordAdvance = campaignState.credits >= advanceCost;
 
     const navBar = renderNavBar({
       activeTab: 'contracts',
@@ -112,8 +122,13 @@ const ContractsScreenComponent: Screen<ContractsState, ContractsProps> = {
 
     // Advance sector button (only show if not at max sector)
     const advanceButton = canAdvance
-      ? `<button class="btn btn-secondary contracts-advance-btn" id="btn-advance-sector">
-           Advance to Sector ${currentSector + 1} →
+      ? `<button
+           class="btn btn-secondary contracts-advance-btn ${!canAffordAdvance ? 'disabled' : ''}"
+           id="btn-advance-sector"
+           ${!canAffordAdvance ? 'disabled' : ''}
+           title="${canAffordAdvance ? `Advance to sector ${currentSector + 1}` : 'Not enough credits'}"
+         >
+           Advance&nbsp;to&nbsp;Sector&nbsp;${currentSector + 1} (${advanceCost.toLocaleString()}&nbsp;cr)&nbsp;→
          </button>`
       : '';
 
@@ -184,11 +199,15 @@ const ContractsScreenComponent: Screen<ContractsState, ContractsProps> = {
 
     // Advance sector button - show confirmation modal
     api.on('#btn-advance-sector', 'click', () => {
-      showSectorAdvanceModal(currentSector).then((result) => {
-        if (result.confirmed) {
-          onAdvanceSector();
-        }
-      });
+      const advanceCost = props.advanceCost;
+      const playerCredits = props.campaignState.credits;
+      showSectorAdvanceModal(currentSector, advanceCost, playerCredits).then(
+        (result) => {
+          if (result.confirmed) {
+            onAdvanceSector();
+          }
+        },
+      );
     });
   },
 };
@@ -222,7 +241,7 @@ export function createContractsUI(
     state.currentSector,
     state.seed,
     state.sectorMissionsCompleted,
-    4,
+    5,
     state.completedContracts,
     state.contractRefreshCount,
   );
@@ -232,6 +251,7 @@ export function createContractsUI(
     contracts: generated.contracts,
     isReplayMode: generated.isReplayMode,
     refreshCost: getContractRefreshCost(state.currentSector),
+    advanceCost: getSectorAdvanceCost(state.currentSector),
     onNavigate,
     onAccept,
     onAdvanceSector,
@@ -269,7 +289,7 @@ export function updateContractsUI(
     state.currentSector,
     state.seed,
     state.sectorMissionsCompleted,
-    4,
+    5,
     state.completedContracts,
     state.contractRefreshCount,
   );
@@ -281,6 +301,7 @@ export function updateContractsUI(
       contracts: generated.contracts,
       isReplayMode: generated.isReplayMode,
       refreshCost: getContractRefreshCost(state.currentSector),
+      advanceCost: getSectorAdvanceCost(state.currentSector),
       onNavigate: ui.onNavigate,
       onAccept: ui.onAccept,
       onAdvanceSector: ui.onAdvanceSector,
