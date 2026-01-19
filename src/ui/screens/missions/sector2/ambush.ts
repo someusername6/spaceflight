@@ -51,7 +51,7 @@ export const SECTOR_2_AMBUSH: Contract[] = [
         },
       ],
     },
-    reward: 5200,
+    reward: 2041,
   },
   {
     id: 's2-merchant-raid',
@@ -79,7 +79,7 @@ export const SECTOR_2_AMBUSH: Contract[] = [
         { archetype: 'wasp', skill: 'veteran', count: 3, role: 'aggressive' },
       ],
     },
-    reward: 7800,
+    reward: 3661,
   },
   {
     id: 's2-contested-cargo',
@@ -107,6 +107,6 @@ export const SECTOR_2_AMBUSH: Contract[] = [
         { archetype: 'wasp', skill: 'veteran', count: 4, role: 'aggressive' },
       ],
     },
-    reward: 9600,
+    reward: 4759,
   },
 ];
