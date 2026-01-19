@@ -40,13 +40,14 @@ export function weaponSystem(world: World, dt: number): void {
     const health = getComponent(world, entity, 'health');
     if (health && isDead(health)) continue;
 
-    const transform = getComponent(world, entity, 'transform')!;
+    const transform = getComponent(world, entity, 'transform');
+    const heat = getComponent(world, entity, 'heat');
+    if (!transform || !heat) continue;
     const weapons = getComponent(
       world,
       entity,
       'primaryWeapons',
     ) as PrimaryWeapons;
-    const heat = getComponent(world, entity, 'heat')!;
     const faction = getComponent(world, entity, 'faction');
     const player = getComponent(world, entity, 'playerControlled');
 
@@ -92,7 +93,8 @@ export function weaponSystem(world: World, dt: number): void {
     const health = getComponent(world, entity, 'health');
     if (health && isDead(health)) continue;
 
-    const transform = getComponent(world, entity, 'transform')!;
+    const transform = getComponent(world, entity, 'transform');
+    if (!transform) continue;
     const weapons = getComponent(
       world,
       entity,

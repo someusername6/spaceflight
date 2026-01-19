@@ -80,9 +80,9 @@ export function dealAoeDamage(
     if (entity === owner || entity === exclude) continue;
     // Note: missiles AND projectiles CAN be damaged by AoE (e.g., nuke clearing the area)
 
-    // Query guarantees these components exist
-    const transform = getComponent(world, entity, 'transform')!;
-    const health = getComponent(world, entity, 'health')!;
+    const transform = getComponent(world, entity, 'transform');
+    const health = getComponent(world, entity, 'health');
+    if (!transform || !health) continue;
 
     // Skip dead entities
     if (health.hull <= 0) continue;
@@ -96,7 +96,7 @@ export function dealAoeDamage(
       const falloff = 1 - distance / radius;
       const damage = maxDamage * falloff;
       if (damage > 0) {
-        const result = dealDamage(world, entity, damage, center);
+        const result = dealDamage(world, entity, damage, center, 1, 1, owner);
         const entityDamage = result.shieldDamage + result.hullDamage;
         totalDamage += entityDamage;
 
@@ -157,8 +157,9 @@ export function findClosestEnemyDistance(
     if (!ownerFaction || !entityFaction) continue;
     if (!areEnemies(ownerFaction.faction, entityFaction.faction)) continue;
 
-    const transform = getComponent(world, entity, 'transform')!;
-    const health = getComponent(world, entity, 'health')!;
+    const transform = getComponent(world, entity, 'transform');
+    const health = getComponent(world, entity, 'health');
+    if (!transform || !health) continue;
 
     // Skip dead entities
     if (health.hull <= 0) continue;
@@ -181,7 +182,8 @@ export function findClosestEnemyDistance(
       if (!ownerFaction || !entityFaction) continue;
       if (!areEnemies(ownerFaction.faction, entityFaction.faction)) continue;
 
-      const transform = getComponent(world, entity, 'transform')!;
+      const transform = getComponent(world, entity, 'transform');
+      if (!transform) continue;
 
       aoeTempVec.copy(transform.position).sub(center);
       const distance = aoeTempVec.length();
@@ -216,9 +218,9 @@ export function checkForEnemiesInRange(
       }
     }
 
-    // Query guarantees transform component exists
-    const transform = getComponent(world, entity, 'transform')!;
-    const health = getComponent(world, entity, 'health')!;
+    const transform = getComponent(world, entity, 'transform');
+    const health = getComponent(world, entity, 'health');
+    if (!transform || !health) continue;
 
     // Skip dead entities
     if (health.hull <= 0) continue;
@@ -244,11 +246,13 @@ export function destroyProjectilesInRadius(
   const toDestroy: Entity[] = [];
 
   for (const entity of queryEntities(world, ['projectile', 'transform'])) {
-    const projectile = getComponent(world, entity, 'projectile')!;
+    const projectile = getComponent(world, entity, 'projectile');
+    if (!projectile) continue;
     // Don't destroy owner's projectiles
     if (projectile.owner === owner) continue;
 
-    const transform = getComponent(world, entity, 'transform')!;
+    const transform = getComponent(world, entity, 'transform');
+    if (!transform) continue;
 
     aoeTempVec.copy(transform.position).sub(center);
     const distance = aoeTempVec.length();

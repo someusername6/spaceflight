@@ -168,9 +168,8 @@ export function collisionSystem(world: World, _dt: number): void {
   // Clear previous frame's collisions and hull collision list
   hullCollisions.length = 0;
   for (const entity of queryEntities(world, ['collision'])) {
-    // Query guarantees this component exists
-    const collision = getComponent(world, entity, 'collision')!;
-    collision.collidedWith.length = 0; // Clear without allocation
+    const collision = getComponent(world, entity, 'collision');
+    if (collision) collision.collidedWith.length = 0; // Clear without allocation
   }
 
   // Reset pool and clear collidables array
@@ -178,9 +177,9 @@ export function collisionSystem(world: World, _dt: number): void {
   collidables.length = 0;
 
   for (const entity of queryEntities(world, ['transform', 'collision'])) {
-    // Query guarantees these components exist
-    const transform = getComponent(world, entity, 'transform')!;
-    const collision = getComponent(world, entity, 'collision')!;
+    const transform = getComponent(world, entity, 'transform');
+    const collision = getComponent(world, entity, 'collision');
+    if (!transform || !collision) continue;
     const hull = getComponent(world, entity, 'hullCollider') ?? null;
     const isProjectile = hasComponent(world, entity, 'projectile');
     const isMissile = hasComponent(world, entity, 'missile');

@@ -198,7 +198,8 @@ export function updateJumpEffectRenderer(
   for (const entity of queryEntities(world, ['hyperspaceJump', 'transform'])) {
     renderer.seenJumps.add(entity);
 
-    const jump = getComponent(world, entity, 'hyperspaceJump')!;
+    const jump = getComponent(world, entity, 'hyperspaceJump');
+    if (!jump) continue;
 
     const visual = renderer.visuals.get(entity);
 

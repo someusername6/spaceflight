@@ -231,6 +231,7 @@ export function applyBeamDamageAndEffects(params: BeamDamageParams): void {
     hitPoint,
     weapon.shieldDamageMultiplier ?? 1,
     weapon.hullDamageMultiplier ?? 1,
+    owner,
   );
 
   // Apply ionization effect (for future ion beams)

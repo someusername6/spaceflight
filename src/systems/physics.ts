@@ -31,9 +31,9 @@ function moveToward(current: number, target: number, maxDelta: number): number {
 /** Physics system - updates positions and velocities */
 export function physicsSystem(world: World, dt: number): void {
   for (const entity of queryEntities(world, ['transform', 'physics'])) {
-    // Query guarantees these components exist
-    const transform = getComponent(world, entity, 'transform')!;
-    const physics = getComponent(world, entity, 'physics')!;
+    const transform = getComponent(world, entity, 'transform');
+    const physics = getComponent(world, entity, 'physics');
+    if (!transform || !physics) continue;
 
     // Save current state for render interpolation (before any updates)
     physics.prevPosition.copy(transform.position);

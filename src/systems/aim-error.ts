@@ -62,8 +62,8 @@ export function calculateAngularVelocity(
 /** Aim error system - updates aim drift and angular velocity effects */
 export function aimErrorSystem(world: World, dt: number): void {
   for (const entity of queryEntities(world, ['aimError'])) {
-    // Query guarantees this component exists
-    const aimError = getComponent(world, entity, 'aimError')!;
+    const aimError = getComponent(world, entity, 'aimError');
+    if (!aimError) continue;
 
     // Get AI component to find target for angular velocity calculation
     const ai = getComponent(world, entity, 'aiControlled');

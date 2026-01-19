@@ -107,9 +107,9 @@ export function updateExplosionRenderer(
   for (const entity of queryEntities(world, ['explosion', 'transform'])) {
     seenExplosions.add(entity);
 
-    // Query guarantees these components exist
-    const explosion = getComponent(world, entity, 'explosion')!;
-    const transform = getComponent(world, entity, 'transform')!;
+    const explosion = getComponent(world, entity, 'explosion');
+    const transform = getComponent(world, entity, 'transform');
+    if (!explosion || !transform) continue;
     // Calculate interpolated progress for smooth animation
     // Interpolate between previous age (age - TICK_SEC) and current age using alpha
     const interpolatedAge = explosion.age - TICK_SEC * (1 - alpha);

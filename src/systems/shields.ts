@@ -11,8 +11,8 @@ export function shieldSystem(world: World, dt: number): void {
   const gameTime = world.systemState.gameTime;
 
   for (const entity of queryEntities(world, ['shields'])) {
-    // Query guarantees this component exists
-    const shields = getComponent(world, entity, 'shields')!;
+    const shields = getComponent(world, entity, 'shields');
+    if (!shields) continue;
     regenerateShields(shields, gameTime, dt);
   }
 }

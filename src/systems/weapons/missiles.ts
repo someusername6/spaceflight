@@ -44,9 +44,9 @@ export function missileSystem(world: World, dt: number): void {
   const toRemove: Entity[] = [];
 
   for (const entity of queryEntities(world, ['missile', 'transform'])) {
-    // Query guarantees these components exist
-    const missile = getComponent(world, entity, 'missile')!;
-    const transform = getComponent(world, entity, 'transform')!;
+    const missile = getComponent(world, entity, 'missile');
+    const transform = getComponent(world, entity, 'transform');
+    if (!missile || !transform) continue;
 
     // Check for decoy seduction (any missile with turnRate can be seduced)
     if (
@@ -319,6 +319,9 @@ export function missileSystem(world: World, dt: number): void {
             other,
             missile.damage,
             transform.position,
+            1, // shieldDamageMultiplier
+            1, // hullDamageMultiplier
+            missile.owner,
           );
           const totalDamage =
             damageResult.shieldDamage + damageResult.hullDamage;

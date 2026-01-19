@@ -45,9 +45,9 @@ export function projectileSystem(world: World, dt: number): void {
   const toRemove: Entity[] = [];
 
   for (const entity of queryEntities(world, ['projectile', 'transform'])) {
-    // Query guarantees these components exist
-    const projectile = getComponent(world, entity, 'projectile')!;
-    const transform = getComponent(world, entity, 'transform')!;
+    const projectile = getComponent(world, entity, 'projectile');
+    const transform = getComponent(world, entity, 'transform');
+    if (!projectile || !transform) continue;
 
     // === Gyrojet-style acceleration ===
     if (
@@ -206,6 +206,8 @@ export function projectileSystem(world: World, dt: number): void {
           projectile.damage,
           transform.position,
           projectile.shieldDamageMultiplier ?? 1,
+          1, // hullDamageMultiplier
+          projectile.owner,
         );
 
         // Apply ionization effect if projectile has ionize flag

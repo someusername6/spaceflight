@@ -120,8 +120,8 @@ export function createEscortMissionState(
 function countLivingConvoy(world: World): number {
   let count = 0;
   for (const entity of queryEntities(world, ['convoyShip', 'health'])) {
-    const health = getComponent(world, entity, 'health')!;
-    if (!isDead(health)) count++;
+    const health = getComponent(world, entity, 'health');
+    if (health && !isDead(health)) count++;
   }
   return count;
 }
@@ -166,10 +166,11 @@ function updateConvoyShips(
     'transform',
     'health',
   ])) {
-    const health = getComponent(world, entity, 'health')!;
-    if (isDead(health)) continue;
+    const health = getComponent(world, entity, 'health');
+    if (!health || isDead(health)) continue;
 
-    const convoyShip = getComponent(world, entity, 'convoyShip')!;
+    const convoyShip = getComponent(world, entity, 'convoyShip');
+    if (!convoyShip) continue;
 
     // Ships already jumping or jumped - skip (they're already counted in escapedConvoy)
     if (
@@ -179,7 +180,8 @@ function updateConvoyShips(
       continue;
     }
 
-    const transform = getComponent(world, entity, 'transform')!;
+    const transform = getComponent(world, entity, 'transform');
+    if (!transform) continue;
     const distance = transform.position.distanceTo(state.escapeZonePosition);
     const isInZone = distance <= state.escapeZoneRadius;
 
@@ -229,7 +231,8 @@ function isPlayerInZone(world: World, state: EscortMissionState): boolean {
     'playerControlled',
     'transform',
   ])) {
-    const transform = getComponent(world, entity, 'transform')!;
+    const transform = getComponent(world, entity, 'transform');
+    if (!transform) continue;
     const distance = transform.position.distanceTo(state.escapeZonePosition);
     if (distance <= state.escapeZoneRadius) return true;
   }
@@ -239,8 +242,8 @@ function isPlayerInZone(world: World, state: EscortMissionState): boolean {
 /** Check if the player is dead */
 function isPlayerDead(world: World): boolean {
   for (const entity of queryEntities(world, ['playerControlled', 'health'])) {
-    const health = getComponent(world, entity, 'health')!;
-    if (!isDead(health)) return false; // Player is alive
+    const health = getComponent(world, entity, 'health');
+    if (health && !isDead(health)) return false; // Player is alive
   }
   // No living player found
   return true;
@@ -254,11 +257,11 @@ function countLivingEnemies(world: World): number {
     'health',
     'faction',
   ])) {
-    const faction = getComponent(world, entity, 'faction')!;
-    if (faction.faction !== Faction.Enemy) continue;
+    const faction = getComponent(world, entity, 'faction');
+    if (!faction || faction.faction !== Faction.Enemy) continue;
 
-    const health = getComponent(world, entity, 'health')!;
-    if (!isDead(health)) count++;
+    const health = getComponent(world, entity, 'health');
+    if (health && !isDead(health)) count++;
   }
   return count;
 }

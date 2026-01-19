@@ -71,7 +71,8 @@ export function renderWaveHostiles(contract: Contract): string {
 
 /** Render mission info for escort missions */
 export function renderEscortInfo(contract: Contract): string {
-  const escort = contract.escortData!;
+  const escort = contract.escortData;
+  if (!escort) return '';
   const enemyTypes = escort.enemyPool
     .map((e) => e.archetype)
     .filter((v, i, a) => a.indexOf(v) === i) // unique
@@ -97,9 +98,39 @@ export function renderEscortInfo(contract: Contract): string {
   `;
 }
 
+/** Render mission info for ambush missions */
+export function renderAmbushInfo(contract: Contract): string {
+  const ambush = contract.ambushData;
+  if (!ambush) return '';
+  const escortTypes = ambush.escorts
+    .map((e) => e.archetype)
+    .filter((v, i, a) => a.indexOf(v) === i) // unique
+    .join(', ');
+  const totalEscorts = ambush.escorts.reduce((sum, e) => sum + e.count, 0);
+
+  return `
+    <div class="contract-detail-section">
+      <div class="detail-section-label">AMBUSH MISSION</div>
+      <div class="escort-info">
+        <div class="escort-entry">Targets: ${ambush.convoySize} ${ambush.convoyType} ships</div>
+        <div class="escort-entry">Objective: Stop or destroy all convoy ships</div>
+        <div class="escort-entry">Defeat if: Convoy escapes or commander dies</div>
+      </div>
+    </div>
+    <div class="contract-detail-section">
+      <div class="detail-section-label">ESCORTS</div>
+      <div class="contract-enemies">
+        <div class="enemy-entry">${totalEscorts}× escorts: ${escortTypes}</div>
+      </div>
+      <div class="contract-waves">Stopped targets pay full reward, destroyed pay 50%</div>
+    </div>
+  `;
+}
+
 /** Render mission info for station defense missions */
 export function renderStationDefenseInfo(contract: Contract): string {
-  const defense = contract.stationDefenseData!;
+  const defense = contract.stationDefenseData;
+  if (!defense) return '';
   const waves = defense.waves;
 
   // Count enemy types across waves
@@ -157,6 +188,7 @@ export function renderContractDetail(
   const isEscort = contract.missionType === 'escort' && contract.escortData;
   const isStationDefense =
     contract.missionType === 'station-defense' && contract.stationDefenseData;
+  const isAmbush = contract.missionType === 'ambush' && contract.ambushData;
 
   // Accept button or commander warning (hard block)
   const acceptButton = canLaunch
@@ -168,6 +200,8 @@ export function renderContractDetail(
     missionInfo = renderEscortInfo(contract);
   } else if (isStationDefense) {
     missionInfo = renderStationDefenseInfo(contract);
+  } else if (isAmbush) {
+    missionInfo = renderAmbushInfo(contract);
   } else {
     missionInfo = renderWaveHostiles(contract);
   }

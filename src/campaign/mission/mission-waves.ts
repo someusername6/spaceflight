@@ -36,6 +36,13 @@ export interface MissionEndState {
     reinforcementsArrived: boolean;
     reinforcementsSpawned: number;
   };
+  /** Ambush mission results */
+  ambushResults?: {
+    convoyDestroyed: number;
+    convoyStopped: number;
+    convoyEscaped: number;
+    totalConvoy: number;
+  };
 }
 
 /** Delay before transitioning to results screen (seconds) */

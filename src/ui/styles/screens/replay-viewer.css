@@ -72,7 +72,7 @@
    opacity transition and overrides .replay-controls pointer-events: auto */
 .replay-hud.controls-hidden {
   opacity: 0;
-  pointer-events: none !important;
+  pointer-events: none;
 }
 
 /* Hide cursor when controls are hidden */

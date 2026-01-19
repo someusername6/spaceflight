@@ -100,7 +100,7 @@ export interface SystemState {
   mission: {
     result: MissionResult;
     /** Mission type - determines win/lose condition handling */
-    missionType: 'elimination' | 'escort' | 'station-defense';
+    missionType: 'elimination' | 'escort' | 'station-defense' | 'ambush';
   };
   /** Ship identity state - callsign counters per prefix */
   shipIdentity: {

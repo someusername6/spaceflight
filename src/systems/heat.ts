@@ -11,8 +11,8 @@ import type { World } from '../core/types';
 /** Heat system - passive cooling */
 export function heatSystem(world: World, dt: number): void {
   for (const entity of queryEntities(world, ['heat'])) {
-    // Query guarantees this component exists
-    const heat = getComponent(world, entity, 'heat')!;
+    const heat = getComponent(world, entity, 'heat');
+    if (!heat) continue;
     coolDown(heat, dt);
   }
 }

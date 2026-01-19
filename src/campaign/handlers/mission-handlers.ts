@@ -18,6 +18,7 @@ import {
 } from '../../ui/common/screens';
 import { collectDebriefData } from '../../ui/screens/results/debrief';
 import {
+  type AmbushResultsDisplay,
   createGameOverUI,
   createResultsUI,
   type EscortResultsDisplay,
@@ -47,6 +48,7 @@ import { setupTitleScreen } from './menu-handlers';
  * @param salvage - Optional salvage results from the mission
  * @param earnedReward - Actual reward earned (with multipliers applied)
  * @param escortResults - Convoy survival results for escort missions
+ * @param ambushResults - Convoy results for ambush missions
  */
 export function showResults(
   controller: CampaignController,
@@ -57,6 +59,7 @@ export function showResults(
   salvage?: SalvageResult | null,
   earnedReward?: number,
   escortResults?: EscortResultsDisplay,
+  ambushResults?: AmbushResultsDisplay,
 ): void {
   const { screenManager } = controller;
   const resultsElement = getScreenElement(screenManager, Screen.RESULTS);
@@ -76,6 +79,7 @@ export function showResults(
     salvage,
     earnedReward,
     escortResults,
+    ambushResults,
   );
 }
 

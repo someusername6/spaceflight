@@ -6,7 +6,7 @@ import type { Vector3 } from 'three';
 import type { ComponentBase } from '../core/types';
 
 /**
- * Marks an entity as a convoy ship (escort target).
+ * Marks an entity as a convoy ship (escort target or ambush target).
  * Convoy ships are defenseless NPCs that fly toward the escape zone.
  */
 export interface ConvoyShip extends ComponentBase {
@@ -21,21 +21,37 @@ export interface ConvoyShip extends ComponentBase {
   jumpChargeTime: number;
   /** Whether this ship has started its hyperspace jump */
   jumpInitiated: boolean;
+  /** For ambush missions: convoy has stopped permanently (isolated from escorts) */
+  isStopped: boolean;
+  /**
+   * Distance threshold for stop behavior (ambush only).
+   * Stored on component so convoy-autopilot system can access it.
+   * Set during entity creation from AmbushMissionData.convoyStopDistance.
+   * Undefined for escort missions (no stop behavior).
+   */
+  stopDistance?: number;
 }
 
 /** Create a ConvoyShip component */
 export function createConvoyShip(
   index: number,
   jumpChargeTime: number,
+  stopDistance?: number,
 ): ConvoyShip {
-  return {
+  const component: ConvoyShip = {
     type: 'convoyShip',
     index,
     inEscapeZone: false,
     jumpChargeProgress: 0,
     jumpChargeTime,
     jumpInitiated: false,
+    isStopped: false,
   };
+  // Only add stopDistance if defined (for ambush missions)
+  if (stopDistance !== undefined) {
+    component.stopDistance = stopDistance;
+  }
+  return component;
 }
 
 /** Autopilot control inputs (similar to AIInput but simpler) */

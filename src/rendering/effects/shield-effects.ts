@@ -80,7 +80,8 @@ export function updateShieldEffectRenderer(
 
   // Find all entities with shield hit tracking
   for (const entity of queryEntities(world, ['shieldHit'])) {
-    const shieldHit = getComponent(world, entity, 'shieldHit')!;
+    const shieldHit = getComponent(world, entity, 'shieldHit');
+    if (!shieldHit) continue;
 
     const hits = getActiveHits(shieldHit, gameTime);
 

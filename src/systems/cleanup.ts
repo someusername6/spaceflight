@@ -40,8 +40,8 @@ const EXPLOSION_COLORS: Record<Faction, THREE.Color> = {
 export function cleanupSystem(world: World, dt: number): void {
   // Handle dead entities
   for (const entity of queryEntities(world, ['health'])) {
-    // Query guarantees this component exists
-    const health = getComponent(world, entity, 'health')!;
+    const health = getComponent(world, entity, 'health');
+    if (!health) continue;
 
     if (!isDead(health)) continue;
 

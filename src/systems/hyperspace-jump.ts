@@ -19,7 +19,8 @@ import type { World } from '../core/types';
  */
 export function hyperspaceJumpSystem(world: World, dt: number): void {
   for (const entity of queryEntities(world, ['hyperspaceJump'])) {
-    const jump = getComponent(world, entity, 'hyperspaceJump')!;
+    const jump = getComponent(world, entity, 'hyperspaceJump');
+    if (!jump) continue;
 
     // Update progress
     jump.progress += dt / jump.duration;

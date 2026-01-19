@@ -6,7 +6,6 @@ import { Vector3 } from 'three';
 import { type AIControlled, AIState } from '../../components/ai';
 import { areEnemies, type Faction } from '../../components/faction';
 import { isDead } from '../../components/health';
-import type { Transform } from '../../components/transform';
 import { getComponent, queryEntities } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
 
@@ -18,9 +17,8 @@ const _returnCentroid = new Vector3();
 export function countEngagingTarget(world: World, target: Entity): number {
   let count = 0;
   for (const entity of queryEntities(world, ['aiControlled'])) {
-    // Query guarantees this component exists
-    const ai = getComponent(world, entity, 'aiControlled')!;
-    if (ai.state === AIState.Engage && ai.target === target) {
+    const ai = getComponent(world, entity, 'aiControlled');
+    if (ai && ai.state === AIState.Engage && ai.target === target) {
       count++;
     }
   }
@@ -72,15 +70,12 @@ export function findNearestThreatToPlayer(
     if (!health || isDead(health)) continue;
 
     // Check if this enemy is targeting the player
-    const ai = getComponent(world, entity, 'aiControlled')!;
-    if (ai.target !== player) continue;
+    const ai = getComponent(world, entity, 'aiControlled');
+    if (!ai || ai.target !== player) continue;
     if (ai.state !== AIState.Pursue && ai.state !== AIState.Engage) continue;
 
-    const entityTransform = getComponent(
-      world,
-      entity,
-      'transform',
-    ) as Transform;
+    const entityTransform = getComponent(world, entity, 'transform');
+    if (!entityTransform) continue;
     const dist = selfTransform.position.distanceTo(entityTransform.position);
 
     if (dist < nearestDist) {
@@ -119,8 +114,8 @@ export function findNearestEnemy(
     if (!otherFaction || !areEnemies(selfFaction, otherFaction.faction))
       continue;
 
-    // Query guarantees transform component exists
-    const otherTransform = getComponent(world, other, 'transform')!;
+    const otherTransform = getComponent(world, other, 'transform');
+    if (!otherTransform) continue;
     const dist = selfTransform.position.distanceTo(otherTransform.position);
 
     if (dist < nearestDist) {
@@ -160,7 +155,8 @@ export function findNearestConvoyShip(
     const otherHealth = getComponent(world, other, 'health');
     if (otherHealth && isDead(otherHealth)) continue;
 
-    const otherTransform = getComponent(world, other, 'transform')!;
+    const otherTransform = getComponent(world, other, 'transform');
+    if (!otherTransform) continue;
     const dist = selfTransform.position.distanceTo(otherTransform.position);
 
     if (dist < nearestDist) {
@@ -189,7 +185,8 @@ export function getConvoyCentroid(world: World): Vector3 | null {
     const health = getComponent(world, entity, 'health');
     if (health && isDead(health)) continue;
 
-    const transform = getComponent(world, entity, 'transform')!;
+    const transform = getComponent(world, entity, 'transform');
+    if (!transform) continue;
     _centroid.add(transform.position);
     count++;
   }
@@ -240,7 +237,8 @@ export function findNearestThreatToConvoy(
     const health = getComponent(world, other, 'health');
     if (health && isDead(health)) continue;
 
-    const otherTransform = getComponent(world, other, 'transform')!;
+    const otherTransform = getComponent(world, other, 'transform');
+    if (!otherTransform) continue;
 
     // Only consider enemies near the convoy
     const distToConvoy = otherTransform.position.distanceTo(convoyCentroid);
@@ -325,7 +323,8 @@ export function findNearestThreatToStation(
     const health = getComponent(world, other, 'health');
     if (health && isDead(health)) continue;
 
-    const otherTransform = getComponent(world, other, 'transform')!;
+    const otherTransform = getComponent(world, other, 'transform');
+    if (!otherTransform) continue;
 
     // Only consider enemies near the station
     const distToStation = otherTransform.position.distanceTo(stationPosition);
@@ -343,3 +342,10 @@ export function findNearestThreatToStation(
 
   return nearest;
 }
+
+// Re-export ambush mission utilities for backward compatibility
+export {
+  findNearestEnemyConvoyShip,
+  findNearestEnemyEscort,
+  getEnemyConvoyCentroid,
+} from './ai-ambush-utils';

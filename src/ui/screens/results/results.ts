@@ -37,6 +37,14 @@ export interface EscortResultsDisplay {
   convoyTotal: number;
 }
 
+/** Ambush mission results for display */
+export interface AmbushResultsDisplay {
+  convoyDestroyed: number;
+  convoyStopped: number;
+  convoyEscaped: number;
+  totalConvoy: number;
+}
+
 /** Results screen props */
 interface ResultsProps {
   victory: boolean;
@@ -49,6 +57,8 @@ interface ResultsProps {
   earnedReward: number | undefined;
   /** Convoy survival results for escort missions */
   escortResults: EscortResultsDisplay | undefined;
+  /** Convoy results for ambush missions */
+  ambushResults: AmbushResultsDisplay | undefined;
 }
 
 /** Legacy UI interface for backwards compatibility */
@@ -57,6 +67,9 @@ export interface ResultsUI {
   onContinue: () => void;
   selectedTab: ResultsTab;
 }
+
+// Re-export createGameOverUI from game-over module
+export { createGameOverUI } from './game-over';
 
 /** Render the results tab bar */
 function renderResultsTabBar(
@@ -112,6 +125,7 @@ function renderRewards(
   salvage: SalvageResult | null,
   earnedReward?: number,
   escortResults?: EscortResultsDisplay,
+  ambushResults?: AmbushResultsDisplay,
 ): string {
   const titleClass = victory ? 'victory' : 'defeat';
   const titleText = victory ? 'VICTORY' : 'DEFEAT';
@@ -134,6 +148,24 @@ function renderRewards(
     `
     : '';
 
+  // Ambush mission details
+  let ambushHtml = '';
+  if (ambushResults) {
+    const destroyed = ambushResults.convoyDestroyed;
+    const stopped = ambushResults.convoyStopped;
+    const escaped = ambushResults.convoyEscaped;
+    const total = ambushResults.totalConvoy;
+    const neutralized = destroyed + stopped;
+    const rewardPct = Math.round(((stopped + destroyed * 0.5) / total) * 100);
+    ambushHtml = `
+      <div class="rewards-ambush-details">
+        <span class="ambush-result">${neutralized}/${total} targets neutralized</span>
+        <span class="ambush-breakdown">(${stopped} stopped, ${destroyed} destroyed${escaped > 0 ? `, ${escaped} escaped` : ''})</span>
+        ${rewardPct < 100 ? `<span class="ambush-reward">(${rewardPct}% reward)</span>` : ''}
+      </div>
+    `;
+  }
+
   const contractRewardHtml = contract
     ? `
       <div class="rewards-contract">
@@ -144,6 +176,7 @@ function renderRewards(
         <div class="rewards-contract-details">
           <div class="rewards-contract-name">${contract.name}</div>
           ${escortHtml}
+          ${ambushHtml}
           <div class="rewards-contract-amount ${victory ? 'earned' : 'failed'}">
             ${victory ? `+${displayReward.toLocaleString()} cr` : 'Mission Failed'}
           </div>
@@ -175,6 +208,7 @@ const ResultsScreenComponent: Screen<ResultsState, ResultsProps> = {
       salvage,
       earnedReward,
       escortResults,
+      ambushResults,
     } = props;
 
     const tabBar = renderResultsTabBar(
@@ -195,6 +229,7 @@ const ResultsScreenComponent: Screen<ResultsState, ResultsProps> = {
             salvage,
             earnedReward,
             escortResults,
+            ambushResults,
           );
 
     const buttonText = victory ? 'Return to Hangar' : 'Continue';
@@ -249,6 +284,7 @@ export function createResultsUI(
   salvage?: SalvageResult | null,
   earnedReward?: number,
   escortResults?: EscortResultsDisplay,
+  ambushResults?: AmbushResultsDisplay,
 ): ResultsUI {
   // Clean up previous handle
   resultsScreenHandle?.destroy();
@@ -264,6 +300,7 @@ export function createResultsUI(
     onContinue,
     earnedReward,
     escortResults,
+    ambushResults,
   };
 
   resultsScreenHandle = createScreen(
@@ -279,96 +316,4 @@ export function createResultsUI(
     onContinue,
     selectedTab: 'debrief',
   };
-}
-
-/** Game over state (empty - no interactive state) */
-interface GameOverState {
-  _placeholder: boolean;
-}
-
-/** Game over props */
-interface GameOverProps {
-  campaignState: CampaignState;
-  onRestart: () => void;
-  debriefData: MissionDebriefData | null;
-}
-
-/** Game over screen component */
-const GameOverScreenComponent: Screen<GameOverState, GameOverProps> = {
-  render(_state, props) {
-    const { campaignState, debriefData } = props;
-
-    // Render debrief section if available
-    const debriefHtml = debriefData
-      ? renderDebrief(debriefData)
-      : '<div class="game-over-no-debrief">No combat data available</div>';
-
-    return `
-      <div class="results-screen game-over-screen">
-        <div class="game-over-header">
-          <h1 class="game-over-title">GAME OVER</h1>
-          <div class="game-over-summary">
-            <div class="game-over-message">Your commander was killed in action.</div>
-            <div class="game-over-campaign-stats">
-              <div class="game-over-stat">
-                <span class="stat-value">${campaignState.missionCount}</span>
-                <span class="stat-label">Missions</span>
-              </div>
-              <div class="game-over-stat">
-                <span class="stat-value">${campaignState.currentSector}</span>
-                <span class="stat-label">Sector</span>
-              </div>
-              <div class="game-over-stat">
-                <span class="stat-value">${campaignState.credits.toLocaleString()}</span>
-                <span class="stat-label">Credits</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="game-over-debrief">
-          ${debriefHtml}
-        </div>
-        <footer class="game-over-footer">
-          <button class="btn btn-xl btn-danger" id="btn-restart">
-            Start New Campaign
-          </button>
-        </footer>
-      </div>
-    `;
-  },
-
-  bind(api: ScreenAPI<GameOverState>, props: GameOverProps) {
-    api.on('#btn-restart', 'click', () => {
-      props.onRestart();
-    });
-  },
-};
-
-/** Screen handle for game over */
-let gameOverScreenHandle: ScreenHandle<GameOverState, GameOverProps> | null =
-  null;
-
-/** Create game over UI */
-export function createGameOverUI(
-  element: HTMLElement,
-  state: CampaignState,
-  onRestart: () => void,
-  debriefData?: MissionDebriefData | null,
-): void {
-  // Clean up previous handle
-  gameOverScreenHandle?.destroy();
-
-  const initialState: GameOverState = { _placeholder: true };
-  const props: GameOverProps = {
-    campaignState: state,
-    onRestart,
-    debriefData: debriefData ?? null,
-  };
-
-  gameOverScreenHandle = createScreen(
-    GameOverScreenComponent,
-    element,
-    initialState,
-    props,
-  );
 }

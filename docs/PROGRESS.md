@@ -138,5 +138,48 @@ Weapons (projectiles, missiles, beams, decoys), shields, AI (states, behaviors, 
   - `src/ui/screens/missions/sector*/escort.ts` - Per-mission ratio values
   - `src/ui/screens/missions/sector*/station-defense.ts` - Per-mission ratio values
 
-### 5.6 Remaining (Planned)
+### 5.6 Ambush Missions ✅
+- **New Mission Type**: Convoy ambush missions - player attacks neutral convoy protected by enemy escorts
+- **Convoy Faction**: Neutral (yellow) - distinguishes cargo targets from hostile escorts
+- **Victory Conditions**:
+  - All convoy destroyed → immediate victory (no need to kill escorts)
+  - All convoy destroyed or stopped AND all escorts dead → victory
+- **Defeat Conditions**: Any convoy escapes OR player dies
+- **Convoy Stop Behavior**: Convoy ships stop permanently when:
+  - No enemy escorts within stop distance AND
+  - Player ship within stop distance
+- **Reward Calculation**:
+  - Stopped convoy: 100% reward (cargo captured intact)
+  - Destroyed convoy: 50% reward (cargo lost)
+- **Escort Roles**:
+  - `aggressive`: Proactive engagement - attacks player when they deal damage to anyone
+  - `defensive`: Reactive only - defends convoy when convoy is attacked
+- **AI Behavior Modes**:
+  - `convoy-guard-aggressive`: Protects convoy, proactively attacks player on any damage
+  - `convoy-guard-defensive`: Protects convoy, only attacks when convoy damaged
+  - `convoy-interceptor`: Wingmen prioritize killing escorts, then approach neutral convoy to stop it
+- **Spawn Positioning**:
+  - Convoy starts at +Z (convoyStartDistance)
+  - Waypoint (escape zone) at -Z (escapeZoneDistance)
+  - Player/wingmen spawn equidistant from convoy and waypoint (X=1000m offset)
+  - Escorts spawn 100-200m around convoy start position
+- **Implementation Files**:
+  - `src/campaign/types.ts:109-137` - AmbushMissionData, EscortRole types
+  - `src/systems/ambush-mission.ts` - Mission tick processing, convoy stop detection, reward calculation
+  - `src/campaign/mission/ambush-launcher.ts` - Mission setup, spawning, callbacks
+  - `src/systems/ai/ai-idle.ts` - Convoy guard and convoy-interceptor behavior modes
+  - `src/systems/ai/ai-ambush-utils.ts` - Neutral convoy targeting for wingmen
+  - `src/rendering/hud/convoy-hud.ts` - Faction-aware HUD (TARGETS vs CONVOY display)
+  - `src/ui/screens/contracts-rendering.ts:100-126` - Ambush mission preview
+  - `src/replay/mission-setup.ts`, `src/replay/playback.ts` - Replay support
+- **Balance Targets** (via grid search, `test-ambush-balance.mjs`):
+  - Easy: 75-95% win rate, 75-90% squad survival
+  - Medium: 60-80% win rate, 60-75% squad survival
+  - Hard: 45-65% win rate, 45-60% squad survival
+- **Sector 1 Missions** (`src/ui/screens/missions/sector1/ambush.ts`):
+  - Supply Interdiction (easy): 78% win, 78% survival (1 gnat def + 2 mantis rookie agg)
+  - Cargo Heist (medium): 60% win, 74% survival (2 gnat def + 2 mantis regular agg)
+  - Convoy Raid (hard): 60% win, 58% survival (1 ember def + 2 wasp vet + 1 wasp ace agg)
+
+### 5.7 Remaining (Planned)
 Procedural contracts, more ship classes, sound/music.

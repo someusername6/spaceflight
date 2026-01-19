@@ -50,9 +50,9 @@ export function damageSystem(world: World, _dt: number): void {
     // Victory protection: allied ships are immune after victory
     if (isProtectedByMissionEnd(world, entity)) continue;
 
-    // Query guarantees these components exist
-    const collision = getComponent(world, entity, 'collision')!;
-    const faction = getComponent(world, entity, 'faction')!;
+    const collision = getComponent(world, entity, 'collision');
+    const faction = getComponent(world, entity, 'faction');
+    if (!collision || !faction) continue;
 
     for (const other of collision.collidedWith) {
       const otherFaction = getComponent(world, other, 'faction');
@@ -143,13 +143,14 @@ export function dealDamage(
   hitPosition?: THREE.Vector3,
   shieldDamageMultiplier = 1,
   hullDamageMultiplier = 1,
+  attacker?: Entity,
 ): DamageResult {
   // Victory protection: allied ships are immune after victory
   if (isProtectedByMissionEnd(world, entity)) {
     return { shieldDamage: 0, hullDamage: 0 };
   }
 
-  return applyDamageWithShields(
+  const result = applyDamageWithShields(
     world,
     entity,
     amount,
@@ -157,4 +158,15 @@ export function dealDamage(
     shieldDamageMultiplier,
     hullDamageMultiplier,
   );
+
+  // Record attacker for AI aggro (used by convoy-guard-defensive escorts)
+  if (attacker !== undefined && result.shieldDamage + result.hullDamage > 0) {
+    const damageTracking = getComponent(world, entity, 'damageTracking');
+    if (damageTracking) {
+      damageTracking.lastAttacker = attacker;
+      damageTracking.lastDamageTime = world.systemState.gameTime;
+    }
+  }
+
+  return result;
 }

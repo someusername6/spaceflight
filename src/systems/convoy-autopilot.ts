@@ -67,9 +67,10 @@ export function convoyAutopilotSystem(world: World, _dt: number): void {
     'transform',
     'physics',
   ])) {
-    const autopilot = getComponent(world, entity, 'convoyAutopilot')!;
-    const transform = getComponent(world, entity, 'transform')!;
-    const physics = getComponent(world, entity, 'physics')!;
+    const autopilot = getComponent(world, entity, 'convoyAutopilot');
+    const transform = getComponent(world, entity, 'transform');
+    const physics = getComponent(world, entity, 'physics');
+    if (!autopilot || !transform || !physics) continue;
 
     // Skip inactive autopilot
     if (!autopilot.active) {
@@ -90,10 +91,12 @@ export function convoyAutopilotSystem(world: World, _dt: number): void {
       continue;
     }
 
-    // Use Z distance for braking (not 3D distance) so all ships stop at waypoint Z
+    // Use absolute Z distance for braking (not 3D distance) so all ships stop at waypoint Z
     // This ensures back row ships arrive later since they start further back
-    const zDistanceToDestination =
-      autopilot.destination.z - transform.position.z;
+    // Using absolute value allows convoy to travel in either Z direction
+    const zDistanceToDestination = Math.abs(
+      autopilot.destination.z - transform.position.z,
+    );
 
     // Braking strategy based on Z distance to waypoint:
     // - Full brake when very close to stop at waypoint Z

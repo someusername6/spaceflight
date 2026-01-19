@@ -160,8 +160,8 @@ export function syncScene(renderer: Renderer, world: World, alpha = 1): void {
     if (!isMissile && !isDecoy && !isShipEntity && !isStructure) continue;
 
     seenEntities.add(entity);
-    // Query guarantees this component exists
-    const transform = getComponent(world, entity, 'transform')!;
+    const transform = getComponent(world, entity, 'transform');
+    if (!transform) continue;
     const faction = getComponent(world, entity, 'faction');
 
     let mesh = entityMeshes.get(entity);

@@ -55,14 +55,14 @@ export function beamSystem(world: World, dt: number): void {
     const health = getComponent(world, entity, 'health');
     if (health && isDead(health)) continue;
 
-    // Query guarantees these components exist
-    const transform = getComponent(world, entity, 'transform')!;
+    const transform = getComponent(world, entity, 'transform');
+    const heat = getComponent(world, entity, 'heat');
+    if (!transform || !heat) continue;
     const weapons = getComponent(
       world,
       entity,
       'primaryWeapons',
     ) as PrimaryWeapons;
-    const heat = getComponent(world, entity, 'heat')!;
     const player = getComponent(world, entity, 'playerControlled');
 
     // Check if firing and calculate beam direction

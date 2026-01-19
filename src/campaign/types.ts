@@ -81,7 +81,11 @@ export interface StoredShip {
 }
 
 /** Mission types supported by the game */
-export type MissionType = 'elimination' | 'escort' | 'station-defense';
+export type MissionType =
+  | 'elimination'
+  | 'escort'
+  | 'station-defense'
+  | 'ambush';
 
 /** Escort mission specific data */
 export interface EscortMissionData {
@@ -145,6 +149,53 @@ export interface StationDefenseMissionData {
   initialAllies?: ContractEnemy[];
 }
 
+/** Escort role determines engagement behavior in ambush missions */
+export type EscortRole = 'aggressive' | 'defensive';
+
+/** Escort ship configuration for ambush missions */
+export interface AmbushEscort {
+  archetype: string;
+  skill: SkillLevel;
+  count: number;
+  /**
+   * Escort role determines proactive behavior:
+   * - 'aggressive': Engages player within ~600m, plus all reactive triggers
+   * - 'defensive': Only reacts to damage/lock triggers, stays near convoy
+   */
+  role: EscortRole;
+}
+
+/** Ambush mission specific data - player attacks enemy convoy */
+export interface AmbushMissionData {
+  /** Number of enemy convoy ships to destroy */
+  convoySize: number;
+  /** Ship type for convoy ships ('freighter' | 'transport') */
+  convoyType: 'freighter' | 'transport';
+  /**
+   * Distance from origin where convoy STARTS (positive Z, behind player).
+   * Convoy travels from +Z toward -Z (escape zone).
+   * Default: 500
+   */
+  convoyStartDistance?: number;
+  /**
+   * Distance from origin where convoy ESCAPES (negative Z).
+   * Convoy travels from convoyStartDistance toward -escapeZoneDistance.
+   * Example: convoyStartDistance=500, escapeZoneDistance=3500 → convoy travels 4000m total
+   */
+  escapeZoneDistance: number;
+  /** Radius of escape zone trigger (meters) */
+  escapeZoneRadius: number;
+  /**
+   * Distance threshold for convoy "stopped" behavior.
+   * If no escorts within this distance AND player within this distance,
+   * convoy ships will halt permanently.
+   * Default: 500
+   */
+  convoyStopDistance?: number;
+  /** Enemy escort ships that protect the convoy (with explicit roles) */
+  escorts: AmbushEscort[];
+}
+
 /** A contract (mission) available to accept */
 export interface Contract {
   id: string;
@@ -161,6 +212,8 @@ export interface Contract {
   escortData?: EscortMissionData;
   /** Station defense data - required when missionType === 'station-defense' */
   stationDefenseData?: StationDefenseMissionData;
+  /** Ambush mission data - required when missionType === 'ambush' */
+  ambushData?: AmbushMissionData;
   reward: number; // credits
 }
 

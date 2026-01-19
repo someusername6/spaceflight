@@ -41,10 +41,11 @@ export function setFactionBehaviorMode(
   mode: AIBehaviorMode,
 ): void {
   for (const entity of queryEntities(world, ['aiControlled', 'faction'])) {
-    const entityFaction = getComponent(world, entity, 'faction')!;
-    if (entityFaction.faction !== faction) continue;
+    const entityFaction = getComponent(world, entity, 'faction');
+    if (!entityFaction || entityFaction.faction !== faction) continue;
 
-    const ai = getComponent(world, entity, 'aiControlled')!;
+    const ai = getComponent(world, entity, 'aiControlled');
+    if (!ai) continue;
     ai.behaviorMode = mode;
   }
 }
@@ -136,7 +137,8 @@ export function spawnConvoyShips(
 
   let shipIndex = 0;
   for (let row = 0; row < rowDistribution.length; row++) {
-    const shipsInThisRow = rowDistribution[row]!;
+    const shipsInThisRow = rowDistribution[row];
+    if (shipsInThisRow === undefined) continue;
 
     for (let posInRow = 0; posInRow < shipsInThisRow; posInRow++) {
       const xOffset = getXOffsetInRow(posInRow, shipsInThisRow, xSpacing);
@@ -322,7 +324,9 @@ export function createEscortTickCallback(
   missionEndState: MissionEndState,
   executeMissionEnd: () => Promise<void>,
 ): (world: World) => void {
-  const escortData = contract.escortData!;
+  const escortData = contract.escortData;
+  if (!escortData)
+    throw new Error('createEscortTickCallback requires escortData');
   const escapeZonePosition = escortState.escapeZonePosition.clone();
 
   return (world: World) => {

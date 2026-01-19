@@ -83,9 +83,9 @@ export function findBeamHit(
     const otherHealth = getComponent(world, other, 'health');
     if (otherHealth && isDead(otherHealth)) continue;
 
-    // Query guarantees these components exist
-    const otherTransform = getComponent(world, other, 'transform')!;
-    const collision = getComponent(world, other, 'collision')!;
+    const otherTransform = getComponent(world, other, 'transform');
+    const collision = getComponent(world, other, 'collision');
+    if (!otherTransform || !collision) continue;
 
     // Simple sphere intersection test
     const distance = rayIntersectsSphere(
@@ -143,8 +143,9 @@ export function findAllBeamHits(
     const otherHealth = getComponent(world, other, 'health');
     if (otherHealth && isDead(otherHealth)) continue;
 
-    const otherTransform = getComponent(world, other, 'transform')!;
-    const collision = getComponent(world, other, 'collision')!;
+    const otherTransform = getComponent(world, other, 'transform');
+    const collision = getComponent(world, other, 'collision');
+    if (!otherTransform || !collision) continue;
 
     const distance = rayIntersectsSphere(
       rayOrigin,

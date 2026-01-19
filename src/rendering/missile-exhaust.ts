@@ -103,8 +103,9 @@ export function updateExhaustRenderer(
   for (const entity of queryEntities(world, ['missile', 'transform'])) {
     seenMissiles.add(entity);
 
-    const missile = getComponent(world, entity, 'missile')!;
-    const transform = getComponent(world, entity, 'transform')!;
+    const missile = getComponent(world, entity, 'missile');
+    const transform = getComponent(world, entity, 'transform');
+    if (!missile || !transform) continue;
 
     let exhaust = renderer.exhausts.get(entity);
 

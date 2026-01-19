@@ -25,9 +25,9 @@ export function decoySystem(world: World, dt: number): void {
   const toRemove: Entity[] = [];
 
   for (const entity of queryEntities(world, ['decoy', 'transform'])) {
-    // Query guarantees these components exist
-    const decoy = getComponent(world, entity, 'decoy')!;
-    const transform = getComponent(world, entity, 'transform')!;
+    const decoy = getComponent(world, entity, 'decoy');
+    const transform = getComponent(world, entity, 'transform');
+    if (!decoy || !transform) continue;
 
     // Update lifetime
     decoy.timeRemaining -= dt;
@@ -54,7 +54,7 @@ export function decoySystem(world: World, dt: number): void {
         // Destroy missiles that collide with decoy
         if (hasComponent(world, other, 'missile')) {
           // Deal enough damage to destroy the missile (they have 1 HP)
-          dealDamage(world, other, 10, transform.position);
+          dealDamage(world, other, 10, transform.position, 1, 1, decoy.owner);
           // Decoy is consumed when destroying a missile
           toRemove.push(entity);
           break;

@@ -8,6 +8,7 @@
 import { Quaternion, Vector3 } from 'three';
 import { createCollision } from '../components/collision';
 import { createConvoyAutopilot, createConvoyShip } from '../components/convoy';
+import { createDamageTracking } from '../components/damage-tracking';
 import { createFaction } from '../components/faction';
 import { createHealth } from '../components/health';
 import { createPhysics } from '../components/physics';
@@ -81,11 +82,24 @@ export function getConvoyCollisionRadius(shipType: ConvoyShipType): number {
   return stats.collisionRadius;
 }
 
+/** Options for creating convoy ships (ambush missions need different settings) */
+export interface ConvoyShipOptions {
+  /** Faction of the convoy ship. Default: Neutral (for escort missions) */
+  faction?: Faction;
+  /** For ambush missions: distance threshold for stop behavior */
+  stopDistance?: number;
+  /** For ambush missions: add damage tracking for escort aggro */
+  addDamageTracking?: boolean;
+}
+
 /**
  * Create a convoy ship entity.
  *
- * Convoy ships are Neutral faction, have no weapons, and use
- * a simple autopilot to fly toward the escape zone destination.
+ * Convoy ships have no weapons and use a simple autopilot to fly toward
+ * the escape zone destination.
+ *
+ * For escort missions: Neutral faction (default)
+ * For ambush missions: Enemy faction with stopDistance and damageTracking
  */
 export function createConvoyShipEntity(
   world: World,
@@ -95,6 +109,7 @@ export function createConvoyShipEntity(
   escapeZoneRadius: number,
   index: number,
   jumpChargeTime: number,
+  options: ConvoyShipOptions = {},
 ): Entity {
   const stats = getConvoyStats(shipType);
   const entity = createEntity(world);
@@ -130,11 +145,13 @@ export function createConvoyShipEntity(
   );
   addComponent(world, entity, createShieldHit());
 
-  // Neutral faction - non-combatant (enemies must explicitly target via convoy-hunter mode)
-  addComponent(world, entity, createFaction(Faction.Neutral));
+  // Faction: Neutral for escort (default), Enemy for ambush
+  const faction = options.faction ?? Faction.Neutral;
+  addComponent(world, entity, createFaction(faction));
 
   // Ship identity for rendering and HUD
-  const callsign = `Convoy ${index + 1}`;
+  const callsign =
+    faction === Faction.Enemy ? `Target ${index + 1}` : `Convoy ${index + 1}`;
   addComponent(world, entity, createShipIdentity(shipType, callsign));
 
   addComponent(world, entity, createCollision(stats.collisionRadius));
@@ -144,12 +161,21 @@ export function createConvoyShipEntity(
   addHullColliderFromClass(world, entity, shipType, true);
 
   // Convoy-specific components
-  addComponent(world, entity, createConvoyShip(index, jumpChargeTime));
+  addComponent(
+    world,
+    entity,
+    createConvoyShip(index, jumpChargeTime, options.stopDistance),
+  );
   addComponent(
     world,
     entity,
     createConvoyAutopilot(destination, escapeZoneRadius),
   );
+
+  // Add damage tracking for ambush missions (escort aggro)
+  if (options.addDamageTracking) {
+    addComponent(world, entity, createDamageTracking());
+  }
 
   return entity;
 }

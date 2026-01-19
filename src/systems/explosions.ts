@@ -15,9 +15,9 @@ import type { World } from '../core/types';
 /** Explosion system - updates explosion lifetimes */
 export function explosionSystem(world: World, dt: number): void {
   for (const entity of queryEntities(world, ['explosion', 'transform'])) {
-    // Query guarantees these components exist
-    const explosion = getComponent(world, entity, 'explosion')!;
-    const transform = getComponent(world, entity, 'transform')!;
+    const explosion = getComponent(world, entity, 'explosion');
+    const transform = getComponent(world, entity, 'transform');
+    if (!explosion || !transform) continue;
 
     // Follow source entity if it still exists (for coasting dying ships)
     if (

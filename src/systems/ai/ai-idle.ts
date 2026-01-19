@@ -7,22 +7,29 @@
  * - convoy-hunter: Enemies prioritize convoy ships
  * - station-hunter: Enemies prioritize station
  * - station-defense: Stay near station, protect it from threats
+ * - convoy-interceptor: Wingmen attack escorts, then approach enemy convoy to stop it
  */
 
 import type { Vector3 } from 'three';
 import { type AIControlled, AIState } from '../../components/ai';
 import { Faction } from '../../components/faction';
 import type { Transform } from '../../components/transform';
+import { entityExists, getComponent, queryEntities } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
 import { setRotationInputs } from './ai-movement';
 import {
   findNearestConvoyShip,
   findNearestEnemy,
+  findNearestEnemyConvoyShip,
+  findNearestEnemyEscort,
   findNearestThreatToConvoy,
   findNearestThreatToPlayer,
   findNearestThreatToStation,
   findStation,
 } from './ai-utils';
+
+/** Time window for damage tracking to trigger aggro (seconds) */
+const DAMAGE_AGGRO_WINDOW = 10;
 
 /** Distance at which defensive ships disengage from combat to follow convoy (meters) */
 export const DEFENSIVE_DISENGAGE_DISTANCE = 600;
@@ -36,6 +43,9 @@ const STATION_DEFENSE_FOLLOW_DISTANCE = 600;
 /** Minimum distance to keep from station center to avoid collision (meters) */
 const STATION_AVOID_DISTANCE = 350;
 
+/** Distance at which convoy-interceptor ships approach enemy convoy (meters) */
+const CONVOY_INTERCEPT_APPROACH_DISTANCE = 300;
+
 /** Idle state - look for enemies based on behavior mode */
 export function updateIdle(
   world: World,
@@ -45,6 +55,7 @@ export function updateIdle(
   transform: Transform,
   convoyCentroid: Vector3 | null,
   stationPosition: Vector3 | null,
+  enemyConvoyCentroid: Vector3 | null,
 ): void {
   let target: Entity | null = null;
   const mode = ai.behaviorMode ?? 'standard';
@@ -117,6 +128,65 @@ export function updateIdle(
       break;
     }
 
+    case 'convoy-guard-aggressive':
+      // Enemy escorts: proactively attack player/wingmen
+      // Attack nearest enemy (player faction) - aggressive pursuit
+      target = findNearestEnemy(world, entity, faction);
+      break;
+
+    case 'convoy-guard-defensive': {
+      // Enemy escorts: reactive only - stay near convoy, only engage if provoked
+      // Check damage tracking on self and nearby convoy ships
+      const gameTime = world.systemState.gameTime;
+
+      // Check if self was attacked recently
+      const selfTracking = getComponent(world, entity, 'damageTracking');
+      if (selfTracking && selfTracking.lastAttacker !== null) {
+        const attacker = selfTracking.lastAttacker;
+        if (
+          gameTime - selfTracking.lastDamageTime < DAMAGE_AGGRO_WINDOW &&
+          entityExists(world, attacker)
+        ) {
+          target = attacker;
+          break;
+        }
+      }
+
+      // Check if any Neutral convoy ship was attacked (defend the convoy)
+      for (const convoy of queryEntities(world, [
+        'convoyShip',
+        'faction',
+        'damageTracking',
+      ])) {
+        const convoyFaction = getComponent(world, convoy, 'faction');
+        if (convoyFaction?.faction !== Faction.Neutral) continue;
+
+        const tracking = getComponent(world, convoy, 'damageTracking');
+        if (tracking && tracking.lastAttacker !== null) {
+          const attacker = tracking.lastAttacker;
+          if (
+            gameTime - tracking.lastDamageTime < DAMAGE_AGGRO_WINDOW &&
+            entityExists(world, attacker)
+          ) {
+            target = attacker;
+            break;
+          }
+        }
+      }
+      break;
+    }
+
+    case 'convoy-interceptor':
+      // Wingmen in ambush missions: prioritize escorts, then approach convoy
+      // First: attack enemy escorts (non-convoy enemy ships)
+      target = findNearestEnemyEscort(world, entity, faction);
+      if (target === null) {
+        // No escorts - target enemy convoy ships to approach them
+        // (AI will pursue and get close enough to trigger stop)
+        target = findNearestEnemyConvoyShip(world, entity);
+      }
+      break;
+
     default:
       // Standard behavior: wingmen protect player, enemies attack nearest
       if (faction === Faction.Player) {
@@ -167,6 +237,20 @@ export function updateIdle(
     // Move toward station if too far away
     if (distanceToStation > STATION_DEFENSE_FOLLOW_DISTANCE) {
       const direction = stationPosition
+        .clone()
+        .sub(transform.position)
+        .normalize();
+      setRotationInputs(ai, transform, direction);
+      ai.input.accelerate = true;
+    }
+  }
+
+  // No target found - convoy-interceptor ships should approach enemy convoy
+  if (mode === 'convoy-interceptor' && enemyConvoyCentroid) {
+    const distanceToConvoy = transform.position.distanceTo(enemyConvoyCentroid);
+    // Approach convoy if too far away (to trigger stop behavior)
+    if (distanceToConvoy > CONVOY_INTERCEPT_APPROACH_DISTANCE) {
+      const direction = enemyConvoyCentroid
         .clone()
         .sub(transform.position)
         .normalize();

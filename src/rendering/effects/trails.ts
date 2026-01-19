@@ -165,8 +165,9 @@ export function updateBoltRenderer(
   for (const entity of queryEntities(world, ['projectile', 'transform'])) {
     seenProjectiles.add(entity);
 
-    const projectile = getComponent(world, entity, 'projectile')!;
-    const transform = getComponent(world, entity, 'transform')!;
+    const projectile = getComponent(world, entity, 'projectile');
+    const transform = getComponent(world, entity, 'transform');
+    if (!projectile || !transform) continue;
 
     let projectileBolt = renderer.bolts.get(entity);
 

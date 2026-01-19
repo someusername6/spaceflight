@@ -14,12 +14,15 @@ import { getComponent, queryEntities } from '../core/ecs';
 import type { World } from '../core/types';
 import { SIMULATION_SYSTEMS } from '../game';
 import { InputPlayer } from '../input/input-recorder';
+import type { AmbushMissionState } from '../systems/ambush-mission';
 import type { EscortMissionState } from '../systems/escort-mission';
 import { decodeRLE } from './compression';
 import {
+  isReplayAmbushComplete,
   isReplayEscortComplete,
   isReplayMissionComplete,
   setupReplayWorld,
+  tickReplayAmbush,
   tickReplayEscort,
   tickReplayWaves,
 } from './mission-setup';
@@ -45,6 +48,7 @@ export class ReplayPlayback {
   private missionType: MissionType;
   private waveState: WaveState | null = null;
   private escortState: EscortMissionState | null = null;
+  private ambushState: AmbushMissionState | null = null;
   private inputPlayer: InputPlayer;
   private currentTick: number = 0;
   private playbackSpeed: number = 1;
@@ -78,6 +82,7 @@ export class ReplayPlayback {
     this.missionType = setup.missionType;
     this.waveState = setup.waveState ?? null;
     this.escortState = setup.escortState ?? null;
+    this.ambushState = setup.ambushState ?? null;
   }
 
   /**
@@ -97,6 +102,7 @@ export class ReplayPlayback {
     this.missionType = setup.missionType;
     this.waveState = setup.waveState ?? null;
     this.escortState = setup.escortState ?? null;
+    this.ambushState = setup.ambushState ?? null;
     this.currentTick = 0;
   }
 
@@ -144,8 +150,10 @@ export class ReplayPlayback {
       system(this.world, TICK_SEC);
     }
 
-    // Process mission-specific logic (wave spawning or escort)
-    if (this.missionType === 'escort' && this.escortState) {
+    // Process mission-specific logic (wave spawning, escort, or ambush)
+    if (this.missionType === 'ambush' && this.ambushState) {
+      tickReplayAmbush(this.world, this.ambushState);
+    } else if (this.missionType === 'escort' && this.escortState) {
       tickReplayEscort(this.world, this.escortState, this.mission, TICK_SEC);
     } else if (this.waveState) {
       tickReplayWaves(this.world, this.waveState, this.mission, TICK_SEC);
@@ -300,6 +308,9 @@ export class ReplayPlayback {
   }
 
   isComplete(): boolean {
+    if (this.missionType === 'ambush' && this.ambushState) {
+      return isReplayAmbushComplete(this.ambushState);
+    }
     if (this.missionType === 'escort' && this.escortState) {
       return isReplayEscortComplete(this.escortState);
     }

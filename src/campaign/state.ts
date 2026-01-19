@@ -293,8 +293,8 @@ export function advanceSector(state: CampaignState): CampaignState {
 }
 
 /** Get the cost to refresh contracts (scales with sector) */
-export function getContractRefreshCost(sector: number): number {
-  return 500 * sector;
+export function getContractRefreshCost(_sector: number): number {
+  return 1; // TODO: restore to 500 * sector after playtesting
 }
 
 /** Refresh available contracts (increment refresh counter, deduct cost) */

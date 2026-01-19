@@ -235,6 +235,7 @@ export function createMissionEndExecutor(
         salvageResult,
         baseReward,
         missionEndState.escortResults,
+        missionEndState.ambushResults,
       );
     }
   };

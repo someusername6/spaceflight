@@ -99,8 +99,8 @@ export function createStationDefenseMissionState(
 /** Check if player is dead */
 function isPlayerDead(world: World): boolean {
   for (const entity of queryEntities(world, ['playerControlled', 'health'])) {
-    const health = getComponent(world, entity, 'health')!;
-    if (!isDead(health)) return false;
+    const health = getComponent(world, entity, 'health');
+    if (health && !isDead(health)) return false;
   }
   return true;
 }

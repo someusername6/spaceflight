@@ -66,8 +66,9 @@ export function targetingSystem(world: World, _dt: number): void {
       entity,
       'playerControlled',
     ) as PlayerControlled;
-    const targeting = getComponent(world, entity, 'targeting')!;
-    const transform = getComponent(world, entity, 'transform')!;
+    const targeting = getComponent(world, entity, 'targeting');
+    const transform = getComponent(world, entity, 'transform');
+    if (!targeting || !transform) continue;
     const faction = getComponent(world, entity, 'faction');
 
     const selfFaction = faction?.faction ?? Faction.Player;
@@ -153,8 +154,8 @@ function updateValidTargets(
     if (!otherFaction || !areEnemies(selfFaction, otherFaction.faction))
       continue;
 
-    // Query guarantees transform component exists
-    const otherTransform = getComponent(world, other, 'transform')!;
+    const otherTransform = getComponent(world, other, 'transform');
+    if (!otherTransform) continue;
     const distance = selfTransform.position.distanceTo(otherTransform.position);
 
     targetCollector.push(getTargetCollectorInfo(world, other, distance));

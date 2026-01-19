@@ -86,7 +86,7 @@ function countEntities(world, wingmenEntities = null) {
       if (identity && !isDead(health)) {
         playerTeam++;
         // Count original wingmen separately
-        if (wingmenEntities && wingmenEntities.has(entity)) {
+        if (wingmenEntities?.has(entity)) {
           wingmenAlive++;
         }
       }

@@ -28,6 +28,7 @@ import {
   countEngagingTarget,
   findNearestEnemy,
   getConvoyCentroid,
+  getEnemyConvoyCentroid,
   getStationPosition,
   isPlayer,
   setAITarget,
@@ -44,6 +45,9 @@ export function aiSystem(world: World, dt: number): void {
   // Cache station position once per tick (used by station-defense wingmen and station-hunters)
   const stationPosition = getStationPosition(world);
 
+  // Cache enemy convoy centroid once per tick (used by convoy-interceptor wingmen in ambush missions)
+  const enemyConvoyCentroid = getEnemyConvoyCentroid(world);
+
   for (const entity of queryEntities(world, [
     'aiControlled',
     'transform',
@@ -54,11 +58,11 @@ export function aiSystem(world: World, dt: number): void {
     const health = getComponent(world, entity, 'health');
     if (health && isDead(health)) continue;
 
-    // Query guarantees these components exist
-    const ai = getComponent(world, entity, 'aiControlled')!;
-    const transform = getComponent(world, entity, 'transform')!;
-    const physics = getComponent(world, entity, 'physics')!;
-    const faction = getComponent(world, entity, 'faction')!;
+    const ai = getComponent(world, entity, 'aiControlled');
+    const transform = getComponent(world, entity, 'transform');
+    const physics = getComponent(world, entity, 'physics');
+    const faction = getComponent(world, entity, 'faction');
+    if (!ai || !transform || !physics || !faction) continue;
 
     // Reset inputs each frame (behaviors will set them as needed)
     ai.input.pitch = 0;
@@ -119,6 +123,7 @@ export function aiSystem(world: World, dt: number): void {
           transform,
           convoyCentroid,
           stationPosition,
+          enemyConvoyCentroid,
         );
         break;
       case AIState.Pursue:

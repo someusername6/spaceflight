@@ -18,6 +18,7 @@ import type { AimError } from '../components/aim-error';
 import type { Collision } from '../components/collision';
 import type { CombatStats } from '../components/combat-stats';
 import type { ConvoyAutopilot, ConvoyShip } from '../components/convoy';
+import type { DamageTracking } from '../components/damage-tracking';
 import type { Decoy } from '../components/decoy';
 import type { Explosion } from '../components/explosion';
 import type { FactionComponent } from '../components/faction';
@@ -78,9 +79,10 @@ export interface ComponentRegistry {
   shieldHit: ShieldHit;
   combatStats: CombatStats;
 
-  // Convoy components (escort missions)
+  // Convoy components (escort and ambush missions)
   convoyShip: ConvoyShip;
   convoyAutopilot: ConvoyAutopilot;
+  damageTracking: DamageTracking;
 
   // Structure components
   structure: Structure;

@@ -76,10 +76,11 @@ export function setEnemiesToStationHunter(
   playerThreatRatio: number = 0,
 ): void {
   for (const entity of queryEntities(world, ['aiControlled', 'faction'])) {
-    const faction = getComponent(world, entity, 'faction')!;
-    if (faction.faction !== Faction.Enemy) continue;
+    const faction = getComponent(world, entity, 'faction');
+    if (!faction || faction.faction !== Faction.Enemy) continue;
 
-    const ai = getComponent(world, entity, 'aiControlled')!;
+    const ai = getComponent(world, entity, 'aiControlled');
+    if (!ai) continue;
     // Only set if not already assigned (preserves existing mode)
     if (ai.behaviorMode !== undefined) continue;
 

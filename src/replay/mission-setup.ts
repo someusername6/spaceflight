@@ -7,6 +7,10 @@
 
 import { Quaternion, Vector3 } from 'three';
 import {
+  getAmbushPlayerSpawn,
+  setupAmbushMission,
+} from '../campaign/mission/ambush-launcher';
+import {
   setFactionBehaviorMode,
   setupEscortMission,
   spawnEscortEnemy,
@@ -25,6 +29,10 @@ import type { Contract, MissionType } from '../campaign/types';
 import { createWorld } from '../core/ecs';
 import type { World } from '../core/types';
 import { Faction } from '../core/types';
+import {
+  type AmbushMissionState,
+  processAmbushMissionTick,
+} from '../systems/ambush-mission';
 import {
   type EscortMissionState,
   processEscortMissionTick,
@@ -63,6 +71,8 @@ export interface ReplayWorldSetup {
   escortState?: EscortMissionState;
   /** Station defense state for station defense missions */
   stationState?: StationDefenseMissionState;
+  /** Ambush state for ambush missions */
+  ambushState?: AmbushMissionState;
 }
 
 /**
@@ -92,18 +102,30 @@ export function setupReplayWorld(
   // Initialize match stats (for damage tracking)
   initMatchStats(world);
 
-  // Calculate player spawn position
-  // Station defense: 1500m from station, facing station
-  // Other missions: spawn at origin
-  let playerSpawnZ = 0;
-  if (mission.stationDefenseData) {
+  // Determine mission type early (needed for spawn position)
+  const effectiveMissionType =
+    missionType ?? mission.missionType ?? 'elimination';
+
+  // Calculate player spawn position based on mission type
+  let playerPos: Vector3;
+  let playerRot: Quaternion;
+
+  if (effectiveMissionType === 'ambush' && mission.ambushData) {
+    // Ambush: spawn to side of convoy path
+    const spawn = getAmbushPlayerSpawn(mission.ambushData);
+    playerPos = spawn.position;
+    playerRot = spawn.rotation;
+  } else if (mission.stationDefenseData) {
+    // Station defense: 1500m from station, facing station
     const stationZ = mission.stationDefenseData.stationDistance;
-    playerSpawnZ = stationZ + 1500;
+    playerPos = new Vector3(0, 0, stationZ + 1500);
+    playerRot = new Quaternion();
+  } else {
+    // Other missions: spawn at origin facing -Z
+    playerPos = new Vector3(0, 0, 0);
+    playerRot = new Quaternion();
   }
 
-  // Spawn player facing -Z
-  const playerPos = new Vector3(0, 0, playerSpawnZ);
-  const playerRot = new Quaternion();
   spawnPlayerFromReplayLoadout(world, playerLoadout, playerPos, playerRot);
 
   // Spawn wingmen from replay data
@@ -123,9 +145,12 @@ export function setupReplayWorld(
     );
   }
 
-  // Determine mission type (from replay metadata or contract, defaults to elimination)
-  const effectiveMissionType =
-    missionType ?? mission.missionType ?? 'elimination';
+  if (effectiveMissionType === 'ambush' && mission.ambushData) {
+    // Setup ambush mission (spawns enemy convoy, escorts)
+    const ambushState = setupAmbushMission(world, mission);
+
+    return { world, mission, missionType: 'ambush', ambushState };
+  }
 
   if (effectiveMissionType === 'escort' && mission.escortData) {
     // Set wingmen to defensive mode (same as live gameplay)
@@ -240,4 +265,25 @@ export function isReplayStationDefenseComplete(
   stationState: StationDefenseMissionState,
 ): boolean {
   return stationState.completed;
+}
+
+/**
+ * Process ambush mission logic during replay tick.
+ * Uses shared processAmbushMissionTick for determinism with live gameplay.
+ */
+export function tickReplayAmbush(
+  world: World,
+  ambushState: AmbushMissionState,
+): void {
+  // Use shared ambush tick logic (identical to live gameplay)
+  processAmbushMissionTick(world, ambushState);
+}
+
+/**
+ * Check if the ambush replay mission is complete.
+ */
+export function isReplayAmbushComplete(
+  ambushState: AmbushMissionState,
+): boolean {
+  return ambushState.completed;
 }

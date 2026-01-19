@@ -37,6 +37,9 @@ export type AIBehaviorMode =
   | 'standard'
   | 'defensive'
   | 'convoy-hunter'
+  | 'convoy-guard-aggressive' // Ambush: proactive + reactive escort
+  | 'convoy-guard-defensive' // Ambush: reactive only escort
+  | 'convoy-interceptor' // Ambush: player wingmen attack escorts, then stop convoy
   | 'station-hunter'
   | 'station-defense';
 
@@ -68,6 +71,8 @@ export interface AIControlled extends ComponentBase {
    * - 'standard': Normal targeting (wingmen protect player, enemies attack nearest)
    * - 'defensive': Stay near convoy, only engage nearby threats
    * - 'convoy-hunter': Prioritize convoy ships over combat targets
+   * - 'convoy-guard-aggressive': Protect convoy, engage player within 600m proactively
+   * - 'convoy-guard-defensive': Protect convoy, only react to damage/lock triggers
    * - 'station-hunter': Prioritize station over combat targets
    * - 'station-defense': Stay near station, protect it from threats
    */

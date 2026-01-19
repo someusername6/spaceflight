@@ -61,9 +61,9 @@ export function countLivingEnemyShips(world: World): number {
     'health',
     'shipIdentity',
   ])) {
-    // Query guarantees these components exist
-    const health = getComponent(world, entity, 'health')!;
-    const faction = getComponent(world, entity, 'faction')!;
+    const health = getComponent(world, entity, 'health');
+    const faction = getComponent(world, entity, 'faction');
+    if (!health || !faction) continue;
     if (isDead(health)) continue;
     if (faction.faction === Faction.Enemy) {
       count++;

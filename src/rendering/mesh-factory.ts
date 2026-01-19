@@ -93,8 +93,10 @@ export function createShipMesh(
   const material = new THREE.MeshPhongMaterial({ color });
 
   // Try to use embedded geometry (built lazily on first use)
-  if (shipClass && isShipClass(shipClass)) {
-    const geometry = getShipGeometry(shipClass).clone();
+  // Map 'freighter' to 'transport' (freighter is a convoy type, not a separate mesh)
+  const mappedClass = shipClass === 'freighter' ? 'transport' : shipClass;
+  if (mappedClass && isShipClass(mappedClass)) {
+    const geometry = getShipGeometry(mappedClass).clone();
     const mesh = new THREE.Mesh(geometry, material);
     mesh.scale.setScalar(SHIP_MODEL_SCALE);
     // Models created in top-down view (nose pointing +Y in Blender)

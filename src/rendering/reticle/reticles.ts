@@ -155,9 +155,9 @@ export function updateReticles(
     const health = getComponent(world, entity, 'health');
     if (health && isDead(health)) continue;
 
-    // Query guarantees these components exist
-    const transform = getComponent(world, entity, 'transform')!;
-    const faction = getComponent(world, entity, 'faction')!;
+    const transform = getComponent(world, entity, 'transform');
+    const faction = getComponent(world, entity, 'faction');
+    if (!transform || !faction) continue;
     const physics = getComponent(world, entity, 'physics');
     const mesh = entityMeshes.get(entity);
     const distance =
