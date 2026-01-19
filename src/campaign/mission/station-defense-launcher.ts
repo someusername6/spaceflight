@@ -65,11 +65,29 @@ export function setFactionBehaviorMode(
 }
 
 /**
- * Set all enemy ships to station-hunter mode.
- * Called after spawning waves to ensure enemies prioritize the station.
+ * Set enemy ships behavior mode based on playerThreatRatio.
+ * Some enemies attack player or player allies (standard), others attack station (station-hunter).
+ *
+ * @param world - Game world
+ * @param playerThreatRatio - Ratio of enemies that target player/allies instead of station (0-1)
  */
-export function setEnemiesToStationHunter(world: World): void {
-  setFactionBehaviorMode(world, Faction.Enemy, 'station-hunter');
+export function setEnemiesToStationHunter(
+  world: World,
+  playerThreatRatio: number = 0,
+): void {
+  for (const entity of queryEntities(world, ['aiControlled', 'faction'])) {
+    const faction = getComponent(world, entity, 'faction')!;
+    if (faction.faction !== Faction.Enemy) continue;
+
+    const ai = getComponent(world, entity, 'aiControlled')!;
+    // Only set if not already assigned (preserves existing mode)
+    if (ai.behaviorMode !== undefined) continue;
+
+    ai.behaviorMode =
+      randomRange(world.prng, 0, 1) < playerThreatRatio
+        ? 'standard' // Attack player or player allies
+        : 'station-hunter'; // Attack station
+  }
 }
 
 /**
@@ -261,7 +279,10 @@ export function setupStationDefenseMission(
     } else {
       // Spawn first wave immediately
       spawnWave(world, firstWave, 0);
-      setEnemiesToStationHunter(world);
+      setEnemiesToStationHunter(
+        world,
+        stationDefenseData.playerThreatRatio ?? 0,
+      );
       logDebug(`[STATION DEFENSE] Wave 1/${state.totalWaves} spawned`);
     }
   }

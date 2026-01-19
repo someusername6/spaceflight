@@ -8,7 +8,7 @@
  * - Fighter: hull=90, shields=65
  * - Defender (tankiest ship): hull=165, shields=130
  * - Convoy transport: hull=600, shields=300
- * - Station: hull=3000-6000, shields=1500-3000 (5-10x convoy)
+ * - Station: hull=20000-30000, shields=7500-15000 (massive structures)
  */
 
 /** Station type identifier */
@@ -33,9 +33,9 @@ export interface StationStats {
  * Medium durability, balanced stats.
  */
 const MINING_STATION_STATS: StationStats = {
-  hull: 5000,
-  shields: 2000,
-  shieldRegen: 50,
+  hull: 12500,
+  shields: 5000,
+  shieldRegen: 125,
   shieldDelay: 5,
   displayName: 'Mining Station',
 };
@@ -45,9 +45,9 @@ const MINING_STATION_STATS: StationStats = {
  * Lower shields but higher hull (thick plating).
  */
 const REFINERY_STATION_STATS: StationStats = {
-  hull: 6000,
-  shields: 1500,
-  shieldRegen: 40,
+  hull: 15000,
+  shields: 3750,
+  shieldRegen: 100,
   shieldDelay: 6,
   displayName: 'Refinery',
 };
@@ -57,9 +57,9 @@ const REFINERY_STATION_STATS: StationStats = {
  * High shields with fast regeneration.
  */
 const MILITARY_STATION_STATS: StationStats = {
-  hull: 4000,
-  shields: 3000,
-  shieldRegen: 80,
+  hull: 10000,
+  shields: 7500,
+  shieldRegen: 200,
   shieldDelay: 4,
   displayName: 'Defense Platform',
 };

@@ -61,9 +61,11 @@ const DEFAULT_MAX_SIMULATION_TIME = 300;
 
 /**
  * Count living entities by faction and type.
+ * @param {Set<number>} [wingmenEntities] - Set of original wingman entity IDs to track separately
  */
-function countEntities(world) {
+function countEntities(world, wingmenEntities = null) {
   let playerTeam = 0;
+  let wingmenAlive = 0;
   let enemies = 0;
   let stationAlive = false;
   let stationHealth = 0;
@@ -81,14 +83,27 @@ function countEntities(world) {
       stationMaxHealth = health.maxHull;
     } else if (faction.faction === Faction.Player) {
       const identity = getComponent(world, entity, 'shipIdentity');
-      if (identity && !isDead(health)) playerTeam++;
+      if (identity && !isDead(health)) {
+        playerTeam++;
+        // Count original wingmen separately
+        if (wingmenEntities && wingmenEntities.has(entity)) {
+          wingmenAlive++;
+        }
+      }
     } else if (faction.faction === Faction.Enemy) {
       const identity = getComponent(world, entity, 'shipIdentity');
       if (identity && !isDead(health)) enemies++;
     }
   }
 
-  return { playerTeam, enemies, stationAlive, stationHealth, stationMaxHealth };
+  return {
+    playerTeam,
+    wingmenAlive,
+    enemies,
+    stationAlive,
+    stationHealth,
+    stationMaxHealth,
+  };
 }
 
 /**
@@ -119,6 +134,8 @@ function runStationDefenseMission(mission, seed, sector, options = {}) {
 
   // Spawn sector-specific player loadout (near station)
   // First ship gets playerControlled component so missionSystem doesn't trigger immediate defeat
+  // Track wingmen entity IDs for survival counting (excludes reinforcements/initial allies)
+  const wingmenEntities = new Set();
   const loadout = SECTOR_LOADOUTS[sector] || SECTOR_LOADOUTS[1];
   loadout.forEach((ship, i) => {
     const x = (i - (loadout.length - 1) / 2) * 50;
@@ -130,6 +147,7 @@ function runStationDefenseMission(mission, seed, sector, options = {}) {
       new Quaternion(),
       ship.skill,
     );
+    wingmenEntities.add(entity);
     // Mark first ship as player-controlled (needed for missionSystem player death check)
     if (i === 0) {
       addComponent(world, entity, { type: 'playerControlled', input: {} });
@@ -144,6 +162,8 @@ function runStationDefenseMission(mission, seed, sector, options = {}) {
     winner: null,
     timeToComplete: 0,
     playerTeamRemaining: 0,
+    wingmenRemaining: 0,
+    wingmenTotal: loadout.length,
     stationHealthRemaining: 0,
     stationHealthPercent: 0,
     reinforcementsArrived: false,
@@ -176,8 +196,9 @@ function runStationDefenseMission(mission, seed, sector, options = {}) {
     );
 
     // Update metrics
-    const counts = countEntities(world);
+    const counts = countEntities(world, wingmenEntities);
     metrics.playerTeamRemaining = counts.playerTeam;
+    metrics.wingmenRemaining = counts.wingmenAlive;
     metrics.stationHealthRemaining = counts.stationHealth;
     metrics.stationHealthPercent =
       counts.stationMaxHealth > 0
@@ -190,7 +211,7 @@ function runStationDefenseMission(mission, seed, sector, options = {}) {
     if (options.debug) {
       if (tick < 3 || tick % 500 === 0) {
         console.log(
-          `  Tick ${tick} (${(tick / TICK_RATE).toFixed(0)}s): station=${counts.stationAlive ? 'alive' : 'dead'} (${metrics.stationHealthPercent.toFixed(0)}%), player=${counts.playerTeam}, enemies=${counts.enemies}, reinforced=${stationState.reinforcementsArrived}`,
+          `  Tick ${tick} (${(tick / TICK_RATE).toFixed(0)}s): station=${counts.stationAlive ? 'alive' : 'dead'} (${metrics.stationHealthPercent.toFixed(0)}%), wingmen=${counts.wingmenAlive}/${loadout.length}, enemies=${counts.enemies}, reinforced=${stationState.reinforcementsArrived}`,
         );
       }
     }
@@ -253,6 +274,9 @@ function runStationDefenseTrials(mission, sector, runs) {
 
   const wins = results.filter((r) => r.winner === 'player');
 
+  // Get wingmen count from first result
+  const wingmenTotal = results[0]?.wingmenTotal ?? 4;
+
   return {
     runs,
     wins: wins.length,
@@ -262,10 +286,11 @@ function runStationDefenseTrials(mission, sector, runs) {
       wins.length > 0
         ? wins.reduce((s, r) => s + r.timeToComplete, 0) / wins.length
         : 0,
-    avgPlayerSurvivors:
+    avgWingmenSurvivors:
       wins.length > 0
-        ? wins.reduce((s, r) => s + r.playerTeamRemaining, 0) / wins.length
+        ? wins.reduce((s, r) => s + r.wingmenRemaining, 0) / wins.length
         : 0,
+    wingmenTotal,
     avgStationHealth:
       wins.length > 0
         ? wins.reduce((s, r) => s + r.stationHealthPercent, 0) / wins.length
@@ -323,40 +348,44 @@ describe('Station Defense Mission Balance', () => {
       console.log(
         `Win Rate: ${results.winRate.toFixed(1)}% (${results.wins}/${results.runs})`,
       );
-      console.log(`Avg Time to Win: ${results.avgTime.toFixed(1)}s`);
       console.log(
-        `Avg Player Survivors: ${results.avgPlayerSurvivors.toFixed(1)}`,
+        `Squad Survival: ${results.avgWingmenSurvivors.toFixed(2)}/${results.wingmenTotal} (on wins)`,
       );
       console.log(
-        `Avg Station Health: ${results.avgStationHealth.toFixed(1)}%`,
+        `Station Health: ${results.avgStationHealth.toFixed(1)}% (on wins)`,
       );
-      console.log(
-        `Reinforcement Arrival Rate: ${results.reinforcementRate.toFixed(1)}%`,
-      );
-      console.log(`Timeouts: ${results.timeouts}`);
 
-      // Balance targets (same as other mission types)
+      // Balance targets: squad = player + wingmen (4 total in S1)
+      // Targets are for 4-ship squad
       const targets = {
-        easy: { minWin: 75, maxWin: 95 },
-        medium: { minWin: 60, maxWin: 80 },
-        hard: { minWin: 45, maxWin: 65 },
+        easy: { minWin: 75, maxWin: 95, minSquad: 3.0, maxSquad: 3.5 },
+        medium: { minWin: 60, maxWin: 80, minSquad: 2.5, maxSquad: 3.0 },
+        hard: { minWin: 45, maxWin: 65, minSquad: 2.0, maxSquad: 2.5 },
       };
       const target = targets[mission.difficulty];
 
-      // Report status
+      // Report win rate status
+      let winStatus = 'BALANCED';
       if (results.winRate < target.minWin) {
-        console.log(
-          `STATUS: TOO HARD (target ${target.minWin}-${target.maxWin}%)`,
-        );
+        winStatus = 'TOO HARD';
       } else if (results.winRate > target.maxWin) {
-        console.log(
-          `STATUS: TOO EASY (target ${target.minWin}-${target.maxWin}%)`,
-        );
-      } else {
-        console.log(
-          `STATUS: BALANCED (target ${target.minWin}-${target.maxWin}%)`,
-        );
+        winStatus = 'TOO EASY';
       }
+
+      // Report squad survival status
+      let squadStatus = 'BALANCED';
+      if (results.avgWingmenSurvivors < target.minSquad) {
+        squadStatus = 'TOO FEW';
+      } else if (results.avgWingmenSurvivors > target.maxSquad) {
+        squadStatus = 'TOO MANY';
+      }
+
+      console.log(
+        `WIN RATE: ${winStatus} (target ${target.minWin}-${target.maxWin}%)`,
+      );
+      console.log(
+        `SQUAD: ${squadStatus} (target ${target.minSquad}-${target.maxSquad})`,
+      );
 
       // Assert win rate is non-zero (mission is completable)
       assert.ok(

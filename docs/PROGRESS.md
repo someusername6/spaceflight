@@ -115,5 +115,28 @@ Weapons (projectiles, missiles, beams, decoys), shields, AI (states, behaviors, 
   - `logDebug()` - Debug-only output (controlled via localStorage)
   - `logWarn()`, `logError()` - Always-visible warnings/errors
 
-### 5.5 Remaining (Planned)
+### 5.5 Escort & Station Defense Balance ✅
+- **playerThreatRatio Parameter**: Controls enemy targeting split between player/allies and objective
+  - `EscortMissionData.playerThreatRatio` and `StationDefenseMissionData.playerThreatRatio`
+  - Range 0-1: 0 = all enemies attack objective, 1 = all enemies attack player/allies
+  - Applied via PRNG for deterministic behavior mode assignment
+- **Balance Targets** (same as elimination missions):
+  - Easy: 80-90% win rate, 3.0-3.5 wingman survival on wins
+  - Medium: 70-80% win rate, 2.5-3.0 wingman survival on wins
+  - Hard: 60-70% win rate, 2.0-2.5 wingman survival on wins
+- **Recommended Ratios** (tuned per difficulty):
+  - Easy: 0.15 (15% attack player/allies, 85% attack objective)
+  - Medium: 0.25 (25% attack player/allies, 75% attack objective)
+  - Hard: 0.35 (35% attack player/allies, 65% attack objective)
+- **Victory Conditions**:
+  - Escort: Binary (≥1 convoy ship escapes = victory), reward scales with convoy survival
+  - Station Defense: Binary (station survives = victory), reward scales with station health
+- **Implementation Files**:
+  - `src/campaign/types.ts` - Type definitions
+  - `src/campaign/mission/escort-launcher.ts` - Applies ratio during enemy spawn
+  - `src/campaign/mission/station-defense-launcher.ts` - Applies ratio to wave spawns
+  - `src/ui/screens/missions/sector*/escort.ts` - Per-mission ratio values
+  - `src/ui/screens/missions/sector*/station-defense.ts` - Per-mission ratio values
+
+### 5.6 Remaining (Planned)
 Procedural contracts, more ship classes, sound/music.

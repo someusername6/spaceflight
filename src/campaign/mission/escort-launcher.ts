@@ -250,10 +250,13 @@ export function spawnEscortEnemy(
     spec.skill,
   );
 
-  // Set convoy-hunter mode
+  // Set behavior mode based on playerThreatRatio
+  // Some enemies attack player or player allies (standard), others attack convoy (convoy-hunter)
   const ai = getComponent(world, entity, 'aiControlled');
   if (ai) {
-    ai.behaviorMode = 'convoy-hunter';
+    const ratio = escortData.playerThreatRatio ?? 0;
+    ai.behaviorMode =
+      randomRange(world.prng, 0, 1) < ratio ? 'standard' : 'convoy-hunter';
   }
 
   return entity;

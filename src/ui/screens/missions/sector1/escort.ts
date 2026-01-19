@@ -1,6 +1,11 @@
 /**
- * Sector 1: Escort Missions
+ * Sector 1: Escort Missions (target win rates by difficulty)
+ * - Easy: 75-95% win rate, 3.0-3.5 squad survival
+ * - Medium: 60-80% win rate, 2.5-3.0 squad survival
+ * - Hard: 45-65% win rate, 2.0-2.5 squad survival
+ *
  * Convoy protection missions - escort friendly ships to safety.
+ * playerThreatRatio controls enemy targeting split.
  *
  * Sector 1 enemies: gnat, ember, shocker, mantis (rookie/regular skill)
  * Sector 1 wingmen: 4x regular fighters
@@ -19,6 +24,7 @@ export const SECTOR_1_ESCORT: Contract[] = [
     sector: 1,
     missionType: 'escort',
     escortData: {
+      playerThreatRatio: 0.35,
       convoySize: 3,
       convoyType: 'transport',
       escapeZoneDistance: 9350, // (180 - 10) * 55
@@ -26,8 +32,8 @@ export const SECTOR_1_ESCORT: Contract[] = [
       jumpChargeTime: 10,
       spawnInterval: 16,
       enemyPool: [
-        { archetype: 'gnat', skill: 'rookie', count: 1 },
-        { archetype: 'ember', skill: 'rookie', count: 1 },
+        { archetype: 'gnat', skill: 'regular', count: 1 },
+        { archetype: 'ember', skill: 'regular', count: 1 },
       ],
       maxConcurrentEnemies: 4,
       initialSpawnCount: 2,
@@ -44,19 +50,20 @@ export const SECTOR_1_ESCORT: Contract[] = [
     sector: 1,
     missionType: 'escort',
     escortData: {
+      playerThreatRatio: 0.3,
       convoySize: 4,
       convoyType: 'transport',
       escapeZoneDistance: 9240, // (180 - 12) * 55
       escapeZoneRadius: 300,
       jumpChargeTime: 12,
-      spawnInterval: 8,
+      spawnInterval: 7,
       enemyPool: [
-        { archetype: 'shocker', skill: 'rookie', count: 1 },
+        { archetype: 'shocker', skill: 'regular', count: 1 },
         { archetype: 'gnat', skill: 'regular', count: 1 },
         { archetype: 'ember', skill: 'regular', count: 1 },
       ],
-      maxConcurrentEnemies: 5,
-      initialSpawnCount: 3,
+      maxConcurrentEnemies: 6,
+      initialSpawnCount: 4,
       spawnBatchSize: 1,
     },
     reward: 7764,
@@ -70,19 +77,20 @@ export const SECTOR_1_ESCORT: Contract[] = [
     sector: 1,
     missionType: 'escort',
     escortData: {
+      playerThreatRatio: 0.4,
       convoySize: 5,
       convoyType: 'transport',
       escapeZoneDistance: 9240, // (180 - 12) * 55
       escapeZoneRadius: 300,
       jumpChargeTime: 12,
-      spawnInterval: 12,
+      spawnInterval: 6,
       enemyPool: [
-        { archetype: 'mantis', skill: 'rookie', count: 1 },
+        { archetype: 'mantis', skill: 'regular', count: 1 },
         { archetype: 'ember', skill: 'regular', count: 1 },
-        { archetype: 'shocker', skill: 'rookie', count: 1 },
+        { archetype: 'shocker', skill: 'regular', count: 1 },
       ],
-      maxConcurrentEnemies: 5,
-      initialSpawnCount: 3,
+      maxConcurrentEnemies: 6,
+      initialSpawnCount: 4,
       spawnBatchSize: 1,
     },
     reward: 17576,

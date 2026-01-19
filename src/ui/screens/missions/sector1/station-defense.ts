@@ -1,11 +1,14 @@
 /**
- * Sector 1: Station Defense Missions
- * Defend stations from pirate raiders until reinforcements arrive.
+ * Sector 1: Station Defense Missions (target win rates by difficulty)
+ * - Easy: 75-95% win rate, 3.0-3.5 squad survival
+ * - Medium: 60-80% win rate, 2.5-3.0 squad survival
+ * - Hard: 45-65% win rate, 2.0-2.5 squad survival
  *
- * Sector 1 enemies: gnat, ember, shocker, mantis (rookie/regular skill)
- * Sector 1 wingmen: 4x regular fighters
+ * Defend stations from attackers until reinforcements arrive.
+ * playerThreatRatio fixed at 0.3 (30% attack squad, 70% attack station).
  *
  * Station types: mining (balanced), refinery (high hull), military (high shields + initial allies)
+ * Sector 1 enemies: gnat, ember, shocker, mantis (rookie/regular skill)
  */
 
 import type { Contract } from '../../../../campaign/types';
@@ -20,16 +23,25 @@ export const SECTOR_1_STATION_DEFENSE: Contract[] = [
     sector: 1,
     missionType: 'station-defense',
     stationDefenseData: {
+      playerThreatRatio: 0.6,
       stationType: 'mining',
       stationDistance: -400,
       waves: [
         {
-          enemies: [{ archetype: 'gnat', skill: 'rookie', count: 2 }],
-          delay: 15,
+          enemies: [{ archetype: 'gnat', skill: 'regular', count: 4 }],
+          delay: 5,
         },
         {
-          enemies: [{ archetype: 'gnat', skill: 'rookie', count: 2 }],
-          delay: 55,
+          enemies: [{ archetype: 'ember', skill: 'regular', count: 4 }],
+          delay: 25,
+        },
+        {
+          enemies: [{ archetype: 'gnat', skill: 'regular', count: 3 }],
+          delay: 45,
+        },
+        {
+          enemies: [{ archetype: 'ember', skill: 'regular', count: 3 }],
+          delay: 65,
         },
       ],
       reinforcementTime: null,
@@ -51,19 +63,28 @@ export const SECTOR_1_STATION_DEFENSE: Contract[] = [
     sector: 1,
     missionType: 'station-defense',
     stationDefenseData: {
+      playerThreatRatio: 0.75,
       stationType: 'refinery',
       stationDistance: -350,
       waves: [
         {
-          enemies: [{ archetype: 'gnat', skill: 'rookie', count: 2 }],
-          delay: 12,
+          enemies: [{ archetype: 'gnat', skill: 'regular', count: 5 }],
+          delay: 5,
         },
         {
-          enemies: [{ archetype: 'ember', skill: 'rookie', count: 2 }],
-          delay: 40,
+          enemies: [{ archetype: 'ember', skill: 'regular', count: 5 }],
+          delay: 20,
         },
         {
-          enemies: [{ archetype: 'gnat', skill: 'rookie', count: 2 }],
+          enemies: [{ archetype: 'shocker', skill: 'regular', count: 4 }],
+          delay: 35,
+        },
+        {
+          enemies: [{ archetype: 'gnat', skill: 'veteran', count: 4 }],
+          delay: 50,
+        },
+        {
+          enemies: [{ archetype: 'ember', skill: 'veteran', count: 4 }],
           delay: 65,
         },
       ],
@@ -86,29 +107,42 @@ export const SECTOR_1_STATION_DEFENSE: Contract[] = [
     sector: 1,
     missionType: 'station-defense',
     stationDefenseData: {
+      playerThreatRatio: 0.85,
       stationType: 'military',
       stationDistance: -300,
       initialAllies: [{ archetype: 'fighter', skill: 'regular', count: 2 }],
       waves: [
         {
-          enemies: [{ archetype: 'gnat', skill: 'rookie', count: 2 }],
+          enemies: [{ archetype: 'gnat', skill: 'veteran', count: 6 }],
+          delay: 3,
+        },
+        {
+          enemies: [{ archetype: 'ember', skill: 'veteran', count: 6 }],
           delay: 10,
         },
         {
-          enemies: [{ archetype: 'ember', skill: 'rookie', count: 2 }],
-          delay: 35,
+          enemies: [{ archetype: 'shocker', skill: 'veteran', count: 6 }],
+          delay: 17,
         },
         {
-          enemies: [{ archetype: 'shocker', skill: 'rookie', count: 2 }],
-          delay: 60,
+          enemies: [{ archetype: 'mantis', skill: 'veteran', count: 6 }],
+          delay: 24,
         },
         {
-          enemies: [{ archetype: 'gnat', skill: 'regular', count: 2 }],
-          delay: 85,
+          enemies: [{ archetype: 'gnat', skill: 'veteran', count: 6 }],
+          delay: 31,
+        },
+        {
+          enemies: [{ archetype: 'ember', skill: 'veteran', count: 6 }],
+          delay: 38,
+        },
+        {
+          enemies: [{ archetype: 'shocker', skill: 'veteran', count: 6 }],
+          delay: 45,
         },
       ],
       reinforcementTime: null,
-      reinforcementHealthThreshold: 0.25,
+      reinforcementHealthThreshold: 0.2,
       reinforcementCount: 4,
       reinforcementPool: [
         { archetype: 'fighter', skill: 'veteran', count: 1 },

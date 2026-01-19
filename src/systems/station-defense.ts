@@ -201,7 +201,10 @@ export function processStationDefenseMissionTick(
       const nextWave = waves[state.currentWave];
       if (nextWave) {
         spawnWave(world, nextWave, state.currentWave);
-        setEnemiesToStationHunter(world);
+        setEnemiesToStationHunter(
+          world,
+          stationDefenseData.playerThreatRatio ?? 0,
+        );
         stateChanged = true;
       }
     }

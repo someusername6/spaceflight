@@ -1,9 +1,14 @@
 /**
- * Sector 2: Escort Missions
+ * Sector 2: Escort Missions (target win rates by difficulty)
+ * - Easy: 75-95% win rate, 3.0-3.5 squad survival
+ * - Medium: 60-80% win rate, 2.5-3.0 squad survival
+ * - Hard: 45-65% win rate, 2.0-2.5 squad survival
+ *
  * Convoy protection missions - escort friendly ships to safety.
+ * playerThreatRatio controls enemy targeting split.
  *
  * Sector 2 enemies: dragonfly, firefly, stinger, locust, bruiser, sparkler (rookie/regular/veteran)
- * Sector 2 wingmen: veteran fighter, regular fighter, regular interceptor, regular defender
+ * Sector 2 wingmen: 4x regular fighters
  * Convoy speed: 55 m/s. Distance = (180 - jumpChargeTime) * 55 for ~180s missions.
  */
 
@@ -19,6 +24,7 @@ export const SECTOR_2_ESCORT: Contract[] = [
     sector: 2,
     missionType: 'escort',
     escortData: {
+      playerThreatRatio: 0.15,
       convoySize: 3,
       convoyType: 'transport',
       escapeZoneDistance: 9350, // (180 - 10) * 55
@@ -44,18 +50,19 @@ export const SECTOR_2_ESCORT: Contract[] = [
     sector: 2,
     missionType: 'escort',
     escortData: {
+      playerThreatRatio: 0.25,
       convoySize: 4,
       convoyType: 'transport',
       escapeZoneDistance: 9240, // (180 - 12) * 55
       escapeZoneRadius: 300,
       jumpChargeTime: 12,
-      spawnInterval: 11,
+      spawnInterval: 8,
       enemyPool: [
         { archetype: 'locust', skill: 'rookie', count: 1 },
         { archetype: 'firefly', skill: 'rookie', count: 1 },
       ],
-      maxConcurrentEnemies: 5,
-      initialSpawnCount: 3,
+      maxConcurrentEnemies: 6,
+      initialSpawnCount: 4,
       spawnBatchSize: 1,
     },
     reward: 5826,
@@ -69,6 +76,7 @@ export const SECTOR_2_ESCORT: Contract[] = [
     sector: 2,
     missionType: 'escort',
     escortData: {
+      playerThreatRatio: 0.35,
       convoySize: 5,
       convoyType: 'transport',
       escapeZoneDistance: 9240, // (180 - 12) * 55

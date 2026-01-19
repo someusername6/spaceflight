@@ -85,6 +85,13 @@ export type MissionType = 'elimination' | 'escort' | 'station-defense';
 
 /** Escort mission specific data */
 export interface EscortMissionData {
+  /**
+   * Ratio of enemies that target player or player allies instead of convoy (0-1).
+   * 0.0 = all enemies attack convoy (current behavior)
+   * 0.5 = 50% attack player/allies, 50% attack convoy
+   * Default: 0 (backward compatible)
+   */
+  playerThreatRatio?: number;
   /** Number of NPC convoy ships to protect */
   convoySize: number;
   /** Ship type for convoy ships ('freighter' or 'transport') */
@@ -109,6 +116,13 @@ export interface EscortMissionData {
 
 /** Station defense mission specific data */
 export interface StationDefenseMissionData {
+  /**
+   * Ratio of enemies that target player or player allies instead of station (0-1).
+   * 0.0 = all enemies attack station (current behavior)
+   * 0.5 = 50% attack player/allies, 50% attack station
+   * Default: 0 (backward compatible)
+   */
+  playerThreatRatio?: number;
   /** Station type (affects stats and display name) - defaults to 'mining' */
   stationType?: 'mining' | 'refinery' | 'military';
   /** Station hull health pool (overrides type default if specified) */

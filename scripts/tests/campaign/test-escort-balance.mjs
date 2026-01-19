@@ -326,8 +326,11 @@ describe('Escort Mission Balance', () => {
         `Win Rate: ${results.winRate.toFixed(1)}% (${results.wins}/${results.runs})`,
       );
       console.log(`Avg Time to Win: ${results.avgTime.toFixed(1)}s`);
+      // Get squad size from sector loadout
+      const loadout = SECTOR_LOADOUTS[mission.sector] || SECTOR_LOADOUTS[1];
+      const squadSize = loadout.length;
       console.log(
-        `Avg Player Survivors: ${results.avgPlayerSurvivors.toFixed(1)}`,
+        `Squad Survival: ${results.avgPlayerSurvivors.toFixed(2)}/${squadSize} (on wins)`,
       );
       console.log(
         `Avg Convoy Survivors: ${results.avgConvoySurvivors.toFixed(1)}/${mission.escortData.convoySize}`,
@@ -337,28 +340,45 @@ describe('Escort Mission Balance', () => {
       );
       console.log(`Timeouts: ${results.timeouts}`);
 
-      // Balance targets
-      const targets = {
-        easy: { minWin: 75, maxWin: 95 },
-        medium: { minWin: 60, maxWin: 80 },
-        hard: { minWin: 45, maxWin: 65 },
+      // Balance targets: squad = player + wingmen
+      // Base targets are for 4-ship squad, scaled by actual squad size
+      const baseTargets = {
+        easy: { minWin: 75, maxWin: 95, minSquad: 3.0, maxSquad: 3.5 },
+        medium: { minWin: 60, maxWin: 80, minSquad: 2.5, maxSquad: 3.0 },
+        hard: { minWin: 45, maxWin: 65, minSquad: 2.0, maxSquad: 2.5 },
       };
-      const target = targets[mission.difficulty];
+      const baseTarget = baseTargets[mission.difficulty];
+      // Scale squad targets by actual squad size (base is 4 ships)
+      const scaleFactor = squadSize / 4;
+      const target = {
+        minWin: baseTarget.minWin,
+        maxWin: baseTarget.maxWin,
+        minSquad: baseTarget.minSquad * scaleFactor,
+        maxSquad: baseTarget.maxSquad * scaleFactor,
+      };
 
-      // Report status
+      // Report win rate status
+      let winStatus = 'BALANCED';
       if (results.winRate < target.minWin) {
-        console.log(
-          `STATUS: TOO HARD (target ${target.minWin}-${target.maxWin}%)`,
-        );
+        winStatus = 'TOO HARD';
       } else if (results.winRate > target.maxWin) {
-        console.log(
-          `STATUS: TOO EASY (target ${target.minWin}-${target.maxWin}%)`,
-        );
-      } else {
-        console.log(
-          `STATUS: BALANCED (target ${target.minWin}-${target.maxWin}%)`,
-        );
+        winStatus = 'TOO EASY';
       }
+
+      // Report squad survival status
+      let squadStatus = 'BALANCED';
+      if (results.avgPlayerSurvivors < target.minSquad) {
+        squadStatus = 'TOO FEW';
+      } else if (results.avgPlayerSurvivors > target.maxSquad) {
+        squadStatus = 'TOO MANY';
+      }
+
+      console.log(
+        `WIN RATE: ${winStatus} (target ${target.minWin}-${target.maxWin}%)`,
+      );
+      console.log(
+        `SQUAD: ${squadStatus} (target ${target.minSquad.toFixed(2)}-${target.maxSquad.toFixed(2)})`,
+      );
 
       // Assert win rate is non-zero (mission is completable)
       assert.ok(
