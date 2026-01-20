@@ -22,41 +22,15 @@ export const SECTOR_1_EASY: Contract[] = [
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'gnat', skill: 'regular', count: 4 }],
+        enemies: [{ archetype: 'gnat', skill: 'rookie', count: 4 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'gnat', skill: 'regular', count: 4 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 1561,
-  },
-  {
-    id: 's1-ion-maiden',
-    name: 'Ion Maiden',
-    description: 'Eliminate hostile patrol. Shockers with ion cannons.',
-    difficulty: 'easy',
-    sector: 1,
-    waves: [
-      {
-        enemies: [{ archetype: 'shocker', skill: 'rookie', count: 2 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'shocker', skill: 'rookie', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'shocker', skill: 'rookie', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'shocker', skill: 'rookie', count: 2 }],
+        enemies: [{ archetype: 'gnat', skill: 'regular', count: 3 }],
         delay: [8, 12],
       },
     ],
-    reward: 2138,
+    reward: 1763,
   },
   {
     id: 's1-stray-scout-strut',
@@ -66,23 +40,49 @@ export const SECTOR_1_EASY: Contract[] = [
     sector: 1,
     waves: [
       {
-        enemies: [{ archetype: 'ember', skill: 'rookie', count: 3 }],
+        enemies: [{ archetype: 'ember', skill: 'rookie', count: 4 }],
         delay: [3, 5],
       },
       {
-        enemies: [{ archetype: 'gnat', skill: 'rookie', count: 4 }],
+        enemies: [{ archetype: 'gnat', skill: 'rookie', count: 5 }],
         delay: [4, 6],
       },
       {
-        enemies: [{ archetype: 'ember', skill: 'regular', count: 3 }],
+        enemies: [{ archetype: 'ember', skill: 'regular', count: 4 }],
         delay: [4, 6],
       },
       {
-        enemies: [{ archetype: 'gnat', skill: 'regular', count: 4 }],
+        enemies: [{ archetype: 'gnat', skill: 'rookie', count: 5 }],
         delay: [4, 6],
       },
     ],
-    reward: 2158,
+    reward: 1777,
+  },
+  {
+    id: 's1-ion-maiden',
+    name: 'Ion Maiden',
+    description: 'Eliminate hostile patrol. Shockers with ion cannons.',
+    difficulty: 'easy',
+    sector: 1,
+    waves: [
+      {
+        enemies: [{ archetype: 'shocker', skill: 'rookie', count: 4 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'shocker', skill: 'rookie', count: 4 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'shocker', skill: 'rookie', count: 4 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'shocker', skill: 'rookie', count: 4 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 2076,
   },
   {
     id: 's1-praying-for-time',
@@ -92,22 +92,22 @@ export const SECTOR_1_EASY: Contract[] = [
     sector: 1,
     waves: [
       {
-        enemies: [{ archetype: 'mantis', skill: 'rookie', count: 1 }],
+        enemies: [{ archetype: 'mantis', skill: 'rookie', count: 2 }],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'mantis', skill: 'rookie', count: 1 }],
-        delay: [8, 12],
-      },
-      {
         enemies: [{ archetype: 'mantis', skill: 'rookie', count: 2 }],
         delay: [8, 12],
       },
       {
         enemies: [{ archetype: 'mantis', skill: 'rookie', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'mantis', skill: 'rookie', count: 3 }],
         delay: [8, 12],
       },
     ],
-    reward: 2619,
+    reward: 2501,
   },
 ];

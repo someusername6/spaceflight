@@ -50,16 +50,16 @@ export const SECTOR_2_ESCORT: Contract[] = [
     sector: 2,
     missionType: 'escort',
     escortData: {
-      playerThreatRatio: 0.25,
+      playerThreatRatio: 0.5,
       convoySize: 4,
       convoyType: 'transport',
       escapeZoneDistance: 9240, // (180 - 12) * 55
       escapeZoneRadius: 300,
       jumpChargeTime: 12,
-      spawnInterval: 8,
+      spawnInterval: 9,
       enemyPool: [
         { archetype: 'locust', skill: 'rookie', count: 1 },
-        { archetype: 'firefly', skill: 'rookie', count: 1 },
+        { archetype: 'firefly', skill: 'regular', count: 1 },
       ],
       maxConcurrentEnemies: 6,
       initialSpawnCount: 4,
@@ -76,17 +76,17 @@ export const SECTOR_2_ESCORT: Contract[] = [
     sector: 2,
     missionType: 'escort',
     escortData: {
-      playerThreatRatio: 0.35,
+      playerThreatRatio: 0.45,
       convoySize: 5,
       convoyType: 'transport',
       escapeZoneDistance: 9240, // (180 - 12) * 55
       escapeZoneRadius: 300,
       jumpChargeTime: 12,
-      spawnInterval: 10,
+      spawnInterval: 5,
       enemyPool: [
-        { archetype: 'bruiser', skill: 'rookie', count: 1 },
-        { archetype: 'stinger', skill: 'rookie', count: 1 },
-        { archetype: 'dragonfly', skill: 'regular', count: 1 },
+        { archetype: 'bruiser', skill: 'ace', count: 1 },
+        { archetype: 'stinger', skill: 'veteran', count: 1 },
+        { archetype: 'dragonfly', skill: 'ace', count: 1 },
       ],
       maxConcurrentEnemies: 6,
       initialSpawnCount: 3,

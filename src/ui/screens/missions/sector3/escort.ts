@@ -76,13 +76,13 @@ export const SECTOR_3_ESCORT: Contract[] = [
     sector: 3,
     missionType: 'escort',
     escortData: {
-      playerThreatRatio: 0.2,
+      playerThreatRatio: 0.5,
       convoySize: 5,
       convoyType: 'transport',
       escapeZoneDistance: 9240, // (180 - 12) * 55
       escapeZoneRadius: 300,
       jumpChargeTime: 12,
-      spawnInterval: 12,
+      spawnInterval: 13,
       enemyPool: [
         { archetype: 'phantom', skill: 'regular', count: 1 },
         { archetype: 'firefly', skill: 'regular', count: 1 },

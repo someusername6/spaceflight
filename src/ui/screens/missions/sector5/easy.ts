@@ -6,33 +6,6 @@ import type { Contract } from '../types';
 
 export const SECTOR_5_EASY: Contract[] = [
   {
-    id: 's5-blackout',
-    name: 'Blackout',
-    description:
-      'Clear sniper position. Scorpions with railguns and ace escorts.',
-    difficulty: 'easy',
-    sector: 5,
-    waves: [
-      {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'scorpion', skill: 'veteran', count: 1 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 7516,
-  },
-  {
     id: 's5-spirit-in-the-sky',
     name: 'Spirit in the Sky',
     description: 'Intercept nuclear lance carrier. A Wraith with ace escorts.',
@@ -40,23 +13,26 @@ export const SECTOR_5_EASY: Contract[] = [
     sector: 5,
     waves: [
       {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
+        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'wraith', skill: 'veteran', count: 1 }],
+        enemies: [{ archetype: 'wraith', skill: 'ace', count: 1 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 3 }],
+        enemies: [
+          { archetype: 'dragonfly', skill: 'veteran', count: 1 },
+          { archetype: 'dragonfly', skill: 'ace', count: 2 },
+        ],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
+        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
         delay: [8, 12],
       },
     ],
-    reward: 7761,
+    reward: 6102,
   },
   {
     id: 's5-aces-wild',
@@ -83,7 +59,7 @@ export const SECTOR_5_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 8048,
+    reward: 6271,
   },
   {
     id: 's5-where-eagles-dare',
@@ -94,7 +70,7 @@ export const SECTOR_5_EASY: Contract[] = [
     sector: 5,
     waves: [
       {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
+        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
         delay: [5, 10],
       },
       {
@@ -102,14 +78,47 @@ export const SECTOR_5_EASY: Contract[] = [
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 2 }],
+        enemies: [
+          { archetype: 'phantom', skill: 'veteran', count: 1 },
+          { archetype: 'phantom', skill: 'ace', count: 1 },
+        ],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'firefly', skill: 'ace', count: 3 }],
+        enemies: [{ archetype: 'firefly', skill: 'ace', count: 2 }],
         delay: [8, 12],
       },
     ],
-    reward: 8742,
+    reward: 6351,
+  },
+  {
+    id: 's5-blackout',
+    name: 'Blackout',
+    description:
+      'Clear sniper position. Scorpions with railguns and ace escorts.',
+    difficulty: 'easy',
+    sector: 5,
+    waves: [
+      {
+        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'scorpion', skill: 'ace', count: 1 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [
+          { archetype: 'dragonfly', skill: 'veteran', count: 1 },
+          { archetype: 'dragonfly', skill: 'ace', count: 2 },
+        ],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 7091,
   },
 ];

@@ -23,7 +23,7 @@ export const SECTOR_5_STATION_DEFENSE: Contract[] = [
     sector: 5,
     missionType: 'station-defense',
     stationDefenseData: {
-      playerThreatRatio: 0.45,
+      playerThreatRatio: 0.2,
       stationType: 'mining',
       stationDistance: -400,
       waves: [
@@ -77,7 +77,7 @@ export const SECTOR_5_STATION_DEFENSE: Contract[] = [
     missionType: 'station-defense',
     stationDefenseData: {
       playerThreatRatio: 0.5,
-      stationType: 'refinery',
+      stationType: 'mining',
       stationDistance: -350,
       waves: [
         {
@@ -141,59 +141,66 @@ export const SECTOR_5_STATION_DEFENSE: Contract[] = [
     sector: 5,
     missionType: 'station-defense',
     stationDefenseData: {
-      playerThreatRatio: 0.6,
-      stationType: 'military',
+      playerThreatRatio: 0.35,
+      stationType: 'mining',
       stationDistance: -300,
       waves: [
         {
           enemies: [
-            { archetype: 'phantom', skill: 'ace', count: 5 },
-            { archetype: 'dragonfly', skill: 'ace', count: 5 },
+            { archetype: 'phantom', skill: 'ace', count: 10 },
+            { archetype: 'dragonfly', skill: 'ace', count: 10 },
           ],
           delay: 2,
         },
         {
           enemies: [
-            { archetype: 'wraith', skill: 'ace', count: 2 },
-            { archetype: 'scorpion', skill: 'ace', count: 2 },
-            { archetype: 'phantom', skill: 'ace', count: 3 },
+            { archetype: 'wraith', skill: 'ace', count: 5 },
+            { archetype: 'scorpion', skill: 'ace', count: 5 },
+            { archetype: 'phantom', skill: 'ace', count: 8 },
           ],
-          delay: 7,
+          delay: 5,
         },
         {
           enemies: [
-            { archetype: 'phantom', skill: 'ace', count: 4 },
-            { archetype: 'dragonfly', skill: 'ace', count: 4 },
+            { archetype: 'phantom', skill: 'ace', count: 10 },
+            { archetype: 'dragonfly', skill: 'ace', count: 10 },
           ],
-          delay: 12,
+          delay: 8,
         },
         {
           enemies: [
-            { archetype: 'wraith', skill: 'ace', count: 2 },
-            { archetype: 'scorpion', skill: 'ace', count: 2 },
-            { archetype: 'phantom', skill: 'ace', count: 4 },
+            { archetype: 'wraith', skill: 'ace', count: 5 },
+            { archetype: 'scorpion', skill: 'ace', count: 5 },
+            { archetype: 'phantom', skill: 'ace', count: 8 },
+          ],
+          delay: 11,
+        },
+        {
+          enemies: [
+            { archetype: 'wraith', skill: 'ace', count: 5 },
+            { archetype: 'phantom', skill: 'ace', count: 10 },
+            { archetype: 'dragonfly', skill: 'ace', count: 10 },
+          ],
+          delay: 14,
+        },
+        {
+          enemies: [
+            { archetype: 'scorpion', skill: 'ace', count: 5 },
+            { archetype: 'wraith', skill: 'ace', count: 5 },
+            { archetype: 'phantom', skill: 'ace', count: 8 },
           ],
           delay: 17,
         },
         {
           enemies: [
-            { archetype: 'wraith', skill: 'ace', count: 2 },
-            { archetype: 'phantom', skill: 'ace', count: 4 },
-            { archetype: 'dragonfly', skill: 'ace', count: 4 },
+            { archetype: 'phantom', skill: 'ace', count: 10 },
+            { archetype: 'dragonfly', skill: 'ace', count: 10 },
           ],
-          delay: 22,
-        },
-        {
-          enemies: [
-            { archetype: 'scorpion', skill: 'ace', count: 2 },
-            { archetype: 'wraith', skill: 'ace', count: 2 },
-            { archetype: 'phantom', skill: 'ace', count: 3 },
-          ],
-          delay: 27,
+          delay: 20,
         },
       ],
       reinforcementTime: null,
-      reinforcementHealthThreshold: 0.2,
+      reinforcementHealthThreshold: 0.15,
       reinforcementCount: 5,
       reinforcementPool: [
         { archetype: 'striker', skill: 'ace', count: 1 },

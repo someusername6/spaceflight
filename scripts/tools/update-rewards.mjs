@@ -282,13 +282,27 @@ async function main() {
   const rewardsByFile = {}; // filePath -> { missionId -> newReward }
 
   for (const sector of sectors) {
-    const missions = getMissionsForSector(sector);
+    // Only process elimination missions
+    // Elimination missions: no missionType (defaults to elimination) or missionType === 'elimination'
+    // They also have 'waves' and no escortData/stationDefenseData/ambushData
+    const allMissions = getMissionsForSector(sector);
+    const missions = allMissions.filter(
+      (m) =>
+        (!m.missionType || m.missionType === 'elimination') &&
+        m.waves &&
+        !m.escortData &&
+        !m.stationDefenseData &&
+        !m.ambushData,
+    );
     if (missions.length === 0) continue;
 
     const loadoutDesc = getLoadoutDescription(sector);
+    const skipped = allMissions.length - missions.length;
 
     console.log(`\n${'─'.repeat(90)}`);
-    console.log(`SECTOR ${sector} (${missions.length} missions)`);
+    console.log(
+      `SECTOR ${sector} (${missions.length} elimination missions${skipped > 0 ? `, ${skipped} non-elimination skipped` : ''})`,
+    );
     console.log(`Loadout: ${loadoutDesc}`);
     console.log('─'.repeat(90));
     console.log(
@@ -319,6 +333,12 @@ async function main() {
 
       // Track reward for file update
       const filePath = getMissionFilePath(sector, mission.difficulty);
+      if (!filePath) {
+        console.error(
+          `  WARNING: No file path for sector ${sector}, difficulty ${mission.difficulty}`,
+        );
+        continue;
+      }
       if (!rewardsByFile[filePath]) {
         rewardsByFile[filePath] = {};
       }

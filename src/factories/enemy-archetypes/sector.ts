@@ -25,7 +25,7 @@ export const S1_ARCHETYPES: Record<string, EnemyShipStats> = {
 
   // Scout with swarm missiles - missile spammer
   gnat: createArchetype('scout', {
-    playstyle: 'escape',
+    playstyle: 'brawler',
     primaryWeapons: [
       { name: 'pulse', size: 1 },
       { name: 'pulse', size: 1 },

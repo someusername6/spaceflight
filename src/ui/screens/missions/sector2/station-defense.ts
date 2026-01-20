@@ -23,34 +23,62 @@ export const SECTOR_2_STATION_DEFENSE: Contract[] = [
     sector: 2,
     missionType: 'station-defense',
     stationDefenseData: {
-      playerThreatRatio: 0.2,
+      playerThreatRatio: 0.1,
       stationType: 'mining',
       stationDistance: -400,
       waves: [
         {
           enemies: [
-            { archetype: 'firefly', skill: 'regular', count: 4 },
-            { archetype: 'dragonfly', skill: 'regular', count: 4 },
+            { archetype: 'firefly', skill: 'veteran', count: 7 },
+            { archetype: 'dragonfly', skill: 'veteran', count: 7 },
           ],
-          delay: 5,
+          delay: 3,
         },
         {
           enemies: [
-            { archetype: 'stinger', skill: 'regular', count: 4 },
-            { archetype: 'firefly', skill: 'regular', count: 4 },
+            { archetype: 'stinger', skill: 'veteran', count: 7 },
+            { archetype: 'firefly', skill: 'veteran', count: 7 },
           ],
-          delay: 25,
+          delay: 8,
         },
         {
           enemies: [
-            { archetype: 'dragonfly', skill: 'regular', count: 4 },
-            { archetype: 'stinger', skill: 'regular', count: 3 },
+            { archetype: 'dragonfly', skill: 'ace', count: 6 },
+            { archetype: 'stinger', skill: 'ace', count: 6 },
           ],
-          delay: 45,
+          delay: 13,
+        },
+        {
+          enemies: [
+            { archetype: 'firefly', skill: 'ace', count: 6 },
+            { archetype: 'dragonfly', skill: 'ace', count: 6 },
+          ],
+          delay: 18,
+        },
+        {
+          enemies: [
+            { archetype: 'stinger', skill: 'ace', count: 6 },
+            { archetype: 'firefly', skill: 'ace', count: 6 },
+          ],
+          delay: 23,
+        },
+        {
+          enemies: [
+            { archetype: 'dragonfly', skill: 'ace', count: 6 },
+            { archetype: 'stinger', skill: 'ace', count: 6 },
+          ],
+          delay: 28,
+        },
+        {
+          enemies: [
+            { archetype: 'firefly', skill: 'ace', count: 6 },
+            { archetype: 'dragonfly', skill: 'ace', count: 6 },
+          ],
+          delay: 33,
         },
       ],
       reinforcementTime: null,
-      reinforcementHealthThreshold: 0.4,
+      reinforcementHealthThreshold: 0.25,
       reinforcementCount: 3,
       reinforcementPool: [
         { archetype: 'fighter', skill: 'regular', count: 1 },
@@ -68,45 +96,59 @@ export const SECTOR_2_STATION_DEFENSE: Contract[] = [
     sector: 2,
     missionType: 'station-defense',
     stationDefenseData: {
-      playerThreatRatio: 0.55,
+      playerThreatRatio: 0.3,
       stationType: 'military',
       stationDistance: -300,
-      initialAllies: [{ archetype: 'interceptor', skill: 'regular', count: 2 }],
+      initialAllies: [],
       waves: [
         {
           enemies: [
-            { archetype: 'dragonfly', skill: 'veteran', count: 6 },
-            { archetype: 'stinger', skill: 'veteran', count: 6 },
+            { archetype: 'dragonfly', skill: 'ace', count: 6 },
+            { archetype: 'stinger', skill: 'ace', count: 6 },
           ],
           delay: 3,
         },
         {
           enemies: [
-            { archetype: 'locust', skill: 'veteran', count: 6 },
-            { archetype: 'firefly', skill: 'veteran', count: 6 },
+            { archetype: 'locust', skill: 'ace', count: 6 },
+            { archetype: 'firefly', skill: 'ace', count: 6 },
           ],
-          delay: 12,
+          delay: 8,
         },
         {
           enemies: [
-            { archetype: 'bruiser', skill: 'veteran', count: 5 },
-            { archetype: 'dragonfly', skill: 'veteran', count: 5 },
+            { archetype: 'bruiser', skill: 'ace', count: 6 },
+            { archetype: 'dragonfly', skill: 'ace', count: 6 },
           ],
-          delay: 21,
+          delay: 13,
         },
         {
           enemies: [
-            { archetype: 'sparkler', skill: 'veteran', count: 5 },
-            { archetype: 'stinger', skill: 'veteran', count: 5 },
+            { archetype: 'sparkler', skill: 'ace', count: 6 },
+            { archetype: 'stinger', skill: 'ace', count: 6 },
           ],
-          delay: 30,
+          delay: 18,
         },
         {
           enemies: [
-            { archetype: 'locust', skill: 'veteran', count: 5 },
-            { archetype: 'bruiser', skill: 'veteran', count: 5 },
+            { archetype: 'locust', skill: 'ace', count: 6 },
+            { archetype: 'bruiser', skill: 'ace', count: 6 },
           ],
-          delay: 39,
+          delay: 23,
+        },
+        {
+          enemies: [
+            { archetype: 'sparkler', skill: 'ace', count: 6 },
+            { archetype: 'dragonfly', skill: 'ace', count: 6 },
+          ],
+          delay: 28,
+        },
+        {
+          enemies: [
+            { archetype: 'firefly', skill: 'ace', count: 6 },
+            { archetype: 'stinger', skill: 'ace', count: 6 },
+          ],
+          delay: 33,
         },
       ],
       reinforcementTime: null,
@@ -129,41 +171,55 @@ export const SECTOR_2_STATION_DEFENSE: Contract[] = [
     sector: 2,
     missionType: 'station-defense',
     stationDefenseData: {
-      playerThreatRatio: 0.25,
-      stationType: 'refinery',
+      playerThreatRatio: 0.26,
+      stationType: 'mining',
       stationDistance: -350,
       waves: [
         {
           enemies: [
-            { archetype: 'firefly', skill: 'regular', count: 5 },
-            { archetype: 'dragonfly', skill: 'regular', count: 5 },
+            { archetype: 'firefly', skill: 'ace', count: 6 },
+            { archetype: 'dragonfly', skill: 'ace', count: 6 },
           ],
-          delay: 5,
+          delay: 3,
         },
         {
           enemies: [
-            { archetype: 'stinger', skill: 'regular', count: 5 },
-            { archetype: 'locust', skill: 'regular', count: 4 },
+            { archetype: 'stinger', skill: 'ace', count: 6 },
+            { archetype: 'locust', skill: 'ace', count: 5 },
           ],
-          delay: 20,
+          delay: 8,
         },
         {
           enemies: [
-            { archetype: 'dragonfly', skill: 'veteran', count: 5 },
-            { archetype: 'bruiser', skill: 'regular', count: 3 },
+            { archetype: 'dragonfly', skill: 'ace', count: 6 },
+            { archetype: 'bruiser', skill: 'ace', count: 5 },
           ],
-          delay: 35,
+          delay: 13,
         },
         {
           enemies: [
-            { archetype: 'firefly', skill: 'veteran', count: 4 },
-            { archetype: 'stinger', skill: 'veteran', count: 4 },
+            { archetype: 'firefly', skill: 'ace', count: 6 },
+            { archetype: 'stinger', skill: 'ace', count: 6 },
           ],
-          delay: 50,
+          delay: 18,
+        },
+        {
+          enemies: [
+            { archetype: 'locust', skill: 'ace', count: 5 },
+            { archetype: 'dragonfly', skill: 'ace', count: 5 },
+          ],
+          delay: 23,
+        },
+        {
+          enemies: [
+            { archetype: 'bruiser', skill: 'ace', count: 5 },
+            { archetype: 'stinger', skill: 'ace', count: 5 },
+          ],
+          delay: 28,
         },
       ],
       reinforcementTime: null,
-      reinforcementHealthThreshold: 0.35,
+      reinforcementHealthThreshold: 0.25,
       reinforcementCount: 4,
       reinforcementPool: [
         { archetype: 'fighter', skill: 'veteran', count: 1 },

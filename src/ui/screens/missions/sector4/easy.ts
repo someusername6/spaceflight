@@ -6,31 +6,47 @@ import type { Contract } from '../types';
 
 export const SECTOR_4_EASY: Contract[] = [
   {
-    id: 's4-uninvited',
-    name: 'Uninvited',
+    id: 's4-fortunate-son',
+    name: 'Fortunate Son',
     description:
-      'Engage response force. Phantoms with Firefly and Dragonfly support.',
+      'Destroy assault group. Infernos with Phantom support - heat incoming.',
     difficulty: 'easy',
     sector: 4,
     waves: [
       {
-        enemies: [{ archetype: 'phantom', skill: 'rookie', count: 2 }],
+        enemies: [
+          { archetype: 'inferno', skill: 'rookie', count: 4 },
+          { archetype: 'inferno', skill: 'regular', count: 2 },
+          { archetype: 'phantom', skill: 'rookie', count: 1 },
+        ],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
+        enemies: [
+          { archetype: 'inferno', skill: 'rookie', count: 4 },
+          { archetype: 'inferno', skill: 'regular', count: 2 },
+          { archetype: 'dragonfly', skill: 'rookie', count: 1 },
+        ],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
+        enemies: [
+          { archetype: 'inferno', skill: 'rookie', count: 4 },
+          { archetype: 'inferno', skill: 'regular', count: 2 },
+          { archetype: 'phantom', skill: 'regular', count: 1 },
+        ],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
+        enemies: [
+          { archetype: 'inferno', skill: 'rookie', count: 4 },
+          { archetype: 'inferno', skill: 'regular', count: 2 },
+          { archetype: 'dragonfly', skill: 'regular', count: 1 },
+        ],
         delay: [8, 12],
       },
     ],
-    reward: 4182,
+    reward: 3650,
   },
   {
     id: 's4-strike-a-pose',
@@ -41,62 +57,32 @@ export const SECTOR_4_EASY: Contract[] = [
     sector: 4,
     waves: [
       {
-        enemies: [{ archetype: 'phantom', skill: 'rookie', count: 2 }],
+        enemies: [{ archetype: 'phantom', skill: 'rookie', count: 3 }],
         delay: [4, 8],
       },
       {
-        enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
-        delay: [6, 10],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
-        delay: [6, 10],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
-        delay: [6, 10],
-      },
-    ],
-    reward: 4457,
-  },
-  {
-    id: 's4-fortunate-son',
-    name: 'Fortunate Son',
-    description:
-      'Destroy assault group. Infernos with Phantom support - heat incoming.',
-    difficulty: 'easy',
-    sector: 4,
-    waves: [
-      {
         enemies: [
-          { archetype: 'inferno', skill: 'regular', count: 3 },
-          { archetype: 'phantom', skill: 'rookie', count: 1 },
+          { archetype: 'firefly', skill: 'rookie', count: 3 },
+          { archetype: 'firefly', skill: 'regular', count: 1 },
         ],
-        delay: [5, 10],
+        delay: [6, 10],
       },
       {
         enemies: [
-          { archetype: 'inferno', skill: 'regular', count: 3 },
+          { archetype: 'dragonfly', skill: 'rookie', count: 3 },
           { archetype: 'dragonfly', skill: 'regular', count: 1 },
         ],
-        delay: [8, 12],
+        delay: [6, 10],
       },
       {
         enemies: [
-          { archetype: 'inferno', skill: 'veteran', count: 3 },
+          { archetype: 'phantom', skill: 'rookie', count: 2 },
           { archetype: 'phantom', skill: 'regular', count: 1 },
         ],
-        delay: [8, 12],
-      },
-      {
-        enemies: [
-          { archetype: 'inferno', skill: 'veteran', count: 3 },
-          { archetype: 'dragonfly', skill: 'veteran', count: 1 },
-        ],
-        delay: [8, 12],
+        delay: [6, 10],
       },
     ],
-    reward: 4608,
+    reward: 3713,
   },
   {
     id: 's4-scope-creep',
@@ -108,33 +94,73 @@ export const SECTOR_4_EASY: Contract[] = [
       {
         enemies: [
           { archetype: 'scorpion', skill: 'rookie', count: 1 },
-          { archetype: 'dragonfly', skill: 'veteran', count: 2 },
+          { archetype: 'dragonfly', skill: 'rookie', count: 3 },
+          { archetype: 'dragonfly', skill: 'regular', count: 1 },
         ],
         delay: [5, 10],
       },
       {
         enemies: [
-          { archetype: 'scorpion', skill: 'regular', count: 1 },
-          { archetype: 'firefly', skill: 'veteran', count: 2 },
+          { archetype: 'scorpion', skill: 'rookie', count: 1 },
+          { archetype: 'firefly', skill: 'rookie', count: 2 },
+          { archetype: 'firefly', skill: 'regular', count: 2 },
+        ],
+        delay: [8, 12],
+      },
+      {
+        enemies: [
+          { archetype: 'scorpion', skill: 'rookie', count: 1 },
+          { archetype: 'dragonfly', skill: 'rookie', count: 3 },
+          { archetype: 'dragonfly', skill: 'regular', count: 1 },
         ],
         delay: [8, 12],
       },
       {
         enemies: [
           { archetype: 'scorpion', skill: 'regular', count: 1 },
-          { archetype: 'dragonfly', skill: 'veteran', count: 2 },
-        ],
-        delay: [8, 12],
-      },
-      {
-        enemies: [
-          { archetype: 'scorpion', skill: 'regular', count: 1 },
-          { archetype: 'firefly', skill: 'veteran', count: 2 },
+          { archetype: 'firefly', skill: 'rookie', count: 2 },
+          { archetype: 'firefly', skill: 'regular', count: 2 },
         ],
         delay: [8, 12],
       },
     ],
-    reward: 5756,
+    reward: 4389,
+  },
+  {
+    id: 's4-uninvited',
+    name: 'Uninvited',
+    description:
+      'Engage response force. Phantoms with Firefly and Dragonfly support.',
+    difficulty: 'easy',
+    sector: 4,
+    waves: [
+      {
+        enemies: [{ archetype: 'phantom', skill: 'rookie', count: 3 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [
+          { archetype: 'firefly', skill: 'rookie', count: 3 },
+          { archetype: 'firefly', skill: 'regular', count: 1 },
+        ],
+        delay: [8, 12],
+      },
+      {
+        enemies: [
+          { archetype: 'dragonfly', skill: 'rookie', count: 3 },
+          { archetype: 'dragonfly', skill: 'regular', count: 1 },
+        ],
+        delay: [8, 12],
+      },
+      {
+        enemies: [
+          { archetype: 'phantom', skill: 'rookie', count: 2 },
+          { archetype: 'phantom', skill: 'regular', count: 1 },
+        ],
+        delay: [8, 12],
+      },
+    ],
+    reward: 4468,
   },
   {
     id: 's4-watchtower',
@@ -145,22 +171,34 @@ export const SECTOR_4_EASY: Contract[] = [
     sector: 4,
     waves: [
       {
-        enemies: [{ archetype: 'wasp', skill: 'regular', count: 2 }],
+        enemies: [
+          { archetype: 'wasp', skill: 'rookie', count: 3 },
+          { archetype: 'wasp', skill: 'regular', count: 1 },
+        ],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
+        enemies: [
+          { archetype: 'dragonfly', skill: 'rookie', count: 3 },
+          { archetype: 'dragonfly', skill: 'regular', count: 2 },
+        ],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'firefly', skill: 'veteran', count: 3 }],
+        enemies: [
+          { archetype: 'firefly', skill: 'rookie', count: 3 },
+          { archetype: 'firefly', skill: 'regular', count: 2 },
+        ],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'wasp', skill: 'veteran', count: 2 }],
+        enemies: [
+          { archetype: 'wasp', skill: 'rookie', count: 2 },
+          { archetype: 'wasp', skill: 'regular', count: 2 },
+        ],
         delay: [8, 12],
       },
     ],
-    reward: 5882,
+    reward: 6271,
   },
 ];

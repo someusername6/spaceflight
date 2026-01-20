@@ -258,7 +258,12 @@ export function runMission(mission, seed, sector, options = {}) {
 
     let playerTeamCount = 0,
       enemyCount = 0;
-    for (const entity of queryEntities(world, ['faction', 'health'])) {
+    // Only count ships (not decoys, missiles, etc. which also have faction+health)
+    for (const entity of queryEntities(world, [
+      'faction',
+      'health',
+      'shipIdentity',
+    ])) {
       const faction = getComponent(world, entity, 'faction');
       if (faction.faction === Faction.Player) playerTeamCount++;
       else if (faction.faction === Faction.Enemy) enemyCount++;

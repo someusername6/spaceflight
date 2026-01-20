@@ -18,7 +18,7 @@ export const SECTOR_2_MEDIUM: Contract[] = [
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'shredder', skill: 'rookie', count: 2 }],
+        enemies: [{ archetype: 'shredder', skill: 'rookie', count: 3 }],
         delay: [8, 12],
       },
       {
@@ -26,11 +26,11 @@ export const SECTOR_2_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'shredder', skill: 'rookie', count: 3 }],
+        enemies: [{ archetype: 'shredder', skill: 'rookie', count: 4 }],
         delay: [8, 12],
       },
     ],
-    reward: 2860,
+    reward: 1973,
   },
   {
     id: 's2-dart-side-of-the-moon',
@@ -45,7 +45,7 @@ export const SECTOR_2_MEDIUM: Contract[] = [
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'phantom', skill: 'rookie', count: 2 }],
+        enemies: [{ archetype: 'phantom', skill: 'rookie', count: 3 }],
         delay: [8, 12],
       },
       {
@@ -57,7 +57,7 @@ export const SECTOR_2_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3315,
+    reward: 3228,
   },
   {
     id: 's2-heavy-metal-queen',
@@ -83,7 +83,7 @@ export const SECTOR_2_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3581,
+    reward: 3350,
   },
   {
     id: 's2-backup-singers',
@@ -94,23 +94,23 @@ export const SECTOR_2_MEDIUM: Contract[] = [
     sector: 2,
     waves: [
       {
-        enemies: [{ archetype: 'firefly', skill: 'regular', count: 2 }],
+        enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'locust', skill: 'regular', count: 2 }],
+        enemies: [{ archetype: 'locust', skill: 'regular', count: 3 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'firefly', skill: 'regular', count: 3 }],
+        enemies: [{ archetype: 'firefly', skill: 'regular', count: 4 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 3 }],
+        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 4 }],
         delay: [8, 12],
       },
     ],
-    reward: 3791,
+    reward: 3423,
   },
   {
     id: 's2-fangs-for-the-memories',
@@ -136,6 +136,6 @@ export const SECTOR_2_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 4094,
+    reward: 3747,
   },
 ];

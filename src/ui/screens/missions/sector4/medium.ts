@@ -6,44 +6,6 @@ import type { Contract } from '../types';
 
 export const SECTOR_4_MEDIUM: Contract[] = [
   {
-    id: 's4-spooky',
-    name: 'Spooky',
-    description: 'Hunt Specters. Elite railgun snipers with Dragonfly support.',
-    difficulty: 'medium',
-    sector: 4,
-    waves: [
-      {
-        enemies: [
-          { archetype: 'specter', skill: 'veteran', count: 2 },
-          { archetype: 'dragonfly', skill: 'regular', count: 1 },
-        ],
-        delay: [5, 10],
-      },
-      {
-        enemies: [
-          { archetype: 'specter', skill: 'veteran', count: 2 },
-          { archetype: 'dragonfly', skill: 'veteran', count: 1 },
-        ],
-        delay: [8, 12],
-      },
-      {
-        enemies: [
-          { archetype: 'specter', skill: 'ace', count: 2 },
-          { archetype: 'dragonfly', skill: 'veteran', count: 1 },
-        ],
-        delay: [8, 12],
-      },
-      {
-        enemies: [
-          { archetype: 'specter', skill: 'ace', count: 2 },
-          { archetype: 'phantom', skill: 'veteran', count: 1 },
-        ],
-        delay: [8, 12],
-      },
-    ],
-    reward: 4849,
-  },
-  {
     id: 's4-atomic',
     name: 'Atomic',
     description:
@@ -71,7 +33,81 @@ export const SECTOR_4_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 5392,
+    reward: 4610,
+  },
+  {
+    id: 's4-spooky',
+    name: 'Spooky',
+    description: 'Hunt Specters. Elite railgun snipers with Dragonfly support.',
+    difficulty: 'medium',
+    sector: 4,
+    waves: [
+      {
+        enemies: [
+          { archetype: 'specter', skill: 'regular', count: 2 },
+          { archetype: 'dragonfly', skill: 'regular', count: 1 },
+        ],
+        delay: [5, 10],
+      },
+      {
+        enemies: [
+          { archetype: 'specter', skill: 'regular', count: 1 },
+          { archetype: 'specter', skill: 'veteran', count: 1 },
+          { archetype: 'dragonfly', skill: 'regular', count: 1 },
+        ],
+        delay: [8, 12],
+      },
+      {
+        enemies: [
+          { archetype: 'specter', skill: 'veteran', count: 2 },
+          { archetype: 'dragonfly', skill: 'regular', count: 1 },
+        ],
+        delay: [8, 12],
+      },
+      {
+        enemies: [
+          { archetype: 'specter', skill: 'veteran', count: 2 },
+          { archetype: 'phantom', skill: 'regular', count: 1 },
+        ],
+        delay: [8, 12],
+      },
+    ],
+    reward: 4649,
+  },
+  {
+    id: 's4-brothers-in-arms',
+    name: 'Brothers in Arms',
+    description: 'Face pilots. Phantoms, Wasps, and Dragonflies together.',
+    difficulty: 'medium',
+    sector: 4,
+    waves: [
+      {
+        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [
+          { archetype: 'wasp', skill: 'regular', count: 1 },
+          { archetype: 'wasp', skill: 'veteran', count: 1 },
+        ],
+        delay: [8, 12],
+      },
+      {
+        enemies: [
+          { archetype: 'dragonfly', skill: 'regular', count: 1 },
+          { archetype: 'dragonfly', skill: 'veteran', count: 1 },
+        ],
+        delay: [8, 12],
+      },
+      {
+        enemies: [
+          { archetype: 'phantom', skill: 'regular', count: 1 },
+          { archetype: 'phantom', skill: 'veteran', count: 1 },
+        ],
+        delay: [8, 12],
+      },
+    ],
+    reward: 4698,
   },
   {
     id: 's4-b-52s',
@@ -82,68 +118,32 @@ export const SECTOR_4_MEDIUM: Contract[] = [
     sector: 4,
     waves: [
       {
-        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
+        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 4 }],
         delay: [5, 10],
       },
       {
         enemies: [
-          { archetype: 'behemoth', skill: 'rookie', count: 1 },
-          { archetype: 'firefly', skill: 'veteran', count: 2 },
+          { archetype: 'behemoth', skill: 'regular', count: 1 },
+          { archetype: 'firefly', skill: 'regular', count: 2 },
         ],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
+        enemies: [
+          { archetype: 'phantom', skill: 'regular', count: 1 },
+          { archetype: 'phantom', skill: 'veteran', count: 1 },
+        ],
         delay: [8, 12],
       },
       {
         enemies: [
           { archetype: 'behemoth', skill: 'regular', count: 1 },
-          { archetype: 'dragonfly', skill: 'regular', count: 2 },
+          { archetype: 'dragonfly', skill: 'veteran', count: 2 },
         ],
         delay: [8, 12],
       },
     ],
-    reward: 5413,
-  },
-  {
-    id: 's4-rock-you-like-a-hurricane',
-    name: 'Rock You Like a Hurricane',
-    description:
-      'Clear sniper position. Scorpions and Sparklers lighting up the void.',
-    difficulty: 'medium',
-    sector: 4,
-    waves: [
-      {
-        enemies: [
-          { archetype: 'scorpion', skill: 'rookie', count: 1 },
-          { archetype: 'sparkler', skill: 'rookie', count: 1 },
-        ],
-        delay: [5, 10],
-      },
-      {
-        enemies: [
-          { archetype: 'scorpion', skill: 'rookie', count: 1 },
-          { archetype: 'sparkler', skill: 'rookie', count: 1 },
-        ],
-        delay: [8, 12],
-      },
-      {
-        enemies: [
-          { archetype: 'scorpion', skill: 'rookie', count: 1 },
-          { archetype: 'sparkler', skill: 'rookie', count: 1 },
-        ],
-        delay: [8, 12],
-      },
-      {
-        enemies: [
-          { archetype: 'scorpion', skill: 'rookie', count: 1 },
-          { archetype: 'sparkler', skill: 'rookie', count: 1 },
-        ],
-        delay: [8, 12],
-      },
-    ],
-    reward: 5634,
+    reward: 4892,
   },
   {
     id: 's4-clash-of-the-titans',
@@ -181,32 +181,46 @@ export const SECTOR_4_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 5664,
+    reward: 6121,
   },
   {
-    id: 's4-brothers-in-arms',
-    name: 'Brothers in Arms',
-    description: 'Face pilots. Phantoms, Wasps, and Dragonflies together.',
+    id: 's4-rock-you-like-a-hurricane',
+    name: 'Rock You Like a Hurricane',
+    description:
+      'Clear sniper position. Scorpions and Sparklers lighting up the void.',
     difficulty: 'medium',
     sector: 4,
     waves: [
       {
-        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
+        enemies: [
+          { archetype: 'scorpion', skill: 'rookie', count: 1 },
+          { archetype: 'sparkler', skill: 'rookie', count: 2 },
+        ],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'wasp', skill: 'regular', count: 2 }],
+        enemies: [
+          { archetype: 'scorpion', skill: 'rookie', count: 1 },
+          { archetype: 'sparkler', skill: 'rookie', count: 2 },
+        ],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
+        enemies: [
+          { archetype: 'scorpion', skill: 'rookie', count: 1 },
+          { archetype: 'sparkler', skill: 'rookie', count: 1 },
+          { archetype: 'sparkler', skill: 'regular', count: 1 },
+        ],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
+        enemies: [
+          { archetype: 'scorpion', skill: 'regular', count: 1 },
+          { archetype: 'sparkler', skill: 'regular', count: 2 },
+        ],
         delay: [8, 12],
       },
     ],
-    reward: 6282,
+    reward: 7155,
   },
 ];

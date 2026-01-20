@@ -6,32 +6,6 @@ import type { Contract } from '../types';
 
 export const SECTOR_3_HARD: Contract[] = [
   {
-    id: 's3-das-boot',
-    name: 'Das Boot',
-    description: 'Heavy ordnance incoming. Beetles with torpedo launchers.',
-    difficulty: 'hard',
-    sector: 3,
-    waves: [
-      {
-        enemies: [{ archetype: 'beetle', skill: 'rookie', count: 1 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'beetle', skill: 'rookie', count: 1 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'beetle', skill: 'rookie', count: 1 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'beetle', skill: 'rookie', count: 2 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 4840,
-  },
-  {
     id: 's3-hammer-to-fall',
     name: 'Hammer to Fall',
     description:
@@ -40,11 +14,11 @@ export const SECTOR_3_HARD: Contract[] = [
     sector: 3,
     waves: [
       {
-        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
+        enemies: [{ archetype: 'phantom', skill: 'regular', count: 3 }],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'beetle', skill: 'rookie', count: 1 }],
+        enemies: [{ archetype: 'beetle', skill: 'rookie', count: 2 }],
         delay: [8, 12],
       },
       {
@@ -56,7 +30,7 @@ export const SECTOR_3_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 5133,
+    reward: 4479,
   },
   {
     id: 's3-break-on-through',
@@ -66,11 +40,11 @@ export const SECTOR_3_HARD: Contract[] = [
     sector: 3,
     waves: [
       {
-        enemies: [{ archetype: 'phantom', skill: 'rookie', count: 2 }],
+        enemies: [{ archetype: 'phantom', skill: 'rookie', count: 3 }],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'fireant', skill: 'ace', count: 3 }],
+        enemies: [{ archetype: 'fireant', skill: 'ace', count: 5 }],
         delay: [8, 12],
       },
       {
@@ -78,37 +52,11 @@ export const SECTOR_3_HARD: Contract[] = [
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
+        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 4 }],
         delay: [8, 12],
       },
     ],
-    reward: 5244,
-  },
-  {
-    id: 's3-riders-on-the-storm',
-    name: 'Riders on the Storm',
-    description: 'Survive the storm. Ace Moths with lightning cannons.',
-    difficulty: 'hard',
-    sector: 3,
-    waves: [
-      {
-        enemies: [{ archetype: 'moth', skill: 'veteran', count: 3 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'moth', skill: 'veteran', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'moth', skill: 'ace', count: 4 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'moth', skill: 'ace', count: 3 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 5567,
+    reward: 4719,
   },
   {
     id: 's3-the-final-countdown',
@@ -134,6 +82,58 @@ export const SECTOR_3_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 6210,
+    reward: 4990,
+  },
+  {
+    id: 's3-riders-on-the-storm',
+    name: 'Riders on the Storm',
+    description: 'Survive the storm. Ace Moths with lightning cannons.',
+    difficulty: 'hard',
+    sector: 3,
+    waves: [
+      {
+        enemies: [{ archetype: 'moth', skill: 'veteran', count: 6 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'moth', skill: 'veteran', count: 6 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'moth', skill: 'ace', count: 8 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'moth', skill: 'ace', count: 6 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 5206,
+  },
+  {
+    id: 's3-das-boot',
+    name: 'Das Boot',
+    description: 'Heavy ordnance incoming. Beetles with torpedo launchers.',
+    difficulty: 'hard',
+    sector: 3,
+    waves: [
+      {
+        enemies: [{ archetype: 'beetle', skill: 'rookie', count: 1 }],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'beetle', skill: 'rookie', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'beetle', skill: 'rookie', count: 2 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'beetle', skill: 'rookie', count: 2 }],
+        delay: [8, 12],
+      },
+    ],
+    reward: 5524,
   },
 ];

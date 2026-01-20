@@ -35,18 +35,18 @@ export const SECTOR_2_AMBUSH: Contract[] = [
       escapeZoneDistance: 9200,
       escapeZoneRadius: 300,
       convoyStopDistance: 400,
-      // Easy: 2 defensive dragonflies + 3 aggressive stingers (regular)
+      // Easy: 3 defensive dragonflies + 4 aggressive stingers (veteran)
       escorts: [
         {
           archetype: 'dragonfly',
-          skill: 'regular',
-          count: 2,
+          skill: 'veteran',
+          count: 3,
           role: 'defensive',
         },
         {
           archetype: 'stinger',
-          skill: 'regular',
-          count: 3,
+          skill: 'veteran',
+          count: 4,
           role: 'aggressive',
         },
       ],
@@ -68,15 +68,15 @@ export const SECTOR_2_AMBUSH: Contract[] = [
       escapeZoneDistance: 9300,
       escapeZoneRadius: 300,
       convoyStopDistance: 400,
-      // Medium: 2 defensive dragonflies + 3 aggressive wasps (veteran)
+      // Medium: 2 defensive dragonflies + 5 aggressive wasps (ace)
       escorts: [
         {
           archetype: 'dragonfly',
-          skill: 'regular',
+          skill: 'veteran',
           count: 2,
           role: 'defensive',
         },
-        { archetype: 'wasp', skill: 'veteran', count: 3, role: 'aggressive' },
+        { archetype: 'wasp', skill: 'ace', count: 5, role: 'aggressive' },
       ],
     },
     reward: 3661,
@@ -96,15 +96,9 @@ export const SECTOR_2_AMBUSH: Contract[] = [
       escapeZoneDistance: 9000,
       escapeZoneRadius: 350,
       convoyStopDistance: 400,
-      // Hard: 2 defensive dragonflies + 4 aggressive wasps (veteran)
+      // Hard: 8 aggressive wasps (ace) - all attack player squad
       escorts: [
-        {
-          archetype: 'dragonfly',
-          skill: 'regular',
-          count: 2,
-          role: 'defensive',
-        },
-        { archetype: 'wasp', skill: 'veteran', count: 4, role: 'aggressive' },
+        { archetype: 'wasp', skill: 'ace', count: 8, role: 'aggressive' },
       ],
     },
     reward: 4759,

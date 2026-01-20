@@ -35,10 +35,10 @@ export const SECTOR_1_AMBUSH: Contract[] = [
       escapeZoneDistance: 9300, // (180 - 10) * 55 m/s transport speed
       escapeZoneRadius: 300,
       convoyStopDistance: 400,
-      // Easy: 2 defensive gnats + 1 aggressive mantis
+      // Easy: 2 defensive gnats + 2 aggressive mantis (rookie)
       escorts: [
-        { archetype: 'gnat', skill: 'rookie', count: 2, role: 'defensive' },
-        { archetype: 'mantis', skill: 'rookie', count: 1, role: 'aggressive' },
+        { archetype: 'gnat', skill: 'regular', count: 2, role: 'defensive' },
+        { archetype: 'mantis', skill: 'rookie', count: 2, role: 'aggressive' },
       ],
     },
     reward: 1409,

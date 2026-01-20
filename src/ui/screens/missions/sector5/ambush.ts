@@ -35,17 +35,17 @@ export const SECTOR_5_AMBUSH: Contract[] = [
       escapeZoneDistance: 9000,
       escapeZoneRadius: 300,
       convoyStopDistance: 400,
-      // Easy: 5 defensive dragonflies + 2 aggressive phantoms (regular)
+      // Easy: 3 defensive dragonflies + 2 aggressive phantoms (veteran)
       escorts: [
         {
           archetype: 'dragonfly',
-          skill: 'regular',
-          count: 5,
+          skill: 'veteran',
+          count: 3,
           role: 'defensive',
         },
         {
           archetype: 'phantom',
-          skill: 'regular',
+          skill: 'veteran',
           count: 2,
           role: 'aggressive',
         },
@@ -68,15 +68,15 @@ export const SECTOR_5_AMBUSH: Contract[] = [
       escapeZoneDistance: 8950,
       escapeZoneRadius: 300,
       convoyStopDistance: 400,
-      // Medium: 5 defensive dragonflies + 4 aggressive wasps (veteran)
+      // Medium: 4 defensive dragonflies + 8 aggressive wasps (ace)
       escorts: [
         {
           archetype: 'dragonfly',
-          skill: 'veteran',
-          count: 5,
+          skill: 'ace',
+          count: 4,
           role: 'defensive',
         },
-        { archetype: 'wasp', skill: 'veteran', count: 4, role: 'aggressive' },
+        { archetype: 'wasp', skill: 'ace', count: 8, role: 'aggressive' },
       ],
     },
     reward: 8871,
@@ -96,15 +96,10 @@ export const SECTOR_5_AMBUSH: Contract[] = [
       escapeZoneDistance: 8900,
       escapeZoneRadius: 350,
       convoyStopDistance: 400,
-      // Hard: 5 defensive scorpions + 5 aggressive wasps (veteran/ace)
+      // Hard: 3 defensive scorpions + 10 aggressive wasps (ace)
       escorts: [
-        {
-          archetype: 'scorpion',
-          skill: 'veteran',
-          count: 5,
-          role: 'defensive',
-        },
-        { archetype: 'wasp', skill: 'ace', count: 5, role: 'aggressive' },
+        { archetype: 'scorpion', skill: 'ace', count: 3, role: 'defensive' },
+        { archetype: 'wasp', skill: 'ace', count: 10, role: 'aggressive' },
       ],
     },
     reward: 9830,

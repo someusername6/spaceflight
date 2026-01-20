@@ -24,18 +24,18 @@ export const SECTOR_1_ESCORT: Contract[] = [
     sector: 1,
     missionType: 'escort',
     escortData: {
-      playerThreatRatio: 0.35,
+      playerThreatRatio: 0.4,
       convoySize: 3,
       convoyType: 'transport',
       escapeZoneDistance: 9350, // (180 - 10) * 55
       escapeZoneRadius: 300,
       jumpChargeTime: 10,
-      spawnInterval: 16,
+      spawnInterval: 18,
       enemyPool: [
         { archetype: 'gnat', skill: 'regular', count: 1 },
         { archetype: 'ember', skill: 'regular', count: 1 },
       ],
-      maxConcurrentEnemies: 4,
+      maxConcurrentEnemies: 3,
       initialSpawnCount: 2,
       spawnBatchSize: 1,
     },

@@ -32,7 +32,7 @@ export const SECTOR_5_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 10159,
+    reward: 9716,
   },
   {
     id: 's5-the-end',
@@ -42,7 +42,10 @@ export const SECTOR_5_HARD: Contract[] = [
     sector: 5,
     waves: [
       {
-        enemies: [{ archetype: 'phantom', skill: 'ace', count: 3 }],
+        enemies: [
+          { archetype: 'phantom', skill: 'veteran', count: 2 },
+          { archetype: 'phantom', skill: 'ace', count: 1 },
+        ],
         delay: [5, 10],
       },
       {
@@ -58,7 +61,7 @@ export const SECTOR_5_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 11150,
+    reward: 10148,
   },
   {
     id: 's5-ghost-town',
@@ -69,7 +72,7 @@ export const SECTOR_5_HARD: Contract[] = [
     waves: [
       {
         enemies: [
-          { archetype: 'wraith', skill: 'ace', count: 1 },
+          { archetype: 'wraith', skill: 'veteran', count: 1 },
           { archetype: 'phantom', skill: 'ace', count: 1 },
         ],
         delay: [5, 10],
@@ -81,7 +84,7 @@ export const SECTOR_5_HARD: Contract[] = [
       {
         enemies: [
           { archetype: 'wraith', skill: 'ace', count: 1 },
-          { archetype: 'phantom', skill: 'ace', count: 2 },
+          { archetype: 'phantom', skill: 'veteran', count: 2 },
         ],
         delay: [8, 12],
       },
@@ -90,7 +93,7 @@ export const SECTOR_5_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 11734,
+    reward: 11151,
   },
   {
     id: 's5-wont-back-down',
@@ -117,7 +120,7 @@ export const SECTOR_5_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 11801,
+    reward: 11642,
   },
   {
     id: 's5-dont-stop-me-now',
@@ -128,22 +131,22 @@ export const SECTOR_5_HARD: Contract[] = [
     sector: 5,
     waves: [
       {
-        enemies: [{ archetype: 'sparkler', skill: 'ace', count: 1 }],
+        enemies: [{ archetype: 'sparkler', skill: 'ace', count: 2 }],
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'sparkler', skill: 'ace', count: 1 }],
-        delay: [8, 12],
-      },
-      {
         enemies: [{ archetype: 'sparkler', skill: 'ace', count: 2 }],
         delay: [8, 12],
       },
       {
-        enemies: [{ archetype: 'sparkler', skill: 'ace', count: 2 }],
+        enemies: [{ archetype: 'sparkler', skill: 'ace', count: 3 }],
+        delay: [8, 12],
+      },
+      {
+        enemies: [{ archetype: 'sparkler', skill: 'ace', count: 3 }],
         delay: [8, 12],
       },
     ],
-    reward: 12145,
+    reward: 12061,
   },
 ];

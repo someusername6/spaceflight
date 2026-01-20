@@ -29,35 +29,49 @@ export const SECTOR_3_STATION_DEFENSE: Contract[] = [
       waves: [
         {
           enemies: [
-            { archetype: 'rocketeer', skill: 'regular', count: 6 },
-            { archetype: 'dragonfly', skill: 'regular', count: 6 },
+            { archetype: 'rocketeer', skill: 'veteran', count: 7 },
+            { archetype: 'dragonfly', skill: 'veteran', count: 7 },
           ],
-          delay: 5,
+          delay: 3,
         },
         {
           enemies: [
-            { archetype: 'fireant', skill: 'regular', count: 5 },
-            { archetype: 'rocketeer', skill: 'regular', count: 5 },
+            { archetype: 'fireant', skill: 'veteran', count: 6 },
+            { archetype: 'rocketeer', skill: 'veteran', count: 6 },
           ],
-          delay: 16,
+          delay: 8,
         },
         {
           enemies: [
-            { archetype: 'dragonfly', skill: 'regular', count: 5 },
-            { archetype: 'beetle', skill: 'regular', count: 4 },
+            { archetype: 'dragonfly', skill: 'ace', count: 6 },
+            { archetype: 'beetle', skill: 'veteran', count: 5 },
           ],
-          delay: 27,
+          delay: 13,
         },
         {
           enemies: [
-            { archetype: 'rocketeer', skill: 'regular', count: 5 },
-            { archetype: 'fireant', skill: 'regular', count: 4 },
+            { archetype: 'rocketeer', skill: 'ace', count: 6 },
+            { archetype: 'fireant', skill: 'ace', count: 5 },
           ],
-          delay: 38,
+          delay: 18,
+        },
+        {
+          enemies: [
+            { archetype: 'beetle', skill: 'ace', count: 5 },
+            { archetype: 'dragonfly', skill: 'ace', count: 5 },
+          ],
+          delay: 23,
+        },
+        {
+          enemies: [
+            { archetype: 'rocketeer', skill: 'ace', count: 6 },
+            { archetype: 'fireant', skill: 'ace', count: 6 },
+          ],
+          delay: 28,
         },
       ],
       reinforcementTime: null,
-      reinforcementHealthThreshold: 0.3,
+      reinforcementHealthThreshold: 0.25,
       reinforcementCount: 3,
       reinforcementPool: [
         { archetype: 'interceptor', skill: 'regular', count: 1 },
@@ -75,63 +89,76 @@ export const SECTOR_3_STATION_DEFENSE: Contract[] = [
     sector: 3,
     missionType: 'station-defense',
     stationDefenseData: {
-      playerThreatRatio: 0.5,
-      stationType: 'military',
+      playerThreatRatio: 0.4,
+      stationType: 'mining',
       stationDistance: -300,
       waves: [
         {
           enemies: [
-            { archetype: 'dragonfly', skill: 'veteran', count: 8 },
-            { archetype: 'rocketeer', skill: 'veteran', count: 8 },
+            { archetype: 'dragonfly', skill: 'ace', count: 10 },
+            { archetype: 'rocketeer', skill: 'ace', count: 10 },
           ],
           delay: 2,
         },
         {
           enemies: [
-            { archetype: 'moth', skill: 'veteran', count: 7 },
-            { archetype: 'fireant', skill: 'veteran', count: 8 },
+            { archetype: 'moth', skill: 'ace', count: 10 },
+            { archetype: 'fireant', skill: 'ace', count: 10 },
           ],
-          delay: 7,
+          delay: 5,
         },
         {
           enemies: [
-            { archetype: 'rocketeer', skill: 'veteran', count: 8 },
-            { archetype: 'beetle', skill: 'veteran', count: 7 },
+            { archetype: 'rocketeer', skill: 'ace', count: 10 },
+            { archetype: 'beetle', skill: 'ace', count: 10 },
           ],
-          delay: 12,
+          delay: 8,
         },
         {
           enemies: [
-            { archetype: 'moth', skill: 'veteran', count: 8 },
-            { archetype: 'dragonfly', skill: 'veteran', count: 8 },
+            { archetype: 'moth', skill: 'ace', count: 10 },
+            { archetype: 'dragonfly', skill: 'ace', count: 10 },
+          ],
+          delay: 11,
+        },
+        {
+          enemies: [
+            { archetype: 'moth', skill: 'ace', count: 10 },
+            { archetype: 'beetle', skill: 'ace', count: 10 },
+          ],
+          delay: 14,
+        },
+        {
+          enemies: [
+            { archetype: 'rocketeer', skill: 'ace', count: 10 },
+            { archetype: 'fireant', skill: 'ace', count: 10 },
           ],
           delay: 17,
         },
         {
           enemies: [
-            { archetype: 'moth', skill: 'veteran', count: 8 },
-            { archetype: 'beetle', skill: 'veteran', count: 7 },
-            { archetype: 'rocketeer', skill: 'veteran', count: 7 },
+            { archetype: 'beetle', skill: 'ace', count: 10 },
+            { archetype: 'dragonfly', skill: 'ace', count: 10 },
           ],
-          delay: 22,
+          delay: 20,
         },
         {
           enemies: [
-            { archetype: 'moth', skill: 'veteran', count: 7 },
-            { archetype: 'fireant', skill: 'veteran', count: 7 },
+            { archetype: 'moth', skill: 'ace', count: 10 },
+            { archetype: 'rocketeer', skill: 'ace', count: 10 },
           ],
-          delay: 27,
+          delay: 23,
         },
         {
           enemies: [
-            { archetype: 'beetle', skill: 'veteran', count: 6 },
-            { archetype: 'dragonfly', skill: 'veteran', count: 6 },
+            { archetype: 'fireant', skill: 'ace', count: 10 },
+            { archetype: 'beetle', skill: 'ace', count: 10 },
           ],
-          delay: 32,
+          delay: 26,
         },
       ],
       reinforcementTime: null,
-      reinforcementHealthThreshold: 0.2,
+      reinforcementHealthThreshold: 0.15,
       reinforcementCount: 4,
       reinforcementPool: [
         { archetype: 'interceptor', skill: 'veteran', count: 1 },
@@ -151,54 +178,61 @@ export const SECTOR_3_STATION_DEFENSE: Contract[] = [
     missionType: 'station-defense',
     stationDefenseData: {
       playerThreatRatio: 0.25,
-      stationType: 'refinery',
+      stationType: 'mining',
       stationDistance: -350,
       waves: [
         {
           enemies: [
-            { archetype: 'dragonfly', skill: 'veteran', count: 8 },
-            { archetype: 'rocketeer', skill: 'veteran', count: 7 },
+            { archetype: 'dragonfly', skill: 'ace', count: 10 },
+            { archetype: 'rocketeer', skill: 'ace', count: 10 },
           ],
-          delay: 3,
+          delay: 2,
         },
         {
           enemies: [
-            { archetype: 'moth', skill: 'veteran', count: 6 },
-            { archetype: 'fireant', skill: 'veteran', count: 8 },
+            { archetype: 'moth', skill: 'ace', count: 10 },
+            { archetype: 'fireant', skill: 'ace', count: 10 },
           ],
-          delay: 9,
+          delay: 5,
         },
         {
           enemies: [
-            { archetype: 'rocketeer', skill: 'veteran', count: 7 },
-            { archetype: 'beetle', skill: 'veteran', count: 6 },
+            { archetype: 'rocketeer', skill: 'ace', count: 10 },
+            { archetype: 'beetle', skill: 'ace', count: 10 },
           ],
-          delay: 15,
+          delay: 8,
         },
         {
           enemies: [
-            { archetype: 'moth', skill: 'veteran', count: 7 },
-            { archetype: 'dragonfly', skill: 'veteran', count: 8 },
+            { archetype: 'moth', skill: 'ace', count: 10 },
+            { archetype: 'dragonfly', skill: 'ace', count: 10 },
           ],
-          delay: 21,
+          delay: 11,
         },
         {
           enemies: [
-            { archetype: 'moth', skill: 'veteran', count: 7 },
-            { archetype: 'rocketeer', skill: 'veteran', count: 7 },
+            { archetype: 'moth', skill: 'ace', count: 10 },
+            { archetype: 'rocketeer', skill: 'ace', count: 10 },
           ],
-          delay: 27,
+          delay: 14,
         },
         {
           enemies: [
-            { archetype: 'beetle', skill: 'veteran', count: 5 },
-            { archetype: 'fireant', skill: 'veteran', count: 6 },
+            { archetype: 'beetle', skill: 'ace', count: 10 },
+            { archetype: 'fireant', skill: 'ace', count: 10 },
           ],
-          delay: 33,
+          delay: 17,
+        },
+        {
+          enemies: [
+            { archetype: 'moth', skill: 'ace', count: 10 },
+            { archetype: 'dragonfly', skill: 'ace', count: 10 },
+          ],
+          delay: 20,
         },
       ],
       reinforcementTime: null,
-      reinforcementHealthThreshold: 0.25,
+      reinforcementHealthThreshold: 0.15,
       reinforcementCount: 4,
       reinforcementPool: [
         { archetype: 'interceptor', skill: 'veteran', count: 1 },

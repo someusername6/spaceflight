@@ -91,15 +91,9 @@ export const SECTOR_4_AMBUSH: Contract[] = [
       escapeZoneDistance: 8950,
       escapeZoneRadius: 350,
       convoyStopDistance: 400,
-      // Hard: 4 defensive dragonflies + 5 aggressive wasps (regular/veteran)
+      // Hard: 10 aggressive wasps (ace) - all attack player squad
       escorts: [
-        {
-          archetype: 'dragonfly',
-          skill: 'regular',
-          count: 4,
-          role: 'defensive',
-        },
-        { archetype: 'wasp', skill: 'veteran', count: 5, role: 'aggressive' },
+        { archetype: 'wasp', skill: 'ace', count: 10, role: 'aggressive' },
       ],
     },
     reward: 6928,

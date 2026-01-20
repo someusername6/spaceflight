@@ -99,7 +99,7 @@ export const ELITE_ARCHETYPES: Record<string, EnemyShipStats> = {
     ],
     secondaryWeapons: [
       { name: 'dart', count: 5, size: 1 },
-      { name: 'seeker', count: 8, size: 2 },
+      { name: 'dart', count: 10, size: 2 },
       { name: 'decoy', count: 6, size: 1 },
     ],
     preferredCombatRange: 500,

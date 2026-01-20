@@ -17,7 +17,45 @@ export const SECTOR_4_HARD: Contract[] = [
         delay: [5, 10],
       },
       {
-        enemies: [{ archetype: 'dragonfly', skill: 'regular', count: 4 }],
+        enemies: [
+          { archetype: 'dragonfly', skill: 'regular', count: 3 },
+          { archetype: 'dragonfly', skill: 'veteran', count: 1 },
+        ],
+        delay: [8, 12],
+      },
+      {
+        enemies: [
+          { archetype: 'phantom', skill: 'regular', count: 1 },
+          { archetype: 'phantom', skill: 'veteran', count: 1 },
+        ],
+        delay: [8, 12],
+      },
+      {
+        enemies: [
+          { archetype: 'specter', skill: 'veteran', count: 1 },
+          { archetype: 'phantom', skill: 'veteran', count: 1 },
+        ],
+        delay: [8, 12],
+      },
+    ],
+    reward: 4627,
+  },
+  {
+    id: 's4-ace-of-spades',
+    name: 'Ace of Spades',
+    description: 'Face heavy assault. Phantoms and Dragonflies.',
+    difficulty: 'hard',
+    sector: 4,
+    waves: [
+      {
+        enemies: [
+          { archetype: 'phantom', skill: 'regular', count: 1 },
+          { archetype: 'phantom', skill: 'veteran', count: 1 },
+        ],
+        delay: [5, 10],
+      },
+      {
+        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
         delay: [8, 12],
       },
       {
@@ -25,14 +63,11 @@ export const SECTOR_4_HARD: Contract[] = [
         delay: [8, 12],
       },
       {
-        enemies: [
-          { archetype: 'specter', skill: 'veteran', count: 1 },
-          { archetype: 'phantom', skill: 'regular', count: 1 },
-        ],
+        enemies: [{ archetype: 'dragonfly', skill: 'ace', count: 3 }],
         delay: [8, 12],
       },
     ],
-    reward: 6199,
+    reward: 6090,
   },
   {
     id: 's4-radioactive',
@@ -44,7 +79,7 @@ export const SECTOR_4_HARD: Contract[] = [
     waves: [
       {
         enemies: [
-          { archetype: 'juggernaut', skill: 'rookie', count: 1 },
+          { archetype: 'juggernaut', skill: 'regular', count: 1 },
           { archetype: 'phantom', skill: 'regular', count: 2 },
         ],
         delay: [5, 10],
@@ -52,52 +87,27 @@ export const SECTOR_4_HARD: Contract[] = [
       {
         enemies: [
           { archetype: 'behemoth', skill: 'regular', count: 1 },
-          { archetype: 'dragonfly', skill: 'regular', count: 2 },
+          { archetype: 'dragonfly', skill: 'regular', count: 1 },
+          { archetype: 'dragonfly', skill: 'veteran', count: 1 },
         ],
         delay: [8, 12],
       },
       {
         enemies: [
-          { archetype: 'juggernaut', skill: 'regular', count: 1 },
+          { archetype: 'juggernaut', skill: 'veteran', count: 1 },
           { archetype: 'inferno', skill: 'regular', count: 2 },
         ],
         delay: [8, 12],
       },
       {
         enemies: [
-          { archetype: 'behemoth', skill: 'regular', count: 1 },
-          { archetype: 'dragonfly', skill: 'veteran', count: 3 },
+          { archetype: 'behemoth', skill: 'veteran', count: 1 },
+          { archetype: 'dragonfly', skill: 'veteran', count: 2 },
         ],
         delay: [8, 12],
       },
     ],
-    reward: 6257,
-  },
-  {
-    id: 's4-ace-of-spades',
-    name: 'Ace of Spades',
-    description: 'Face heavy assault. Phantoms and Dragonflies.',
-    difficulty: 'hard',
-    sector: 4,
-    waves: [
-      {
-        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
-        delay: [5, 10],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'phantom', skill: 'veteran', count: 2 }],
-        delay: [8, 12],
-      },
-      {
-        enemies: [{ archetype: 'dragonfly', skill: 'veteran', count: 3 }],
-        delay: [8, 12],
-      },
-    ],
-    reward: 6786,
+    reward: 6842,
   },
   {
     id: 's4-master-of-puppets',
@@ -108,13 +118,16 @@ export const SECTOR_4_HARD: Contract[] = [
     sector: 4,
     waves: [
       {
-        enemies: [{ archetype: 'phantom', skill: 'regular', count: 2 }],
+        enemies: [
+          { archetype: 'phantom', skill: 'regular', count: 1 },
+          { archetype: 'phantom', skill: 'veteran', count: 1 },
+        ],
         delay: [5, 10],
       },
       {
         enemies: [
           { archetype: 'inferno', skill: 'veteran', count: 3 },
-          { archetype: 'dragonfly', skill: 'regular', count: 2 },
+          { archetype: 'dragonfly', skill: 'veteran', count: 2 },
         ],
         delay: [8, 12],
       },
@@ -130,6 +143,6 @@ export const SECTOR_4_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 7300,
+    reward: 7113,
   },
 ];

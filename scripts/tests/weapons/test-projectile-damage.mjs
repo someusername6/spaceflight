@@ -318,8 +318,8 @@ describe('Damage Priority - Shields Before Hull', () => {
         );
         assert.strictEqual(
           finalDamage.hullDamage,
-          80,
-          'Hull should take overflow damage (70) plus ramming damage (10)',
+          70,
+          'Hull should take overflow damage (80 railgun - 10 shields = 70)',
         );
         break;
       }

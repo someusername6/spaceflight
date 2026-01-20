@@ -63,10 +63,10 @@ export const SECTOR_3_AMBUSH: Contract[] = [
       escapeZoneDistance: 9050,
       escapeZoneRadius: 300,
       convoyStopDistance: 400,
-      // Medium: 3 defensive moths + 4 aggressive wasps (regular)
+      // Medium: 2 defensive moths + 6 aggressive wasps (ace)
       escorts: [
-        { archetype: 'moth', skill: 'regular', count: 3, role: 'defensive' },
-        { archetype: 'wasp', skill: 'regular', count: 4, role: 'aggressive' },
+        { archetype: 'moth', skill: 'ace', count: 2, role: 'defensive' },
+        { archetype: 'wasp', skill: 'ace', count: 6, role: 'aggressive' },
       ],
     },
     reward: 4592,
@@ -86,10 +86,9 @@ export const SECTOR_3_AMBUSH: Contract[] = [
       escapeZoneDistance: 9000,
       escapeZoneRadius: 350,
       convoyStopDistance: 400,
-      // Hard: 3 defensive fireants + 4 aggressive wasps (veteran)
+      // Hard: 10 aggressive wasps (ace) - all attack player squad
       escorts: [
-        { archetype: 'fireant', skill: 'veteran', count: 3, role: 'defensive' },
-        { archetype: 'wasp', skill: 'veteran', count: 4, role: 'aggressive' },
+        { archetype: 'wasp', skill: 'ace', count: 10, role: 'aggressive' },
       ],
     },
     reward: 5482,

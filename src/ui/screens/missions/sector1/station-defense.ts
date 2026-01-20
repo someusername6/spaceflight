@@ -23,38 +23,42 @@ export const SECTOR_1_STATION_DEFENSE: Contract[] = [
     sector: 1,
     missionType: 'station-defense',
     stationDefenseData: {
-      playerThreatRatio: 0.85,
+      playerThreatRatio: 0.65,
       stationType: 'military',
       stationDistance: -300,
-      initialAllies: [{ archetype: 'fighter', skill: 'regular', count: 2 }],
+      initialAllies: [{ archetype: 'fighter', skill: 'regular', count: 1 }],
       waves: [
         {
-          enemies: [{ archetype: 'gnat', skill: 'veteran', count: 5 }],
+          enemies: [{ archetype: 'gnat', skill: 'ace', count: 6 }],
           delay: 3,
         },
         {
-          enemies: [{ archetype: 'ember', skill: 'veteran', count: 5 }],
-          delay: 10,
+          enemies: [{ archetype: 'ember', skill: 'ace', count: 6 }],
+          delay: 8,
         },
         {
-          enemies: [{ archetype: 'shocker', skill: 'veteran', count: 5 }],
-          delay: 17,
+          enemies: [{ archetype: 'shocker', skill: 'ace', count: 6 }],
+          delay: 13,
         },
         {
-          enemies: [{ archetype: 'mantis', skill: 'veteran', count: 5 }],
-          delay: 24,
+          enemies: [{ archetype: 'mantis', skill: 'ace', count: 6 }],
+          delay: 18,
         },
         {
-          enemies: [{ archetype: 'gnat', skill: 'veteran', count: 5 }],
-          delay: 31,
+          enemies: [{ archetype: 'gnat', skill: 'ace', count: 6 }],
+          delay: 23,
         },
         {
-          enemies: [{ archetype: 'ember', skill: 'veteran', count: 5 }],
+          enemies: [{ archetype: 'ember', skill: 'ace', count: 6 }],
+          delay: 28,
+        },
+        {
+          enemies: [{ archetype: 'shocker', skill: 'ace', count: 6 }],
+          delay: 33,
+        },
+        {
+          enemies: [{ archetype: 'mantis', skill: 'ace', count: 6 }],
           delay: 38,
-        },
-        {
-          enemies: [{ archetype: 'shocker', skill: 'veteran', count: 5 }],
-          delay: 45,
         },
       ],
       reinforcementTime: null,
@@ -77,24 +81,24 @@ export const SECTOR_1_STATION_DEFENSE: Contract[] = [
     sector: 1,
     missionType: 'station-defense',
     stationDefenseData: {
-      playerThreatRatio: 0.6,
+      playerThreatRatio: 0.75,
       stationType: 'mining',
       stationDistance: -400,
       waves: [
         {
-          enemies: [{ archetype: 'gnat', skill: 'regular', count: 4 }],
+          enemies: [{ archetype: 'gnat', skill: 'veteran', count: 4 }],
           delay: 5,
         },
         {
-          enemies: [{ archetype: 'ember', skill: 'regular', count: 4 }],
+          enemies: [{ archetype: 'ember', skill: 'veteran', count: 4 }],
           delay: 25,
         },
         {
-          enemies: [{ archetype: 'gnat', skill: 'regular', count: 3 }],
+          enemies: [{ archetype: 'gnat', skill: 'veteran', count: 3 }],
           delay: 45,
         },
         {
-          enemies: [{ archetype: 'ember', skill: 'regular', count: 3 }],
+          enemies: [{ archetype: 'ember', skill: 'veteran', count: 3 }],
           delay: 65,
         },
       ],
@@ -117,29 +121,41 @@ export const SECTOR_1_STATION_DEFENSE: Contract[] = [
     sector: 1,
     missionType: 'station-defense',
     stationDefenseData: {
-      playerThreatRatio: 0.75,
-      stationType: 'refinery',
+      playerThreatRatio: 0.4,
+      stationType: 'mining',
       stationDistance: -350,
       waves: [
         {
-          enemies: [{ archetype: 'gnat', skill: 'regular', count: 5 }],
-          delay: 5,
+          enemies: [{ archetype: 'gnat', skill: 'ace', count: 6 }],
+          delay: 3,
         },
         {
-          enemies: [{ archetype: 'ember', skill: 'regular', count: 5 }],
-          delay: 20,
+          enemies: [{ archetype: 'ember', skill: 'ace', count: 6 }],
+          delay: 8,
         },
         {
-          enemies: [{ archetype: 'shocker', skill: 'regular', count: 4 }],
-          delay: 35,
+          enemies: [{ archetype: 'shocker', skill: 'ace', count: 6 }],
+          delay: 13,
         },
         {
-          enemies: [{ archetype: 'gnat', skill: 'veteran', count: 4 }],
-          delay: 50,
+          enemies: [{ archetype: 'gnat', skill: 'ace', count: 6 }],
+          delay: 18,
         },
         {
-          enemies: [{ archetype: 'ember', skill: 'veteran', count: 4 }],
-          delay: 65,
+          enemies: [{ archetype: 'ember', skill: 'ace', count: 6 }],
+          delay: 23,
+        },
+        {
+          enemies: [{ archetype: 'shocker', skill: 'ace', count: 6 }],
+          delay: 28,
+        },
+        {
+          enemies: [{ archetype: 'mantis', skill: 'ace', count: 5 }],
+          delay: 33,
+        },
+        {
+          enemies: [{ archetype: 'gnat', skill: 'ace', count: 6 }],
+          delay: 38,
         },
       ],
       reinforcementTime: null,
