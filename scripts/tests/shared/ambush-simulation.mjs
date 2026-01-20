@@ -50,8 +50,8 @@ export function countAmbushEntities(world) {
     const health = getComponent(world, entity, 'health');
     const convoyShip = getComponent(world, entity, 'convoyShip');
 
-    if (convoyShip && faction.faction === Faction.Neutral) {
-      // Convoy ships are Neutral (yellow) in ambush missions
+    if (convoyShip && faction.faction === Faction.Enemy) {
+      // Convoy ships are Enemy faction in ambush missions (enables weapon targeting)
       convoyTotal++;
       if (isDead(health)) {
         convoyDead++;

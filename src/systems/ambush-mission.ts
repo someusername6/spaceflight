@@ -52,7 +52,7 @@ export function createAmbushMissionState(
  * Escape is detected when convoy enters escape zone and completes jump charge.
  *
  * Unlike escort missions where convoy escaping is good, here it's defeat.
- * Convoy ships are Neutral faction (yellow) in ambush missions.
+ * Convoy ships are Enemy faction in ambush missions (enables weapon targeting).
  */
 function countConvoyStatus(world: World): {
   alive: number;
@@ -71,7 +71,7 @@ function countConvoyStatus(world: World): {
     'health',
   ])) {
     const faction = getComponent(world, entity, 'faction');
-    if (faction?.faction !== Faction.Neutral) continue;
+    if (faction?.faction !== Faction.Enemy) continue;
 
     const health = getComponent(world, entity, 'health');
     if (!health || isDead(health)) {
@@ -135,12 +135,12 @@ function isPlayerDead(world: World): boolean {
  * - Player ship within stopDistance
  *
  * Once stopped, convoy never restarts.
- * Convoy ships are Neutral faction in ambush missions.
+ * Convoy ships are Enemy faction in ambush missions.
  */
 export function checkConvoyStop(world: World, entity: Entity): boolean {
-  // Only for neutral faction convoys (ambush missions)
+  // Only for enemy faction convoys (ambush missions)
   const faction = getComponent(world, entity, 'faction');
-  if (faction?.faction !== Faction.Neutral) return false;
+  if (faction?.faction !== Faction.Enemy) return false;
 
   const convoyShip = getComponent(world, entity, 'convoyShip');
   if (!convoyShip) return false;
@@ -227,9 +227,10 @@ export function processAmbushMissionTick(
   }
 
   // Check convoy stop behavior for each convoy ship
+  // Convoy ships are Enemy faction in ambush missions (enables weapon targeting)
   for (const entity of queryEntities(world, ['convoyShip', 'faction'])) {
     const faction = getComponent(world, entity, 'faction');
-    if (faction?.faction === Faction.Neutral) {
+    if (faction?.faction === Faction.Enemy) {
       checkConvoyStop(world, entity);
     }
   }

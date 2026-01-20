@@ -54,6 +54,10 @@ const difficultyLabel = DIFFICULTY ? DIFFICULTY.toUpperCase() : 'ALL';
 describe(`Sector ${SECTOR} ${difficultyLabel} Balance`, () => {
   let missions = getMissionsForSector(SECTOR);
 
+  // Filter to elimination missions only (missions with waves)
+  // Other mission types (escort, station-defense, ambush) have their own balance tests
+  missions = missions.filter((m) => m.waves !== undefined);
+
   // Filter by difficulty if specified
   if (DIFFICULTY) {
     missions = missions.filter((m) => m.difficulty === DIFFICULTY);
