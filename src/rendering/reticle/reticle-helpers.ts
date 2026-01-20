@@ -27,6 +27,8 @@ export interface TargetInfo {
   isSelected: boolean;
   isEnemy: boolean;
   isNeutral: boolean;
+  /** Convoy ships always render yellow regardless of faction */
+  isConvoy: boolean;
   isLockTarget: boolean;
   lockProgress: number;
   isMissile: boolean;
@@ -50,6 +52,7 @@ export function getTargetInfo(): TargetInfo {
       isSelected: false,
       isEnemy: false,
       isNeutral: false,
+      isConvoy: false,
       isLockTarget: false,
       lockProgress: 0,
       isMissile: false,

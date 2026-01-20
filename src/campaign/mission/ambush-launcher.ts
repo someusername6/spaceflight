@@ -128,7 +128,7 @@ function spawnEnemyConvoyShips(
       i,
       8, // jumpChargeTime
       {
-        faction: Faction.Neutral,
+        faction: Faction.Enemy,
         stopDistance: ambushData.convoyStopDistance ?? 500,
         addDamageTracking: true,
       },

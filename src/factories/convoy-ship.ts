@@ -84,7 +84,7 @@ export function getConvoyCollisionRadius(shipType: ConvoyShipType): number {
 
 /** Options for creating convoy ships (ambush missions need different settings) */
 export interface ConvoyShipOptions {
-  /** Faction of the convoy ship. Default: Neutral (for escort missions) */
+  /** Faction of the convoy ship. Escort=Player, Ambush=Enemy (default: Neutral) */
   faction?: Faction;
   /** For ambush missions: distance threshold for stop behavior */
   stopDistance?: number;
@@ -145,7 +145,7 @@ export function createConvoyShipEntity(
   );
   addComponent(world, entity, createShieldHit());
 
-  // Faction: Neutral for escort (default), Enemy for ambush
+  // Faction: Player for escort, Enemy for ambush (both render yellow via visual override)
   const faction = options.faction ?? Faction.Neutral;
   addComponent(world, entity, createFaction(faction));
 

@@ -197,6 +197,7 @@ export function updateRadar(
     const blipY = centerY - Math.cos(angle) * radarDist; // Negative because screen Y is inverted
 
     // Determine colors based on faction and target status
+    const isConvoy = hasComponent(world, entity, 'convoyShip');
     const isEnemy =
       faction.faction !== playerFaction.faction &&
       faction.faction !== Faction.Neutral;
@@ -204,7 +205,10 @@ export function updateRadar(
     const isTarget = targeting?.currentTarget === entity;
 
     let color: string;
-    if (isNeutral) {
+    if (isConvoy) {
+      // Convoys always yellow regardless of faction (escort=Player, ambush=Enemy)
+      color = isTarget ? COLORS.neutralBright : COLORS.neutralDim;
+    } else if (isNeutral) {
       color = isTarget ? COLORS.neutralBright : COLORS.neutralDim;
     } else if (isEnemy) {
       color = isTarget ? COLORS.enemyBright : COLORS.enemyDim;

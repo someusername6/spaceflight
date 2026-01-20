@@ -161,6 +161,7 @@ export function spawnConvoyShips(
         escortData.escapeZoneRadius,
         shipIndex,
         escortData.jumpChargeTime,
+        { faction: Faction.Player },
       );
       entities.push(entity);
       shipIndex++;

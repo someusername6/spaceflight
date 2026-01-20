@@ -165,6 +165,7 @@ export function updateReticles(
 
     const isLockTarget = entity === lockTarget;
     const isMissile = hasComponent(world, entity, 'missile');
+    const isConvoy = hasComponent(world, entity, 'convoyShip');
 
     // Get reusable object from pool (avoids per-frame allocation)
     const target = getTargetInfo();
@@ -183,6 +184,7 @@ export function updateReticles(
     target.isSelected = entity === currentTarget;
     target.isEnemy = faction.faction === Faction.Enemy;
     target.isNeutral = faction.faction === Faction.Neutral;
+    target.isConvoy = isConvoy;
     target.isLockTarget = isLockTarget;
     target.lockProgress = isLockTarget ? lockProgress : 0;
     target.isMissile = isMissile;
@@ -221,10 +223,13 @@ function renderTarget(
   secondaryWeapons: SecondaryWeapons | undefined,
 ): void {
   // Colors matching radar: dim for non-selected, bright for selected
-  // Missiles always grey, ships use faction colors
+  // Missiles always grey, convoys always yellow, ships use faction colors
   let color: string;
   if (target.isMissile) {
     color = '#888888';
+  } else if (target.isConvoy) {
+    // Convoys always yellow regardless of faction (escort=Player, ambush=Enemy)
+    color = target.isSelected ? '#ffff00' : '#888800';
   } else if (target.isNeutral) {
     color = target.isSelected ? '#ffff00' : '#888800';
   } else if (target.isEnemy) {

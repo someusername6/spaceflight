@@ -188,7 +188,12 @@ export function syncScene(renderer: Renderer, world: World, alpha = 1): void {
           ? getArchetype(identity.archetype)
           : undefined;
         const shipClass = archetype?.shipClassName ?? identity?.archetype;
-        mesh = createShipMesh(faction?.faction ?? Faction.Neutral, shipClass);
+        // Convoy ships always use Neutral color (yellow) regardless of faction
+        const isConvoy = hasComponent(world, entity, 'convoyShip');
+        const meshFaction = isConvoy
+          ? Faction.Neutral
+          : (faction?.faction ?? Faction.Neutral);
+        mesh = createShipMesh(meshFaction, shipClass);
       }
       scene.add(mesh);
       entityMeshes.set(entity, mesh);
