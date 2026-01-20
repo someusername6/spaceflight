@@ -43,8 +43,7 @@ export function findNearestEnemyEscort(
       continue;
 
     // Skip convoy ships - we want escorts only
-    // (Defensive check: query filters by enemy faction, but convoy ships are Neutral
-    // in ambush missions, so this shouldn't match. Kept for safety.)
+    // (Convoy ships are also Enemy faction in ambush missions, so this filters them out)
     const convoyShip = getComponent(world, other, 'convoyShip');
     if (convoyShip) continue;
 
@@ -67,7 +66,7 @@ export function findNearestEnemyEscort(
 /**
  * Find nearest target convoy ship for convoy-interceptor behavior.
  * Used by player wingmen in ambush missions to approach and stop convoy.
- * In ambush missions, convoy ships are Neutral faction (yellow).
+ * In ambush missions, convoy ships are Enemy faction (enables weapon targeting).
  */
 export function findNearestEnemyConvoyShip(
   world: World,
@@ -86,8 +85,8 @@ export function findNearestEnemyConvoyShip(
     'health',
   ])) {
     const otherFaction = getComponent(world, other, 'faction');
-    // In ambush missions, convoy ships are Neutral (not Enemy)
-    if (!otherFaction || otherFaction.faction !== Faction.Neutral) continue;
+    // In ambush missions, convoy ships are Enemy faction (enables weapon targeting)
+    if (!otherFaction || otherFaction.faction !== Faction.Enemy) continue;
 
     const health = getComponent(world, other, 'health');
     if (health && isDead(health)) continue;
@@ -112,7 +111,7 @@ export function findNearestEnemyConvoyShip(
 /**
  * Get the centroid position of all living, non-stopped target convoy ships.
  * Used by convoy-interceptor wingmen to navigate toward convoy.
- * In ambush missions, convoy ships are Neutral faction (yellow).
+ * In ambush missions, convoy ships are Enemy faction (enables weapon targeting).
  */
 export function getEnemyConvoyCentroid(world: World): Vector3 | null {
   let count = 0;
@@ -125,8 +124,8 @@ export function getEnemyConvoyCentroid(world: World): Vector3 | null {
     'health',
   ])) {
     const faction = getComponent(world, entity, 'faction');
-    // In ambush missions, convoy ships are Neutral (not Enemy)
-    if (!faction || faction.faction !== Faction.Neutral) continue;
+    // In ambush missions, convoy ships are Enemy faction (enables weapon targeting)
+    if (!faction || faction.faction !== Faction.Enemy) continue;
 
     const health = getComponent(world, entity, 'health');
     if (health && isDead(health)) continue;
