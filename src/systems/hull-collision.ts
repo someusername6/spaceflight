@@ -38,7 +38,8 @@ export interface HullCollisionResult {
 const HULL_APPROXIMATION_FACTOR = 0.7;
 
 // Reusable result object for non-collision returns (avoids allocation)
-const _noCollisionResult: HullCollisionResult = {
+// Exported for use by ray-collision.ts
+export const noCollisionResult: HullCollisionResult = {
   collided: false,
   penetration: -1,
   normal: new Vector3(),
@@ -148,14 +149,14 @@ export function testSphereVsHull(
 ): HullCollisionResult {
   // Guard against invalid scale
   if (hullScale <= 0) {
-    return _noCollisionResult;
+    return noCollisionResult;
   }
 
   // Early out: bounding sphere check
   const boundingDist = sphereCenter.distanceTo(hullPosition);
   const maxDist = hull.boundingRadius * hullScale + sphereRadius;
   if (boundingDist > maxDist) {
-    return _noCollisionResult;
+    return noCollisionResult;
   }
 
   // Transform sphere center to hull local space
@@ -185,8 +186,8 @@ export function testSphereVsHull(
   );
 
   if (!result) {
-    _noCollisionResult.penetration = -1;
-    return _noCollisionResult;
+    noCollisionResult.penetration = -1;
+    return noCollisionResult;
   }
 
   // Collision! Return penetration and normal
@@ -230,8 +231,8 @@ function testSphereVsSubHulls(
   }
 
   if (deepestPenetration <= 0 || !deepestPlane) {
-    _noCollisionResult.penetration = deepestPenetration;
-    return _noCollisionResult;
+    noCollisionResult.penetration = deepestPenetration;
+    return noCollisionResult;
   }
 
   // Collision with deepest sub-hull
@@ -280,14 +281,14 @@ export function testHullVsHull(
 ): HullCollisionResult {
   // Guard against invalid scale
   if (scaleA <= 0 || scaleB <= 0) {
-    return _noCollisionResult;
+    return noCollisionResult;
   }
 
   // Early out: bounding sphere check
   const boundingDist = posA.distanceTo(posB);
   const maxDist = hullA.boundingRadius * scaleA + hullB.boundingRadius * scaleB;
   if (boundingDist > maxDist) {
-    return _noCollisionResult;
+    return noCollisionResult;
   }
 
   // Compound hulls (with subHulls) cannot be approximated as spheres.
@@ -333,5 +334,5 @@ export function testHullVsHull(
     }
   }
 
-  return _noCollisionResult;
+  return noCollisionResult;
 }

@@ -312,6 +312,34 @@ export function missileSystem(world: World, dt: number): void {
               missile.owner,
             );
           }
+        } else if (missile.flakRadius && missile.shrapnelCount) {
+          // Shrapnel missiles: spawn shrapnel on collision (same as proximity detonation)
+          const missileFaction = getComponent(world, entity, 'faction');
+          spawnShrapnel(
+            world,
+            transform.position,
+            missile.shrapnelCount,
+            missile.owner,
+            missileFaction,
+            missileName,
+            {
+              damage: missile.shrapnelDamage,
+              speed: missile.shrapnelSpeed,
+              range: missile.shrapnelRange,
+            },
+          );
+
+          // Record collision as a hit (missile achieved its purpose)
+          recordMissileHit(world, missile.owner, missileName);
+
+          // Track aggregate stats (for balance analysis)
+          if (world.systemState.combatStats) {
+            const stats = world.systemState.combatStats;
+            stats.missilesHit[missileName] =
+              (stats.missilesHit[missileName] || 0) + 1;
+            stats.shrapnelSpawned =
+              (stats.shrapnelSpawned || 0) + missile.shrapnelCount;
+          }
         } else {
           // Non-AoE missiles: deal direct damage
           const damageResult = dealDamage(

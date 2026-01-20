@@ -9,11 +9,16 @@
  * - Ship vs Ship: Hull collision (if both have hull colliders)
  * - Projectile vs Ship: Sphere (or hull if ship.useHullForWeapons)
  * - Missile vs Ship: Same as projectile
+ *
+ * Fast-moving projectiles use swept collision detection (ray-sphere intersection)
+ * to prevent tunneling through targets.
  */
 
 import { Vector3 } from 'three';
 import { type Collision, createCollision } from '../components/collision';
 import type { HullCollider } from '../components/hull-collider';
+import type { Missile } from '../components/missile';
+import type { Projectile } from '../components/projectile';
 import type { Transform } from '../components/transform';
 import {
   addComponent,
@@ -28,6 +33,7 @@ import {
   testHullVsHull,
   testSphereVsHull,
 } from './hull-collision';
+import { testRayVsHull, testRayVsSphere } from './ray-collision';
 
 // Re-export for backward compatibility
 export { type Collision, createCollision } from '../components/collision';
@@ -49,6 +55,10 @@ export interface HullCollisionInfo {
 /** Hull collisions detected this frame (consumed by response system) */
 export const hullCollisions: HullCollisionInfo[] = [];
 
+// Reusable vectors for swept collision
+const _prevPosition = new Vector3();
+const _rayDir = new Vector3();
+
 // Pool for collidable info objects (avoid per-frame allocations)
 interface CollidableInfo {
   entity: Entity;
@@ -57,6 +67,10 @@ interface CollidableInfo {
   hull: HullCollider | null;
   isProjectile: boolean;
   isMissile: boolean;
+  /** Speed of projectile/missile (0 for non-weapons) */
+  speed: number;
+  /** Direction of movement (only valid for projectiles/missiles) */
+  direction: Vector3 | null;
 }
 const collidablePool: CollidableInfo[] = [];
 
@@ -68,6 +82,8 @@ function getCollidableInfo(
   hull: HullCollider | null,
   isProjectile: boolean,
   isMissile: boolean,
+  speed: number,
+  direction: Vector3 | null,
 ): CollidableInfo {
   const poolIndex = world.systemState.pools.collidable;
   if (poolIndex >= collidablePool.length) {
@@ -78,6 +94,8 @@ function getCollidableInfo(
       hull: null,
       isProjectile: false,
       isMissile: false,
+      speed: 0,
+      direction: null,
     });
   }
   const info = collidablePool[poolIndex] as CollidableInfo;
@@ -88,6 +106,8 @@ function getCollidableInfo(
   info.hull = hull;
   info.isProjectile = isProjectile;
   info.isMissile = isMissile;
+  info.speed = speed;
+  info.direction = direction;
   return info;
 }
 
@@ -97,10 +117,14 @@ const collidables: CollidableInfo[] = [];
 /**
  * Check collision between two entities, using appropriate method.
  * Returns collision result if detected, null otherwise.
+ *
+ * For fast-moving projectiles/missiles, uses swept collision detection
+ * (ray intersection) to prevent tunneling through targets.
  */
 function checkCollision(
   a: CollidableInfo,
   b: CollidableInfo,
+  dt: number,
 ): HullCollisionResult | null {
   const aIsWeapon = a.isProjectile || a.isMissile;
   const bIsWeapon = b.isProjectile || b.isMissile;
@@ -122,6 +146,31 @@ function checkCollision(
 
   // Case 2: Weapon vs Ship with hull (if ship uses hull for weapons)
   if (aIsWeapon && b.hull?.useHullForWeapons) {
+    // Check if weapon needs swept collision (fast enough to tunnel)
+    const distanceTraveled = a.speed * dt;
+    const needsSwept =
+      distanceTraveled > a.collision.radius + b.collision.radius;
+
+    if (needsSwept && a.direction) {
+      // Compute previous position
+      _prevPosition.copy(a.transform.position);
+      _prevPosition.addScaledVector(a.direction, -distanceTraveled);
+      _rayDir.copy(a.direction);
+
+      const result = testRayVsHull(
+        _prevPosition,
+        _rayDir,
+        distanceTraveled,
+        a.collision.radius,
+        b.hull,
+        b.transform.position,
+        b.transform.rotation,
+        SHIP_MODEL_SCALE,
+      );
+      return result.collided ? result : null;
+    }
+
+    // Standard sphere-vs-hull test
     const result = testSphereVsHull(
       a.transform.position,
       a.collision.radius,
@@ -132,7 +181,36 @@ function checkCollision(
     );
     return result.collided ? result : null;
   }
+
   if (bIsWeapon && a.hull?.useHullForWeapons) {
+    // Check if weapon needs swept collision
+    const distanceTraveled = b.speed * dt;
+    const needsSwept =
+      distanceTraveled > b.collision.radius + a.collision.radius;
+
+    if (needsSwept && b.direction) {
+      // Compute previous position
+      _prevPosition.copy(b.transform.position);
+      _prevPosition.addScaledVector(b.direction, -distanceTraveled);
+      _rayDir.copy(b.direction);
+
+      const result = testRayVsHull(
+        _prevPosition,
+        _rayDir,
+        distanceTraveled,
+        b.collision.radius,
+        a.hull,
+        a.transform.position,
+        a.transform.rotation,
+        SHIP_MODEL_SCALE,
+      );
+      if (result.collided) {
+        result.normal.negate(); // Flip normal for consistent direction
+      }
+      return result.collided ? result : null;
+    }
+
+    // Standard sphere-vs-hull test
     const result = testSphereVsHull(
       b.transform.position,
       b.collision.radius,
@@ -142,17 +220,59 @@ function checkCollision(
       SHIP_MODEL_SCALE,
     );
     if (result.collided) {
-      result.normal.negate(); // Flip normal for consistent direction
+      result.normal.negate();
     }
     return result.collided ? result : null;
   }
 
-  // Case 3: Default sphere-sphere collision
-  const dist = a.transform.position.distanceTo(b.transform.position);
-  const minDist = a.collision.radius + b.collision.radius;
+  // Case 3: Default sphere-sphere collision (with swept detection for fast weapons)
+  const aDistanceTraveled = aIsWeapon ? a.speed * dt : 0;
+  const bDistanceTraveled = bIsWeapon ? b.speed * dt : 0;
+  const combinedRadius = a.collision.radius + b.collision.radius;
 
-  if (dist < minDist) {
-    _sphereCollisionResult.penetration = minDist - dist;
+  // Check if either weapon is fast enough to need swept collision
+  if (aDistanceTraveled > combinedRadius && a.direction) {
+    // Fast-moving 'a' (weapon) vs slow 'b' (target)
+    _prevPosition.copy(a.transform.position);
+    _prevPosition.addScaledVector(a.direction, -aDistanceTraveled);
+    _rayDir.copy(a.direction);
+
+    const result = testRayVsSphere(
+      _prevPosition,
+      _rayDir,
+      aDistanceTraveled,
+      a.collision.radius,
+      b.transform.position,
+      b.collision.radius,
+    );
+    return result.collided ? result : null;
+  }
+
+  if (bDistanceTraveled > combinedRadius && b.direction) {
+    // Fast-moving 'b' (weapon) vs slow 'a' (target)
+    _prevPosition.copy(b.transform.position);
+    _prevPosition.addScaledVector(b.direction, -bDistanceTraveled);
+    _rayDir.copy(b.direction);
+
+    const result = testRayVsSphere(
+      _prevPosition,
+      _rayDir,
+      bDistanceTraveled,
+      b.collision.radius,
+      a.transform.position,
+      a.collision.radius,
+    );
+    if (result.collided) {
+      result.normal.negate(); // Flip normal
+    }
+    return result.collided ? result : null;
+  }
+
+  // Standard sphere-sphere test
+  const dist = a.transform.position.distanceTo(b.transform.position);
+
+  if (dist < combinedRadius) {
+    _sphereCollisionResult.penetration = combinedRadius - dist;
     _sphereCollisionResult.normal
       .copy(b.transform.position)
       .sub(a.transform.position)
@@ -164,7 +284,7 @@ function checkCollision(
 }
 
 /** Collision detection system */
-export function collisionSystem(world: World, _dt: number): void {
+export function collisionSystem(world: World, dt: number): void {
   // Clear previous frame's collisions and hull collision list
   hullCollisions.length = 0;
   for (const entity of queryEntities(world, ['collision'])) {
@@ -184,6 +304,24 @@ export function collisionSystem(world: World, _dt: number): void {
     const isProjectile = hasComponent(world, entity, 'projectile');
     const isMissile = hasComponent(world, entity, 'missile');
 
+    // Extract speed and direction for swept collision detection
+    let speed = 0;
+    let direction: Vector3 | null = null;
+
+    if (isProjectile) {
+      const proj = getComponent(world, entity, 'projectile') as Projectile;
+      if (proj) {
+        speed = proj.speed;
+        direction = proj.direction;
+      }
+    } else if (isMissile) {
+      const missile = getComponent(world, entity, 'missile') as Missile;
+      if (missile) {
+        speed = missile.speed;
+        direction = missile.direction;
+      }
+    }
+
     collidables.push(
       getCollidableInfo(
         world,
@@ -193,6 +331,8 @@ export function collisionSystem(world: World, _dt: number): void {
         hull,
         isProjectile,
         isMissile,
+        speed,
+        direction,
       ),
     );
   }
@@ -207,7 +347,7 @@ export function collisionSystem(world: World, _dt: number): void {
       const a = collidables[i] as (typeof collidables)[0];
       const b = collidables[j] as (typeof collidables)[0];
 
-      const result = checkCollision(a, b);
+      const result = checkCollision(a, b, dt);
       if (result) {
         // Collision detected
         a.collision.collidedWith.push(b.entity);
