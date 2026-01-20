@@ -35,13 +35,13 @@ export const SECTOR_1_AMBUSH: Contract[] = [
       escapeZoneDistance: 9300, // (180 - 10) * 55 m/s transport speed
       escapeZoneRadius: 300,
       convoyStopDistance: 400,
-      // Easy: 2 defensive gnats + 2 aggressive mantis (rookie)
+      // Easy: 2 defensive gnats + 1 aggressive mantis (rookie)
       escorts: [
-        { archetype: 'gnat', skill: 'regular', count: 2, role: 'defensive' },
-        { archetype: 'mantis', skill: 'rookie', count: 2, role: 'aggressive' },
+        { archetype: 'gnat', skill: 'rookie', count: 2, role: 'defensive' },
+        { archetype: 'mantis', skill: 'rookie', count: 1, role: 'aggressive' },
       ],
     },
-    reward: 1409,
+    reward: 1327,
   },
   {
     id: 's1-smash-and-grab',
@@ -58,13 +58,13 @@ export const SECTOR_1_AMBUSH: Contract[] = [
       escapeZoneDistance: 9200, // (180 - 12) * 55 m/s transport speed
       escapeZoneRadius: 300,
       convoyStopDistance: 400,
-      // Medium: 2 defensive + 2 aggressive
+      // Medium: 2 defensive embers + 2 aggressive mantis
       escorts: [
-        { archetype: 'gnat', skill: 'rookie', count: 2, role: 'defensive' },
-        { archetype: 'mantis', skill: 'regular', count: 2, role: 'aggressive' },
+        { archetype: 'ember', skill: 'rookie', count: 2, role: 'defensive' },
+        { archetype: 'mantis', skill: 'rookie', count: 2, role: 'aggressive' },
       ],
     },
-    reward: 3073,
+    reward: 2455,
   },
   {
     id: 's1-fools-gold',
@@ -87,6 +87,6 @@ export const SECTOR_1_AMBUSH: Contract[] = [
         { archetype: 'wasp', skill: 'veteran', count: 4, role: 'aggressive' },
       ],
     },
-    reward: 3725,
+    reward: 3693,
   },
 ];

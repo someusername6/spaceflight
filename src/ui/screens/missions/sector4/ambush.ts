@@ -51,7 +51,7 @@ export const SECTOR_4_AMBUSH: Contract[] = [
         },
       ],
     },
-    reward: 4344,
+    reward: 4152,
   },
   {
     id: 's4-hellfire',
@@ -74,7 +74,7 @@ export const SECTOR_4_AMBUSH: Contract[] = [
         { archetype: 'wasp', skill: 'veteran', count: 3, role: 'aggressive' },
       ],
     },
-    reward: 6109,
+    reward: 6714,
   },
   {
     id: 's4-long-shot',
@@ -96,6 +96,6 @@ export const SECTOR_4_AMBUSH: Contract[] = [
         { archetype: 'wasp', skill: 'ace', count: 10, role: 'aggressive' },
       ],
     },
-    reward: 6928,
+    reward: 7058,
   },
 ];

@@ -39,7 +39,7 @@ export const SECTOR_5_ESCORT: Contract[] = [
       initialSpawnCount: 3,
       spawnBatchSize: 1,
     },
-    reward: 9148,
+    reward: 7943,
   },
   {
     id: 's5-iron-curtain',
@@ -65,7 +65,7 @@ export const SECTOR_5_ESCORT: Contract[] = [
       initialSpawnCount: 4,
       spawnBatchSize: 1,
     },
-    reward: 17994,
+    reward: 13496,
   },
   {
     id: 's5-the-abyss',
@@ -92,6 +92,6 @@ export const SECTOR_5_ESCORT: Contract[] = [
       initialSpawnCount: 3,
       spawnBatchSize: 1,
     },
-    reward: 22268,
+    reward: 26578,
   },
 ];

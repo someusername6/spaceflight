@@ -71,7 +71,67 @@ export const SECTOR_4_STATION_DEFENSE: Contract[] = [
         { archetype: 'defender', skill: 'veteran', count: 1 },
       ],
     },
-    reward: 6488,
+    reward: 14994,
+  },
+  {
+    id: 's4-chain-reaction',
+    name: 'Chain Reaction',
+    description:
+      'Veteran phantom squadron targeting the refinery. Heavy torpedo threat.',
+    difficulty: 'medium',
+    sector: 4,
+    missionType: 'station-defense',
+    stationDefenseData: {
+      playerThreatRatio: 0.15,
+      stationType: 'mining',
+      stationDistance: -350,
+      waves: [
+        {
+          enemies: [
+            { archetype: 'firefly', skill: 'ace', count: 6 },
+            { archetype: 'dragonfly', skill: 'ace', count: 6 },
+          ],
+          delay: 3,
+        },
+        {
+          enemies: [
+            { archetype: 'phantom', skill: 'ace', count: 6 },
+            { archetype: 'firefly', skill: 'ace', count: 6 },
+          ],
+          delay: 8,
+        },
+        {
+          enemies: [
+            { archetype: 'phantom', skill: 'ace', count: 6 },
+            { archetype: 'dragonfly', skill: 'ace', count: 6 },
+          ],
+          delay: 13,
+        },
+        {
+          enemies: [
+            { archetype: 'dragonfly', skill: 'ace', count: 6 },
+            { archetype: 'firefly', skill: 'ace', count: 6 },
+          ],
+          delay: 18,
+        },
+        {
+          enemies: [
+            { archetype: 'phantom', skill: 'ace', count: 6 },
+            { archetype: 'dragonfly', skill: 'ace', count: 6 },
+          ],
+          delay: 23,
+        },
+      ],
+      reinforcementTime: null,
+      reinforcementHealthThreshold: 0.2,
+      reinforcementCount: 4,
+      reinforcementPool: [
+        { archetype: 'striker', skill: 'veteran', count: 1 },
+        { archetype: 'defender', skill: 'veteran', count: 1 },
+        { archetype: 'sentinel', skill: 'regular', count: 1 },
+      ],
+    },
+    reward: 21432,
   },
   {
     id: 's4-omega-point',
@@ -138,66 +198,6 @@ export const SECTOR_4_STATION_DEFENSE: Contract[] = [
         { archetype: 'sentinel', skill: 'veteran', count: 1 },
       ],
     },
-    reward: 14408,
-  },
-  {
-    id: 's4-chain-reaction',
-    name: 'Chain Reaction',
-    description:
-      'Veteran phantom squadron targeting the refinery. Heavy torpedo threat.',
-    difficulty: 'medium',
-    sector: 4,
-    missionType: 'station-defense',
-    stationDefenseData: {
-      playerThreatRatio: 0.15,
-      stationType: 'mining',
-      stationDistance: -350,
-      waves: [
-        {
-          enemies: [
-            { archetype: 'firefly', skill: 'ace', count: 6 },
-            { archetype: 'dragonfly', skill: 'ace', count: 6 },
-          ],
-          delay: 3,
-        },
-        {
-          enemies: [
-            { archetype: 'phantom', skill: 'ace', count: 6 },
-            { archetype: 'firefly', skill: 'ace', count: 6 },
-          ],
-          delay: 8,
-        },
-        {
-          enemies: [
-            { archetype: 'phantom', skill: 'ace', count: 6 },
-            { archetype: 'dragonfly', skill: 'ace', count: 6 },
-          ],
-          delay: 13,
-        },
-        {
-          enemies: [
-            { archetype: 'dragonfly', skill: 'ace', count: 6 },
-            { archetype: 'firefly', skill: 'ace', count: 6 },
-          ],
-          delay: 18,
-        },
-        {
-          enemies: [
-            { archetype: 'phantom', skill: 'ace', count: 6 },
-            { archetype: 'dragonfly', skill: 'ace', count: 6 },
-          ],
-          delay: 23,
-        },
-      ],
-      reinforcementTime: null,
-      reinforcementHealthThreshold: 0.2,
-      reinforcementCount: 4,
-      reinforcementPool: [
-        { archetype: 'striker', skill: 'veteran', count: 1 },
-        { archetype: 'defender', skill: 'veteran', count: 1 },
-        { archetype: 'sentinel', skill: 'regular', count: 1 },
-      ],
-    },
-    reward: 14729,
+    reward: 22990,
   },
 ];

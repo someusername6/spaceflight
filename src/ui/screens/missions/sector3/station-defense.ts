@@ -78,7 +78,81 @@ export const SECTOR_3_STATION_DEFENSE: Contract[] = [
         { archetype: 'defender', skill: 'regular', count: 1 },
       ],
     },
-    reward: 9714,
+    reward: 7122,
+  },
+  {
+    id: 's3-arc-flash',
+    name: 'Arc Flash',
+    description:
+      'Moths with chain lightning targeting the refinery. High energy threat.',
+    difficulty: 'medium',
+    sector: 3,
+    missionType: 'station-defense',
+    stationDefenseData: {
+      playerThreatRatio: 0.25,
+      stationType: 'mining',
+      stationDistance: -350,
+      waves: [
+        {
+          enemies: [
+            { archetype: 'dragonfly', skill: 'ace', count: 10 },
+            { archetype: 'rocketeer', skill: 'ace', count: 10 },
+          ],
+          delay: 2,
+        },
+        {
+          enemies: [
+            { archetype: 'moth', skill: 'ace', count: 10 },
+            { archetype: 'fireant', skill: 'ace', count: 10 },
+          ],
+          delay: 5,
+        },
+        {
+          enemies: [
+            { archetype: 'rocketeer', skill: 'ace', count: 10 },
+            { archetype: 'beetle', skill: 'ace', count: 10 },
+          ],
+          delay: 8,
+        },
+        {
+          enemies: [
+            { archetype: 'moth', skill: 'ace', count: 10 },
+            { archetype: 'dragonfly', skill: 'ace', count: 10 },
+          ],
+          delay: 11,
+        },
+        {
+          enemies: [
+            { archetype: 'moth', skill: 'ace', count: 10 },
+            { archetype: 'rocketeer', skill: 'ace', count: 10 },
+          ],
+          delay: 14,
+        },
+        {
+          enemies: [
+            { archetype: 'beetle', skill: 'ace', count: 10 },
+            { archetype: 'fireant', skill: 'ace', count: 10 },
+          ],
+          delay: 17,
+        },
+        {
+          enemies: [
+            { archetype: 'moth', skill: 'ace', count: 10 },
+            { archetype: 'dragonfly', skill: 'ace', count: 10 },
+          ],
+          delay: 20,
+        },
+      ],
+      reinforcementTime: null,
+      reinforcementHealthThreshold: 0.15,
+      reinforcementCount: 4,
+      reinforcementPool: [
+        { archetype: 'interceptor', skill: 'veteran', count: 1 },
+        { archetype: 'defender', skill: 'regular', count: 1 },
+        { archetype: 'striker', skill: 'regular', count: 1 },
+      ],
+    },
+    reward: 11093,
   },
   {
     id: 's3-hot-zone',
@@ -166,80 +240,6 @@ export const SECTOR_3_STATION_DEFENSE: Contract[] = [
         { archetype: 'striker', skill: 'regular', count: 1 },
       ],
     },
-    reward: 10508,
-  },
-  {
-    id: 's3-arc-flash',
-    name: 'Arc Flash',
-    description:
-      'Moths with chain lightning targeting the refinery. High energy threat.',
-    difficulty: 'medium',
-    sector: 3,
-    missionType: 'station-defense',
-    stationDefenseData: {
-      playerThreatRatio: 0.25,
-      stationType: 'mining',
-      stationDistance: -350,
-      waves: [
-        {
-          enemies: [
-            { archetype: 'dragonfly', skill: 'ace', count: 10 },
-            { archetype: 'rocketeer', skill: 'ace', count: 10 },
-          ],
-          delay: 2,
-        },
-        {
-          enemies: [
-            { archetype: 'moth', skill: 'ace', count: 10 },
-            { archetype: 'fireant', skill: 'ace', count: 10 },
-          ],
-          delay: 5,
-        },
-        {
-          enemies: [
-            { archetype: 'rocketeer', skill: 'ace', count: 10 },
-            { archetype: 'beetle', skill: 'ace', count: 10 },
-          ],
-          delay: 8,
-        },
-        {
-          enemies: [
-            { archetype: 'moth', skill: 'ace', count: 10 },
-            { archetype: 'dragonfly', skill: 'ace', count: 10 },
-          ],
-          delay: 11,
-        },
-        {
-          enemies: [
-            { archetype: 'moth', skill: 'ace', count: 10 },
-            { archetype: 'rocketeer', skill: 'ace', count: 10 },
-          ],
-          delay: 14,
-        },
-        {
-          enemies: [
-            { archetype: 'beetle', skill: 'ace', count: 10 },
-            { archetype: 'fireant', skill: 'ace', count: 10 },
-          ],
-          delay: 17,
-        },
-        {
-          enemies: [
-            { archetype: 'moth', skill: 'ace', count: 10 },
-            { archetype: 'dragonfly', skill: 'ace', count: 10 },
-          ],
-          delay: 20,
-        },
-      ],
-      reinforcementTime: null,
-      reinforcementHealthThreshold: 0.15,
-      reinforcementCount: 4,
-      reinforcementPool: [
-        { archetype: 'interceptor', skill: 'veteran', count: 1 },
-        { archetype: 'defender', skill: 'regular', count: 1 },
-        { archetype: 'striker', skill: 'regular', count: 1 },
-      ],
-    },
-    reward: 13609,
+    reward: 15889,
   },
 ];

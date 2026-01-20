@@ -15,6 +15,73 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_2_STATION_DEFENSE: Contract[] = [
   {
+    id: 's2-tinderbox',
+    name: 'Tinderbox',
+    description:
+      'Locusts with cluster missiles targeting the refinery. Bruiser support incoming.',
+    difficulty: 'medium',
+    sector: 2,
+    missionType: 'station-defense',
+    stationDefenseData: {
+      playerThreatRatio: 0.26,
+      stationType: 'mining',
+      stationDistance: -350,
+      waves: [
+        {
+          enemies: [
+            { archetype: 'firefly', skill: 'ace', count: 6 },
+            { archetype: 'dragonfly', skill: 'ace', count: 6 },
+          ],
+          delay: 3,
+        },
+        {
+          enemies: [
+            { archetype: 'stinger', skill: 'ace', count: 6 },
+            { archetype: 'locust', skill: 'ace', count: 5 },
+          ],
+          delay: 8,
+        },
+        {
+          enemies: [
+            { archetype: 'dragonfly', skill: 'ace', count: 6 },
+            { archetype: 'bruiser', skill: 'ace', count: 5 },
+          ],
+          delay: 13,
+        },
+        {
+          enemies: [
+            { archetype: 'firefly', skill: 'ace', count: 6 },
+            { archetype: 'stinger', skill: 'ace', count: 6 },
+          ],
+          delay: 18,
+        },
+        {
+          enemies: [
+            { archetype: 'locust', skill: 'ace', count: 5 },
+            { archetype: 'dragonfly', skill: 'ace', count: 5 },
+          ],
+          delay: 23,
+        },
+        {
+          enemies: [
+            { archetype: 'bruiser', skill: 'ace', count: 5 },
+            { archetype: 'stinger', skill: 'ace', count: 5 },
+          ],
+          delay: 28,
+        },
+      ],
+      reinforcementTime: null,
+      reinforcementHealthThreshold: 0.25,
+      reinforcementCount: 4,
+      reinforcementPool: [
+        { archetype: 'fighter', skill: 'veteran', count: 1 },
+        { archetype: 'interceptor', skill: 'regular', count: 1 },
+        { archetype: 'defender', skill: 'regular', count: 1 },
+      ],
+    },
+    reward: 9803,
+  },
+  {
     id: 's2-heavy-metal',
     name: 'Heavy Metal',
     description:
@@ -85,7 +152,7 @@ export const SECTOR_2_STATION_DEFENSE: Contract[] = [
         { archetype: 'interceptor', skill: 'regular', count: 1 },
       ],
     },
-    reward: 1810,
+    reward: 10869,
   },
   {
     id: 's2-blood-money',
@@ -160,73 +227,6 @@ export const SECTOR_2_STATION_DEFENSE: Contract[] = [
         { archetype: 'defender', skill: 'regular', count: 1 },
       ],
     },
-    reward: 7458,
-  },
-  {
-    id: 's2-tinderbox',
-    name: 'Tinderbox',
-    description:
-      'Locusts with cluster missiles targeting the refinery. Bruiser support incoming.',
-    difficulty: 'medium',
-    sector: 2,
-    missionType: 'station-defense',
-    stationDefenseData: {
-      playerThreatRatio: 0.26,
-      stationType: 'mining',
-      stationDistance: -350,
-      waves: [
-        {
-          enemies: [
-            { archetype: 'firefly', skill: 'ace', count: 6 },
-            { archetype: 'dragonfly', skill: 'ace', count: 6 },
-          ],
-          delay: 3,
-        },
-        {
-          enemies: [
-            { archetype: 'stinger', skill: 'ace', count: 6 },
-            { archetype: 'locust', skill: 'ace', count: 5 },
-          ],
-          delay: 8,
-        },
-        {
-          enemies: [
-            { archetype: 'dragonfly', skill: 'ace', count: 6 },
-            { archetype: 'bruiser', skill: 'ace', count: 5 },
-          ],
-          delay: 13,
-        },
-        {
-          enemies: [
-            { archetype: 'firefly', skill: 'ace', count: 6 },
-            { archetype: 'stinger', skill: 'ace', count: 6 },
-          ],
-          delay: 18,
-        },
-        {
-          enemies: [
-            { archetype: 'locust', skill: 'ace', count: 5 },
-            { archetype: 'dragonfly', skill: 'ace', count: 5 },
-          ],
-          delay: 23,
-        },
-        {
-          enemies: [
-            { archetype: 'bruiser', skill: 'ace', count: 5 },
-            { archetype: 'stinger', skill: 'ace', count: 5 },
-          ],
-          delay: 28,
-        },
-      ],
-      reinforcementTime: null,
-      reinforcementHealthThreshold: 0.25,
-      reinforcementCount: 4,
-      reinforcementPool: [
-        { archetype: 'fighter', skill: 'veteran', count: 1 },
-        { archetype: 'interceptor', skill: 'regular', count: 1 },
-        { archetype: 'defender', skill: 'regular', count: 1 },
-      ],
-    },
-    reward: 10104,
+    reward: 13332,
   },
 ];
