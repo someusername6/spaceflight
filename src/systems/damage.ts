@@ -55,6 +55,10 @@ export function damageSystem(world: World, _dt: number): void {
     if (!collision || !faction) continue;
 
     for (const other of collision.collidedWith) {
+      // Skip projectiles and missiles - they handle their own damage
+      if (hasComponent(world, other, 'projectile')) continue;
+      if (hasComponent(world, other, 'missile')) continue;
+
       const otherFaction = getComponent(world, other, 'faction');
 
       // Only damage from enemies (or if no faction)
