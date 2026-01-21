@@ -1,42 +1,40 @@
 #!/usr/bin/env node
 /**
- * Station Defense Mission Reward Updater
+ * Attack Station Mission Reward Updater
  *
- * Runs simulations and automatically updates station defense mission reward values.
+ * Runs simulations and automatically updates attack station mission reward values.
  * Also sorts missions by reward (increasing order) within each file.
  *
- * Formula:
- *   Reward = (replacement_cost + consumables_used + profitMargin) / station_health_fraction - expected_salvage
+ * Formula (all-or-nothing, calculated from victories):
+ *   Reward = (replacement_cost + consumables_used + profitMargin) - expected_salvage
  *
  * Where:
  *   - replacement_cost = value of lost ships (player team)
  *   - consumables_used = missiles/ammo used by surviving ships
- *   - profitMargin = difficulty-based profit margin (same as wave missions)
- *   - station_health_fraction = fraction of station hull remaining (victories only)
+ *   - profitMargin = difficulty-based profit margin
  *   - expected_salvage = SALVAGE_RATE * (enemy ships killed value + friendly ships lost value)
  *
+ * Victory = station destroyed (full reward)
+ * Defeat = station survives (no reward)
+ *
  * Usage:
- *   npx tsx scripts/tools/update-station-defense-rewards.mjs [sector]
- *   npx tsx scripts/tools/update-station-defense-rewards.mjs --dry-run [sector]
+ *   npx tsx scripts/tools/update-attack-station-rewards.mjs [sector]
+ *   npx tsx scripts/tools/update-attack-station-rewards.mjs --dry-run [sector]
  *
  * Options:
  *   --dry-run  Show changes without writing to files
  */
 
-import { SECTOR_1_STATION_DEFENSE } from '../../src/ui/screens/missions/sector1/station-defense.ts';
-import { SECTOR_2_STATION_DEFENSE } from '../../src/ui/screens/missions/sector2/station-defense.ts';
-import { SECTOR_3_STATION_DEFENSE } from '../../src/ui/screens/missions/sector3/station-defense.ts';
-import { SECTOR_4_STATION_DEFENSE } from '../../src/ui/screens/missions/sector4/station-defense.ts';
-import { SECTOR_5_STATION_DEFENSE } from '../../src/ui/screens/missions/sector5/station-defense.ts';
-import { getLoadoutDescription } from '../tests/shared/mission-simulation.mjs';
+import { SECTOR_1_ATTACK_STATION } from '../../src/ui/screens/missions/sector1/attack-station.ts';
+import { getAssaultLoadoutDescription } from '../tests/shared/mission-simulation.mjs';
 import {
   getArchetypeValue,
   getPlayerShipValue,
   PROFIT_MARGINS,
   SALVAGE_RATE,
 } from '../tests/shared/mission-value.mjs';
+import { runAttackStationMission } from './attack-station-simulation.mjs';
 import { createProject, updateMissionFile } from './mission-file-updater.mjs';
-import { runStationDefenseMission } from './station-defense-simulation.mjs';
 
 // ============================================================================
 // Configuration
@@ -49,97 +47,81 @@ const SECTOR = sectorArg ? parseInt(sectorArg, 10) : null;
 
 const RUNS_PER_MISSION = 50;
 
-// Station defense mission files by sector
-const STATION_DEFENSE_FILES = {
-  1: 'src/ui/screens/missions/sector1/station-defense.ts',
-  2: 'src/ui/screens/missions/sector2/station-defense.ts',
-  3: 'src/ui/screens/missions/sector3/station-defense.ts',
-  4: 'src/ui/screens/missions/sector4/station-defense.ts',
-  5: 'src/ui/screens/missions/sector5/station-defense.ts',
+// Attack station mission files by sector (only sector 1 for now)
+const ATTACK_STATION_FILES = {
+  1: 'src/ui/screens/missions/sector1/attack-station.ts',
 };
 
-// All station defense missions by sector
-const STATION_DEFENSE_MISSIONS = {
-  1: SECTOR_1_STATION_DEFENSE,
-  2: SECTOR_2_STATION_DEFENSE,
-  3: SECTOR_3_STATION_DEFENSE,
-  4: SECTOR_4_STATION_DEFENSE,
-  5: SECTOR_5_STATION_DEFENSE,
+// All attack station missions by sector
+const ATTACK_STATION_MISSIONS = {
+  1: SECTOR_1_ATTACK_STATION,
 };
 
 // ============================================================================
 // Reward Calculation
 // ============================================================================
 
-function calculateStationDefenseReward(mission, sector) {
+function calculateAttackStationReward(mission, sector) {
   const results = [];
 
   for (let i = 0; i < RUNS_PER_MISSION; i++) {
     const seed = 12345 + i * 7919 + mission.id.charCodeAt(0) * 13;
-    results.push(runStationDefenseMission(mission, seed, sector));
+    results.push(runAttackStationMission(mission, seed, sector));
   }
 
-  // Calculate average ships lost value
-  let totalLostValue = 0;
-  for (const result of results) {
+  // Only victories count for reward calculation (all-or-nothing)
+  const wins = results.filter((r) => r.winner === 'player');
+  const winRate = (wins.length / results.length) * 100;
+
+  if (wins.length === 0) {
+    // If no wins, use fallback estimation
+    return {
+      reward: PROFIT_MARGINS[mission.difficulty] ?? PROFIT_MARGINS.medium,
+      breakdown: {
+        avgShipsLostValue: 0,
+        avgConsumablesUsed: 0,
+        expectedSalvage: 0,
+        profitMargin:
+          PROFIT_MARGINS[mission.difficulty] ?? PROFIT_MARGINS.medium,
+        winRate: '0.0',
+      },
+    };
+  }
+
+  // Calculate averages from victories only (single pass for ship losses)
+  let totalShipsLostValue = 0;
+  let totalEnemyValue = 0;
+  let totalConsumables = 0;
+
+  for (const result of wins) {
+    totalConsumables += result.consumablesUsed;
+
     for (const ship of result.shipsLost) {
       const value = getPlayerShipValue(ship.archetype, ship.skill);
-      totalLostValue += value.total;
+      totalShipsLostValue += value.total;
     }
-  }
-  const avgShipsLostValue = totalLostValue / results.length;
 
-  // Calculate average consumables used (from wins only)
-  const wins = results.filter((r) => r.winner === 'player');
-  const avgConsumablesUsed =
-    wins.length > 0
-      ? wins.reduce((sum, r) => sum + r.consumablesUsed, 0) / wins.length
-      : 0;
-
-  // Calculate expected salvage from killed enemies (from wins only)
-  let totalEnemySalvageValue = 0;
-  for (const result of wins) {
     for (const enemy of result.enemiesKilled) {
       const value = getArchetypeValue(enemy.archetype, true);
-      totalEnemySalvageValue += value.total;
+      totalEnemyValue += value.total;
     }
   }
-  const avgEnemySalvageValue =
-    wins.length > 0 ? totalEnemySalvageValue / wins.length : 0;
 
-  // Calculate expected salvage from lost friendly ships (from wins only)
-  let totalFriendlySalvageValue = 0;
-  for (const result of wins) {
-    for (const ship of result.shipsLost) {
-      const value = getPlayerShipValue(ship.archetype, ship.skill);
-      totalFriendlySalvageValue += value.total;
-    }
-  }
-  const avgFriendlySalvageValue =
-    wins.length > 0 ? totalFriendlySalvageValue / wins.length : 0;
+  const avgShipsLostValue = totalShipsLostValue / wins.length;
+  const avgConsumablesUsed = totalConsumables / wins.length;
 
-  // Total expected salvage (enemy + friendly, both at SALVAGE_RATE)
+  // Expected salvage: enemy ships + friendly ships lost (same value as replacement cost)
   const expectedSalvage =
-    (avgEnemySalvageValue + avgFriendlySalvageValue) * SALVAGE_RATE;
-
-  // Calculate station health fraction from victories only
-  // Higher health remaining = lower multiplier = lower reward
-  let totalStationHealth = 0;
-  for (const result of wins) {
-    totalStationHealth += result.stationHealthPercent / 100;
-  }
-  const stationHealthFraction =
-    wins.length > 0 ? totalStationHealth / wins.length : 0;
+    ((totalEnemyValue + totalShipsLostValue) / wins.length) * SALVAGE_RATE;
 
   // Profit margin by difficulty
   const profitMargin =
     PROFIT_MARGINS[mission.difficulty] ?? PROFIT_MARGINS.medium;
 
-  // Formula: Reward = (replacement_cost + consumables + profit_margin) / station_health_fraction - expected_salvage
-  // Guard against division by zero
-  const effectiveHealth = Math.max(stationHealthFraction, 0.1);
-  const baseCost = avgShipsLostValue + avgConsumablesUsed + profitMargin;
-  const reward = Math.round(baseCost / effectiveHealth - expectedSalvage);
+  // Formula: Reward = (replacement_cost + consumables + profit_margin) - expected_salvage
+  const reward = Math.round(
+    avgShipsLostValue + avgConsumablesUsed + profitMargin - expectedSalvage,
+  );
 
   return {
     reward: Math.max(reward, 100),
@@ -147,9 +129,8 @@ function calculateStationDefenseReward(mission, sector) {
       avgShipsLostValue: Math.round(avgShipsLostValue),
       avgConsumablesUsed: Math.round(avgConsumablesUsed),
       expectedSalvage: Math.round(expectedSalvage),
-      stationHealth: (stationHealthFraction * 100).toFixed(1),
       profitMargin,
-      winRate: ((wins.length / results.length) * 100).toFixed(1),
+      winRate: winRate.toFixed(1),
     },
   };
 }
@@ -159,29 +140,30 @@ function calculateStationDefenseReward(mission, sector) {
 // ============================================================================
 
 async function main() {
-  const sectors = SECTOR ? [SECTOR] : [1, 2, 3, 4, 5];
+  const sectors = SECTOR ? [SECTOR] : [1];
 
   console.log('='.repeat(90));
   console.log(
-    `STATION DEFENSE MISSION REWARD UPDATER ${DRY_RUN ? '(DRY RUN)' : ''}`,
+    `ATTACK STATION MISSION REWARD UPDATER ${DRY_RUN ? '(DRY RUN)' : ''}`,
   );
   console.log(
-    'Formula: Reward = (replacement_cost + consumables + profit) / station_health - salvage',
+    'Formula: Reward = (replacement_cost + consumables + profit) - salvage',
   );
+  console.log('All-or-nothing: Victory = full reward, Defeat = nothing');
   console.log('='.repeat(90));
 
   const allUpdates = [];
   const rewardsByFile = {};
 
   for (const sector of sectors) {
-    const missions = STATION_DEFENSE_MISSIONS[sector];
+    const missions = ATTACK_STATION_MISSIONS[sector];
     if (!missions || missions.length === 0) continue;
 
-    const loadoutDesc = getLoadoutDescription(sector);
+    const loadoutDesc = getAssaultLoadoutDescription(sector);
 
     console.log(`\n${'─'.repeat(90)}`);
     console.log(
-      `SECTOR ${sector} STATION DEFENSE (${missions.length} missions)`,
+      `SECTOR ${sector} ATTACK STATION (${missions.length} missions)`,
     );
     console.log(`Loadout: ${loadoutDesc}`);
     console.log('─'.repeat(90));
@@ -191,12 +173,11 @@ async function main() {
         'Current'.padEnd(10) +
         'New'.padEnd(10) +
         'WinRate'.padEnd(10) +
-        'StationHP'.padEnd(12) +
         'Delta',
     );
     console.log('─'.repeat(90));
 
-    const filePath = STATION_DEFENSE_FILES[sector];
+    const filePath = ATTACK_STATION_FILES[sector];
     if (!rewardsByFile[filePath]) {
       rewardsByFile[filePath] = {};
     }
@@ -206,7 +187,7 @@ async function main() {
         `${`Calculating ${mission.name.substring(0, 14)}...`.padEnd(30)}\r`,
       );
 
-      const { reward: newReward, breakdown } = calculateStationDefenseReward(
+      const { reward: newReward, breakdown } = calculateAttackStationReward(
         mission,
         sector,
       );
@@ -219,7 +200,6 @@ async function main() {
           mission.reward.toString().padEnd(10) +
           newReward.toString().padEnd(10) +
           `${breakdown.winRate}%`.padEnd(10) +
-          `${breakdown.stationHealth}%`.padEnd(12) +
           deltaStr,
       );
 
@@ -257,7 +237,7 @@ async function main() {
 
   console.log(`\n${'='.repeat(90)}`);
   console.log(
-    `SUMMARY: ${allUpdates.length} station defense mission rewards changed`,
+    `SUMMARY: ${allUpdates.length} attack station mission rewards changed`,
   );
 
   if (allUpdates.length > 0) {

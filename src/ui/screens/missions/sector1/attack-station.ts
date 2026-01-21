@@ -53,7 +53,7 @@ export const SECTOR_1_ATTACK_STATION: Contract[] = [
       ],
       stationAttackDpsThreshold: 100,
     },
-    reward: 4000,
+    reward: 2639,
   },
   {
     id: 's1-smash-and-grab',
@@ -92,7 +92,7 @@ export const SECTOR_1_ATTACK_STATION: Contract[] = [
       ],
       stationAttackDpsThreshold: 100,
     },
-    reward: 6500,
+    reward: 2914,
   },
   {
     id: 's1-fortress-assault',
@@ -132,6 +132,6 @@ export const SECTOR_1_ATTACK_STATION: Contract[] = [
       ],
       stationAttackDpsThreshold: 100,
     },
-    reward: 9000,
+    reward: 3411,
   },
 ];

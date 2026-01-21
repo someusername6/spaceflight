@@ -35,8 +35,8 @@ import {
   PROFIT_MARGINS,
   SALVAGE_RATE,
 } from '../tests/shared/mission-value.mjs';
-import { createProject, updateAmbushFile } from './ambush-file-updater.mjs';
 import { runAmbushMission } from './ambush-simulation.mjs';
+import { createProject, updateMissionFile } from './mission-file-updater.mjs';
 
 // ============================================================================
 // Configuration
@@ -238,7 +238,7 @@ async function main() {
   const project = createProject();
 
   for (const [filePath, rewardMap] of Object.entries(rewardsByFile)) {
-    const success = updateAmbushFile(project, filePath, rewardMap);
+    const success = updateMissionFile(project, filePath, rewardMap);
     if (success) {
       console.log(`  ${DRY_RUN ? '[DRY RUN] ' : ''}Updated: ${filePath}`);
     }
