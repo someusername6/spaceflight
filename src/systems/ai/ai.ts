@@ -26,8 +26,10 @@ import { CLOSE_URGENTLY_THRESHOLD, isKitingShip } from './ai-movement';
 import { maintainDistanceEngage, pursueTarget } from './ai-pursuit';
 import {
   getHomingMissileLockSpeed,
+  getHomingMissileRange,
   getStationApproachSpeed,
   hasHomingMissiles,
+  STRAFING_MIN_RANGE,
   shouldReposition,
   updateReposition,
 } from './ai-reposition';
@@ -112,17 +114,15 @@ export function aiSystem(world: World, dt: number): void {
         }
       }
 
-      // Don't regroup when attacking stations with homing missiles (need to complete lock)
-      // Ships with only dumbfire can regroup normally
-      const stationWithHomingAttack =
+      // Don't regroup when attacking stations with LONG-RANGE homing missiles
+      // (need to complete lock from safe distance). Short-range missiles regroup normally.
+      const hasLongRangeMissiles =
         isTargetingStation(world, ai) &&
         secondary &&
-        hasHomingMissiles(secondary);
+        hasHomingMissiles(secondary) &&
+        getHomingMissileRange(secondary) >= STRAFING_MIN_RANGE;
 
-      if (
-        !stationWithHomingAttack &&
-        shouldRegroup(shields, heat, ai.profile)
-      ) {
+      if (!hasLongRangeMissiles && shouldRegroup(shields, heat, ai.profile)) {
         ai.state = AIState.Regroup;
         ai.stateTimer = 0;
       } else if (shouldEvade(shields, ai.profile)) {
@@ -270,16 +270,19 @@ function updateEngage(
     return;
   }
 
-  // Check if attacking station with homing missiles (special strafing pattern)
+  // Check if attacking station with long-range homing missiles (strafing pattern)
+  // Short-range missiles (dart, swarm) skip this and use normal pursuit
   const targetIsStation = isTargetingStation(world, ai);
   const hasHoming =
     targetIsStation && secondary && hasHomingMissiles(secondary);
+  const missileRange = hasHoming ? getHomingMissileRange(secondary) : 0;
+  const usesStrafing = hasHoming && missileRange >= STRAFING_MIN_RANGE;
   const lockProgress = secondary?.lockProgress ?? 0;
 
-  // Station strafing pattern: only for ships with homing missiles
-  if (targetIsStation && hasHoming) {
+  // Station strafing pattern: only for ships with LONG-RANGE homing missiles
+  if (targetIsStation && usesStrafing) {
     // Retreat after firing (lockProgress resets to 0) when too close
-    if (shouldReposition(ai, distance, true, lockProgress)) {
+    if (shouldReposition(ai, distance, true, lockProgress, missileRange)) {
       ai.state = AIState.Reposition;
       ai.stateTimer = 0;
       return;
@@ -292,6 +295,7 @@ function updateEngage(
       lockProgress,
       lockSpeed,
       physics.maxSpeed,
+      missileRange,
     );
     const speedFactor =
       physics.maxSpeed > 0 ? approachSpeed / physics.maxSpeed : 0;

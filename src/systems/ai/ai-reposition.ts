@@ -58,16 +58,42 @@ export function getHomingMissileLockSpeed(secondary: SecondaryWeapons): number {
 }
 
 /**
+ * Get the range of the first homing missile with ammo.
+ * Returns 0 if no homing missiles are available.
+ */
+export function getHomingMissileRange(secondary: SecondaryWeapons): number {
+  for (const weapon of secondary.weapons) {
+    if (weapon.requiresLock && !weapon.isDecoy && weapon.count > 0) {
+      return weapon.range;
+    }
+  }
+  return 0;
+}
+
+/**
+ * Minimum missile range to use controlled strafing approach.
+ * Short-range missiles (dart 800m, swarm 600m) rush in at full speed.
+ * Long-range missiles (seeker 2000m, torpedo 4000m) use controlled approach.
+ */
+export const STRAFING_MIN_RANGE = 1000;
+
+/**
  * Calculate approach speed for station attack run.
- * Speed is calculated so lock completes exactly when reaching safe distance.
+ * Short-range missiles rush in; long-range missiles use controlled approach.
  */
 export function getStationApproachSpeed(
   distance: number,
   lockProgress: number,
   lockSpeed: number,
   maxSpeed: number,
+  missileRange: number,
 ): number {
   if (lockSpeed <= 0) return maxSpeed; // No lock needed
+
+  // Short-range missiles: rush in at full speed
+  if (missileRange < STRAFING_MIN_RANGE) {
+    return maxSpeed;
+  }
 
   const lockTimeRemaining = (1 - lockProgress) / lockSpeed;
   if (lockTimeRemaining <= 0) return maxSpeed; // Lock complete
@@ -83,15 +109,19 @@ export function getStationApproachSpeed(
  * Check if AI should reposition (burst-disengage for long-range ships).
  * @param targetIsStation True if target is a station (uses different retreat logic)
  * @param lockProgress Current missile lock progress (0-1) for station attacks
+ * @param missileRange Range of homing missile (defaults to 0 = short-range/no strafing)
  */
 export function shouldReposition(
   ai: AIControlled,
   distance: number,
   targetIsStation = false,
   lockProgress = 0,
+  missileRange = 0,
 ): boolean {
   // Station attackers: retreat when too close and not building lock
   if (targetIsStation) {
+    // Short-range missiles: don't retreat (rush in like pre-strafing)
+    if (missileRange < STRAFING_MIN_RANGE) return false;
     // Don't retreat while lock is building (wait for missile to fire)
     if (lockProgress > 0) return false;
     // Retreat when at safe distance (after firing or no homing missiles)
