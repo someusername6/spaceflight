@@ -35,6 +35,7 @@ export function getProjectileSpeed(world: World, entity: Entity): number {
 /**
  * Pursue behavior - turn toward target (with lead) and accelerate.
  * @param closeUrgently If true, aim directly at target (skip lead) to close distance faster
+ * @param speedFactor 0-1 multiplier on maxSpeed for controlled approach
  */
 export function pursueTarget(
   world: World,
@@ -44,6 +45,7 @@ export function pursueTarget(
   physics: Physics,
   dt: number,
   closeUrgently = false,
+  speedFactor = 1,
 ): void {
   const { toTarget, leadPoint } = tempVectors;
 
@@ -95,7 +97,7 @@ export function pursueTarget(
     aimToward(world, entity, ai, transform, toTarget, weapons, aimError, dt);
   }
 
-  setSpeedInputs(ai, physics, physics.maxSpeed);
+  setSpeedInputs(ai, physics, physics.maxSpeed * speedFactor);
 }
 
 /**

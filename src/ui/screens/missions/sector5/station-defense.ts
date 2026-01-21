@@ -65,7 +65,7 @@ export const SECTOR_5_STATION_DEFENSE: Contract[] = [
         { archetype: 'sentinel', skill: 'ace', count: 1 },
       ],
     },
-    reward: 10270,
+    reward: 9733,
   },
   {
     id: 's5-meltdown',
@@ -130,7 +130,7 @@ export const SECTOR_5_STATION_DEFENSE: Contract[] = [
         { archetype: 'sentinel', skill: 'ace', count: 1 },
       ],
     },
-    reward: 20469,
+    reward: 24945,
   },
   {
     id: 's5-final-stand',
@@ -141,62 +141,55 @@ export const SECTOR_5_STATION_DEFENSE: Contract[] = [
     sector: 5,
     missionType: 'station-defense',
     stationDefenseData: {
-      playerThreatRatio: 0.35,
+      playerThreatRatio: 0.3,
       stationType: 'mining',
       stationDistance: -300,
       waves: [
         {
           enemies: [
-            { archetype: 'phantom', skill: 'ace', count: 10 },
-            { archetype: 'dragonfly', skill: 'ace', count: 10 },
+            { archetype: 'phantom', skill: 'ace', count: 6 },
+            { archetype: 'dragonfly', skill: 'ace', count: 6 },
           ],
-          delay: 2,
+          delay: 3,
         },
         {
           enemies: [
-            { archetype: 'wraith', skill: 'ace', count: 5 },
-            { archetype: 'scorpion', skill: 'ace', count: 5 },
-            { archetype: 'phantom', skill: 'ace', count: 8 },
+            { archetype: 'wraith', skill: 'ace', count: 3 },
+            { archetype: 'scorpion', skill: 'ace', count: 3 },
+            { archetype: 'phantom', skill: 'ace', count: 5 },
           ],
-          delay: 5,
+          delay: 9,
         },
         {
           enemies: [
-            { archetype: 'phantom', skill: 'ace', count: 10 },
-            { archetype: 'dragonfly', skill: 'ace', count: 10 },
+            { archetype: 'phantom', skill: 'ace', count: 6 },
+            { archetype: 'dragonfly', skill: 'ace', count: 6 },
           ],
-          delay: 8,
+          delay: 15,
         },
         {
           enemies: [
-            { archetype: 'wraith', skill: 'ace', count: 5 },
-            { archetype: 'scorpion', skill: 'ace', count: 5 },
-            { archetype: 'phantom', skill: 'ace', count: 8 },
+            { archetype: 'wraith', skill: 'ace', count: 3 },
+            { archetype: 'scorpion', skill: 'ace', count: 3 },
+            { archetype: 'phantom', skill: 'ace', count: 5 },
           ],
-          delay: 11,
+          delay: 21,
         },
         {
           enemies: [
-            { archetype: 'wraith', skill: 'ace', count: 5 },
-            { archetype: 'phantom', skill: 'ace', count: 10 },
-            { archetype: 'dragonfly', skill: 'ace', count: 10 },
+            { archetype: 'wraith', skill: 'ace', count: 3 },
+            { archetype: 'phantom', skill: 'ace', count: 6 },
+            { archetype: 'dragonfly', skill: 'ace', count: 6 },
           ],
-          delay: 14,
+          delay: 27,
         },
         {
           enemies: [
-            { archetype: 'scorpion', skill: 'ace', count: 5 },
-            { archetype: 'wraith', skill: 'ace', count: 5 },
-            { archetype: 'phantom', skill: 'ace', count: 8 },
+            { archetype: 'scorpion', skill: 'ace', count: 3 },
+            { archetype: 'wraith', skill: 'ace', count: 3 },
+            { archetype: 'phantom', skill: 'ace', count: 5 },
           ],
-          delay: 17,
-        },
-        {
-          enemies: [
-            { archetype: 'phantom', skill: 'ace', count: 10 },
-            { archetype: 'dragonfly', skill: 'ace', count: 10 },
-          ],
-          delay: 20,
+          delay: 33,
         },
       ],
       reinforcementTime: null,
@@ -208,6 +201,6 @@ export const SECTOR_5_STATION_DEFENSE: Contract[] = [
         { archetype: 'sentinel', skill: 'ace', count: 1 },
       ],
     },
-    reward: 36310,
+    reward: 26501,
   },
 ];

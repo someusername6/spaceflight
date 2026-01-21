@@ -343,6 +343,16 @@ export function findNearestThreatToStation(
   return nearest;
 }
 
+/**
+ * Check if the AI is currently targeting a station.
+ * Used to apply station-specific attack patterns.
+ */
+export function isTargetingStation(world: World, ai: AIControlled): boolean {
+  if (!ai.target) return false;
+  const structure = getComponent(world, ai.target, 'structure');
+  return structure?.structureType === 'station';
+}
+
 // Re-export ambush mission utilities for backward compatibility
 export {
   findNearestEnemyConvoyShip,

@@ -15,6 +15,65 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_2_STATION_DEFENSE: Contract[] = [
   {
+    id: 's2-heavy-metal',
+    name: 'Heavy Metal',
+    description:
+      'Defend mining station from raider scouts. Fireflies and Dragonflies inbound.',
+    difficulty: 'easy',
+    sector: 2,
+    missionType: 'station-defense',
+    stationDefenseData: {
+      playerThreatRatio: 0.3,
+      stationType: 'mining',
+      stationDistance: -400,
+      waves: [
+        {
+          enemies: [
+            { archetype: 'firefly', skill: 'veteran', count: 5 },
+            { archetype: 'dragonfly', skill: 'veteran', count: 5 },
+          ],
+          delay: 5,
+        },
+        {
+          enemies: [
+            { archetype: 'stinger', skill: 'veteran', count: 5 },
+            { archetype: 'firefly', skill: 'veteran', count: 5 },
+          ],
+          delay: 12,
+        },
+        {
+          enemies: [
+            { archetype: 'dragonfly', skill: 'veteran', count: 5 },
+            { archetype: 'stinger', skill: 'veteran', count: 5 },
+          ],
+          delay: 19,
+        },
+        {
+          enemies: [
+            { archetype: 'firefly', skill: 'ace', count: 5 },
+            { archetype: 'dragonfly', skill: 'ace', count: 5 },
+          ],
+          delay: 26,
+        },
+        {
+          enemies: [
+            { archetype: 'stinger', skill: 'ace', count: 5 },
+            { archetype: 'firefly', skill: 'ace', count: 5 },
+          ],
+          delay: 33,
+        },
+      ],
+      reinforcementTime: null,
+      reinforcementHealthThreshold: 0.25,
+      reinforcementCount: 3,
+      reinforcementPool: [
+        { archetype: 'fighter', skill: 'regular', count: 1 },
+        { archetype: 'interceptor', skill: 'regular', count: 1 },
+      ],
+    },
+    reward: 7224,
+  },
+  {
     id: 's2-tinderbox',
     name: 'Tinderbox',
     description:
@@ -79,80 +138,7 @@ export const SECTOR_2_STATION_DEFENSE: Contract[] = [
         { archetype: 'defender', skill: 'regular', count: 1 },
       ],
     },
-    reward: 9803,
-  },
-  {
-    id: 's2-heavy-metal',
-    name: 'Heavy Metal',
-    description:
-      'Defend mining station from raider scouts. Fireflies and Dragonflies inbound.',
-    difficulty: 'easy',
-    sector: 2,
-    missionType: 'station-defense',
-    stationDefenseData: {
-      playerThreatRatio: 0.1,
-      stationType: 'mining',
-      stationDistance: -400,
-      waves: [
-        {
-          enemies: [
-            { archetype: 'firefly', skill: 'veteran', count: 7 },
-            { archetype: 'dragonfly', skill: 'veteran', count: 7 },
-          ],
-          delay: 3,
-        },
-        {
-          enemies: [
-            { archetype: 'stinger', skill: 'veteran', count: 7 },
-            { archetype: 'firefly', skill: 'veteran', count: 7 },
-          ],
-          delay: 8,
-        },
-        {
-          enemies: [
-            { archetype: 'dragonfly', skill: 'ace', count: 6 },
-            { archetype: 'stinger', skill: 'ace', count: 6 },
-          ],
-          delay: 13,
-        },
-        {
-          enemies: [
-            { archetype: 'firefly', skill: 'ace', count: 6 },
-            { archetype: 'dragonfly', skill: 'ace', count: 6 },
-          ],
-          delay: 18,
-        },
-        {
-          enemies: [
-            { archetype: 'stinger', skill: 'ace', count: 6 },
-            { archetype: 'firefly', skill: 'ace', count: 6 },
-          ],
-          delay: 23,
-        },
-        {
-          enemies: [
-            { archetype: 'dragonfly', skill: 'ace', count: 6 },
-            { archetype: 'stinger', skill: 'ace', count: 6 },
-          ],
-          delay: 28,
-        },
-        {
-          enemies: [
-            { archetype: 'firefly', skill: 'ace', count: 6 },
-            { archetype: 'dragonfly', skill: 'ace', count: 6 },
-          ],
-          delay: 33,
-        },
-      ],
-      reinforcementTime: null,
-      reinforcementHealthThreshold: 0.25,
-      reinforcementCount: 3,
-      reinforcementPool: [
-        { archetype: 'fighter', skill: 'regular', count: 1 },
-        { archetype: 'interceptor', skill: 'regular', count: 1 },
-      ],
-    },
-    reward: 10869,
+    reward: 8633,
   },
   {
     id: 's2-blood-money',
@@ -227,6 +213,6 @@ export const SECTOR_2_STATION_DEFENSE: Contract[] = [
         { archetype: 'defender', skill: 'regular', count: 1 },
       ],
     },
-    reward: 13332,
+    reward: 12864,
   },
 ];

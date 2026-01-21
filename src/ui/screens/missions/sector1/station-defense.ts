@@ -15,6 +15,50 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_1_STATION_DEFENSE: Contract[] = [
   {
+    id: 's1-easy-pickings',
+    name: 'Easy Pickings',
+    description:
+      'Defend the mining station from rookie pirates until reinforcements arrive.',
+    difficulty: 'easy',
+    sector: 1,
+    missionType: 'station-defense',
+    stationDefenseData: {
+      playerThreatRatio: 0.3,
+      stationType: 'mining',
+      stationDistance: -400,
+      waves: [
+        {
+          enemies: [{ archetype: 'gnat', skill: 'ace', count: 8 }],
+          delay: 5,
+        },
+        {
+          enemies: [{ archetype: 'ember', skill: 'ace', count: 8 }],
+          delay: 12,
+        },
+        {
+          enemies: [{ archetype: 'gnat', skill: 'ace', count: 8 }],
+          delay: 19,
+        },
+        {
+          enemies: [{ archetype: 'ember', skill: 'ace', count: 8 }],
+          delay: 26,
+        },
+        {
+          enemies: [{ archetype: 'gnat', skill: 'ace', count: 8 }],
+          delay: 33,
+        },
+      ],
+      reinforcementTime: null,
+      reinforcementHealthThreshold: 0.25,
+      reinforcementCount: 4,
+      reinforcementPool: [
+        { archetype: 'fighter', skill: 'regular', count: 1 },
+        { archetype: 'interceptor', skill: 'regular', count: 1 },
+      ],
+    },
+    reward: 6142,
+  },
+  {
     id: 's1-the-rock',
     name: 'The Rock',
     description:
@@ -29,36 +73,46 @@ export const SECTOR_1_STATION_DEFENSE: Contract[] = [
       initialAllies: [{ archetype: 'fighter', skill: 'regular', count: 1 }],
       waves: [
         {
-          enemies: [{ archetype: 'gnat', skill: 'ace', count: 7 }],
+          enemies: [
+            { archetype: 'gnat', skill: 'ace', count: 5 },
+            { archetype: 'phantom', skill: 'veteran', count: 3 },
+          ],
           delay: 3,
         },
         {
-          enemies: [{ archetype: 'ember', skill: 'ace', count: 7 }],
+          enemies: [
+            { archetype: 'ember', skill: 'ace', count: 5 },
+            { archetype: 'phantom', skill: 'veteran', count: 3 },
+          ],
           delay: 8,
         },
         {
-          enemies: [{ archetype: 'shocker', skill: 'ace', count: 7 }],
+          enemies: [
+            { archetype: 'shocker', skill: 'ace', count: 5 },
+            { archetype: 'phantom', skill: 'ace', count: 3 },
+          ],
           delay: 13,
         },
         {
-          enemies: [{ archetype: 'mantis', skill: 'ace', count: 7 }],
+          enemies: [
+            { archetype: 'mantis', skill: 'ace', count: 5 },
+            { archetype: 'phantom', skill: 'ace', count: 3 },
+          ],
           delay: 18,
         },
         {
-          enemies: [{ archetype: 'gnat', skill: 'ace', count: 7 }],
+          enemies: [
+            { archetype: 'gnat', skill: 'ace', count: 5 },
+            { archetype: 'phantom', skill: 'ace', count: 4 },
+          ],
           delay: 23,
         },
         {
-          enemies: [{ archetype: 'ember', skill: 'ace', count: 7 }],
+          enemies: [
+            { archetype: 'ember', skill: 'ace', count: 5 },
+            { archetype: 'phantom', skill: 'ace', count: 4 },
+          ],
           delay: 28,
-        },
-        {
-          enemies: [{ archetype: 'shocker', skill: 'ace', count: 7 }],
-          delay: 33,
-        },
-        {
-          enemies: [{ archetype: 'mantis', skill: 'ace', count: 7 }],
-          delay: 38,
         },
       ],
       reinforcementTime: null,
@@ -70,47 +124,7 @@ export const SECTOR_1_STATION_DEFENSE: Contract[] = [
         { archetype: 'striker', skill: 'regular', count: 1 },
       ],
     },
-    reward: 9265,
-  },
-  {
-    id: 's1-easy-pickings',
-    name: 'Easy Pickings',
-    description:
-      'Defend the mining station from rookie pirates until reinforcements arrive.',
-    difficulty: 'easy',
-    sector: 1,
-    missionType: 'station-defense',
-    stationDefenseData: {
-      playerThreatRatio: 0.3,
-      stationType: 'mining',
-      stationDistance: -400,
-      waves: [
-        {
-          enemies: [{ archetype: 'gnat', skill: 'veteran', count: 5 }],
-          delay: 5,
-        },
-        {
-          enemies: [{ archetype: 'ember', skill: 'veteran', count: 5 }],
-          delay: 15,
-        },
-        {
-          enemies: [{ archetype: 'gnat', skill: 'veteran', count: 5 }],
-          delay: 25,
-        },
-        {
-          enemies: [{ archetype: 'ember', skill: 'veteran', count: 5 }],
-          delay: 35,
-        },
-      ],
-      reinforcementTime: null,
-      reinforcementHealthThreshold: 0.25,
-      reinforcementCount: 4,
-      reinforcementPool: [
-        { archetype: 'fighter', skill: 'regular', count: 1 },
-        { archetype: 'interceptor', skill: 'regular', count: 1 },
-      ],
-    },
-    reward: 9767,
+    reward: 13050,
   },
   {
     id: 's1-burn-notice',
@@ -126,36 +140,36 @@ export const SECTOR_1_STATION_DEFENSE: Contract[] = [
       stationDistance: -350,
       waves: [
         {
-          enemies: [{ archetype: 'gnat', skill: 'ace', count: 7 }],
+          enemies: [{ archetype: 'gnat', skill: 'ace', count: 12 }],
           delay: 3,
         },
         {
-          enemies: [{ archetype: 'ember', skill: 'ace', count: 7 }],
-          delay: 8,
+          enemies: [{ archetype: 'ember', skill: 'ace', count: 12 }],
+          delay: 6,
         },
         {
-          enemies: [{ archetype: 'shocker', skill: 'ace', count: 7 }],
-          delay: 13,
+          enemies: [{ archetype: 'shocker', skill: 'ace', count: 12 }],
+          delay: 9,
         },
         {
-          enemies: [{ archetype: 'gnat', skill: 'ace', count: 7 }],
+          enemies: [{ archetype: 'mantis', skill: 'ace', count: 10 }],
+          delay: 12,
+        },
+        {
+          enemies: [{ archetype: 'gnat', skill: 'ace', count: 12 }],
+          delay: 15,
+        },
+        {
+          enemies: [{ archetype: 'ember', skill: 'ace', count: 12 }],
           delay: 18,
         },
         {
-          enemies: [{ archetype: 'ember', skill: 'ace', count: 7 }],
-          delay: 23,
+          enemies: [{ archetype: 'shocker', skill: 'ace', count: 12 }],
+          delay: 21,
         },
         {
-          enemies: [{ archetype: 'shocker', skill: 'ace', count: 7 }],
-          delay: 28,
-        },
-        {
-          enemies: [{ archetype: 'mantis', skill: 'ace', count: 6 }],
-          delay: 33,
-        },
-        {
-          enemies: [{ archetype: 'gnat', skill: 'ace', count: 7 }],
-          delay: 38,
+          enemies: [{ archetype: 'mantis', skill: 'ace', count: 10 }],
+          delay: 24,
         },
       ],
       reinforcementTime: null,
@@ -166,6 +180,6 @@ export const SECTOR_1_STATION_DEFENSE: Contract[] = [
         { archetype: 'interceptor', skill: 'regular', count: 1 },
       ],
     },
-    reward: 10921,
+    reward: 13241,
   },
 ];

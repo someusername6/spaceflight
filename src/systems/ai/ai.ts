@@ -6,6 +6,7 @@ import { type AIControlled, AIState } from '../../components/ai';
 import { isDead } from '../../components/health';
 import type { Physics } from '../../components/physics';
 import type { Transform } from '../../components/transform';
+import type { SecondaryWeapons } from '../../components/weapons';
 import { entityExists, getComponent, queryEntities } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
 import { AI_GLOBAL_SETTINGS } from '../../data/ai-profiles';
@@ -23,7 +24,13 @@ import {
 } from './ai-idle';
 import { CLOSE_URGENTLY_THRESHOLD, isKitingShip } from './ai-movement';
 import { maintainDistanceEngage, pursueTarget } from './ai-pursuit';
-import { shouldReposition, updateReposition } from './ai-reposition';
+import {
+  getHomingMissileLockSpeed,
+  getStationApproachSpeed,
+  hasHomingMissiles,
+  shouldReposition,
+  updateReposition,
+} from './ai-reposition';
 import {
   countEngagingTarget,
   findNearestEnemy,
@@ -31,6 +38,7 @@ import {
   getEnemyConvoyCentroid,
   getStationPosition,
   isPlayer,
+  isTargetingStation,
   setAITarget,
 } from './ai-utils';
 
@@ -75,9 +83,10 @@ export function aiSystem(world: World, dt: number): void {
     // Update state timer
     ai.stateTimer += dt;
 
-    // Get shields and heat for state transitions
+    // Get shields, heat, and secondary weapons for state transitions
     const shields = getComponent(world, entity, 'shields');
     const heat = getComponent(world, entity, 'heat');
+    const secondary = getComponent(world, entity, 'secondaryWeapons');
 
     // Check for emergency transitions (can happen from any combat state)
     if (ai.state === AIState.Pursue || ai.state === AIState.Engage) {
@@ -103,7 +112,17 @@ export function aiSystem(world: World, dt: number): void {
         }
       }
 
-      if (shouldRegroup(shields, heat, ai.profile)) {
+      // Don't regroup when attacking stations with homing missiles (need to complete lock)
+      // Ships with only dumbfire can regroup normally
+      const stationWithHomingAttack =
+        isTargetingStation(world, ai) &&
+        secondary &&
+        hasHomingMissiles(secondary);
+
+      if (
+        !stationWithHomingAttack &&
+        shouldRegroup(shields, heat, ai.profile)
+      ) {
         ai.state = AIState.Regroup;
         ai.stateTimer = 0;
       } else if (shouldEvade(shields, ai.profile)) {
@@ -130,7 +149,7 @@ export function aiSystem(world: World, dt: number): void {
         updatePursue(world, entity, ai, transform, physics, dt);
         break;
       case AIState.Engage:
-        updateEngage(world, entity, ai, transform, physics, dt);
+        updateEngage(world, entity, ai, transform, physics, secondary, dt);
         break;
       case AIState.Evade:
         updateEvade(world, entity, ai, transform, physics, shields, heat, dt);
@@ -139,7 +158,15 @@ export function aiSystem(world: World, dt: number): void {
         updateRegroup(world, entity, ai, transform, physics, shields, heat, dt);
         break;
       case AIState.Reposition:
-        updateReposition(world, entity, ai, transform, physics, dt);
+        updateReposition(
+          world,
+          entity,
+          ai,
+          transform,
+          physics,
+          dt,
+          isTargetingStation(world, ai),
+        );
         break;
     }
   }
@@ -208,6 +235,7 @@ function updateEngage(
   ai: AIControlled,
   transform: Transform,
   physics: Physics,
+  secondary: SecondaryWeapons | undefined,
   dt: number,
 ): void {
   if (ai.target === null || !entityExists(world, ai.target)) {
@@ -239,6 +267,35 @@ function updateEngage(
   if (shouldFleeDistance(ai, distance)) {
     ai.state = AIState.Evade;
     ai.stateTimer = 0;
+    return;
+  }
+
+  // Check if attacking station with homing missiles (special strafing pattern)
+  const targetIsStation = isTargetingStation(world, ai);
+  const hasHoming =
+    targetIsStation && secondary && hasHomingMissiles(secondary);
+  const lockProgress = secondary?.lockProgress ?? 0;
+
+  // Station strafing pattern: only for ships with homing missiles
+  if (targetIsStation && hasHoming) {
+    // Retreat after firing (lockProgress resets to 0) when too close
+    if (shouldReposition(ai, distance, true, lockProgress)) {
+      ai.state = AIState.Reposition;
+      ai.stateTimer = 0;
+      return;
+    }
+
+    // Controlled approach: speed calculated so lock completes at safe distance
+    const lockSpeed = getHomingMissileLockSpeed(secondary);
+    const approachSpeed = getStationApproachSpeed(
+      distance,
+      lockProgress,
+      lockSpeed,
+      physics.maxSpeed,
+    );
+    const speedFactor =
+      physics.maxSpeed > 0 ? approachSpeed / physics.maxSpeed : 0;
+    pursueTarget(world, entity, ai, transform, physics, dt, false, speedFactor);
     return;
   }
 

@@ -56,17 +56,17 @@ export const SECTOR_1_ESCORT: Contract[] = [
       escapeZoneDistance: 9240, // (180 - 12) * 55
       escapeZoneRadius: 300,
       jumpChargeTime: 12,
-      spawnInterval: 7,
+      spawnInterval: 8,
       enemyPool: [
-        { archetype: 'shocker', skill: 'regular', count: 1 },
+        { archetype: 'shocker', skill: 'rookie', count: 1 },
         { archetype: 'gnat', skill: 'regular', count: 1 },
         { archetype: 'ember', skill: 'regular', count: 1 },
       ],
-      maxConcurrentEnemies: 6,
-      initialSpawnCount: 4,
+      maxConcurrentEnemies: 5,
+      initialSpawnCount: 3,
       spawnBatchSize: 1,
     },
-    reward: 11499,
+    reward: 7994,
   },
   {
     id: 's1-shell-game',
