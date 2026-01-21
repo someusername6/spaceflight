@@ -8,6 +8,8 @@
  * - station-hunter: Enemies prioritize station
  * - station-defense: Stay near station, protect it from threats
  * - convoy-interceptor: Wingmen attack escorts, then approach enemy convoy to stop it
+ * - station-assault-high-dps: High DPS ships attack enemy station
+ * - station-assault-low-dps: Low DPS ships attack enemy defenders
  */
 
 import type { Vector3 } from 'three';
@@ -18,6 +20,7 @@ import { entityExists, getComponent, queryEntities } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
 import { setRotationInputs } from './ai-movement';
 import {
+  findEnemyStation,
   findNearestConvoyShip,
   findNearestEnemy,
   findNearestEnemyConvoyShip,
@@ -185,6 +188,19 @@ export function updateIdle(
         // (AI will pursue and get close enough to trigger stop)
         target = findNearestEnemyConvoyShip(world, entity);
       }
+      break;
+
+    case 'station-assault-high-dps':
+      // High DPS ships: prioritize enemy station, fall back to defenders
+      target = findEnemyStation(world);
+      if (target === null) {
+        target = findNearestEnemy(world, entity, faction);
+      }
+      break;
+
+    case 'station-assault-low-dps':
+      // Low DPS ships: attack defenders to protect the bombers
+      target = findNearestEnemy(world, entity, faction);
       break;
 
     default:

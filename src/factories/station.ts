@@ -50,6 +50,8 @@ export interface StationOptions {
   shieldDelay?: number;
   /** Override display name (uses type default if not specified) */
   displayName?: string;
+  /** Station faction (defaults to Player) */
+  faction?: Faction;
 }
 
 /**
@@ -150,8 +152,9 @@ export function createStationEntity(
   // Ship identity for rendering and HUD display
   addComponent(world, entity, createShipIdentity('station', displayName));
 
-  // Faction - allied with player, enemies will target it
-  addComponent(world, entity, createFaction(Faction.Player));
+  // Faction - defaults to Player, can be overridden for enemy stations
+  const stationFaction = options.faction ?? Faction.Player;
+  addComponent(world, entity, createFaction(stationFaction));
 
   return entity;
 }

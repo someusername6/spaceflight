@@ -237,6 +237,7 @@ export function createMissionEndExecutor(
         missionEndState.escortResults,
         missionEndState.ambushResults,
         missionEndState.stationDefenseResults,
+        missionEndState.attackStationResults,
       );
     }
   };

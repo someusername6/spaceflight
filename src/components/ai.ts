@@ -41,7 +41,9 @@ export type AIBehaviorMode =
   | 'convoy-guard-defensive' // Ambush: reactive only escort
   | 'convoy-interceptor' // Ambush: player wingmen attack escorts, then stop convoy
   | 'station-hunter'
-  | 'station-defense';
+  | 'station-defense'
+  | 'station-assault-high-dps' // Attack station: high DPS ships attack enemy station
+  | 'station-assault-low-dps'; // Attack station: low DPS ships attack enemy defenders
 
 export interface AIControlled extends ComponentBase {
   readonly type: 'aiControlled';

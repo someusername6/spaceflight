@@ -19,6 +19,7 @@ import {
 import { collectDebriefData } from '../../ui/screens/results/debrief';
 import {
   type AmbushResultsDisplay,
+  type AttackStationResultsDisplay,
   createGameOverUI,
   createResultsUI,
   type EscortResultsDisplay,
@@ -51,6 +52,7 @@ import { setupTitleScreen } from './menu-handlers';
  * @param escortResults - Convoy survival results for escort missions
  * @param ambushResults - Convoy results for ambush missions
  * @param stationDefenseResults - Station defense results
+ * @param attackStationResults - Attack station results
  */
 export function showResults(
   controller: CampaignController,
@@ -63,6 +65,7 @@ export function showResults(
   escortResults?: EscortResultsDisplay,
   ambushResults?: AmbushResultsDisplay,
   stationDefenseResults?: StationDefenseResultsDisplay,
+  attackStationResults?: AttackStationResultsDisplay,
 ): void {
   const { screenManager } = controller;
   const resultsElement = getScreenElement(screenManager, Screen.RESULTS);
@@ -84,6 +87,7 @@ export function showResults(
     escortResults,
     ambushResults,
     stationDefenseResults,
+    attackStationResults,
   );
 }
 

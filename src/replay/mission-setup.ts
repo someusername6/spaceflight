@@ -11,6 +11,11 @@ import {
   setupAmbushMission,
 } from '../campaign/mission/ambush-launcher';
 import {
+  type AttackStationMissionState,
+  processAttackStationMissionTick,
+  setupAttackStationMission,
+} from '../campaign/mission/attack-station-launcher';
+import {
   setFactionBehaviorMode,
   setupEscortMission,
   spawnEscortEnemy,
@@ -73,6 +78,8 @@ export interface ReplayWorldSetup {
   stationState?: StationDefenseMissionState;
   /** Ambush state for ambush missions */
   ambushState?: AmbushMissionState;
+  /** Attack station state for attack station missions */
+  attackStationState?: AttackStationMissionState;
 }
 
 /**
@@ -115,6 +122,13 @@ export function setupReplayWorld(
     const spawn = getAmbushPlayerSpawn(mission.ambushData);
     playerPos = spawn.position;
     playerRot = spawn.rotation;
+  } else if (
+    effectiveMissionType === 'attack-station' &&
+    mission.attackStationData
+  ) {
+    // Attack station: spawn at origin facing -Z (toward station)
+    playerPos = new Vector3(0, 0, 0);
+    playerRot = new Quaternion();
   } else if (mission.stationDefenseData) {
     // Station defense: 1500m from station, facing station
     const stationZ = mission.stationDefenseData.stationDistance;
@@ -170,6 +184,18 @@ export function setupReplayWorld(
     const stationState = setupStationDefenseMission(world, mission);
 
     return { world, mission, missionType: 'station-defense', stationState };
+  }
+
+  if (effectiveMissionType === 'attack-station' && mission.attackStationData) {
+    // Setup attack station mission (spawns enemy station, defenders)
+    const attackStationState = setupAttackStationMission(world, mission);
+
+    return {
+      world,
+      mission,
+      missionType: 'attack-station',
+      attackStationState,
+    };
   }
 
   // Default: elimination mission with wave-based spawning
@@ -286,4 +312,29 @@ export function isReplayAmbushComplete(
   ambushState: AmbushMissionState,
 ): boolean {
   return ambushState.completed;
+}
+
+/**
+ * Process attack station mission logic during replay tick.
+ * Uses shared processAttackStationMissionTick for determinism with live gameplay.
+ */
+export function tickReplayAttackStation(
+  world: World,
+  attackStationState: AttackStationMissionState,
+  mission: Contract,
+  dt: number,
+): void {
+  if (!mission.attackStationData) return;
+
+  // Use shared attack station tick logic (identical to live gameplay)
+  processAttackStationMissionTick(world, attackStationState, mission, dt);
+}
+
+/**
+ * Check if the attack station replay mission is complete.
+ */
+export function isReplayAttackStationComplete(
+  attackStationState: AttackStationMissionState,
+): boolean {
+  return attackStationState.completed;
 }

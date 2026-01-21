@@ -51,6 +51,15 @@ export interface StationDefenseResultsDisplay {
   reinforcementsArrived: boolean;
 }
 
+/** Attack station mission results for display */
+export interface AttackStationResultsDisplay {
+  stationDestroyed: boolean;
+  stationDamagePercent: number;
+  reinforcementsReceived: number;
+  totalReinforcements: number;
+  overwhelmed: boolean;
+}
+
 /** Results screen props */
 interface ResultsProps {
   victory: boolean;
@@ -67,6 +76,8 @@ interface ResultsProps {
   ambushResults: AmbushResultsDisplay | undefined;
   /** Station defense results */
   stationDefenseResults: StationDefenseResultsDisplay | undefined;
+  /** Attack station results */
+  attackStationResults: AttackStationResultsDisplay | undefined;
 }
 
 /** Legacy UI interface for backwards compatibility */
@@ -135,6 +146,7 @@ function renderRewards(
   escortResults?: EscortResultsDisplay,
   ambushResults?: AmbushResultsDisplay,
   stationDefenseResults?: StationDefenseResultsDisplay,
+  attackStationResults?: AttackStationResultsDisplay,
 ): string {
   const titleClass = victory ? 'victory' : 'defeat';
   const titleText = victory ? 'VICTORY' : 'DEFEAT';
@@ -193,6 +205,23 @@ function renderRewards(
     `;
   }
 
+  // Attack station mission details
+  let attackStationHtml = '';
+  if (attackStationResults) {
+    const destroyed = attackStationResults.stationDestroyed;
+    const damagePct = attackStationResults.stationDamagePercent;
+    const reinforcements = attackStationResults.reinforcementsReceived;
+    const totalReinforcements = attackStationResults.totalReinforcements;
+    const overwhelmed = attackStationResults.overwhelmed;
+    attackStationHtml = `
+      <div class="rewards-attack-station-details">
+        <span class="attack-result">${destroyed ? 'Station Destroyed' : `Station Damage: ${damagePct}%`}</span>
+        <span class="attack-reinforcements">Reinforcements: ${reinforcements}/${totalReinforcements} waves</span>
+        ${overwhelmed ? '<span class="attack-overwhelmed">Overwhelming force deployed</span>' : ''}
+      </div>
+    `;
+  }
+
   const contractRewardHtml = contract
     ? `
       <div class="rewards-contract">
@@ -205,6 +234,7 @@ function renderRewards(
           ${escortHtml}
           ${ambushHtml}
           ${stationDefenseHtml}
+          ${attackStationHtml}
           <div class="rewards-contract-amount ${victory ? 'earned' : 'failed'}">
             ${victory ? `+${displayReward.toLocaleString()} cr` : 'Mission Failed'}
           </div>
@@ -238,6 +268,7 @@ const ResultsScreenComponent: Screen<ResultsState, ResultsProps> = {
       escortResults,
       ambushResults,
       stationDefenseResults,
+      attackStationResults,
     } = props;
 
     const tabBar = renderResultsTabBar(
@@ -260,6 +291,7 @@ const ResultsScreenComponent: Screen<ResultsState, ResultsProps> = {
             escortResults,
             ambushResults,
             stationDefenseResults,
+            attackStationResults,
           );
 
     const buttonText = victory ? 'Return to Hangar' : 'Continue';
@@ -316,6 +348,7 @@ export function createResultsUI(
   escortResults?: EscortResultsDisplay,
   ambushResults?: AmbushResultsDisplay,
   stationDefenseResults?: StationDefenseResultsDisplay,
+  attackStationResults?: AttackStationResultsDisplay,
 ): ResultsUI {
   // Clean up previous handle
   resultsScreenHandle?.destroy();
@@ -333,6 +366,7 @@ export function createResultsUI(
     escortResults,
     ambushResults,
     stationDefenseResults,
+    attackStationResults,
   };
 
   resultsScreenHandle = createScreen(

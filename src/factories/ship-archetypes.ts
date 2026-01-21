@@ -240,4 +240,85 @@ export const SHIP_ARCHETYPES: Record<string, ShipStats> = {
     ],
     preferredCombatRange: 200, // Close range - ace at 260m still has good damage
   }),
+
+  // === ASSAULT ARCHETYPES (optimized for attacking stations) ===
+  // Based on empirical DPS testing from test-station-dps-loadouts.mjs
+  // Bank sizes must match ship class secondaryBanks. Counts use missile base capacity.
+  // Capacities: rocket=12, starburst=12, torpedo=4
+
+  // Assault Fighter: Fighter chassis with autocannon - ~60 DPS against stations
+  // fighter secondaryBanks: [1, 1]
+  assaultFighter: createArchetype('fighter', {
+    primaryWeapons: [
+      { name: 'autocannon', size: 1 },
+      { name: 'autocannon', size: 1 },
+    ],
+    secondaryWeapons: [
+      { name: 'rocket', count: 12, size: 1 },
+      { name: 'rocket', count: 12, size: 1 },
+    ],
+    preferredCombatRange: 300, // Autocannon 400m range - close for best DPS
+  }),
+
+  // Assault Interceptor: Interceptor chassis with flak - ~100 DPS against stations
+  // interceptor secondaryBanks: [1, 2, 1]
+  assaultInterceptor: createArchetype('interceptor', {
+    primaryWeapons: [
+      { name: 'flak', size: 2 },
+      { name: 'flak', size: 2 },
+    ],
+    secondaryWeapons: [
+      { name: 'starburst', count: 12, size: 1 },
+      { name: 'starburst', count: 12, size: 2 },
+      { name: 'rocket', count: 12, size: 1 },
+    ],
+    preferredCombatRange: 400, // Flak 600m range - close for shrapnel hits
+  }),
+
+  // Assault Sentinel: Sentinel chassis with flak - ~140 DPS against stations
+  // sentinel secondaryBanks: [2, 2, 1]
+  assaultSentinel: createArchetype('sentinel', {
+    primaryWeapons: [
+      { name: 'flak', size: 3 },
+      { name: 'flak', size: 2 },
+      { name: 'flak', size: 1 },
+    ],
+    secondaryWeapons: [
+      { name: 'starburst', count: 12, size: 2 },
+      { name: 'torpedo', count: 4, size: 2 },
+      { name: 'rocket', count: 12, size: 1 },
+    ],
+    preferredCombatRange: 400, // Flak 600m range - close for shrapnel hits
+  }),
+
+  // Assault Striker: Striker chassis with flak - ~230 DPS against stations
+  // striker secondaryBanks: [1]
+  assaultStriker: createArchetype('striker', {
+    playstyle: 'gunboat',
+    primaryWeapons: [
+      { name: 'flak', size: 2 },
+      { name: 'flak', size: 2 },
+      { name: 'flak', size: 2 },
+      { name: 'autocannon', size: 1 },
+      { name: 'autocannon', size: 1 },
+    ],
+    secondaryWeapons: [{ name: 'starburst', count: 12, size: 1 }],
+    preferredCombatRange: 350, // Autocannon 400m, Flak 600m - close for both
+  }),
+
+  // Assault Bomber: Bomber chassis with torpedo + starburst - high burst damage
+  // bomber secondaryBanks: [2, 2, 2, 1, 1, 1, 1]
+  assaultBomber: createArchetype('bomber', {
+    primaryWeapons: [{ name: 'flak', size: 2 }],
+    secondaryWeapons: [
+      { name: 'torpedo', count: 4, size: 2 },
+      { name: 'starburst', count: 12, size: 2 },
+      { name: 'starburst', count: 12, size: 2 },
+      { name: 'rocket', count: 12, size: 1 },
+      { name: 'rocket', count: 12, size: 1 },
+      { name: 'rocket', count: 12, size: 1 },
+      { name: 'rocket', count: 12, size: 1 },
+    ],
+    preferredCombatRange: 400, // Flak 600m range - close for shrapnel hits
+  }),
 };

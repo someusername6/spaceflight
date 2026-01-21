@@ -8,6 +8,7 @@
  * - Seeking (via restart + fast-forward for MVP)
  */
 
+import type { AttackStationMissionState } from '../campaign/mission/attack-station-launcher';
 import type { WaveState } from '../campaign/mission/mission-waves';
 import type { Contract, MissionType } from '../campaign/types';
 import { getComponent, queryEntities } from '../core/ecs';
@@ -19,10 +20,12 @@ import type { EscortMissionState } from '../systems/escort-mission';
 import { decodeRLE } from './compression';
 import {
   isReplayAmbushComplete,
+  isReplayAttackStationComplete,
   isReplayEscortComplete,
   isReplayMissionComplete,
   setupReplayWorld,
   tickReplayAmbush,
+  tickReplayAttackStation,
   tickReplayEscort,
   tickReplayWaves,
 } from './mission-setup';
@@ -49,6 +52,7 @@ export class ReplayPlayback {
   private waveState: WaveState | null = null;
   private escortState: EscortMissionState | null = null;
   private ambushState: AmbushMissionState | null = null;
+  private attackStationState: AttackStationMissionState | null = null;
   private inputPlayer: InputPlayer;
   private currentTick: number = 0;
   private playbackSpeed: number = 1;
@@ -83,6 +87,7 @@ export class ReplayPlayback {
     this.waveState = setup.waveState ?? null;
     this.escortState = setup.escortState ?? null;
     this.ambushState = setup.ambushState ?? null;
+    this.attackStationState = setup.attackStationState ?? null;
   }
 
   /**
@@ -103,6 +108,7 @@ export class ReplayPlayback {
     this.waveState = setup.waveState ?? null;
     this.escortState = setup.escortState ?? null;
     this.ambushState = setup.ambushState ?? null;
+    this.attackStationState = setup.attackStationState ?? null;
     this.currentTick = 0;
   }
 
@@ -150,9 +156,19 @@ export class ReplayPlayback {
       system(this.world, TICK_SEC);
     }
 
-    // Process mission-specific logic (wave spawning, escort, or ambush)
+    // Process mission-specific logic (wave spawning, escort, ambush, or attack-station)
     if (this.missionType === 'ambush' && this.ambushState) {
       tickReplayAmbush(this.world, this.ambushState);
+    } else if (
+      this.missionType === 'attack-station' &&
+      this.attackStationState
+    ) {
+      tickReplayAttackStation(
+        this.world,
+        this.attackStationState,
+        this.mission,
+        TICK_SEC,
+      );
     } else if (this.missionType === 'escort' && this.escortState) {
       tickReplayEscort(this.world, this.escortState, this.mission, TICK_SEC);
     } else if (this.waveState) {
@@ -310,6 +326,9 @@ export class ReplayPlayback {
   isComplete(): boolean {
     if (this.missionType === 'ambush' && this.ambushState) {
       return isReplayAmbushComplete(this.ambushState);
+    }
+    if (this.missionType === 'attack-station' && this.attackStationState) {
+      return isReplayAttackStationComplete(this.attackStationState);
     }
     if (this.missionType === 'escort' && this.escortState) {
       return isReplayEscortComplete(this.escortState);

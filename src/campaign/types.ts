@@ -85,7 +85,8 @@ export type MissionType =
   | 'elimination'
   | 'escort'
   | 'station-defense'
-  | 'ambush';
+  | 'ambush'
+  | 'attack-station';
 
 /** Escort mission specific data */
 export interface EscortMissionData {
@@ -196,6 +197,35 @@ export interface AmbushMissionData {
   escorts: AmbushEscort[];
 }
 
+/** Reinforcement wave for attack station missions */
+export interface AttackStationReinforcementWave {
+  /** Allied ships to spawn as reinforcements */
+  allies: ContractEnemy[];
+  /** Delay in seconds before this wave spawns (cumulative from mission start) */
+  delay: number;
+}
+
+/** Attack station mission specific data - player attacks enemy station */
+export interface AttackStationMissionData {
+  /** Station type (affects stats and display name) - defaults to 'mining' */
+  stationType?: 'mining' | 'refinery' | 'military';
+  /** Station position (Z distance from player spawn, negative = in front of player) */
+  stationDistance: number;
+  /** Initial enemy defenders present at mission start */
+  initialDefenders: ContractEnemy[];
+  /** Friendly reinforcement waves that arrive over time */
+  reinforcementWaves: AttackStationReinforcementWave[];
+  /** Time in seconds before overwhelming enemy wave spawns (soft time limit) */
+  overwhelmingSpawnTime: number;
+  /** Single overwhelming wave of enemies that spawns after timer */
+  overwhelmingWave: ContractEnemy[];
+  /**
+   * DPS threshold for AI targeting behavior.
+   * Ships with DPS >= this value attack station, others attack defenders.
+   */
+  stationAttackDpsThreshold: number;
+}
+
 /** A contract (mission) available to accept */
 export interface Contract {
   id: string;
@@ -214,6 +244,8 @@ export interface Contract {
   stationDefenseData?: StationDefenseMissionData;
   /** Ambush mission data - required when missionType === 'ambush' */
   ambushData?: AmbushMissionData;
+  /** Attack station mission data - required when missionType === 'attack-station' */
+  attackStationData?: AttackStationMissionData;
   reward: number; // credits
 }
 

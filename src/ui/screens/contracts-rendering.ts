@@ -188,6 +188,63 @@ export function renderStationDefenseInfo(contract: Contract): string {
   `;
 }
 
+/** Render mission info for attack station missions */
+export function renderAttackStationInfo(contract: Contract): string {
+  const attack = contract.attackStationData;
+  if (!attack) return '';
+
+  // Count defender types
+  const defenderCounts = new Map<string, number>();
+  for (const defender of attack.initialDefenders) {
+    defenderCounts.set(
+      defender.archetype,
+      (defenderCounts.get(defender.archetype) ?? 0) + defender.count,
+    );
+  }
+  const defenderList = Array.from(defenderCounts.entries())
+    .map(([type, count]) => `${count}× ${type}`)
+    .join(', ');
+  const totalDefenders = Array.from(defenderCounts.values()).reduce(
+    (a, b) => a + b,
+    0,
+  );
+
+  // Count reinforcement waves
+  const totalReinforcements = attack.reinforcementWaves.reduce(
+    (sum, w) => sum + w.allies.reduce((s, a) => s + a.count, 0),
+    0,
+  );
+
+  // Station type display name
+  const stationType = attack.stationType ?? 'mining';
+  const stationName = `${stationType.charAt(0).toUpperCase()}${stationType.slice(1)} Station`;
+
+  // Overwhelming wave info
+  const overwhelmingCount = attack.overwhelmingWave.reduce(
+    (sum, e) => sum + e.count,
+    0,
+  );
+  const timeLimit = Math.round(attack.overwhelmingSpawnTime);
+
+  return `
+    <div class="contract-detail-section">
+      <div class="detail-section-label">ATTACK MISSION</div>
+      <div class="mission-info">
+        <div class="mission-entry">Objective: Destroy enemy ${stationName}</div>
+        <div class="mission-entry">Reinforcements: ${totalReinforcements} allied ships</div>
+        <div class="mission-entry">Time limit: ~${timeLimit}s before overwhelming force</div>
+      </div>
+    </div>
+    <div class="contract-detail-section">
+      <div class="detail-section-label">DEFENDERS</div>
+      <div class="contract-enemies">
+        <div class="enemy-entry">${defenderList}</div>
+      </div>
+      <div class="contract-waves">${totalDefenders} initial + ${overwhelmingCount} overwhelming</div>
+    </div>
+  `;
+}
+
 /** Render contract detail panel */
 export function renderContractDetail(
   contract: Contract,
@@ -197,6 +254,8 @@ export function renderContractDetail(
   const isStationDefense =
     contract.missionType === 'station-defense' && contract.stationDefenseData;
   const isAmbush = contract.missionType === 'ambush' && contract.ambushData;
+  const isAttackStation =
+    contract.missionType === 'attack-station' && contract.attackStationData;
 
   // Accept button or commander warning (hard block)
   const acceptButton = canLaunch
@@ -208,6 +267,8 @@ export function renderContractDetail(
     missionInfo = renderEscortInfo(contract);
   } else if (isStationDefense) {
     missionInfo = renderStationDefenseInfo(contract);
+  } else if (isAttackStation) {
+    missionInfo = renderAttackStationInfo(contract);
   } else if (isAmbush) {
     missionInfo = renderAmbushInfo(contract);
   } else {

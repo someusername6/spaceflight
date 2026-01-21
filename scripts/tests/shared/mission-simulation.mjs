@@ -21,56 +21,17 @@ import {
   TICK_SEC,
 } from './combat-utils.mjs';
 import { getArchetypeValue, getPlayerShipValue } from './mission-value.mjs';
+import {
+  getAssaultLoadout,
+  getAssaultLoadoutDescription,
+  getLoadout,
+  getLoadoutDescription,
+  SECTOR_ASSAULT_LOADOUTS,
+  SECTOR_LOADOUTS,
+} from './sector-loadouts.mjs';
 
-// ============================================================================
-// Sector Loadouts
-// ============================================================================
-
-/**
- * Sector-specific test loadouts for balance simulation.
- * Player skill progresses: Regular -> Veteran -> Veteran -> Ace -> Ace
- * Wingmen and ships improve based on expected progression.
- */
-export const SECTOR_LOADOUTS = {
-  1: [
-    // Sector 1: New player, all regular skill, basic fighters
-    { archetype: 'fighter', skill: 'regular' },
-    { archetype: 'fighter', skill: 'regular' },
-    { archetype: 'fighter', skill: 'regular' },
-    { archetype: 'fighter', skill: 'regular' },
-  ],
-  2: [
-    // Sector 2: Improving player, mixed ships
-    { archetype: 'fighter', skill: 'veteran' },
-    { archetype: 'fighter', skill: 'regular' },
-    { archetype: 'interceptor', skill: 'regular' },
-    { archetype: 'defender', skill: 'regular' },
-  ],
-  3: [
-    // Sector 3: Solid player, better ships and wingmen
-    { archetype: 'interceptor', skill: 'veteran' },
-    { archetype: 'interceptor', skill: 'regular' },
-    { archetype: 'defender', skill: 'regular' },
-    { archetype: 'defender', skill: 'regular' },
-  ],
-  4: [
-    // Sector 4: Skilled player, advanced ships
-    { archetype: 'striker', skill: 'ace' },
-    { archetype: 'striker', skill: 'veteran' },
-    { archetype: 'defender', skill: 'veteran' },
-    { archetype: 'defender', skill: 'veteran' },
-    { archetype: 'sentinel', skill: 'regular' },
-  ],
-  5: [
-    // Sector 5: Master player, top-tier loadout (all ace)
-    { archetype: 'striker', skill: 'ace' },
-    { archetype: 'striker', skill: 'ace' },
-    { archetype: 'defender', skill: 'ace' },
-    { archetype: 'defender', skill: 'ace' },
-    { archetype: 'sentinel', skill: 'ace' },
-    { archetype: 'sentinel', skill: 'ace' },
-  ],
-};
+// Re-export loadouts for backwards compatibility
+export { SECTOR_LOADOUTS, SECTOR_ASSAULT_LOADOUTS };
 
 // ============================================================================
 // Wave Delay
@@ -150,20 +111,13 @@ export function spawnWave(world, wave) {
   });
 }
 
-/**
- * Get the loadout for a sector.
- */
-export function getLoadout(sector) {
-  return SECTOR_LOADOUTS[sector] || SECTOR_LOADOUTS[1];
-}
-
-/**
- * Get a human-readable description of a loadout.
- */
-export function getLoadoutDescription(sector) {
-  const loadout = getLoadout(sector);
-  return loadout.map((s) => `${s.skill} ${s.archetype}`).join(', ');
-}
+// Re-export loadout utility functions for backwards compatibility
+export {
+  getAssaultLoadout,
+  getAssaultLoadoutDescription,
+  getLoadout,
+  getLoadoutDescription,
+};
 
 // ============================================================================
 // Loadout Value Calculations

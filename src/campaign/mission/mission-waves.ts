@@ -43,6 +43,14 @@ export interface MissionEndState {
     convoyEscaped: number;
     totalConvoy: number;
   };
+  /** Attack station mission results */
+  attackStationResults?: {
+    stationDestroyed: boolean;
+    stationDamagePercent: number;
+    reinforcementsReceived: number;
+    totalReinforcements: number;
+    overwhelmed: boolean;
+  };
 }
 
 /** Delay before transitioning to results screen (seconds) */
