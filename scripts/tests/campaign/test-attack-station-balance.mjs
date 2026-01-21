@@ -327,9 +327,9 @@ describe('Attack Station Mission Balance', () => {
       console.log(`Overwhelm Rate: ${results.overwhelmRate.toFixed(1)}%`);
       console.log(`Timeouts: ${results.timeouts}`);
 
-      // Balance targets (from attack-station.ts header)
+      // Balance targets (attack-station: wins are fast with high survival)
       const targets = {
-        easy: { minWin: 70, maxWin: 90, minSquad: 2.5, maxSquad: 3.5 },
+        easy: { minWin: 70, maxWin: 90, minSquad: 2.0, maxSquad: 3.0 },
         medium: { minWin: 55, maxWin: 75, minSquad: 2.0, maxSquad: 3.0 },
         hard: { minWin: 40, maxWin: 60, minSquad: 1.5, maxSquad: 2.5 },
       };

@@ -29,6 +29,7 @@ import {
   findNearestThreatToPlayer,
   findNearestThreatToStation,
   findStation,
+  findStationAttacker,
 } from './ai-utils';
 
 /** Time window for damage tracking to trigger aggro (seconds) */
@@ -202,6 +203,16 @@ export function updateIdle(
       // Low DPS ships: attack defenders to protect the bombers
       target = findNearestEnemy(world, entity, faction);
       break;
+
+    case 'station-defender': {
+      // Enemy defenders: prioritize station attackers with smart distribution
+      const enemyStation = findEnemyStation(world);
+      target = findStationAttacker(world, entity, faction, enemyStation);
+      if (target === null) {
+        target = findNearestEnemy(world, entity, faction);
+      }
+      break;
+    }
 
     default:
       // Standard behavior: wingmen protect player, enemies attack nearest

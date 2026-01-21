@@ -270,6 +270,76 @@ export function getEnemyStationPosition(world: World): Vector3 | null {
   return _returnPosition.copy(transform.position);
 }
 
+/**
+ * Find an enemy ship attacking the station that needs a defender.
+ * Prioritizes enemies that have fewer defenders targeting them.
+ * Used by enemy defenders in attack-station missions.
+ */
+export function findStationAttacker(
+  world: World,
+  self: Entity,
+  selfFaction: Faction,
+  stationEntity: Entity | null,
+): Entity | null {
+  if (!stationEntity) return null;
+
+  const selfTransform = getComponent(world, self, 'transform');
+  if (!selfTransform) return null;
+
+  // Single pass: collect defender target counts and enemy candidates
+  const targetCounts = new Map<Entity, number>();
+  const candidates: Array<{ entity: Entity; isAttackingStation: boolean }> = [];
+
+  for (const other of queryEntities(world, [
+    'aiControlled',
+    'faction',
+    'health',
+  ])) {
+    const otherFaction = getComponent(world, other, 'faction');
+    if (!otherFaction) continue;
+
+    const otherAi = getComponent(world, other, 'aiControlled');
+    if (!otherAi) continue;
+
+    if (otherFaction.faction === selfFaction) {
+      // Same faction = fellow defender, count their target
+      if (other !== self && otherAi.target) {
+        targetCounts.set(
+          otherAi.target,
+          (targetCounts.get(otherAi.target) ?? 0) + 1,
+        );
+      }
+    } else if (areEnemies(selfFaction, otherFaction.faction)) {
+      // Enemy faction = potential target
+      const health = getComponent(world, other, 'health');
+      if (health && isDead(health)) continue;
+
+      candidates.push({
+        entity: other,
+        isAttackingStation: otherAi.target === stationEntity,
+      });
+    }
+  }
+
+  // Score candidates: prefer station attackers with fewer defenders
+  let best: Entity | null = null;
+  let bestScore = Infinity;
+
+  for (const { entity, isAttackingStation } of candidates) {
+    const defenderCount = targetCounts.get(entity) ?? 0;
+    const score = isAttackingStation
+      ? defenderCount // 0, 1, 2, etc - lower is better
+      : 1000 + defenderCount; // Non-attackers are lower priority
+
+    if (score < bestScore) {
+      bestScore = score;
+      best = entity;
+    }
+  }
+
+  return best;
+}
+
 // Re-export ambush mission utilities for backward compatibility
 export {
   findNearestEnemyConvoyShip,

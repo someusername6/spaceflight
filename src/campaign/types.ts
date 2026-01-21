@@ -213,6 +213,8 @@ export interface AttackStationMissionData {
   stationDistance: number;
   /** Initial enemy defenders present at mission start */
   initialDefenders: ContractEnemy[];
+  /** Initial allied NPC ships present at mission start (optional, already engaged) */
+  initialAllies?: ContractEnemy[];
   /** Friendly reinforcement waves that arrive over time */
   reinforcementWaves: AttackStationReinforcementWave[];
   /** Time in seconds before overwhelming enemy wave spawns (soft time limit) */

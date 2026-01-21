@@ -144,6 +144,30 @@ Required changes:
 | Medium | 70-80% | 2.5-3.0 of 4 |
 | Hard | 60-70% | 2.0-2.5 of 4 |
 
+**Note**: Attack-station missions have different targets due to sustained combat - see mission file headers.
+
+### Mission Balancing Process
+
+When rebalancing missions, follow this systematic approach:
+
+1. **Analyze working examples first**: If a similar mission already has good balance, study WHY it works (enemy count, skill levels, reinforcement timing) and adapt from there rather than starting from scratch.
+
+2. **Understand variable relationships**:
+   - Enemy count/skill → primarily affects win rate
+   - Reinforcement timing → affects both win rate AND survival
+   - Initial allies → affect both metrics (they protect everyone including assault ships)
+   - Station type (attack-station) → directly affects difficulty (mining=12500, refinery=15000, military=10000 HP)
+
+3. **Tune one metric at a time**: Get win rate in range first, THEN adjust survival.
+
+4. **Use larger increments**: Change enemy count by 2-3, delay by 15-20s to find the ballpark faster.
+
+5. **Know the constraints**:
+   - Sector 1 allies: `fighter`, `assaultFighter` only
+   - Sector 1 enemies: `gnat`, `ember`, `shocker`, `mantis` (rookie/regular/veteran)
+   - Each reinforcement wave needs at least 2 ships
+   - Overwhelming wave timing (180s) should not change
+
 ## Replay Determinism (CRITICAL)
 
 The replay system records player inputs and reconstructs battles deterministically. **Any entity that affects simulation must be reconstructed identically.**

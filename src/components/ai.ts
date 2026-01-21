@@ -43,7 +43,8 @@ export type AIBehaviorMode =
   | 'station-hunter'
   | 'station-defense'
   | 'station-assault-high-dps' // Attack station: high DPS ships attack enemy station
-  | 'station-assault-low-dps'; // Attack station: low DPS ships attack enemy defenders
+  | 'station-assault-low-dps' // Attack station: low DPS ships attack enemy defenders
+  | 'station-defender'; // Attack station: enemy defenders prioritize station attackers
 
 export interface AIControlled extends ComponentBase {
   readonly type: 'aiControlled';

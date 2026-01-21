@@ -20,7 +20,11 @@ import { getStationStats } from '../../data/stations';
 import { createStationEntity } from '../../factories/station';
 import { isHighDpsShip } from '../../systems/ai/ai-dps-utils';
 import type { Contract } from '../types';
-import { spawnDefender, spawnReinforcement } from './attack-station-spawning';
+import {
+  spawnDefender,
+  spawnInitialAlly,
+  spawnReinforcement,
+} from './attack-station-spawning';
 
 /** Attack station mission runtime state */
 export interface AttackStationMissionState {
@@ -182,6 +186,24 @@ export function setupAttackStationMission(
     0,
   );
   logDebug(`[ATTACK STATION] Spawned ${totalDefenders} initial defenders`);
+
+  // Spawn initial allied NPCs if configured (already engaged with defenders)
+  if (attackData.initialAllies) {
+    let allyIndex = 0;
+    for (const spec of attackData.initialAllies) {
+      for (let i = 0; i < spec.count; i++) {
+        spawnInitialAlly(
+          world,
+          stationPosition,
+          spec,
+          allyIndex,
+          attackData.stationAttackDpsThreshold,
+        );
+        allyIndex++;
+      }
+    }
+    logDebug(`[ATTACK STATION] Spawned ${allyIndex} initial allies`);
+  }
 
   // Assign DPS-based behavior to player faction ships
   assignDpsBasedBehavior(world, attackData.stationAttackDpsThreshold);
