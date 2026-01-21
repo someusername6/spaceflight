@@ -29,31 +29,24 @@ export const SECTOR_4_STATION_DEFENSE: Contract[] = [
       waves: [
         {
           enemies: [
-            { archetype: 'phantom', skill: 'veteran', count: 3 },
-            { archetype: 'firefly', skill: 'veteran', count: 4 },
+            { archetype: 'phantom', skill: 'regular', count: 5 },
+            { archetype: 'firefly', skill: 'regular', count: 6 },
           ],
-          delay: 5,
+          delay: 3,
         },
         {
           enemies: [
-            { archetype: 'dragonfly', skill: 'veteran', count: 5 },
-            { archetype: 'firefly', skill: 'veteran', count: 5 },
+            { archetype: 'dragonfly', skill: 'regular', count: 7 },
+            { archetype: 'firefly', skill: 'regular', count: 7 },
           ],
-          delay: 14,
+          delay: 8,
         },
         {
           enemies: [
-            { archetype: 'phantom', skill: 'veteran', count: 3 },
-            { archetype: 'dragonfly', skill: 'ace', count: 4 },
+            { archetype: 'phantom', skill: 'regular', count: 5 },
+            { archetype: 'dragonfly', skill: 'regular', count: 6 },
           ],
-          delay: 23,
-        },
-        {
-          enemies: [
-            { archetype: 'phantom', skill: 'ace', count: 3 },
-            { archetype: 'firefly', skill: 'ace', count: 4 },
-          ],
-          delay: 32,
+          delay: 13,
         },
       ],
       reinforcementTime: null,
@@ -64,7 +57,60 @@ export const SECTOR_4_STATION_DEFENSE: Contract[] = [
         { archetype: 'defender', skill: 'veteran', count: 1 },
       ],
     },
-    reward: 11823,
+    reward: 8263,
+  },
+  {
+    id: 's4-chain-reaction',
+    name: 'Chain Reaction',
+    description:
+      'Veteran phantom squadron targeting the refinery. Heavy torpedo threat.',
+    difficulty: 'medium',
+    sector: 4,
+    missionType: 'station-defense',
+    stationDefenseData: {
+      playerThreatRatio: 0.25,
+      stationType: 'mining',
+      stationDistance: -350,
+      waves: [
+        {
+          enemies: [
+            { archetype: 'firefly', skill: 'ace', count: 7 },
+            { archetype: 'dragonfly', skill: 'ace', count: 7 },
+          ],
+          delay: 3,
+        },
+        {
+          enemies: [
+            { archetype: 'phantom', skill: 'ace', count: 6 },
+            { archetype: 'firefly', skill: 'ace', count: 7 },
+          ],
+          delay: 8,
+        },
+        {
+          enemies: [
+            { archetype: 'phantom', skill: 'ace', count: 6 },
+            { archetype: 'dragonfly', skill: 'ace', count: 7 },
+          ],
+          delay: 13,
+        },
+        {
+          enemies: [
+            { archetype: 'dragonfly', skill: 'ace', count: 7 },
+            { archetype: 'firefly', skill: 'ace', count: 7 },
+          ],
+          delay: 18,
+        },
+      ],
+      reinforcementTime: null,
+      reinforcementHealthThreshold: 0.2,
+      reinforcementCount: 4,
+      reinforcementPool: [
+        { archetype: 'striker', skill: 'veteran', count: 1 },
+        { archetype: 'defender', skill: 'veteran', count: 1 },
+        { archetype: 'sentinel', skill: 'regular', count: 1 },
+      ],
+    },
+    reward: 17937,
   },
   {
     id: 's4-omega-point',
@@ -81,38 +127,31 @@ export const SECTOR_4_STATION_DEFENSE: Contract[] = [
       waves: [
         {
           enemies: [
-            { archetype: 'dragonfly', skill: 'ace', count: 6 },
-            { archetype: 'phantom', skill: 'ace', count: 5 },
+            { archetype: 'dragonfly', skill: 'ace', count: 8 },
+            { archetype: 'phantom', skill: 'ace', count: 7 },
           ],
-          delay: 5,
+          delay: 3,
         },
         {
           enemies: [
-            { archetype: 'phantom', skill: 'ace', count: 6 },
-            { archetype: 'firefly', skill: 'ace', count: 6 },
+            { archetype: 'phantom', skill: 'ace', count: 8 },
+            { archetype: 'firefly', skill: 'ace', count: 8 },
           ],
-          delay: 11,
+          delay: 8,
         },
         {
           enemies: [
-            { archetype: 'firefly', skill: 'ace', count: 6 },
-            { archetype: 'dragonfly', skill: 'ace', count: 6 },
+            { archetype: 'firefly', skill: 'ace', count: 8 },
+            { archetype: 'dragonfly', skill: 'ace', count: 8 },
           ],
-          delay: 17,
+          delay: 13,
         },
         {
           enemies: [
-            { archetype: 'phantom', skill: 'ace', count: 6 },
-            { archetype: 'firefly', skill: 'ace', count: 6 },
+            { archetype: 'phantom', skill: 'ace', count: 8 },
+            { archetype: 'firefly', skill: 'ace', count: 8 },
           ],
-          delay: 23,
-        },
-        {
-          enemies: [
-            { archetype: 'phantom', skill: 'ace', count: 6 },
-            { archetype: 'dragonfly', skill: 'ace', count: 6 },
-          ],
-          delay: 29,
+          delay: 18,
         },
       ],
       reinforcementTime: null,
@@ -124,66 +163,6 @@ export const SECTOR_4_STATION_DEFENSE: Contract[] = [
         { archetype: 'sentinel', skill: 'veteran', count: 1 },
       ],
     },
-    reward: 12536,
-  },
-  {
-    id: 's4-chain-reaction',
-    name: 'Chain Reaction',
-    description:
-      'Veteran phantom squadron targeting the refinery. Heavy torpedo threat.',
-    difficulty: 'medium',
-    sector: 4,
-    missionType: 'station-defense',
-    stationDefenseData: {
-      playerThreatRatio: 0.2,
-      stationType: 'mining',
-      stationDistance: -350,
-      waves: [
-        {
-          enemies: [
-            { archetype: 'firefly', skill: 'ace', count: 5 },
-            { archetype: 'dragonfly', skill: 'ace', count: 5 },
-          ],
-          delay: 5,
-        },
-        {
-          enemies: [
-            { archetype: 'phantom', skill: 'veteran', count: 4 },
-            { archetype: 'firefly', skill: 'ace', count: 5 },
-          ],
-          delay: 12,
-        },
-        {
-          enemies: [
-            { archetype: 'phantom', skill: 'ace', count: 4 },
-            { archetype: 'dragonfly', skill: 'ace', count: 5 },
-          ],
-          delay: 19,
-        },
-        {
-          enemies: [
-            { archetype: 'dragonfly', skill: 'ace', count: 5 },
-            { archetype: 'firefly', skill: 'ace', count: 5 },
-          ],
-          delay: 26,
-        },
-        {
-          enemies: [
-            { archetype: 'phantom', skill: 'ace', count: 4 },
-            { archetype: 'dragonfly', skill: 'ace', count: 5 },
-          ],
-          delay: 33,
-        },
-      ],
-      reinforcementTime: null,
-      reinforcementHealthThreshold: 0.2,
-      reinforcementCount: 4,
-      reinforcementPool: [
-        { archetype: 'striker', skill: 'veteran', count: 1 },
-        { archetype: 'defender', skill: 'veteran', count: 1 },
-        { archetype: 'sentinel', skill: 'regular', count: 1 },
-      ],
-    },
-    reward: 18063,
+    reward: 31338,
   },
 ];
