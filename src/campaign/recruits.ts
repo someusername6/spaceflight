@@ -289,6 +289,7 @@ export function hirePilot(
     damageReceived: 0,
     ejectionCount: 0,
     injuredMissionsLeft: 0,
+    xp: 0,
   };
 
   return {

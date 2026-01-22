@@ -42,8 +42,12 @@ export interface Pilot {
   damageDealt: number;
   damageReceived: number;
   // Ejection tracking (wingmen eject on ship destruction, commander death = game over)
-  ejectionCount: number; // 0, 1, or 2 (2 = retiring)
+  ejectionCount: number; // Number of times pilot has ejected (increases retirement chance)
   injuredMissionsLeft: number; // 0 = active, 1+ = recovering
+  // XP system (wingmen only - commander doesn't track XP)
+  // XP toward next skill level; resets to 0 on promotion
+  // Skill progression: rookie → regular → veteran → ace → elite
+  xp: number;
 }
 
 /** A weapon equipped in a primary bank */

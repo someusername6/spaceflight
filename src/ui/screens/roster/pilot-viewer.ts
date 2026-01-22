@@ -2,8 +2,31 @@
  * Pilot Viewer - renders detailed pilot information and assignment options.
  */
 
-import type { CampaignState, OwnedShip, Pilot } from '../../../campaign/types';
+import {
+  getXPProgress,
+  isMaxSkillLevel,
+  XP_PER_LEVEL,
+} from '../../../campaign/pilot-xp';
+import type {
+  CampaignState,
+  OwnedShip,
+  Pilot,
+  SkillLevel,
+} from '../../../campaign/types';
 import { getShipIconPath, iconErrorHandler } from '../../ship/viewer';
+
+/** Get display label for the next skill level */
+function getNextSkillLabel(current: SkillLevel): string {
+  const progression: Record<SkillLevel, string> = {
+    green: 'Rookie',
+    rookie: 'Regular',
+    regular: 'Veteran',
+    veteran: 'Ace',
+    ace: 'Elite',
+    elite: 'Max',
+  };
+  return progression[current] ?? 'Next';
+}
 
 /** Get available ships for pilot assignment (ships without pilots) */
 function getAvailableShipsForPilot(state: CampaignState): OwnedShip[] {
@@ -41,6 +64,35 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
   // Rank: "PLAYER" for commander, skill level for others
   const rankText = isCommander ? 'PLAYER' : pilot.skill.toUpperCase();
 
+  // XP progress bar (wingmen only, not shown for commander or elite pilots)
+  const showXPBar = !isCommander && !isMaxSkillLevel(pilot);
+  const xpProgress = getXPProgress(pilot);
+  const nextSkillLabel = getNextSkillLabel(pilot.skill);
+  const xpSection = showXPBar
+    ? `
+      <div class="pilot-xp-section">
+        <div class="xp-header">
+          <span class="xp-label">XP to ${nextSkillLabel}</span>
+          <span class="xp-value">${pilot.xp} / ${XP_PER_LEVEL}</span>
+        </div>
+        <div class="xp-bar-container">
+          <div class="xp-bar-fill" style="width: ${xpProgress}%"></div>
+        </div>
+      </div>
+    `
+    : '';
+
+  // Elite badge (shown instead of XP bar for elite pilots)
+  const eliteBadge =
+    !isCommander && isMaxSkillLevel(pilot)
+      ? `
+      <div class="pilot-elite-badge">
+        <span class="elite-icon">★</span>
+        <span class="elite-text">Elite - Max Rank</span>
+      </div>
+    `
+      : '';
+
   // Injury status banner (shown when pilot is recovering)
   const isInjured = pilot.injuredMissionsLeft > 0;
   const injuryBanner = isInjured
@@ -53,13 +105,13 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
     `
     : '';
 
-  // Warning banner for pilots with 1 close call (will retire on next ejection)
+  // Warning banner for pilots with close calls (higher retirement risk)
   const hasCloseCall = pilot.ejectionCount > 0 && !isInjured;
   const closeCallBanner = hasCloseCall
     ? `
       <div class="pilot-close-call-banner">
         <span class="close-call-icon">⚠</span>
-        <span class="close-call-text">Will retire if ejected again</span>
+        <span class="close-call-text">Higher retirement risk if ejected</span>
       </div>
     `
     : '';
@@ -153,6 +205,8 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
         </div>
       </div>
 
+      ${xpSection}
+      ${eliteBadge}
       ${injuryBanner}
       ${closeCallBanner}
 

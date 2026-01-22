@@ -77,6 +77,7 @@ function createPilot(id: string, name: string, skill: Pilot['skill']): Pilot {
     damageReceived: 0,
     ejectionCount: 0,
     injuredMissionsLeft: 0,
+    xp: 0,
   };
 }
 

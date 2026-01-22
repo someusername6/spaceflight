@@ -12,20 +12,26 @@ import type {
 } from '../types';
 
 /**
- * Migrate pilot data to include ejection fields if missing.
- * Handles saves from before the ejection system was added.
+ * Migrate pilot data to include ejection and XP fields if missing.
+ * Handles saves from before the ejection/XP systems were added.
  */
 function migratePilot<
-  T extends { ejectionCount?: number; injuredMissionsLeft?: number },
+  T extends {
+    ejectionCount?: number;
+    injuredMissionsLeft?: number;
+    xp?: number;
+  },
 >(pilot: T): T {
   if (
     pilot.ejectionCount === undefined ||
-    pilot.injuredMissionsLeft === undefined
+    pilot.injuredMissionsLeft === undefined ||
+    pilot.xp === undefined
   ) {
     return {
       ...pilot,
       ejectionCount: pilot.ejectionCount ?? 0,
       injuredMissionsLeft: pilot.injuredMissionsLeft ?? 0,
+      xp: pilot.xp ?? 0,
     };
   }
   return pilot;

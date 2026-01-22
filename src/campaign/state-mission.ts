@@ -7,6 +7,12 @@
 
 import { logDebug } from '../core/logger';
 import { getRetirementChance, rollForRetirement } from './ejection';
+import {
+  applyXP,
+  calculateMissionXP,
+  isMaxSkillLevel,
+  XP_EJECTION_SURVIVAL,
+} from './pilot-xp';
 import { mapSlots } from './slot-array';
 import { applyStoreTrickle } from './store/store-trickle';
 import type { CampaignState } from './types';
@@ -217,7 +223,17 @@ export function applyAmmoUsage(
   };
 }
 
-/** Apply extracted pilot stats from mission back to campaign state */
+/**
+ * Apply extracted pilot stats and XP from mission back to campaign state.
+ *
+ * XP is awarded to wingmen only (not commander):
+ * - Mission completion: 10 XP
+ * - Per kill: 5 XP
+ * - Per assist: 2 XP
+ * - Ejection survival bonus: 10 XP (if pilot ejected but didn't retire)
+ *
+ * @param ejectedPilotIds - IDs of pilots who ejected and survived (for XP bonus)
+ */
 export function applyPilotStats(
   state: CampaignState,
   pilotStats: Array<{
@@ -227,25 +243,68 @@ export function applyPilotStats(
     damageDealt: number;
     damageReceived: number;
   }>,
+  ejectedPilotIds: Set<string> = new Set(),
 ): CampaignState {
   // Create a map for quick lookup
   const statsByPilotId = new Map(pilotStats.map((s) => [s.pilotId, s]));
 
-  // Helper to apply stats to a pilot
+  // Helper to apply stats and XP to a pilot (no logging - done separately)
   const applyStats = (pilot: (typeof state.pilots)[0]) => {
     const extracted = statsByPilotId.get(pilot.id);
     if (!extracted) return pilot;
-    return {
+
+    // Apply combat stats
+    let updated = {
       ...pilot,
       kills: pilot.kills + extracted.kills,
       assists: pilot.assists + extracted.assists,
       damageDealt: pilot.damageDealt + extracted.damageDealt,
       damageReceived: pilot.damageReceived + extracted.damageReceived,
     };
+
+    // Apply XP for wingmen only (not commander)
+    if (pilot.id !== state.commanderId && !isMaxSkillLevel(pilot)) {
+      let xpGained = calculateMissionXP(extracted.kills, extracted.assists);
+
+      // Ejection survival bonus
+      if (ejectedPilotIds.has(pilot.id)) {
+        xpGained += XP_EJECTION_SURVIVAL;
+      }
+
+      updated = applyXP(updated, xpGained);
+    }
+
+    return updated;
   };
 
   // Update pilots array
   const updatedPilots = state.pilots.map(applyStats);
+
+  // Log XP gains and promotions (only once, using pilots array)
+  for (const pilot of state.pilots) {
+    const extracted = statsByPilotId.get(pilot.id);
+    if (!extracted) continue;
+    if (pilot.id === state.commanderId || isMaxSkillLevel(pilot)) continue;
+
+    let xpGained = calculateMissionXP(extracted.kills, extracted.assists);
+    const hasEjectionBonus = ejectedPilotIds.has(pilot.id);
+    if (hasEjectionBonus) {
+      xpGained += XP_EJECTION_SURVIVAL;
+    }
+
+    const bonusText = hasEjectionBonus
+      ? ' (includes ejection survival bonus)'
+      : '';
+    logDebug(`Pilot ${pilot.name} gains ${xpGained} XP${bonusText}`);
+
+    // Check for promotion by finding the updated pilot
+    const updatedPilot = updatedPilots.find((p) => p.id === pilot.id);
+    if (updatedPilot && updatedPilot.skill !== pilot.skill) {
+      logDebug(
+        `Pilot ${pilot.name} promoted from ${pilot.skill} to ${updatedPilot.skill}!`,
+      );
+    }
+  }
 
   // Also update pilots embedded in ships (data is denormalized)
   const updatedShips = state.ships.map((ship) => {

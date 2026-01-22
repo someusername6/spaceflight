@@ -162,7 +162,19 @@ export function createMissionEndExecutor(
         damageReceived: p.damageReceived,
       }));
 
-    newState = applyPilotStats(newState, pilotStatsData);
+    // Get pilots who ejected and survived (for XP bonus)
+    // These are pilots marked as ejected but NOT retiring in the debrief
+    const ejectedPilotIds = new Set<string>();
+    for (const pilot of debriefData.pilots) {
+      if (pilot.isEjected && !pilot.isRetiring && pilot.campaignShipId) {
+        const pilotId = shipToPilot.get(pilot.campaignShipId);
+        if (pilotId) {
+          ejectedPilotIds.add(pilotId);
+        }
+      }
+    }
+
+    newState = applyPilotStats(newState, pilotStatsData, ejectedPilotIds);
 
     // Calculate and apply item-based salvage from all destroyed ships
     // (Convoy ships are excluded from salvage in the stats system)
