@@ -143,6 +143,7 @@ export function createMissionEndExecutor(
         shipToPilot.set(ship.id, ship.pilot.id);
       }
     }
+
     const pilotStatsData = debriefData.pilots
       .filter((p) => p.campaignShipId && shipToPilot.has(p.campaignShipId))
       .map((p) => ({
@@ -152,6 +153,7 @@ export function createMissionEndExecutor(
         damageDealt: p.damageDealt,
         damageReceived: p.damageReceived,
       }));
+
     newState = applyPilotStats(newState, pilotStatsData);
 
     // Calculate and apply item-based salvage from all destroyed ships

@@ -47,19 +47,30 @@ export function applyMissionResults(
   // Remove destroyed ships
   const survivingShips = state.ships.filter((s) => !shipsLost.includes(s.id));
 
+  // Helper to update mission stats for a pilot
+  const updateMissionStats = (pilot: (typeof state.pilots)[0]) => {
+    if (!pilotIdsInMission.has(pilot.id)) {
+      return pilot;
+    }
+    return {
+      ...pilot,
+      missionsFlown: pilot.missionsFlown + 1,
+      missionsWon: pilot.missionsWon + (victory ? 1 : 0),
+    };
+  };
+
   // Update pilot career stats for survivors, remove KIA pilots
   const updatedPilots = state.pilots
     .filter((pilot) => !killedPilotIds.has(pilot.id)) // Remove KIA
-    .map((pilot) => {
-      if (!pilotIdsInMission.has(pilot.id)) {
-        return pilot;
-      }
-      return {
-        ...pilot,
-        missionsFlown: pilot.missionsFlown + 1,
-        missionsWon: pilot.missionsWon + (victory ? 1 : 0),
-      };
-    });
+    .map(updateMissionStats);
+
+  // Also update pilots embedded in surviving ships (data is denormalized)
+  const updatedShips = survivingShips.map((ship) => {
+    if (!ship.pilot) return ship;
+    const updatedPilot = updateMissionStats(ship.pilot);
+    if (updatedPilot === ship.pilot) return ship; // No change
+    return { ...ship, pilot: updatedPilot };
+  });
 
   // Track completed contracts (don't add duplicates)
   const completedContracts =
@@ -72,7 +83,7 @@ export function applyMissionResults(
   const afterMission: CampaignState = {
     ...state,
     credits: state.credits + (victory ? creditsEarned : 0),
-    ships: survivingShips,
+    ships: updatedShips,
     pilots: updatedPilots,
     missionCount: state.missionCount + 1,
     sectorMissionsCompleted: victory
@@ -148,11 +159,10 @@ export function applyPilotStats(
   // Create a map for quick lookup
   const statsByPilotId = new Map(pilotStats.map((s) => [s.pilotId, s]));
 
-  // Update pilots with combat stats
-  const updatedPilots = state.pilots.map((pilot) => {
+  // Helper to apply stats to a pilot
+  const applyStats = (pilot: (typeof state.pilots)[0]) => {
     const extracted = statsByPilotId.get(pilot.id);
     if (!extracted) return pilot;
-
     return {
       ...pilot,
       kills: pilot.kills + extracted.kills,
@@ -160,10 +170,22 @@ export function applyPilotStats(
       damageDealt: pilot.damageDealt + extracted.damageDealt,
       damageReceived: pilot.damageReceived + extracted.damageReceived,
     };
+  };
+
+  // Update pilots array
+  const updatedPilots = state.pilots.map(applyStats);
+
+  // Also update pilots embedded in ships (data is denormalized)
+  const updatedShips = state.ships.map((ship) => {
+    if (!ship.pilot) return ship;
+    const updatedPilot = applyStats(ship.pilot);
+    if (updatedPilot === ship.pilot) return ship; // No change
+    return { ...ship, pilot: updatedPilot };
   });
 
   return {
     ...state,
     pilots: updatedPilots,
+    ships: updatedShips,
   };
 }
