@@ -1,0 +1,81 @@
+/**
+ * Debrief Weapon Breakdown Styles
+ *
+ * Table styling for weapon statistics display in pilot debrief cards.
+ */
+
+/* ========================================
+   WEAPON BREAKDOWN TABLE
+   ======================================== */
+
+.weapon-breakdown {
+  margin-top: var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--space-3);
+}
+
+.weapon-breakdown table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-xs);
+}
+
+.weapon-breakdown th {
+  font-family: var(--font-ui);
+  font-size: var(--text-2xs);
+  font-weight: var(--font-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+  color: var(--text-dim);
+  text-align: left;
+  padding: var(--space-2) var(--space-1-5);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.weapon-breakdown th:last-child {
+  text-align: right;
+}
+
+.weapon-breakdown td {
+  font-family: var(--font-body);
+  color: var(--text-secondary);
+  padding: var(--space-2) var(--space-1-5);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.weapon-breakdown tr:last-child td {
+  border-bottom: none;
+}
+
+.weapon-breakdown tr:hover td {
+  background: var(--highlight-subtle);
+}
+
+.weapon-breakdown td.damage {
+  text-align: right;
+  font-family: var(--font-display);
+  color: var(--color-primary);
+  text-shadow: 0 0 var(--glow-sm) var(--color-primary-glow);
+}
+
+.weapon-breakdown .no-weapons {
+  text-align: center;
+  color: var(--text-dim);
+  padding: var(--space-4);
+}
+
+/* ========================================
+   WEAPON ROW (legacy class)
+   ======================================== */
+
+.weapon-row {
+  display: flex;
+  align-items: center;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: var(--text-sm);
+}
+
+.weapon-row:last-child {
+  border-bottom: none;
+}

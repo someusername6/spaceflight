@@ -41,6 +41,12 @@ function renderDeployedItem(
 ): string {
   const showWarning = needsAttention(ship);
 
+  // Show ejection warning if pilot has had a close call (will retire on next ejection)
+  const ejectionWarning =
+    ship.pilot && ship.pilot.ejectionCount > 0
+      ? '<span class="ejection-warning" title="1 close call - will retire if ejected again">⚠</span>'
+      : '';
+
   return renderShipItem({
     ship,
     isCommander,
@@ -48,7 +54,7 @@ function renderDeployedItem(
     extraClasses: `deployed ${showWarning ? 'has-warning' : ''}`,
     dataAttrs: { 'deployed-id': ship.id },
     iconContent: showWarning ? renderWarningBadge(ship) : '',
-    afterContent: renderWeaponBadges(ship),
+    afterContent: renderWeaponBadges(ship) + ejectionWarning,
   });
 }
 
@@ -60,24 +66,33 @@ function renderAvailableItem(
 ): string {
   const selectedClass = isSelected ? 'selected' : '';
   const commanderClass = isCommander ? 'commander' : '';
+  const isInjured = pilot.injuredMissionsLeft > 0;
+  const injuredClass = isInjured ? 'injured' : '';
+
+  // Show injury status with warning indicator if ejected before
+  const statusText = isInjured ? 'Injured' : 'Available';
+  const ejectionWarning =
+    pilot.ejectionCount > 0 && !isInjured
+      ? '<span class="ejection-warning" title="1 close call">⚠</span>'
+      : '';
 
   return `
     <article
-      class="ship-item available ${selectedClass} ${commanderClass}"
+      class="ship-item available ${selectedClass} ${commanderClass} ${injuredClass}"
       data-pilot-id="${pilot.id}"
       role="option"
       aria-selected="${isSelected}"
       tabindex="0"
-      aria-label="${pilot.name}, available"
+      aria-label="${pilot.name}, ${statusText}"
     >
       <div class="ship-item-icon">
         <img src="${getFallbackSvgUrl()}" alt="No ship" class="ship-item-img ship-item-img-empty" />
       </div>
       <div class="ship-item-info">
         <div class="ship-item-name-row">
-          <span class="ship-item-pilot">${isCommander ? '<span class="commander-star" aria-label="Commander">★</span>' : ''}${pilot.name}</span>
+          <span class="ship-item-pilot">${isCommander ? '<span class="commander-star" aria-label="Commander">★</span>' : ''}${pilot.name}${ejectionWarning}</span>
         </div>
-        <span class="ship-item-status">Available</span>
+        <span class="ship-item-status${isInjured ? ' injured' : ''}">${statusText}</span>
       </div>
     </article>
   `;

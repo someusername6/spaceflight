@@ -41,6 +41,9 @@ export interface Pilot {
   missionsWon: number;
   damageDealt: number;
   damageReceived: number;
+  // Ejection tracking (wingmen eject on ship destruction, commander death = game over)
+  ejectionCount: number; // 0, 1, or 2 (2 = retiring)
+  injuredMissionsLeft: number; // 0 = active, 1+ = recovering
 }
 
 /** A weapon equipped in a primary bank */

@@ -175,3 +175,29 @@
   color: var(--text-dim);
   font-size: var(--text-xs);
 }
+
+/* ========================================
+   INJURED PILOT STYLES
+   ======================================== */
+
+/* Grayed out injured pilots */
+.ship-item.injured {
+  opacity: 0.5;
+}
+
+.ship-item.injured .ship-item-img {
+  filter: grayscale(0.8);
+}
+
+/* Injured status text */
+.ship-item-status.injured {
+  color: var(--color-warning);
+}
+
+/* Ejection warning icon (pilot has 1 close call, will retire if ejected again) */
+.ejection-warning {
+  color: var(--color-warning);
+  font-size: var(--text-xs);
+  margin-left: var(--space-1);
+  cursor: help;
+}

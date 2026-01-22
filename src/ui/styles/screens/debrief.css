@@ -3,7 +3,11 @@
  *
  * Pilot cards layout: responsive 2-column grid (max-width ~450px per card)
  * Features staggered reveal animations and military aesthetic details
+ *
+ * Note: Weapon breakdown table styles are in debrief-weapons.css
  */
+
+@import "./debrief-weapons.css";
 
 /* ========================================
    DEBRIEF SECTION
@@ -171,6 +175,16 @@
   box-shadow: 0 0 8px var(--color-danger-glow);
 }
 
+/* Ejected (ship lost but pilot survived) - warning/orange color */
+.pilot-card.lost-ship::before {
+  background: linear-gradient(
+    90deg,
+    var(--color-warning) 0%,
+    var(--color-warning-dim) 100%
+  );
+  box-shadow: 0 0 8px var(--color-warning-glow);
+}
+
 /* Corner detail */
 .pilot-card::after {
   content: "";
@@ -265,6 +279,23 @@
   animation: kiaFlicker 3s ease-in-out infinite;
 }
 
+.pilot-status.ejected {
+  background: color-mix(in srgb, var(--color-warning) 15%, transparent);
+  color: var(--color-warning);
+  border: 1px solid color-mix(in srgb, var(--color-warning) 35%, transparent);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-0-5);
+}
+
+.status-subtext {
+  font-size: var(--text-2xs);
+  font-weight: var(--font-normal);
+  opacity: 0.85;
+  letter-spacing: var(--tracking-wide);
+}
+
 @keyframes kiaFlicker {
   0%,
   92%,
@@ -296,80 +327,4 @@
 .pilot-stats {
   grid-template-columns: repeat(4, 1fr);
   margin-bottom: var(--space-3);
-}
-
-/* ========================================
-   WEAPON BREAKDOWN TABLE
-   ======================================== */
-
-.weapon-breakdown {
-  margin-top: var(--space-3);
-  border-top: 1px solid var(--border-subtle);
-  padding-top: var(--space-3);
-}
-
-.weapon-breakdown table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--text-xs);
-}
-
-.weapon-breakdown th {
-  font-family: var(--font-ui);
-  font-size: var(--text-2xs);
-  font-weight: var(--font-semibold);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-wider);
-  color: var(--text-dim);
-  text-align: left;
-  padding: var(--space-2) var(--space-1-5);
-  border-bottom: 1px solid var(--border-color);
-}
-
-.weapon-breakdown th:last-child {
-  text-align: right;
-}
-
-.weapon-breakdown td {
-  font-family: var(--font-body);
-  color: var(--text-secondary);
-  padding: var(--space-2) var(--space-1-5);
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.weapon-breakdown tr:last-child td {
-  border-bottom: none;
-}
-
-.weapon-breakdown tr:hover td {
-  background: var(--highlight-subtle);
-}
-
-.weapon-breakdown td.damage {
-  text-align: right;
-  font-family: var(--font-display);
-  color: var(--color-primary);
-  text-shadow: 0 0 var(--glow-sm) var(--color-primary-glow);
-}
-
-.weapon-breakdown .no-weapons {
-  text-align: center;
-  color: var(--text-dim);
-  padding: var(--space-4);
-}
-
-/* ========================================
-   WEAPON ROW (legacy class)
-   ======================================== */
-
-.weapon-row {
-  display: flex;
-  align-items: center;
-  padding: var(--space-2) 0;
-  border-bottom: 1px solid var(--border-subtle);
-  font-size: var(--text-sm);
-}
-
-.weapon-row:last-child {
-  border-bottom: none;
 }

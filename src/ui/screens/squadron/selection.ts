@@ -97,9 +97,10 @@ const SquadSelectionScreen: Screen<SquadState, SquadProps> = {
     const selectedCount = selectedSet.size;
     const maxDeployment = getDeploymentLimit(campaignState.currentSector);
 
-    // Get ships with pilots (can deploy), commander first
+    // Get ships with non-injured pilots (can deploy), commander first
+    // Injured pilots (injuredMissionsLeft > 0) cannot deploy until recovered
     const deployableShips = campaignState.ships
-      .filter((s) => s.pilot !== null)
+      .filter((s) => s.pilot !== null && s.pilot.injuredMissionsLeft <= 0)
       .sort((a, b) => {
         if (a.id === commanderShipId) return -1;
         if (b.id === commanderShipId) return 1;
@@ -278,10 +279,11 @@ export function showSquadSelection(
     return Promise.resolve({ confirmed: false, deployedShipIds: [] });
   }
 
-  // Initialize selection: all ships with pilots, up to sector deployment limit
+  // Initialize selection: all ships with non-injured pilots, up to sector limit
+  // Injured pilots cannot deploy until recovered
   const maxDeployment = getDeploymentLimit(state.currentSector);
   const initialSelectedIds = state.ships
-    .filter((s) => s.pilot !== null)
+    .filter((s) => s.pilot !== null && s.pilot.injuredMissionsLeft <= 0)
     .slice(0, maxDeployment)
     .map((s) => s.id);
 

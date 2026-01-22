@@ -41,6 +41,29 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
   // Rank: "PLAYER" for commander, skill level for others
   const rankText = isCommander ? 'PLAYER' : pilot.skill.toUpperCase();
 
+  // Injury status banner (shown when pilot is recovering)
+  const isInjured = pilot.injuredMissionsLeft > 0;
+  const injuryBanner = isInjured
+    ? `
+      <div class="pilot-injury-banner">
+        <span class="injury-icon">⚠</span>
+        <span class="injury-text">Recovering from ejection</span>
+        <span class="injury-missions">${pilot.injuredMissionsLeft} mission${pilot.injuredMissionsLeft > 1 ? 's' : ''} remaining</span>
+      </div>
+    `
+    : '';
+
+  // Warning banner for pilots with 1 close call (will retire on next ejection)
+  const hasCloseCall = pilot.ejectionCount > 0 && !isInjured;
+  const closeCallBanner = hasCloseCall
+    ? `
+      <div class="pilot-close-call-banner">
+        <span class="close-call-icon">⚠</span>
+        <span class="close-call-text">Will retire if ejected again</span>
+      </div>
+    `
+    : '';
+
   // Unassign button for assigned pilots (including commander)
   const unassignSection =
     isAssigned && currentShip
@@ -130,6 +153,9 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
         </div>
       </div>
 
+      ${injuryBanner}
+      ${closeCallBanner}
+
       <div class="stat-grid pilot-viewer-stats">
         <div class="stat">
           <span class="stat-value">${pilot.missionsFlown}</span>
@@ -154,6 +180,10 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
         <div class="stat">
           <span class="stat-value">${pilot.damageReceived.toLocaleString()}</span>
           <span class="stat-label">Dmg Recv</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value">${pilot.ejectionCount}</span>
+          <span class="stat-label">Close Calls</span>
         </div>
       </div>
 

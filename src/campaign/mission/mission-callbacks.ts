@@ -18,7 +18,10 @@ import type { FullReplayData } from '../../replay/types';
 import { stopRecording } from '../../systems/input';
 import { finalizeMatchStats } from '../../systems/stats';
 import { endMission, updateCampaignState } from '../../ui/common/screens';
-import { collectDebriefData } from '../../ui/screens/results/debrief';
+import {
+  collectDebriefData,
+  enhanceDebriefWithEjections,
+} from '../../ui/screens/results/debrief';
 import type { CampaignController } from '../controller-types';
 import {
   handleNonIronmanDefeat,
@@ -62,7 +65,12 @@ export function createMissionEndExecutor(
     finalizeMatchStats(game.world);
 
     // Collect debrief data while world is still available
-    const debriefData = collectDebriefData(game.world);
+    // Enhance with ejection info using PRE-mission campaign state
+    const rawDebriefData = collectDebriefData(game.world);
+    const debriefData = enhanceDebriefWithEjections(
+      rawDebriefData,
+      screenManager.campaignState,
+    );
 
     // Extract remaining ammo from all player ships before stopping
     const ammoData = extractAmmoFromWorld(game.world);

@@ -5,123 +5,15 @@
  */
 
 import type { WeaponStats } from '../../../components/combat-stats';
-import { snapshotStats } from '../../../components/combat-stats';
-import { Faction } from '../../../components/faction';
-import { getComponent, hasComponent, queryEntities } from '../../../core/ecs';
-import type { World } from '../../../core/types';
 import { getShipIconPath, iconErrorHandler } from '../../ship/viewer';
+import type { MissionDebriefData, PilotDebriefData } from './debrief-data';
 
-/** Data for a pilot's debrief card */
-export interface PilotDebriefData {
-  callsign: string;
-  archetype: string;
-  isPlayer: boolean;
-  isKIA: boolean;
-  kills: number;
-  assists: number;
-  damageDealt: number;
-  damageReceived: number;
-  hullRemaining: number;
-  hullMax: number;
-  timeOfDeath: number | null; // null if survived
-  weaponStats: WeaponStats[];
-  /** Campaign ship ID for mapping back to pilot (undefined for reinforcements) */
-  campaignShipId?: string;
-}
-
-/** Debrief data for the entire mission */
-export interface MissionDebriefData {
-  missionDuration: number;
-  pilots: PilotDebriefData[];
-}
-
-/** Collect debrief data from world state */
-export function collectDebriefData(world: World): MissionDebriefData {
-  const matchStats = world.systemState.matchStats;
-  const missionDuration = matchStats
-    ? matchStats.missionEndTime - matchStats.missionStartTime
-    : 0;
-
-  const pilots: PilotDebriefData[] = [];
-
-  // Add destroyed ships (KIA) from match stats
-  if (matchStats) {
-    for (const record of matchStats.destroyedShips) {
-      const pilot: PilotDebriefData = {
-        callsign: record.callsign,
-        archetype: record.archetype,
-        isPlayer: record.wasPlayer,
-        isKIA: true,
-        kills: record.stats.kills,
-        assists: record.stats.assists,
-        damageDealt: record.stats.damageDealt,
-        damageReceived: record.stats.damageReceived,
-        hullRemaining: 0,
-        hullMax: record.hullMax,
-        timeOfDeath: record.timeOfDeath,
-        weaponStats: record.stats.weaponStats,
-      };
-      if (record.campaignShipId) {
-        pilot.campaignShipId = record.campaignShipId;
-      }
-      pilots.push(pilot);
-    }
-  }
-
-  // Add surviving player faction ships
-  for (const entity of queryEntities(world, ['shipIdentity', 'combatStats'])) {
-    const faction = getComponent(world, entity, 'faction');
-    if (!faction || faction.faction !== Faction.Player) continue;
-
-    const identity = getComponent(world, entity, 'shipIdentity');
-    const combatStats = getComponent(world, entity, 'combatStats');
-    const health = getComponent(world, entity, 'health');
-
-    if (!identity || !combatStats || !health) continue;
-
-    const isPlayer = hasComponent(world, entity, 'playerControlled');
-    const snapshot = snapshotStats(combatStats);
-
-    const pilot: PilotDebriefData = {
-      callsign: identity.callsign,
-      archetype: identity.archetype,
-      isPlayer,
-      isKIA: false,
-      kills: snapshot.kills,
-      assists: snapshot.assists,
-      damageDealt: snapshot.damageDealt,
-      damageReceived: snapshot.damageReceived,
-      hullRemaining: health.hull,
-      hullMax: health.maxHull,
-      timeOfDeath: null,
-      weaponStats: snapshot.weaponStats,
-    };
-    if (identity.campaignShipId) {
-      pilot.campaignShipId = identity.campaignShipId;
-    }
-    pilots.push(pilot);
-  }
-
-  // Sort: Player first, then non-reinforcement by kills/damage, reinforcements last
-  // Reinforcement ships have callsigns starting with "Rescue"
-  pilots.sort((a, b) => {
-    // Player always first
-    if (a.isPlayer !== b.isPlayer) return a.isPlayer ? -1 : 1;
-
-    // Reinforcements go last (callsign starts with "Rescue")
-    const aIsReinforcement = a.callsign.startsWith('Rescue');
-    const bIsReinforcement = b.callsign.startsWith('Rescue');
-    if (aIsReinforcement !== bIsReinforcement) {
-      return aIsReinforcement ? 1 : -1;
-    }
-
-    // Within each group, sort by kills then damage
-    if (a.kills !== b.kills) return b.kills - a.kills;
-    return b.damageDealt - a.damageDealt;
-  });
-
-  return { missionDuration, pilots };
-}
+// Re-export data types and functions for convenience
+export type { MissionDebriefData, PilotDebriefData } from './debrief-data';
+export {
+  collectDebriefData,
+  enhanceDebriefWithEjections,
+} from './debrief-data';
 
 /** Format time as M:SS */
 function formatTime(seconds: number): string {
@@ -220,8 +112,23 @@ function renderWeaponRow(weapon: WeaponStats): string {
 
 /** Render a pilot card */
 function renderPilotCard(pilot: PilotDebriefData): string {
-  const statusClass = pilot.isKIA ? 'kia' : 'survived';
-  const statusText = pilot.isKIA ? 'KIA' : 'Survived';
+  // Determine status text and CSS class
+  let statusClass: string;
+  let statusText: string;
+  let statusSubtext = '';
+
+  if (pilot.isKIA) {
+    statusClass = 'kia';
+    statusText = 'KIA';
+  } else if (pilot.isEjected) {
+    statusClass = 'ejected';
+    statusText = 'EJECTED';
+    statusSubtext = pilot.isRetiring ? 'Retiring' : 'Injured';
+  } else {
+    statusClass = 'survived';
+    statusText = 'Survived';
+  }
+
   const hullPercent =
     pilot.hullMax > 0
       ? Math.round((pilot.hullRemaining / pilot.hullMax) * 100)
@@ -246,12 +153,21 @@ function renderPilotCard(pilot: PilotDebriefData): string {
       ? `<span class="time-of-death">@ ${formatTime(pilot.timeOfDeath)}</span>`
       : '';
 
-  const kiaClass = pilot.isKIA ? 'kia' : '';
+  // Card gets special class for KIA or ejected pilots
+  const cardStatusClass = pilot.isKIA || pilot.isEjected ? 'lost-ship' : '';
 
   const iconPath = getShipIconPath(pilot.archetype);
 
+  // Subtext shown below status (e.g., "Injured" or "Retiring")
+  const subtextHtml = statusSubtext
+    ? `<span class="status-subtext">${statusSubtext}</span>`
+    : '';
+
+  // Ship was lost if KIA or ejected
+  const shipLost = pilot.isKIA || pilot.isEjected;
+
   return `
-    <div class="pilot-card ${pilot.isPlayer ? 'player' : 'wingman'} ${kiaClass}">
+    <div class="pilot-card ${pilot.isPlayer ? 'player' : 'wingman'} ${cardStatusClass}">
       <div class="pilot-header">
         <div class="pilot-info">
           <span class="callsign">${pilot.callsign}</span>
@@ -262,6 +178,7 @@ function renderPilotCard(pilot: PilotDebriefData): string {
         </div>
         <div class="pilot-status ${statusClass}">
           ${statusText} ${timeOfDeathStr}
+          ${subtextHtml}
         </div>
       </div>
 
@@ -279,7 +196,7 @@ function renderPilotCard(pilot: PilotDebriefData): string {
           <span class="stat-label">Damage</span>
         </div>
         <div class="stat">
-          <span class="stat-value ${pilot.isKIA ? 'destroyed' : ''}">${pilot.isKIA ? '0' : hullPercent}%</span>
+          <span class="stat-value ${shipLost ? 'destroyed' : ''}">${shipLost ? '0' : hullPercent}%</span>
           <span class="stat-label">Hull</span>
         </div>
       </div>

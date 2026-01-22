@@ -13,8 +13,14 @@ import type { CampaignState } from './types';
 /**
  * Apply mission results to campaign state.
  *
- * Processes ship losses, pilot deaths, credit rewards, and store restocking.
+ * Processes ship losses, pilot ejections/deaths, credit rewards, and store restocking.
  * This function always returns a valid state, even if the commander died.
+ *
+ * Ejection system:
+ * - Commander death = game over (no ejection)
+ * - Wingman ship destruction = ejection (pilot survives)
+ *   - 1st ejection: pilot injured for 1 mission
+ *   - 2nd ejection: pilot retires (removed from roster)
  *
  * IMPORTANT: Caller must check `isGameOver(result)` after calling this function
  * to handle commander death appropriately (show game-over screen, etc.).
@@ -31,15 +37,31 @@ export function applyMissionResults(
     state.ships.filter((s) => s.pilot).map((s) => s.pilot?.id),
   );
 
-  // Find pilots who died (their ships were destroyed)
-  const killedPilotIds = new Set<string>();
+  // Process ship losses - separate commander death from wingman ejection
+  let commanderDied = false;
+  const ejectedPilotIds = new Set<string>(); // 1st ejection = injured
+  const retiringPilotIds = new Set<string>(); // 2nd ejection = retirement
+
   for (const shipId of shipsLost) {
     const lostShip = state.ships.find((s) => s.id === shipId);
     if (lostShip?.pilot) {
-      killedPilotIds.add(lostShip.pilot.id);
-      // Log commander death for debugging (caller handles game-over via isGameOver)
-      if (lostShip.pilot.id === state.commanderId) {
+      const pilot = lostShip.pilot;
+      if (pilot.id === state.commanderId) {
+        // Commander death = game over (no ejection)
+        commanderDied = true;
         logDebug('Commander killed - game over state');
+      } else {
+        // Wingman ejection - check if this is their 2nd ejection
+        const newEjectionCount = pilot.ejectionCount + 1;
+        if (newEjectionCount >= 2) {
+          // 2nd ejection = retiring (will be removed from roster)
+          retiringPilotIds.add(pilot.id);
+          logDebug(`Pilot ${pilot.name} retiring after 2nd ejection`);
+        } else {
+          // 1st ejection = injured for 1 mission
+          ejectedPilotIds.add(pilot.id);
+          logDebug(`Pilot ${pilot.name} ejected - injured for 1 mission`);
+        }
       }
     }
   }
@@ -47,28 +69,67 @@ export function applyMissionResults(
   // Remove destroyed ships
   const survivingShips = state.ships.filter((s) => !shipsLost.includes(s.id));
 
-  // Helper to update mission stats for a pilot
-  const updateMissionStats = (pilot: (typeof state.pilots)[0]) => {
-    if (!pilotIdsInMission.has(pilot.id)) {
-      return pilot;
+  // Helper to update pilot after mission (returns null if pilot should be removed)
+  const updatePilotAfterMission = (
+    pilot: (typeof state.pilots)[0],
+  ): (typeof state.pilots)[0] | null => {
+    // Commander died - remove from roster (game over)
+    if (pilot.id === state.commanderId && commanderDied) {
+      return null;
     }
-    return {
-      ...pilot,
-      missionsFlown: pilot.missionsFlown + 1,
-      missionsWon: pilot.missionsWon + (victory ? 1 : 0),
-    };
+
+    // Retiring pilots - remove from roster
+    if (retiringPilotIds.has(pilot.id)) {
+      return null;
+    }
+
+    // Start with mission stats update (if pilot flew this mission)
+    let updated = pilot;
+    if (pilotIdsInMission.has(pilot.id)) {
+      updated = {
+        ...updated,
+        missionsFlown: updated.missionsFlown + 1,
+        missionsWon: updated.missionsWon + (victory ? 1 : 0),
+      };
+    }
+
+    // Apply ejection effects (1st ejection = injured)
+    if (ejectedPilotIds.has(pilot.id)) {
+      updated = {
+        ...updated,
+        ejectionCount: updated.ejectionCount + 1,
+        injuredMissionsLeft: 1,
+      };
+    }
+
+    return updated;
   };
 
-  // Update pilot career stats for survivors, remove KIA pilots
-  const updatedPilots = state.pilots
-    .filter((pilot) => !killedPilotIds.has(pilot.id)) // Remove KIA
-    .map(updateMissionStats);
+  // Update pilots array (filter out null for dead/retiring pilots)
+  const pilotsAfterMission = state.pilots
+    .map(updatePilotAfterMission)
+    .filter((p): p is (typeof state.pilots)[0] => p !== null);
+
+  // Apply injury recovery for pilots who were already injured (not newly ejected)
+  // Injured pilots don't fly, so they recover while others are on missions
+  const updatedPilots = pilotsAfterMission.map((pilot) => {
+    // Skip if pilot wasn't injured or just ejected this mission
+    if (pilot.injuredMissionsLeft <= 0 || ejectedPilotIds.has(pilot.id)) {
+      return pilot;
+    }
+    // Decrement recovery time
+    return {
+      ...pilot,
+      injuredMissionsLeft: pilot.injuredMissionsLeft - 1,
+    };
+  });
 
   // Also update pilots embedded in surviving ships (data is denormalized)
   const updatedShips = survivingShips.map((ship) => {
     if (!ship.pilot) return ship;
-    const updatedPilot = updateMissionStats(ship.pilot);
-    if (updatedPilot === ship.pilot) return ship; // No change
+    const updatedPilot = updatePilotAfterMission(ship.pilot);
+    // Pilot removed (shouldn't happen for surviving ships) or unchanged
+    if (!updatedPilot || updatedPilot === ship.pilot) return ship;
     return { ...ship, pilot: updatedPilot };
   });
 
