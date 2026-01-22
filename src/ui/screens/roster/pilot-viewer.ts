@@ -228,11 +228,11 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
           <span class="stat-label">Assists</span>
         </div>
         <div class="stat">
-          <span class="stat-value">${pilot.damageDealt.toLocaleString()}</span>
+          <span class="stat-value">${Math.round(pilot.damageDealt).toLocaleString()}</span>
           <span class="stat-label">Dmg Dealt</span>
         </div>
         <div class="stat">
-          <span class="stat-value">${pilot.damageReceived.toLocaleString()}</span>
+          <span class="stat-value">${Math.round(pilot.damageReceived).toLocaleString()}</span>
           <span class="stat-label">Dmg Recv</span>
         </div>
         <div class="stat">
