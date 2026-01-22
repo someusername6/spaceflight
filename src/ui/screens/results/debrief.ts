@@ -25,6 +25,8 @@ export interface PilotDebriefData {
   hullMax: number;
   timeOfDeath: number | null; // null if survived
   weaponStats: WeaponStats[];
+  /** Campaign ship ID for mapping back to pilot (undefined for reinforcements) */
+  campaignShipId?: string;
 }
 
 /** Debrief data for the entire mission */
@@ -45,7 +47,7 @@ export function collectDebriefData(world: World): MissionDebriefData {
   // Add destroyed ships (KIA) from match stats
   if (matchStats) {
     for (const record of matchStats.destroyedShips) {
-      pilots.push({
+      const pilot: PilotDebriefData = {
         callsign: record.callsign,
         archetype: record.archetype,
         isPlayer: record.wasPlayer,
@@ -58,7 +60,11 @@ export function collectDebriefData(world: World): MissionDebriefData {
         hullMax: record.hullMax,
         timeOfDeath: record.timeOfDeath,
         weaponStats: record.stats.weaponStats,
-      });
+      };
+      if (record.campaignShipId) {
+        pilot.campaignShipId = record.campaignShipId;
+      }
+      pilots.push(pilot);
     }
   }
 
@@ -76,7 +82,7 @@ export function collectDebriefData(world: World): MissionDebriefData {
     const isPlayer = hasComponent(world, entity, 'playerControlled');
     const snapshot = snapshotStats(combatStats);
 
-    pilots.push({
+    const pilot: PilotDebriefData = {
       callsign: identity.callsign,
       archetype: identity.archetype,
       isPlayer,
@@ -89,7 +95,11 @@ export function collectDebriefData(world: World): MissionDebriefData {
       hullMax: health.maxHull,
       timeOfDeath: null,
       weaponStats: snapshot.weaponStats,
-    });
+    };
+    if (identity.campaignShipId) {
+      pilot.campaignShipId = identity.campaignShipId;
+    }
+    pilots.push(pilot);
   }
 
   // Sort: Player first, then non-reinforcement by kills/damage, reinforcements last

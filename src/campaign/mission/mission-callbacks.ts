@@ -27,10 +27,7 @@ import {
 } from '../handlers/mission-handlers';
 import { refreshRecruits } from '../recruits';
 import { applySalvage, calculateSalvage } from '../salvage';
-import {
-  extractAmmoFromWorld,
-  extractPilotStatsFromWorld,
-} from '../ship-spawning';
+import { extractAmmoFromWorld } from '../ship-spawning';
 import {
   applyAmmoUsage,
   applyMissionResults,
@@ -69,12 +66,6 @@ export function createMissionEndExecutor(
 
     // Extract remaining ammo from all player ships before stopping
     const ammoData = extractAmmoFromWorld(game.world);
-
-    // Extract pilot combat stats before stopping (needs ship->pilot mapping)
-    const pilotStatsData = extractPilotStatsFromWorld(
-      game.world,
-      screenManager.campaignState.ships,
-    );
 
     // Stop the game loop
     stopGame(game);
@@ -144,7 +135,23 @@ export function createMissionEndExecutor(
     // Apply ammo usage to campaign state (persist remaining ammo)
     newState = applyAmmoUsage(newState, ammoData);
 
-    // Apply pilot combat stats to campaign state (persist kills, assists, damage)
+    // Apply pilot combat stats from debrief data (reuses existing extraction)
+    // Map campaignShipId -> pilotId using campaign state
+    const shipToPilot = new Map<string, string>();
+    for (const ship of screenManager.campaignState.ships) {
+      if (ship.pilot) {
+        shipToPilot.set(ship.id, ship.pilot.id);
+      }
+    }
+    const pilotStatsData = debriefData.pilots
+      .filter((p) => p.campaignShipId && shipToPilot.has(p.campaignShipId))
+      .map((p) => ({
+        pilotId: shipToPilot.get(p.campaignShipId!)!,
+        kills: p.kills,
+        assists: p.assists,
+        damageDealt: p.damageDealt,
+        damageReceived: p.damageReceived,
+      }));
     newState = applyPilotStats(newState, pilotStatsData);
 
     // Calculate and apply item-based salvage from all destroyed ships
