@@ -57,6 +57,7 @@ const QUICK_TESTS = [
   'campaign/test-resupply-needs.mjs',
   'campaign/test-resupply-ship.mjs',
   'campaign/test-resupply-estimate.mjs',
+  'campaign/test-ejection.mjs',
 
   // Replay system tests
   'replay/test-compression.mjs',

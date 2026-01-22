@@ -6,6 +6,7 @@
  */
 
 import { logDebug } from '../core/logger';
+import { getRetirementChance, rollForRetirement } from './ejection';
 import { mapSlots } from './slot-array';
 import { applyStoreTrickle } from './store/store-trickle';
 import type { CampaignState } from './types';
@@ -18,9 +19,9 @@ import type { CampaignState } from './types';
  *
  * Ejection system:
  * - Commander death = game over (no ejection)
- * - Wingman ship destruction = ejection (pilot survives)
- *   - 1st ejection: pilot injured for 1 mission
- *   - 2nd ejection: pilot retires (removed from roster)
+ * - Wingman ship destruction = ejection (pilot survives, but may retire)
+ *   - Retirement chance increases with each ejection: 0%, 15%, 30%, 45%, 50% (capped)
+ *   - If pilot doesn't retire, they're injured for 1 mission
  *
  * IMPORTANT: Caller must check `isGameOver(result)` after calling this function
  * to handle commander death appropriately (show game-over screen, etc.).
@@ -51,16 +52,26 @@ export function applyMissionResults(
         commanderDied = true;
         logDebug('Commander killed - game over state');
       } else {
-        // Wingman ejection - check if this is their 2nd ejection
-        const newEjectionCount = pilot.ejectionCount + 1;
-        if (newEjectionCount >= 2) {
-          // 2nd ejection = retiring (will be removed from roster)
+        // Wingman ejection - roll for retirement based on ejection history
+        const retires = rollForRetirement(
+          state.seed,
+          state.missionCount,
+          pilot.id,
+          pilot.ejectionCount,
+        );
+        const chance = getRetirementChance(pilot.ejectionCount);
+
+        if (retires) {
           retiringPilotIds.add(pilot.id);
-          logDebug(`Pilot ${pilot.name} retiring after 2nd ejection`);
+          logDebug(
+            `Pilot ${pilot.name} retiring (${Math.round(chance * 100)}% chance, ejection #${pilot.ejectionCount + 1})`,
+          );
         } else {
-          // 1st ejection = injured for 1 mission
+          // Survived ejection - injured for 1 mission
           ejectedPilotIds.add(pilot.id);
-          logDebug(`Pilot ${pilot.name} ejected - injured for 1 mission`);
+          logDebug(
+            `Pilot ${pilot.name} ejected - injured for 1 mission (survived ${Math.round(chance * 100)}% retirement chance)`,
+          );
         }
       }
     }

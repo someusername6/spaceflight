@@ -5,6 +5,7 @@
  * to create debrief cards after a mission.
  */
 
+import { rollForRetirement } from '../../../campaign/ejection';
 import type { CampaignState } from '../../../campaign/types';
 import type { WeaponStats } from '../../../components/combat-stats';
 import { snapshotStats } from '../../../components/combat-stats';
@@ -20,7 +21,7 @@ export interface PilotDebriefData {
   isKIA: boolean;
   /** Ejected from destroyed ship (wingman only, not commander) */
   isEjected: boolean;
-  /** Retiring after 2nd ejection (shown in debrief, removed from roster after) */
+  /** Retiring due to ejection (probability-based, shown in debrief, removed from roster after) */
   isRetiring: boolean;
   kills: number;
   assists: number;
@@ -137,9 +138,8 @@ export function collectDebriefData(world: World): MissionDebriefData {
  * Enhance debrief data with ejection status from campaign state.
  *
  * Called BEFORE applyMissionResults, so campaign state has the PRE-mission
- * ejection counts. This lets us determine if a destroyed wingman is:
- * - 1st ejection (ejectionCount was 0) → injured
- * - 2nd ejection (ejectionCount was 1) → retiring
+ * ejection counts. Uses the same PRNG derivation as state-mission.ts to
+ * determine retirement outcomes (must match exactly for consistency).
  *
  * Commander deaths remain as KIA (no ejection).
  */
@@ -177,9 +177,13 @@ export function enhanceDebriefWithEjections(
       return pilotData;
     }
 
-    // Wingman destroyed = ejection
-    // Check PRE-mission ejection count to determine if retiring
-    const isRetiring = campaignPilot.ejectionCount >= 1;
+    // Wingman destroyed = ejection - use shared retirement logic
+    const isRetiring = rollForRetirement(
+      campaignState.seed,
+      campaignState.missionCount,
+      campaignPilot.id,
+      campaignPilot.ejectionCount,
+    );
 
     return {
       ...pilotData,
