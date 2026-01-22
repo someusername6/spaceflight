@@ -13,6 +13,7 @@ import type {
 import { getCurrentSecondary } from '../../components/weapons';
 import { getComponent, hasComponent, queryEntities } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
+import { getMissilesTargetingPlayer } from '../hud/missile-warning';
 import { getInterpolatedPosition } from '../renderer';
 import {
   drawDumbfireMissileLeadIndicator,
@@ -139,6 +140,9 @@ export function updateReticles(
   resetTargetPool();
   targets.length = 0;
 
+  // Get missiles targeting player for threat highlighting
+  const threatMissiles = new Set(getMissilesTargetingPlayer(world, player));
+
   // Collect all targetable entities
   for (const entity of queryEntities(world, [
     'transform',
@@ -167,6 +171,9 @@ export function updateReticles(
     const isMissile = hasComponent(world, entity, 'missile');
     const isConvoy = hasComponent(world, entity, 'convoyShip');
 
+    // Check if this is a missile targeting the player
+    const isThreatMissile = isMissile && threatMissiles.has(entity);
+
     // Get reusable object from pool (avoids per-frame allocation)
     const target = getTargetInfo();
     target.entity = entity;
@@ -188,6 +195,7 @@ export function updateReticles(
     target.isLockTarget = isLockTarget;
     target.lockProgress = isLockTarget ? lockProgress : 0;
     target.isMissile = isMissile;
+    target.isThreatMissile = isThreatMissile;
     targets.push(target);
   }
 
@@ -223,9 +231,11 @@ function renderTarget(
   secondaryWeapons: SecondaryWeapons | undefined,
 ): void {
   // Colors matching radar: dim for non-selected, bright for selected
-  // Missiles always grey, convoys always yellow, ships use faction colors
+  // Threat missiles are red, other missiles grey, convoys yellow, ships use faction
   let color: string;
-  if (target.isMissile) {
+  if (target.isThreatMissile) {
+    color = '#ff0000'; // Red for missiles targeting player
+  } else if (target.isMissile) {
     color = '#888888';
   } else if (target.isConvoy) {
     // Convoys always yellow regardless of faction (escort=Player, ambush=Enemy)

@@ -32,6 +32,8 @@ export interface TargetInfo {
   isLockTarget: boolean;
   lockProgress: number;
   isMissile: boolean;
+  /** Missile targeting the player (renders as red threat indicator) */
+  isThreatMissile: boolean;
 }
 
 // Pool of reusable TargetInfo objects (avoids per-frame object allocation)
@@ -56,6 +58,7 @@ export function getTargetInfo(): TargetInfo {
       isLockTarget: false,
       lockProgress: 0,
       isMissile: false,
+      isThreatMissile: false,
     });
   }
   return targetPool[targetPoolIndex++] as TargetInfo;

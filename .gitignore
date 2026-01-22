@@ -35,3 +35,7 @@ src/rendering/ship-geometries.ts
 
 # Test output
 balance-test-results.txt
+
+# Generated ship geometry files
+src/rendering/ship-geometry-ships.ts
+src/rendering/ship-geometry-structures.ts

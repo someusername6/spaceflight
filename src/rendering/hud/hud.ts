@@ -27,6 +27,7 @@ import {
 } from './allied-hud';
 import { requireElement } from './dom-utils';
 import { getHUDStyles, HUD_STYLE_ID } from './hud-styles';
+import { getMissileThreatState } from './missile-warning';
 import {
   createRadar,
   getRadarStyles,
@@ -79,6 +80,8 @@ export interface HUD {
   alliedDisplay: AlliedDisplay;
   // Match speed indicator
   matchSpeedIndicator: HTMLElement;
+  // Missile warning indicator
+  missileWarning: HTMLElement;
   // Cleanup function
   dispose: () => void;
 }
@@ -97,6 +100,7 @@ export function createHUD(parent: HTMLElement): HUD {
   container.id = 'hud';
   container.innerHTML = `
     <div class="match-speed-indicator" style="display: none;">[MATCH SPEED]</div>
+    <div class="missile-warning"></div>
     <div class="status-panel">
       <div class="bar-row speed-row">
         <div class="bar-label">SPD</div>
@@ -209,6 +213,7 @@ export function createHUD(parent: HTMLElement): HUD {
     targetCamera,
     alliedDisplay,
     matchSpeedIndicator: requireElement(container, '.match-speed-indicator'),
+    missileWarning: requireElement(container, '.missile-warning'),
     dispose,
   };
 }
@@ -226,6 +231,7 @@ export function updateHUD(
   if (player === undefined) return;
 
   updatePlayerStatus(hud, world, player);
+  updateMissileWarning(hud, world, player);
   updateWeaponDisplay(hud.weaponDisplay, world, player);
   updateRadar(hud.radarDisplay, world, player);
   updateTargetStats(hud.targetStats, world, player);
@@ -336,5 +342,34 @@ function updateSegmentedBar(segments: HTMLElement[], percentage: number): void {
   for (let i = 0; i < segments.length; i++) {
     const segment = segments[i];
     if (segment) segment.classList.toggle('filled', i < filledCount);
+  }
+}
+
+/** Update missile warning indicator */
+function updateMissileWarning(hud: HUD, world: World, player: Entity): void {
+  const threat = getMissileThreatState(world, player);
+
+  // Priority: Incoming missiles > Lock achieved > Being locked
+  if (threat.incomingCount > 0) {
+    // Missiles incoming - highest priority warning
+    const text =
+      threat.incomingCount === 1
+        ? '[MISSILE INCOMING]'
+        : `[MISSILE INCOMING x${threat.incomingCount}]`;
+    hud.missileWarning.textContent = text;
+    hud.missileWarning.classList.add('active');
+    hud.missileWarning.classList.remove('lock-warning');
+  } else if (threat.hasEnemyLock) {
+    // Enemy has achieved full lock
+    hud.missileWarning.textContent = '[MISSILE LOCK]';
+    hud.missileWarning.classList.add('active');
+    hud.missileWarning.classList.remove('lock-warning');
+  } else if (threat.maxEnemyLockProgress > 0) {
+    // Being locked - show warning in orange
+    hud.missileWarning.textContent = '[MISSILE LOCK]';
+    hud.missileWarning.classList.add('active', 'lock-warning');
+  } else {
+    // No threat
+    hud.missileWarning.classList.remove('active', 'lock-warning');
   }
 }

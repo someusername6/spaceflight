@@ -44,6 +44,30 @@ export function getHUDStyles(): string {
       padding: 4px 10px;
       border: 1px solid #0af;
     }
+    .missile-warning {
+      position: absolute;
+      top: 30%;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 16px;
+      color: #f00;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 6px 14px;
+      border: 1px solid #f00;
+      display: none;
+    }
+    .missile-warning.active {
+      display: block;
+      animation: missile-pulse 0.4s ease-in-out infinite alternate;
+    }
+    .missile-warning.lock-warning {
+      color: #f80;
+      border-color: #f80;
+    }
+    @keyframes missile-pulse {
+      from { opacity: 1; }
+      to { opacity: 0.6; }
+    }
     /* Common row styling */
     .bar-row,
     .bar-container {

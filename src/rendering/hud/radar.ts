@@ -16,6 +16,7 @@ import { getComponent, hasComponent, queryEntities } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
 import { Faction } from '../../core/types';
 import { require2DContext } from './dom-utils';
+import { getMissilesTargetingPlayer } from './missile-warning';
 
 /** Radar display state */
 export interface RadarDisplay {
@@ -45,6 +46,7 @@ const COLORS = {
   neutralBright: '#ff0',
   player: '#0f0',
   missile: '#888',
+  missileThreat: '#f00', // Missiles targeting the player
 };
 
 // Reusable vector for ship-local transformation
@@ -236,10 +238,11 @@ export function updateRadar(
     }
   }
 
-  // Draw missiles as grey Xs
+  // Draw missiles (grey for normal, red for player-targeted)
   drawMissiles(
     ctx,
     world,
+    player,
     playerTransform,
     inverseQuat,
     centerX,
@@ -248,19 +251,32 @@ export function updateRadar(
   );
 }
 
-/** Draw missiles on radar as grey Xs */
+/** Missile blip data for batched drawing */
+interface MissileBlip {
+  x: number;
+  y: number;
+  isThreat: boolean;
+}
+
+// Reusable array for missile blips (avoid per-frame allocation)
+const missileBlips: MissileBlip[] = [];
+
+/** Draw missiles on radar (grey for normal, red for player-targeted) */
 function drawMissiles(
   ctx: CanvasRenderingContext2D,
   world: World,
+  player: Entity,
   playerTransform: Transform,
   invQuat: THREE.Quaternion,
   centerX: number,
   centerY: number,
   maxRadius: number,
 ): void {
-  ctx.strokeStyle = COLORS.missile;
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
+  // Get missiles targeting player for threat highlighting
+  const threatMissiles = new Set(getMissilesTargetingPlayer(world, player));
+
+  // Collect missile positions and threat status
+  missileBlips.length = 0;
 
   for (const entity of queryEntities(world, [
     'transform',
@@ -290,14 +306,39 @@ function drawMissiles(
     const blipX = centerX + Math.sin(angle) * radarDist;
     const blipY = centerY - Math.cos(angle) * radarDist;
 
-    // Draw X shape (batched into single path)
-    const xSize = 2;
-    ctx.moveTo(blipX - xSize, blipY - xSize);
-    ctx.lineTo(blipX + xSize, blipY + xSize);
-    ctx.moveTo(blipX + xSize, blipY - xSize);
-    ctx.lineTo(blipX - xSize, blipY + xSize);
+    missileBlips.push({
+      x: blipX,
+      y: blipY,
+      isThreat: threatMissiles.has(entity),
+    });
   }
 
+  // Draw normal missiles first (grey)
+  ctx.strokeStyle = COLORS.missile;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  for (const blip of missileBlips) {
+    if (blip.isThreat) continue;
+    const xSize = 2;
+    ctx.moveTo(blip.x - xSize, blip.y - xSize);
+    ctx.lineTo(blip.x + xSize, blip.y + xSize);
+    ctx.moveTo(blip.x + xSize, blip.y - xSize);
+    ctx.lineTo(blip.x - xSize, blip.y + xSize);
+  }
+  ctx.stroke();
+
+  // Draw threat missiles (red, slightly larger)
+  ctx.strokeStyle = COLORS.missileThreat;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (const blip of missileBlips) {
+    if (!blip.isThreat) continue;
+    const xSize = 3;
+    ctx.moveTo(blip.x - xSize, blip.y - xSize);
+    ctx.lineTo(blip.x + xSize, blip.y + xSize);
+    ctx.moveTo(blip.x + xSize, blip.y - xSize);
+    ctx.lineTo(blip.x - xSize, blip.y + xSize);
+  }
   ctx.stroke();
 }
 
