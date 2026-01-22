@@ -1,0 +1,310 @@
+/**
+ * Retirement Screen Styles - Campaign completion celebration
+ */
+
+/* ========================================
+   RETIREMENT SCREEN LAYOUT
+   ======================================== */
+
+.retirement-screen {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ========================================
+   HEADER SECTION
+   ======================================== */
+
+.retirement-screen-header {
+  flex-shrink: 0;
+  text-align: center;
+  padding: var(--space-6) var(--space-6) var(--space-4);
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), transparent);
+  animation: fadeSlideIn var(--duration-slower) var(--ease-out);
+}
+
+.retirement-screen-title {
+  font-family: var(--font-display);
+  font-size: var(--text-4xl);
+  font-weight: var(--font-bold);
+  color: var(--color-secondary);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-ultra);
+  text-shadow:
+    0 0 30px var(--color-secondary),
+    0 0 60px var(--color-secondary);
+  margin-bottom: var(--space-4);
+  animation: retirementGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes retirementGlow {
+  from {
+    text-shadow:
+      0 0 30px var(--color-secondary),
+      0 0 60px var(--color-secondary);
+  }
+  to {
+    text-shadow:
+      0 0 40px var(--color-secondary),
+      0 0 80px var(--color-secondary),
+      0 0 120px rgba(74, 222, 128, 0.3);
+  }
+}
+
+/* Tier display in header */
+.retirement-screen-tier-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.retirement-screen-tier-label-main {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.retirement-screen-tier-name {
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  font-weight: var(--font-bold);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+/* Tier name colors (matching modal) */
+.retirement-screen-tier-name.tier-survival {
+  color: var(--text-dim);
+}
+
+.retirement-screen-tier-name.tier-modest {
+  color: var(--color-primary);
+}
+
+.retirement-screen-tier-name.tier-comfortable {
+  color: var(--color-secondary);
+}
+
+.retirement-screen-tier-name.tier-wealthy {
+  color: #f5c842;
+  text-shadow: 0 0 15px rgba(245, 200, 66, 0.6);
+}
+
+.retirement-screen-tier-name.tier-legend {
+  color: #ff6b35;
+  text-shadow: 0 0 20px rgba(255, 107, 53, 0.8);
+  animation: legendPulse 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes legendPulse {
+  from {
+    text-shadow: 0 0 20px rgba(255, 107, 53, 0.8);
+  }
+  to {
+    text-shadow:
+      0 0 30px rgba(255, 107, 53, 1),
+      0 0 50px rgba(255, 107, 53, 0.5);
+  }
+}
+
+/* ========================================
+   CONTENT SECTION
+   ======================================== */
+
+.retirement-screen-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-5);
+  max-width: 700px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Stats row */
+.retirement-screen-stats {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-6);
+  width: 100%;
+}
+
+.retirement-screen-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-5);
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border-color);
+}
+
+.retirement-screen-stat.highlight {
+  border-color: var(--color-secondary);
+  background: rgba(74, 222, 128, 0.1);
+}
+
+.retirement-screen-stat .stat-value {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  color: var(--text-primary);
+}
+
+.retirement-screen-stat.highlight .stat-value {
+  color: var(--color-secondary);
+}
+
+.retirement-screen-stat .stat-label {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+/* ========================================
+   TIER BAR (in content)
+   ======================================== */
+
+.retirement-screen-tier-bar-container {
+  width: 100%;
+  max-width: 500px;
+}
+
+.retirement-screen-tier-bar {
+  display: flex;
+  gap: 3px;
+  height: 16px;
+  background: var(--bg-darker);
+  border: 1px solid var(--border-color);
+  padding: 3px;
+}
+
+.retirement-screen-tier-segment {
+  flex: 1;
+  background: var(--bg-panel);
+  transition: background 0.3s ease;
+}
+
+.retirement-screen-tier-segment.reached {
+  background: var(--color-primary);
+}
+
+.retirement-screen-tier-segment.current {
+  background: var(--color-secondary);
+  box-shadow: 0 0 8px var(--color-secondary);
+}
+
+.retirement-screen-tier-labels {
+  display: flex;
+  margin-top: var(--space-2);
+}
+
+.retirement-screen-tier-label {
+  flex: 1;
+  font-family: var(--font-ui);
+  font-size: 10px;
+  color: var(--text-dim);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.retirement-screen-tier-label.reached {
+  color: var(--text-secondary);
+}
+
+/* ========================================
+   NARRATIVE SECTION
+   ======================================== */
+
+.retirement-screen-narrative {
+  width: 100%;
+  padding: var(--space-4);
+  background: var(--bg-darker);
+  border-left: 3px solid var(--color-secondary);
+}
+
+.retirement-screen-description {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-style: italic;
+  color: var(--color-secondary);
+  margin: 0 0 var(--space-3) 0;
+  text-align: center;
+}
+
+.retirement-screen-story {
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin: 0;
+  text-align: center;
+}
+
+/* ========================================
+   LEADERBOARD NOTE
+   ======================================== */
+
+.retirement-screen-leaderboard {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--color-secondary);
+  text-align: center;
+  padding: var(--space-2) var(--space-4);
+  background: rgba(74, 222, 128, 0.1);
+  border: 1px solid var(--color-secondary);
+}
+
+/* ========================================
+   FOOTER SECTION
+   ======================================== */
+
+.retirement-screen-footer {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  padding: var(--space-4) var(--space-6);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent);
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+
+@media (max-width: 700px) {
+  .retirement-screen-title {
+    font-size: 1.75rem;
+    letter-spacing: 0.15em;
+  }
+
+  .retirement-screen-tier-name {
+    font-size: var(--text-2xl);
+  }
+
+  .retirement-screen-stats {
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+
+  .retirement-screen-stat {
+    padding: var(--space-2) var(--space-4);
+  }
+
+  .retirement-screen-stat .stat-value {
+    font-size: var(--text-lg);
+  }
+
+  .retirement-screen-content {
+    padding: var(--space-2) var(--space-3);
+  }
+}

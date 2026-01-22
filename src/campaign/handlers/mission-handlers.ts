@@ -22,6 +22,7 @@ import {
   type AttackStationResultsDisplay,
   createGameOverUI,
   createResultsUI,
+  createRetirementUI,
   type EscortResultsDisplay,
   type StationDefenseResultsDisplay,
 } from '../../ui/screens/results/results';
@@ -188,6 +189,50 @@ export async function showGameOver(
       await setupTitleScreen(controller, onStartGameplay);
     },
     debriefData,
+  );
+
+  goToGameOver(screenManager);
+}
+
+/**
+ * Handle player retirement (sector 5 only - successful campaign end).
+ *
+ * Shows the retirement screen with tier achievement, then returns to title.
+ * Campaign is deleted as it's complete.
+ *
+ * @param controller - Campaign controller instance
+ */
+export async function handleRetirement(
+  controller: CampaignController,
+): Promise<void> {
+  const { screenManager } = controller;
+
+  // Use game-over element for retirement screen (same slot)
+  const retirementElement = getScreenElement(screenManager, Screen.GAME_OVER);
+
+  // Delete the completed campaign from storage
+  const currentSlotId = getActiveSlotId();
+  if (currentSlotId) {
+    try {
+      await deleteCampaign(currentSlotId);
+    } catch (error) {
+      // Log but continue - player earned their retirement
+      logError('Failed to delete campaign on retirement:', error);
+    }
+  }
+
+  createRetirementUI(
+    retirementElement,
+    screenManager.campaignState,
+    async () => {
+      // Return to title screen
+      void resetTitleScreen();
+      goToTitle(screenManager);
+
+      // Setup title screen with gameplay callback
+      const onStartGameplay = () => startCampaignGameplay(controller);
+      await setupTitleScreen(controller, onStartGameplay);
+    },
   );
 
   goToGameOver(screenManager);

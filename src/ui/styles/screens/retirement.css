@@ -1,0 +1,219 @@
+/**
+ * Retirement Modal Styles
+ */
+
+/* ========================================
+   RETIREMENT MODAL
+   ======================================== */
+
+.retirement-modal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  min-width: 400px;
+  max-width: 520px;
+}
+
+.retirement-modal .modal-title {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: var(--font-bold);
+  color: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  text-shadow: 0 0 10px var(--color-primary-glow);
+  text-align: center;
+  margin: 0;
+}
+
+/* ========================================
+   RETIREMENT INFO
+   ======================================== */
+
+.retirement-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+}
+
+.retirement-credits,
+.retirement-tier {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.retirement-label {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.retirement-value {
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+}
+
+/* ========================================
+   TIER BAR
+   ======================================== */
+
+.tier-bar-container {
+  margin-top: var(--space-3);
+}
+
+.tier-bar {
+  display: flex;
+  gap: 2px;
+  height: 12px;
+  background: var(--bg-darker);
+  border: 1px solid var(--border-color);
+  padding: 2px;
+}
+
+.tier-segment {
+  flex: 1;
+  background: var(--bg-panel);
+  transition: background 0.2s ease;
+}
+
+.tier-segment.reached {
+  background: var(--color-primary);
+}
+
+.tier-segment.current {
+  background: var(--color-secondary);
+  box-shadow: 0 0 6px var(--color-secondary);
+}
+
+.tier-labels {
+  display: flex;
+  margin-top: var(--space-1);
+}
+
+.tier-label {
+  flex: 1;
+  font-family: var(--font-ui);
+  font-size: 9px;
+  color: var(--text-dim);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tier-label.reached {
+  color: var(--text-secondary);
+}
+
+/* ========================================
+   NEXT TIER HINT
+   ======================================== */
+
+.retirement-next-tier {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  text-align: center;
+  padding-top: var(--space-2);
+}
+
+.retirement-next-tier.max-tier {
+  color: var(--color-secondary);
+  font-weight: var(--font-semibold);
+}
+
+/* ========================================
+   TIER NAME COLORS
+   ======================================== */
+
+.retirement-tier-name {
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.retirement-tier-name.tier-survival {
+  color: var(--text-dim);
+}
+
+.retirement-tier-name.tier-modest {
+  color: var(--color-primary);
+}
+
+.retirement-tier-name.tier-comfortable {
+  color: var(--color-secondary);
+}
+
+.retirement-tier-name.tier-wealthy {
+  color: #f5c842;
+  text-shadow: 0 0 8px rgba(245, 200, 66, 0.5);
+}
+
+.retirement-tier-name.tier-legend {
+  color: #ff6b35;
+  text-shadow: 0 0 10px rgba(255, 107, 53, 0.6);
+  animation: legend-glow 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes legend-glow {
+  from {
+    text-shadow: 0 0 10px rgba(255, 107, 53, 0.6);
+  }
+  to {
+    text-shadow:
+      0 0 20px rgba(255, 107, 53, 0.9),
+      0 0 30px rgba(255, 107, 53, 0.4);
+  }
+}
+
+/* ========================================
+   NARRATIVE
+   ======================================== */
+
+.retirement-narrative {
+  padding: var(--space-4);
+  background: var(--bg-darker);
+  border-left: 3px solid var(--color-primary);
+}
+
+.retirement-description {
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  font-style: italic;
+  color: var(--color-secondary);
+  margin: 0 0 var(--space-3) 0;
+}
+
+.retirement-story {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ========================================
+   NOTES & WARNINGS
+   ======================================== */
+
+.retirement-leaderboard-note {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--color-secondary);
+  text-align: center;
+}
+
+.retirement-warning {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-danger);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}

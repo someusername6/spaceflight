@@ -34,6 +34,7 @@ import {
 } from '../state';
 import { autoSave, getActiveSlotId, saveCheckpoint } from '../storage';
 import type { Contract } from '../types';
+import { handleRetirement } from './mission-handlers';
 
 /**
  * Setup squadron screen.
@@ -234,6 +235,10 @@ export function setupContractsScreen(controller: CampaignController): void {
       void autoSave(newState, 'contracts-refresh');
       // Refresh contracts screen with new selection
       setupContractsScreen(controller);
+    },
+    () => {
+      // Retire squadron (sector 5 only)
+      void handleRetirement(controller);
     },
   );
 }

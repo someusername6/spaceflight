@@ -106,8 +106,8 @@ export function generateContracts(
   // Sort by reward (ascending)
   let contracts = selected.sort((a, b) => a.reward - b.reward).slice(0, count);
 
-  // In replay mode, halve all rewards
-  if (isReplayMode) {
+  // In replay mode, halve all rewards (except in sector 5 - final sector has no penalty)
+  if (isReplayMode && sector < 5) {
     contracts = contracts.map((c) => ({
       ...c,
       reward: Math.floor(c.reward * REPLAY_REWARD_MULTIPLIER),

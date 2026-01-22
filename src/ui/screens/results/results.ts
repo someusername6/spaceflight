@@ -90,6 +90,9 @@ export interface ResultsUI {
 // Re-export createGameOverUI from game-over module
 export { createGameOverUI } from './game-over';
 
+// Re-export createRetirementUI from retirement-screen module
+export { createRetirementUI } from './retirement-screen';
+
 /** Render the results tab bar */
 function renderResultsTabBar(
   selectedTab: ResultsTab,

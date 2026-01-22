@@ -123,6 +123,12 @@
 /* Sector advance modal */
 @import "./screens/sector-advance.css";
 
+/* Retirement modal */
+@import "./screens/retirement.css";
+
+/* Retirement end screen */
+@import "./screens/retirement-screen.css";
+
 /* Replays screen */
 @import "./screens/replays.css";
 @import "./screens/replay-viewer.css";

@@ -28,6 +28,7 @@ import {
   renderContractDetail,
   renderContractListItem,
 } from './contracts-rendering';
+import { showRetirementModal } from './retirement-modal';
 import { showSectorAdvanceModal } from './sector-advance-modal';
 
 /** Contracts screen state */
@@ -49,6 +50,7 @@ interface ContractsProps {
   onAccept: (contract: Contract) => void;
   onAdvanceSector: () => void;
   onRefresh: () => void;
+  onRetire: () => void;
 }
 
 /** Legacy UI interface for backwards compatibility */
@@ -61,6 +63,7 @@ export interface ContractsUI {
   onAccept: (contract: Contract) => void;
   onAdvanceSector: () => void;
   onRefresh: () => void;
+  onRetire: () => void;
 }
 
 // Re-export types and functions for external use
@@ -104,8 +107,11 @@ const ContractsScreenComponent: Screen<ContractsState, ContractsProps> = {
         : completedCount === 1
           ? '1 contract completed'
           : `${completedCount} contracts completed`;
+    // Sector 5 has no replay penalty (final sector)
+    const replayText =
+      currentSector >= 5 ? 'Replay mode' : 'Replay mode (50% rewards)';
     const poolCounter = isReplayMode
-      ? '<div class="contracts-pool-counter replay">Replay mode (50% rewards)</div>'
+      ? `<div class="contracts-pool-counter replay">${replayText}</div>`
       : `<div class="contracts-pool-counter">${completedText}</div>`;
 
     // Refresh button
@@ -132,6 +138,18 @@ const ContractsScreenComponent: Screen<ContractsState, ContractsProps> = {
          </button>`
       : '';
 
+    // Retire button (only show at max sector)
+    const retireButton =
+      currentSector >= MAX_SECTOR
+        ? `<button
+             class="btn btn-primary contracts-retire-btn"
+             id="btn-retire"
+             title="End your campaign and retire"
+           >
+             Retire Squadron
+           </button>`
+        : '';
+
     return `
       <div class="campaign-page">
         ${navBar}
@@ -143,6 +161,7 @@ const ContractsScreenComponent: Screen<ContractsState, ContractsProps> = {
               <div class="contracts-actions">
                 ${refreshButton}
                 ${advanceButton}
+                ${retireButton}
               </div>
             </aside>
             <section class="contracts-detail-panel" aria-label="Contract details">
@@ -155,8 +174,14 @@ const ContractsScreenComponent: Screen<ContractsState, ContractsProps> = {
   },
 
   bind(api: ScreenAPI<ContractsState>, props: ContractsProps) {
-    const { contracts, onNavigate, onAccept, onAdvanceSector, onRefresh } =
-      props;
+    const {
+      contracts,
+      onNavigate,
+      onAccept,
+      onAdvanceSector,
+      onRefresh,
+      onRetire,
+    } = props;
     const currentSector = props.campaignState.currentSector;
 
     // Bind navigation bar (uses Screen framework's event delegation)
@@ -209,6 +234,17 @@ const ContractsScreenComponent: Screen<ContractsState, ContractsProps> = {
         },
       );
     });
+
+    // Retire button - show retirement modal (sector 5 only)
+    api.on('#btn-retire', 'click', () => {
+      const playerCredits = props.campaignState.credits;
+      const isIronman = props.campaignState.settings?.ironmanMode ?? false;
+      showRetirementModal(playerCredits, isIronman).then((result) => {
+        if (result.confirmed) {
+          onRetire();
+        }
+      });
+    });
   },
 };
 
@@ -233,6 +269,7 @@ export function createContractsUI(
   onAccept: (contract: Contract) => void,
   onAdvanceSector: () => void,
   onRefresh: () => void,
+  onRetire: () => void,
 ): ContractsUI {
   // Clean up previous handle
   screenHandle?.destroy();
@@ -256,6 +293,7 @@ export function createContractsUI(
     onAccept,
     onAdvanceSector,
     onRefresh,
+    onRetire,
   };
 
   screenHandle = createScreen(
@@ -275,6 +313,7 @@ export function createContractsUI(
     onAccept,
     onAdvanceSector,
     onRefresh,
+    onRetire,
   };
 }
 
@@ -306,6 +345,7 @@ export function updateContractsUI(
       onAccept: ui.onAccept,
       onAdvanceSector: ui.onAdvanceSector,
       onRefresh,
+      onRetire: ui.onRetire,
     });
   }
 }
