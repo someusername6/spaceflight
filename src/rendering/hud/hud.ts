@@ -297,8 +297,10 @@ function updatePlayerStatus(hud: HUD, world: World, player: Entity): void {
     updateSegmentedBar(hud.hullSegments, pct);
     hud.hullValue.textContent = Math.round(health.hull).toString();
 
-    // Critical state: hull < 25%
-    hud.hullContainer.classList.toggle('critical', pct < 25);
+    // Warning state: hull 30-50%
+    hud.hullContainer.classList.toggle('hull-warning', pct >= 30 && pct < 50);
+    // Critical state: hull < 30%
+    hud.hullContainer.classList.toggle('critical', pct < 30);
   }
 
   const shields = getComponent(world, player, 'shields');

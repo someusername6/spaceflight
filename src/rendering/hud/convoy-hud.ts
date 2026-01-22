@@ -255,7 +255,7 @@ export function updateConvoyDisplay(
       // Hull bar color
       if (convoy.hullPct === 0) {
         el.hullBar.style.background = '#400';
-      } else if (convoy.hullPct < 25) {
+      } else if (convoy.hullPct < 30) {
         el.hullBar.style.background = '#f00';
       } else if (convoy.hullPct < 50) {
         el.hullBar.style.background = '#f80';

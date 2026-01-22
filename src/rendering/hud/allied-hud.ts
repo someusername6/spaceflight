@@ -167,7 +167,7 @@ export function updateAlliedDisplay(
       el.distance.textContent = formatDistance(ally.distance);
 
       // Hull bar color based on health
-      if (ally.hullPct < 25) {
+      if (ally.hullPct < 30) {
         el.hullBar.style.background = '#f00';
       } else if (ally.hullPct < 50) {
         el.hullBar.style.background = '#f80';

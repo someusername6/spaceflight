@@ -103,7 +103,7 @@ function findStation(world: World): StationInfo | null {
       shieldPct,
       shieldCurrent: shields ? Math.ceil(shields.current) : 0,
       shieldMax: shields?.max ?? 0,
-      critical: hullPct > 0 && hullPct < 25,
+      critical: hullPct > 0 && hullPct < 30,
       destroyed: isDead(health),
     };
   }
@@ -136,7 +136,7 @@ export function updateStationDisplay(
     display.hullBar.style.background = '#400';
     display.section.classList.add('destroyed');
     display.section.classList.remove('critical');
-  } else if (station.hullPct < 25) {
+  } else if (station.hullPct < 30) {
     display.hullBar.style.background = '#f00';
     display.section.classList.add('critical');
     display.section.classList.remove('destroyed');
@@ -144,7 +144,7 @@ export function updateStationDisplay(
     display.hullBar.style.background = '#f80';
     display.section.classList.remove('critical', 'destroyed');
   } else {
-    display.hullBar.style.background = '#0af';
+    display.hullBar.style.background = '#0f0';
     display.section.classList.remove('critical', 'destroyed');
   }
 
@@ -173,17 +173,17 @@ export function getStationDisplayStyles(): string {
     .station-section {
       margin-top: 8px;
       padding-top: 8px;
-      border-top: 1px solid #055;
+      border-top: 1px solid #040;
     }
     .station-header {
       font-size: 10px;
-      color: #0af;
+      color: #0a0;
       letter-spacing: 1px;
       margin-bottom: 4px;
     }
     .station-name {
       font-size: 11px;
-      color: #0af;
+      color: #0f0;
       font-weight: bold;
       margin-bottom: 6px;
     }
@@ -205,8 +205,8 @@ export function getStationDisplayStyles(): string {
     .station-bar {
       flex: 1;
       height: 8px;
-      background: #222;
-      border: 1px solid #444;
+      background: rgba(0, 20, 0, 0.5);
+      border: 1px solid #040;
       position: relative;
     }
     .station-bar-fill {
@@ -214,10 +214,10 @@ export function getStationDisplayStyles(): string {
       transition: width 0.2s ease-out;
     }
     .station-bar.hull .station-bar-fill {
-      background: #0af;
+      background: #0f0;
     }
     .station-bar.shield .station-bar-fill {
-      background: #08f;
+      background: #0af;
     }
     .station-bar-text {
       width: 60px;

@@ -155,7 +155,7 @@ export function updateTargetStats(
     display.hullValue.textContent = `${Math.round(hullPct)}%`;
 
     // Color based on health
-    if (hullPct < 25) {
+    if (hullPct < 30) {
       display.hullBar.style.background = '#f00';
     } else if (hullPct < 50) {
       display.hullBar.style.background = '#f80';

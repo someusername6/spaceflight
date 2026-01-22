@@ -140,6 +140,11 @@ export function getHUDStyles(): string {
     }
     /* Hull bar colors */
     .hull-bar .segment.filled { background: #0f0; }
+    /* Warning state: hull 30-50% */
+    .bar-container.hull-warning .hull-bar .segment.filled { background: #f80; }
+    .bar-container.hull-warning .bar-label,
+    .bar-container.hull-warning .bar-value { color: #f80; }
+    /* Critical state: hull < 30% */
     .bar-container.critical .hull-bar .segment.filled { background: #f00; }
     .bar-container.critical .bar-label,
     .bar-container.critical .bar-value { color: #f00; }
