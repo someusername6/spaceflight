@@ -9,7 +9,7 @@ export const SECTOR_3_MEDIUM: Contract[] = [
     id: 's3-hot-blooded',
     name: 'Hot Blooded',
     description:
-      'Survive the inferno. Fireants with Phantom escorts closing fast.',
+      'Fight through the inferno. Fireants with Phantom escorts closing fast.',
     difficulty: 'medium',
     sector: 3,
     waves: [

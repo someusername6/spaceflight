@@ -15,8 +15,8 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_4_STATION_DEFENSE: Contract[] = [
   {
-    id: 's4-dark-matter',
-    name: 'Dark Matter',
+    id: 's4-phantom-planet',
+    name: 'Phantom Planet',
     description:
       'Phantom infiltrators targeting the mining station. Torpedoes inbound.',
     difficulty: 'easy',

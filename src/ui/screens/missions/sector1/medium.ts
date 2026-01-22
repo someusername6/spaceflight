@@ -60,7 +60,7 @@ export const SECTOR_1_MEDIUM: Contract[] = [
   {
     id: 's1-lead-serenade',
     name: 'Lead Serenade',
-    description: 'Survive the gauntlet. Wasps with autocannons.',
+    description: 'Run the gauntlet. Wasps with autocannons.',
     difficulty: 'medium',
     sector: 1,
     waves: [

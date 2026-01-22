@@ -87,7 +87,7 @@ export const SECTOR_3_HARD: Contract[] = [
   {
     id: 's3-riders-on-the-storm',
     name: 'Riders on the Storm',
-    description: 'Survive the storm. Ace Moths with lightning cannons.',
+    description: 'Weather the storm. Ace Moths with lightning cannons.',
     difficulty: 'hard',
     sector: 3,
     waves: [

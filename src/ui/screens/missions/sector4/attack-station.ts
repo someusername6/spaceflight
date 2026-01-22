@@ -23,8 +23,8 @@ import type { Contract } from '../../../../campaign/types';
 export const SECTOR_4_ATTACK_STATION: Contract[] = [
   {
     // Optimized: Win=84%, Time=104s, Surv=2.33
-    id: 's4-forward-base',
-    name: 'Forward Base',
+    id: 's4-point-of-no-return',
+    name: 'Point of No Return',
     description:
       'Enemy forward operating base. Take it out before they can launch.',
     difficulty: 'easy',
@@ -101,8 +101,8 @@ export const SECTOR_4_ATTACK_STATION: Contract[] = [
   },
   {
     // Optimized: Win=68%, Time=124s, Surv=2.35
-    id: 's4-weapons-depot',
-    name: 'Weapons Depot',
+    id: 's4-ammunition',
+    name: 'Ammunition',
     description:
       'Enemy weapons cache. Destroy it before those munitions reach the front.',
     difficulty: 'medium',
@@ -176,8 +176,8 @@ export const SECTOR_4_ATTACK_STATION: Contract[] = [
   },
   {
     // Optimized: Win=56%, Time=139s, Surv=2.14
-    id: 's4-fleet-command',
-    name: 'Fleet Command',
+    id: 's4-iron-fist',
+    name: 'Iron Fist',
     description:
       'Enemy fleet command station. Elite pilots and heavy defenses await.',
     difficulty: 'hard',

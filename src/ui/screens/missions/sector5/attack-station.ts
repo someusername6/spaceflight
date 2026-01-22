@@ -23,8 +23,8 @@ import type { Contract } from '../../../../campaign/types';
 export const SECTOR_5_ATTACK_STATION: Contract[] = [
   {
     // Optimized: Win=72%, Time=82s, Surv=2.94
-    id: 's5-shadow-refinery',
-    name: 'Shadow Refinery',
+    id: 's5-paint-it-black',
+    name: 'Paint It Black',
     description:
       'Hidden refinery processing rare minerals. Wraith sentinels guard the perimeter.',
     difficulty: 'medium',
@@ -90,8 +90,8 @@ export const SECTOR_5_ATTACK_STATION: Contract[] = [
   },
   {
     // Optimized: Win=84%, Time=80s, Surv=2.62
-    id: 's5-dark-outpost',
-    name: 'Dark Outpost',
+    id: 's5-black-hole-sun',
+    name: 'Black Hole Sun',
     description: 'Remote mining platform in the void. Elite defenders await.',
     difficulty: 'easy',
     sector: 5,
@@ -172,8 +172,8 @@ export const SECTOR_5_ATTACK_STATION: Contract[] = [
   },
   {
     // Optimized: Win=52%, Time=103s, Surv=2.31
-    id: 's5-void-citadel',
-    name: 'Void Citadel',
+    id: 's5-stairway-to-heaven',
+    name: 'Stairway to Heaven',
     description:
       'Enemy command fortress at the edge of known space. Ace pilots and devastating firepower.',
     difficulty: 'hard',

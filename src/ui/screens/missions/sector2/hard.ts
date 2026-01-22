@@ -71,10 +71,9 @@ export const SECTOR_2_HARD: Contract[] = [
     reward: 4306,
   },
   {
-    id: 's2-disco-inferno',
-    name: 'Disco Inferno',
-    description:
-      'Survive laser onslaught. All laser colors lighting up the void.',
+    id: 's2-laser-floyd',
+    name: 'Laser Floyd',
+    description: 'Face the light show. All laser colors lighting up the void.',
     difficulty: 'hard',
     sector: 2,
     waves: [

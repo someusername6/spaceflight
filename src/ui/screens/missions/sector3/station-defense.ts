@@ -15,8 +15,8 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_3_STATION_DEFENSE: Contract[] = [
   {
-    id: 's3-dead-weight',
-    name: 'Dead Weight',
+    id: 's3-under-pressure',
+    name: 'Under Pressure',
     description:
       'Rocketeers targeting the mining station. Intercept accelerating rounds.',
     difficulty: 'easy',
@@ -74,8 +74,8 @@ export const SECTOR_3_STATION_DEFENSE: Contract[] = [
     reward: 5283,
   },
   {
-    id: 's3-arc-flash',
-    name: 'Arc Flash',
+    id: 's3-electric-eye',
+    name: 'Electric Eye',
     description:
       'Moths with chain lightning targeting the refinery. High energy threat.',
     difficulty: 'medium',

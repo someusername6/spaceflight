@@ -23,8 +23,8 @@ import type { Contract } from '../../../../campaign/types';
 export const SECTOR_3_ATTACK_STATION: Contract[] = [
   {
     // Optimized: Win=64%, Time=79s, Surv=1.50
-    id: 's3-fuel-depot',
-    name: 'Fuel Depot',
+    id: 's3-rocket-queen',
+    name: 'Rocket Queen',
     description:
       'Enemy fuel depot supplying their fleet. Destroy it to cripple their operations.',
     difficulty: 'medium',
@@ -110,8 +110,8 @@ export const SECTOR_3_ATTACK_STATION: Contract[] = [
   },
   {
     // Optimized: Win=72%, Time=90s, Surv=1.56
-    id: 's3-orbital-raid',
-    name: 'Orbital Raid',
+    id: 's3-space-oddity',
+    name: 'Space Oddity',
     description:
       'Mining platform in contested space. Strike before they call for backup.',
     difficulty: 'easy',
@@ -200,8 +200,8 @@ export const SECTOR_3_ATTACK_STATION: Contract[] = [
   },
   {
     // Optimized: Win=52%, Time=80s, Surv=1.54
-    id: 's3-command-center',
-    name: 'Command Center',
+    id: 's3-war-machine',
+    name: 'War Machine',
     description:
       'Regional command station. Heavily defended but strategically vital.',
     difficulty: 'hard',

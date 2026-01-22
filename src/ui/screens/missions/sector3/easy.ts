@@ -127,7 +127,7 @@ export const SECTOR_3_EASY: Contract[] = [
   {
     id: 's3-light-my-fire',
     name: 'Light My Fire',
-    description: 'Survive the heat. Fireants with torch beams - stay at range.',
+    description: 'Take the heat. Fireants with torch beams - stay at range.',
     difficulty: 'easy',
     sector: 3,
     waves: [

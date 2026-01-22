@@ -65,7 +65,7 @@ export const SECTOR_5_EASY: Contract[] = [
     id: 's5-where-eagles-dare',
     name: 'Where Eagles Dare',
     description:
-      'Survive beyond the frontier. Ace Phantoms, Dragonflies, and Fireflies.',
+      'Hunt beyond the frontier. Ace Phantoms, Dragonflies, and Fireflies.',
     difficulty: 'easy',
     sector: 5,
     waves: [

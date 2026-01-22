@@ -15,8 +15,8 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_1_STATION_DEFENSE: Contract[] = [
   {
-    id: 's1-easy-pickings',
-    name: 'Easy Pickings',
+    id: 's1-no-easy-way-out',
+    name: 'No Easy Way Out',
     description:
       'Defend the mining station from rookie pirates until reinforcements arrive.',
     difficulty: 'easy',

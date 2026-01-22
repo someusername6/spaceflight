@@ -126,7 +126,7 @@ export const SECTOR_5_HARD: Contract[] = [
     id: 's5-dont-stop-me-now',
     name: "Don't Stop Me Now",
     description:
-      'Survive the fireworks. Ace Sparklers with flak and starbursts.',
+      'Light up the fireworks. Ace Sparklers with flak and starbursts.',
     difficulty: 'hard',
     sector: 5,
     waves: [

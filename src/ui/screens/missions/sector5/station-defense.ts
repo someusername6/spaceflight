@@ -110,8 +110,8 @@ export const SECTOR_5_STATION_DEFENSE: Contract[] = [
     reward: 10843,
   },
   {
-    id: 's5-final-stand',
-    name: 'Final Stand',
+    id: 's5-the-last-stand',
+    name: 'The Last Stand',
     description:
       'Massive elite assault on final military outpost. Wraiths, Scorpions, and ace pilots.',
     difficulty: 'hard',

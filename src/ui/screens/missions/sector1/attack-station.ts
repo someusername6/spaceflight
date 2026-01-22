@@ -18,8 +18,8 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_1_ATTACK_STATION: Contract[] = [
   {
-    id: 's1-first-strike',
-    name: 'First Strike',
+    id: 's1-opening-act',
+    name: 'Opening Act',
     description: 'A lightly defended refinery. Perfect for a training assault.',
     difficulty: 'easy',
     sector: 1,
@@ -64,8 +64,8 @@ export const SECTOR_1_ATTACK_STATION: Contract[] = [
     reward: 2768,
   },
   {
-    id: 's1-smash-and-grab',
-    name: 'Smash and Grab',
+    id: 's1-wrecking-ball',
+    name: 'Wrecking Ball',
     description:
       'Hit the refinery fast before reinforcements arrive. Every second counts.',
     difficulty: 'medium',
@@ -111,8 +111,8 @@ export const SECTOR_1_ATTACK_STATION: Contract[] = [
     reward: 3181,
   },
   {
-    id: 's1-fortress-assault',
-    name: 'Fortress Assault',
+    id: 's1-knockin-on-heavens-door',
+    name: "Knockin' on Heaven's Door",
     description:
       'Military outpost with veteran defenders. Expect heavy resistance.',
     difficulty: 'hard',

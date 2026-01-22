@@ -20,8 +20,8 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_2_ATTACK_STATION: Contract[] = [
   {
-    id: 's2-garrison-assault',
-    name: 'Garrison Assault',
+    id: 's2-welcome-to-the-jungle',
+    name: 'Welcome to the Jungle',
     description:
       'Military garrison with veteran pilots. Coordinated assault required.',
     difficulty: 'hard',
@@ -91,8 +91,8 @@ export const SECTOR_2_ATTACK_STATION: Contract[] = [
     reward: 6427,
   },
   {
-    id: 's2-supply-raid',
-    name: 'Supply Raid',
+    id: 's2-take-the-money',
+    name: 'Take the Money',
     description: 'A mining station with light defenses. Hit hard, hit fast.',
     difficulty: 'easy',
     sector: 2,
@@ -172,8 +172,8 @@ export const SECTOR_2_ATTACK_STATION: Contract[] = [
     reward: 7000,
   },
   {
-    id: 's2-refinery-strike',
-    name: 'Refinery Strike',
+    id: 's2-burning-down-the-house',
+    name: 'Burning Down the House',
     description:
       'Enemy refinery processing stolen ore. Destroy it before they can reinforce.',
     difficulty: 'medium',

@@ -88,7 +88,8 @@ export const SECTOR_2_EASY: Contract[] = [
   {
     id: 's2-starburst',
     name: 'Starburst',
-    description: 'Survive area denial. Sparklers with starburst missiles.',
+    description:
+      'Break through area denial. Sparklers with starburst missiles.',
     difficulty: 'easy',
     sector: 2,
     waves: [
