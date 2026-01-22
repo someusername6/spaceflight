@@ -4,10 +4,10 @@
  * Player attacks enemy station while enemy defenders protect it.
  * High DPS ships (bombers) attack station, low DPS ships (fighters) attack defenders.
  *
- * Balance targets (attack-station: wins are fast with high survival):
- * - Easy: 70-90% win rate, 2.0-3.0 squad survival
- * - Medium: 55-75% win rate, 2.0-3.0 squad survival
- * - Hard: 40-60% win rate, 1.5-2.5 squad survival
+ * Balance targets (attack-station missions):
+ * - Easy: 70-90% win rate, 2.0-3.0 squad survival, 90s+ avg time
+ * - Medium: 55-75% win rate, 2.0-3.0 squad survival, 90s+ avg time
+ * - Hard: 40-60% win rate, 1.5-2.5 squad survival, 90s+ avg time
  *
  * DPS threshold ~100 separates bombers from fighters.
  * Sector 1 enemies: gnat, ember, shocker, mantis (rookie/regular/veteran skill)
@@ -30,20 +30,28 @@ export const SECTOR_1_ATTACK_STATION: Contract[] = [
       initialDefenders: [
         { archetype: 'gnat', skill: 'regular', count: 3 },
         { archetype: 'ember', skill: 'regular', count: 2 },
-        { archetype: 'shocker', skill: 'rookie', count: 2 },
+        { archetype: 'shocker', skill: 'regular', count: 2 },
       ],
       reinforcementWaves: [
         {
           allies: [{ archetype: 'fighter', skill: 'regular', count: 2 }],
-          delay: 15,
+          delay: 20,
         },
         {
           allies: [{ archetype: 'fighter', skill: 'regular', count: 2 }],
-          delay: 40,
+          delay: 45,
         },
         {
           allies: [{ archetype: 'assaultFighter', skill: 'regular', count: 2 }],
-          delay: 65,
+          delay: 50,
+        },
+        {
+          allies: [{ archetype: 'assaultFighter', skill: 'regular', count: 2 }],
+          delay: 80,
+        },
+        {
+          allies: [{ archetype: 'assaultFighter', skill: 'regular', count: 2 }],
+          delay: 110,
         },
       ],
       overwhelmingSpawnTime: 180,
@@ -53,7 +61,7 @@ export const SECTOR_1_ATTACK_STATION: Contract[] = [
       ],
       stationAttackDpsThreshold: 100,
     },
-    reward: 2639,
+    reward: 2768,
   },
   {
     id: 's1-smash-and-grab',
@@ -68,21 +76,29 @@ export const SECTOR_1_ATTACK_STATION: Contract[] = [
       stationDistance: -2500,
       initialDefenders: [
         { archetype: 'gnat', skill: 'regular', count: 4 },
-        { archetype: 'ember', skill: 'regular', count: 3 },
-        { archetype: 'shocker', skill: 'regular', count: 3 },
+        { archetype: 'ember', skill: 'regular', count: 4 },
+        { archetype: 'shocker', skill: 'regular', count: 4 },
       ],
       reinforcementWaves: [
         {
           allies: [{ archetype: 'fighter', skill: 'regular', count: 2 }],
-          delay: 40,
-        },
-        {
-          allies: [{ archetype: 'assaultFighter', skill: 'regular', count: 2 }],
-          delay: 70,
+          delay: 20,
         },
         {
           allies: [{ archetype: 'fighter', skill: 'regular', count: 2 }],
-          delay: 100,
+          delay: 45,
+        },
+        {
+          allies: [{ archetype: 'assaultFighter', skill: 'regular', count: 2 }],
+          delay: 60,
+        },
+        {
+          allies: [{ archetype: 'assaultFighter', skill: 'regular', count: 2 }],
+          delay: 90,
+        },
+        {
+          allies: [{ archetype: 'assaultFighter', skill: 'regular', count: 2 }],
+          delay: 120,
         },
       ],
       overwhelmingSpawnTime: 180,
@@ -92,7 +108,7 @@ export const SECTOR_1_ATTACK_STATION: Contract[] = [
       ],
       stationAttackDpsThreshold: 100,
     },
-    reward: 2914,
+    reward: 3181,
   },
   {
     id: 's1-fortress-assault',
@@ -106,22 +122,31 @@ export const SECTOR_1_ATTACK_STATION: Contract[] = [
       stationType: 'military',
       stationDistance: -3000,
       initialDefenders: [
-        { archetype: 'mantis', skill: 'veteran', count: 8 },
-        { archetype: 'shocker', skill: 'veteran', count: 6 },
-        { archetype: 'ember', skill: 'veteran', count: 6 },
+        { archetype: 'mantis', skill: 'veteran', count: 5 },
+        { archetype: 'shocker', skill: 'veteran', count: 5 },
+        { archetype: 'ember', skill: 'veteran', count: 5 },
+        { archetype: 'gnat', skill: 'veteran', count: 4 },
       ],
       reinforcementWaves: [
         {
           allies: [{ archetype: 'fighter', skill: 'regular', count: 2 }],
-          delay: 90,
+          delay: 20,
         },
         {
           allies: [{ archetype: 'fighter', skill: 'regular', count: 2 }],
-          delay: 120,
+          delay: 45,
         },
         {
-          allies: [{ archetype: 'fighter', skill: 'regular', count: 2 }],
-          delay: 150,
+          allies: [{ archetype: 'assaultFighter', skill: 'regular', count: 2 }],
+          delay: 70,
+        },
+        {
+          allies: [{ archetype: 'assaultFighter', skill: 'regular', count: 2 }],
+          delay: 100,
+        },
+        {
+          allies: [{ archetype: 'assaultFighter', skill: 'regular', count: 2 }],
+          delay: 130,
         },
       ],
       overwhelmingSpawnTime: 180,
@@ -132,6 +157,6 @@ export const SECTOR_1_ATTACK_STATION: Contract[] = [
       ],
       stationAttackDpsThreshold: 100,
     },
-    reward: 3411,
+    reward: 3649,
   },
 ];

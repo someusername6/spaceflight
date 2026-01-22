@@ -37,6 +37,10 @@ import {
 import { Faction, MissionResult } from '../../../src/core/types.ts';
 import { createAIShip } from '../../../src/factories/ship.ts';
 import { SECTOR_1_ATTACK_STATION } from '../../../src/ui/screens/missions/sector1/attack-station.ts';
+import { SECTOR_2_ATTACK_STATION } from '../../../src/ui/screens/missions/sector2/attack-station.ts';
+import { SECTOR_3_ATTACK_STATION } from '../../../src/ui/screens/missions/sector3/attack-station.ts';
+import { SECTOR_4_ATTACK_STATION } from '../../../src/ui/screens/missions/sector4/attack-station.ts';
+import { SECTOR_5_ATTACK_STATION } from '../../../src/ui/screens/missions/sector5/attack-station.ts';
 import {
   initCombatStats,
   SYSTEMS,
@@ -45,8 +49,14 @@ import {
 } from '../shared/combat-utils.mjs';
 import { SECTOR_ASSAULT_LOADOUTS } from '../shared/mission-simulation.mjs';
 
-// All attack station missions (only sector 1 for now)
-const ALL_ATTACK_STATION_MISSIONS = [...SECTOR_1_ATTACK_STATION];
+// All attack station missions
+const ALL_ATTACK_STATION_MISSIONS = [
+  ...SECTOR_1_ATTACK_STATION,
+  ...SECTOR_2_ATTACK_STATION,
+  ...SECTOR_3_ATTACK_STATION,
+  ...SECTOR_4_ATTACK_STATION,
+  ...SECTOR_5_ATTACK_STATION,
+];
 
 // ============================================================================
 // Attack Station Mission Simulation
@@ -328,12 +338,20 @@ describe('Attack Station Mission Balance', () => {
       console.log(`Timeouts: ${results.timeouts}`);
 
       // Balance targets (attack-station: wins are fast with high survival)
-      const targets = {
-        easy: { minWin: 70, maxWin: 90, minSquad: 2.0, maxSquad: 3.0 },
-        medium: { minWin: 55, maxWin: 75, minSquad: 2.0, maxSquad: 3.0 },
-        hard: { minWin: 40, maxWin: 60, minSquad: 1.5, maxSquad: 2.5 },
+      // Scale squad survival targets based on squad size (50-75% survival rate)
+      const squadSize = results.wingmenTotal;
+      const baseTargets = {
+        easy: { minWin: 70, maxWin: 90, survivalRate: [0.5, 0.75] },
+        medium: { minWin: 55, maxWin: 75, survivalRate: [0.5, 0.75] },
+        hard: { minWin: 40, maxWin: 60, survivalRate: [0.38, 0.62] },
       };
-      const target = targets[mission.difficulty];
+      const base = baseTargets[mission.difficulty];
+      const target = {
+        minWin: base.minWin,
+        maxWin: base.maxWin,
+        minSquad: squadSize * base.survivalRate[0],
+        maxSquad: squadSize * base.survivalRate[1],
+      };
 
       // Report win rate status
       let winStatus = 'BALANCED';

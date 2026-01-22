@@ -14,6 +14,7 @@ import type { Entity, World } from '../../core/types';
  *
  * - Projectile weapons: damage / fireRate * bankSize
  * - Beam weapons: damage * bankSize (damage is per second)
+ * - Flak weapons: shrapnelCount * shrapnelDamage * hitRate / fireRate * bankSize
  */
 function calculateWeaponDps(weapon: PrimaryWeapon): number {
   if (weapon.category === 'beam') {
@@ -22,8 +23,15 @@ function calculateWeaponDps(weapon: PrimaryWeapon): number {
     return weapon.damage * weapon.bankSize * 0.5;
   }
 
-  // Projectile weapons: damage per shot / fire interval
   if (weapon.fireRate <= 0) return 0;
+
+  // Flak weapons: use shrapnel damage (assume 80% hit rate on large targets)
+  if (weapon.shrapnelCount && weapon.shrapnelDamage) {
+    const effectiveDamage = weapon.shrapnelCount * weapon.shrapnelDamage * 0.8;
+    return (effectiveDamage / weapon.fireRate) * weapon.bankSize;
+  }
+
+  // Projectile weapons: damage per shot / fire interval
   return (weapon.damage / weapon.fireRate) * weapon.bankSize;
 }
 

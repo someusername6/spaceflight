@@ -26,6 +26,10 @@
  */
 
 import { SECTOR_1_ATTACK_STATION } from '../../src/ui/screens/missions/sector1/attack-station.ts';
+import { SECTOR_2_ATTACK_STATION } from '../../src/ui/screens/missions/sector2/attack-station.ts';
+import { SECTOR_3_ATTACK_STATION } from '../../src/ui/screens/missions/sector3/attack-station.ts';
+import { SECTOR_4_ATTACK_STATION } from '../../src/ui/screens/missions/sector4/attack-station.ts';
+import { SECTOR_5_ATTACK_STATION } from '../../src/ui/screens/missions/sector5/attack-station.ts';
 import { getAssaultLoadoutDescription } from '../tests/shared/mission-simulation.mjs';
 import {
   getArchetypeValue,
@@ -47,14 +51,22 @@ const SECTOR = sectorArg ? parseInt(sectorArg, 10) : null;
 
 const RUNS_PER_MISSION = 50;
 
-// Attack station mission files by sector (only sector 1 for now)
+// Attack station mission files by sector
 const ATTACK_STATION_FILES = {
   1: 'src/ui/screens/missions/sector1/attack-station.ts',
+  2: 'src/ui/screens/missions/sector2/attack-station.ts',
+  3: 'src/ui/screens/missions/sector3/attack-station.ts',
+  4: 'src/ui/screens/missions/sector4/attack-station.ts',
+  5: 'src/ui/screens/missions/sector5/attack-station.ts',
 };
 
 // All attack station missions by sector
 const ATTACK_STATION_MISSIONS = {
   1: SECTOR_1_ATTACK_STATION,
+  2: SECTOR_2_ATTACK_STATION,
+  3: SECTOR_3_ATTACK_STATION,
+  4: SECTOR_4_ATTACK_STATION,
+  5: SECTOR_5_ATTACK_STATION,
 };
 
 // ============================================================================
@@ -140,7 +152,7 @@ function calculateAttackStationReward(mission, sector) {
 // ============================================================================
 
 async function main() {
-  const sectors = SECTOR ? [SECTOR] : [1];
+  const sectors = SECTOR ? [SECTOR] : [1, 2, 3, 4, 5];
 
   console.log('='.repeat(90));
   console.log(
