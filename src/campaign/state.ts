@@ -2,18 +2,16 @@
  * Campaign state management - create, save, load campaign state.
  */
 
-import { logDebug } from '../core/logger';
 import { createDerivedPRNG, random } from '../core/prng';
 import { getArchetype } from '../factories/ship';
 import { generateCampaignId } from './id-generator';
 import { generateInitialRecruits } from './recruits';
-import { createSlotArray, mapSlots } from './slot-array';
+import { createSlotArray } from './slot-array';
 import { getMaxMissileCapacity } from './store/store-ammo';
 import {
   createInitialStoreStock,
   generateSectorStock,
 } from './store/store-catalog';
-import { applyStoreTrickle } from './store/store-trickle';
 import type {
   CampaignSettings,
   CampaignState,
@@ -23,6 +21,13 @@ import type {
   Pilot,
 } from './types';
 import { DEFAULT_CAMPAIGN_SETTINGS, MAX_SECTOR } from './types';
+
+// Re-export mission application functions for backwards compatibility
+export {
+  applyAmmoUsage,
+  applyMissionResults,
+  applyPilotStats,
+} from './state-mission';
 
 /** Create a ship from an archetype with default loadout */
 export function createShipFromArchetype(
@@ -197,81 +202,6 @@ export function isCommanderAssigned(state: CampaignState): boolean {
   return state.ships.some((s) => s.pilot?.id === state.commanderId);
 }
 
-/**
- * Apply mission results to campaign state.
- *
- * Processes ship losses, pilot deaths, credit rewards, and store restocking.
- * This function always returns a valid state, even if the commander died.
- *
- * IMPORTANT: Caller must check `isGameOver(result)` after calling this function
- * to handle commander death appropriately (show game-over screen, etc.).
- */
-export function applyMissionResults(
-  state: CampaignState,
-  victory: boolean,
-  creditsEarned: number,
-  shipsLost: string[],
-  completedContractId?: string,
-): CampaignState {
-  // Get pilot IDs from ships that flew the mission
-  const pilotIdsInMission = new Set(
-    state.ships.filter((s) => s.pilot).map((s) => s.pilot?.id),
-  );
-
-  // Find pilots who died (their ships were destroyed)
-  const killedPilotIds = new Set<string>();
-  for (const shipId of shipsLost) {
-    const lostShip = state.ships.find((s) => s.id === shipId);
-    if (lostShip?.pilot) {
-      killedPilotIds.add(lostShip.pilot.id);
-      // Log commander death for debugging (caller handles game-over via isGameOver)
-      if (lostShip.pilot.id === state.commanderId) {
-        logDebug('Commander killed - game over state');
-      }
-    }
-  }
-
-  // Remove destroyed ships
-  const survivingShips = state.ships.filter((s) => !shipsLost.includes(s.id));
-
-  // Update pilot career stats for survivors, remove KIA pilots
-  const updatedPilots = state.pilots
-    .filter((pilot) => !killedPilotIds.has(pilot.id)) // Remove KIA
-    .map((pilot) => {
-      if (!pilotIdsInMission.has(pilot.id)) {
-        return pilot;
-      }
-      return {
-        ...pilot,
-        missionsFlown: pilot.missionsFlown + 1,
-        missionsWon: pilot.missionsWon + (victory ? 1 : 0),
-      };
-    });
-
-  // Track completed contracts (don't add duplicates)
-  const completedContracts =
-    completedContractId &&
-    !state.completedContracts.includes(completedContractId)
-      ? [...state.completedContracts, completedContractId]
-      : state.completedContracts;
-
-  // Apply mission results first
-  const afterMission: CampaignState = {
-    ...state,
-    credits: state.credits + (victory ? creditsEarned : 0),
-    ships: survivingShips,
-    pilots: updatedPilots,
-    missionCount: state.missionCount + 1,
-    sectorMissionsCompleted: victory
-      ? state.sectorMissionsCompleted + 1
-      : state.sectorMissionsCompleted,
-    completedContracts,
-  };
-
-  // Apply store trickle (resupply shipment arrives after each mission)
-  return applyStoreTrickle(afterMission);
-}
-
 /** Check if game is over (commander's ship destroyed) */
 export function isGameOver(state: CampaignState): boolean {
   return !isCommanderAssigned(state);
@@ -331,54 +261,5 @@ export function markContractAttempted(
   return {
     ...state,
     attemptedContracts: [...state.attemptedContracts, contractId],
-  };
-}
-
-/** Apply extracted ammo from mission back to campaign state */
-export function applyAmmoUsage(
-  state: CampaignState,
-  ammoData: Array<{
-    campaignShipId: string;
-    primaryAmmo: Map<number, number>;
-    secondaryAmmo: Map<number, number>;
-  }>,
-): CampaignState {
-  // Create a map for quick lookup
-  const ammoByShipId = new Map(ammoData.map((a) => [a.campaignShipId, a]));
-
-  // Update ships with remaining ammo
-  const updatedShips = state.ships.map((ship) => {
-    const extracted = ammoByShipId.get(ship.id);
-    if (!extracted) return ship;
-
-    // Update primary weapon ammo (mapSlots skips null slots automatically)
-    const updatedPrimaries = mapSlots(ship.primaryWeapons, (primary, index) => {
-      const remaining = extracted.primaryAmmo.get(index);
-      return remaining !== undefined
-        ? { ...primary, currentAmmo: remaining }
-        : primary;
-    });
-
-    // Update secondary weapon ammo (mapSlots skips null slots automatically)
-    const updatedSecondaries = mapSlots(
-      ship.secondaryWeapons,
-      (secondary, index) => {
-        const remaining = extracted.secondaryAmmo.get(index);
-        return remaining !== undefined
-          ? { ...secondary, count: remaining }
-          : secondary;
-      },
-    );
-
-    return {
-      ...ship,
-      primaryWeapons: updatedPrimaries,
-      secondaryWeapons: updatedSecondaries,
-    };
-  });
-
-  return {
-    ...state,
-    ships: updatedShips,
   };
 }

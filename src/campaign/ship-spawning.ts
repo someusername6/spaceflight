@@ -284,6 +284,76 @@ export function extractAmmoFromWorld(world: World): ExtractedAmmo[] {
   return results;
 }
 
+/** Result of extracting pilot combat stats from a ship entity */
+export interface ExtractedPilotStats {
+  pilotId: string;
+  kills: number;
+  assists: number;
+  damageDealt: number;
+  damageReceived: number;
+}
+
+/**
+ * Extract pilot combat stats from all player faction ships.
+ * Includes both surviving ships and KIA pilots (from matchStats).
+ * Requires campaign state to map campaignShipId to pilotId.
+ */
+export function extractPilotStatsFromWorld(
+  world: World,
+  ships: Array<{ id: string; pilot: { id: string } | null }>,
+): ExtractedPilotStats[] {
+  const results: ExtractedPilotStats[] = [];
+
+  // Build a map from campaignShipId to pilotId
+  const shipToPilot = new Map<string, string>();
+  for (const ship of ships) {
+    if (ship.pilot) {
+      shipToPilot.set(ship.id, ship.pilot.id);
+    }
+  }
+
+  // Extract stats from surviving ships
+  for (const entity of queryEntities(world, ['shipIdentity', 'combatStats'])) {
+    const identity = getComponent(world, entity, 'shipIdentity');
+    if (!identity?.campaignShipId) continue;
+
+    const pilotId = shipToPilot.get(identity.campaignShipId);
+    if (!pilotId) continue;
+
+    const combatStats = getComponent(world, entity, 'combatStats');
+    if (!combatStats) continue;
+
+    results.push({
+      pilotId,
+      kills: combatStats.kills,
+      assists: combatStats.assists,
+      damageDealt: combatStats.damageDealt,
+      damageReceived: combatStats.damageReceived,
+    });
+  }
+
+  // Extract stats from KIA pilots (their entities are destroyed, but stats are in matchStats)
+  const matchStats = world.systemState.matchStats;
+  if (matchStats) {
+    for (const record of matchStats.destroyedShips) {
+      if (!record.campaignShipId) continue;
+
+      const pilotId = shipToPilot.get(record.campaignShipId);
+      if (!pilotId) continue;
+
+      results.push({
+        pilotId,
+        kills: record.stats.kills,
+        assists: record.stats.assists,
+        damageDealt: record.stats.damageDealt,
+        damageReceived: record.stats.damageReceived,
+      });
+    }
+  }
+
+  return results;
+}
+
 /**
  * Convert campaign ship loadout to replay format.
  * Used when recording replays to capture exact weapon configurations.

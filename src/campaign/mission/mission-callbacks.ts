@@ -27,10 +27,14 @@ import {
 } from '../handlers/mission-handlers';
 import { refreshRecruits } from '../recruits';
 import { applySalvage, calculateSalvage } from '../salvage';
-import { extractAmmoFromWorld } from '../ship-spawning';
+import {
+  extractAmmoFromWorld,
+  extractPilotStatsFromWorld,
+} from '../ship-spawning';
 import {
   applyAmmoUsage,
   applyMissionResults,
+  applyPilotStats,
   getCommanderShip,
   isGameOver,
 } from '../state';
@@ -65,6 +69,12 @@ export function createMissionEndExecutor(
 
     // Extract remaining ammo from all player ships before stopping
     const ammoData = extractAmmoFromWorld(game.world);
+
+    // Extract pilot combat stats before stopping (needs ship->pilot mapping)
+    const pilotStatsData = extractPilotStatsFromWorld(
+      game.world,
+      screenManager.campaignState.ships,
+    );
 
     // Stop the game loop
     stopGame(game);
@@ -133,6 +143,9 @@ export function createMissionEndExecutor(
 
     // Apply ammo usage to campaign state (persist remaining ammo)
     newState = applyAmmoUsage(newState, ammoData);
+
+    // Apply pilot combat stats to campaign state (persist kills, assists, damage)
+    newState = applyPilotStats(newState, pilotStatsData);
 
     // Calculate and apply item-based salvage from all destroyed ships
     // (Convoy ships are excluded from salvage in the stats system)
