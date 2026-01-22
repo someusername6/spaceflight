@@ -182,9 +182,6 @@ export function renderStationDefenseInfo(contract: Contract): string {
       <div class="contract-enemies">${enemyList}</div>
       <div class="contract-waves">${totalEnemies} total in ${waves.length} waves</div>
     </div>
-    <div class="contract-detail-section">
-      <div class="contract-waves">Reward scales with station health</div>
-    </div>
   `;
 }
 

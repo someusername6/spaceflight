@@ -6,13 +6,12 @@
  * Also sorts missions by reward (increasing order) within each file.
  *
  * Formula:
- *   Reward = (replacement_cost + consumables_used + profitMargin) / station_health_fraction - expected_salvage
+ *   Reward = (replacement_cost + consumables_used + profitMargin) - expected_salvage
  *
  * Where:
  *   - replacement_cost = value of lost ships (player team)
  *   - consumables_used = missiles/ammo used by surviving ships
  *   - profitMargin = difficulty-based profit margin (same as wave missions)
- *   - station_health_fraction = fraction of station hull remaining (victories only)
  *   - expected_salvage = SALVAGE_RATE * (enemy ships killed value + friendly ships lost value)
  *
  * Usage:
@@ -122,24 +121,13 @@ function calculateStationDefenseReward(mission, sector) {
   const expectedSalvage =
     (avgEnemySalvageValue + avgFriendlySalvageValue) * SALVAGE_RATE;
 
-  // Calculate station health fraction from victories only
-  // Higher health remaining = lower multiplier = lower reward
-  let totalStationHealth = 0;
-  for (const result of wins) {
-    totalStationHealth += result.stationHealthPercent / 100;
-  }
-  const stationHealthFraction =
-    wins.length > 0 ? totalStationHealth / wins.length : 0;
-
   // Profit margin by difficulty
   const profitMargin =
     PROFIT_MARGINS[mission.difficulty] ?? PROFIT_MARGINS.medium;
 
-  // Formula: Reward = (replacement_cost + consumables + profit_margin) / station_health_fraction - expected_salvage
-  // Guard against division by zero
-  const effectiveHealth = Math.max(stationHealthFraction, 0.1);
+  // Formula: Reward = (replacement_cost + consumables + profit_margin) - expected_salvage
   const baseCost = avgShipsLostValue + avgConsumablesUsed + profitMargin;
-  const reward = Math.round(baseCost / effectiveHealth - expectedSalvage);
+  const reward = Math.round(baseCost - expectedSalvage);
 
   return {
     reward: Math.max(reward, 100),
@@ -147,7 +135,6 @@ function calculateStationDefenseReward(mission, sector) {
       avgShipsLostValue: Math.round(avgShipsLostValue),
       avgConsumablesUsed: Math.round(avgConsumablesUsed),
       expectedSalvage: Math.round(expectedSalvage),
-      stationHealth: (stationHealthFraction * 100).toFixed(1),
       profitMargin,
       winRate: ((wins.length / results.length) * 100).toFixed(1),
     },
@@ -166,7 +153,7 @@ async function main() {
     `STATION DEFENSE MISSION REWARD UPDATER ${DRY_RUN ? '(DRY RUN)' : ''}`,
   );
   console.log(
-    'Formula: Reward = (replacement_cost + consumables + profit) / station_health - salvage',
+    'Formula: Reward = (replacement_cost + consumables + profit) - salvage',
   );
   console.log('='.repeat(90));
 
@@ -191,7 +178,6 @@ async function main() {
         'Current'.padEnd(10) +
         'New'.padEnd(10) +
         'WinRate'.padEnd(10) +
-        'StationHP'.padEnd(12) +
         'Delta',
     );
     console.log('─'.repeat(90));
@@ -219,7 +205,6 @@ async function main() {
           mission.reward.toString().padEnd(10) +
           newReward.toString().padEnd(10) +
           `${breakdown.winRate}%`.padEnd(10) +
-          `${breakdown.stationHealth}%`.padEnd(12) +
           deltaStr,
       );
 

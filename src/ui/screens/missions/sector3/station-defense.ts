@@ -71,7 +71,7 @@ export const SECTOR_3_STATION_DEFENSE: Contract[] = [
         { archetype: 'defender', skill: 'regular', count: 1 },
       ],
     },
-    reward: 8473,
+    reward: 5283,
   },
   {
     id: 's3-arc-flash',
@@ -131,7 +131,7 @@ export const SECTOR_3_STATION_DEFENSE: Contract[] = [
         { archetype: 'striker', skill: 'regular', count: 1 },
       ],
     },
-    reward: 9327,
+    reward: 5969,
   },
   {
     id: 's3-hot-zone',
@@ -198,6 +198,6 @@ export const SECTOR_3_STATION_DEFENSE: Contract[] = [
         { archetype: 'striker', skill: 'regular', count: 1 },
       ],
     },
-    reward: 14716,
+    reward: 6479,
   },
 ];

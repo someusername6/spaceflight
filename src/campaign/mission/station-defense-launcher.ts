@@ -21,7 +21,7 @@ import { createStationEntity } from '../../factories/station';
 import { type Game, TICK_SEC } from '../../game';
 import {
   createStationDefenseMissionState,
-  getStationDefenseRewardMultiplier,
+  getStationHealthRatio,
   processStationDefenseMissionTick,
   type StationDefenseMissionState,
 } from '../../systems/station-defense';
@@ -360,14 +360,15 @@ export function createStationDefenseMissionEndCallback(
     missionEndState.pending = true;
     missionEndState.delayRemaining = MISSION_END_DELAY;
 
-    // Calculate reward multiplier based on station health remaining
-    missionEndState.rewardMultiplier = getStationDefenseRewardMultiplier(
-      game.world,
-      stationState,
-    );
-
-    // Store station defense results for display
-    const healthRatio = missionEndState.rewardMultiplier ?? 0;
+    // Get station health for display (flat reward, not scaled by health)
+    const healthRatio =
+      stationState.stationEntity !== null
+        ? getStationHealthRatio(
+            game.world,
+            stationState.stationEntity,
+            stationState.initialStationHealth,
+          )
+        : 0;
     missionEndState.stationDefenseResults = {
       stationHealthPercent: Math.round(healthRatio * 100),
       reinforcementsArrived: stationState.reinforcementsArrived,

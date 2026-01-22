@@ -129,7 +129,7 @@ Four mission types are implemented, each with distinct objectives and failure co
 - **Objective:** Defend station until reinforcements arrive
 - **Victory:** Station survives until reinforcements or all enemies defeated
 - **Defeat:** Station destroyed OR commander dies
-- **Reward:** Scales with station hull % remaining
+- **Reward:** Flat (victory = full reward)
 - **Data:** `stationDefenseData: StationDefenseMissionData` with station type, waves, reinforcement triggers
 
 ### 4. Ambush

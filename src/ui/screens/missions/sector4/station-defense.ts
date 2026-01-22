@@ -57,7 +57,7 @@ export const SECTOR_4_STATION_DEFENSE: Contract[] = [
         { archetype: 'defender', skill: 'veteran', count: 1 },
       ],
     },
-    reward: 8263,
+    reward: 4392,
   },
   {
     id: 's4-chain-reaction',
@@ -110,7 +110,7 @@ export const SECTOR_4_STATION_DEFENSE: Contract[] = [
         { archetype: 'sentinel', skill: 'regular', count: 1 },
       ],
     },
-    reward: 17937,
+    reward: 6085,
   },
   {
     id: 's4-omega-point',
@@ -163,6 +163,6 @@ export const SECTOR_4_STATION_DEFENSE: Contract[] = [
         { archetype: 'sentinel', skill: 'veteran', count: 1 },
       ],
     },
-    reward: 31338,
+    reward: 8078,
   },
 ];

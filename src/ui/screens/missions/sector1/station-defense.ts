@@ -15,6 +15,106 @@ import type { Contract } from '../../../../campaign/types';
 
 export const SECTOR_1_STATION_DEFENSE: Contract[] = [
   {
+    id: 's1-easy-pickings',
+    name: 'Easy Pickings',
+    description:
+      'Defend the mining station from rookie pirates until reinforcements arrive.',
+    difficulty: 'easy',
+    sector: 1,
+    missionType: 'station-defense',
+    stationDefenseData: {
+      playerThreatRatio: 0.3,
+      stationType: 'mining',
+      stationDistance: -400,
+      waves: [
+        {
+          enemies: [{ archetype: 'gnat', skill: 'ace', count: 6 }],
+          delay: 5,
+        },
+        {
+          enemies: [{ archetype: 'ember', skill: 'ace', count: 6 }],
+          delay: 12,
+        },
+        {
+          enemies: [{ archetype: 'gnat', skill: 'ace', count: 6 }],
+          delay: 19,
+        },
+        {
+          enemies: [{ archetype: 'ember', skill: 'ace', count: 6 }],
+          delay: 26,
+        },
+        {
+          enemies: [{ archetype: 'gnat', skill: 'ace', count: 6 }],
+          delay: 33,
+        },
+      ],
+      reinforcementTime: null,
+      reinforcementHealthThreshold: 0.25,
+      reinforcementCount: 4,
+      reinforcementPool: [
+        { archetype: 'fighter', skill: 'regular', count: 1 },
+        { archetype: 'interceptor', skill: 'regular', count: 1 },
+      ],
+    },
+    reward: 1942,
+  },
+  {
+    id: 's1-burn-notice',
+    name: 'Burn Notice',
+    description:
+      'Ion-armed shockers are targeting the refinery. Hold until backup arrives.',
+    difficulty: 'medium',
+    sector: 1,
+    missionType: 'station-defense',
+    stationDefenseData: {
+      playerThreatRatio: 0.5,
+      stationType: 'mining',
+      stationDistance: -350,
+      waves: [
+        {
+          enemies: [{ archetype: 'gnat', skill: 'ace', count: 9 }],
+          delay: 3,
+        },
+        {
+          enemies: [{ archetype: 'ember', skill: 'ace', count: 9 }],
+          delay: 7,
+        },
+        {
+          enemies: [{ archetype: 'shocker', skill: 'ace', count: 9 }],
+          delay: 11,
+        },
+        {
+          enemies: [{ archetype: 'mantis', skill: 'ace', count: 7 }],
+          delay: 15,
+        },
+        {
+          enemies: [{ archetype: 'gnat', skill: 'ace', count: 9 }],
+          delay: 19,
+        },
+        {
+          enemies: [{ archetype: 'ember', skill: 'ace', count: 9 }],
+          delay: 23,
+        },
+        {
+          enemies: [{ archetype: 'shocker', skill: 'ace', count: 9 }],
+          delay: 27,
+        },
+        {
+          enemies: [{ archetype: 'mantis', skill: 'ace', count: 7 }],
+          delay: 31,
+        },
+      ],
+      reinforcementTime: null,
+      reinforcementHealthThreshold: 0.3,
+      reinforcementCount: 4,
+      reinforcementPool: [
+        { archetype: 'fighter', skill: 'regular', count: 1 },
+        { archetype: 'interceptor', skill: 'regular', count: 1 },
+      ],
+    },
+    reward: 2700,
+  },
+  {
     id: 's1-the-rock',
     name: 'The Rock',
     description:
@@ -80,106 +180,6 @@ export const SECTOR_1_STATION_DEFENSE: Contract[] = [
         { archetype: 'striker', skill: 'regular', count: 1 },
       ],
     },
-    reward: 7947,
-  },
-  {
-    id: 's1-easy-pickings',
-    name: 'Easy Pickings',
-    description:
-      'Defend the mining station from rookie pirates until reinforcements arrive.',
-    difficulty: 'easy',
-    sector: 1,
-    missionType: 'station-defense',
-    stationDefenseData: {
-      playerThreatRatio: 0.3,
-      stationType: 'mining',
-      stationDistance: -400,
-      waves: [
-        {
-          enemies: [{ archetype: 'gnat', skill: 'ace', count: 6 }],
-          delay: 5,
-        },
-        {
-          enemies: [{ archetype: 'ember', skill: 'ace', count: 6 }],
-          delay: 12,
-        },
-        {
-          enemies: [{ archetype: 'gnat', skill: 'ace', count: 6 }],
-          delay: 19,
-        },
-        {
-          enemies: [{ archetype: 'ember', skill: 'ace', count: 6 }],
-          delay: 26,
-        },
-        {
-          enemies: [{ archetype: 'gnat', skill: 'ace', count: 6 }],
-          delay: 33,
-        },
-      ],
-      reinforcementTime: null,
-      reinforcementHealthThreshold: 0.25,
-      reinforcementCount: 4,
-      reinforcementPool: [
-        { archetype: 'fighter', skill: 'regular', count: 1 },
-        { archetype: 'interceptor', skill: 'regular', count: 1 },
-      ],
-    },
-    reward: 8712,
-  },
-  {
-    id: 's1-burn-notice',
-    name: 'Burn Notice',
-    description:
-      'Ion-armed shockers are targeting the refinery. Hold until backup arrives.',
-    difficulty: 'medium',
-    sector: 1,
-    missionType: 'station-defense',
-    stationDefenseData: {
-      playerThreatRatio: 0.5,
-      stationType: 'mining',
-      stationDistance: -350,
-      waves: [
-        {
-          enemies: [{ archetype: 'gnat', skill: 'ace', count: 9 }],
-          delay: 3,
-        },
-        {
-          enemies: [{ archetype: 'ember', skill: 'ace', count: 9 }],
-          delay: 7,
-        },
-        {
-          enemies: [{ archetype: 'shocker', skill: 'ace', count: 9 }],
-          delay: 11,
-        },
-        {
-          enemies: [{ archetype: 'mantis', skill: 'ace', count: 7 }],
-          delay: 15,
-        },
-        {
-          enemies: [{ archetype: 'gnat', skill: 'ace', count: 9 }],
-          delay: 19,
-        },
-        {
-          enemies: [{ archetype: 'ember', skill: 'ace', count: 9 }],
-          delay: 23,
-        },
-        {
-          enemies: [{ archetype: 'shocker', skill: 'ace', count: 9 }],
-          delay: 27,
-        },
-        {
-          enemies: [{ archetype: 'mantis', skill: 'ace', count: 7 }],
-          delay: 31,
-        },
-      ],
-      reinforcementTime: null,
-      reinforcementHealthThreshold: 0.3,
-      reinforcementCount: 4,
-      reinforcementPool: [
-        { archetype: 'fighter', skill: 'regular', count: 1 },
-        { archetype: 'interceptor', skill: 'regular', count: 1 },
-      ],
-    },
-    reward: 12753,
+    reward: 4149,
   },
 ];

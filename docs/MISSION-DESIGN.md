@@ -230,7 +230,7 @@ Defend a station until reinforcements arrive.
 
 - **Victory**: Station survives until reinforcements OR all enemies defeated
 - **Defeat**: Station destroyed OR commander dies
-- **Reward**: `baseReward * (stationHealthPercent / 100)`
+- **Reward**: Flat reward (victory = full reward, defeat = nothing)
 
 ---
 

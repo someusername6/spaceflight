@@ -130,7 +130,7 @@ Weapons (projectiles, missiles, beams, decoys), shields, AI (states, behaviors, 
   - Hard: 0.35 (35% attack player/allies, 65% attack objective)
 - **Victory Conditions**:
   - Escort: Binary (≥1 convoy ship escapes = victory), reward scales with convoy survival
-  - Station Defense: Binary (station survives = victory), reward scales with station health
+  - Station Defense: Binary (station survives = victory), flat reward
 - **Implementation Files**:
   - `src/campaign/types.ts` - Type definitions
   - `src/campaign/mission/escort-launcher.ts` - Applies ratio during enemy spawn

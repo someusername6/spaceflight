@@ -200,7 +200,6 @@ function renderRewards(
       <div class="rewards-station-details">
         <span class="station-health">Station: ${healthPct}% hull remaining</span>
         <span class="station-reinforcements">${statusText}</span>
-        ${healthPct < 100 ? `<span class="station-reward">(${healthPct}% reward)</span>` : ''}
       </div>
     `;
   }

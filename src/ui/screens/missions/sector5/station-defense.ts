@@ -58,7 +58,7 @@ export const SECTOR_5_STATION_DEFENSE: Contract[] = [
         { archetype: 'sentinel', skill: 'ace', count: 1 },
       ],
     },
-    reward: 12234,
+    reward: 6408,
   },
   {
     id: 's5-meltdown',
@@ -107,7 +107,7 @@ export const SECTOR_5_STATION_DEFENSE: Contract[] = [
         { archetype: 'sentinel', skill: 'ace', count: 1 },
       ],
     },
-    reward: 19852,
+    reward: 10843,
   },
   {
     id: 's5-final-stand',
@@ -162,6 +162,6 @@ export const SECTOR_5_STATION_DEFENSE: Contract[] = [
         { archetype: 'sentinel', skill: 'ace', count: 1 },
       ],
     },
-    reward: 26792,
+    reward: 11032,
   },
 ];

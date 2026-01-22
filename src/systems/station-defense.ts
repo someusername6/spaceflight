@@ -31,7 +31,7 @@ export interface StationDefenseMissionState {
   stationPosition: Vector3;
 
   // Health tracking
-  /** Initial station health (for reward calculation) */
+  /** Initial station health (for display) */
   initialStationHealth: number;
   /** Initial station shields (for reference) */
   initialStationShields: number;
@@ -113,7 +113,7 @@ function isStationDestroyed(world: World, stationEntity: Entity): boolean {
 }
 
 /** Get current station health ratio (0-1) */
-function getStationHealthRatio(
+export function getStationHealthRatio(
   world: World,
   stationEntity: Entity,
   initialHealth: number,
@@ -249,17 +249,4 @@ export function processStationDefenseMissionTick(
   }
 
   return stateChanged;
-}
-
-/** Get reward multiplier based on station health remaining */
-export function getStationDefenseRewardMultiplier(
-  world: World,
-  state: StationDefenseMissionState,
-): number {
-  if (state.stationEntity === null) return 0;
-  return getStationHealthRatio(
-    world,
-    state.stationEntity,
-    state.initialStationHealth,
-  );
 }
