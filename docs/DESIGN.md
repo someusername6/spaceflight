@@ -109,7 +109,7 @@ To make human play viable:
 
 ## Mission Types
 
-Four mission types are implemented, each with distinct objectives and failure conditions:
+Five mission types are implemented, each with distinct objectives and failure conditions:
 
 ### 1. Elimination (Default)
 - **Objective:** Destroy all hostiles across multiple waves
@@ -126,10 +126,10 @@ Four mission types are implemented, each with distinct objectives and failure co
 - **Data:** `escortData: EscortMissionData` with convoy size, enemy spawn pool, distances
 
 ### 3. Station Defense
-- **Objective:** Defend station until reinforcements arrive
+- **Objective:** Defend friendly station until reinforcements arrive
 - **Victory:** Station survives until reinforcements or all enemies defeated
 - **Defeat:** Station destroyed OR commander dies
-- **Reward:** Flat (victory = full reward)
+- **Reward:** Fixed (100% on victory)
 - **Data:** `stationDefenseData: StationDefenseMissionData` with station type, waves, reinforcement triggers
 
 ### 4. Ambush
@@ -138,6 +138,13 @@ Four mission types are implemented, each with distinct objectives and failure co
 - **Defeat:** Any convoy escapes OR commander dies
 - **Reward:** 100% per stopped ship, 50% per destroyed ship
 - **Data:** `ambushData: AmbushMissionData` with convoy size, escort composition, distances
+
+### 5. Attack Station
+- **Objective:** Destroy enemy station while defenders protect it
+- **Victory:** Station destroyed
+- **Defeat:** Commander dies
+- **Reward:** Fixed (100% on victory)
+- **Data:** `attackStationData: AttackStationMissionData` with station type, defenders, reinforcement waves, overwhelming wave timer
 
 ## Visual Style
 
