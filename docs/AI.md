@@ -146,13 +146,14 @@ sniper: createArchetype('interceptor', {
 
 ## State Transition Cooldowns
 
-To prevent rapid state oscillation:
+Cooldowns vary by AI profile (skilled pilots recover faster):
 
-| Transition | Cooldown |
-|------------|----------|
-| EVADE → PURSUE | 5s |
-| REGROUP → PURSUE | 8s |
-| Any → EVADE | 2s (can't spam evade) |
+| Transition | Green | Rookie | Regular | Veteran | Ace/Elite |
+|------------|-------|--------|---------|---------|-----------|
+| EVADE → PURSUE | 2s | 3s | 5s | 6s | 7s |
+| REGROUP → PURSUE | 1.5s | 2s | 3s | 3.5s | 4s |
+
+Transitions also require recovery thresholds (shields/heat) to be met.
 
 ## Aim Error System
 
@@ -189,12 +190,14 @@ This means evading ships should fly **perpendicular** to their attacker, not dir
 
 ### AI Profile Parameters
 
-| Profile | Base Error | Angular Factor | Effect |
-|---------|------------|----------------|--------|
-| Rookie | 0.12 rad (~7°) | 0.8 | Very affected by movement |
-| Regular | 0.05 rad (~3°) | 0.5 | Moderate tracking ability |
-| Veteran | 0.03 rad (~2°) | 0.3 | Good at tracking |
-| Ace | 0.015 rad (~1°) | 0.15 | Excellent tracker |
+| Profile | Base Error | Angular Factor | Beam Tracking | Effect |
+|---------|------------|----------------|---------------|--------|
+| Green | 0.14 rad (~8°) | 0.9 | 0.5 rad/s | Worst accuracy, easily disrupted |
+| Rookie | 0.095 rad (~5.5°) | 0.68 | 0.8 rad/s | Poor accuracy, very affected by movement |
+| Regular | 0.05 rad (~3°) | 0.5 | 1.5 rad/s | Moderate tracking ability |
+| Veteran | 0.032 rad (~2°) | 0.3 | 2.5 rad/s | Good at tracking |
+| Ace | 0.008 rad (~0.5°) | 0.06 | 4.0 rad/s | Near-perfect tracking |
+| Elite | 0.004 rad (~0.2°) | 0.03 | 4.0 rad/s | Superhuman accuracy |
 
 ### Example: Evading a Regular AI
 
@@ -217,15 +220,20 @@ The AI system is split across several files for maintainability (400 line limit)
 
 ```
 src/systems/ai/
-├── ai.ts                 - Main state machine and aiSystem()
-├── ai-behaviors.ts       - State update functions (evade, protect, regroup)
-├── ai-movement.ts        - Shared movement utilities (turnToward, accelerateTo)
-├── ai-pursuit.ts         - Target pursuit logic (pursueTarget, maintainDistanceEngage)
-├── ai-reposition.ts      - Burst-disengage behavior
-├── ai-utils.ts           - Entity queries (findNearestEnemy, setAITarget)
-├── ai-weapon-selection.ts    - Weapon choice logic
-├── ai-weapon-categories.ts   - Range classification
-└── ai-missile-selection.ts   - Missile targeting
+├── ai.ts                   - Main state machine and aiSystem()
+├── ai-idle.ts              - IDLE state and target selection by behavior mode
+├── ai-behaviors.ts         - State update functions (evade, regroup)
+├── ai-movement.ts          - Shared movement utilities (turnToward, accelerateTo)
+├── ai-pursuit.ts           - Target pursuit logic (pursueTarget, maintainDistanceEngage)
+├── ai-reposition.ts        - Burst-disengage behavior
+├── ai-utils.ts             - Entity queries (findNearestEnemy, setAITarget, etc.)
+├── ai-weapon-selection.ts  - Weapon choice logic
+├── ai-weapon-categories.ts - Range classification
+├── ai-weapon-helpers.ts    - Weapon utility functions
+├── ai-missile-selection.ts - Missile targeting
+├── ai-convoy-utils.ts      - Convoy-related utilities (escort missions)
+├── ai-ambush-utils.ts      - Ambush mission utilities (convoy interception)
+└── ai-dps-utils.ts         - DPS calculation for attack-station role assignment
 ```
 
 **Shared utilities in ai-movement.ts:**
@@ -269,37 +277,79 @@ Implementation:
 - When selecting target, skip human if count >= 3
 - When AI changes target, update counts
 
+## Behavior Modes
+
+AI ships can be assigned different behavior modes that change target selection and engagement patterns. Set via `ai.behaviorMode`.
+
+### Standard Modes
+
+| Mode | Usage | Target Priority |
+|------|-------|-----------------|
+| `standard` | Default for most ships | Wingmen protect player; enemies attack nearest |
+| `defensive` | Escort wingmen | Stay near convoy, protect from threats |
+
+### Escort Mission Modes
+
+| Mode | Usage | Target Priority |
+|------|-------|-----------------|
+| `convoy-hunter` | Enemies in escort missions | Prioritize convoy ships, then player squadron |
+
+### Station Defense Mission Modes
+
+| Mode | Usage | Target Priority |
+|------|-------|-----------------|
+| `station-hunter` | Enemies attacking station | Prioritize station, then player squadron |
+| `station-defense` | Wingmen defending station | Stay near station, protect from threats |
+
+### Ambush Mission Modes
+
+| Mode | Usage | Target Priority |
+|------|-------|-----------------|
+| `convoy-guard-aggressive` | Enemy escorts (proactive) | Attack player/wingmen within 600m |
+| `convoy-guard-defensive` | Enemy escorts (reactive) | Only engage when self or convoy is attacked |
+| `convoy-interceptor` | Player wingmen | Attack escorts first, then approach convoy to stop it |
+
+### Attack Station Mission Modes
+
+| Mode | Usage | Target Priority |
+|------|-------|-----------------|
+| `station-assault-high-dps` | Allied bombers/heavy ships | Attack enemy station |
+| `station-assault-low-dps` | Allied fighters/escorts | Attack enemy defenders |
+| `station-defender` | Enemy defenders | Prioritize ships attacking the station |
+
+**DPS-based role assignment:** Attack station missions use `stationAttackDpsThreshold` (typically ~100) to assign roles. Ships with DPS ≥ threshold get `station-assault-high-dps`, others get `station-assault-low-dps`.
+
 ## Missile Policy
 
-AI fires missiles when:
-1. Has lock on target
-2. Target within 80% of missile range
-3. Cooldown expired (varies by missile type)
-4. Not currently evading
+AI uses the same lock mechanics as the player:
+- Lock progress is shared across all secondary weapons
+- Lock is based on current target (not weapon selection)
+- Lock-requiring missiles can only fire when `lockProgress >= 1`
+- Dumbfire missiles (rockets) can fire immediately
 
-| Missile Type | Cooldown |
-|--------------|----------|
-| Rocket | 2s |
-| Seeker | 4s |
-| Dart | 3s |
-| Swarm | 8s |
-| Torpedo | 10s |
-| Nuke | 30s |
+AI fires missiles when:
+1. Target within missile range
+2. Has ammo remaining
+3. Lock requirements met (if applicable)
+4. Safe distance for AoE missiles (nukes won't fire if target is too close)
+
+AI iterates through weapons in order (like player cycling) and fires the first missile that can fire.
 
 ## Decoy Policy
 
 AI deploys decoys when:
 1. Missile incoming within 500m
 2. Has decoys available
-3. Decoy cooldown expired (5s)
+3. Decoy cooldown expired (varies by profile: Ace 0.5s, Regular 2s, Rookie 3.5s)
 
 ## Afterburner Policy
 
 AI uses afterburner when:
-1. In PURSUE state
-2. Target beyond 1000m
-3. Heat below 60%
-4. Cooldown expired (3s between uses)
+1. In EVADE state (emergency escape)
+2. In REPOSITION state (burst-disengage pattern)
+3. Afterburner not heat-locked
+
+Note: AI does NOT use afterburner during normal pursuit or engagement to conserve heat for combat.
 
 ## Tuning Philosophy
 
