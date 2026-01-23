@@ -10,6 +10,7 @@ This guide covers how to design and balance missions in Spaceflight.
 | Escort | `escort.ts` | `convoy-hunter` (prioritize convoy) |
 | Station Defense | `station-defense.ts` | `station-hunter` (prioritize station) |
 | Ambush | `ambush.ts` | Escort roles: `aggressive` or `defensive` |
+| Attack Station | `attack-station.ts` | DPS-based: high DPS attacks station, low DPS attacks defenders |
 
 ## File Structure
 
@@ -17,24 +18,33 @@ Missions are defined in `src/ui/screens/missions/sector{1-5}/`:
 
 ```
 sector1/
-  index.ts          # Exports all missions for the sector
-  easy.ts           # Elimination missions (easy difficulty)
-  medium.ts         # Elimination missions (medium difficulty)
-  hard.ts           # Elimination missions (hard difficulty)
-  escort.ts         # Escort missions (all difficulties)
-  station-defense.ts # Station defense missions (all difficulties)
-  ambush.ts         # Ambush missions (all difficulties)
+  index.ts            # Exports all missions for the sector
+  easy.ts             # Elimination missions (easy difficulty)
+  medium.ts           # Elimination missions (medium difficulty)
+  hard.ts             # Elimination missions (hard difficulty)
+  escort.ts           # Escort missions (all difficulties)
+  station-defense.ts  # Station defense missions (all difficulties)
+  ambush.ts           # Ambush missions (all difficulties)
+  attack-station.ts   # Attack station missions (all difficulties)
 ```
 
 ## Balance Targets
 
-All mission types should achieve these rates per difficulty:
+Most mission types should achieve these rates per difficulty:
 
 | Difficulty | Win Rate | Wingman Survival (on wins) |
 |------------|----------|----------------------------|
 | Easy | 80-90% | 3.0-3.5 of 4 |
 | Medium | 70-80% | 2.5-3.0 of 4 |
 | Hard | 60-70% | 2.0-2.5 of 4 |
+
+**Attack Station missions** have different targets due to sustained combat:
+
+| Difficulty | Win Rate | Wingman Survival (on wins) |
+|------------|----------|----------------------------|
+| Easy | 70-90% | 2.0-3.0 of 4 |
+| Medium | 55-75% | 2.0-3.0 of 4 |
+| Hard | 40-60% | 1.5-2.5 of 4 |
 
 Run balance tests with: `npx tsx scripts/tests/campaign/test-*-balance.mjs`
 
@@ -308,6 +318,106 @@ Stopped ships pay 100% credit (cargo captured), destroyed pay 50% (cargo lost).
 
 ---
 
+## Attack Station Missions
+
+Attack an enemy station while defenders protect it.
+
+### Contract Structure
+
+```typescript
+{
+  id: 's1-attack-station-name',
+  name: 'Station Assault',
+  description: 'Destroy the enemy station before reinforcements overwhelm you.',
+  difficulty: 'medium',
+  sector: 1,
+  missionType: 'attack-station',
+  attackStationData: {
+    // Station configuration
+    stationType: 'refinery',            // 'mining' | 'refinery' | 'military'
+    stationDistance: -2000,             // Z position (negative = in front of player)
+
+    // Initial enemy defenders
+    initialDefenders: [
+      { archetype: 'gnat', skill: 'regular', count: 3 },
+      { archetype: 'ember', skill: 'regular', count: 2 },
+    ],
+
+    // Initial friendly allies (optional - already engaged at start)
+    initialAllies: [
+      { archetype: 'fighter', skill: 'regular', count: 2 },
+    ],
+
+    // Friendly reinforcement waves (timed arrivals)
+    reinforcementWaves: [
+      {
+        allies: [{ archetype: 'fighter', skill: 'regular', count: 2 }],
+        delay: 20,                      // Seconds from mission start
+      },
+      {
+        allies: [{ archetype: 'assaultFighter', skill: 'regular', count: 2 }],
+        delay: 50,
+      },
+    ],
+
+    // Overwhelming wave (soft time limit)
+    overwhelmingSpawnTime: 180,         // Seconds until overwhelming wave spawns
+    overwhelmingWave: [
+      { archetype: 'mantis', skill: 'veteran', count: 6 },
+      { archetype: 'shocker', skill: 'veteran', count: 4 },
+    ],
+
+    // AI targeting behavior
+    stationAttackDpsThreshold: 100,     // Ships with DPS >= this attack station
+  },
+  reward: 2500,
+}
+```
+
+### Station Types (Enemy)
+
+| Type | Hull | Notes |
+|------|------|-------|
+| `mining` | 12500 | Standard target |
+| `refinery` | 15000 | Tougher target |
+| `military` | 10000 | Weaker but better defended |
+
+### Tuning Parameters
+
+- **stationType**: Affects station health and display name
+- **initialDefenders**: Enemies present at mission start
+- **initialAllies**: Friendly NPCs already engaged (optional)
+- **reinforcementWaves**: Timed friendly reinforcements (crucial for longer fights)
+- **overwhelmingSpawnTime**: Time limit before massive enemy wave (typically 180s)
+- **stationAttackDpsThreshold**: DPS cutoff for targeting behavior (~100 separates bombers from fighters)
+
+### AI Behavior
+
+The `stationAttackDpsThreshold` controls how allied AI prioritizes targets:
+
+- Ships with DPS ≥ threshold (bombers, assault fighters) → attack station
+- Ships with DPS < threshold (fighters, interceptors) → attack enemy defenders
+
+This creates natural role division where heavy hitters focus on the objective while escorts protect them.
+
+### Victory/Defeat
+
+- **Victory**: Station destroyed
+- **Defeat**: Commander dies
+- **Reward**: Fixed (100% on victory)
+
+### Design Notes
+
+Attack station missions are sustained combat encounters with escalating pressure:
+
+1. **Early phase**: Player + initial allies vs initial defenders
+2. **Mid phase**: Reinforcements arrive to help push damage
+3. **Late phase**: Must finish before overwhelming wave spawns
+
+The overwhelming wave acts as a soft time limit - experienced players can survive it, but it significantly increases difficulty.
+
+---
+
 ## Reward Guidelines by Sector
 
 | Sector | Easy | Medium | Hard |
@@ -362,6 +472,7 @@ See `CLAUDE.md` for the full checklist of files to modify. Key steps:
 npx tsx scripts/tests/campaign/test-escort-balance.mjs
 npx tsx scripts/tests/campaign/test-station-defense-balance.mjs
 npx tsx scripts/tests/campaign/test-ambush-balance.mjs
+npx tsx scripts/tests/campaign/test-attack-station-balance.mjs
 
 # Run all balance tests
 npx tsx scripts/tests/run-tests.mjs --balance
