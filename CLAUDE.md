@@ -33,12 +33,9 @@ Before claiming any feature is "not implemented" or making status/priority recom
 
 1. **SEARCH** the codebase for related files (Glob/Grep)
 2. **READ** the relevant files to understand what exists
-3. **CROSS-REFERENCE** with `docs/PROGRESS.md`
-4. **CITE EVIDENCE** - make claims with file:line references
+3. **CITE EVIDENCE** - make claims with file:line references
 
 **Never rely on:** conversation summaries, planning documents, or memory of what was "just implemented".
-
-After completing any feature, update `docs/PROGRESS.md` with file:line references.
 
 ## Code Quality Rules
 
