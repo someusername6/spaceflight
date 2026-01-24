@@ -15,7 +15,7 @@
 import { Vector3 } from 'three';
 import { getComponent, hasComponent } from '../core/ecs';
 import type { World } from '../core/types';
-import { hullCollisions } from './collision';
+import { getHullCollisions } from './collision';
 
 /** Minimum gap to maintain between ships after separation */
 const SEPARATION_GAP = 1.0;
@@ -36,7 +36,7 @@ const _separationDir = new Vector3();
  * Must run AFTER collisionSystem in the system order.
  */
 export function collisionResponseSystem(world: World, _dt: number): void {
-  for (const collision of hullCollisions) {
+  for (const collision of getHullCollisions()) {
     const transformA = getComponent(world, collision.entityA, 'transform');
     const transformB = getComponent(world, collision.entityB, 'transform');
     const physicsA = getComponent(world, collision.entityA, 'physics');

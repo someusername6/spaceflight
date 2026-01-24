@@ -16,8 +16,8 @@ import { PRIMARY_WEAPONS } from '../../../data/weapons';
 import { hideTooltip } from '../../common/tooltip';
 import { renderMissileIcon, renderWeaponIcon } from '../../utils/weapon-icon';
 import {
-  activePicker,
   closePopover,
+  getActivePicker,
   hideWeaponPopoverIfNotPinned,
   resetPopoverState,
   setActivePicker,
@@ -43,7 +43,7 @@ export interface GroupedWeapon {
 
 /** Check if popover is currently open */
 export function isPopoverOpen(): boolean {
-  return activePicker !== null;
+  return getActivePicker() !== null;
 }
 
 /** Get the bank size for a slot on a ship */
@@ -159,7 +159,8 @@ export function showWeaponPicker(
   onRerender: () => void,
 ): void {
   // Don't reopen for the same slot
-  if (activePicker && slotElement.contains(activePicker)) return;
+  const existingPicker = getActivePicker();
+  if (existingPicker && slotElement.contains(existingPicker)) return;
 
   closePopover();
   hideTooltip();

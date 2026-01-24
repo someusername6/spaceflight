@@ -3,7 +3,12 @@
  */
 
 /** Active popover/picker element */
-export let activePicker: HTMLElement | null = null;
+let activePicker: HTMLElement | null = null;
+
+/** Get active picker element */
+export function getActivePicker(): HTMLElement | null {
+  return activePicker;
+}
 
 /** Whether the popover is pinned (locked open) */
 let isPopoverPinned = false;
@@ -18,7 +23,12 @@ let closeTimeout: ReturnType<typeof setTimeout> | null = null;
 let activeSlotElement: HTMLElement | null = null;
 
 /** Active submenu (weapon swap picker) */
-export let activeSubmenu: HTMLElement | null = null;
+let activeSubmenu: HTMLElement | null = null;
+
+/** Get active submenu element */
+export function getActiveSubmenu(): HTMLElement | null {
+  return activeSubmenu;
+}
 
 /** Stored reference to outside click listener for cleanup */
 let outsideClickListener: ((e: MouseEvent) => void) | null = null;

@@ -20,9 +20,9 @@ import { hideTooltip } from '../../common/tooltip';
 import { renderMissileIcon, renderWeaponIcon } from '../../utils/weapon-icon';
 import { type GroupedWeapon, getBankSize, getGroupedWeapons } from './equip';
 import {
-  activePicker,
   closePopover,
   closeSubmenu,
+  getActivePicker,
   setActiveSubmenu,
 } from './weapon';
 
@@ -274,7 +274,7 @@ export function showWeaponSwapPicker(
   const closeOnOutsideClick = (e: MouseEvent) => {
     const target = e.target as Node;
     if (submenu.contains(target)) return;
-    if (activePicker?.contains(target)) {
+    if (getActivePicker()?.contains(target)) {
       closeSubmenu();
       document.removeEventListener('click', closeOnOutsideClick);
       return;

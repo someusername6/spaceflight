@@ -20,11 +20,11 @@ import type {
 import { getWeaponAmmoInfo } from '../../ship/slot-utils';
 import { renderPrimaryPopover, renderSecondaryPopover } from './render';
 import {
-  activePicker,
-  activeSubmenu,
   closePopover,
   closeSubmenu,
+  getActivePicker,
   getActiveSlotElement,
+  getActiveSubmenu,
   hideWeaponPopoverIfNotPinned,
   pinWeaponPopover,
   resetPopoverState,
@@ -36,10 +36,10 @@ import {
 
 // Re-export state management functions
 export {
-  activePicker,
-  activeSubmenu,
   closePopover,
   closeSubmenu,
+  getActivePicker,
+  getActiveSubmenu,
   hideWeaponPopoverIfNotPinned,
   pinWeaponPopover,
   resetPopoverState,
@@ -170,7 +170,8 @@ function bindPopoverEvents(
 
         // Refresh popover content in-place
         const ship = newState.ships.find((s) => s.id === shipId);
-        if (ship && activePicker) {
+        const picker = getActivePicker();
+        if (ship && picker) {
           const weapon =
             slotType === 'primary'
               ? getSlot(ship.primaryWeapons, slotIndex)
@@ -190,11 +191,11 @@ function bindPopoverEvents(
                     slotIndex,
                     newState,
                   );
-            const contentEl = activePicker.querySelector('.popover-content');
+            const contentEl = picker.querySelector('.popover-content');
             if (contentEl) {
               contentEl.innerHTML = content;
               bindPopoverEvents(
-                activePicker,
+                picker,
                 newState,
                 shipId,
                 slotType,
@@ -263,7 +264,7 @@ export function showWeaponPopover(
   onRerender: () => void,
 ): void {
   // Don't reopen for the same slot
-  if (getActiveSlotElement() === slotElement && activePicker) return;
+  if (getActiveSlotElement() === slotElement && getActivePicker()) return;
 
   closePopover();
 
