@@ -62,8 +62,25 @@ export interface ActiveBeam {
   lastInstantFireTime?: number;
 }
 
-/** System-specific state stored in World (not module-level) */
+/**
+ * System-specific state stored in World (not module-level).
+ *
+ * ## Field Categories for Multiplayer Determinism
+ *
+ * **Simulation-critical fields** - Must be identical across all clients:
+ * - gameTime, weapons, targeting, flightAssist, beams, mission, shipIdentity, pools
+ * - These fields affect game logic and must evolve identically on all machines
+ *
+ * **Transient/local fields** - Do not affect simulation determinism:
+ * - projectileHits, muzzleFlashes: Visual effect queues (rendering consumes)
+ * - combatStats, matchStats: Statistics/analytics (read at mission end for UI)
+ * - inputRecorder: Input capture for replays (write-only, doesn't affect sim)
+ */
 export interface SystemState {
+  // ============================================================================
+  // SIMULATION-CRITICAL FIELDS (must be identical across all clients)
+  // ============================================================================
+
   /** Shared game time (used by weapons, shields, damage) */
   gameTime: number;
   /** Weapon system state */
@@ -111,7 +128,10 @@ export interface SystemState {
   shipIdentity: {
     callsignCounters: Record<string, number>;
   };
-  /** Projectile hit queue - systems add, rendering consumes */
+  // Note: projectileHits and muzzleFlashes are visual effect queues.
+  // They're populated by simulation but consumed by rendering - safe to diverge.
+
+  /** Projectile hit queue - systems add, rendering consumes (visual only) */
   projectileHits: {
     pending: Array<{
       x: number;
@@ -124,7 +144,7 @@ export interface SystemState {
       gameTime: number;
     }>;
   };
-  /** Muzzle flash queue - weapon spawning adds, rendering consumes */
+  /** Muzzle flash queue - weapon spawning adds, rendering consumes (visual only) */
   muzzleFlashes: {
     pending: Array<{
       /** Entity that fired (for interpolated position tracking) */
@@ -142,9 +162,14 @@ export interface SystemState {
     collidable: number;
     targetCollector: number;
   };
-  /** Input recording state (null if not recording) */
+
+  // ============================================================================
+  // TRANSIENT/LOCAL FIELDS (do not affect simulation determinism)
+  // ============================================================================
+
+  /** Input recording state (null if not recording) - write-only, doesn't affect sim */
   inputRecorder: import('../input/input-recorder').InputRecorder | null;
-  /** Combat statistics for balance analysis (optional, only tracked in simulation) */
+  /** Combat statistics for balance analysis (optional, read at mission end for UI) */
   combatStats?: {
     /** Shots fired by weapon name */
     shotsFired: Record<string, number>;

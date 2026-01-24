@@ -159,7 +159,11 @@ export function findAllBeamHits(
     }
   }
 
-  // Sort by distance (closest first)
-  hits.sort((a, b) => a.distance - b.distance);
+  // Sort by distance (closest first), with entity ID tiebreaker for determinism
+  hits.sort((a, b) => {
+    const dist = a.distance - b.distance;
+    if (dist !== 0) return dist;
+    return a.entity - b.entity; // Tiebreaker by entity ID
+  });
   return hits;
 }

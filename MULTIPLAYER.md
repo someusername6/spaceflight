@@ -156,6 +156,8 @@ These are module-level states that don't affect gameplay determinism:
 | `campaignCreatedAtMap` | `src/campaign/storage/campaign-db.ts` | Metadata cache for save file timestamps. UI-only. |
 | `pressedKeys` | `src/systems/input.ts` | Global keyboard state. One keyboard per browser. |
 | `notifyUser` | `src/campaign/storage/db-connection.ts` | UI notification callback. |
+| Object pools | `src/systems/targeting.ts`, `beam-helpers.ts` | Module-level memory reuse. Values overwritten before use. |
+| Floating-point math | `src/systems/damage.ts` | IEEE 754 doubles. See file header for mitigation strategies if desync occurs. |
 
 ## Remaining Work
 

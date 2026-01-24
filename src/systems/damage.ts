@@ -6,6 +6,24 @@
  * Victory Protection: Once victory is achieved, allied ships become
  * immune to damage. This prevents the frustrating scenario where
  * the player wins but dies to in-flight projectiles.
+ *
+ * ## Floating-Point Precision (Multiplayer Determinism)
+ *
+ * Damage calculations use IEEE 754 double-precision floats. This should be
+ * deterministic across modern browsers since JavaScript engines (V8, SpiderMonkey,
+ * JavaScriptCore) follow IEEE 754 strictly.
+ *
+ * Potential sources of floating-point divergence:
+ * - Shield/hull damage multipliers (shieldDamageMultiplier, hullDamageMultiplier)
+ * - Division for remaining damage pass-through: `remaining / shieldDamageMultiplier`
+ * - Cumulative shield regeneration: `current + regenRate * dt`
+ *
+ * If multiplayer desync occurs due to floating-point differences:
+ * 1. Add periodic state hash verification (every N ticks)
+ * 2. Consider fixed-point math: store values as integers (e.g., hull * 1000)
+ * 3. Round results to specific precision at key checkpoints
+ *
+ * Current status: Using standard floats. Determinism verified via replay tests.
  */
 
 import type * as THREE from 'three';

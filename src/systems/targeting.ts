@@ -42,11 +42,14 @@ function getTargetCollectorInfo(
 }
 
 // Module-level sort comparator (avoid per-frame callback allocation)
+// Uses entity ID as tiebreaker for deterministic ordering across clients
 function compareByDistance(
   a: TargetCollectorInfo,
   b: TargetCollectorInfo,
 ): number {
-  return a.distance - b.distance;
+  const dist = a.distance - b.distance;
+  if (dist !== 0) return dist;
+  return a.entity - b.entity; // Tiebreaker by entity ID
 }
 
 // Reusable array for target collection (stores pool references)
