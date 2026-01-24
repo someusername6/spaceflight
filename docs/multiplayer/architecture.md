@@ -24,7 +24,8 @@
 │  ┌──────────────────────────▼───────────────────────────┐  │
 │  │                  Rendering Layer                      │  │
 │  │  - Renderer instance with interpolation caches       │  │
-│  │  - Camera follows local player's ship                │  │
+│  │  - Camera follows local player's ship (or spectator  │  │
+│  │    target using replay-like camera controls)         │  │
 │  │  - HUD shows local player's status                   │  │
 │  └──────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────┘
@@ -41,6 +42,7 @@
 | Explicit system order | `src/game.ts` | 19 systems in defined order |
 | Input encoding | `src/input/input-encoding.ts` | Compact 18-bit bitmask |
 | Replay system | `src/replay/` | Records seed, inputs, loadouts - validates determinism |
+| Replay (multiplayer) | `src/replay/` | Will save all players' inputs authoritatively |
 | Determinism tests | `scripts/tests/systems/test-input-replay.mjs` | Verifies replay produces identical state |
 
 ### Multiplayer-Ready Architecture (Ready)

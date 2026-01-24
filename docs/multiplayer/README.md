@@ -11,19 +11,15 @@
 | Topic | Decision | Notes |
 |-------|----------|-------|
 | **Netcode model** | Rollback | Simulate optimistically; rollback on misprediction |
-| **Disconnect handling** | Pause game | Host can force-drop and replace with AI |
-| **Spectator mode** | Not for MVP | Can add later |
+| **Connection** | Signaling server | Room codes, no IP/password sharing |
+| **Communication topology** | Fully connected mesh | Direct P2P between all players; host authoritative for campaign/desync |
+| **Host migration** | Not supported | If host disconnects, session ends |
+| **Max players** | 4 | Host + 3 guests |
+| **Disconnect handling** | Pause game | Any player can pause; host can kick and replace with AI |
+| **Spectator mode** | Supported | Tab through ships with replay-like camera controls |
 | **Reward distribution** | Shared ownership | All credits/items belong to campaign (host) |
-
-## Needs Decision
-
-| Topic | Options |
-|-------|---------|
-| **Game formation** | (A) Direct connect only, (B) Matchmaking server, (C) Dedicated server |
-| **Communication topology** | (A) All through host, (B) P2P mesh, (C) Relay server |
-| **Host migration** | Depends on above choices |
-
-See [protocol.md](protocol.md) for details on these options.
+| **Guest permissions** | Configurable | Host controls ship editing and store access per player |
+| **Kicked players** | Blocked by callsign | Cannot rejoin same session with same callsign |
 
 ## Documentation
 
@@ -31,6 +27,6 @@ See [protocol.md](protocol.md) for details on these options.
 |----------|----------|
 | [architecture.md](architecture.md) | Client architecture, codebase state, what's ready |
 | [netcode.md](netcode.md) | Rollback algorithm, prediction, snapshots, input buffering |
-| [protocol.md](protocol.md) | Network messages, transport options, topology |
-| [ux.md](ux.md) | Player-facing flows: hosting, joining, permissions |
+| [protocol.md](protocol.md) | Network messages, signaling flow, transport options |
+| [ux.md](ux.md) | Player-facing flows: hosting, joining, lobby, permissions, pause |
 | [roadmap.md](roadmap.md) | Implementation phases, testing strategy |

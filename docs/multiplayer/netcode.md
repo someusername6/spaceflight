@@ -6,7 +6,7 @@ At 60 ticks/sec with 100ms+ RTT (São Paulo↔Boston), inputs arrive 6+ ticks la
 
 ## Solution: Rollback Netcode
 
-Each client simulates optimistically using **predicted inputs** for remote players. When actual inputs arrive:
+All players (including host) run the same rollback netcode. Each simulates optimistically using **predicted inputs** for remote players. When actual inputs arrive:
 - If prediction was correct: no action needed
 - If prediction was wrong: **rollback** to the tick where inputs diverged, **resimulate** forward with correct inputs
 
@@ -48,7 +48,14 @@ The simulation must support:
 | Max speculation | 60 ticks (1 sec) | Limits how far ahead any client can simulate beyond confirmed state |
 | Pause threshold | 30 ticks (0.5 sec) | If a client falls this far behind confirmed, pause and wait |
 
-**When max speculation reached**: The fast client pauses simulation until slow client catches up (or host drops the slow player).
+**When max speculation reached**: The game pauses automatically. The host can then decide to wait for the slow player to catch up, or manually kick them (their ship becomes AI-controlled).
+
+**Lag detection flow:**
+1. Each player tracks lag for each remote player (ticks behind confirmed horizon)
+2. When any remote player exceeds pause threshold, local player sends `LagReport` to host
+3. Host receives lag reports and correlates them (if everyone reports player B lagging, it's B's problem)
+4. Host broadcasts `PauseMessage { reason: 'excessive_lag' }`
+5. Host can kick the lagging player or wait for recovery
 
 ## Desync Detection and Recovery
 
@@ -61,6 +68,11 @@ The simulation must support:
    - Client restores state and continues from there
 
 ## Input Buffering
+
+With fully connected mesh, each player:
+- Sends their inputs directly to all other players
+- Receives inputs directly from all other players
+- Maintains separate input buffers for each remote player
 
 Each client maintains per remote player:
 
@@ -97,3 +109,33 @@ Assume we've simulated up to tick 6 with predictions.
 When `confirmedHorizon` advances from H to H', for each tick T in (H, H'], compare `received[T]` vs `usedInputs[T]`. If any differ, rollback to the earliest mismatched tick and resimulate forward to current tick.
 
 **Note**: With reliable ordered delivery (TCP/WebRTC reliable mode), out-of-order arrival shouldn't happen. But the design handles it if we later switch to unreliable delivery with custom reliability.
+
+## Host Role
+
+The host is both a player and the authority:
+- **As player**: Runs the same rollback simulation as guests, predicting other players' inputs
+- **As authority**: When hash mismatches are detected, the host's state is considered authoritative
+- **Desync recovery**: Host sends `StatePush` with their world state to desynced clients
+
+All players simulate identically. The host's "authority" only matters for desync recovery - during normal play, all clients reach the same state through deterministic simulation.
+
+## Mission Start Synchronization
+
+All clients must initialize the mission world identically:
+
+1. Host broadcasts `MissionStarted { seed, contractId }`
+2. All clients have identical `campaignState` (from `Welcome`/`CampaignSync`)
+3. Each client creates world locally using: seed + campaignState + contractId
+4. Identical inputs → identical PRNG seed → identical initial state
+5. No serialized world state is sent at mission start (too large, unnecessary)
+6. **All clients start at tick 0** - First `InputMessage` from each player is for tick 0
+
+## Spectators
+
+Spectators (players without assigned ships) participate in the simulation but don't send gameplay inputs:
+- They run the same deterministic simulation as pilots
+- They compute and send state hashes for desync detection
+- They don't need input prediction (no inputs to predict)
+- Their input buffer is empty - they just receive and apply confirmed inputs from pilots
+
+Spectator camera controls (ship selection, camera mode) are local-only and don't affect simulation.
