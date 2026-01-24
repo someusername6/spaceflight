@@ -1,19 +1,21 @@
 /**
  * Input System - Reads keyboard state and sets player intent flags.
  *
- * Supports three modes:
+ * Supports two modes:
  * 1. Live input: reads from keyboard (default)
  * 2. Recording: reads from keyboard and records each tick
- * 3. Playback: reads from recorded data (for replays)
+ *
+ * Note: Replay playback is handled by ReplayPlayback class which applies
+ * inputs directly without using this system.
  */
 
 import { getComponent, queryEntities } from '../core/ecs';
 import type { InputState, World } from '../core/types';
 import { encodeInput } from '../input/input-encoding';
-import type { InputPlayer, InputRecorder } from '../input/input-recorder';
+import type { InputRecorder } from '../input/input-recorder';
 import { getKeyBindings } from '../input/key-bindings';
 
-/** Currently pressed keys */
+/** Currently pressed keys (global - one keyboard per browser) */
 const pressedKeys = new Set<string>();
 
 /** Stored event handlers for cleanup (const object avoids module-level let) */
@@ -21,16 +23,6 @@ const eventHandlers = {
   keydown: null as ((e: KeyboardEvent) => void) | null,
   keyup: null as ((e: KeyboardEvent) => void) | null,
   blur: null as (() => void) | null,
-};
-
-/** Replay state for recording and playback */
-const replayState = {
-  /** Active recorder (null if not recording) */
-  recorder: null as InputRecorder | null,
-  /** Active player (null if not in playback mode) */
-  player: null as InputPlayer | null,
-  /** Current tick for playback */
-  playbackTick: 0,
 };
 
 /** Initialize keyboard listeners (call once at startup) */
@@ -85,79 +77,24 @@ export function cleanupInput(): void {
 }
 
 // ============================================================================
-// Replay Recording/Playback API
+// Replay Recording API
 // ============================================================================
 
 /**
- * Start recording input.
- * Call before starting the game loop.
+ * Start recording input to a world.
+ * The recorder is stored in world.systemState.inputRecorder.
  */
-export function startRecording(recorder: InputRecorder): void {
-  replayState.recorder = recorder;
-  replayState.player = null;
+export function startRecording(world: World, recorder: InputRecorder): void {
+  world.systemState.inputRecorder = recorder;
 }
 
 /**
  * Stop recording and return the recorder.
  */
-export function stopRecording(): InputRecorder | null {
-  const recorder = replayState.recorder;
-  replayState.recorder = null;
+export function stopRecording(world: World): InputRecorder | null {
+  const recorder = world.systemState.inputRecorder;
+  world.systemState.inputRecorder = null;
   return recorder;
-}
-
-/**
- * Start playback from recorded input.
- * Call before starting the game loop.
- */
-export function startPlayback(player: InputPlayer): void {
-  replayState.player = player;
-  replayState.recorder = null;
-  replayState.playbackTick = 0;
-}
-
-/**
- * Stop playback mode.
- */
-export function stopPlayback(): void {
-  replayState.player = null;
-  replayState.playbackTick = 0;
-}
-
-/**
- * Reset playback to a specific tick (for seeking).
- * Clamps to valid range [0, tickCount).
- * Returns the actual tick set (may differ if clamped).
- */
-export function seekPlayback(tick: number): number {
-  if (!replayState.player) {
-    return 0;
-  }
-  const maxTick = replayState.player.getTickCount();
-  const clampedTick = Math.max(0, Math.min(tick, maxTick - 1));
-  replayState.playbackTick = clampedTick;
-  return clampedTick;
-}
-
-/**
- * Check if currently in playback mode.
- */
-export function isPlaybackMode(): boolean {
-  return replayState.player !== null;
-}
-
-/**
- * Check if currently recording.
- */
-export function isRecordingMode(): boolean {
-  return replayState.recorder !== null;
-}
-
-/**
- * Get current playback tick.
- */
-export function getPlaybackTick(): number {
-  return replayState.playbackTick;
 }
 
 // ============================================================================
@@ -201,23 +138,15 @@ export function inputSystem(world: World, _dt: number): void {
 
     const input = player.input;
 
-    if (replayState.player) {
-      // Playback mode: read from recorded data
-      replayState.player.applyInputForTick(replayState.playbackTick, input);
-      replayState.playbackTick++;
-    } else {
-      // Live mode: read from keyboard
-      readLiveInput(input);
+    // Read live input from keyboard
+    readLiveInput(input);
 
-      // Record if active
-      if (replayState.recorder) {
-        replayState.recorder.recordRaw(encodeInput(input));
-      }
+    // Record if active (recorder stored per-world for multiplayer isolation)
+    const recorder = world.systemState.inputRecorder;
+    if (recorder) {
+      recorder.recordRaw(encodeInput(input));
     }
   }
-  // Note: If no player entity exists, playback tick does NOT advance.
-  // This ensures replay stays synchronized with game state.
-  // If player dies and respawns, replay will resume from correct tick.
 }
 
 /** Check if a specific key is currently pressed (for non-player use) */

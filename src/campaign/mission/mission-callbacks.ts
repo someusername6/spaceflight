@@ -59,7 +59,7 @@ export function createMissionEndExecutor(
     controller.missionEnded = true;
 
     // Stop input recording and save replay
-    const recorder = stopRecording();
+    const recorder = stopRecording(game.world);
 
     // Finalize match stats before stopping
     finalizeMatchStats(game.world);

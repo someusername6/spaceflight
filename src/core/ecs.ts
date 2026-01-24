@@ -71,6 +71,7 @@ export function createWorld(seed: number = 0): World {
         collidable: 0,
         targetCollector: 0,
       },
+      inputRecorder: null,
     },
     prng: createPRNG(seed),
     // Separate PRNG for rendering effects - same seed so visuals are consistent,

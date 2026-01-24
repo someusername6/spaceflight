@@ -142,6 +142,8 @@ export interface SystemState {
     collidable: number;
     targetCollector: number;
   };
+  /** Input recording state (null if not recording) */
+  inputRecorder: import('../input/input-recorder').InputRecorder | null;
   /** Combat statistics for balance analysis (optional, only tracked in simulation) */
   combatStats?: {
     /** Shots fired by weapon name */

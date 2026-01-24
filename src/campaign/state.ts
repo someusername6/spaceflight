@@ -81,12 +81,19 @@ function createPilot(id: string, name: string, skill: Pilot['skill']): Pilot {
   };
 }
 
-/** Create a new campaign with default starting state */
+/**
+ * Create a new campaign with default starting state.
+ * @param settings Campaign settings (commander name, ironman mode, etc.)
+ * @param providedSeed Optional seed for deterministic campaign generation.
+ *                     If not provided, uses Date.now() (single-player default).
+ *                     For multiplayer, server should provide agreed-upon seed.
+ */
 export function createNewCampaign(
   settings: CampaignSettings = DEFAULT_CAMPAIGN_SETTINGS,
+  providedSeed?: number,
 ): CampaignState {
-  // Generate master seed for this campaign run (different each time)
-  const seed = Date.now() >>> 0;
+  // Use provided seed or generate from current time (single-player default)
+  const seed = providedSeed ?? Date.now() >>> 0;
 
   // Track ID counter locally during creation
   let nextId = 1;

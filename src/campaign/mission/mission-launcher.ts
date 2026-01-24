@@ -110,7 +110,7 @@ export function launchMission(
   }
 
   // Start recording input for replay (stopped in mission end executor)
-  startRecording(recorder);
+  startRecording(game.world, recorder);
 
   // Initialize match stats for debrief
   initMatchStats(game.world);

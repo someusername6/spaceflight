@@ -75,6 +75,88 @@ interface Renderer {
 
 All rendering code now passes the `Renderer` instance through to `getInterpolatedPosition` and `getInterpolatedRotation`. This follows best practices by avoiding global state.
 
+### 5. Input Recording Per-World
+
+**Location:** `src/systems/input.ts`, `src/core/types.ts`
+
+Moved input recorder from module-level state to `world.systemState.inputRecorder`:
+
+```typescript
+// Before (module-level, shared across all game instances)
+const replayState = { recorder: null, player: null, playbackTick: 0 };
+
+// After (per-world, isolated)
+interface SystemState {
+  // ...
+  inputRecorder: InputRecorder | null;
+}
+```
+
+Functions updated:
+- `startRecording(world, recorder)` - now takes world parameter
+- `stopRecording(world)` - now takes world parameter
+
+This allows multiple game instances to record independently (e.g., title screen battle simulation + actual mission).
+
+### 6. Deterministic Campaign Seeds
+
+**Location:** `src/campaign/state.ts`
+
+Added optional `seed` parameter to `createNewCampaign()`:
+
+```typescript
+function createNewCampaign(
+  settings: CampaignSettings,
+  providedSeed?: number,  // For multiplayer: server-agreed seed
+): CampaignState
+```
+
+Single-player defaults to `Date.now() >>> 0`. Multiplayer should provide a server-agreed seed so all clients generate identical campaigns.
+
+### 7. Module-Level Mutable State Encapsulation
+
+**Location:** `src/systems/collision.ts`, `src/ui/screens/popover/state.ts`
+
+Encapsulated exported mutable state with getter functions:
+
+```typescript
+// Before: exported mutable array
+export const hullCollisions: HullCollisionInfo[] = [];
+
+// After: private with getter
+const hullCollisions: HullCollisionInfo[] = [];
+export function getHullCollisions(): readonly HullCollisionInfo[] {
+  return hullCollisions;
+}
+```
+
+Similar changes made to `activePicker` and `activeSubmenu` in popover state.
+
+## What's Already Good ✓
+
+The codebase has solid foundations for multiplayer:
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| **Seeded PRNG** | ✓ | `world.prng` for simulation, `world.renderPrng` for visuals |
+| **Explicit System Order** | ✓ | 19 systems in defined order in `src/game.ts` |
+| **Input Encoding** | ✓ | Compact 18-bit bitmask in `src/input/input-encoding.ts` |
+| **Replay System** | ✓ | Records seed, inputs, loadouts, settings |
+| **No Async in Game Logic** | ✓ | All callbacks are synchronous |
+| **Fixed Timestep** | ✓ | 60 ticks/sec deterministic updates |
+| **Determinism Tests** | ✓ | `test-input-replay.mjs` verifies replay determinism |
+
+## Known Limitations (Acceptable)
+
+These are module-level states that don't affect gameplay determinism:
+
+| Item | Location | Notes |
+|------|----------|-------|
+| `dbPromise` | `src/campaign/storage/db-connection.ts` | IndexedDB connection cache. Shared per-browser anyway. |
+| `campaignCreatedAtMap` | `src/campaign/storage/campaign-db.ts` | Metadata cache for save file timestamps. UI-only. |
+| `pressedKeys` | `src/systems/input.ts` | Global keyboard state. One keyboard per browser. |
+| `notifyUser` | `src/campaign/storage/db-connection.ts` | UI notification callback. |
+
 ## Remaining Work
 
 ### Phase 1: Network Foundation
@@ -201,6 +283,19 @@ interface SyncResponseMessage {
 | `src/input/input-source.ts` | Created (new) |
 | `src/core/serialization.ts` | Created (new) |
 | `src/core/player-utils.ts` | Created (new) |
+| `src/core/types.ts` | Added `inputRecorder` to SystemState |
+| `src/core/ecs.ts` | Initialize `inputRecorder: null` in createWorld |
+| `src/systems/input.ts` | Moved recorder to world.systemState, removed unused playback state |
+| `src/campaign/state.ts` | Added optional seed parameter to createNewCampaign |
+| `src/campaign/mission/mission-launcher.ts` | Pass world to startRecording |
+| `src/campaign/mission/mission-callbacks.ts` | Pass world to stopRecording |
+| `src/systems/collision.ts` | Added getter for hullCollisions |
+| `src/systems/collision-check.ts` | Extracted collision detection algorithms |
+| `src/systems/collision-response.ts` | Use getHullCollisions() |
+| `src/ui/screens/popover/state.ts` | Added getters for activePicker/activeSubmenu |
+| `src/ui/screens/popover/weapon.ts` | Use getter functions |
+| `src/ui/screens/popover/equip.ts` | Use getter functions |
+| `src/ui/screens/popover/swap.ts` | Use getter functions |
 | `src/rendering/renderer.ts` | Moved interpolation caches to instance |
 | `src/rendering/beam-effects/lightning.ts` | Added renderer parameter |
 | `src/rendering/beam-effects/torch.ts` | Added renderer parameter |
