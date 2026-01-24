@@ -7,7 +7,7 @@ import type { Explosion } from '../../components/explosion';
 import { entityExists, getComponent, queryEntities } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
 import { TICK_SEC } from '../../game';
-import { getInterpolatedPosition } from '../renderer';
+import { getInterpolatedPosition, type Renderer } from '../renderer';
 import {
   createExplosionVisual,
   disposeExplosionVisual,
@@ -95,10 +95,11 @@ function releaseExplosionVisual(
 
 /** Updates explosion visuals */
 export function updateExplosionRenderer(
-  renderer: ExplosionRenderer,
+  explosionRenderer: ExplosionRenderer,
   scene: THREE.Scene,
   world: World,
   alpha = 1,
+  renderer?: Renderer,
 ): void {
   // Clear reusable Set (avoid per-frame allocations)
   seenExplosions.clear();
@@ -125,25 +126,27 @@ export function updateExplosionRenderer(
       entityExists(world, explosion.sourceEntity)
     ) {
       // Use interpolated position of source entity for smooth following
-      const interpSourcePos = getInterpolatedPosition(explosion.sourceEntity);
+      const interpSourcePos = renderer
+        ? getInterpolatedPosition(renderer, explosion.sourceEntity)
+        : null;
       if (interpSourcePos) {
         interpExplosionPos.copy(interpSourcePos);
         renderPosition = interpExplosionPos;
       }
     }
 
-    let visual = renderer.visuals.get(entity);
+    let visual = explosionRenderer.visuals.get(entity);
 
     if (!visual) {
       // Acquire from pool or create new
       visual = acquireExplosionVisual(
-        renderer,
+        explosionRenderer,
         scene,
         entity,
         explosion,
         renderPosition,
       );
-      renderer.visuals.set(entity, visual);
+      explosionRenderer.visuals.set(entity, visual);
     }
 
     // Update visual based on progress
@@ -151,10 +154,10 @@ export function updateExplosionRenderer(
   }
 
   // Release visuals for explosions that no longer exist (return to pool)
-  for (const [entity, visual] of renderer.visuals) {
+  for (const [entity, visual] of explosionRenderer.visuals) {
     if (!seenExplosions.has(entity)) {
-      releaseExplosionVisual(renderer, visual);
-      renderer.visuals.delete(entity);
+      releaseExplosionVisual(explosionRenderer, visual);
+      explosionRenderer.visuals.delete(entity);
     }
   }
 }

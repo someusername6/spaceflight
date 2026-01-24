@@ -5,8 +5,10 @@
 import type { Camera } from 'three';
 import { getHeatPercentCapped } from '../../components/heat';
 import { isIonized } from '../../components/shields';
-import { findEntity, getComponent } from '../../core/ecs';
+import { getComponent } from '../../core/ecs';
+import { findLocalPlayer } from '../../core/player-utils';
 import type { Entity, World } from '../../core/types';
+import type { Renderer } from '../renderer';
 import {
   createReticleCanvas,
   type ReticleCanvas,
@@ -218,17 +220,28 @@ export function createHUD(parent: HTMLElement): HUD {
   };
 }
 
-/** Update HUD with current game state */
+/**
+ * Update HUD with current game state.
+ *
+ * @param hud - HUD instance
+ * @param world - Game world
+ * @param camera - Active camera
+ * @param renderer - Renderer instance for interpolation data
+ * @param screenWidth - Screen width for reticles
+ * @param screenHeight - Screen height for reticles
+ * @param playerEntity - Optional player entity (if not provided, finds local player)
+ */
 export function updateHUD(
   hud: HUD,
   world: World,
   camera: Camera,
-  entityMeshes: Map<number, import('three').Object3D>,
+  renderer: Renderer,
   screenWidth: number,
   screenHeight: number,
+  playerEntity?: Entity,
 ): void {
-  const player = findEntity(world, ['playerControlled', 'transform']);
-  if (player === undefined) return;
+  const player = playerEntity ?? findLocalPlayer(world);
+  if (player === null) return;
 
   updatePlayerStatus(hud, world, player);
   updateMissileWarning(hud, world, player);
@@ -246,9 +259,10 @@ export function updateHUD(
     playerTransform,
     playerPhysics?.velocity,
     camera,
-    entityMeshes,
+    renderer.entityMeshes,
     screenWidth,
     screenHeight,
+    renderer,
   );
 }
 

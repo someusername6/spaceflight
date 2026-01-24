@@ -7,7 +7,7 @@
 import * as THREE from 'three';
 import { getComponent } from '../../core/ecs';
 import type { World } from '../../core/types';
-import { getInterpolatedPosition } from '../renderer';
+import { getInterpolatedPosition, type Renderer } from '../renderer';
 
 /** Beam glow colors (match beam colors from beam-helpers.ts) */
 const BEAM_GLOW_COLORS: Record<string, THREE.Color> = {
@@ -58,6 +58,7 @@ export function updateBeamGlows(
   scene: THREE.Scene,
   world: World,
   gameTime: number,
+  renderer?: Renderer,
 ): void {
   const activeBeams = world.systemState.beams.activeBeams;
   const seenGlows = new Set<string>();
@@ -65,7 +66,9 @@ export function updateBeamGlows(
   for (const [entity, beams] of activeBeams) {
     // Get entity's current and interpolated positions for offset calculation
     const transform = getComponent(world, entity, 'transform');
-    const interpEntityPos = getInterpolatedPosition(entity);
+    const interpEntityPos = renderer
+      ? getInterpolatedPosition(renderer, entity)
+      : null;
     const entityPos = transform?.position;
 
     for (const beam of beams) {

@@ -242,7 +242,11 @@ function updateRendering(alpha: number, frameDt: number): void {
   const containerHeight = container.clientHeight;
 
   // Get target position for dust system (follows viewed entity, not player)
-  const dustCenter = getCameraTargetPosition(cameraState, world);
+  const dustCenter = getCameraTargetPosition(
+    cameraState,
+    world,
+    viewerRenderers.renderer,
+  );
 
   // Update scene and effects, but skip camera follow and render
   // so we can use our custom replay camera
@@ -265,6 +269,7 @@ function updateRendering(alpha: number, frameDt: number): void {
     world,
     cameraInput,
     dt,
+    viewerRenderers.renderer,
   );
 
   // Skip HUD if: not viewing player, OR user pressed H to hide

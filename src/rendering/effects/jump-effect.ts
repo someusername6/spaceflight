@@ -16,7 +16,11 @@ import { getArchetype } from '../../factories/ship';
 import { TICK_SEC } from '../../game';
 import { SHIP_MODEL_SCALE } from '../constants';
 import { FACTION_COLORS } from '../mesh-factory';
-import { getInterpolatedPosition, getInterpolatedRotation } from '../renderer';
+import {
+  getInterpolatedPosition,
+  getInterpolatedRotation,
+  type Renderer,
+} from '../renderer';
 import { SHIP_GEOMETRIES, type ShipClass } from '../ship-geometries';
 import {
   jumpFragmentShader,
@@ -114,6 +118,7 @@ function createJumpEffectMesh(
   entity: Entity,
   scene: THREE.Scene,
   entityMeshes: Map<Entity, THREE.Object3D>,
+  renderer?: Renderer,
 ): JumpVisual | null {
   const jump = getComponent(world, entity, 'hyperspaceJump');
   const transform = getComponent(world, entity, 'transform');
@@ -157,10 +162,18 @@ function createJumpEffectMesh(
   mesh.rotation.x = -Math.PI / 2; // Same rotation as ship meshes
 
   // Position at entity location
-  const interpPos = getInterpolatedPosition(entity);
-  const interpRot = getInterpolatedRotation(entity);
-  if (interpPos) mesh.position.copy(interpPos);
-  if (interpRot) mesh.quaternion.copy(interpRot);
+  const interpPos = renderer ? getInterpolatedPosition(renderer, entity) : null;
+  const interpRot = renderer ? getInterpolatedRotation(renderer, entity) : null;
+  if (interpPos) {
+    mesh.position.copy(interpPos);
+  } else {
+    mesh.position.copy(transform.position);
+  }
+  if (interpRot) {
+    mesh.quaternion.copy(interpRot);
+  } else {
+    mesh.quaternion.copy(transform.rotation);
+  }
 
   scene.add(mesh);
 
@@ -182,26 +195,27 @@ function createJumpEffectMesh(
 
 /** Updates jump effect visuals */
 export function updateJumpEffectRenderer(
-  renderer: JumpEffectRenderer,
+  jumpRenderer: JumpEffectRenderer,
   scene: THREE.Scene,
   world: World,
   entityMeshes: Map<Entity, THREE.Object3D>,
   alpha = 1,
+  renderer?: Renderer,
 ): void {
-  renderer.scene = scene;
-  renderer.seenJumps.clear();
+  jumpRenderer.scene = scene;
+  jumpRenderer.seenJumps.clear();
 
   const gameTime = world.systemState.gameTime;
   const interpolatedTime = gameTime - TICK_SEC * (1 - alpha);
 
   // Update or create visuals for entities with hyperspace jump
   for (const entity of queryEntities(world, ['hyperspaceJump', 'transform'])) {
-    renderer.seenJumps.add(entity);
+    jumpRenderer.seenJumps.add(entity);
 
     const jump = getComponent(world, entity, 'hyperspaceJump');
     if (!jump) continue;
 
-    const visual = renderer.visuals.get(entity);
+    const visual = jumpRenderer.visuals.get(entity);
 
     if (!visual) {
       const newVisual = createJumpEffectMesh(
@@ -209,9 +223,10 @@ export function updateJumpEffectRenderer(
         entity,
         scene,
         entityMeshes,
+        renderer,
       );
       if (newVisual) {
-        renderer.visuals.set(entity, newVisual);
+        jumpRenderer.visuals.set(entity, newVisual);
       }
       continue;
     }
@@ -228,15 +243,19 @@ export function updateJumpEffectRenderer(
     visual.uniforms.uTime.value = interpolatedTime;
 
     // Update position/rotation
-    const interpPos = getInterpolatedPosition(entity);
-    const interpRot = getInterpolatedRotation(entity);
+    const interpPos = renderer
+      ? getInterpolatedPosition(renderer, entity)
+      : null;
+    const interpRot = renderer
+      ? getInterpolatedRotation(renderer, entity)
+      : null;
     if (interpPos) visual.mesh.position.copy(interpPos);
     if (interpRot) visual.mesh.quaternion.copy(interpRot);
   }
 
   // Remove visuals for entities that no longer have jump component
-  for (const [entity, visual] of renderer.visuals) {
-    if (!renderer.seenJumps.has(entity)) {
+  for (const [entity, visual] of jumpRenderer.visuals) {
+    if (!jumpRenderer.seenJumps.has(entity)) {
       scene.remove(visual.mesh);
       visual.material.dispose();
       // Note: geometry is cached and shared, don't dispose it here
@@ -246,7 +265,7 @@ export function updateJumpEffectRenderer(
         visual.originalMesh.visible = true;
       }
 
-      renderer.visuals.delete(entity);
+      jumpRenderer.visuals.delete(entity);
     }
   }
 }

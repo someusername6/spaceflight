@@ -8,7 +8,10 @@
 import * as THREE from 'three';
 import { getComponent, hasComponent } from '../../../core/ecs';
 import type { World } from '../../../core/types';
-import { getInterpolatedPosition } from '../../../rendering/renderer';
+import {
+  getInterpolatedPosition,
+  type Renderer,
+} from '../../../rendering/renderer';
 import type { ReplayPlayback } from '../../../replay/playback';
 import {
   type CameraInput,
@@ -141,11 +144,14 @@ export function isViewingPlayer(): boolean {
 export function getCameraTargetPosition(
   state: ReplayCameraState,
   world: World,
+  renderer?: Renderer,
 ): THREE.Vector3 | null {
   if (state.targetEntity === null) return null;
 
   // Try interpolated position first
-  const interpPos = getInterpolatedPosition(state.targetEntity);
+  const interpPos = renderer
+    ? getInterpolatedPosition(renderer, state.targetEntity)
+    : null;
   if (interpPos) return interpPos;
 
   // Fall back to transform position

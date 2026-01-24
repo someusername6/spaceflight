@@ -268,19 +268,21 @@ function updateRender(sim: BattleSimulation, alpha: number): void {
   syncScene(renderer, world, alpha);
 
   // Update effect renderers
-  updateExplosionRenderer(sim.explosionRenderer, scene, world);
+  updateExplosionRenderer(sim.explosionRenderer, scene, world, 1, renderer);
   updateBoltRenderer(sim.boltRenderer, scene, world);
   updateExhaustRenderer(
     sim.exhaustRenderer,
     scene,
     world,
     world.systemState.gameTime,
+    1,
+    renderer,
   );
   updateShieldEffectRenderer(sim.shieldEffectRenderer, scene, world);
-  updateMuzzleFlashRenderer(sim.muzzleFlashRenderer, scene, world);
-  updateLightningRenderer(sim.lightningRenderer, scene, world);
+  updateMuzzleFlashRenderer(sim.muzzleFlashRenderer, scene, world, 1, renderer);
+  updateLightningRenderer(sim.lightningRenderer, scene, world, 1, renderer);
   updateNuclearLanceRenderer(sim.nuclearLanceRenderer, scene, world);
-  updateTorchRenderer(sim.torchRenderer, scene, world);
+  updateTorchRenderer(sim.torchRenderer, scene, world, 1, renderer);
   updateProjectileHitRenderer(sim.projectileHitRenderer, scene, world);
 
   // Update camera following
@@ -289,8 +291,8 @@ function updateRender(sim: BattleSimulation, alpha: number): void {
     const transform = getComponent(world, followed, 'transform');
     if (transform) {
       // Use interpolated position/rotation for camera (same as what's rendered)
-      const interpPos = getInterpolatedPosition(followed);
-      const interpRot = getInterpolatedRotation(followed);
+      const interpPos = getInterpolatedPosition(renderer, followed);
+      const interpRot = getInterpolatedRotation(renderer, followed);
       updateSmoothedCamera(
         sim,
         followed,

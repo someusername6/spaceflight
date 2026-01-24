@@ -35,6 +35,10 @@ export interface Renderer {
   webglRenderer: THREE.WebGLRenderer;
   entityMeshes: Map<Entity, THREE.Object3D>;
   beamLines: Map<string, BeamLineEntry>; // Key: "${entity}-${weaponIndex}"
+  /** Interpolated positions for smooth rendering between ticks */
+  interpolatedPositions: Map<Entity, THREE.Vector3>;
+  /** Interpolated rotations for smooth rendering between ticks */
+  interpolatedRotations: Map<Entity, THREE.Quaternion>;
   /** Resize handler for cleanup */
   resizeHandler: () => void;
 }
@@ -45,11 +49,6 @@ const seenEntities = new Set<Entity>();
 // Reusable vectors for interpolation
 const interpPos = new THREE.Vector3();
 const interpRot = new THREE.Quaternion();
-
-/** Store interpolated positions for camera to use */
-const interpolatedPositions = new Map<Entity, THREE.Vector3>();
-/** Store interpolated rotations for camera to use */
-const interpolatedRotations = new Map<Entity, THREE.Quaternion>();
 
 /**
  * Hermite interpolation for smooth velocity across tick boundaries.
@@ -135,6 +134,8 @@ export function createRenderer(container: HTMLElement, seed: number): Renderer {
     webglRenderer,
     entityMeshes: new Map(),
     beamLines: new Map(),
+    interpolatedPositions: new Map(),
+    interpolatedRotations: new Map(),
     resizeHandler,
   };
 }
@@ -144,7 +145,13 @@ export function createRenderer(container: HTMLElement, seed: number): Renderer {
  * @param alpha - Interpolation factor (0-1) for smooth rendering between physics ticks
  */
 export function syncScene(renderer: Renderer, world: World, alpha = 1): void {
-  const { scene, entityMeshes, beamLines } = renderer;
+  const {
+    scene,
+    entityMeshes,
+    beamLines,
+    interpolatedPositions,
+    interpolatedRotations,
+  } = renderer;
   // Clear reusable Set (avoid per-frame allocations)
   seenEntities.clear();
 
@@ -280,7 +287,7 @@ export function syncScene(renderer: Renderer, world: World, alpha = 1): void {
   // Update beam lines with interpolated gameTime for smooth fade animation
   const interpolatedGameTime =
     world.systemState.gameTime - TICK_SEC * (1 - alpha);
-  updateAllBeamLines(world, scene, beamLines, interpolatedGameTime);
+  updateAllBeamLines(world, scene, beamLines, interpolatedGameTime, renderer);
 }
 
 /** Renders the scene */
@@ -301,8 +308,10 @@ export function followEntity(
 
   // Use interpolated position/rotation (same as what mesh is rendered at)
   // This prevents camera-mesh desync that causes visible jitter
-  const shipPos = getInterpolatedPosition(entity) ?? transform.position;
-  const shipRot = getInterpolatedRotation(entity) ?? transform.rotation;
+  const shipPos =
+    getInterpolatedPosition(renderer, entity) ?? transform.position;
+  const shipRot =
+    getInterpolatedRotation(renderer, entity) ?? transform.rotation;
 
   // Calculate camera position behind and above the ship (in ship's local space)
   cameraOffset.set(0, 5, 20);
@@ -325,8 +334,11 @@ export function getScene(renderer: Renderer): THREE.Scene {
  * Returns the same position the mesh is rendered at.
  * Returns null if no interpolated position exists.
  */
-export function getInterpolatedPosition(entity: Entity): THREE.Vector3 | null {
-  return interpolatedPositions.get(entity) ?? null;
+export function getInterpolatedPosition(
+  renderer: Renderer,
+  entity: Entity,
+): THREE.Vector3 | null {
+  return renderer.interpolatedPositions.get(entity) ?? null;
 }
 
 /**
@@ -335,9 +347,10 @@ export function getInterpolatedPosition(entity: Entity): THREE.Vector3 | null {
  * Returns null if no interpolated rotation exists.
  */
 export function getInterpolatedRotation(
+  renderer: Renderer,
   entity: Entity,
 ): THREE.Quaternion | null {
-  return interpolatedRotations.get(entity) ?? null;
+  return renderer.interpolatedRotations.get(entity) ?? null;
 }
 
 /** Disposes of renderer resources */

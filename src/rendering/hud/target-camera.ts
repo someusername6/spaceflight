@@ -6,7 +6,11 @@
 import * as THREE from 'three';
 import { getComponent } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
-import { getInterpolatedPosition, getInterpolatedRotation } from '../renderer';
+import {
+  getInterpolatedPosition,
+  getInterpolatedRotation,
+  type Renderer,
+} from '../renderer';
 
 /** Target camera display dimensions */
 const CAMERA_WIDTH = 160;
@@ -87,6 +91,7 @@ export function updateTargetCamera(
   scene: THREE.Scene,
   world: World,
   player: Entity | undefined,
+  renderer: Renderer,
 ): void {
   if (player === undefined) {
     clearTargetCamera(targetCamera);
@@ -108,8 +113,8 @@ export function updateTargetCamera(
   }
 
   // Use interpolated position/rotation for smooth camera movement
-  const interpPos = getInterpolatedPosition(target);
-  const interpRot = getInterpolatedRotation(target);
+  const interpPos = getInterpolatedPosition(renderer, target);
+  const interpRot = getInterpolatedRotation(renderer, target);
   const usePos = interpPos ?? targetTransform.position;
   const useRot = interpRot ?? targetTransform.rotation;
 

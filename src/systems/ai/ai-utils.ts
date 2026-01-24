@@ -7,6 +7,7 @@ import { type AIControlled, AIState } from '../../components/ai';
 import { areEnemies, Faction } from '../../components/faction';
 import { isDead } from '../../components/health';
 import { getComponent, queryEntities } from '../../core/ecs';
+import { findLocalPlayer as findLocalPlayerUtil } from '../../core/player-utils';
 import type { Entity, World } from '../../core/types';
 
 // Reusable vector to avoid allocations in hot path
@@ -29,15 +30,12 @@ export function isPlayer(world: World, entity: Entity): boolean {
   return getComponent(world, entity, 'playerControlled') !== undefined;
 }
 
-/** Find the player entity */
+/**
+ * Find the player entity (local player in single-player, first player in multiplayer).
+ * @deprecated Use findLocalPlayer from core/player-utils for new code
+ */
 export function findPlayer(world: World): Entity | null {
-  for (const entity of queryEntities(world, [
-    'playerControlled',
-    'transform',
-  ])) {
-    return entity;
-  }
-  return null;
+  return findLocalPlayerUtil(world);
 }
 
 /** Find the nearest enemy that is actively threatening (targeting) the player */

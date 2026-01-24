@@ -14,7 +14,7 @@ import { getCurrentSecondary } from '../../components/weapons';
 import { getComponent, hasComponent, queryEntities } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
 import { getMissilesTargetingPlayer } from '../hud/missile-warning';
-import { getInterpolatedPosition } from '../renderer';
+import { getInterpolatedPosition, type Renderer } from '../renderer';
 import {
   drawDumbfireMissileLeadIndicator,
   drawLeadIndicators,
@@ -108,6 +108,7 @@ export function updateReticles(
   entityMeshes: Map<Entity, THREE.Object3D>,
   screenWidth: number,
   screenHeight: number,
+  renderer: Renderer,
 ): void {
   const { ctx, dpr } = rc;
 
@@ -179,7 +180,7 @@ export function updateReticles(
     target.entity = entity;
     target.transform = transform;
     // Use interpolated position for smooth rendering (fall back to tick position)
-    const interpPos = getInterpolatedPosition(entity);
+    const interpPos = getInterpolatedPosition(renderer, entity);
     if (interpPos) {
       target.interpolatedPosition.copy(interpPos);
     } else {

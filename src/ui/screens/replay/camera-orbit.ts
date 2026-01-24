@@ -8,7 +8,10 @@
 import * as THREE from 'three';
 import { getComponent } from '../../../core/ecs';
 import type { Entity, World } from '../../../core/types';
-import { getInterpolatedPosition } from '../../../rendering/renderer';
+import {
+  getInterpolatedPosition,
+  type Renderer,
+} from '../../../rendering/renderer';
 import type { CameraInput, ReplayCameraState } from './replay-camera';
 
 /** Camera movement speeds */
@@ -31,8 +34,12 @@ export const orbitAxisX = new THREE.Vector3(1, 0, 0);
 export const orbitAxisY = new THREE.Vector3(0, 1, 0);
 
 /** Get target entity position (interpolated) */
-function getTargetPosition(entity: Entity, world: World): THREE.Vector3 | null {
-  const interpPos = getInterpolatedPosition(entity);
+function getTargetPosition(
+  entity: Entity,
+  world: World,
+  renderer?: Renderer,
+): THREE.Vector3 | null {
+  const interpPos = renderer ? getInterpolatedPosition(renderer, entity) : null;
   if (interpPos) return interpPos;
 
   const transform = getComponent(world, entity, 'transform');
@@ -46,10 +53,11 @@ export function updateOrbitCamera(
   world: World,
   input: CameraInput,
   dt: number,
+  renderer?: Renderer,
 ): void {
   if (state.targetEntity === null) return;
 
-  const targetPos = getTargetPosition(state.targetEntity, world);
+  const targetPos = getTargetPosition(state.targetEntity, world, renderer);
   if (!targetPos) return;
 
   // Apply rotation from input using quaternions (no gimbal lock)

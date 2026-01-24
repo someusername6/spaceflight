@@ -8,7 +8,7 @@ import * as THREE from 'three';
 import { getComponent } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
 import { TICK_SEC } from '../../game';
-import { getInterpolatedPosition } from '../renderer';
+import { getInterpolatedPosition, type Renderer } from '../renderer';
 import {
   generateBoltPath,
   generateBranches,
@@ -79,10 +79,11 @@ export function createLightningRenderer(
 
 /** Update lightning rendering */
 export function updateLightningRenderer(
-  renderer: LightningRenderer,
+  lightningRenderer: LightningRenderer,
   scene: THREE.Scene,
   world: World,
   alpha = 1,
+  renderer?: Renderer,
 ): void {
   // Calculate interpolated gameTime for smooth animation
   const gameTime = world.systemState.gameTime - TICK_SEC * (1 - alpha);
@@ -101,7 +102,7 @@ export function updateLightningRenderer(
       const key = `${entity}-${beam.weaponIndex}`;
       seenBolts.add(key);
 
-      let bolt = renderer.bolts.get(key);
+      let bolt = lightningRenderer.bolts.get(key);
 
       // Check if we need to generate a new bolt (on pulse)
       if (beam.pulseActive) {
@@ -146,7 +147,7 @@ export function updateLightningRenderer(
           active: true,
           entityId: entity,
         };
-        renderer.bolts.set(key, bolt);
+        lightningRenderer.bolts.set(key, bolt);
       } else if (bolt) {
         // Fade out existing bolt
         const age = gameTime - bolt.startTime;
@@ -158,14 +159,14 @@ export function updateLightningRenderer(
   }
 
   // Remove inactive bolts
-  for (const [key, bolt] of renderer.bolts) {
+  for (const [key, bolt] of lightningRenderer.bolts) {
     if (!seenBolts.has(key) || !bolt.active) {
-      renderer.bolts.delete(key);
+      lightningRenderer.bolts.delete(key);
     }
   }
 
   // Render all active bolts with interpolation
-  renderBolts(renderer, scene, world, gameTime);
+  renderBolts(lightningRenderer, scene, world, gameTime, renderer);
 }
 
 // Reusable vector for interpolation offset
@@ -190,31 +191,34 @@ function applyOffset(points: THREE.Vector3[], offset: THREE.Vector3): number {
 
 /** Render all active lightning bolts with interpolation */
 function renderBolts(
-  renderer: LightningRenderer,
+  lightningRenderer: LightningRenderer,
   scene: THREE.Scene,
   world: World,
   gameTime: number,
+  renderer?: Renderer,
 ): void {
   // Store scene reference
-  renderer.scene = scene;
+  lightningRenderer.scene = scene;
 
   // Release all currently visible lines back to pool
-  for (const line of renderer.mainLines) {
-    releaseLine(renderer.mainPool, line);
+  for (const line of lightningRenderer.mainLines) {
+    releaseLine(lightningRenderer.mainPool, line);
   }
-  renderer.mainLines.length = 0;
+  lightningRenderer.mainLines.length = 0;
 
-  for (const line of renderer.branchLines) {
-    releaseLine(renderer.branchPool, line);
+  for (const line of lightningRenderer.branchLines) {
+    releaseLine(lightningRenderer.branchPool, line);
   }
-  renderer.branchLines.length = 0;
+  lightningRenderer.branchLines.length = 0;
 
   // Render all active bolts
-  for (const bolt of renderer.bolts.values()) {
+  for (const bolt of lightningRenderer.bolts.values()) {
     if (!bolt.active) continue;
 
     // Calculate interpolation offset
-    const interpEntityPos = getInterpolatedPosition(bolt.entityId);
+    const interpEntityPos = renderer
+      ? getInterpolatedPosition(renderer, bolt.entityId)
+      : null;
     const transform = getComponent(world, bolt.entityId, 'transform');
     const hasOffset = interpEntityPos && transform;
     if (hasOffset) {
@@ -233,9 +237,9 @@ function renderBolts(
         ? applyOffset(bolt.segments, interpOffset)
         : bolt.segments.length;
       const points = hasOffset ? offsetPoints : bolt.segments;
-      const line = acquireLine(renderer.mainPool, scene, true);
+      const line = acquireLine(lightningRenderer.mainPool, scene, true);
       updateRenderedLine(line, points, count, opacity, true);
-      renderer.mainLines.push(line);
+      lightningRenderer.mainLines.push(line);
     }
 
     // Render branches with offset
@@ -246,9 +250,9 @@ function renderBolts(
         ? applyOffset(branch, interpOffset)
         : branch.length;
       const points = hasOffset ? offsetPoints : branch;
-      const line = acquireLine(renderer.branchPool, scene, false);
+      const line = acquireLine(lightningRenderer.branchPool, scene, false);
       updateRenderedLine(line, points, count, opacity, false);
-      renderer.branchLines.push(line);
+      lightningRenderer.branchLines.push(line);
     }
   }
 }

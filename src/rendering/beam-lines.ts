@@ -11,7 +11,7 @@ import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 import { getComponent } from '../core/ecs';
 import type { ActiveBeam, Entity, World } from '../core/types';
-import { getInterpolatedPosition } from './renderer';
+import { getInterpolatedPosition, type Renderer } from './renderer';
 
 /** Beam fade-out duration in seconds */
 const BEAM_FADE_DURATION = 0.15;
@@ -150,6 +150,7 @@ export function updateAllBeamLines(
   scene: THREE.Scene,
   beamLines: Map<string, BeamLineEntry>,
   gameTime: number,
+  renderer: Renderer,
 ): void {
   const activeBeams = world.systemState.beams.activeBeams;
   seenBeams.clear();
@@ -158,7 +159,7 @@ export function updateAllBeamLines(
   for (const [entity, beams] of activeBeams) {
     // Get entity's current and interpolated positions for offset calculation
     const transform = getComponent(world, entity, 'transform');
-    const interpEntityPos = getInterpolatedPosition(entity);
+    const interpEntityPos = getInterpolatedPosition(renderer, entity);
     const entityPos = transform?.position;
 
     for (const beam of beams) {

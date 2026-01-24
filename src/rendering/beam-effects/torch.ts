@@ -10,7 +10,7 @@ import * as THREE from 'three';
 import { getComponent } from '../../core/ecs';
 import type { ActiveBeam, World } from '../../core/types';
 import { TICK_SEC } from '../../game';
-import { getInterpolatedPosition } from '../renderer';
+import { getInterpolatedPosition, type Renderer } from '../renderer';
 
 /** Torch visual parameters */
 const TORCH_BASE_WIDTH = 1.5; // Width at emitter
@@ -65,10 +65,11 @@ const interpHitPoint = new THREE.Vector3();
 
 /** Update torch rendering with interpolation */
 export function updateTorchRenderer(
-  renderer: TorchRenderer,
+  torchRenderer: TorchRenderer,
   scene: THREE.Scene,
   world: World,
   alpha = 1,
+  renderer?: Renderer,
 ): void {
   // Calculate interpolated gameTime for smooth flicker animation
   const gameTime = world.systemState.gameTime - TICK_SEC * (1 - alpha);
@@ -79,7 +80,9 @@ export function updateTorchRenderer(
   for (const [entity, beams] of activeBeams) {
     // Get entity's current and interpolated positions for offset calculation
     const transform = getComponent(world, entity, 'transform');
-    const interpEntityPos = getInterpolatedPosition(entity);
+    const interpEntityPos = renderer
+      ? getInterpolatedPosition(renderer, entity)
+      : null;
     const entityPos = transform?.position;
 
     for (const beam of beams) {
@@ -93,11 +96,11 @@ export function updateTorchRenderer(
       const key = `${entity}-${beam.weaponIndex}`;
       seenTorches.add(key);
 
-      let cone = renderer.cones.get(key);
+      let cone = torchRenderer.cones.get(key);
       if (!cone) {
-        cone = createTorchCone(renderer);
+        cone = createTorchCone(torchRenderer);
         scene.add(cone);
-        renderer.cones.set(key, cone);
+        torchRenderer.cones.set(key, cone);
       }
 
       // Calculate interpolated positions
@@ -118,12 +121,12 @@ export function updateTorchRenderer(
   }
 
   // Clean up old torches
-  for (const [key, cone] of renderer.cones) {
+  for (const [key, cone] of torchRenderer.cones) {
     if (!seenTorches.has(key)) {
       scene.remove(cone);
       cone.geometry.dispose();
       (cone.material as THREE.Material).dispose();
-      renderer.cones.delete(key);
+      torchRenderer.cones.delete(key);
     }
   }
 }

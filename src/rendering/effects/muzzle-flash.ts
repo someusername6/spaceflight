@@ -10,7 +10,11 @@ import type { WeaponName } from '../../components/projectile';
 import { entityExists, getComponent } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
 import { TICK_SEC } from '../../game';
-import { getInterpolatedPosition, getInterpolatedRotation } from '../renderer';
+import {
+  getInterpolatedPosition,
+  getInterpolatedRotation,
+  type Renderer,
+} from '../renderer';
 import {
   type BeamGlowVisual,
   disposeBeamGlows,
@@ -137,6 +141,7 @@ function reinitializeFlashVisual(
  * @param world - ECS world
  * @param entity - Entity to get position from
  * @param offset - Local offset in entity's coordinate system
+ * @param renderer - Renderer for interpolation data
  * @returns true if position was computed, false if entity not found
  */
 function computeFlashWorldPosition(
@@ -144,6 +149,7 @@ function computeFlashWorldPosition(
   world: World,
   entity: Entity,
   offset: { x: number; y: number; z: number },
+  renderer?: Renderer,
 ): boolean {
   // Check entity still exists
   if (!entityExists(world, entity)) {
@@ -151,8 +157,8 @@ function computeFlashWorldPosition(
   }
 
   // Get interpolated position and rotation
-  const interpPos = getInterpolatedPosition(entity);
-  const interpRot = getInterpolatedRotation(entity);
+  const interpPos = renderer ? getInterpolatedPosition(renderer, entity) : null;
+  const interpRot = renderer ? getInterpolatedRotation(renderer, entity) : null;
 
   if (!interpPos || !interpRot) {
     // Fallback to current transform if interpolation not available
@@ -185,10 +191,11 @@ function computeFlashWorldPosition(
 
 /** Updates muzzle flash visuals */
 export function updateMuzzleFlashRenderer(
-  renderer: MuzzleFlashRenderer,
+  muzzleFlashRenderer: MuzzleFlashRenderer,
   scene: THREE.Scene,
   world: World,
   alpha = 1,
+  renderer?: Renderer,
 ): void {
   // Calculate interpolated gameTime for smooth animation
   // Interpolate between previous time (gameTime - TICK_SEC) and current using alpha
@@ -208,13 +215,14 @@ export function updateMuzzleFlashRenderer(
         world,
         pending.entity,
         pending.localOffset,
+        renderer,
       )
     ) {
       continue; // Entity not found, skip this flash
     }
 
     // Try to reuse from pool first (avoids allocation)
-    const pooled = renderer.flashPool.pop();
+    const pooled = muzzleFlashRenderer.flashPool.pop();
     if (pooled) {
       reinitializeFlashVisual(
         pooled,
@@ -224,12 +232,12 @@ export function updateMuzzleFlashRenderer(
         pending.entity,
         pending.localOffset,
       );
-      renderer.flashes.push(pooled);
+      muzzleFlashRenderer.flashes.push(pooled);
     } else {
       // No pooled flash available, create new one
       const flash: FlashVisual = {
         mesh: createFlashMesh(
-          renderer,
+          muzzleFlashRenderer,
           scene,
           flashPosition,
           pending.weaponName as WeaponName,
@@ -238,14 +246,14 @@ export function updateMuzzleFlashRenderer(
         entity: pending.entity,
         localOffset: pending.localOffset,
       };
-      renderer.flashes.push(flash);
+      muzzleFlashRenderer.flashes.push(flash);
     }
   }
   pendingFlashes.length = 0;
 
   // Update existing flashes
-  for (let i = renderer.flashes.length - 1; i >= 0; i--) {
-    const flash = renderer.flashes[i];
+  for (let i = muzzleFlashRenderer.flashes.length - 1; i >= 0; i--) {
+    const flash = muzzleFlashRenderer.flashes[i];
     if (!flash) continue;
 
     const age = gameTime - flash.startTime;
@@ -254,8 +262,8 @@ export function updateMuzzleFlashRenderer(
     if (progress >= 1) {
       // Flash expired - return to pool for reuse
       hideFlashVisual(flash);
-      renderer.flashes.splice(i, 1);
-      renderer.flashPool.push(flash);
+      muzzleFlashRenderer.flashes.splice(i, 1);
+      muzzleFlashRenderer.flashPool.push(flash);
     } else {
       // Update flash position from entity's interpolated transform (follows the ship)
       if (
@@ -264,6 +272,7 @@ export function updateMuzzleFlashRenderer(
           world,
           flash.entity,
           flash.localOffset,
+          renderer,
         )
       ) {
         flash.mesh.position.copy(flashPosition);
@@ -279,11 +288,12 @@ export function updateMuzzleFlashRenderer(
 
   // Update beam glows (delegated to beam-glow module)
   updateBeamGlows(
-    renderer.beamGlows,
-    renderer.glowGeometry,
+    muzzleFlashRenderer.beamGlows,
+    muzzleFlashRenderer.glowGeometry,
     scene,
     world,
     gameTime,
+    renderer,
   );
 }
 

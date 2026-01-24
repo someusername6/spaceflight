@@ -5,7 +5,8 @@
  */
 
 import type * as THREE from 'three';
-import { findEntity, getComponent } from '../../core/ecs';
+import { getComponent } from '../../core/ecs';
+import { findLocalPlayer } from '../../core/player-utils';
 import type { World } from '../../core/types';
 import {
   createLightningRenderer,
@@ -137,13 +138,20 @@ export function updateMissionRenderers(
   const scene = getScene(renderer);
 
   syncScene(renderer, world, alpha);
-  updateExplosionRenderer(renderers.explosionRenderer, scene, world, alpha);
+  updateExplosionRenderer(
+    renderers.explosionRenderer,
+    scene,
+    world,
+    alpha,
+    renderer,
+  );
   updateJumpEffectRenderer(
     renderers.jumpEffectRenderer,
     scene,
     world,
     renderer.entityMeshes,
     alpha,
+    renderer,
   );
   updateBoltRenderer(renderers.boltRenderer, scene, world, alpha);
   updateExhaustRenderer(
@@ -152,6 +160,7 @@ export function updateMissionRenderers(
     world,
     world.systemState.gameTime,
     alpha,
+    renderer,
   );
   updateShieldEffectRenderer(
     renderers.shieldEffectRenderer,
@@ -159,15 +168,27 @@ export function updateMissionRenderers(
     world,
     alpha,
   );
-  updateMuzzleFlashRenderer(renderers.muzzleFlashRenderer, scene, world, alpha);
-  updateLightningRenderer(renderers.lightningRenderer, scene, world, alpha);
+  updateMuzzleFlashRenderer(
+    renderers.muzzleFlashRenderer,
+    scene,
+    world,
+    alpha,
+    renderer,
+  );
+  updateLightningRenderer(
+    renderers.lightningRenderer,
+    scene,
+    world,
+    alpha,
+    renderer,
+  );
   updateNuclearLanceRenderer(
     renderers.nuclearLanceRenderer,
     scene,
     world,
     alpha,
   );
-  updateTorchRenderer(renderers.torchRenderer, scene, world, alpha);
+  updateTorchRenderer(renderers.torchRenderer, scene, world, alpha, renderer);
   updateProjectileHitRenderer(
     renderers.projectileHitRenderer,
     scene,
@@ -175,12 +196,12 @@ export function updateMissionRenderers(
     alpha,
   );
 
-  const player = findEntity(world, ['playerControlled', 'transform']);
+  const player = findLocalPlayer(world);
 
   // Update dust system based on custom position or player position
   if (options?.dustCenterPosition) {
     updateDustSystem(renderers.dustSystem, options.dustCenterPosition);
-  } else if (player !== undefined) {
+  } else if (player !== null) {
     const transform = getComponent(world, player, 'transform');
     if (transform) {
       updateDustSystem(renderers.dustSystem, transform.position);
@@ -193,7 +214,7 @@ export function updateMissionRenderers(
   }
 
   // Default behavior: follow player and render
-  if (player !== undefined) {
+  if (player !== null) {
     followEntity(renderer, world, player);
   }
 
@@ -203,7 +224,8 @@ export function updateMissionRenderers(
     renderer.webglRenderer,
     scene,
     world,
-    player,
+    player ?? undefined,
+    renderer,
   );
 
   render(renderer);
@@ -211,7 +233,7 @@ export function updateMissionRenderers(
     renderers.hud,
     world,
     renderer.camera,
-    renderer.entityMeshes,
+    renderer,
     containerWidth,
     containerHeight,
   );
@@ -237,7 +259,7 @@ export function renderMissionFrame(
 ): void {
   const { renderer } = renderers;
   const scene = getScene(renderer);
-  const player = findEntity(world, ['playerControlled', 'transform']);
+  const player = findLocalPlayer(world);
 
   // Render target camera (before main render to avoid render target issues)
   updateTargetCamera(
@@ -245,7 +267,8 @@ export function renderMissionFrame(
     renderer.webglRenderer,
     scene,
     world,
-    player,
+    player ?? undefined,
+    renderer,
   );
 
   render(renderer);
@@ -261,7 +284,7 @@ export function renderMissionFrame(
       renderers.hud,
       world,
       renderer.camera,
-      renderer.entityMeshes,
+      renderer,
       containerWidth,
       containerHeight,
     );

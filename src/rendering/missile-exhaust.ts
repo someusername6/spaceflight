@@ -10,7 +10,11 @@ import { getComponent, queryEntities } from '../core/ecs';
 import { random } from '../core/prng';
 import type { Entity, World } from '../core/types';
 import { TICK_SEC } from '../game';
-import { getInterpolatedPosition, getInterpolatedRotation } from './renderer';
+import {
+  getInterpolatedPosition,
+  getInterpolatedRotation,
+  type Renderer,
+} from './renderer';
 
 /** Exhaust colors - orange/yellow flame */
 const EXHAUST_CORE_COLOR = new THREE.Color(1.0, 0.6, 0.1); // Orange-yellow
@@ -89,11 +93,12 @@ function createExhaust(
 
 /** Updates exhaust visuals with interpolation */
 export function updateExhaustRenderer(
-  renderer: ExhaustRenderer,
+  exhaustRenderer: ExhaustRenderer,
   scene: THREE.Scene,
   world: World,
   gameTime: number,
   alpha = 1,
+  renderer?: Renderer,
 ): void {
   // Calculate interpolated gameTime for smooth flicker animation
   const interpolatedGameTime = gameTime - TICK_SEC * (1 - alpha);
@@ -107,21 +112,27 @@ export function updateExhaustRenderer(
     const transform = getComponent(world, entity, 'transform');
     if (!missile || !transform) continue;
 
-    let exhaust = renderer.exhausts.get(entity);
+    let exhaust = exhaustRenderer.exhausts.get(entity);
 
     if (!exhaust) {
-      exhaust = createExhaust(renderer, scene, world);
-      renderer.exhausts.set(entity, exhaust);
+      exhaust = createExhaust(exhaustRenderer, scene, world);
+      exhaustRenderer.exhausts.set(entity, exhaust);
     }
 
     // Use interpolated position/rotation from syncScene (falls back to current if not available)
-    const interpPos = getInterpolatedPosition(entity) ?? transform.position;
-    const interpRot = getInterpolatedRotation(entity) ?? transform.rotation;
+    const interpPos = renderer
+      ? getInterpolatedPosition(renderer, entity)
+      : null;
+    const interpRot = renderer
+      ? getInterpolatedRotation(renderer, entity)
+      : null;
+    const usePos = interpPos ?? transform.position;
+    const useRot = interpRot ?? transform.rotation;
 
     // Position exhaust behind missile
     exhaustOffset.copy(missile.direction).multiplyScalar(-1.5); // Behind missile
-    exhaust.cone.position.copy(interpPos).add(exhaustOffset);
-    exhaust.cone.quaternion.copy(interpRot);
+    exhaust.cone.position.copy(usePos).add(exhaustOffset);
+    exhaust.cone.quaternion.copy(useRot);
 
     // Position glow light
     exhaust.glow.position.copy(exhaust.cone.position);
@@ -143,13 +154,13 @@ export function updateExhaustRenderer(
   }
 
   // Remove exhausts for missiles that no longer exist
-  for (const [entity, exhaust] of renderer.exhausts) {
+  for (const [entity, exhaust] of exhaustRenderer.exhausts) {
     if (!seenMissiles.has(entity)) {
       scene.remove(exhaust.cone);
       scene.remove(exhaust.glow);
       exhaust.cone.geometry.dispose();
       (exhaust.cone.material as THREE.Material).dispose();
-      renderer.exhausts.delete(entity);
+      exhaustRenderer.exhausts.delete(entity);
     }
   }
 }

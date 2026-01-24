@@ -13,6 +13,7 @@ import type { Entity, World } from '../../../core/types';
 import {
   getInterpolatedPosition,
   getInterpolatedRotation,
+  type Renderer,
 } from '../../../rendering/renderer';
 import { updateFreeCamera } from './camera-free';
 import { orbitAxisX, orbitAxisY, updateOrbitCamera } from './camera-orbit';
@@ -263,7 +264,7 @@ export function toggleCameraMode(state: ReplayCameraState, world: World): void {
 
   // When entering free mode, initialize position from current camera
   if (state.mode === CameraMode.Free && state.targetEntity !== null) {
-    const targetPos = getTargetPosition(state.targetEntity, world);
+    const targetPos = getTargetPosition(state.targetEntity, world, undefined);
     if (targetPos) {
       // Position free camera at current orbit/chase position
       state.freePosition.copy(targetPos);
@@ -274,8 +275,12 @@ export function toggleCameraMode(state: ReplayCameraState, world: World): void {
 }
 
 /** Get target entity position (interpolated) */
-function getTargetPosition(entity: Entity, world: World): THREE.Vector3 | null {
-  const interpPos = getInterpolatedPosition(entity);
+function getTargetPosition(
+  entity: Entity,
+  world: World,
+  renderer?: Renderer,
+): THREE.Vector3 | null {
+  const interpPos = renderer ? getInterpolatedPosition(renderer, entity) : null;
   if (interpPos) return interpPos;
 
   const transform = getComponent(world, entity, 'transform');
@@ -286,8 +291,9 @@ function getTargetPosition(entity: Entity, world: World): THREE.Vector3 | null {
 function getTargetRotation(
   entity: Entity,
   world: World,
+  renderer?: Renderer,
 ): THREE.Quaternion | null {
-  const interpRot = getInterpolatedRotation(entity);
+  const interpRot = renderer ? getInterpolatedRotation(renderer, entity) : null;
   if (interpRot) return interpRot;
 
   const transform = getComponent(world, entity, 'transform');
@@ -306,6 +312,7 @@ export function updateCamera(
   world: World,
   input: CameraInput,
   dt: number,
+  renderer?: Renderer,
 ): void {
   // Update entity list
   updateEntityList(state, world);
@@ -328,10 +335,10 @@ export function updateCamera(
 
   switch (state.mode) {
     case CameraMode.Chase:
-      updateChaseCamera(state, camera, world, input, dt);
+      updateChaseCamera(state, camera, world, input, dt, renderer);
       break;
     case CameraMode.Orbit:
-      updateOrbitCamera(state, camera, world, input, dt);
+      updateOrbitCamera(state, camera, world, input, dt, renderer);
       break;
     case CameraMode.Free:
       updateFreeCamera(state, camera, input, dt);
@@ -346,11 +353,12 @@ function updateChaseCamera(
   world: World,
   input: CameraInput,
   dt: number,
+  renderer?: Renderer,
 ): void {
   if (state.targetEntity === null) return;
 
-  const targetPos = getTargetPosition(state.targetEntity, world);
-  const targetRot = getTargetRotation(state.targetEntity, world);
+  const targetPos = getTargetPosition(state.targetEntity, world, renderer);
+  const targetRot = getTargetRotation(state.targetEntity, world, renderer);
 
   if (!targetPos || !targetRot) return;
 
