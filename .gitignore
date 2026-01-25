@@ -30,9 +30,6 @@ cover-image.png
 spaceflight-build.zip
 spaceflight-*.zip
 
-# Generated files (created by build scripts)
-src/rendering/ship-geometries.ts
-
 # Test output
 balance-test-results.txt
 
