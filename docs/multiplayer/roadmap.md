@@ -143,10 +143,10 @@ This roadmap breaks implementation into phases, each scoped to complete in a sin
 
 ### Success Criteria
 
-- [ ] Two local sessions stay in sync over 1000 ticks
-- [ ] Delayed input triggers rollback and resimulation
-- [ ] Hash comparison detects intentional desync
-- [ ] No memory leaks after extended run
+- [x] Two local sessions stay in sync over 1000 ticks
+- [x] Delayed input triggers rollback and resimulation
+- [x] Hash comparison detects intentional desync
+- [x] No memory leaks after extended run
 
 ---
 

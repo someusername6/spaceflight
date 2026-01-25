@@ -107,6 +107,18 @@ export interface SerializedShields {
   iu: number; // ionizedUntil
 }
 
+// Marker value for -Infinity in JSON (since JSON doesn't support Infinity)
+const NEG_INFINITY_MARKER = -1e308;
+
+function serializeTime(t: number): number {
+  return t === -Infinity ? NEG_INFINITY_MARKER : t;
+}
+
+function deserializeTime(t: number | null): number {
+  if (t === null || t === NEG_INFINITY_MARKER) return -Infinity;
+  return t;
+}
+
 export function serializeShields(c: Shields): SerializedShields {
   return {
     t: 18,
@@ -114,8 +126,8 @@ export function serializeShields(c: Shields): SerializedShields {
     m: c.max,
     rr: c.regenRate,
     rd: c.regenDelay,
-    ld: c.lastDamageTime,
-    iu: c.ionizedUntil,
+    ld: serializeTime(c.lastDamageTime),
+    iu: serializeTime(c.ionizedUntil),
   };
 }
 
@@ -126,7 +138,7 @@ export function deserializeShields(s: SerializedShields): Shields {
     max: s.m,
     regenRate: s.rr,
     regenDelay: s.rd,
-    lastDamageTime: s.ld,
-    ionizedUntil: s.iu,
+    lastDamageTime: deserializeTime(s.ld),
+    ionizedUntil: deserializeTime(s.iu),
   };
 }
