@@ -24,11 +24,11 @@ import {
   createPrimaryWeapons,
   createSecondaryWeapons,
 } from '../../../src/components/weapons.ts';
+import { createPRNG } from '../../../src/core/prng.ts';
 import {
   deserializeComponent,
   serializeComponent,
-} from '../../../src/core/component-serializers.ts';
-import { createPRNG } from '../../../src/core/prng.ts';
+} from '../../../src/core/serialization/index.ts';
 import { AI_PROFILES } from '../../../src/data/ai-profiles.ts';
 
 describe('Component Serialization', () => {

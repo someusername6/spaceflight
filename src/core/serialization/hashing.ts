@@ -12,8 +12,8 @@
  * - Skips transient/visual-only state
  */
 
+import type { World } from '../types';
 import { hashComponent } from './component-hashers';
-import type { World } from './types';
 
 // =============================================================================
 // FNV-1a Hash Implementation
@@ -78,7 +78,7 @@ export class HashState {
 
 function hashSystemState(
   hash: HashState,
-  state: import('./types').SystemState,
+  state: import('../types').SystemState,
 ): void {
   hash.addFloat64(state.gameTime);
 

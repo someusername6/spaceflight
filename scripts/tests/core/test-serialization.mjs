@@ -13,9 +13,9 @@ import {
   isSerializedQuaternion,
   isSerializedVector3,
   serializeQuaternion,
-  serializeTransform,
+  serializeTransformPrimitive,
   serializeVector3,
-} from '../../../src/core/serialization.ts';
+} from '../../../src/core/serialization/index.ts';
 
 describe('Vector3 serialization', () => {
   it('serializes Vector3 to plain object', () => {
@@ -107,7 +107,7 @@ describe('Transform serialization', () => {
   it('serializes position and rotation together', () => {
     const pos = new Vector3(10, 20, 30);
     const rot = new Quaternion(0, 0, 0, 1);
-    const s = serializeTransform(pos, rot);
+    const s = serializeTransformPrimitive(pos, rot);
 
     assert.deepStrictEqual(s.position, { x: 10, y: 20, z: 30 });
     assert.deepStrictEqual(s.rotation, { x: 0, y: 0, z: 0, w: 1 });

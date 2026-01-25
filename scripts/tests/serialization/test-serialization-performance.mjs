@@ -33,13 +33,14 @@ import {
   createEntity,
   createWorld,
 } from '../../../src/core/ecs.ts';
-import { Faction } from '../../../src/core/types.ts';
 import {
+  computeWorldHash,
   deserializeWorld,
   estimateWorldSize,
   serializeWorld,
   serializeWorldToBytes,
-} from '../../../src/core/world-serialization.ts';
+} from '../../../src/core/serialization/index.ts';
+import { Faction } from '../../../src/core/types.ts';
 import { AI_PROFILES } from '../../../src/data/ai-profiles.ts';
 
 /**
@@ -252,8 +253,6 @@ describe('Serialization Performance', () => {
     );
   });
 });
-
-import { computeWorldHash } from '../../../src/core/world-hash.ts';
 
 describe('Hash Performance', () => {
   it('Large world hash completes quickly', () => {

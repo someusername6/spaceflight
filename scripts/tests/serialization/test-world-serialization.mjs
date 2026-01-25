@@ -18,10 +18,6 @@ import { createProjectile } from '../../../src/components/projectile.ts';
 import { createTransform } from '../../../src/components/transform.ts';
 import { createSecondaryWeapons } from '../../../src/components/weapons.ts';
 import {
-  deserializeComponent,
-  serializeComponent,
-} from '../../../src/core/component-serializers.ts';
-import {
   addComponent,
   createEntity,
   createWorld,
@@ -29,15 +25,17 @@ import {
   removeEntity,
 } from '../../../src/core/ecs.ts';
 import { random } from '../../../src/core/prng.ts';
-import { Faction, MissionResult } from '../../../src/core/types.ts';
-import { computeWorldHash } from '../../../src/core/world-hash.ts';
 import {
+  computeWorldHash,
+  deserializeComponent,
   deserializeWorld,
   deserializeWorldFromBytes,
   estimateWorldSize,
+  serializeComponent,
   serializeWorld,
   serializeWorldToBytes,
-} from '../../../src/core/world-serialization.ts';
+} from '../../../src/core/serialization/index.ts';
+import { Faction, MissionResult } from '../../../src/core/types.ts';
 import { AI_PROFILES } from '../../../src/data/ai-profiles.ts';
 
 describe('World Serialization', () => {

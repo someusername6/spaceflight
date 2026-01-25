@@ -29,12 +29,12 @@ import {
   getComponent,
 } from '../../../src/core/ecs.ts';
 import { random } from '../../../src/core/prng.ts';
-import { Faction, MissionResult } from '../../../src/core/types.ts';
 import {
   computeWorldHash,
   HashState,
   worldsEqual,
-} from '../../../src/core/world-hash.ts';
+} from '../../../src/core/serialization/index.ts';
+import { Faction, MissionResult } from '../../../src/core/types.ts';
 import { AI_PROFILES } from '../../../src/data/ai-profiles.ts';
 
 describe('HashState', () => {

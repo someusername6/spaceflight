@@ -1,30 +1,16 @@
 /**
- * World Serialization - Full ECS world snapshot for rollback netcode.
- * Serializes entities, components, SystemState, PRNG, and entity allocator.
- * Transient fields (renderPrng, visual queues) are NOT serialized.
+ * SystemState Serialization - Beam and system state handling for world snapshots.
  */
 
-import type { ComponentType } from './component-registry';
+import type { ActiveBeam, Entity, SystemState } from '../types';
 import {
   deserializeColor,
-  deserializeComponent,
   deserializeVector3,
   type SerializedColor,
-  type SerializedComponent,
   type SerializedVector3,
   serializeColor,
-  serializeComponent,
   serializeVector3,
-} from './component-serializers';
-import type { PRNGState } from './prng';
-import type {
-  ActiveBeam,
-  ComponentBase,
-  Entity,
-  MissionResult,
-  SystemState,
-  World,
-} from './types';
+} from './primitives';
 
 // =============================================================================
 // Serialized Types
@@ -81,7 +67,7 @@ export interface SerializedSystemState {
     prevFireState: Array<[Entity, boolean]>;
   };
   mission: {
-    result: MissionResult;
+    result: import('../types').MissionResult;
     missionType:
       | 'elimination'
       | 'escort'
@@ -98,31 +84,6 @@ export interface SerializedSystemState {
     targetCollector: number;
   };
 }
-
-/** Serialized entity with all components */
-export interface SerializedEntity {
-  id: Entity;
-  components: SerializedComponent[];
-}
-
-/** Complete serialized world state */
-export interface SerializedWorld {
-  /** Version for future compatibility */
-  version: number;
-  /** All entities with their components */
-  entities: SerializedEntity[];
-  /** Next entity ID to allocate */
-  nextEntityId: Entity;
-  /** Entities pending removal */
-  toRemove: Entity[];
-  /** Simulation PRNG state */
-  prng: PRNGState;
-  /** Simulation-critical system state */
-  systemState: SerializedSystemState;
-}
-
-/** Current serialization version */
-export const WORLD_SERIALIZATION_VERSION = 1;
 
 // =============================================================================
 // Beam Serialization
@@ -187,7 +148,9 @@ function deserializeActiveBeam(s: SerializedActiveBeam): ActiveBeam {
 // SystemState Serialization
 // =============================================================================
 
-function serializeSystemState(state: SystemState): SerializedSystemState {
+export function serializeSystemState(
+  state: SystemState,
+): SerializedSystemState {
   // Convert activeBeams Map to array
   const activeBeamsArray: Array<[Entity, SerializedActiveBeam[]]> = [];
   for (const [entity, beams] of state.beams.activeBeams) {
@@ -227,7 +190,7 @@ function serializeSystemState(state: SystemState): SerializedSystemState {
   };
 }
 
-function deserializeSystemState(
+export function deserializeSystemState(
   s: SerializedSystemState,
   target: SystemState,
 ): void {
@@ -278,119 +241,4 @@ function deserializeSystemState(
   target.pools.beamWeapon = s.pools.beamWeapon;
   target.pools.collidable = s.pools.collidable;
   target.pools.targetCollector = s.pools.targetCollector;
-}
-
-// =============================================================================
-// World Serialization
-// =============================================================================
-
-/**
- * Serialize the entire world state to a plain object.
- * The result can be JSON.stringify'd or converted to binary.
- */
-export function serializeWorld(world: World): SerializedWorld {
-  const entities: SerializedEntity[] = [];
-
-  // Serialize all entities and their components
-  for (const entityId of world.entities) {
-    const componentMap = world.components.get(entityId);
-    if (!componentMap) continue;
-
-    const serializedComponents: SerializedComponent[] = [];
-    for (const component of componentMap.values()) {
-      serializedComponents.push(serializeComponent(component));
-    }
-
-    entities.push({
-      id: entityId,
-      components: serializedComponents,
-    });
-  }
-
-  return {
-    version: WORLD_SERIALIZATION_VERSION,
-    entities,
-    nextEntityId: world.nextEntityId,
-    toRemove: Array.from(world.toRemove),
-    prng: { seed: world.prng.seed },
-    systemState: serializeSystemState(world.systemState),
-  };
-}
-
-/**
- * Deserialize world state into an existing World object.
- * Clears current state and replaces with serialized data.
- *
- * @param data - The serialized world data
- * @param world - The world object to populate
- */
-export function deserializeWorld(data: SerializedWorld, world: World): void {
-  if (data.version !== WORLD_SERIALIZATION_VERSION) {
-    throw new Error(
-      `World serialization version mismatch: expected ${WORLD_SERIALIZATION_VERSION}, got ${data.version}`,
-    );
-  }
-
-  // Clear existing state
-  world.entities.clear();
-  world.components.clear();
-  world.toRemove.clear();
-
-  // Restore entities and components
-  for (const serializedEntity of data.entities) {
-    world.entities.add(serializedEntity.id);
-
-    const componentMap = new Map<ComponentType, ComponentBase>();
-    for (const serializedComponent of serializedEntity.components) {
-      const component = deserializeComponent(serializedComponent);
-      componentMap.set(component.type as ComponentType, component);
-    }
-    world.components.set(serializedEntity.id, componentMap);
-  }
-
-  // Restore entity ID allocator
-  world.nextEntityId = data.nextEntityId;
-
-  // Restore pending removals
-  for (const entityId of data.toRemove) {
-    world.toRemove.add(entityId);
-  }
-
-  // Restore PRNG state
-  world.prng.seed = data.prng.seed;
-
-  // Restore system state
-  deserializeSystemState(data.systemState, world.systemState);
-}
-
-/**
- * Convert serialized world to Uint8Array for network transmission.
- * Uses JSON encoding with TextEncoder for simplicity.
- * For production, consider MessagePack or custom binary format.
- */
-export function serializeWorldToBytes(world: World): Uint8Array {
-  const serialized = serializeWorld(world);
-  const json = JSON.stringify(serialized);
-  return new TextEncoder().encode(json);
-}
-
-/**
- * Deserialize world from Uint8Array.
- */
-export function deserializeWorldFromBytes(
-  data: Uint8Array,
-  world: World,
-): void {
-  const json = new TextDecoder().decode(data);
-  const serialized = JSON.parse(json) as SerializedWorld;
-  deserializeWorld(serialized, world);
-}
-
-/**
- * Estimate the byte size of a serialized world.
- * Useful for monitoring snapshot sizes.
- */
-export function estimateWorldSize(world: World): number {
-  const serialized = serializeWorld(world);
-  return JSON.stringify(serialized).length;
 }

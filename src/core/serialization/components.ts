@@ -1,30 +1,37 @@
 /**
- * Component Dispatch - Generic serialize/deserialize for any component.
+ * Component Serialization - Generic serialize/deserialize dispatch.
  *
- * These functions dispatch to the appropriate component-specific serializer
- * based on the component's type field (serialize) or numeric type ID (deserialize).
+ * Each component file (src/components/*.ts) defines its own:
+ * - SerializedX interface with compact field names
+ * - serializeX() function
+ * - deserializeX() function
+ *
+ * This module provides:
+ * - SerializedComponent union type (all 26 component types)
+ * - serializeComponent() - dispatches by component.type string
+ * - deserializeComponent() - dispatches by numeric type ID (t field)
  */
 
 import {
   deserializeAIControlled,
   type SerializedAIControlled,
   serializeAIControlled,
-} from '../components/ai';
+} from '../../components/ai';
 import {
   deserializeAimError,
   type SerializedAimError,
   serializeAimError,
-} from '../components/aim-error';
+} from '../../components/aim-error';
 import {
   deserializeCollision,
   type SerializedCollision,
   serializeCollision,
-} from '../components/collision';
+} from '../../components/collision';
 import {
   deserializeCombatStats,
   type SerializedCombatStats,
   serializeCombatStats,
-} from '../components/combat-stats';
+} from '../../components/combat-stats';
 import {
   deserializeConvoyAutopilot,
   deserializeConvoyShip,
@@ -32,97 +39,97 @@ import {
   type SerializedConvoyShip,
   serializeConvoyAutopilot,
   serializeConvoyShip,
-} from '../components/convoy';
+} from '../../components/convoy';
 import {
   deserializeDamageTracking,
   type SerializedDamageTracking,
   serializeDamageTracking,
-} from '../components/damage-tracking';
+} from '../../components/damage-tracking';
 import {
   deserializeDecoy,
   type SerializedDecoy,
   serializeDecoy,
-} from '../components/decoy';
+} from '../../components/decoy';
 import {
   deserializeExplosion,
   type SerializedExplosion,
   serializeExplosion,
-} from '../components/explosion';
+} from '../../components/explosion';
 import {
   deserializeFaction,
   type SerializedFaction,
   serializeFaction,
-} from '../components/faction';
+} from '../../components/faction';
 import {
   deserializeHealth,
   type SerializedHealth,
   serializeHealth,
-} from '../components/health';
+} from '../../components/health';
 import {
   deserializeHeat,
   type SerializedHeat,
   serializeHeat,
-} from '../components/heat';
+} from '../../components/heat';
 import {
   deserializeHullCollider,
   type SerializedHullCollider,
   serializeHullCollider,
-} from '../components/hull-collider';
+} from '../../components/hull-collider';
 import {
   deserializeHyperspaceJump,
   type SerializedHyperspaceJump,
   serializeHyperspaceJump,
-} from '../components/hyperspace-jump';
+} from '../../components/hyperspace-jump';
 import {
   deserializeMissile,
   type SerializedMissile,
   serializeMissile,
-} from '../components/missile';
+} from '../../components/missile';
 import {
   deserializePhysics,
   type SerializedPhysics,
   serializePhysics,
-} from '../components/physics';
+} from '../../components/physics';
 import {
   deserializePlayerControlled,
   type SerializedPlayerControlled,
   serializePlayerControlled,
-} from '../components/player';
+} from '../../components/player';
 import {
   deserializeProjectile,
   type SerializedProjectile,
   serializeProjectile,
-} from '../components/projectile';
+} from '../../components/projectile';
 import {
   deserializeShieldHit,
   type SerializedShieldHit,
   serializeShieldHit,
-} from '../components/shield-hit';
+} from '../../components/shield-hit';
 import {
   deserializeShields,
   type SerializedShields,
   serializeShields,
-} from '../components/shields';
+} from '../../components/shields';
 import {
   deserializeShipIdentity,
   type SerializedShipIdentity,
   serializeShipIdentity,
-} from '../components/ship-identity';
+} from '../../components/ship-identity';
 import {
   deserializeStructure,
   type SerializedStructure,
   serializeStructure,
-} from '../components/structure';
+} from '../../components/structure';
 import {
   deserializeTargeting,
   type SerializedTargeting,
   serializeTargeting,
-} from '../components/targeting';
+} from '../../components/targeting';
 import {
   deserializeTransform,
   type SerializedTransform,
   serializeTransform,
-} from '../components/transform';
+} from '../../components/transform';
 import {
   deserializePrimaryWeapons,
   deserializeSecondaryWeapons,
@@ -130,10 +137,14 @@ import {
   type SerializedSecondaryWeapons,
   serializePrimaryWeapons,
   serializeSecondaryWeapons,
-} from '../components/weapons';
-import type { ComponentBase } from './types';
+} from '../../components/weapons';
+import type { ComponentBase } from '../types';
 
-// Union type for all serialized components (uses numeric type IDs)
+// =============================================================================
+// Serialized Component Types
+// =============================================================================
+
+/** Union type for all serialized components (uses numeric type IDs) */
 export type SerializedComponent =
   | SerializedTransform
   | SerializedPhysics
@@ -162,8 +173,42 @@ export type SerializedComponent =
   | SerializedStructure
   | SerializedHyperspaceJump;
 
+// Re-export all serialized types for convenience
+export type {
+  SerializedTransform,
+  SerializedPhysics,
+  SerializedHealth,
+  SerializedCollision,
+  SerializedHullCollider,
+  SerializedFaction,
+  SerializedPlayerControlled,
+  SerializedAIControlled,
+  SerializedTargeting,
+  SerializedAimError,
+  SerializedPrimaryWeapons,
+  SerializedSecondaryWeapons,
+  SerializedProjectile,
+  SerializedMissile,
+  SerializedDecoy,
+  SerializedExplosion,
+  SerializedShipIdentity,
+  SerializedHeat,
+  SerializedShields,
+  SerializedShieldHit,
+  SerializedCombatStats,
+  SerializedConvoyShip,
+  SerializedConvoyAutopilot,
+  SerializedDamageTracking,
+  SerializedStructure,
+  SerializedHyperspaceJump,
+};
+
 // Type guard for compact serialized components (check numeric type ID)
 type ComponentWithTypeId = { t: number };
+
+// =============================================================================
+// Dispatch Functions
+// =============================================================================
 
 /**
  * Serialize any component by type.

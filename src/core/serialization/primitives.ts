@@ -1,5 +1,5 @@
 /**
- * Serialization Utilities - Convert Three.js objects to/from plain JSON.
+ * Serialization Primitives - Convert Three.js objects to/from plain JSON.
  *
  * Three.js Vector3 and Quaternion objects contain methods and internal state
  * that don't survive JSON serialization. These utilities provide clean
@@ -122,7 +122,7 @@ export function deserializeColor(s: SerializedColor): Color {
 }
 
 /** Serialized transform state for network transmission */
-export interface SerializedTransform {
+export interface SerializedTransformPrimitive {
   position: SerializedVector3;
   rotation: SerializedQuaternion;
 }
@@ -131,10 +131,10 @@ export interface SerializedTransform {
  * Serialize a transform component's position and rotation.
  * Useful for full entity state snapshots.
  */
-export function serializeTransform(
+export function serializeTransformPrimitive(
   position: Vector3,
   rotation: Quaternion,
-): SerializedTransform {
+): SerializedTransformPrimitive {
   return {
     position: serializeVector3(position),
     rotation: serializeQuaternion(rotation),
