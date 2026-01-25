@@ -3,6 +3,14 @@
  */
 
 import { Quaternion, Vector3 } from 'three';
+import {
+  deserializeQuaternion,
+  deserializeVector3,
+  type SerializedQuaternion,
+  type SerializedVector3,
+  serializeQuaternion,
+  serializeVector3,
+} from '../core/serialization';
 import type { ComponentBase } from '../core/types';
 
 export interface Physics extends ComponentBase {
@@ -74,4 +82,72 @@ export function setInitialVelocity(
   const forward = new Vector3(0, 0, -1).applyQuaternion(rotation);
   physics.velocity.copy(forward).multiplyScalar(speed);
   physics.currentSpeed = speed;
+}
+
+// =============================================================================
+// Serialization
+// =============================================================================
+
+export interface SerializedPhysics {
+  t: 1; // Component type ID
+  v: SerializedVector3; // velocity
+  ms: number; // maxSpeed
+  ac: number; // acceleration
+  dr: number; // drag
+  tr: number; // turnRate
+  rr: number; // rollRate
+  cs: number; // currentSpeed
+  am: number; // afterburnerMultiplier
+  ah: number; // afterburnerHeatRate
+  ia: boolean; // isAfterburning
+  al: boolean; // afterburnerLocked
+  av: SerializedVector3; // angularVelocity
+  aa: number; // angularAcceleration
+  pp: SerializedVector3; // prevPosition
+  pr: SerializedQuaternion; // prevRotation
+  pv: SerializedVector3; // prevVelocity
+}
+
+export function serializePhysics(c: Physics): SerializedPhysics {
+  return {
+    t: 1,
+    v: serializeVector3(c.velocity),
+    ms: c.maxSpeed,
+    ac: c.acceleration,
+    dr: c.drag,
+    tr: c.turnRate,
+    rr: c.rollRate,
+    cs: c.currentSpeed,
+    am: c.afterburnerMultiplier,
+    ah: c.afterburnerHeatRate,
+    ia: c.isAfterburning,
+    al: c.afterburnerLocked,
+    av: serializeVector3(c.angularVelocity),
+    aa: c.angularAcceleration,
+    pp: serializeVector3(c.prevPosition),
+    pr: serializeQuaternion(c.prevRotation),
+    pv: serializeVector3(c.prevVelocity),
+  };
+}
+
+export function deserializePhysics(s: SerializedPhysics): Physics {
+  return {
+    type: 'physics',
+    velocity: deserializeVector3(s.v),
+    maxSpeed: s.ms,
+    acceleration: s.ac,
+    drag: s.dr,
+    turnRate: s.tr,
+    rollRate: s.rr,
+    currentSpeed: s.cs,
+    afterburnerMultiplier: s.am,
+    afterburnerHeatRate: s.ah,
+    isAfterburning: s.ia,
+    afterburnerLocked: s.al,
+    angularVelocity: deserializeVector3(s.av),
+    angularAcceleration: s.aa,
+    prevPosition: deserializeVector3(s.pp),
+    prevRotation: deserializeQuaternion(s.pr),
+    prevVelocity: deserializeVector3(s.pv),
+  };
 }

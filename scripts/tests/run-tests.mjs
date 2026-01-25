@@ -68,6 +68,10 @@ const QUICK_TESTS = [
   'replay/test-storage-compression.mjs',
   'systems/test-input-replay.mjs',
 
+  // Serialization tests (multiplayer rollback support)
+  'serialization/test-world-serialization.mjs',
+  'serialization/test-world-hash.mjs',
+
   // UI framework and component tests
   'rendering/test-hud-dom-utils.mjs',
   'ui/framework/test-screen-framework.mjs',

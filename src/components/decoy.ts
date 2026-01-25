@@ -35,3 +35,38 @@ export function createDecoy(owner: Entity, direction: Vector3): Decoy {
 export function isDecoyExpired(decoy: Decoy): boolean {
   return decoy.timeRemaining <= 0;
 }
+
+// =============================================================================
+// Serialization
+// =============================================================================
+
+import {
+  deserializeVector3,
+  type SerializedVector3,
+  serializeVector3,
+} from '../core/serialization';
+
+export interface SerializedDecoy {
+  t: 14; // Component type ID
+  o: Entity; // owner
+  d: SerializedVector3; // direction
+  tr: number; // timeRemaining
+}
+
+export function serializeDecoy(c: Decoy): SerializedDecoy {
+  return {
+    t: 14,
+    o: c.owner,
+    d: serializeVector3(c.direction),
+    tr: c.timeRemaining,
+  };
+}
+
+export function deserializeDecoy(s: SerializedDecoy): Decoy {
+  return {
+    type: 'decoy',
+    owner: s.o,
+    direction: deserializeVector3(s.d),
+    timeRemaining: s.tr,
+  };
+}

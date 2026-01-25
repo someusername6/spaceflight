@@ -92,3 +92,41 @@ export function regenerateShields(
     shields.current + shields.regenRate * dt,
   );
 }
+
+// =============================================================================
+// Serialization
+// =============================================================================
+
+export interface SerializedShields {
+  t: 18; // Component type ID
+  c: number; // current
+  m: number; // max
+  rr: number; // regenRate
+  rd: number; // regenDelay
+  ld: number; // lastDamageTime
+  iu: number; // ionizedUntil
+}
+
+export function serializeShields(c: Shields): SerializedShields {
+  return {
+    t: 18,
+    c: c.current,
+    m: c.max,
+    rr: c.regenRate,
+    rd: c.regenDelay,
+    ld: c.lastDamageTime,
+    iu: c.ionizedUntil,
+  };
+}
+
+export function deserializeShields(s: SerializedShields): Shields {
+  return {
+    type: 'shields',
+    current: s.c,
+    max: s.m,
+    regenRate: s.rr,
+    regenDelay: s.rd,
+    lastDamageTime: s.ld,
+    ionizedUntil: s.iu,
+  };
+}

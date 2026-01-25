@@ -165,3 +165,117 @@ export function snapshotStats(
     weaponStats: Array.from(stats.weaponStats.values()),
   };
 }
+
+// =============================================================================
+// Serialization
+// =============================================================================
+
+/** Category as numeric */
+const WeaponCategoryToNum: Record<WeaponStats['category'], number> = {
+  projectile: 0,
+  beam: 1,
+  missile: 2,
+  decoy: 3,
+};
+const NumToWeaponCategory: WeaponStats['category'][] = [
+  'projectile',
+  'beam',
+  'missile',
+  'decoy',
+];
+
+export interface SerializedWeaponStats {
+  n: string; // weaponName
+  c: number; // category
+  sf: number; // shotsFired
+  so: number; // shotsOnTarget
+  sh: number; // shrapnelHitsOnTarget
+  tf: number; // timeFired
+  to: number; // timeOnTarget
+  pb: boolean; // isPulseBeam
+  ac: number; // ammoCarried
+  ml: number; // missilesLaunched
+  mh: number; // missilesHit
+  ms: number; // missilesSeduced
+  dc: number; // decoysCarried
+  dd: number; // decoysDeployed
+  msd: number; // missilesSeducedByDecoy
+  dm: number; // damageDealt
+}
+
+export interface SerializedCombatStats {
+  t: 20; // Component type ID
+  k: number; // kills
+  a: number; // assists
+  dd: number; // damageDealt
+  dr: number; // damageReceived
+  ws: SerializedWeaponStats[]; // weaponStats
+}
+
+function serializeWeaponStats(w: WeaponStats): SerializedWeaponStats {
+  return {
+    n: w.weaponName,
+    c: WeaponCategoryToNum[w.category],
+    sf: w.shotsFired,
+    so: w.shotsOnTarget,
+    sh: w.shrapnelHitsOnTarget,
+    tf: w.timeFired,
+    to: w.timeOnTarget,
+    pb: w.isPulseBeam,
+    ac: w.ammoCarried,
+    ml: w.missilesLaunched,
+    mh: w.missilesHit,
+    ms: w.missilesSeduced,
+    dc: w.decoysCarried,
+    dd: w.decoysDeployed,
+    msd: w.missilesSeducedByDecoy,
+    dm: w.damageDealt,
+  };
+}
+
+function deserializeWeaponStats(s: SerializedWeaponStats): WeaponStats {
+  return {
+    weaponName: s.n,
+    category: NumToWeaponCategory[s.c] ?? 'projectile',
+    shotsFired: s.sf,
+    shotsOnTarget: s.so,
+    shrapnelHitsOnTarget: s.sh,
+    timeFired: s.tf,
+    timeOnTarget: s.to,
+    isPulseBeam: s.pb,
+    ammoCarried: s.ac,
+    missilesLaunched: s.ml,
+    missilesHit: s.mh,
+    missilesSeduced: s.ms,
+    decoysCarried: s.dc,
+    decoysDeployed: s.dd,
+    missilesSeducedByDecoy: s.msd,
+    damageDealt: s.dm,
+  };
+}
+
+export function serializeCombatStats(c: CombatStats): SerializedCombatStats {
+  return {
+    t: 20,
+    k: c.kills,
+    a: c.assists,
+    dd: c.damageDealt,
+    dr: c.damageReceived,
+    ws: Array.from(c.weaponStats.values()).map(serializeWeaponStats),
+  };
+}
+
+export function deserializeCombatStats(s: SerializedCombatStats): CombatStats {
+  const weaponStats = new Map<string, WeaponStats>();
+  for (const ws of s.ws) {
+    weaponStats.set(ws.n, deserializeWeaponStats(ws));
+  }
+  return {
+    type: 'combatStats',
+    kills: s.k,
+    assists: s.a,
+    damageDealt: s.dd,
+    damageReceived: s.dr,
+    weaponStats,
+  };
+}

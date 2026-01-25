@@ -26,3 +26,25 @@ export function createDamageTracking(): DamageTracking {
     lastDamageTime: 0,
   };
 }
+
+// =============================================================================
+// Serialization
+// =============================================================================
+
+export interface SerializedDamageTracking {
+  t: 23; // Component type ID
+  la: Entity | null; // lastAttacker
+  ld: number; // lastDamageTime
+}
+
+export function serializeDamageTracking(
+  c: DamageTracking,
+): SerializedDamageTracking {
+  return { t: 23, la: c.lastAttacker, ld: c.lastDamageTime };
+}
+
+export function deserializeDamageTracking(
+  s: SerializedDamageTracking,
+): DamageTracking {
+  return { type: 'damageTracking', lastAttacker: s.la, lastDamageTime: s.ld };
+}

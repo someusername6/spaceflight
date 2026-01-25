@@ -92,3 +92,69 @@ export function createCompoundHullCollider(
     subHulls,
   };
 }
+
+// =============================================================================
+// Serialization
+// =============================================================================
+
+/** Serialized hull plane (array for compactness) */
+export type SerializedHullPlane = [number, number, number, number]; // [nx, ny, nz, d]
+
+/** Serialized sub-hull */
+export interface SerializedSubHull {
+  p: SerializedHullPlane[]; // planes
+  r: number; // boundingRadius
+}
+
+export interface SerializedHullCollider {
+  t: 4; // Component type ID
+  p: SerializedHullPlane[]; // planes
+  r: number; // boundingRadius
+  m: number; // mass
+  u: boolean; // useHullForWeapons
+  s?: SerializedSubHull[]; // subHulls
+}
+
+function serializePlane(p: HullPlane): SerializedHullPlane {
+  return [p.nx, p.ny, p.nz, p.d];
+}
+
+function deserializePlane(s: SerializedHullPlane): HullPlane {
+  return { nx: s[0], ny: s[1], nz: s[2], d: s[3] };
+}
+
+export function serializeHullCollider(c: HullCollider): SerializedHullCollider {
+  const result: SerializedHullCollider = {
+    t: 4,
+    p: c.planes.map(serializePlane),
+    r: c.boundingRadius,
+    m: c.mass,
+    u: c.useHullForWeapons,
+  };
+  if (c.subHulls !== undefined) {
+    result.s = c.subHulls.map((sh) => ({
+      p: sh.planes.map(serializePlane),
+      r: sh.boundingRadius,
+    }));
+  }
+  return result;
+}
+
+export function deserializeHullCollider(
+  s: SerializedHullCollider,
+): HullCollider {
+  const result: HullCollider = {
+    type: 'hullCollider',
+    planes: s.p.map(deserializePlane),
+    boundingRadius: s.r,
+    mass: s.m,
+    useHullForWeapons: s.u,
+  };
+  if (s.s !== undefined) {
+    result.subHulls = s.s.map((sh) => ({
+      planes: sh.p.map(deserializePlane),
+      boundingRadius: sh.r,
+    }));
+  }
+  return result;
+}

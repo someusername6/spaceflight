@@ -357,3 +357,16 @@ export function canFire(
 export function hasBeamWeapons(weapons: PrimaryWeapons): boolean {
   return weapons.hasBeams;
 }
+
+// =============================================================================
+// Serialization (see weapons-serialization.ts for complex serializers)
+// =============================================================================
+
+export {
+  deserializePrimaryWeapons,
+  deserializeSecondaryWeapons,
+  type SerializedPrimaryWeapons,
+  type SerializedSecondaryWeapons,
+  serializePrimaryWeapons,
+  serializeSecondaryWeapons,
+} from './weapons-serialization';

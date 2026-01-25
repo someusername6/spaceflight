@@ -150,3 +150,115 @@ export function createProjectile(
 export function isExpired(projectile: Projectile): boolean {
   return projectile.distanceTraveled >= projectile.range;
 }
+
+// =============================================================================
+// Serialization
+// =============================================================================
+
+import {
+  deserializeVector3,
+  type SerializedVector3,
+  serializeVector3,
+} from '../core/serialization';
+
+/** Category as numeric */
+const CategoryToNum: Record<ProjectileCategory, number> = {
+  energy: 0,
+  ballistic: 1,
+};
+const NumToCategory: ProjectileCategory[] = ['energy', 'ballistic'];
+
+export interface SerializedProjectile {
+  t: 12; // Component type ID
+  o: Entity; // owner
+  dm: number; // damage
+  sp: number; // speed
+  rg: number; // range
+  dt: number; // distanceTraveled
+  dr: SerializedVector3; // direction
+  ct: number; // category
+  wn: string; // weaponName
+  vn?: string; // visualName
+  fr?: number; // flakRadius
+  sc?: number; // shrapnelCount
+  sd?: number; // shrapnelDamage
+  ss?: number; // shrapnelSpeed
+  sr?: number; // shrapnelRange
+  sm?: number; // shieldDamageMultiplier
+  iz?: boolean; // ionize
+  ac?: number; // acceleration
+  ms?: number; // maxSpeed
+  tr?: number; // trackingRate
+  tc?: number; // trackingCone
+  sds?: boolean; // speedDamageScale
+  bd?: number; // baseDamage
+  tt?: Entity | null; // trackingTarget
+  pc?: number; // previousClosestEnemyDistance
+  is?: boolean; // isShrapnel
+}
+
+export function serializeProjectile(c: Projectile): SerializedProjectile {
+  const result: SerializedProjectile = {
+    t: 12,
+    o: c.owner,
+    dm: c.damage,
+    sp: c.speed,
+    rg: c.range,
+    dt: c.distanceTraveled,
+    dr: serializeVector3(c.direction),
+    ct: CategoryToNum[c.category],
+    wn: c.weaponName,
+  };
+  if (c.visualName !== undefined) result.vn = c.visualName;
+  if (c.flakRadius !== undefined) result.fr = c.flakRadius;
+  if (c.shrapnelCount !== undefined) result.sc = c.shrapnelCount;
+  if (c.shrapnelDamage !== undefined) result.sd = c.shrapnelDamage;
+  if (c.shrapnelSpeed !== undefined) result.ss = c.shrapnelSpeed;
+  if (c.shrapnelRange !== undefined) result.sr = c.shrapnelRange;
+  if (c.shieldDamageMultiplier !== undefined)
+    result.sm = c.shieldDamageMultiplier;
+  if (c.ionize !== undefined) result.iz = c.ionize;
+  if (c.acceleration !== undefined) result.ac = c.acceleration;
+  if (c.maxSpeed !== undefined) result.ms = c.maxSpeed;
+  if (c.trackingRate !== undefined) result.tr = c.trackingRate;
+  if (c.trackingCone !== undefined) result.tc = c.trackingCone;
+  if (c.speedDamageScale !== undefined) result.sds = c.speedDamageScale;
+  if (c.baseDamage !== undefined) result.bd = c.baseDamage;
+  if (c.trackingTarget !== undefined) result.tt = c.trackingTarget ?? null;
+  if (c.previousClosestEnemyDistance !== undefined)
+    result.pc = c.previousClosestEnemyDistance;
+  if (c.isShrapnel !== undefined) result.is = c.isShrapnel;
+  return result;
+}
+
+export function deserializeProjectile(s: SerializedProjectile): Projectile {
+  const result: Projectile = {
+    type: 'projectile',
+    owner: s.o,
+    damage: s.dm,
+    speed: s.sp,
+    range: s.rg,
+    distanceTraveled: s.dt,
+    direction: deserializeVector3(s.dr),
+    category: NumToCategory[s.ct] ?? 'energy',
+    weaponName: s.wn,
+  };
+  if (s.vn !== undefined) result.visualName = s.vn;
+  if (s.fr !== undefined) result.flakRadius = s.fr;
+  if (s.sc !== undefined) result.shrapnelCount = s.sc;
+  if (s.sd !== undefined) result.shrapnelDamage = s.sd;
+  if (s.ss !== undefined) result.shrapnelSpeed = s.ss;
+  if (s.sr !== undefined) result.shrapnelRange = s.sr;
+  if (s.sm !== undefined) result.shieldDamageMultiplier = s.sm;
+  if (s.iz !== undefined) result.ionize = s.iz;
+  if (s.ac !== undefined) result.acceleration = s.ac;
+  if (s.ms !== undefined) result.maxSpeed = s.ms;
+  if (s.tr !== undefined) result.trackingRate = s.tr;
+  if (s.tc !== undefined) result.trackingCone = s.tc;
+  if (s.sds !== undefined) result.speedDamageScale = s.sds;
+  if (s.bd !== undefined) result.baseDamage = s.bd;
+  if (s.tt !== undefined) result.trackingTarget = s.tt ?? undefined;
+  if (s.pc !== undefined) result.previousClosestEnemyDistance = s.pc;
+  if (s.is !== undefined) result.isShrapnel = s.is;
+  return result;
+}

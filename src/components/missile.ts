@@ -126,3 +126,108 @@ export function createSecondaryWeaponFromDef(
   const count = baseCount * bankSize;
   return { ...def, count, maxCount: count, bankSize };
 }
+
+// =============================================================================
+// Serialization
+// =============================================================================
+
+import {
+  deserializeVector3,
+  type SerializedVector3,
+  serializeVector3,
+} from '../core/serialization';
+
+/** Missile type as numeric */
+const MissileTypeToNum: Record<MissileType, number> = {
+  rocket: 0,
+  starburst: 1,
+  seeker: 2,
+  dart: 3,
+  cluster: 4,
+  swarm: 5,
+  torpedo: 6,
+  nuke: 7,
+};
+const NumToMissileType: MissileType[] = [
+  'rocket',
+  'starburst',
+  'seeker',
+  'dart',
+  'cluster',
+  'swarm',
+  'torpedo',
+  'nuke',
+];
+
+export interface SerializedMissile {
+  t: 13; // Component type ID
+  o: Entity; // owner
+  tg: Entity | null; // target
+  dm: number; // damage
+  sp: number; // speed
+  tr: number; // turnRate (radians/s)
+  rg: number; // range
+  dt: number; // distanceTraveled
+  dr: SerializedVector3; // direction
+  ar: number; // aoeRadius
+  nk: boolean; // isNuke
+  mt: number; // missileType
+  rd: Entity[]; // resistedDecoys (as array)
+  pc?: number; // previousClosestEnemyDistance
+  fr?: number; // flakRadius
+  sc?: number; // shrapnelCount
+  sd?: number; // shrapnelDamage
+  ss?: number; // shrapnelSpeed
+  sr?: number; // shrapnelRange
+}
+
+export function serializeMissile(c: Missile): SerializedMissile {
+  const result: SerializedMissile = {
+    t: 13,
+    o: c.owner,
+    tg: c.target ?? null,
+    dm: c.damage,
+    sp: c.speed,
+    tr: c.turnRate,
+    rg: c.range,
+    dt: c.distanceTraveled,
+    dr: serializeVector3(c.direction),
+    ar: c.aoeRadius,
+    nk: c.isNuke,
+    mt: MissileTypeToNum[c.missileType],
+    rd: [...c.resistedDecoys],
+  };
+  if (c.previousClosestEnemyDistance !== undefined)
+    result.pc = c.previousClosestEnemyDistance;
+  if (c.flakRadius !== undefined) result.fr = c.flakRadius;
+  if (c.shrapnelCount !== undefined) result.sc = c.shrapnelCount;
+  if (c.shrapnelDamage !== undefined) result.sd = c.shrapnelDamage;
+  if (c.shrapnelSpeed !== undefined) result.ss = c.shrapnelSpeed;
+  if (c.shrapnelRange !== undefined) result.sr = c.shrapnelRange;
+  return result;
+}
+
+export function deserializeMissile(s: SerializedMissile): Missile {
+  const result: Missile = {
+    type: 'missile',
+    owner: s.o,
+    target: s.tg ?? undefined,
+    damage: s.dm,
+    speed: s.sp,
+    turnRate: s.tr,
+    range: s.rg,
+    distanceTraveled: s.dt,
+    direction: deserializeVector3(s.dr),
+    aoeRadius: s.ar,
+    isNuke: s.nk,
+    missileType: NumToMissileType[s.mt] ?? 'seeker',
+    resistedDecoys: new Set(s.rd),
+  };
+  if (s.pc !== undefined) result.previousClosestEnemyDistance = s.pc;
+  if (s.fr !== undefined) result.flakRadius = s.fr;
+  if (s.sc !== undefined) result.shrapnelCount = s.sc;
+  if (s.sd !== undefined) result.shrapnelDamage = s.sd;
+  if (s.ss !== undefined) result.shrapnelSpeed = s.ss;
+  if (s.sr !== undefined) result.shrapnelRange = s.sr;
+  return result;
+}

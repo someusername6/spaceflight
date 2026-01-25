@@ -118,3 +118,147 @@ export function createAIControlled(
   }
   return result;
 }
+
+// =============================================================================
+// Serialization
+// =============================================================================
+
+import { AI_PROFILES, getAIProfile } from '../data/ai-profiles';
+
+/** Serialized AI state enum as numeric */
+const AIStateToNum: Record<AIState, number> = {
+  [AIState.Idle]: 0,
+  [AIState.Pursue]: 1,
+  [AIState.Engage]: 2,
+  [AIState.Evade]: 3,
+  [AIState.Regroup]: 4,
+  [AIState.Reposition]: 5,
+};
+const NumToAIState: AIState[] = [
+  AIState.Idle,
+  AIState.Pursue,
+  AIState.Engage,
+  AIState.Evade,
+  AIState.Regroup,
+  AIState.Reposition,
+];
+
+/** Serialized behavior mode as numeric */
+const BehaviorModeToNum: Record<AIBehaviorMode, number> = {
+  standard: 0,
+  defensive: 1,
+  'convoy-hunter': 2,
+  'convoy-guard-aggressive': 3,
+  'convoy-guard-defensive': 4,
+  'convoy-interceptor': 5,
+  'station-hunter': 6,
+  'station-defense': 7,
+  'station-assault-high-dps': 8,
+  'station-assault-low-dps': 9,
+  'station-defender': 10,
+};
+const NumToBehaviorMode: AIBehaviorMode[] = [
+  'standard',
+  'defensive',
+  'convoy-hunter',
+  'convoy-guard-aggressive',
+  'convoy-guard-defensive',
+  'convoy-interceptor',
+  'station-hunter',
+  'station-defense',
+  'station-assault-high-dps',
+  'station-assault-low-dps',
+  'station-defender',
+];
+
+export interface SerializedAIInput {
+  p: number; // pitch
+  y: number; // yaw
+  r: number; // roll
+  b: number; // bitmask: accelerate(0), decelerate(1), afterburner(2)
+}
+
+export interface SerializedAIControlled {
+  t: 7; // Component type ID
+  s: number; // state (AIState as number)
+  tg: Entity | null; // target
+  st: number; // stateTimer
+  lc: number; // lastStateChange
+  ld: number; // lastDecoyTime
+  lr: number; // lastRepositionTime
+  pn: string; // profile name (lookup from AI_PROFILES)
+  i: SerializedAIInput; // input
+  pr?: number; // preferredCombatRange
+  fd?: number; // fleeDistance
+  bm?: number; // behaviorMode as number
+}
+
+function serializeAIInput(input: AIInput): SerializedAIInput {
+  let bitmask = 0;
+  if (input.accelerate) bitmask |= 1;
+  if (input.decelerate) bitmask |= 2;
+  if (input.afterburner) bitmask |= 4;
+  return { p: input.pitch, y: input.yaw, r: input.roll, b: bitmask };
+}
+
+function deserializeAIInput(s: SerializedAIInput): AIInput {
+  return {
+    pitch: s.p,
+    yaw: s.y,
+    roll: s.r,
+    accelerate: (s.b & 1) !== 0,
+    decelerate: (s.b & 2) !== 0,
+    afterburner: (s.b & 4) !== 0,
+  };
+}
+
+export function serializeAIControlled(c: AIControlled): SerializedAIControlled {
+  // Handle undefined/null profile gracefully - use 'regular' as default
+  const profileName = c.profile?.name?.toLowerCase() ?? 'regular';
+  const result: SerializedAIControlled = {
+    t: 7,
+    s: AIStateToNum[c.state],
+    tg: c.target,
+    st: c.stateTimer,
+    lc: c.lastStateChange,
+    ld: c.lastDecoyTime,
+    lr: c.lastRepositionTime,
+    pn: profileName,
+    i: serializeAIInput(c.input),
+  };
+  if (c.preferredCombatRange !== undefined) result.pr = c.preferredCombatRange;
+  if (c.fleeDistance !== undefined) result.fd = c.fleeDistance;
+  if (c.behaviorMode !== undefined)
+    result.bm = BehaviorModeToNum[c.behaviorMode];
+  return result;
+}
+
+export function deserializeAIControlled(
+  s: SerializedAIControlled,
+): AIControlled {
+  const profile = AI_PROFILES[s.pn] ?? getAIProfile(s.pn);
+  const result: AIControlled = {
+    type: 'aiControlled',
+    state: NumToAIState[s.s] ?? AIState.Idle,
+    target: s.tg,
+    stateTimer: s.st,
+    lastStateChange: s.lc,
+    lastDecoyTime: s.ld,
+    lastRepositionTime: s.lr,
+    profile,
+    input: deserializeAIInput(s.i),
+  };
+  if (s.pr !== undefined) {
+    (result as { preferredCombatRange?: number }).preferredCombatRange = s.pr;
+  }
+  if (s.fd !== undefined) {
+    (result as { fleeDistance?: number }).fleeDistance = s.fd;
+  }
+  if (s.bm !== undefined) {
+    const mode = NumToBehaviorMode[s.bm];
+    if (mode !== undefined) {
+      (result as { behaviorMode?: AIBehaviorMode }).behaviorMode = mode;
+    }
+  }
+  return result;
+}

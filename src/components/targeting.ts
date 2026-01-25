@@ -24,3 +24,32 @@ export function createTargeting(): Targeting {
     targetIndex: -1,
   };
 }
+
+// =============================================================================
+// Serialization
+// =============================================================================
+
+export interface SerializedTargeting {
+  t: 8; // Component type ID
+  c: Entity | null; // currentTarget
+  v: Entity[]; // validTargets
+  i: number; // targetIndex
+}
+
+export function serializeTargeting(c: Targeting): SerializedTargeting {
+  return {
+    t: 8,
+    c: c.currentTarget ?? null,
+    v: [...c.validTargets],
+    i: c.targetIndex,
+  };
+}
+
+export function deserializeTargeting(s: SerializedTargeting): Targeting {
+  return {
+    type: 'targeting',
+    currentTarget: s.c ?? undefined,
+    validTargets: [...s.v],
+    targetIndex: s.i,
+  };
+}

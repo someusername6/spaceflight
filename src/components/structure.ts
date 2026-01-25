@@ -35,3 +35,39 @@ export function createStructure(
   }
   return base;
 }
+
+// =============================================================================
+// Serialization
+// =============================================================================
+
+/** Structure type as numeric */
+const StructureTypeToNum: Record<StructureType, number> = {
+  waypoint: 0,
+  obstacle: 1,
+  station: 2,
+};
+const NumToStructureType: StructureType[] = ['waypoint', 'obstacle', 'station'];
+
+export interface SerializedStructure {
+  t: 24; // Component type ID
+  st: number; // structureType
+  sn?: StationType; // stationType (string enum, keep as-is)
+}
+
+export function serializeStructure(c: Structure): SerializedStructure {
+  const result: SerializedStructure = {
+    t: 24,
+    st: StructureTypeToNum[c.structureType],
+  };
+  if (c.stationType !== undefined) result.sn = c.stationType;
+  return result;
+}
+
+export function deserializeStructure(s: SerializedStructure): Structure {
+  const result: Structure = {
+    type: 'structure',
+    structureType: NumToStructureType[s.st] ?? 'waypoint',
+  };
+  if (s.sn !== undefined) result.stationType = s.sn;
+  return result;
+}

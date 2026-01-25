@@ -59,3 +59,53 @@ export function getExplosionProgress(explosion: Explosion): number {
 export function isExplosionFinished(explosion: Explosion): boolean {
   return explosion.age >= explosion.maxAge;
 }
+
+// =============================================================================
+// Serialization
+// =============================================================================
+
+import {
+  deserializeColor,
+  type SerializedColor,
+  serializeColor,
+} from '../core/serialization';
+
+/** Variant as numeric */
+const VariantToNum: Record<ExplosionVariant, number> = { standard: 0, nuke: 1 };
+const NumToVariant: ExplosionVariant[] = ['standard', 'nuke'];
+
+export interface SerializedExplosion {
+  t: 15; // Component type ID
+  a: number; // age
+  ma: number; // maxAge
+  s: number; // size
+  c: SerializedColor; // color
+  se?: Entity; // sourceEntity
+  v: number; // variant
+}
+
+export function serializeExplosion(c: Explosion): SerializedExplosion {
+  const result: SerializedExplosion = {
+    t: 15,
+    a: c.age,
+    ma: c.maxAge,
+    s: c.size,
+    c: serializeColor(c.color),
+    v: VariantToNum[c.variant],
+  };
+  if (c.sourceEntity !== undefined) result.se = c.sourceEntity;
+  return result;
+}
+
+export function deserializeExplosion(s: SerializedExplosion): Explosion {
+  const result: Explosion = {
+    type: 'explosion',
+    age: s.a,
+    maxAge: s.ma,
+    size: s.s,
+    color: deserializeColor(s.c),
+    variant: NumToVariant[s.v] ?? 'standard',
+  };
+  if (s.se !== undefined) result.sourceEntity = s.se;
+  return result;
+}

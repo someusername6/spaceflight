@@ -96,3 +96,96 @@ export function createConvoyAutopilot(
     },
   };
 }
+
+// =============================================================================
+// Serialization
+// =============================================================================
+
+import {
+  deserializeVector3,
+  type SerializedVector3,
+  serializeVector3,
+} from '../core/serialization';
+
+export interface SerializedConvoyShip {
+  t: 21; // Component type ID
+  i: number; // index
+  ez: boolean; // inEscapeZone
+  jp: number; // jumpChargeProgress
+  jt: number; // jumpChargeTime
+  ji: boolean; // jumpInitiated
+  is: boolean; // isStopped
+  sd?: number; // stopDistance
+}
+
+export interface SerializedConvoyAutopilot {
+  t: 22; // Component type ID
+  d: SerializedVector3; // destination
+  er: number; // escapeZoneRadius
+  a: boolean; // active
+  ip: number; // input.pitch
+  iy: number; // input.yaw
+  b: number; // bitmask: accelerate(0), decelerate(1)
+}
+
+export function serializeConvoyShip(c: ConvoyShip): SerializedConvoyShip {
+  const result: SerializedConvoyShip = {
+    t: 21,
+    i: c.index,
+    ez: c.inEscapeZone,
+    jp: c.jumpChargeProgress,
+    jt: c.jumpChargeTime,
+    ji: c.jumpInitiated,
+    is: c.isStopped,
+  };
+  if (c.stopDistance !== undefined) result.sd = c.stopDistance;
+  return result;
+}
+
+export function deserializeConvoyShip(s: SerializedConvoyShip): ConvoyShip {
+  const result: ConvoyShip = {
+    type: 'convoyShip',
+    index: s.i,
+    inEscapeZone: s.ez,
+    jumpChargeProgress: s.jp,
+    jumpChargeTime: s.jt,
+    jumpInitiated: s.ji,
+    isStopped: s.is,
+  };
+  if (s.sd !== undefined) result.stopDistance = s.sd;
+  return result;
+}
+
+export function serializeConvoyAutopilot(
+  c: ConvoyAutopilot,
+): SerializedConvoyAutopilot {
+  let bitmask = 0;
+  if (c.input.accelerate) bitmask |= 1;
+  if (c.input.decelerate) bitmask |= 2;
+  return {
+    t: 22,
+    d: serializeVector3(c.destination),
+    er: c.escapeZoneRadius,
+    a: c.active,
+    ip: c.input.pitch,
+    iy: c.input.yaw,
+    b: bitmask,
+  };
+}
+
+export function deserializeConvoyAutopilot(
+  s: SerializedConvoyAutopilot,
+): ConvoyAutopilot {
+  return {
+    type: 'convoyAutopilot',
+    destination: deserializeVector3(s.d),
+    escapeZoneRadius: s.er,
+    active: s.a,
+    input: {
+      pitch: s.ip,
+      yaw: s.iy,
+      accelerate: (s.b & 1) !== 0,
+      decelerate: (s.b & 2) !== 0,
+    },
+  };
+}

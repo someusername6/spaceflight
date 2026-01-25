@@ -72,3 +72,49 @@ export function getActiveHits(
     (hit) => gameTime - hit.time < SHIELD_HIT_DURATION,
   );
 }
+
+// =============================================================================
+// Serialization
+// =============================================================================
+
+import {
+  deserializeVector3,
+  type SerializedVector3,
+  serializeVector3,
+} from '../core/serialization';
+
+export interface SerializedShieldHitEvent {
+  p: SerializedVector3; // position
+  i: number; // intensity
+  t: number; // time
+}
+
+export interface SerializedShieldHit {
+  t: 19; // Component type ID
+  h: SerializedShieldHitEvent[]; // hits
+  w: number; // writeIndex
+}
+
+export function serializeShieldHit(c: ShieldHit): SerializedShieldHit {
+  return {
+    t: 19,
+    h: c.hits.map((h) => ({
+      p: serializeVector3(h.position),
+      i: h.intensity,
+      t: h.time,
+    })),
+    w: c.writeIndex,
+  };
+}
+
+export function deserializeShieldHit(s: SerializedShieldHit): ShieldHit {
+  return {
+    type: 'shieldHit',
+    hits: s.h.map((h) => ({
+      position: deserializeVector3(h.p),
+      intensity: h.i,
+      time: h.t,
+    })),
+    writeIndex: s.w,
+  };
+}

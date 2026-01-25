@@ -31,3 +31,20 @@ export function areAllies(a: Faction, b: Faction): boolean {
 }
 
 export { Faction };
+
+// =============================================================================
+// Serialization
+// =============================================================================
+
+export interface SerializedFaction {
+  t: 5; // Component type ID
+  f: Faction; // faction (already numeric)
+}
+
+export function serializeFaction(c: FactionComponent): SerializedFaction {
+  return { t: 5, f: c.faction };
+}
+
+export function deserializeFaction(s: SerializedFaction): FactionComponent {
+  return { type: 'faction', faction: s.f };
+}

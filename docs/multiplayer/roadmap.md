@@ -76,12 +76,12 @@ This roadmap breaks implementation into phases, each scoped to complete in a sin
 
 ### Success Criteria
 
-- [ ] All gameplay-affecting components serialize correctly
-- [ ] PRNG state serializes and restores correctly
-- [ ] System state (waves, mission) serializes correctly
-- [ ] Round-trip preserves exact state (hash matches)
-- [ ] Snapshot size ~50KB for typical battle (matches bandwidth estimates)
-- [ ] Serialization time <5ms for 60fps budget
+- [x] All gameplay-affecting components serialize correctly
+- [x] PRNG state serializes and restores correctly
+- [x] System state (waves, mission) serializes correctly
+- [x] Round-trip preserves exact state (hash matches)
+- [x] Snapshot size ~50KB for typical battle (16.7KB achieved)
+- [x] Serialization time <5ms for 60fps budget (0.05ms achieved)
 
 ---
 

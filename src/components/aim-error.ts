@@ -226,3 +226,62 @@ export function updateBeamTracking(
     error.currentBeamDirection.lerp(targetDirection, t).normalize();
   }
 }
+
+// =============================================================================
+// Serialization
+// =============================================================================
+
+import {
+  deserializeVector2,
+  deserializeVector3,
+  type SerializedVector2,
+  type SerializedVector3,
+  serializeVector2,
+  serializeVector3,
+} from '../core/serialization';
+
+export interface SerializedAimError {
+  t: 9; // Component type ID
+  o: SerializedVector2; // offset
+  me: number; // maxError
+  em: number; // effectiveMaxError
+  af: number; // angularFactor
+  ds: number; // driftSpeed
+  dd: SerializedVector2; // driftDirection
+  dt: number; // driftTimer
+  ca: number; // currentAngularVelocity
+  bt: number; // beamTrackingSpeed
+  cb: SerializedVector3; // currentBeamDirection
+}
+
+export function serializeAimError(c: AimError): SerializedAimError {
+  return {
+    t: 9,
+    o: serializeVector2(c.offset),
+    me: c.maxError,
+    em: c.effectiveMaxError,
+    af: c.angularFactor,
+    ds: c.driftSpeed,
+    dd: serializeVector2(c.driftDirection),
+    dt: c.driftTimer,
+    ca: c.currentAngularVelocity,
+    bt: c.beamTrackingSpeed,
+    cb: serializeVector3(c.currentBeamDirection),
+  };
+}
+
+export function deserializeAimError(s: SerializedAimError): AimError {
+  return {
+    type: 'aimError',
+    offset: deserializeVector2(s.o),
+    maxError: s.me,
+    effectiveMaxError: s.em,
+    angularFactor: s.af,
+    driftSpeed: s.ds,
+    driftDirection: deserializeVector2(s.dd),
+    driftTimer: s.dt,
+    currentAngularVelocity: s.ca,
+    beamTrackingSpeed: s.bt,
+    currentBeamDirection: deserializeVector3(s.cb),
+  };
+}

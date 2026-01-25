@@ -93,3 +93,36 @@ export interface ComponentRegistry {
 
 /** All valid component type strings (derived from registry keys) */
 export type ComponentType = keyof ComponentRegistry;
+
+/**
+ * Numeric IDs for compact serialization.
+ * These must remain stable - never change existing IDs, only add new ones.
+ */
+export const ComponentTypeId = {
+  transform: 0,
+  physics: 1,
+  health: 2,
+  collision: 3,
+  hullCollider: 4,
+  faction: 5,
+  playerControlled: 6,
+  aiControlled: 7,
+  targeting: 8,
+  aimError: 9,
+  primaryWeapons: 10,
+  secondaryWeapons: 11,
+  projectile: 12,
+  missile: 13,
+  decoy: 14,
+  explosion: 15,
+  shipIdentity: 16,
+  heat: 17,
+  shields: 18,
+  shieldHit: 19,
+  combatStats: 20,
+  convoyShip: 21,
+  convoyAutopilot: 22,
+  damageTracking: 23,
+  structure: 24,
+  hyperspaceJump: 25,
+} as const;

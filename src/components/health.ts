@@ -39,3 +39,26 @@ export function applyDamage(health: Health, damage: number): number {
   health.hull -= actualDamage;
   return actualDamage;
 }
+
+// =============================================================================
+// Serialization
+// =============================================================================
+
+export interface SerializedHealth {
+  t: 2; // Component type ID
+  h: number; // hull
+  m: number; // maxHull
+  d?: number; // deathDelay
+}
+
+export function serializeHealth(c: Health): SerializedHealth {
+  const result: SerializedHealth = { t: 2, h: c.hull, m: c.maxHull };
+  if (c.deathDelay !== undefined) result.d = c.deathDelay;
+  return result;
+}
+
+export function deserializeHealth(s: SerializedHealth): Health {
+  const result: Health = { type: 'health', hull: s.h, maxHull: s.m };
+  if (s.d !== undefined) result.deathDelay = s.d;
+  return result;
+}

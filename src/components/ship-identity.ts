@@ -71,3 +71,36 @@ export function createShipIdentity(
   }
   return identity;
 }
+
+// =============================================================================
+// Serialization
+// =============================================================================
+
+export interface SerializedShipIdentity {
+  t: 16; // Component type ID
+  a: string; // archetype
+  c: string; // callsign
+  id?: string; // campaignShipId
+}
+
+export function serializeShipIdentity(c: ShipIdentity): SerializedShipIdentity {
+  const result: SerializedShipIdentity = {
+    t: 16,
+    a: c.archetype,
+    c: c.callsign,
+  };
+  if (c.campaignShipId !== undefined) result.id = c.campaignShipId;
+  return result;
+}
+
+export function deserializeShipIdentity(
+  s: SerializedShipIdentity,
+): ShipIdentity {
+  const result: ShipIdentity = {
+    type: 'shipIdentity',
+    archetype: s.a,
+    callsign: s.c,
+  };
+  if (s.id !== undefined) result.campaignShipId = s.id;
+  return result;
+}

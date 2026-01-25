@@ -3,6 +3,14 @@
  */
 
 import { Quaternion, Vector3 } from 'three';
+import {
+  deserializeQuaternion,
+  deserializeVector3,
+  type SerializedQuaternion,
+  type SerializedVector3,
+  serializeQuaternion,
+  serializeVector3,
+} from '../core/serialization';
 import type { ComponentBase } from '../core/types';
 
 export interface Transform extends ComponentBase {
@@ -34,5 +42,34 @@ export function createTransformAt(
     type: 'transform',
     position: position.clone(),
     rotation: rotation?.clone() ?? new Quaternion(),
+  };
+}
+
+// =============================================================================
+// Serialization
+// =============================================================================
+
+export interface SerializedTransform {
+  /** Component type ID (0 = transform) */
+  t: 0;
+  /** Position */
+  p: SerializedVector3;
+  /** Rotation */
+  r: SerializedQuaternion;
+}
+
+export function serializeTransform(c: Transform): SerializedTransform {
+  return {
+    t: 0,
+    p: serializeVector3(c.position),
+    r: serializeQuaternion(c.rotation),
+  };
+}
+
+export function deserializeTransform(s: SerializedTransform): Transform {
+  return {
+    type: 'transform',
+    position: deserializeVector3(s.p),
+    rotation: deserializeQuaternion(s.r),
   };
 }

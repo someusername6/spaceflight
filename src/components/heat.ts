@@ -92,3 +92,35 @@ export function coolDown(heat: Heat, dt: number): void {
     heat.weaponsLocked = false;
   }
 }
+
+// =============================================================================
+// Serialization
+// =============================================================================
+
+export interface SerializedHeat {
+  t: 17; // Component type ID
+  c: number; // current
+  m: number; // max
+  cr: number; // coolingRate
+  wl: boolean; // weaponsLocked
+}
+
+export function serializeHeat(c: Heat): SerializedHeat {
+  return {
+    t: 17,
+    c: c.current,
+    m: c.max,
+    cr: c.coolingRate,
+    wl: c.weaponsLocked,
+  };
+}
+
+export function deserializeHeat(s: SerializedHeat): Heat {
+  return {
+    type: 'heat',
+    current: s.c,
+    max: s.m,
+    coolingRate: s.cr,
+    weaponsLocked: s.wl,
+  };
+}

@@ -9,13 +9,26 @@
  * - Save/load systems
  */
 
-import { Quaternion, Vector3 } from 'three';
+import { Color, Quaternion, Vector2, Vector3 } from 'three';
 
 /** Plain object representation of Vector3 (JSON-serializable) */
 export interface SerializedVector3 {
   x: number;
   y: number;
   z: number;
+}
+
+/** Plain object representation of Vector2 (JSON-serializable) */
+export interface SerializedVector2 {
+  x: number;
+  y: number;
+}
+
+/** Plain object representation of Color (JSON-serializable) */
+export interface SerializedColor {
+  r: number;
+  g: number;
+  b: number;
 }
 
 /** Plain object representation of Quaternion (JSON-serializable) */
@@ -78,6 +91,34 @@ export function deserializeQuaternionInto(
   target: Quaternion,
 ): Quaternion {
   return target.set(s.x, s.y, s.z, s.w);
+}
+
+/**
+ * Convert a Three.js Vector2 to a plain object.
+ */
+export function serializeVector2(v: Vector2): SerializedVector2 {
+  return { x: v.x, y: v.y };
+}
+
+/**
+ * Convert a plain object back to a Three.js Vector2.
+ */
+export function deserializeVector2(s: SerializedVector2): Vector2 {
+  return new Vector2(s.x, s.y);
+}
+
+/**
+ * Convert a Three.js Color to a plain object.
+ */
+export function serializeColor(c: Color): SerializedColor {
+  return { r: c.r, g: c.g, b: c.b };
+}
+
+/**
+ * Convert a plain object back to a Three.js Color.
+ */
+export function deserializeColor(s: SerializedColor): Color {
+  return new Color(s.r, s.g, s.b);
 }
 
 /** Serialized transform state for network transmission */

@@ -22,3 +22,21 @@ export function createCollision(radius = DEFAULT_COLLISION_RADIUS): Collision {
     radius,
   };
 }
+
+// =============================================================================
+// Serialization
+// =============================================================================
+
+export interface SerializedCollision {
+  t: 3; // Component type ID
+  c: Entity[]; // collidedWith
+  r: number; // radius
+}
+
+export function serializeCollision(c: Collision): SerializedCollision {
+  return { t: 3, c: [...c.collidedWith], r: c.radius };
+}
+
+export function deserializeCollision(s: SerializedCollision): Collision {
+  return { type: 'collision', collidedWith: [...s.c], radius: s.r };
+}

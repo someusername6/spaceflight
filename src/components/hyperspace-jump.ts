@@ -50,3 +50,45 @@ export function createHyperspaceJump(
 export function isJumpComplete(jump: HyperspaceJump): boolean {
   return jump.progress >= 1;
 }
+
+// =============================================================================
+// Serialization
+// =============================================================================
+
+import {
+  deserializeVector3,
+  type SerializedVector3,
+  serializeVector3,
+} from '../core/serialization';
+
+export interface SerializedHyperspaceJump {
+  t: 25; // Component type ID
+  p: number; // progress
+  d: number; // duration
+  dr: SerializedVector3; // direction
+  st: number; // startTime
+}
+
+export function serializeHyperspaceJump(
+  c: HyperspaceJump,
+): SerializedHyperspaceJump {
+  return {
+    t: 25,
+    p: c.progress,
+    d: c.duration,
+    dr: serializeVector3(c.direction),
+    st: c.startTime,
+  };
+}
+
+export function deserializeHyperspaceJump(
+  s: SerializedHyperspaceJump,
+): HyperspaceJump {
+  return {
+    type: 'hyperspaceJump',
+    progress: s.p,
+    duration: s.d,
+    direction: deserializeVector3(s.dr),
+    startTime: s.st,
+  };
+}
