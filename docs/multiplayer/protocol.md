@@ -16,47 +16,45 @@ Rollback netcode requires **reliable delivery** of inputs - missing inputs cause
 
 ## Signaling Flow
 
+The signaling server is minimal: it creates rooms, relays WebRTC signals, and tracks room state. It does **not** track connection status between peers - mesh formation is handled entirely by clients.
+
 ```
 1. Host creates room:
-   Host → Server: CREATE_ROOM
-   Server → Host: ROOM_CREATED { roomCode, hostId }
+   POST /rooms { gameVersion }
+   → { roomCode, hostId, hostToken }
 
 2. Guest joins:
-   Guest → Server: JOIN_ROOM { roomCode, callsign }
-   Server validates: room exists, not full, callsign available, not kicked
-   Server → Guest: ROOM_JOINED { hostId, existingPlayers[] }
-   Server → All existing players: GUEST_JOINING { guestId, callsign }
+   POST /rooms/:code/join { gameVersion }
+   Server validates: room exists, not full, game not in progress, version match
+   → { guestId, guestToken, hostId, existingPeers: [{ peerId }] }
 
-3. WebRTC mesh formation (for each existing player P):
-   Server → Guest: PREPARE_OFFER { peerId: P.id }
-   Guest creates SDP offer for P
-   Guest → Server: SDP_OFFER { peerId: P.id, sdp }
-   Server → P: SDP_OFFER { peerId: Guest.id, sdp }
-   P creates SDP answer
-   P → Server: SDP_ANSWER { peerId: Guest.id, sdp }
-   Server → Guest: SDP_ANSWER { peerId: P.id, sdp }
-   (ICE candidates exchanged similarly via ICE_CANDIDATE messages)
+3. WebRTC mesh formation (client-side):
+   Guest initiates WebRTC connection to each existing peer:
+   - Guest creates SDP offer for each peer
+   - POST /rooms/:code/signals { targetPeerId, type: 'offer', data: <SDP> }
+   - Existing peers poll GET /rooms/:code/signals to receive offers
+   - Peers create SDP answers and post them back
+   - ICE candidates exchanged via same signal endpoint
 
-4. Connection confirmation:
-   Each player reports success: Player → Server: PEER_CONNECTED { peerId }
-   Once all connections established:
-   Server → All: PLAYER_CONNECTED { playerId: Guest.id, callsign }
+   Mesh formation is handled entirely by clients. Server just relays signals.
 
-   Partial mesh failure: If guest cannot connect to all existing players within
-   timeout (10s), guest receives JOIN_FAILED and returns to join screen.
-   Existing session continues unaffected. Full mesh is required.
+4. Events:
+   GET /rooms/:code/events?since=<timestamp>
+   → { events: [{ type, data, timestamp }] }
 
-5. Player kicked:
-   Host → Server: CALLSIGN_KICKED { callsign }
-   Server stores kicked callsign for this room
-   (Checked on subsequent JOIN_ROOM attempts)
+   Event types: peer_joined, peer_left, peer_kicked, game_started
+
+5. Host actions:
+   POST /rooms/:code/kick { peerId }     (host only)
+   POST /rooms/:code/state { state }     (host only, 'lobby' | 'playing')
+   DELETE /rooms/:code                   (host only)
 ```
 
 ### Post-Signaling Flow
 
-After signaling completes and mesh is established:
+After WebRTC mesh is established (clients determine this themselves):
 
-1. Host receives `PLAYER_CONNECTED` from signaling server
+1. Guest notifies host via WebRTC that mesh is complete
 2. Host sends `Welcome` to new guest over WebRTC with:
    - Assigned `playerId`
    - Current `campaignState`

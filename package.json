@@ -15,7 +15,11 @@
     "validate-hardpoints": "node scripts/build/validate-hardpoints.mjs",
     "test": "npx tsx scripts/tests/run-tests.mjs",
     "test:all": "npx tsx scripts/tests/run-tests.mjs --all",
-    "test:balance": "npx tsx scripts/tests/run-tests.mjs --balance"
+    "test:balance": "npx tsx scripts/tests/run-tests.mjs --balance",
+    "test:signaling": "JOIN_RATE_LIMIT_PER_SECOND=1000 CREATE_RATE_LIMIT_PER_MINUTE=1000 node --test scripts/tests/signaling/test-room-lifecycle.mjs scripts/tests/signaling/test-signaling-relay.mjs scripts/tests/signaling/test-mesh-formation.mjs scripts/tests/signaling/test-rate-limiting.mjs",
+    "test:signaling:cleanup": "node --test scripts/tests/signaling/test-cleanup.mjs",
+    "signaling:install": "cd server/signaling && npm install",
+    "signaling:dev": "cd server/signaling && npm run dev"
   },
   "dependencies": {
     "canvas": "^3.2.0",

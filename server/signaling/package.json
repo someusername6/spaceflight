@@ -1,0 +1,26 @@
+{
+  "name": "spaceflight-signaling",
+  "version": "1.0.0",
+  "description": "Signaling server for Spaceflight multiplayer",
+  "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "node --test --experimental-strip-types src/**/*.test.ts"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "uuid": "^11.0.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^20.0.0",
+    "@types/uuid": "^10.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.7.0"
+  }
+}

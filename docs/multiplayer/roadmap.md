@@ -152,71 +152,89 @@ This roadmap breaks implementation into phases, each scoped to complete in a sin
 
 ## Phase 3: Signaling Server
 
-**Goal:** Create signaling server for room management and WebRTC relay.
+**Goal:** Create minimal signaling server for room management and WebRTC relay.
+
+**Status:** ✅ Complete (local development)
+
+### Design Philosophy
+
+The signaling server is intentionally minimal:
+- **Relays WebRTC signals** (SDP offers/answers, ICE candidates)
+- **Does not track peer connections** - mesh formation handled by clients
+- **Does not track callsigns** - identity managed by clients via WebRTC
+- **HTTP polling** - simple, stateless, Lambda-compatible
 
 ### Deliverables
 
 1. **Server application** (`server/signaling/`)
-   - Node.js with WebSocket
-   - Room creation (generate codes)
-   - Room joining (validate code, callsign)
+   - Express.js with in-memory storage (local dev)
+   - Room creation (generate 8-char codes)
+   - Room joining (validate code, version, capacity, state)
    - WebRTC signaling relay (SDP, ICE)
 
 2. **Room management**
-   - Track connected players per room
-   - **Track room state** (lobby vs playing) - reject joins mid-mission
-   - Store kicked callsigns per room
-   - Room expiry on host disconnect
+   - Track room metadata (code, hostId, gameVersion, state)
+   - Track peers in room (peerId, token, joinedAt)
+   - Room state (lobby vs playing) - reject joins mid-mission
+   - Room expiry after inactivity
 
 3. **Security**
-   - Rate limiting (1 join/IP/second)
+   - Rate limiting (room creation, join attempts)
    - Room code format (8 chars, no ambiguous characters)
-   - Callsign validation (length 1-20, unique in room)
+   - Token-based peer authentication
 
 4. **Version compatibility**
-   - Client sends game version in JOIN_ROOM message
+   - Client sends game version in join request
    - Server compares with host's version
    - Reject with `version_mismatch` if incompatible
-   - Include version in ROOM_CREATED/ROOM_JOINED responses
 
-5. **Protocol messages**
-   ```typescript
-   // Server ↔ Client messages
-   CREATE_ROOM, ROOM_CREATED
-   JOIN_ROOM, ROOM_JOINED, JOIN_FAILED
-   SDP_OFFER, SDP_ANSWER, ICE_CANDIDATE
-   PEER_CONNECTED, PLAYER_CONNECTED
-   CALLSIGN_KICKED
-   ROOM_STATE_CHANGED  // lobby ↔ playing
+5. **API endpoints**
+   ```
+   POST   /rooms                 Create room
+   DELETE /rooms/:code           Delete room (host only)
+   POST   /rooms/:code/join      Join room
+   POST   /rooms/:code/leave     Leave room
+   POST   /rooms/:code/signals   Post WebRTC signal
+   GET    /rooms/:code/signals   Get pending signals
+   GET    /rooms/:code/events    Get room events
+   POST   /rooms/:code/kick      Kick peer (host only)
+   POST   /rooms/:code/state     Set room state (host only)
    ```
 
 6. **Join failure reasons**
    - `invalid_room` - room doesn't exist
    - `room_full` - max players reached
-   - `callsign_taken` - another player has this callsign
-   - `callsign_kicked` - callsign was kicked from this session
    - `game_in_progress` - can't join mid-mission
    - `version_mismatch` - client version doesn't match host
 
-### Files to Create
+### Files Created
 
-| File | Action |
-|------|--------|
-| `server/signaling/index.ts` | Create - server entry point |
-| `server/signaling/room-manager.ts` | Create - room state management |
-| `server/signaling/signaling-protocol.ts` | Create - message types |
-| `server/signaling/rate-limiter.ts` | Create - IP rate limiting |
-| `server/signaling/package.json` | Create - server dependencies |
-| `server/signaling/README.md` | Create - deployment instructions |
+| File | Purpose |
+|------|---------|
+| `server/signaling/src/index.ts` | Express server entry point |
+| `server/signaling/src/routes.ts` | HTTP route handlers |
+| `server/signaling/src/handlers/*.ts` | Request handler functions |
+| `server/signaling/src/storage/types.ts` | Storage interface |
+| `server/signaling/src/storage/memory-storage.ts` | In-memory storage |
+| `server/signaling/src/types.ts` | API types |
+| `server/signaling/src/auth.ts` | Token generation |
+| `server/signaling/src/room-code.ts` | Room code generation |
+| `server/signaling/src/rate-limiter.ts` | Rate limiting |
+| `server/signaling/src/config.ts` | Configuration |
+| `server/signaling/src/logger.ts` | Logging utility |
 
 ### Success Criteria
 
-- [ ] Room codes generated and validated
-- [ ] WebRTC signaling relayed correctly
-- [ ] Kicked callsigns rejected on rejoin
-- [ ] Mid-mission join attempts rejected with `game_in_progress`
-- [ ] Rate limiting prevents abuse
-- [ ] Rooms cleaned up on host disconnect
+- [x] Room codes generated and validated
+- [x] WebRTC signaling relayed correctly
+- [x] Mid-mission join attempts rejected with `game_in_progress`
+- [x] Rate limiting prevents abuse
+- [x] Rooms cleaned up after expiry
+
+### Deferred
+
+- **AWS deployment** (DynamoDB storage, Lambda handlers, CloudFormation)
+- **Kicked callsign tracking** - can be added if needed, currently kicks just remove peer
 
 ---
 
