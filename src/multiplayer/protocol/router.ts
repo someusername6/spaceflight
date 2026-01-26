@@ -8,7 +8,8 @@
  */
 
 import type { TransportAdapter } from 'rollback-netcode';
-import { decodeMessage, encodeMessage, isGameMessage } from './encoding';
+import { decodeMessage, isGameMessage } from './decode';
+import { encodeMessage } from './encode';
 import {
   type ActionRequestMessage,
   type ActionResponseMessage,

@@ -18,10 +18,10 @@ import {
   type LeaveReason,
   type MissionOutcomeData,
   type Permission,
-} from './message-types';
+} from './types';
 
-// Re-export all types from message-types for convenience
-export * from './message-types';
+// Re-export all types from types.ts for convenience
+export * from './types';
 
 // =============================================================================
 // Message Interfaces

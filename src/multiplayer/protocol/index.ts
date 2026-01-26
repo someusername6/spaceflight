@@ -65,12 +65,8 @@ export {
 // Encoding
 // =============================================================================
 
-export {
-  decodeMessage,
-  encodeMessage,
-  getMessageType,
-  isGameMessage,
-} from './encoding';
+export { decodeMessage, getMessageType, isGameMessage } from './decode';
+export { encodeMessage } from './encode';
 
 // =============================================================================
 // Router

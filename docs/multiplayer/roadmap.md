@@ -353,7 +353,7 @@ This phase implements **game-specific** messages only.
    CallsignChanged       // Host → all: broadcast callsign update
    ```
 
-2. **Message encoding** (`src/multiplayer/protocol/encoding.ts`)
+2. **Message encoding** (`src/multiplayer/protocol/encode.ts`, `decode.ts`)
    - Binary encoding for efficiency
    - Type-safe encode/decode functions
    - Message type byte prefix to distinguish from rollback-netcode messages
@@ -374,18 +374,18 @@ This phase implements **game-specific** messages only.
 
 | File | Purpose |
 |------|---------|
+| `src/multiplayer/protocol/types.ts` | Enums, shared types, action types |
 | `src/multiplayer/protocol/messages.ts` | 20 message type definitions |
 | `src/multiplayer/protocol/encode.ts` | Binary encoding functions |
 | `src/multiplayer/protocol/decode.ts` | Binary decoding functions |
 | `src/multiplayer/protocol/buffer-utils.ts` | Buffer read/write utilities |
-| `src/multiplayer/protocol/encoding.ts` | Barrel re-export for encode/decode |
 | `src/multiplayer/protocol/router.ts` | Message routing with host-only validation |
 | `src/multiplayer/protocol/index.ts` | Barrel exports |
 | `src/multiplayer/action-processing.ts` | Permission validation + action execution |
 | `src/multiplayer/campaign-sync.ts` | CampaignSyncManager class |
 | `scripts/tests/multiplayer/protocol-test-helpers.mjs` | Shared test utilities |
-| `scripts/tests/multiplayer/test-protocol-encoding.mjs` | Encoding tests (lobby/action messages) |
-| `scripts/tests/multiplayer/test-protocol-encoding-2.mjs` | Encoding tests (session/callsign messages) |
+| `scripts/tests/multiplayer/test-encoding-lobby.mjs` | Encoding tests (lobby/action messages) |
+| `scripts/tests/multiplayer/test-encoding-session.mjs` | Encoding tests (session/callsign messages) |
 | `scripts/tests/multiplayer/test-protocol-validation.mjs` | Message type + permission validation tests |
 | `scripts/tests/multiplayer/test-protocol-router.mjs` | MessageRouter dispatch + send tests |
 | `scripts/tests/multiplayer/test-protocol-sync.mjs` | Additional permission + action tests |
