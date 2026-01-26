@@ -11,7 +11,7 @@
  * Tests are split into:
  * - e2e-tests-navigation.mjs: Title screen, host game, join game navigation
  * - e2e-tests-connection.mjs: Full host flow, host-guest connection
- * - e2e-tests-ui-chat.mjs: Chat messaging, back button cleanup
+ * - e2e-tests-ui-chat-cleanup.mjs: Chat messaging, back button cleanup
  * - e2e-tests-ui-copy.mjs: Copy room code, ping display
  * - e2e-tests-ui-ready.mjs: Ready toggle
  * - e2e-tests-ui-indicators.mjs: Host indicator, self highlight
@@ -37,7 +37,7 @@ import {
 import {
   testBackButtonCleanup,
   testChatMessaging,
-} from './e2e-tests-ui-chat.mjs';
+} from './e2e-tests-ui-chat-cleanup.mjs';
 import { testCopyRoomCode, testPingDisplay } from './e2e-tests-ui-copy.mjs';
 import {
   testHostIndicator,

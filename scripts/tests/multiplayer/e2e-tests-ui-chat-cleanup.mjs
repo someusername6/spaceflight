@@ -1,7 +1,7 @@
 /**
- * Lobby E2E UI Tests - Chat and Back Button
+ * Lobby E2E UI Tests - Chat and Cleanup
  *
- * Tests for chat messaging and back button cleanup.
+ * Tests for chat messaging and back button cleanup/resource management.
  */
 
 import { chromium } from 'playwright';

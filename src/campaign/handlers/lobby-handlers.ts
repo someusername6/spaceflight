@@ -40,7 +40,7 @@ import {
   type MessageHandlerContext,
   sendCallsignAnnounce,
   setupMessageHandling,
-} from './lobby-message-handler';
+} from './lobby-protocol-routing';
 
 // =============================================================================
 // Module State

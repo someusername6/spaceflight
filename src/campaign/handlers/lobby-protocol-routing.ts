@@ -1,10 +1,11 @@
 /**
- * Lobby Message Handler - Handle incoming protocol messages in lobby.
+ * Lobby Protocol Routing - Transport layer for lobby protocol messages.
  *
  * Responsibilities:
- * - Decode game messages from binary data
- * - Process Welcome, PlayerJoinedExt, ReadyState, ChatMessage
- * - Send CallsignAnnounce, Welcome, PlayerJoinedExt broadcasts
+ * - Decode/encode game messages (binary protocol)
+ * - Route incoming messages to appropriate handlers
+ * - Manage message subscriptions on transport layer
+ * - Broadcast messages to connected peers
  */
 
 import { getStoredCallsign } from '../../multiplayer/callsign-storage';
