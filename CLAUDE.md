@@ -133,38 +133,6 @@ Required changes:
 9. **Missions** (`src/ui/screens/missions/sector*/`):
    - Create `{type}.ts` files for each sector with contracts
 
-### Balance Targets by Difficulty
-
-| Difficulty | Win Rate | Wingman Survival (on wins) |
-|------------|----------|----------------------------|
-| Easy | 80-90% | 3.0-3.5 of 4 |
-| Medium | 70-80% | 2.5-3.0 of 4 |
-| Hard | 60-70% | 2.0-2.5 of 4 |
-
-**Note**: Attack-station missions have different targets due to sustained combat - see mission file headers.
-
-### Mission Balancing Process
-
-When rebalancing missions, follow this systematic approach:
-
-1. **Analyze working examples first**: If a similar mission already has good balance, study WHY it works (enemy count, skill levels, reinforcement timing) and adapt from there rather than starting from scratch.
-
-2. **Understand variable relationships**:
-   - Enemy count/skill → primarily affects win rate
-   - Reinforcement timing → affects both win rate AND survival
-   - Initial allies → affect both metrics (they protect everyone including assault ships)
-   - Station type (attack-station) → directly affects difficulty (mining=12500, refinery=15000, military=10000 HP)
-
-3. **Tune one metric at a time**: Get win rate in range first, THEN adjust survival.
-
-4. **Use larger increments**: Change enemy count by 2-3, delay by 15-20s to find the ballpark faster.
-
-5. **Know the constraints**:
-   - Sector 1 allies: `fighter`, `assaultFighter` only
-   - Sector 1 enemies: `gnat`, `ember`, `shocker`, `mantis` (rookie/regular/veteran)
-   - Each reinforcement wave needs at least 2 ships
-   - Overwhelming wave timing (180s) should not change
-
 ## Replay Determinism (CRITICAL)
 
 The replay system records player inputs and reconstructs battles deterministically. **Any entity that affects simulation must be reconstructed identically.**
@@ -197,22 +165,6 @@ When adding features that affect missions, ensure replay captures:
 | `src/replay/mission-setup.ts` | Reconstructs world for playback |
 | `src/replay/storage.ts` | Version migration for old replays |
 
-### Historical Bugs
-
-**v2 → v3: Missing loadout data**
-- Live game used campaign loadouts; replay used archetype defaults
-- Live game spawned wingmen; replay didn't
-- Fix: Added `playerLoadout` and `wingmen` to replay data format
-
-**v3: Rendering PRNG contamination**
-- Rendering code (lightning, missile exhaust) consumed `world.prng`
-- PRNG state diverged based on frame rate, not tick count
-- Fix: Added `world.renderPrng` for visual-only randomness
-
-**v3: Wave initialization mismatch**
-- Replay was missing `waveState.currentWave = -1` for delayed first waves
-- Fix: Created shared `initializeFirstWave()` and `processWaveTick()` in `mission-waves.ts`
-
 ## Testing
 
 ### Running Tests
@@ -235,45 +187,6 @@ npx tsx scripts/tests/run-tests.mjs --balance --strict  # Balance tests with str
 
 ### Test Framework
 
-All tests use Node.js built-in test runner (`node:test`) with `describe`/`it` pattern:
+Tests use Node.js built-in test runner (`node:test`) with `describe`/`it` pattern. See existing tests in `scripts/tests/` for examples.
 
-```javascript
-import assert from 'node:assert';
-import { describe, it } from 'node:test';
-
-describe('Feature', () => {
-  it('does something', () => {
-    assert.strictEqual(actual, expected, 'message');
-  });
-});
-```
-
-### Key Test Files
-
-| Area | Files |
-|------|-------|
-| ECS/Game | `integration/test-game.mjs`, `test-architecture.mjs` |
-| Weapons | `weapons/test-weapons*.mjs` |
-| AI | `ai/test-ai-*.mjs` |
-| Campaign | `campaign/test-*.mjs` |
-| Campaign Storage | `campaign/test-campaign-storage.mjs` (uses IndexedDB polyfill) |
-| Replay | `replay/test-*.mjs`, `systems/test-input-replay.mjs` |
-| Determinism | `systems/test-input-replay.mjs` |
-
-### Shared Test Utilities
-
-- `scripts/tests/shared/replay-test-utils.mjs` - Battle simulation helpers, checksum computation
-
-### Browser API Polyfills
-
-The campaign storage tests (`test-campaign-storage.mjs`) require browser API polyfills to run in Node.js:
-
-- **IndexedDB**: Uses `fake-indexeddb` package (npm dev dependency)
-- **localStorage**: Simple in-memory Map-based polyfill defined in test file
-
-When adding tests for browser-only code, follow the same pattern:
-```javascript
-// At top of test file, BEFORE imports that use browser APIs
-import 'fake-indexeddb/auto';  // Polyfill indexedDB
-globalThis.localStorage = { ... };  // Polyfill localStorage
-```
+For browser API tests (IndexedDB, localStorage), see `test-campaign-storage.mjs` for polyfill patterns using `fake-indexeddb`.
