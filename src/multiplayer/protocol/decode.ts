@@ -93,8 +93,11 @@ export function decodeMessage(data: Uint8Array): GameMessage {
       return decodeCallsignChangeRequest(rb);
     case GameMessageType.CallsignChanged:
       return decodeCallsignChanged(rb);
-    default:
-      throw new Error(`Unknown message type: 0x${type.toString(16)}`);
+    default: {
+      // Cast to number for error message (type is 'never' due to exhaustive switch)
+      const unknownType = type as number;
+      throw new Error(`Unknown message type: 0x${unknownType.toString(16)}`);
+    }
   }
 }
 
@@ -196,13 +199,11 @@ function decodeActionResponse(rb: ReadBuffer): ActionResponseMessage {
   const requestId = readUint32(rb);
   const success = readBool(rb);
   const hasError = readBool(rb);
-  const error = hasError ? readString(rb) : undefined;
-  return {
-    type: GameMessageType.ActionResponse,
-    requestId,
-    success,
-    error,
-  };
+  if (hasError) {
+    const error = readString(rb);
+    return { type: GameMessageType.ActionResponse, requestId, success, error };
+  }
+  return { type: GameMessageType.ActionResponse, requestId, success };
 }
 
 function decodeContractAccepted(rb: ReadBuffer): ContractAcceptedMessage {
@@ -251,11 +252,11 @@ function decodeSessionEnded(rb: ReadBuffer): SessionEndedMessage {
 
 function decodeKickNotification(rb: ReadBuffer): KickNotificationMessage {
   const hasReason = readBool(rb);
-  const reason = hasReason ? readString(rb) : undefined;
-  return {
-    type: GameMessageType.KickNotification,
-    reason,
-  };
+  if (hasReason) {
+    const reason = readString(rb);
+    return { type: GameMessageType.KickNotification, reason };
+  }
+  return { type: GameMessageType.KickNotification };
 }
 
 function decodeCallsignAnnounce(rb: ReadBuffer): CallsignAnnounceMessage {
@@ -292,8 +293,8 @@ function decodeCallsignChanged(rb: ReadBuffer): CallsignChangedMessage {
  * Used to distinguish game messages from rollback-netcode messages.
  */
 export function isGameMessage(data: Uint8Array): boolean {
-  if (data.length === 0) return false;
   const typeByte = data[0];
+  if (typeByte === undefined) return false;
   return typeByte >= 0x80 && typeByte <= 0x93;
 }
 

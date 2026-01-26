@@ -68,7 +68,7 @@ function renderOccupiedSlot(metadata: CampaignMetadata): string {
         <span class="slot-credits">◈ ${credits}</span>
       </div>
       <div class="slot-actions">
-        <button class="btn btn-sm btn-danger" data-slot="${slotId}" data-action="delete">
+        <button class="btn btn-sm btn-danger-subdued" data-slot="${slotId}" data-action="delete">
           Delete
         </button>
         <button class="btn btn-sm btn-primary" data-slot="${slotId}" data-action="load">

@@ -1,9 +1,10 @@
 /**
- * Menu Handlers - Title screen and settings screen setup.
+ * Menu Handlers - Title screen, settings screen, and replay screens setup.
  *
  * Handles:
  * - Title screen rendering and callbacks (new game, continue, settings)
  * - Settings screen rendering and callbacks (back navigation, canvas transfer)
+ * - Replay list and viewer screen setup
  * - Campaign creation flow with commander name, ironman mode, and autoaim
  */
 
@@ -14,10 +15,10 @@ import {
 } from '../../settings/game-settings';
 import {
   getScreenElement,
-  goBackFromLoadCampaign,
   goBackFromReplays,
   goBackFromReplayViewer,
   goBackFromSettings,
+  goToJoinGame,
   goToLoadCampaign,
   goToReplays,
   goToReplayViewer,
@@ -26,14 +27,6 @@ import {
   type ScreenManager,
   updateCampaignState,
 } from '../../ui/common/screens';
-import { showCampaignCreateModal } from '../../ui/screens/campaign-create';
-import {
-  bindLoadCampaignScreen,
-  cleanupLoadCampaignScreen,
-  type LoadCampaignCallbacks,
-  renderLoadCampaignScreen,
-  storeBattleCanvas as storeLoadCampaignBattleCanvas,
-} from '../../ui/screens/load-campaign';
 import {
   bindReplaysScreen,
   cleanupReplaysScreen,
@@ -65,6 +58,14 @@ import {
   setCampaignCreatedAt,
 } from '../storage';
 import type { CampaignSettings, CampaignState } from '../types';
+
+// Re-export multiplayer menu handlers for backward compatibility
+export {
+  setupJoinGameScreen,
+  setupLoadCampaignScreen,
+  setupLoadCampaignScreenForHosting,
+  setupRoomCreatedScreen,
+} from './multiplayer-menu-handlers';
 
 /**
  * Sync global autoaim setting with campaign autoaim.
@@ -109,6 +110,13 @@ export async function setupTitleScreen(
   controller: CampaignController,
   onStartGameplay: () => void,
 ): Promise<void> {
+  // Import here to avoid circular dependency
+  const {
+    setupJoinGameScreen,
+    setupLoadCampaignScreen,
+    setupLoadCampaignScreenForHosting,
+  } = await import('./multiplayer-menu-handlers');
+
   const { screenManager } = controller;
   const titleElement = getScreenElement(screenManager, Screen.TITLE);
 
@@ -117,6 +125,14 @@ export async function setupTitleScreen(
     onNewGame: () => {
       goToLoadCampaign(screenManager);
       void setupLoadCampaignScreen(controller, onStartGameplay);
+    },
+    onHostGame: () => {
+      goToLoadCampaign(screenManager);
+      void setupLoadCampaignScreenForHosting(controller, onStartGameplay);
+    },
+    onJoinGame: () => {
+      goToJoinGame(screenManager);
+      setupJoinGameScreen(controller, onStartGameplay);
     },
     onSettings: () => {
       goToSettings(screenManager);
@@ -127,86 +143,6 @@ export async function setupTitleScreen(
       setupReplaysScreen(controller, onStartGameplay);
     },
   });
-}
-
-/**
- * Setup load campaign screen with callbacks.
- */
-export async function setupLoadCampaignScreen(
-  controller: CampaignController,
-  onStartGameplay: () => void,
-): Promise<void> {
-  const { screenManager } = controller;
-  const loadCampaignElement = getScreenElement(
-    screenManager,
-    Screen.LOAD_CAMPAIGN,
-  );
-
-  renderLoadCampaignScreen(loadCampaignElement);
-
-  const callbacks: LoadCampaignCallbacks = {
-    onBack: () => {
-      // Transfer canvas back to title if needed
-      if (hasBattleSimulation()) {
-        const canvas = getBattleSimulationCanvas();
-        const titleBg = document.getElementById('title-battle-bg');
-        if (canvas && titleBg) {
-          titleBg.appendChild(canvas);
-        }
-      }
-
-      cleanupLoadCampaignScreen();
-      goBackFromLoadCampaign(screenManager);
-
-      // Re-setup title screen
-      void setupTitleScreen(controller, onStartGameplay);
-    },
-    onLoad: (state, _slotId) => {
-      // User loaded existing campaign
-      cleanupLoadCampaignScreen();
-      updateCampaignState(screenManager, state);
-      syncAutoaimFromCampaign(state);
-      onStartGameplay();
-    },
-    onCreate: async (slotId) => {
-      // User wants to create new campaign in selected slot
-      const createResult = await showCampaignCreateModal({ slotId });
-      if (createResult.action === 'cancel') {
-        return; // User cancelled creation
-      }
-
-      // Create and save new campaign
-      const finalSlotId = createResult.slotId ?? slotId;
-      await createAndSaveNewCampaign(
-        screenManager,
-        createResult.settings,
-        finalSlotId,
-      );
-
-      cleanupLoadCampaignScreen();
-      onStartGameplay();
-    },
-  };
-
-  await bindLoadCampaignScreen(loadCampaignElement, callbacks);
-
-  // Transfer battle simulation to load campaign background AFTER bind
-  if (hasBattleSimulation()) {
-    const canvas = getBattleSimulationCanvas();
-    const loadCampaignScreen = loadCampaignElement.querySelector(
-      '.load-campaign-screen',
-    );
-    const loadCampaignBg = loadCampaignElement.querySelector(
-      '#load-campaign-battle-bg',
-    );
-
-    if (canvas && loadCampaignScreen && loadCampaignBg) {
-      loadCampaignBg.appendChild(canvas);
-      loadCampaignScreen.classList.add('with-battle-bg');
-      // Store canvas reference so screen can re-attach after re-renders
-      storeLoadCampaignBattleCanvas(canvas);
-    }
-  }
 }
 
 /**

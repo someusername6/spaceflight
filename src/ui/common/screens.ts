@@ -19,6 +19,8 @@ import type { CampaignState, Contract } from '../../campaign/types';
 export enum Screen {
   TITLE = 'title',
   LOAD_CAMPAIGN = 'load_campaign',
+  JOIN_GAME = 'join_game',
+  ROOM_CREATED = 'room_created',
   SQUADRON = 'squadron',
   STORE = 'store',
   CONTRACTS = 'contracts',
@@ -41,6 +43,8 @@ export interface ScreenManager {
   // Screen elements (created lazily)
   titleElement: HTMLElement | null;
   loadCampaignElement: HTMLElement | null;
+  joinGameElement: HTMLElement | null;
+  roomCreatedElement: HTMLElement | null;
   squadronElement: HTMLElement | null;
   storeElement: HTMLElement | null;
   contractsElement: HTMLElement | null;
@@ -72,6 +76,8 @@ export function createScreenManager(
     lastMissionVictory: false,
     titleElement: null,
     loadCampaignElement: null,
+    joinGameElement: null,
+    roomCreatedElement: null,
     squadronElement: null,
     storeElement: null,
     contractsElement: null,
@@ -252,6 +258,32 @@ export function goToReplayViewer(manager: ScreenManager): void {
 /** Return from replay viewer to replays list */
 export function goBackFromReplayViewer(manager: ScreenManager): void {
   const target = manager.previousScreen ?? Screen.REPLAYS;
+  manager.previousScreen = null;
+  showScreen(manager, target);
+}
+
+/** Transition to join game screen (remembers previous screen for back navigation) */
+export function goToJoinGame(manager: ScreenManager): void {
+  manager.previousScreen = manager.currentScreen;
+  showScreen(manager, Screen.JOIN_GAME);
+}
+
+/** Return from join game to previous screen */
+export function goBackFromJoinGame(manager: ScreenManager): void {
+  const target = manager.previousScreen ?? Screen.TITLE;
+  manager.previousScreen = null;
+  showScreen(manager, target);
+}
+
+/** Transition to room created screen (remembers previous screen for back navigation) */
+export function goToRoomCreated(manager: ScreenManager): void {
+  manager.previousScreen = manager.currentScreen;
+  showScreen(manager, Screen.ROOM_CREATED);
+}
+
+/** Return from room created to previous screen */
+export function goBackFromRoomCreated(manager: ScreenManager): void {
+  const target = manager.previousScreen ?? Screen.LOAD_CAMPAIGN;
   manager.previousScreen = null;
   showScreen(manager, target);
 }

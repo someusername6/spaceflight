@@ -171,12 +171,9 @@ export class CampaignSyncManager {
     success: boolean,
     error?: string,
   ): void {
-    const response: ActionResponseMessage = {
-      type: GameMessageType.ActionResponse,
-      requestId,
-      success,
-      error,
-    };
+    const response: ActionResponseMessage = error
+      ? { type: GameMessageType.ActionResponse, requestId, success, error }
+      : { type: GameMessageType.ActionResponse, requestId, success };
     this.router.sendToPeer(peerId, response);
   }
 

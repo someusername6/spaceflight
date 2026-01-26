@@ -446,12 +446,12 @@ This phase implements **game-specific** messages only.
 
 ### Success Criteria
 
-- [ ] Can navigate to join screen from title
-- [ ] Room code + callsign validated
-- [ ] All error cases display appropriate messages
-- [ ] Successful join transitions to lobby
-- [ ] Host can create room from campaign load
-- [ ] Host transitions to lobby with room code visible
+- [x] Can navigate to join screen from title
+- [x] Room code + callsign validated
+- [x] All error cases display appropriate messages
+- [x] Successful join transitions to lobby (placeholder - returns to title until Phase 7)
+- [x] Host can create room from campaign load
+- [x] Host transitions to lobby with room code visible (room-created screen)
 
 ---
 

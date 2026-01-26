@@ -10,6 +10,10 @@ echo "Running pre-commit checks..."
 echo "Checking formatting and lint..."
 npx biome check --staged src/ scripts/
 
+# Run TypeScript type check
+echo "Checking TypeScript types..."
+npx tsc --noEmit
+
 # Run file size check
 echo "Checking file sizes..."
 bash scripts/build/check-file-size.sh

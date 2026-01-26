@@ -33,7 +33,7 @@ interface FilePickerType {
 }
 
 /** Window with File System Access API (Chromium) */
-type WindowWithFileSystemAccess = Window & {
+interface WindowWithFileSystemAccess extends Window {
   showOpenFilePicker: (options: {
     types: FilePickerType[];
   }) => Promise<FileSystemFileHandle[]>;
@@ -41,7 +41,18 @@ type WindowWithFileSystemAccess = Window & {
     suggestedName?: string;
     types?: FilePickerType[];
   }) => Promise<FileSystemFileHandle>;
-};
+}
+
+/** Type guard for File System Access API availability */
+function hasFileSystemAccess(): boolean {
+  return 'showSaveFilePicker' in window && 'showOpenFilePicker' in window;
+}
+
+/** Get window with File System Access API (call after hasFileSystemAccess check) */
+function getFileSystemWindow(): WindowWithFileSystemAccess {
+  // Safe cast - only called after hasFileSystemAccess() confirms API exists
+  return window as Window as WindowWithFileSystemAccess;
+}
 
 // =============================================================================
 // Import/Export Result Types
@@ -229,7 +240,10 @@ export async function downloadCampaign(
       return { success: false, error: 'No campaign to export' };
     }
 
-    const blob = new Blob([compressed], { type: 'application/gzip' });
+    // Cast to ArrayBuffer for Blob constructor (TypeScript strictness)
+    const blob = new Blob([compressed.buffer as ArrayBuffer], {
+      type: 'application/gzip',
+    });
     const name = filename ?? `spaceflight-campaign-${Date.now()}.campaign.gz`;
 
     // Try modern File System Access API (Chromium) for save dialog
@@ -263,14 +277,12 @@ async function saveWithFilePicker(
   blob: Blob,
   suggestedName: string,
 ): Promise<ExportResult | null> {
-  if (!('showSaveFilePicker' in window)) {
+  if (!hasFileSystemAccess()) {
     return null; // API not available, use fallback
   }
 
   try {
-    const handle = await (
-      window as WindowWithFileSystemAccess
-    ).showSaveFilePicker({
+    const handle = await getFileSystemWindow().showSaveFilePicker({
       suggestedName,
       types: [
         {
@@ -329,11 +341,9 @@ export async function openCampaignFile(
  */
 async function pickFile(): Promise<File | null> {
   // Try modern File System Access API (Chromium)
-  if ('showOpenFilePicker' in window) {
+  if (hasFileSystemAccess()) {
     try {
-      const handles = await (
-        window as WindowWithFileSystemAccess
-      ).showOpenFilePicker({
+      const handles = await getFileSystemWindow().showOpenFilePicker({
         types: [
           {
             description: 'Campaign files',

@@ -34,6 +34,12 @@ export function renderMainView(_state: TitleState): string {
           <button class="btn btn-title btn-primary" id="btn-play">
             Play
           </button>
+          <button class="btn btn-title" id="btn-host-game">
+            Host Game
+          </button>
+          <button class="btn btn-title" id="btn-join-game">
+            Join Game
+          </button>
           <button class="btn btn-title" id="btn-settings">
             Settings
           </button>

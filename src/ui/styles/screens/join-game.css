@@ -1,0 +1,273 @@
+/**
+ * Join Game Screen Styles
+ * Form inputs, connection progress, and error views
+ */
+
+/* ========================================
+   SCREEN CONTAINER
+   ======================================== */
+
+.join-game-screen {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-deep);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Content layer */
+.join-game-wrapper {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+/* Scanline overlay */
+.join-game-screen::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.1) 2px,
+    rgba(0, 0, 0, 0.1) 4px
+  );
+  pointer-events: none;
+  z-index: 100;
+}
+
+/* ========================================
+   CONTENT CONTAINER
+   ======================================== */
+
+.join-game-content {
+  position: relative;
+  z-index: 10;
+  background: var(--bg-overlay);
+  border: 1px solid var(--border-color);
+  padding: var(--space-6);
+  width: 400px;
+  max-width: 90vw;
+}
+
+/* ========================================
+   HEADER
+   ======================================== */
+
+.join-game-header {
+  margin-bottom: var(--space-5);
+  text-align: center;
+}
+
+.join-game-header h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: var(--font-bold);
+  color: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-widest);
+  text-shadow: 0 0 10px var(--color-primary-glow);
+}
+
+.join-game-header h2.error-title {
+  color: var(--color-danger);
+  text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+}
+
+.join-game-subtitle {
+  margin: var(--space-2) 0 0 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+/* ========================================
+   FORM
+   ======================================== */
+
+.join-game-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.form-field label {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.form-field input {
+  padding: var(--space-3);
+  background: rgba(10, 14, 20, 0.8);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  letter-spacing: var(--tracking-wide);
+  transition: border-color var(--duration-base) var(--ease-out);
+}
+
+.form-field input::placeholder {
+  color: var(--text-dim);
+}
+
+.form-field input:focus {
+  outline: 2px solid var(--color-secondary);
+  outline-offset: 2px;
+  border-color: var(--color-secondary);
+}
+
+#room-code {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.field-error {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-danger);
+}
+
+/* ========================================
+   ACTIONS
+   ======================================== */
+
+.join-game-actions {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-dim);
+}
+
+.join-game-actions .btn {
+  min-width: 100px;
+}
+
+/* ========================================
+   CONNECTING VIEW
+   ======================================== */
+
+.join-game-connecting {
+  padding: var(--space-4) 0;
+}
+
+.room-code-display {
+  font-family: var(--font-display);
+  color: var(--color-secondary);
+  letter-spacing: 0.2em;
+}
+
+.join-progress-steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.join-progress-step {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: rgba(10, 14, 20, 0.5);
+  border: 1px solid var(--border-dim);
+}
+
+.join-progress-step.step-pending {
+  opacity: 0.5;
+}
+
+.join-progress-step.step-active {
+  border-color: var(--color-secondary);
+  background: rgba(0, 245, 255, 0.05);
+}
+
+.join-progress-step.step-complete {
+  border-color: var(--color-success);
+  background: rgba(34, 197, 94, 0.05);
+}
+
+.step-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.step-active .step-icon {
+  color: var(--color-secondary);
+}
+
+.step-complete .step-icon {
+  color: var(--color-success);
+}
+
+.step-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border-dim);
+  border-top-color: var(--color-secondary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.step-label {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.step-active .step-label {
+  color: var(--color-secondary);
+}
+
+.step-complete .step-label {
+  color: var(--color-success);
+}
+
+/* ========================================
+   ERROR VIEW
+   ======================================== */
+
+.join-game-error {
+  padding: var(--space-4) 0;
+  text-align: center;
+}
+
+.error-message {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}

@@ -45,6 +45,8 @@ import {
 /** Title screen callbacks */
 export interface TitleScreenProps {
   onNewGame: () => void;
+  onHostGame: () => void;
+  onJoinGame: () => void;
   onSettings: () => void;
   onReplays: () => void;
 }
@@ -80,6 +82,14 @@ const TitleScreenComponent: Screen<TitleState, TitleScreenProps> = {
     // Play button - shows slot selection modal
     api.on('#btn-play', 'click', () => {
       props.onNewGame();
+    });
+
+    api.on('#btn-host-game', 'click', () => {
+      props.onHostGame();
+    });
+
+    api.on('#btn-join-game', 'click', () => {
+      props.onJoinGame();
     });
 
     api.on('#btn-settings', 'click', () => {
@@ -234,6 +244,8 @@ export function renderTitleScreen(element: HTMLElement): void {
   };
   element.innerHTML = TitleScreenComponent.render(initialState, {
     onNewGame: () => {},
+    onHostGame: () => {},
+    onJoinGame: () => {},
     onSettings: () => {},
     onReplays: () => {},
   });
