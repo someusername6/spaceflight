@@ -16,6 +16,7 @@ import {
   type ScreenAPI,
   type ScreenHandle,
 } from '../framework/screen';
+import { copyToClipboard } from '../utils/clipboard';
 import {
   type RoomCreatedState,
   renderErrorView,
@@ -45,7 +46,7 @@ const RoomCreatedScreenComponent: Screen<
     }
 
     return `
-      <div class="room-created-screen">
+      <div class="room-created-screen scanline-overlay-screen">
         <div class="room-created-wrapper">
           ${content}
         </div>
@@ -90,36 +91,6 @@ const RoomCreatedScreenComponent: Screen<
     });
   },
 };
-
-/** Copy text to clipboard with fallback */
-async function copyToClipboard(text: string): Promise<boolean> {
-  // Try modern clipboard API first
-  if (navigator.clipboard?.writeText) {
-    try {
-      await navigator.clipboard.writeText(text);
-      return true;
-    } catch {
-      // Fall through to fallback
-    }
-  }
-
-  // Fallback for older browsers
-  try {
-    const textArea = document.createElement('textarea');
-    textArea.value = text;
-    textArea.style.position = 'fixed';
-    textArea.style.left = '-9999px';
-    textArea.style.top = '-9999px';
-    document.body.appendChild(textArea);
-    textArea.focus();
-    textArea.select();
-    const success = document.execCommand('copy');
-    document.body.removeChild(textArea);
-    return success;
-  } catch {
-    return false;
-  }
-}
 
 /** Screen handle for external control */
 let screenHandle: ScreenHandle<RoomCreatedState, RoomCreatedCallbacks> | null =

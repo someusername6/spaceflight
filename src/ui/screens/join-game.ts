@@ -22,6 +22,11 @@ import type {
   ConnectionState,
 } from '../../multiplayer/networking/types';
 import {
+  formatRoomCode,
+  normalizeRoomCode,
+  validateRoomCode,
+} from '../../multiplayer/room-code';
+import {
   createScreen,
   type Screen,
   type ScreenAPI,
@@ -34,35 +39,6 @@ import {
   renderErrorView,
   renderInputView,
 } from './join-game-render';
-
-/** Valid room code: 8 uppercase alphanumeric characters */
-const ROOM_CODE_LENGTH = 8;
-const ROOM_CODE_PATTERN = /^[A-Z0-9]{8}$/;
-
-/** Validate room code */
-function validateRoomCode(code: string): { valid: boolean; error?: string } {
-  const normalized = code.toUpperCase().trim();
-
-  if (normalized.length === 0) {
-    return { valid: false, error: 'Room code is required' };
-  }
-
-  if (normalized.length !== ROOM_CODE_LENGTH) {
-    return {
-      valid: false,
-      error: `Room code must be ${ROOM_CODE_LENGTH} characters`,
-    };
-  }
-
-  if (!ROOM_CODE_PATTERN.test(normalized)) {
-    return {
-      valid: false,
-      error: 'Room code can only contain letters and numbers',
-    };
-  }
-
-  return { valid: true };
-}
 
 /** Callbacks for join game screen */
 export interface JoinGameCallbacks {
@@ -88,7 +64,7 @@ const JoinGameScreenComponent: Screen<JoinGameState, JoinGameCallbacks> = {
     }
 
     return `
-      <div class="join-game-screen">
+      <div class="join-game-screen scanline-overlay-screen">
         <div class="join-game-wrapper">
           ${content}
         </div>
@@ -106,15 +82,8 @@ const JoinGameScreenComponent: Screen<JoinGameState, JoinGameCallbacks> = {
     // Room code input - auto-uppercase, filter, and format as "XXXX XXXX"
     api.on('#room-code', 'input', (e) => {
       const input = e.target as HTMLInputElement;
-      // Strip to raw alphanumeric uppercase, max 8 chars
-      const raw = input.value
-        .toUpperCase()
-        .replace(/[^A-Z0-9]/g, '')
-        .slice(0, 8);
-      // Format with space for display: "ABCD 1234"
-      const formatted =
-        raw.length > 4 ? `${raw.slice(0, 4)} ${raw.slice(4)}` : raw;
-      input.value = formatted;
+      const raw = normalizeRoomCode(input.value).slice(0, 8);
+      input.value = formatRoomCode(raw);
       api.updateState({ roomCode: raw, roomCodeError: null });
     });
 
@@ -240,8 +209,7 @@ async function handleJoin(
     );
 
     // Attempt to join
-    const normalizedCode = state.roomCode.toUpperCase();
-    const result = await connectionFlow.joinRoom(normalizedCode);
+    const result = await connectionFlow.joinRoom(state.roomCode);
 
     // Success - pass to callback
     props.onJoined(result, connectionFlow);

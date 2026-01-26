@@ -1,5 +1,5 @@
 /**
- * Multiplayer Menu Handlers - Join game, host game, and room management screens.
+ * Campaign Menu Handlers - Load campaign, host game, join game, and room screens.
  *
  * Handles:
  * - Load campaign screen setup (for both normal play and hosting)
@@ -53,135 +53,31 @@ import {
 } from './menu-handlers';
 
 /**
- * Setup load campaign screen with callbacks.
+ * Create the onBack callback for load campaign screens.
+ * Shared between normal and hosting modes.
  */
-export async function setupLoadCampaignScreen(
+function createLoadCampaignBackHandler(
   controller: CampaignController,
   onStartGameplay: () => void,
-): Promise<void> {
+): () => void {
   const { screenManager } = controller;
-  const loadCampaignElement = getScreenElement(
-    screenManager,
-    Screen.LOAD_CAMPAIGN,
-  );
 
-  renderLoadCampaignScreen(loadCampaignElement);
-
-  const callbacks: LoadCampaignCallbacks = {
-    onBack: () => {
-      // Transfer canvas back to title if needed
-      if (hasBattleSimulation()) {
-        const canvas = getBattleSimulationCanvas();
-        const titleBg = document.getElementById('title-battle-bg');
-        if (canvas && titleBg) {
-          titleBg.appendChild(canvas);
-        }
+  return () => {
+    // Transfer canvas back to title if needed
+    if (hasBattleSimulation()) {
+      const canvas = getBattleSimulationCanvas();
+      const titleBg = document.getElementById('title-battle-bg');
+      if (canvas && titleBg) {
+        titleBg.appendChild(canvas);
       }
+    }
 
-      cleanupLoadCampaignScreen();
-      goBackFromLoadCampaign(screenManager);
+    cleanupLoadCampaignScreen();
+    goBackFromLoadCampaign(screenManager);
 
-      // Re-setup title screen
-      void setupTitleScreen(controller, onStartGameplay);
-    },
-    onLoad: (state, _slotId) => {
-      // User loaded existing campaign
-      cleanupLoadCampaignScreen();
-      updateCampaignState(screenManager, state);
-      syncAutoaimFromCampaign(state);
-      onStartGameplay();
-    },
-    onCreate: async (slotId) => {
-      // User wants to create new campaign in selected slot
-      const createResult = await showCampaignCreateModal({ slotId });
-      if (createResult.action === 'cancel') {
-        return; // User cancelled creation
-      }
-
-      // Create and save new campaign
-      const finalSlotId = (createResult.slotId ?? slotId) as SlotId;
-      await createAndSaveNewCampaign(
-        screenManager,
-        createResult.settings,
-        finalSlotId,
-      );
-
-      cleanupLoadCampaignScreen();
-      onStartGameplay();
-    },
+    // Re-setup title screen
+    void setupTitleScreen(controller, onStartGameplay);
   };
-
-  await bindLoadCampaignScreen(loadCampaignElement, callbacks);
-
-  // Transfer battle simulation to load campaign background AFTER bind
-  transferBattleCanvasToLoadCampaign(loadCampaignElement);
-}
-
-/**
- * Setup load campaign screen for hosting multiplayer.
- * Reuses the load campaign screen but loading a slot triggers hosting instead of gameplay.
- */
-export async function setupLoadCampaignScreenForHosting(
-  controller: CampaignController,
-  onStartGameplay: () => void,
-): Promise<void> {
-  const { screenManager } = controller;
-  const loadCampaignElement = getScreenElement(
-    screenManager,
-    Screen.LOAD_CAMPAIGN,
-  );
-
-  renderLoadCampaignScreen(loadCampaignElement);
-
-  const callbacks: LoadCampaignCallbacks = {
-    onBack: () => {
-      // Transfer canvas back to title if needed
-      if (hasBattleSimulation()) {
-        const canvas = getBattleSimulationCanvas();
-        const titleBg = document.getElementById('title-battle-bg');
-        if (canvas && titleBg) {
-          titleBg.appendChild(canvas);
-        }
-      }
-
-      cleanupLoadCampaignScreen();
-      goBackFromLoadCampaign(screenManager);
-
-      // Re-setup title screen
-      void setupTitleScreen(controller, onStartGameplay);
-    },
-    onLoad: (state, _slotId) => {
-      // In hosting mode, loading triggers hosting instead of gameplay
-      cleanupLoadCampaignScreen();
-      updateCampaignState(screenManager, state);
-      syncAutoaimFromCampaign(state);
-
-      // Start hosting flow
-      void setupRoomCreatedScreen(controller, onStartGameplay);
-    },
-    onCreate: async (slotId) => {
-      // User wants to create new campaign - same as normal flow
-      const createResult = await showCampaignCreateModal({ slotId });
-      if (createResult.action === 'cancel') {
-        return;
-      }
-
-      const finalSlotId = (createResult.slotId ?? slotId) as SlotId;
-      await createAndSaveNewCampaign(
-        screenManager,
-        createResult.settings,
-        finalSlotId,
-      );
-
-      // After creating, go directly to hosting
-      void setupRoomCreatedScreen(controller, onStartGameplay);
-    },
-  };
-
-  await bindLoadCampaignScreen(loadCampaignElement, callbacks);
-
-  // Transfer battle simulation to load campaign background AFTER bind
-  transferBattleCanvasToLoadCampaign(loadCampaignElement);
 }
 
 /**
@@ -208,6 +104,98 @@ function transferBattleCanvasToLoadCampaign(
 }
 
 /**
+ * Setup load campaign screen with callbacks.
+ */
+export async function setupLoadCampaignScreen(
+  controller: CampaignController,
+  onStartGameplay: () => void,
+): Promise<void> {
+  const { screenManager } = controller;
+  const loadCampaignElement = getScreenElement(
+    screenManager,
+    Screen.LOAD_CAMPAIGN,
+  );
+
+  renderLoadCampaignScreen(loadCampaignElement);
+
+  const callbacks: LoadCampaignCallbacks = {
+    onBack: createLoadCampaignBackHandler(controller, onStartGameplay),
+    onLoad: (state, _slotId) => {
+      cleanupLoadCampaignScreen();
+      updateCampaignState(screenManager, state);
+      syncAutoaimFromCampaign(state);
+      onStartGameplay();
+    },
+    onCreate: async (slotId) => {
+      const createResult = await showCampaignCreateModal({ slotId });
+      if (createResult.action === 'cancel') {
+        return;
+      }
+
+      const finalSlotId = (createResult.slotId ?? slotId) as SlotId;
+      await createAndSaveNewCampaign(
+        screenManager,
+        createResult.settings,
+        finalSlotId,
+      );
+
+      cleanupLoadCampaignScreen();
+      onStartGameplay();
+    },
+  };
+
+  await bindLoadCampaignScreen(loadCampaignElement, callbacks);
+  transferBattleCanvasToLoadCampaign(loadCampaignElement);
+}
+
+/**
+ * Setup load campaign screen for hosting multiplayer.
+ * Reuses the load campaign screen but loading triggers hosting instead of gameplay.
+ */
+export async function setupLoadCampaignScreenForHosting(
+  controller: CampaignController,
+  onStartGameplay: () => void,
+): Promise<void> {
+  const { screenManager } = controller;
+  const loadCampaignElement = getScreenElement(
+    screenManager,
+    Screen.LOAD_CAMPAIGN,
+  );
+
+  renderLoadCampaignScreen(loadCampaignElement);
+
+  const callbacks: LoadCampaignCallbacks = {
+    onBack: createLoadCampaignBackHandler(controller, onStartGameplay),
+    onLoad: (state, _slotId) => {
+      cleanupLoadCampaignScreen();
+      updateCampaignState(screenManager, state);
+      syncAutoaimFromCampaign(state);
+      // Start hosting flow instead of gameplay
+      void setupRoomCreatedScreen(controller, onStartGameplay);
+    },
+    onCreate: async (slotId) => {
+      const createResult = await showCampaignCreateModal({ slotId });
+      if (createResult.action === 'cancel') {
+        return;
+      }
+
+      const finalSlotId = (createResult.slotId ?? slotId) as SlotId;
+      await createAndSaveNewCampaign(
+        screenManager,
+        createResult.settings,
+        finalSlotId,
+      );
+
+      // After creating, go directly to hosting
+      void setupRoomCreatedScreen(controller, onStartGameplay);
+    },
+  };
+
+  await bindLoadCampaignScreen(loadCampaignElement, callbacks);
+  transferBattleCanvasToLoadCampaign(loadCampaignElement);
+}
+
+/**
  * Setup join game screen with callbacks.
  */
 export function setupJoinGameScreen(
@@ -222,8 +210,6 @@ export function setupJoinGameScreen(
     onBack: () => {
       cleanupJoinGameScreen();
       goBackFromJoinGame(screenManager);
-
-      // Re-setup title screen
       void setupTitleScreen(controller, onStartGameplay);
     },
     onJoined: (_result: ConnectionResult, _connectionFlow: ConnectionFlow) => {
@@ -252,7 +238,6 @@ export async function setupRoomCreatedScreen(
   renderRoomCreatedScreen(roomCreatedElement);
 
   try {
-    // Create connection flow and room
     const connectionFlow = createConnectionFlow();
     const result = await connectionFlow.createRoom();
 
@@ -261,15 +246,11 @@ export async function setupRoomCreatedScreen(
       onCancel: () => {
         cleanupRoomCreatedScreen();
         goBackFromRoomCreated(screenManager);
-
-        // Re-setup load campaign screen in hosting mode
         void setupLoadCampaignScreenForHosting(controller, onStartGameplay);
       },
     });
   } catch (error) {
     // Failed to create room - stay on load campaign (hosting mode)
-    // Don't call goBackFromRoomCreated since goToRoomCreated was never called
-    // and the load campaign screen is still visible
     logError('Failed to create room:', error);
     void setupLoadCampaignScreenForHosting(controller, onStartGameplay);
   }

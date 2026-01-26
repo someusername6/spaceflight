@@ -101,6 +101,25 @@
   z-index: 1;
 }
 
+/* Full-screen variant with higher z-index */
+.scanline-overlay-screen::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.1) 2px,
+    rgba(0, 0, 0, 0.1) 4px
+  );
+  pointer-events: none;
+  z-index: 100;
+}
+
 /* ========================================
    SHARED ANIMATIONS
    ======================================== */
