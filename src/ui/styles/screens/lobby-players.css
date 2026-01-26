@@ -1,0 +1,117 @@
+/**
+ * Lobby Players Panel Styles
+ */
+
+/* ========================================
+   PLAYER LIST
+   ======================================== */
+
+.player-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-2);
+}
+
+.player-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid transparent;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.player-row:hover {
+  background: rgba(0, 245, 255, 0.05);
+  border-color: var(--border-dim);
+}
+
+.player-row.self {
+  background: rgba(0, 245, 255, 0.1);
+  border-color: var(--color-primary-dim);
+}
+
+.player-row.self .player-callsign {
+  font-weight: var(--font-bold);
+  color: var(--color-secondary);
+}
+
+.player-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.host-indicator {
+  color: var(--color-warning);
+  font-size: var(--text-base);
+}
+
+.player-callsign {
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  color: var(--text-primary);
+}
+
+.player-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.ship-status {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--text-dim);
+}
+
+.ship-status.assigned {
+  color: var(--color-primary);
+}
+
+.ship-status.spectator {
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+.ping {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  min-width: 50px;
+  text-align: right;
+}
+
+.ping.ping-good {
+  color: var(--color-success);
+}
+
+.ping.ping-medium {
+  color: var(--color-warning);
+}
+
+.ping.ping-bad {
+  color: var(--color-danger);
+}
+
+.ready-indicator {
+  font-size: var(--text-lg);
+  width: 24px;
+  text-align: center;
+}
+
+.ready-indicator.ready {
+  color: var(--color-success);
+}
+
+.ready-indicator.not-ready {
+  color: var(--color-danger);
+}
+
+.no-players {
+  padding: var(--space-4);
+  text-align: center;
+  color: var(--text-dim);
+  font-style: italic;
+}

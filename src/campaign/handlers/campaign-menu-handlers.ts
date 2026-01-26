@@ -17,8 +17,6 @@ import {
   getScreenElement,
   goBackFromJoinGame,
   goBackFromLoadCampaign,
-  goBackFromRoomCreated,
-  goToRoomCreated,
   Screen,
   updateCampaignState,
 } from '../../ui/common/screens';
@@ -36,7 +34,6 @@ import {
   storeBattleCanvas as storeLoadCampaignBattleCanvas,
 } from '../../ui/screens/load-campaign';
 import {
-  bindRoomCreatedScreen,
   cleanupRoomCreatedScreen,
   renderRoomCreatedScreen,
 } from '../../ui/screens/room-created';
@@ -46,6 +43,10 @@ import {
 } from '../../ui/screens/title';
 import type { CampaignController } from '../controller-types';
 import type { SlotId } from '../storage';
+import {
+  setupLobbyScreenForGuest,
+  setupLobbyScreenForHost,
+} from './lobby-handlers';
 import {
   createAndSaveNewCampaign,
   setupTitleScreen,
@@ -212,18 +213,22 @@ export function setupJoinGameScreen(
       goBackFromJoinGame(screenManager);
       void setupTitleScreen(controller, onStartGameplay);
     },
-    onJoined: (_result: ConnectionResult, _connectionFlow: ConnectionFlow) => {
-      // Successfully joined - transition to multiplayer lobby (Phase 7)
-      // For now, just clean up and return to title
+    onJoined: (result: ConnectionResult, connectionFlow: ConnectionFlow) => {
+      // Successfully joined - transition to multiplayer lobby
       cleanupJoinGameScreen();
-      goBackFromJoinGame(screenManager);
-      void setupTitleScreen(controller, onStartGameplay);
+      setupLobbyScreenForGuest(
+        controller,
+        result,
+        connectionFlow,
+        onStartGameplay,
+      );
     },
   });
 }
 
 /**
  * Setup room created screen with callbacks (host flow).
+ * After creating room, transitions to lobby screen.
  */
 export async function setupRoomCreatedScreen(
   controller: CampaignController,
@@ -241,14 +246,14 @@ export async function setupRoomCreatedScreen(
     const connectionFlow = createConnectionFlow();
     const result = await connectionFlow.createRoom();
 
-    goToRoomCreated(screenManager);
-    bindRoomCreatedScreen(roomCreatedElement, result.roomCode, connectionFlow, {
-      onCancel: () => {
-        cleanupRoomCreatedScreen();
-        goBackFromRoomCreated(screenManager);
-        void setupLoadCampaignScreenForHosting(controller, onStartGameplay);
-      },
-    });
+    // Transition directly to lobby screen instead of room-created
+    cleanupRoomCreatedScreen();
+    setupLobbyScreenForHost(
+      controller,
+      result,
+      connectionFlow,
+      onStartGameplay,
+    );
   } catch (error) {
     // Failed to create room - stay on load campaign (hosting mode)
     logError('Failed to create room:', error);

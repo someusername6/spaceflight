@@ -212,7 +212,11 @@ async function handleJoin(
     const result = await connectionFlow.joinRoom(state.roomCode);
 
     // Success - pass to callback
-    props.onJoined(result, connectionFlow);
+    // Clear the module-level reference BEFORE calling onJoined
+    // so that cleanupJoinGameScreen() won't dispose the connection
+    const flowToPass = connectionFlow;
+    connectionFlow = null;
+    props.onJoined(result, flowToPass);
   } catch {
     // Error already handled by onStateChange callback which sets UI to error view.
     // This catch prevents unhandled rejection if onStateChange wasn't set up.

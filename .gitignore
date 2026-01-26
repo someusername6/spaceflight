@@ -32,6 +32,7 @@ spaceflight-*.zip
 
 # Test output
 balance-test-results.txt
+test-results/
 
 # Generated ship geometry files
 src/rendering/ship-geometry-ships.ts

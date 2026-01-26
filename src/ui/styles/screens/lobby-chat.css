@@ -1,0 +1,184 @@
+/**
+ * Lobby Chat Panel Styles
+ */
+
+/* ========================================
+   CHAT PANEL
+   ======================================== */
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.chat-message {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+
+.chat-message.system {
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+.chat-time {
+  color: var(--text-dim);
+  font-size: var(--text-xs);
+  margin-right: var(--space-2);
+}
+
+.chat-sender {
+  color: var(--color-primary);
+  font-weight: var(--font-medium);
+  margin-right: var(--space-1);
+}
+
+.chat-text {
+  color: var(--text-secondary);
+}
+
+.chat-message.system .chat-text {
+  color: var(--text-dim);
+}
+
+.chat-empty {
+  padding: var(--space-4);
+  text-align: center;
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+.chat-input-form {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-top: 1px solid var(--border-dim);
+  flex-shrink: 0;
+}
+
+.chat-input {
+  flex: 1;
+  padding: var(--space-2) var(--space-3);
+  background: rgba(10, 14, 20, 0.8);
+  border: 1px solid var(--border-dim);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+}
+
+.chat-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.chat-input::placeholder {
+  color: var(--text-dim);
+}
+
+/* ========================================
+   HOST POPOVER
+   ======================================== */
+
+.host-popover {
+  background: var(--bg-overlay);
+  border: 1px solid var(--border-color);
+  padding: var(--space-3);
+  min-width: 180px;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.popover-header {
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border-dim);
+  margin-bottom: var(--space-2);
+}
+
+.popover-title {
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: var(--font-bold);
+  color: var(--color-primary);
+  text-transform: uppercase;
+}
+
+.popover-actions {
+  padding-bottom: var(--space-2);
+  margin-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border-dim);
+}
+
+.popover-permissions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.permission-row {
+  display: flex;
+  align-items: center;
+}
+
+.permission-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.permission-label input[type="checkbox"] {
+  margin: 0;
+}
+
+.permission-label input[type="checkbox"]:disabled {
+  cursor: not-allowed;
+}
+
+/* ========================================
+   ERROR OVERLAY
+   ======================================== */
+
+.lobby-error-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.lobby-error-content {
+  background: var(--bg-overlay);
+  border: 1px solid var(--color-danger);
+  padding: var(--space-5);
+  text-align: center;
+  max-width: 400px;
+}
+
+.lobby-error-content h3 {
+  margin: 0 0 var(--space-3) 0;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  color: var(--color-danger);
+  text-transform: uppercase;
+}
+
+.lobby-error-content p {
+  margin: 0 0 var(--space-4) 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  color: var(--text-secondary);
+}

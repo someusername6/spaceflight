@@ -115,6 +115,9 @@
 /* Room created screen */
 @import "./screens/room-created.css";
 
+/* Lobby screen */
+@import "./screens/lobby.css";
+
 /* Settings screen */
 @import "./screens/settings.css";
 @import "./screens/settings-bindings.css";

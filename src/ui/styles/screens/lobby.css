@@ -1,0 +1,183 @@
+/**
+ * Lobby Screen Styles
+ * Two-column layout: players (left), chat (right)
+ *
+ * Split into:
+ * - lobby.css (this file) - Layout and common styles
+ * - lobby-players.css - Player list styles
+ * - lobby-chat.css - Chat panel, popover, error styles
+ */
+
+@import "./lobby-players.css";
+@import "./lobby-chat.css";
+
+/* ========================================
+   SCREEN CONTAINER
+   ======================================== */
+
+.lobby-screen {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-deep);
+  position: relative;
+  overflow: hidden;
+}
+
+.lobby-wrapper {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+/* ========================================
+   CONTENT CONTAINER
+   ======================================== */
+
+.lobby-content {
+  position: relative;
+  z-index: 10;
+  background: var(--bg-overlay);
+  border: 1px solid var(--border-color);
+  padding: var(--space-5);
+  width: 900px;
+  max-width: 95vw;
+  height: 600px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* ========================================
+   ROOM CODE HEADER
+   ======================================== */
+
+.room-code-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: rgba(10, 14, 20, 0.8);
+  border: 1px solid var(--color-primary);
+}
+
+.room-code-label {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.room-code-value {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: var(--font-bold);
+  color: var(--color-secondary);
+  letter-spacing: 0.2em;
+  text-shadow: 0 0 10px rgba(0, 245, 255, 0.5);
+}
+
+.room-code-header #btn-copy {
+  flex-shrink: 0;
+}
+
+.room-code-header #btn-copy.copied {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
+/* ========================================
+   MAIN LAYOUT
+   ======================================== */
+
+.lobby-main {
+  flex: 1;
+  display: flex;
+  gap: var(--space-4);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.lobby-left {
+  flex: 0 0 55%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.lobby-right {
+  flex: 0 0 45%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* ========================================
+   PANEL STYLES
+   ======================================== */
+
+.players-panel,
+.chat-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: rgba(10, 14, 20, 0.5);
+  border: 1px solid var(--border-dim);
+  min-height: 0;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--border-dim);
+  flex-shrink: 0;
+}
+
+.panel-header h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  font-weight: var(--font-bold);
+  color: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.player-count {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--text-dim);
+}
+
+/* ========================================
+   ACTIONS
+   ======================================== */
+
+.lobby-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-dim);
+  flex-shrink: 0;
+}
+
+.lobby-actions .btn {
+  min-width: 100px;
+}
+
+#btn-ready.ready-active {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: var(--color-success);
+  color: var(--color-success);
+}

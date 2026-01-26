@@ -507,13 +507,16 @@ This phase implements **game-specific** messages only.
 
 ### Success Criteria
 
-- [ ] LOBBY tab appears first in multiplayer mode
-- [ ] Lobby tab renders correctly with two-column layout
-- [ ] Room code displays for host with copy button
-- [ ] Players list updates on join/leave
-- [ ] Chat messages send and display
-- [ ] Ready state syncs across players
-- [ ] Host sees popover on guest hover (buttons may be non-functional)
+- [x] LOBBY screen appears after successful connection (host or guest)
+- [x] Lobby renders correctly with two-column layout (players left, chat right)
+- [x] Room code displays for host with copy button
+- [x] Players list updates on join/leave with system messages
+- [x] Players show: callsign, ping, ready status (✓/✗), host indicator (★), self highlight
+- [x] Chat messages send and display (with timestamps)
+- [x] Ready state syncs across players
+- [x] Host sees popover on guest hover (buttons non-functional until Phase 8/13)
+- [x] Back button returns to title with proper cleanup
+- [x] CallsignAnnounce handshake prevents race conditions
 
 ---
 

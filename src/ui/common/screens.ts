@@ -21,6 +21,7 @@ export enum Screen {
   LOAD_CAMPAIGN = 'load_campaign',
   JOIN_GAME = 'join_game',
   ROOM_CREATED = 'room_created',
+  LOBBY = 'lobby',
   SQUADRON = 'squadron',
   STORE = 'store',
   CONTRACTS = 'contracts',
@@ -45,6 +46,7 @@ export interface ScreenManager {
   loadCampaignElement: HTMLElement | null;
   joinGameElement: HTMLElement | null;
   roomCreatedElement: HTMLElement | null;
+  lobbyElement: HTMLElement | null;
   squadronElement: HTMLElement | null;
   storeElement: HTMLElement | null;
   contractsElement: HTMLElement | null;
@@ -78,6 +80,7 @@ export function createScreenManager(
     loadCampaignElement: null,
     joinGameElement: null,
     roomCreatedElement: null,
+    lobbyElement: null,
     squadronElement: null,
     storeElement: null,
     contractsElement: null,
@@ -286,4 +289,16 @@ export function goBackFromRoomCreated(manager: ScreenManager): void {
   const target = manager.previousScreen ?? Screen.LOAD_CAMPAIGN;
   manager.previousScreen = null;
   showScreen(manager, target);
+}
+
+/** Transition to lobby screen (remembers previous screen for back navigation) */
+export function goToLobby(manager: ScreenManager): void {
+  manager.previousScreen = manager.currentScreen;
+  showScreen(manager, Screen.LOBBY);
+}
+
+/** Return from lobby to title screen */
+export function goBackFromLobby(manager: ScreenManager): void {
+  manager.previousScreen = null;
+  showScreen(manager, Screen.TITLE);
 }
