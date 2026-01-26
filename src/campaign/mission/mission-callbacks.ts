@@ -152,15 +152,27 @@ export function createMissionEndExecutor(
       }
     }
 
-    const pilotStatsData = debriefData.pilots
-      .filter((p) => p.campaignShipId && shipToPilot.has(p.campaignShipId))
-      .map((p) => ({
-        pilotId: shipToPilot.get(p.campaignShipId!)!,
-        kills: p.kills,
-        assists: p.assists,
-        damageDealt: p.damageDealt,
-        damageReceived: p.damageReceived,
-      }));
+    const pilotStatsData: Array<{
+      pilotId: string;
+      kills: number;
+      assists: number;
+      damageDealt: number;
+      damageReceived: number;
+    }> = [];
+    for (const p of debriefData.pilots) {
+      if (p.campaignShipId) {
+        const pilotId = shipToPilot.get(p.campaignShipId);
+        if (pilotId) {
+          pilotStatsData.push({
+            pilotId,
+            kills: p.kills,
+            assists: p.assists,
+            damageDealt: p.damageDealt,
+            damageReceived: p.damageReceived,
+          });
+        }
+      }
+    }
 
     // Get pilots who ejected and survived (for XP bonus)
     // These are pilots marked as ejected but NOT retiring in the debrief

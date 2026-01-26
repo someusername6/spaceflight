@@ -102,3 +102,10 @@ export const DESYNC_AUTHORITY = {
 } as const;
 
 // SessionState values: 0=Disconnected, 1=Connecting, 2=Lobby, 3=Playing, 4=Paused
+
+// =============================================================================
+// Networking (Phase 4)
+// =============================================================================
+
+// Re-export the networking module for WebRTC-based multiplayer
+export * from './networking';

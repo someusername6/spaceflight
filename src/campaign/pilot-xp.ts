@@ -47,7 +47,8 @@ function getNextSkillLevel(current: SkillLevel): SkillLevel | null {
   if (currentIndex === -1 || currentIndex >= SKILL_PROGRESSION.length - 1) {
     return null; // Already at max or unknown skill
   }
-  return SKILL_PROGRESSION[currentIndex + 1]!;
+  const next = SKILL_PROGRESSION[currentIndex + 1];
+  return next ?? null;
 }
 
 /**

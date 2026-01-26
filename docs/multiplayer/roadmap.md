@@ -242,6 +242,8 @@ The signaling server is intentionally minimal:
 
 **Goal:** WebRTC transport in browser, connecting to signaling server.
 
+**Status:** ✅ Complete
+
 ### Deliverables
 
 1. **Signaling client** (`src/multiplayer/signaling-client.ts`)
@@ -291,14 +293,14 @@ The signaling server is intentionally minimal:
 
 ### Success Criteria
 
-- [ ] Connect to signaling server
-- [ ] Create room and get code
-- [ ] Join room with code
-- [ ] Establish WebRTC mesh (2-4 players)
-- [ ] Mesh formation times out after 10s if incomplete
-- [ ] Partial mesh failure returns to join screen with error
-- [ ] DataChannels working for message passing
-- [ ] MultiplayerState tracks all session info
+- [x] Connect to signaling server
+- [x] Create room and get code
+- [x] Join room with code
+- [x] Establish WebRTC mesh (2-4 players)
+- [x] Mesh formation times out after 10s if incomplete
+- [x] Partial mesh failure returns to join screen with error
+- [x] DataChannels working for message passing
+- [x] MultiplayerState tracks all session info
 
 ---
 

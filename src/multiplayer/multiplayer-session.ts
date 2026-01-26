@@ -85,7 +85,7 @@ export class MultiplayerSession {
       game: this.gameAdapter,
       transport: options.transport,
       localPlayerId,
-      config: options.config,
+      ...(options.config && { config: options.config }),
     };
     this.session = createSession(sessionOptions);
   }
@@ -267,6 +267,6 @@ export function createMultiplayerSessionAuto(
     localPlayerId,
     isHost,
     playerEntityMap,
-    config,
+    ...(config && { config }),
   });
 }
