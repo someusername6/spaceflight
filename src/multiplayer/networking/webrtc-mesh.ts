@@ -7,14 +7,18 @@
  * - 'unreliable': unordered, no retransmit (reserved for future optimization)
  */
 
+import {
+  cleanupPeerConnection,
+  createPeerConnection,
+  type OutgoingSignal,
+  type PeerState,
+  processBufferedIceCandidates,
+  toArrayBuffer,
+} from './peer-connection';
 import type { SignalType, WebRTCMeshConfig } from './types';
 
-/** Outgoing signal to be sent via signaling server */
-export interface OutgoingSignal {
-  toPeerId: string;
-  type: SignalType;
-  data: string;
-}
+// Re-export for external use
+export type { OutgoingSignal } from './peer-connection';
 
 /** Events emitted by the mesh */
 export interface WebRTCMeshEvents {
@@ -24,24 +28,6 @@ export interface WebRTCMeshEvents {
   onMeshComplete: () => void;
   onMeshFailed: (error: Error) => void;
   onSignalNeeded: (signal: OutgoingSignal) => void;
-}
-
-/** Internal state for a peer connection */
-interface PeerState {
-  connection: RTCPeerConnection;
-  reliableChannel: RTCDataChannel | null;
-  unreliableChannel: RTCDataChannel | null;
-  connected: boolean;
-  iceCandidateBuffer: RTCIceCandidate[];
-  remoteDescriptionSet: boolean;
-}
-
-/** Convert Uint8Array to ArrayBuffer for DataChannel.send() */
-function toArrayBuffer(data: Uint8Array): ArrayBuffer {
-  return data.buffer.slice(
-    data.byteOffset,
-    data.byteOffset + data.byteLength,
-  ) as ArrayBuffer;
 }
 
 /**
@@ -94,7 +80,6 @@ export class WebRTCMesh {
   initializeAsHost(hostPeerId: string): void {
     this.checkNotDisposed();
     this._localPeerId = hostPeerId;
-    // Host starts with no expected peers; they're added as they join
   }
 
   /**
@@ -120,7 +105,7 @@ export class WebRTCMesh {
 
     // Initiate connections to all existing peers
     for (const peerId of allPeers) {
-      this.initiateConnection(peerId);
+      this.initiatePeerConnection(peerId);
     }
   }
 
@@ -133,7 +118,7 @@ export class WebRTCMesh {
     this.expectedPeers.add(peerId);
 
     // Create connection but don't initiate - wait for their offer
-    this.createPeerConnection(peerId, false);
+    this.createPeer(peerId, false);
   }
 
   /**
@@ -142,7 +127,7 @@ export class WebRTCMesh {
   removePeer(peerId: string): void {
     const state = this.peers.get(peerId);
     if (state) {
-      this.cleanupPeerConnection(peerId, state);
+      cleanupPeerConnection(state);
     }
     this.peers.delete(peerId);
     this._connectedPeers.delete(peerId);
@@ -167,7 +152,7 @@ export class WebRTCMesh {
 
     // If we don't have a connection for this peer yet, create one
     if (!state) {
-      this.createPeerConnection(fromPeerId, false);
+      this.createPeer(fromPeerId, false);
       state = this.peers.get(fromPeerId);
       if (!state) {
         throw new Error(`Failed to create peer connection for ${fromPeerId}`);
@@ -179,10 +164,10 @@ export class WebRTCMesh {
         await this.handleOffer(fromPeerId, state, data);
         break;
       case 'answer':
-        await this.handleAnswer(fromPeerId, state, data);
+        await this.handleAnswer(state, data);
         break;
       case 'ice':
-        await this.handleIceCandidate(fromPeerId, state, data);
+        await this.handleIceCandidate(state, data);
         break;
     }
   }
@@ -196,10 +181,8 @@ export class WebRTCMesh {
     await state.connection.setRemoteDescription(offer);
     state.remoteDescriptionSet = true;
 
-    // Process buffered ICE candidates
-    await this.processBufferedIceCandidates(state);
+    await processBufferedIceCandidates(state);
 
-    // Create and send answer
     const answer = await state.connection.createAnswer();
     await state.connection.setLocalDescription(answer);
 
@@ -210,21 +193,15 @@ export class WebRTCMesh {
     });
   }
 
-  private async handleAnswer(
-    _fromPeerId: string,
-    state: PeerState,
-    data: string,
-  ): Promise<void> {
+  private async handleAnswer(state: PeerState, data: string): Promise<void> {
     const answer = JSON.parse(data) as RTCSessionDescriptionInit;
     await state.connection.setRemoteDescription(answer);
     state.remoteDescriptionSet = true;
 
-    // Process buffered ICE candidates
-    await this.processBufferedIceCandidates(state);
+    await processBufferedIceCandidates(state);
   }
 
   private async handleIceCandidate(
-    _fromPeerId: string,
     state: PeerState,
     data: string,
   ): Promise<void> {
@@ -234,16 +211,8 @@ export class WebRTCMesh {
     if (state.remoteDescriptionSet) {
       await state.connection.addIceCandidate(iceCandidate);
     } else {
-      // Buffer until remote description is set
       state.iceCandidateBuffer.push(iceCandidate);
     }
-  }
-
-  private async processBufferedIceCandidates(state: PeerState): Promise<void> {
-    for (const candidate of state.iceCandidateBuffer) {
-      await state.connection.addIceCandidate(candidate);
-    }
-    state.iceCandidateBuffer = [];
   }
 
   // ===========================================================================
@@ -261,7 +230,6 @@ export class WebRTCMesh {
       throw new Error(`No connection to peer ${peerId}`);
     }
 
-    // Select channel based on reliability requirement
     const channel = reliable ? state.reliableChannel : state.unreliableChannel;
     if (!channel || channel.readyState !== 'open') {
       throw new Error(`Data channel not open for peer ${peerId}`);
@@ -318,8 +286,8 @@ export class WebRTCMesh {
       this.meshTimeoutId = null;
     }
 
-    for (const [peerId, state] of this.peers) {
-      this.cleanupPeerConnection(peerId, state);
+    for (const state of this.peers.values()) {
+      cleanupPeerConnection(state);
     }
     this.peers.clear();
     this._connectedPeers.clear();
@@ -330,158 +298,33 @@ export class WebRTCMesh {
   // Private: Connection Management
   // ===========================================================================
 
-  private initiateConnection(peerId: string): void {
-    this.createPeerConnection(peerId, true);
+  private initiatePeerConnection(peerId: string): void {
+    this.createPeer(peerId, true);
   }
 
-  private createPeerConnection(peerId: string, initiator: boolean): void {
-    const connection = new RTCPeerConnection({
-      iceServers: this.config.iceServers,
-    });
-
-    const state: PeerState = {
-      connection,
-      reliableChannel: null,
-      unreliableChannel: null,
-      connected: false,
-      iceCandidateBuffer: [],
-      remoteDescriptionSet: false,
-    };
+  private createPeer(peerId: string, initiator: boolean): void {
+    const state = createPeerConnection(
+      peerId,
+      initiator,
+      this.config,
+      {
+        onSignalNeeded: (signal) => this.emitSignal(signal),
+        onPeerConnected: (id) => this.handlePeerConnected(id),
+        onPeerDisconnected: (id) => this.handlePeerDisconnected(id),
+        onMessage: (id, data) => this.events.onMessage?.(id, data),
+      },
+      () => {
+        // State change callback - not needed for mesh tracking
+      },
+    );
 
     this.peers.set(peerId, state);
-
-    // Set up ICE candidate handling
-    connection.onicecandidate = (event) => {
-      if (event.candidate) {
-        this.emitSignal({
-          toPeerId: peerId,
-          type: 'ice',
-          data: JSON.stringify(event.candidate.toJSON()),
-        });
-      }
-    };
-
-    // Handle connection state changes
-    connection.onconnectionstatechange = () => {
-      this.handleConnectionStateChange(peerId, state);
-    };
-
-    // Handle incoming data channels (for non-initiators)
-    connection.ondatachannel = (event) => {
-      this.handleIncomingDataChannel(peerId, state, event.channel);
-    };
-
-    // If initiator, create data channels and offer
-    if (initiator) {
-      this.createDataChannels(peerId, state);
-      this.createAndSendOffer(peerId, state);
-    }
   }
 
-  private createDataChannels(peerId: string, state: PeerState): void {
-    // Reliable channel: ordered, guaranteed delivery
-    const reliable = state.connection.createDataChannel('reliable', {
-      ordered: true,
-    });
-    this.setupDataChannel(peerId, state, reliable, 'reliable');
-    state.reliableChannel = reliable;
-
-    // Unreliable channel: for future optimization
-    const unreliable = state.connection.createDataChannel('unreliable', {
-      ordered: false,
-      maxRetransmits: 0,
-    });
-    this.setupDataChannel(peerId, state, unreliable, 'unreliable');
-    state.unreliableChannel = unreliable;
-  }
-
-  private handleIncomingDataChannel(
-    peerId: string,
-    state: PeerState,
-    channel: RTCDataChannel,
-  ): void {
-    if (channel.label === 'reliable') {
-      state.reliableChannel = channel;
-      this.setupDataChannel(peerId, state, channel, 'reliable');
-    } else if (channel.label === 'unreliable') {
-      state.unreliableChannel = channel;
-      this.setupDataChannel(peerId, state, channel, 'unreliable');
-    }
-  }
-
-  private setupDataChannel(
-    peerId: string,
-    state: PeerState,
-    channel: RTCDataChannel,
-    label: string,
-  ): void {
-    channel.binaryType = 'arraybuffer';
-
-    channel.onopen = () => {
-      // Check if both channels are open
-      if (this.areBothChannelsOpen(state)) {
-        this.handlePeerConnected(peerId, state);
-      }
-    };
-
-    channel.onclose = () => {
-      if (state.connected) {
-        this.handlePeerDisconnected(peerId, state);
-      }
-    };
-
-    channel.onerror = (event) => {
-      console.error(`DataChannel ${label} error for peer ${peerId}:`, event);
-    };
-
-    // Only handle messages on reliable channel
-    if (label === 'reliable') {
-      channel.onmessage = (event) => {
-        const data = new Uint8Array(event.data as ArrayBuffer);
-        this.events.onMessage?.(peerId, data);
-      };
-    }
-  }
-
-  private areBothChannelsOpen(state: PeerState): boolean {
-    return (
-      state.reliableChannel?.readyState === 'open' &&
-      state.unreliableChannel?.readyState === 'open'
-    );
-  }
-
-  private async createAndSendOffer(
-    peerId: string,
-    state: PeerState,
-  ): Promise<void> {
-    const offer = await state.connection.createOffer();
-    await state.connection.setLocalDescription(offer);
-
-    this.emitSignal({
-      toPeerId: peerId,
-      type: 'offer',
-      data: JSON.stringify(offer),
-    });
-  }
-
-  private handleConnectionStateChange(peerId: string, state: PeerState): void {
-    const connState = state.connection.connectionState;
-
-    if (connState === 'failed' || connState === 'disconnected') {
-      if (state.connected) {
-        this.handlePeerDisconnected(peerId, state);
-      }
-    }
-  }
-
-  private handlePeerConnected(peerId: string, state: PeerState): void {
-    if (state.connected) return;
-    state.connected = true;
+  private handlePeerConnected(peerId: string): void {
     this._connectedPeers.add(peerId);
-
     this.events.onPeerConnected?.(peerId);
 
-    // Check if mesh is complete
     if (!this.meshCompleted && this.isMeshComplete()) {
       this.meshCompleted = true;
       if (this.meshTimeoutId) {
@@ -492,20 +335,9 @@ export class WebRTCMesh {
     }
   }
 
-  private handlePeerDisconnected(peerId: string, state: PeerState): void {
-    if (!state.connected) return;
-    state.connected = false;
+  private handlePeerDisconnected(peerId: string): void {
     this._connectedPeers.delete(peerId);
-
     this.events.onPeerDisconnected?.(peerId);
-  }
-
-  private cleanupPeerConnection(peerId: string, state: PeerState): void {
-    state.reliableChannel?.close();
-    state.unreliableChannel?.close();
-    state.connection.close();
-    state.connected = false;
-    this._connectedPeers.delete(peerId);
   }
 
   // ===========================================================================

@@ -1,0 +1,83 @@
+/**
+ * Protocol Module - Game-specific messaging layer for multiplayer.
+ *
+ * This module provides:
+ * - Message type definitions (0x80-0x93 byte range)
+ * - Binary encoding/decoding
+ * - Message routing with host-only validation
+ *
+ * Built on top of rollback-netcode's transport layer.
+ */
+
+// =============================================================================
+// Message Types
+// =============================================================================
+
+export {
+  type ActionRequestData,
+  type ActionRequestMessage,
+  type ActionResponseMessage,
+  type AssignShipAction,
+  // Action types
+  type BuyAction,
+  type CallsignAnnounceMessage,
+  type CallsignChangedMessage,
+  type CallsignChangeRequestMessage,
+  type CampaignSyncMessage,
+  type ChatMessageMessage,
+  type ContractAcceptedMessage,
+  type ConvertScrapAction,
+  DEFAULT_PERMISSION,
+  type EquipAction,
+  // Union type
+  type GameMessage,
+  // Enum
+  GameMessageType,
+  type GamePlayerInfo,
+  // Validation
+  HOST_ONLY_MESSAGES,
+  isHostOnlyMessage,
+  type KickNotificationMessage,
+  type LaunchAbortedMessage,
+  type LaunchCountdownMessage,
+  type LeaveReason,
+  type MissionEndedMessage,
+  // Mission outcome
+  type MissionOutcomeData,
+  type MissionStartedMessage,
+  type Permission,
+  type PermissionUpdateMessage,
+  type PlayerJoinedExtMessage,
+  type PlayerLeftExtMessage,
+  type ReadyStateMessage,
+  type ResupplyAction,
+  type SellAction,
+  type SessionEndedMessage,
+  type ShipAssignmentMessage,
+  // Shared types
+  type ShipEditPermission,
+  type UnequipAction,
+  // Message interfaces
+  type WelcomeMessage,
+} from './messages';
+
+// =============================================================================
+// Encoding
+// =============================================================================
+
+export {
+  decodeMessage,
+  encodeMessage,
+  getMessageType,
+  isGameMessage,
+} from './encoding';
+
+// =============================================================================
+// Router
+// =============================================================================
+
+export {
+  createMessageRouter,
+  MessageRouter,
+  type MessageRouterConfig,
+} from './router';

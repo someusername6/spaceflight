@@ -109,3 +109,23 @@ export const DESYNC_AUTHORITY = {
 
 // Re-export the networking module for WebRTC-based multiplayer
 export * from './networking';
+
+// =============================================================================
+// Protocol (Phase 5)
+// =============================================================================
+
+// Re-export the protocol module for game-specific messaging
+export * from './protocol';
+
+// =============================================================================
+// Campaign Sync (Phase 5)
+// =============================================================================
+
+export {
+  type ActionResult,
+  CampaignSyncManager,
+  type CampaignUpdateCallback,
+  createCampaignSyncManager,
+  processAction,
+  validateActionPermission,
+} from './campaign-sync';

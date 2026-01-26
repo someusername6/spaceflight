@@ -10,32 +10,25 @@
  */
 
 import type { TransportAdapter } from 'rollback-netcode';
+import { toConnectionError } from './connection-errors';
+import { createGuestMesh } from './guest-mesh';
+import { SignalQueue } from './signal-queue';
 import {
   createSignalingClient,
   type SignalingClient,
-  SignalingError,
 } from './signaling-client';
 import type {
-  ConnectionError,
   ConnectionResult,
   ConnectionState,
   NetworkingConfig,
   RoomEvent,
 } from './types';
 import { DEFAULT_NETWORKING_CONFIG } from './types';
-import { type OutgoingSignal, WebRTCMesh } from './webrtc-mesh';
+import { WebRTCMesh } from './webrtc-mesh';
 import {
   createWebRTCTransport,
   type WebRTCTransport,
 } from './webrtc-transport';
-
-/** Signal with retry tracking */
-interface PendingSignal extends OutgoingSignal {
-  retryCount: number;
-}
-
-/** Maximum retry attempts for failed signals */
-const MAX_SIGNAL_RETRIES = 3;
 
 /** Events emitted during connection flow */
 export interface ConnectionFlowEvents {
@@ -57,8 +50,7 @@ export class ConnectionFlow {
   private pollIntervalId: ReturnType<typeof setInterval> | null = null;
   private disposed = false;
 
-  // Pending signal queue (signals generated before we can send them)
-  private pendingSignals: PendingSignal[] = [];
+  private readonly signalQueue = new SignalQueue();
 
   constructor(
     config: Partial<NetworkingConfig> = {},
@@ -113,7 +105,6 @@ export class ConnectionFlow {
 
       // Create transport
       this.transport = createWebRTCTransport(this.mesh);
-      this.wireTransportCallbacks();
 
       // Start polling for signals and events
       this.startPolling();
@@ -128,7 +119,7 @@ export class ConnectionFlow {
         allPeerIds: [result.hostId],
       };
     } catch (error) {
-      const connError = this.toConnectionError(error);
+      const connError = toConnectionError(error);
       this.setState({ status: 'error', error: connError });
       throw connError;
     }
@@ -163,20 +154,26 @@ export class ConnectionFlow {
       });
 
       // Create mesh and wait for completion
-      const meshResult = await this.createGuestMesh(
+      const meshResult = await createGuestMesh(
+        this.config.webrtc,
         result.guestId,
         result.hostId,
         result.existingPeers,
         roomCode,
         totalPeers,
+        {
+          getTransport: () => this.transport,
+          startPolling: () => this.startPolling(),
+          setState: (state) => this.setState(state),
+          signalQueue: this.signalQueue,
+          setMesh: (mesh) => {
+            this.mesh = mesh;
+          },
+        },
       );
 
       // Create transport
       this.transport = createWebRTCTransport(meshResult.mesh);
-      this.wireTransportCallbacks();
-
-      // Start polling for signals (mesh creation already started polling)
-      // Polling is already started in createGuestMesh
 
       this.setState({ status: 'connected', roomCode });
 
@@ -188,59 +185,10 @@ export class ConnectionFlow {
         allPeerIds: [result.guestId, ...allPeerIds],
       };
     } catch (error) {
-      const connError = this.toConnectionError(error);
+      const connError = toConnectionError(error);
       this.setState({ status: 'error', error: connError });
       throw connError;
     }
-  }
-
-  /**
-   * Create mesh as guest and wait for it to complete.
-   */
-  private async createGuestMesh(
-    guestId: string,
-    hostId: string,
-    existingPeers: string[],
-    roomCode: string,
-    totalPeers: number,
-  ): Promise<{ mesh: WebRTCMesh }> {
-    return new Promise((resolve, reject) => {
-      const mesh = new WebRTCMesh(this.config.webrtc, {
-        onMeshComplete: () => {
-          resolve({ mesh });
-        },
-        onMeshFailed: (error: Error) => {
-          reject(error);
-        },
-        onPeerConnected: (peerId: string) => {
-          this.transport?.onConnect?.(peerId);
-          const connected = mesh.connectedPeers.size;
-          this.setState({
-            status: 'forming-mesh',
-            roomCode,
-            connectedPeers: connected,
-            totalPeers,
-          });
-        },
-        onPeerDisconnected: (peerId: string) => {
-          this.transport?.onDisconnect?.(peerId);
-        },
-        onMessage: (peerId: string, data: Uint8Array) => {
-          this.transport?.onMessage?.(peerId, data);
-        },
-        onSignalNeeded: (signal: OutgoingSignal) => {
-          this.queueSignal(signal);
-        },
-      });
-
-      this.mesh = mesh;
-
-      // Start polling for signals before initializing (so we can receive answers)
-      this.startPolling();
-
-      // Initialize as guest - this will start sending offers
-      mesh.initializeAsGuest(guestId, hostId, existingPeers);
-    });
   }
 
   /**
@@ -269,7 +217,7 @@ export class ConnectionFlow {
       this.mesh = null;
     }
 
-    this.pendingSignals = [];
+    this.signalQueue.clear();
     this.setState({ status: 'idle' });
   }
 
@@ -306,7 +254,7 @@ export class ConnectionFlow {
     this.transport = null;
     this.mesh = null;
     this.signalingClient = null;
-    this.pendingSignals = [];
+    this.signalQueue.clear();
   }
 
   // ===========================================================================
@@ -325,19 +273,9 @@ export class ConnectionFlow {
         this.transport?.onMessage?.(peerId, data);
       },
       onSignalNeeded: (signal) => {
-        this.queueSignal(signal);
-      },
-      onMeshComplete: () => {
-        // Handled by joinRoom promise
-      },
-      onMeshFailed: () => {
-        // Handled by joinRoom promise
+        this.signalQueue.queue(signal);
       },
     });
-  }
-
-  private wireTransportCallbacks(): void {
-    // Transport callbacks are already wired via mesh events
   }
 
   // ===========================================================================
@@ -370,7 +308,7 @@ export class ConnectionFlow {
     if (!this.signalingClient || !this.mesh) return;
 
     // Send any pending outgoing signals
-    await this.flushPendingSignals();
+    await this.signalQueue.flush(this.signalingClient);
 
     // Poll for incoming signals
     try {
@@ -418,47 +356,6 @@ export class ConnectionFlow {
     }
   }
 
-  private queueSignal(signal: OutgoingSignal): void {
-    this.pendingSignals.push({ ...signal, retryCount: 0 });
-  }
-
-  private async flushPendingSignals(): Promise<void> {
-    if (!this.signalingClient || this.pendingSignals.length === 0) return;
-
-    const signals = [...this.pendingSignals];
-    this.pendingSignals = [];
-
-    const failedSignals: PendingSignal[] = [];
-
-    for (const signal of signals) {
-      try {
-        await this.signalingClient.postSignal(
-          signal.toPeerId,
-          signal.type,
-          signal.data,
-        );
-      } catch (error) {
-        console.error('Error sending signal:', error);
-        // Re-queue with incremented retry count if under max retries
-        if (signal.retryCount < MAX_SIGNAL_RETRIES) {
-          failedSignals.push({
-            ...signal,
-            retryCount: signal.retryCount + 1,
-          });
-        } else {
-          console.error(
-            `Signal to ${signal.toPeerId} failed after ${MAX_SIGNAL_RETRIES} retries, dropping`,
-          );
-        }
-      }
-    }
-
-    // Re-queue failed signals for next poll cycle
-    if (failedSignals.length > 0) {
-      this.pendingSignals.push(...failedSignals);
-    }
-  }
-
   // ===========================================================================
   // Private: State Management
   // ===========================================================================
@@ -479,43 +376,6 @@ export class ConnectionFlow {
   private checkNotDisposed(): void {
     if (this.disposed) {
       throw new Error('ConnectionFlow has been disposed');
-    }
-  }
-
-  // ===========================================================================
-  // Private: Error Handling
-  // ===========================================================================
-
-  private toConnectionError(error: unknown): ConnectionError {
-    if (error instanceof SignalingError) {
-      return {
-        code: this.mapSignalingErrorCode(error.code),
-        message: error.message,
-      };
-    }
-
-    if (error instanceof Error) {
-      if (error.message.includes('timeout')) {
-        return { code: 'mesh_timeout', message: error.message };
-      }
-      return { code: 'network_error', message: error.message };
-    }
-
-    return { code: 'network_error', message: String(error) };
-  }
-
-  private mapSignalingErrorCode(code: string): ConnectionError['code'] {
-    switch (code) {
-      case 'invalid_room':
-        return 'invalid_room';
-      case 'room_full':
-        return 'room_full';
-      case 'game_in_progress':
-        return 'game_in_progress';
-      case 'version_mismatch':
-        return 'version_mismatch';
-      default:
-        return 'signaling_error';
     }
   }
 }

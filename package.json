@@ -24,7 +24,7 @@
   "dependencies": {
     "canvas": "^3.2.0",
     "rng": "^0.2.2",
-    "rollback-netcode": "file:../rollback-netcode",
+    "rollback-netcode": "^0.0.5",
     "three": "^0.170.0"
   },
   "devDependencies": {

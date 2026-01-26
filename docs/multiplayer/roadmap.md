@@ -308,6 +308,8 @@ The signaling server is intentionally minimal:
 
 **Goal:** Game-specific messages on top of rollback-netcode transport.
 
+**Status:** ✅ Complete
+
 **Note:** The following messages are already handled by rollback-netcode and should NOT be reimplemented:
 - Input, InputAck (mission inputs)
 - Hash, Sync, SyncRequest, StateSync (desync detection/recovery)
@@ -343,41 +345,59 @@ This phase implements **game-specific** messages only.
    MissionStarted   // Host → all: seed + contractId
    MissionEnded     // Host → all: outcome
    SessionEnded     // Host → all: session terminating
+
+   // Additional messages (not in original plan)
+   KickNotification      // Host → kicked player: notify of kick with reason
+   CallsignAnnounce      // New peer → host: announce callsign after mesh forms
+   CallsignChangeRequest // Any → host: request callsign change
+   CallsignChanged       // Host → all: broadcast callsign update
    ```
 
 2. **Message encoding** (`src/multiplayer/protocol/encoding.ts`)
    - Binary encoding for efficiency
    - Type-safe encode/decode functions
    - Message type byte prefix to distinguish from rollback-netcode messages
-   - **Byte range:** Use 0x80-0xFF for game messages (rollback-netcode uses 0x00-0x7F internally)
+   - **Byte range:** Uses 0x80-0x93 for 20 game messages (rollback-netcode uses 0x00-0x7F internally)
 
 3. **Host-guest router** (`src/multiplayer/protocol/router.ts`)
    - Route messages based on type
-   - Enforce host-only actions
+   - Enforce host-only actions (15 of 20 message types are host-only)
    - ActionRequest/Response pattern
 
 4. **Campaign state sync** (`src/multiplayer/campaign-sync.ts`)
    - Serialize campaign state for guests
    - Apply sync updates to guest UI
-   - Trigger sync after any campaign mutation
+   - Permission validation for all action types
+   - Action processing with proper error handling
 
-### Files to Create
+### Files Created
 
-| File | Action |
-|------|--------|
-| `src/multiplayer/protocol/messages.ts` | Create - message type definitions |
-| `src/multiplayer/protocol/encoding.ts` | Create - binary encoding |
-| `src/multiplayer/protocol/router.ts` | Create - message routing |
-| `src/multiplayer/campaign-sync.ts` | Create - campaign state sync |
-| `scripts/tests/multiplayer/test-protocol.mjs` | Create |
+| File | Purpose |
+|------|---------|
+| `src/multiplayer/protocol/messages.ts` | 20 message type definitions |
+| `src/multiplayer/protocol/encode.ts` | Binary encoding functions |
+| `src/multiplayer/protocol/decode.ts` | Binary decoding functions |
+| `src/multiplayer/protocol/buffer-utils.ts` | Buffer read/write utilities |
+| `src/multiplayer/protocol/encoding.ts` | Barrel re-export for encode/decode |
+| `src/multiplayer/protocol/router.ts` | Message routing with host-only validation |
+| `src/multiplayer/protocol/index.ts` | Barrel exports |
+| `src/multiplayer/action-processing.ts` | Permission validation + action execution |
+| `src/multiplayer/campaign-sync.ts` | CampaignSyncManager class |
+| `scripts/tests/multiplayer/protocol-test-helpers.mjs` | Shared test utilities |
+| `scripts/tests/multiplayer/test-protocol-encoding.mjs` | Encoding tests (lobby/action messages) |
+| `scripts/tests/multiplayer/test-protocol-encoding-2.mjs` | Encoding tests (session/callsign messages) |
+| `scripts/tests/multiplayer/test-protocol-validation.mjs` | Message type + permission validation tests |
+| `scripts/tests/multiplayer/test-protocol-router.mjs` | MessageRouter dispatch + send tests |
+| `scripts/tests/multiplayer/test-protocol-sync.mjs` | Additional permission + action tests |
+| `scripts/tests/multiplayer/test-protocol-manager.mjs` | CampaignSyncManager tests |
 
 ### Success Criteria
 
-- [ ] All game-specific message types defined
-- [ ] Clear separation from rollback-netcode messages
-- [ ] Round-trip encoding preserves data
-- [ ] Router correctly enforces host-only actions
-- [ ] Campaign state syncs to guests
+- [x] All game-specific message types defined (20 types, 0x80-0x93)
+- [x] Clear separation from rollback-netcode messages (byte range 0x80+)
+- [x] Round-trip encoding preserves data (tested for all 20 types)
+- [x] Router correctly enforces host-only actions (15 host-only types validated)
+- [x] Campaign state syncs to guests (CampaignSyncManager handles host/guest modes)
 
 ---
 
