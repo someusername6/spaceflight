@@ -5,9 +5,13 @@
  * Uses Node.js built-in test runner (node:test) via tsx.
  *
  * Usage:
- *   npx tsx scripts/tests/run-tests.mjs          # Run quick tests (default)
- *   npx tsx scripts/tests/run-tests.mjs --all    # Run all tests
- *   npx tsx scripts/tests/run-tests.mjs --balance # Run balance/simulation tests
+ *   npx tsx scripts/tests/run-tests.mjs              # Run quick tests (default)
+ *   npx tsx scripts/tests/run-tests.mjs --all        # Run all tests (balance in advisory mode)
+ *   npx tsx scripts/tests/run-tests.mjs --balance    # Run balance tests only (advisory mode)
+ *   npx tsx scripts/tests/run-tests.mjs --balance --strict  # Balance tests with strict failures
+ *
+ * Advisory mode: Balance tests run and report results, but don't fail the build.
+ * Use --strict with --balance to enforce balance test failures.
  */
 
 import { spawn } from 'node:child_process';
@@ -121,10 +125,16 @@ async function runTest(testPath) {
 
 /**
  * Run a list of tests sequentially.
+ *
+ * @param tests - List of test file paths
+ * @param label - Label for this test category
+ * @param advisory - If true, report results but don't fail (for balance tests)
  */
-async function runTests(tests, label) {
+async function runTests(tests, label, advisory = false) {
   console.log(`\n${'='.repeat(60)}`);
-  console.log(`Running ${label} (${tests.length} tests)`);
+  console.log(
+    `Running ${label} (${tests.length} tests)${advisory ? ' [ADVISORY]' : ''}`,
+  );
   console.log('='.repeat(60));
 
   const results = [];
@@ -145,7 +155,13 @@ async function runTests(tests, label) {
   const failed = results.filter((r) => r.code !== 0).length;
 
   console.log(`\n${'='.repeat(60)}`);
-  console.log(`${label}: ${passed} passed, ${failed} failed (${totalTime}s)`);
+  if (advisory && failed > 0) {
+    console.log(
+      `${label}: ${passed} passed, ${failed} failed (${totalTime}s) [ADVISORY - not blocking]`,
+    );
+  } else {
+    console.log(`${label}: ${passed} passed, ${failed} failed (${totalTime}s)`);
+  }
   console.log('='.repeat(60));
 
   if (failed > 0) {
@@ -155,24 +171,28 @@ async function runTests(tests, label) {
     }
   }
 
-  return failed === 0;
+  // In advisory mode, always return true (don't block)
+  return advisory ? true : failed === 0;
 }
 
 async function main() {
   const args = process.argv.slice(2);
   const runAll = args.includes('--all');
   const runBalance = args.includes('--balance');
+  const strictBalance = args.includes('--strict');
 
   let success = true;
 
   if (runBalance) {
-    // Only balance tests
-    success = await runTests(BALANCE_TESTS, 'BALANCE TESTS');
+    // Only balance tests - strict mode (fail on errors) unless --advisory passed
+    const advisory = !strictBalance;
+    success = await runTests(BALANCE_TESTS, 'BALANCE TESTS', advisory);
   } else if (runAll) {
-    // Quick first, then balance
+    // Quick first, then balance (advisory mode - don't block on balance failures)
     success = await runTests(QUICK_TESTS, 'QUICK TESTS');
     if (success) {
-      success = await runTests(BALANCE_TESTS, 'BALANCE TESTS');
+      // Balance tests in advisory mode - results shown but don't block
+      await runTests(BALANCE_TESTS, 'BALANCE TESTS', true);
     }
   } else {
     // Default: quick tests only

@@ -218,17 +218,20 @@ When adding features that affect missions, ensure replay captures:
 ### Running Tests
 
 ```bash
-npx tsx scripts/tests/run-tests.mjs          # Quick tests (default, ~20s)
-npx tsx scripts/tests/run-tests.mjs --all    # All tests including balance
-npx tsx scripts/tests/run-tests.mjs --balance # Balance tests only
+npx tsx scripts/tests/run-tests.mjs                   # Quick tests (default, ~20s)
+npx tsx scripts/tests/run-tests.mjs --all             # All tests (balance in advisory mode)
+npx tsx scripts/tests/run-tests.mjs --balance         # Balance tests only (advisory mode)
+npx tsx scripts/tests/run-tests.mjs --balance --strict  # Balance tests with strict failures
 ```
 
 ### Test Categories
 
 | Category | Location | Purpose |
 |----------|----------|---------|
-| Quick tests | `scripts/tests/` | Fast, deterministic logic tests (~36 test files) |
-| Balance tests | `scripts/tests/combat/`, `campaign/` | Simulation-based balance verification |
+| Quick tests | `scripts/tests/` | Fast, deterministic logic tests (~45 test files) |
+| Balance tests | `scripts/tests/combat/`, `campaign/` | Simulation-based balance verification (advisory) |
+
+**Advisory mode**: Balance tests run and report results but don't fail the build. Use `--strict` to enforce failures when explicitly checking balance.
 
 ### Test Framework
 
