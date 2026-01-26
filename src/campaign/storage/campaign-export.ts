@@ -22,6 +22,31 @@ import {
 import { CAMPAIGN_STORAGE_VERSION, type SlotId } from './campaign-types';
 import { reconstituteCampaignState } from './campaign-utils';
 
+// =============================================================================
+// File System Access API Types (non-standard, Chromium only)
+// =============================================================================
+
+/** File type filter for File System Access API */
+interface FilePickerType {
+  description: string;
+  accept: Record<string, string[]>;
+}
+
+/** Window with File System Access API (Chromium) */
+type WindowWithFileSystemAccess = Window & {
+  showOpenFilePicker: (options: {
+    types: FilePickerType[];
+  }) => Promise<FileSystemFileHandle[]>;
+  showSaveFilePicker: (options: {
+    suggestedName?: string;
+    types?: FilePickerType[];
+  }) => Promise<FileSystemFileHandle>;
+};
+
+// =============================================================================
+// Import/Export Result Types
+// =============================================================================
+
 /** Result of an import operation */
 export interface ImportResult {
   success: boolean;
@@ -184,12 +209,15 @@ export async function importCampaignJSON(
 /** Result of an export operation */
 export interface ExportResult {
   success: boolean;
+  /** True if user cancelled the save dialog */
+  cancelled?: boolean;
   error?: string;
 }
 
 /**
  * Download campaign from a slot as a .campaign.gz file.
  * Uses active slot if not specified.
+ * Shows system save dialog on supported browsers (Chromium).
  */
 export async function downloadCampaign(
   filename?: string,
@@ -201,24 +229,71 @@ export async function downloadCampaign(
       return { success: false, error: 'No campaign to export' };
     }
 
-    const buffer = new Uint8Array(compressed.length);
-    buffer.set(compressed);
-    const blob = new Blob([buffer], { type: 'application/gzip' });
-    const url = URL.createObjectURL(blob);
-
+    const blob = new Blob([compressed], { type: 'application/gzip' });
     const name = filename ?? `spaceflight-campaign-${Date.now()}.campaign.gz`;
 
+    // Try modern File System Access API (Chromium) for save dialog
+    const saved = await saveWithFilePicker(blob, name);
+    if (saved !== null) {
+      return saved; // Success or error from picker
+    }
+
+    // Fallback: direct download to browser's default location
+    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = name;
     a.click();
-
     URL.revokeObjectURL(url);
+
     return { success: true };
   } catch (error) {
     const message =
       error instanceof Error ? error.message : 'Unknown error during export';
     logError('Failed to export campaign:', error);
+    return { success: false, error: message };
+  }
+}
+
+/**
+ * Try to save a blob using the File System Access API.
+ * Returns ExportResult on success/error/cancel, or null if API unavailable.
+ */
+async function saveWithFilePicker(
+  blob: Blob,
+  suggestedName: string,
+): Promise<ExportResult | null> {
+  if (!('showSaveFilePicker' in window)) {
+    return null; // API not available, use fallback
+  }
+
+  try {
+    const handle = await (
+      window as WindowWithFileSystemAccess
+    ).showSaveFilePicker({
+      suggestedName,
+      types: [
+        {
+          description: 'Campaign files',
+          accept: { 'application/gzip': ['.campaign.gz'] },
+        },
+      ],
+    });
+
+    const writable = await handle.createWritable();
+    await writable.write(blob);
+    await writable.close();
+
+    return { success: true };
+  } catch (e) {
+    if ((e as Error).name === 'AbortError') {
+      // User cancelled - not an error, just don't save
+      return { success: true, cancelled: true };
+    }
+    // Other errors: report them
+    const message =
+      e instanceof Error ? e.message : 'Unknown error during save';
+    logError('Failed to save campaign file:', e);
     return { success: false, error: message };
   }
 }
@@ -257,11 +332,7 @@ async function pickFile(): Promise<File | null> {
   if ('showOpenFilePicker' in window) {
     try {
       const handles = await (
-        window as Window & {
-          showOpenFilePicker: (options: {
-            types: { description: string; accept: Record<string, string[]> }[];
-          }) => Promise<FileSystemFileHandle[]>;
-        }
+        window as WindowWithFileSystemAccess
       ).showOpenFilePicker({
         types: [
           {

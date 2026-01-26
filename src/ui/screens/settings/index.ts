@@ -210,7 +210,13 @@ const SettingsScreenComponent: Screen<SettingsState, SettingsScreenCallbacks> =
       // Export campaign button (data tab)
       api.on('#btn-export-campaign', 'click', async () => {
         const result = await downloadCampaign();
-        if (!result.success) {
+        if (result.cancelled) {
+          // User cancelled save dialog, do nothing
+          return;
+        }
+        if (result.success) {
+          await showSuccess('Campaign exported successfully');
+        } else {
           await showError(result.error ?? 'Failed to export campaign');
         }
       });
