@@ -1,11 +1,8 @@
 /**
  * Lobby Handlers - Setup and manage lobby screen.
  *
- * Responsibilities:
- * - Initialize lobby state from connection result
- * - Subscribe to protocol message events
- * - Wire up callbacks: onReady, onSendChat, onBack
- * - Handle cleanup on leave
+ * This is the entry point for lobby functionality.
+ * Creates LobbyContext and wires everything together.
  */
 
 import { getStoredCallsign } from '../../multiplayer/callsign-storage';
@@ -13,7 +10,6 @@ import { lobbyPlayerToGamePlayer } from '../../multiplayer/lobby-messages';
 import {
   createLobbyState,
   type LobbyPlayer,
-  type LobbyState,
 } from '../../multiplayer/lobby-state';
 import {
   clearMultiplayerContext,
@@ -35,54 +31,47 @@ import {
   bindLobbyScreen,
   cleanupLobbyScreen,
   renderLobbyScreen,
-  updateLobbyState,
 } from '../../ui/screens/lobby';
-import {
-  isSquadronUIActive,
-  refreshSquadronUI,
-} from '../../ui/screens/squadron';
-import { isStoreUIActive, refreshStoreUI } from '../../ui/screens/store/store';
 import type { CampaignController } from '../controller-types';
 import type { CampaignState } from '../types';
 import {
-  handlePermissionChange,
-  handleReadyToggle,
-  handleSendChat,
-} from './lobby-callbacks';
+  changePermissions,
+  refreshCurrentScreen,
+  sendChat,
+  toggleReady,
+  updateCampaignState as updateCampaignStateAction,
+} from './lobby-actions';
 import {
-  type MessageHandlerContext,
-  sendCallsignAnnounce,
-  setupMessageHandling,
-} from './lobby-protocol-routing';
-import {
-  setLobbyState as setLobbyStateWithEffects,
-  updateAndSyncCampaignState,
-} from './lobby-state-effects';
-import {
-  clearModuleState,
-  getActiveCampaignState,
-  getActiveConnectionFlow,
   getCampaignSyncManager,
-  getLobbyState as getLobbyStateFromHolder,
-  getMessageHandlingResult,
+  getLobbyContext,
+  getLobbyState,
   getMessageRouter,
   isInLobby,
-  setActiveCampaignStateInternal,
-  setActiveConnectionFlow,
-  setLobbyStateInternal,
-  setMessageHandlingResult,
-} from './lobby-state-holder';
+  type LobbyContext,
+  setLobbyContext,
+} from './lobby-context';
+import {
+  sendCallsignAnnounce,
+  setupMessageHandling,
+  wireMessageHandlers,
+} from './lobby-protocol-routing';
 
 // =============================================================================
 // Re-exports for external use
 // =============================================================================
 
-export {
-  getCampaignSyncManager,
-  getMessageRouter,
-  isInLobby,
-  updateAndSyncCampaignState,
-};
+export { getCampaignSyncManager, getLobbyState, getMessageRouter, isInLobby };
+
+/**
+ * Update campaign state and sync to all guests (host only).
+ * Wrapper that gets context and calls the action.
+ */
+export function updateAndSyncCampaignState(newState: CampaignState): void {
+  const ctx = getLobbyContext();
+  if (ctx) {
+    updateCampaignStateAction(ctx, newState);
+  }
+}
 
 // =============================================================================
 // Setup Functions
@@ -90,7 +79,6 @@ export {
 
 /**
  * Setup lobby screen for host.
- * Called after room is created and connection is established.
  */
 export function setupLobbyScreenForHost(
   controller: CampaignController,
@@ -100,12 +88,7 @@ export function setupLobbyScreenForHost(
 ): void {
   const { screenManager } = controller;
   const lobbyElement = getScreenElement(screenManager, Screen.LOBBY);
-
-  // Store connection flow for cleanup
-  setActiveConnectionFlow(connectionFlow);
-
-  // Store campaign state for sending to guests
-  setActiveCampaignStateInternal(screenManager.campaignState ?? null);
+  const campaignState = screenManager.campaignState ?? null;
 
   // Create host player
   const hostCallsign = getStoredCallsign() ?? 'Host';
@@ -119,53 +102,77 @@ export function setupLobbyScreenForHost(
     permissions: HOST_PERMISSIONS,
   };
 
-  // Initialize lobby state
+  // Create initial lobby state
   const initialLobbyState = createLobbyState({
     roomCode: connectionResult.roomCode,
     localPlayerId: connectionResult.localPeerId,
     isHost: true,
     initialPlayers: [hostPlayer],
   });
-  setLobbyStateInternal(initialLobbyState);
 
-  renderLobbyScreen(lobbyElement);
-  goToLobby(screenManager);
+  // Setup message handling (creates router and sync manager)
+  const { cleanup, router, syncManager } = setupMessageHandling({
+    connectionFlow,
+    hostPeerId: connectionResult.hostPeerId,
+    isHost: true,
+    campaignState,
+  });
 
-  // Set multiplayer context for permission checks in other screens
+  // Create the context
+  const ctx: LobbyContext = {
+    connectionFlow,
+    router,
+    syncManager,
+    isHost: true,
+    localPlayerId: connectionResult.localPeerId,
+    lobbyState: initialLobbyState,
+    campaignState,
+    cleanup,
+  };
+
+  // Store the context
+  setLobbyContext(ctx);
+
+  // Wire message handlers now that context exists
+  wireMessageHandlers(ctx, connectionResult.hostPeerId);
+
+  // Register host player in sync manager
+  syncManager.setPlayerInfo(
+    connectionResult.localPeerId,
+    lobbyPlayerToGamePlayer(hostPlayer),
+  );
+
+  // Set multiplayer context for permission checks
   setMultiplayerContext({
     playerId: connectionResult.localPeerId,
     permissions: HOST_PERMISSIONS,
     isHost: true,
   });
 
-  // Setup message handling (host handles peer connections)
-  const ctx = createMessageHandlerContext();
-  const handlingResult = setupMessageHandling(
-    ctx,
-    connectionResult.hostPeerId,
-    true,
-  );
-  setMessageHandlingResult(handlingResult);
-
-  // Register host player in sync manager
-  const syncManager = getCampaignSyncManager();
-  syncManager?.setPlayerInfo(
-    connectionResult.localPeerId,
-    lobbyPlayerToGamePlayer(hostPlayer),
-  );
+  // Render and navigate
+  renderLobbyScreen(lobbyElement);
+  goToLobby(screenManager);
 
   // Bind screen callbacks
   bindLobbyScreen(lobbyElement, initialLobbyState, {
-    onReady: (ready) => handleReadyToggle(connectionResult.localPeerId, ready),
-    onSendChat: (text) => handleSendChat(connectionResult.localPeerId, text),
+    onReady: (ready) => {
+      const currentCtx = getLobbyContext();
+      if (currentCtx) toggleReady(currentCtx, ready);
+    },
+    onSendChat: (text) => {
+      const currentCtx = getLobbyContext();
+      if (currentCtx) sendChat(currentCtx, text);
+    },
     onBack: () => handleLeave(controller),
-    onPermissionChange: handlePermissionChange,
+    onPermissionChange: (playerId, permissions) => {
+      const currentCtx = getLobbyContext();
+      if (currentCtx) changePermissions(currentCtx, playerId, permissions);
+    },
   });
 }
 
 /**
  * Setup lobby screen for guest.
- * Called after joining room and receiving Welcome message.
  */
 export function setupLobbyScreenForGuest(
   controller: CampaignController,
@@ -175,9 +182,6 @@ export function setupLobbyScreenForGuest(
 ): void {
   const { screenManager } = controller;
   const lobbyElement = getScreenElement(screenManager, Screen.LOBBY);
-
-  // Store connection flow for cleanup
-  setActiveConnectionFlow(connectionFlow);
 
   // Create guest player (will be updated when Welcome is received)
   const guestCallsign = getStoredCallsign() ?? 'Guest';
@@ -191,92 +195,81 @@ export function setupLobbyScreenForGuest(
     permissions: DEFAULT_GUEST_PERMISSIONS,
   };
 
-  // Initialize lobby state (players will be updated from Welcome message)
+  // Create initial lobby state
   const initialLobbyState = createLobbyState({
     roomCode: connectionResult.roomCode,
     localPlayerId: connectionResult.localPeerId,
     isHost: false,
     initialPlayers: [guestPlayer],
   });
-  setLobbyStateInternal(initialLobbyState);
 
-  renderLobbyScreen(lobbyElement);
-  goToLobby(screenManager);
+  // Setup message handling with campaign update callback
+  const { cleanup, router, syncManager } = setupMessageHandling({
+    connectionFlow,
+    hostPeerId: connectionResult.hostPeerId,
+    isHost: false,
+    campaignState: null,
+    onCampaignUpdate: (newCampaignState) => {
+      // Update context and screen manager when host syncs
+      const ctx = getLobbyContext();
+      if (ctx) {
+        ctx.campaignState = newCampaignState;
+      }
+      screenManager.campaignState = newCampaignState;
 
-  // Set multiplayer context for permission checks in other screens
+      // Refresh current screen
+      refreshCurrentScreen(newCampaignState);
+    },
+  });
+
+  // Create the context
+  const ctx: LobbyContext = {
+    connectionFlow,
+    router,
+    syncManager,
+    isHost: false,
+    localPlayerId: connectionResult.localPeerId,
+    lobbyState: initialLobbyState,
+    campaignState: null,
+    cleanup,
+  };
+
+  // Store the context
+  setLobbyContext(ctx);
+
+  // Wire message handlers
+  wireMessageHandlers(ctx, connectionResult.hostPeerId);
+
+  // Set multiplayer context
   setMultiplayerContext({
     playerId: connectionResult.localPeerId,
     permissions: DEFAULT_GUEST_PERMISSIONS,
     isHost: false,
   });
 
-  // Setup message handling with campaign update callback
-  const ctx = createMessageHandlerContext((newCampaignState) => {
-    // Update screen manager's campaign state when host syncs
-    screenManager.campaignState = newCampaignState;
-    setActiveCampaignStateInternal(newCampaignState);
-
-    // Refresh the current screen if it's active
-    if (isStoreUIActive()) {
-      refreshStoreUI(newCampaignState);
-    } else if (isSquadronUIActive()) {
-      refreshSquadronUI(newCampaignState);
-    }
-  });
-  const handlingResult = setupMessageHandling(
-    ctx,
-    connectionResult.hostPeerId,
-    false,
-  );
-  setMessageHandlingResult(handlingResult);
+  // Render and navigate
+  renderLobbyScreen(lobbyElement);
+  goToLobby(screenManager);
 
   // Bind screen callbacks
   bindLobbyScreen(lobbyElement, initialLobbyState, {
-    onReady: (ready) => handleReadyToggle(connectionResult.localPeerId, ready),
-    onSendChat: (text) => handleSendChat(connectionResult.localPeerId, text),
+    onReady: (ready) => {
+      const currentCtx = getLobbyContext();
+      if (currentCtx) toggleReady(currentCtx, ready);
+    },
+    onSendChat: (text) => {
+      const currentCtx = getLobbyContext();
+      if (currentCtx) sendChat(currentCtx, text);
+    },
     onBack: () => handleLeave(controller),
   });
 
-  // Send CallsignAnnounce to host - this signals we're ready to receive Welcome
+  // Send CallsignAnnounce to host
   sendCallsignAnnounce(connectionFlow);
 }
 
 // =============================================================================
-// Message Handler Context
-// =============================================================================
-
-/**
- * Create context for message handler.
- */
-function createMessageHandlerContext(
-  onCampaignUpdate?: (state: CampaignState) => void,
-): MessageHandlerContext {
-  const connectionFlow = getActiveConnectionFlow();
-  if (!connectionFlow) {
-    throw new Error('Connection flow not initialized');
-  }
-  const ctx: MessageHandlerContext = {
-    connectionFlow,
-    campaignState: getActiveCampaignState(),
-    getLobbyState: () => getLobbyStateFromHolder(),
-    setLobbyState: (state: LobbyState) => {
-      setLobbyStateInternal(state);
-    },
-    updateUI: () => {
-      const lobbyState = getLobbyStateFromHolder();
-      if (lobbyState) {
-        updateLobbyState(lobbyState);
-      }
-    },
-  };
-  if (onCampaignUpdate) {
-    ctx.onCampaignUpdate = onCampaignUpdate;
-  }
-  return ctx;
-}
-
-// =============================================================================
-// Internal Callbacks
+// Cleanup
 // =============================================================================
 
 /** Handle leave/back button */
@@ -285,43 +278,28 @@ function handleLeave(controller: CampaignController): void {
   goBackFromLobby(controller.screenManager);
 }
 
-// =============================================================================
-// Cleanup
-// =============================================================================
-
 /**
  * Cleanup lobby state and connections.
  */
 export function cleanupLobby(): void {
-  // Cleanup message handling (router, sync manager)
-  const handlingResult = getMessageHandlingResult();
-  handlingResult?.cleanup();
+  const ctx = getLobbyContext();
+  if (ctx) {
+    // Run cleanup (router, sync manager, transport handlers)
+    ctx.cleanup();
 
-  // Disconnect and dispose connection flow
-  const connectionFlow = getActiveConnectionFlow();
-  if (connectionFlow) {
-    connectionFlow.disconnect().catch(() => {
+    // Disconnect and dispose connection flow
+    ctx.connectionFlow.disconnect().catch(() => {
       // Ignore disconnect errors
     });
-    connectionFlow.dispose();
+    ctx.connectionFlow.dispose();
   }
 
   // Cleanup screen
   cleanupLobbyScreen();
 
-  // Clear multiplayer context (returns to single-player mode)
+  // Clear multiplayer context
   clearMultiplayerContext();
 
-  // Clear all module state
-  clearModuleState();
-}
-
-/** Get current lobby state (for testing) */
-export function getLobbyState(): LobbyState | null {
-  return getLobbyStateFromHolder();
-}
-
-/** Update lobby state externally (for protocol handlers) */
-export function setLobbyState(state: LobbyState): void {
-  setLobbyStateWithEffects(state);
+  // Clear lobby context
+  setLobbyContext(null);
 }

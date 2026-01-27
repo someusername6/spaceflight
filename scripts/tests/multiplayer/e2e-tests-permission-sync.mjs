@@ -216,7 +216,11 @@ async function main() {
   process.exit(failed > 0 ? 1 : 0);
 }
 
-main().catch((error) => {
-  console.error('Test runner error:', error);
-  process.exit(1);
-});
+// Only run when executed directly, not when imported
+const isMainModule = process.argv[1]?.endsWith('e2e-tests-permission-sync.mjs');
+if (isMainModule) {
+  main().catch((error) => {
+    console.error('Test runner error:', error);
+    process.exit(1);
+  });
+}

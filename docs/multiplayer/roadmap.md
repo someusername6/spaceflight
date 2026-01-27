@@ -569,8 +569,10 @@ This phase implements **game-specific** messages only.
 | `src/multiplayer/ship-assignment.ts` | Create - assignment logic, player pilots |
 | `src/multiplayer/context-permissions.ts` | Create - UI permission helpers (canBuy, canSell, canEditShip) |
 | `src/multiplayer/multiplayer-context.ts` | Modify - context management (split from permissions) |
-| `src/campaign/handlers/lobby-state-holder.ts` | Create - pure state storage |
-| `src/campaign/handlers/lobby-state-effects.ts` | Create - state changes with side effects |
+| `src/campaign/handlers/lobby-context.ts` | Create - central context object for lobby state |
+| `src/campaign/handlers/lobby-actions.ts` | Create - state modifications with side effects |
+| `src/campaign/handlers/lobby-handlers.ts` | Modify - setup/cleanup using context pattern |
+| `src/campaign/handlers/lobby-protocol-routing.ts` | Modify - message handling with context |
 | `src/ui/screens/squadron/bind-events.ts` | Modify - permission checks for ship changes |
 | `src/ui/screens/squadron/hardpoint.ts` | Modify - permission checks for loadout edits |
 | `src/ui/screens/store/store-bind.ts` | Modify - permission checks for buy/sell |
