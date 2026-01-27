@@ -39,7 +39,11 @@ describe('Full Event Sequence Tests', () => {
     state.setActiveSlotElement(slot);
     state.resetPopoverState();
 
-    assert.strictEqual(state.activePicker, popover, 'popover should be active');
+    assert.strictEqual(
+      state.getActivePicker(),
+      popover,
+      'popover should be active',
+    );
     assert.ok(!popover.classList.contains('pinned'), 'should be UNPINNED');
 
     // Step 3: Click slot to pin
@@ -61,7 +65,7 @@ describe('Full Event Sequence Tests', () => {
     const submenuClickHandler = (e) => {
       const target = e.target;
       if (submenu.contains(target)) return; // Inside submenu - do nothing
-      if (state.activePicker?.contains(target)) {
+      if (state.getActivePicker()?.contains(target)) {
         state.closeSubmenu();
         mockDocument.removeEventListener('click', submenuClickHandler);
         submenuListenerRemoved = true;
@@ -74,7 +78,7 @@ describe('Full Event Sequence Tests', () => {
     mockDocument.addEventListener('click', submenuClickHandler);
 
     assert.strictEqual(
-      state.activeSubmenu,
+      state.getActiveSubmenu(),
       submenu,
       'submenu should be active',
     );
@@ -84,12 +88,12 @@ describe('Full Event Sequence Tests', () => {
     // We simulate this by NOT dispatching to document
     // The button action runs, but popovers stay open
     assert.strictEqual(
-      state.activePicker,
+      state.getActivePicker(),
       popover,
       'popover should stay open after button click',
     );
     assert.strictEqual(
-      state.activeSubmenu,
+      state.getActiveSubmenu(),
       submenu,
       'submenu should stay open after button click',
     );
@@ -102,8 +106,16 @@ describe('Full Event Sequence Tests', () => {
     mockDocument.dispatchEvent({ type: 'click', target: popoverContent });
 
     // Submenu's 3-way handler sees: not in submenu, but IN popover -> close only submenu
-    assert.strictEqual(state.activePicker, popover, 'popover should stay open');
-    assert.strictEqual(state.activeSubmenu, null, 'submenu should be closed');
+    assert.strictEqual(
+      state.getActivePicker(),
+      popover,
+      'popover should stay open',
+    );
+    assert.strictEqual(
+      state.getActiveSubmenu(),
+      null,
+      'submenu should be closed',
+    );
     assert.ok(
       submenuListenerRemoved,
       'submenu listener should have been removed',
@@ -115,7 +127,11 @@ describe('Full Event Sequence Tests', () => {
 
     mockDocument.dispatchEvent({ type: 'click', target: outside });
 
-    assert.strictEqual(state.activePicker, null, 'popover should be closed');
+    assert.strictEqual(
+      state.getActivePicker(),
+      null,
+      'popover should be closed',
+    );
   });
 
   it('hover preview: show -> leave slot -> enter popover -> leave popover -> closes', async () => {
@@ -142,7 +158,7 @@ describe('Full Event Sequence Tests', () => {
     await new Promise((r) => setTimeout(r, 50));
 
     assert.strictEqual(
-      state.activePicker,
+      state.getActivePicker(),
       popover,
       'should still be open (mouse is over)',
     );
@@ -155,7 +171,7 @@ describe('Full Event Sequence Tests', () => {
     await new Promise((r) => setTimeout(r, 100));
 
     assert.strictEqual(
-      state.activePicker,
+      state.getActivePicker(),
       null,
       'should be closed after leaving popover',
     );
@@ -214,7 +230,7 @@ describe('Full Event Sequence Tests', () => {
       'CRITICAL: Main popover must be PINNED after CHANGE click from hover state',
     );
     assert.strictEqual(
-      state.activeSubmenu,
+      state.getActiveSubmenu(),
       submenu,
       'Submenu should be open after CHANGE click',
     );

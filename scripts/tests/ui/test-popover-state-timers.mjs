@@ -39,7 +39,7 @@ describe('State Module Tests with Real Timers', () => {
 
       // Before 50ms - still open
       assert.strictEqual(
-        state.activePicker,
+        state.getActivePicker(),
         picker,
         'should still be open before timeout',
       );
@@ -48,7 +48,7 @@ describe('State Module Tests with Real Timers', () => {
       await new Promise((r) => setTimeout(r, 100));
 
       assert.strictEqual(
-        state.activePicker,
+        state.getActivePicker(),
         null,
         'should be closed after timeout',
       );
@@ -74,8 +74,8 @@ describe('State Module Tests with Real Timers', () => {
       // Wait for timeout to fire (another 80ms)
       await new Promise((r) => setTimeout(r, 80));
 
-      // Should still be open because isMouseOverPopover was true when timeout checked
-      assert.strictEqual(state.activePicker, picker, 'should remain open');
+      // Should still be open because isMouseOver was true when timeout checked
+      assert.strictEqual(state.getActivePicker(), picker, 'should remain open');
 
       state.closePopover();
     });
@@ -98,7 +98,7 @@ describe('State Module Tests with Real Timers', () => {
       await new Promise((r) => setTimeout(r, 100));
 
       assert.strictEqual(
-        state.activePicker,
+        state.getActivePicker(),
         picker,
         'pinned popover should NOT auto-close',
       );
@@ -183,7 +183,7 @@ describe('State Module Tests with Real Timers', () => {
       mockDocument.dispatchEvent({ type: 'click', target: outside });
 
       assert.strictEqual(
-        state.activePicker,
+        state.getActivePicker(),
         null,
         'should close on outside click',
       );
@@ -207,7 +207,7 @@ describe('State Module Tests with Real Timers', () => {
       mockDocument.dispatchEvent({ type: 'click', target: innerButton });
 
       assert.strictEqual(
-        state.activePicker,
+        state.getActivePicker(),
         picker,
         'should NOT close on inside click',
       );
