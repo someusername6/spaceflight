@@ -1,10 +1,12 @@
 /**
  * Hangar Equip/Unequip UI - Weapon picker dropdown for hardpoint slots
+ *
+ * Multiplayer support:
+ * - Hosts: direct state changes, synced to guests
+ * - Guests: actions sent via ActionRequest, state received via CampaignSync
  */
 
 import {
-  equipPrimary,
-  equipSecondary,
   swapPilotToStoredShip,
   unassignPilot,
 } from '../../../campaign/loadout';
@@ -15,6 +17,10 @@ import { SHIP_CLASSES } from '../../../data/ships';
 import { PRIMARY_WEAPONS } from '../../../data/weapons';
 import { hideTooltip } from '../../common/tooltip';
 import { renderMissileIcon, renderWeaponIcon } from '../../utils/weapon-icon';
+import {
+  bindPrimaryPickerEvents,
+  bindSecondaryPickerEvents,
+} from './equip-bind';
 import {
   closePopover,
   getActivePicker,
@@ -143,11 +149,6 @@ export function renderSecondaryPickerContent(
     .join('');
 }
 
-/** Find first storage index for a weapon type */
-function findWeaponIndex(state: CampaignState, weaponType: string): number {
-  return state.storedWeapons.findIndex((w) => w.weaponType === weaponType);
-}
-
 /** Show weapon picker dropdown for an empty slot (hover to preview, click to pin) */
 export function showWeaponPicker(
   slotElement: HTMLElement,
@@ -238,105 +239,6 @@ export function showWeaponPicker(
       onRerender,
     );
   }
-}
-
-/** Bind events for primary weapon picker */
-export function bindPrimaryPickerEvents(
-  picker: HTMLElement,
-  state: CampaignState,
-  shipId: string,
-  slotIndex: number,
-  bankSize: number,
-  onStateUpdate: (newState: CampaignState) => void,
-  onRerender: () => void,
-): void {
-  picker.querySelectorAll<HTMLElement>('.picker-item').forEach((item) => {
-    item.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const weaponType = item.dataset.weaponType;
-      if (!weaponType) return;
-
-      const storageIndex = findWeaponIndex(state, weaponType);
-      if (storageIndex < 0) return;
-
-      const newState = equipPrimary(
-        state,
-        shipId,
-        storageIndex,
-        slotIndex,
-        bankSize,
-      );
-      if (newState !== state) {
-        onStateUpdate(newState);
-      }
-      closePopover();
-      onRerender();
-    });
-  });
-}
-
-/** Bind events for secondary weapon picker (with quantity) */
-export function bindSecondaryPickerEvents(
-  picker: HTMLElement,
-  state: CampaignState,
-  shipId: string,
-  slotIndex: number,
-  bankSize: number,
-  onStateUpdate: (newState: CampaignState) => void,
-  onRerender: () => void,
-): void {
-  // Quantity +/- buttons
-  picker.querySelectorAll<HTMLElement>('.picker-qty-btn').forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const action = btn.dataset.action;
-      const row = btn.closest<HTMLElement>('.picker-missile-row');
-      const valueEl = row?.querySelector<HTMLElement>('.picker-qty-value');
-      if (!valueEl) return;
-
-      const max = Number.parseInt(valueEl.dataset.max ?? '1', 10);
-      let current = Number.parseInt(valueEl.textContent ?? '1', 10);
-
-      if (action === 'inc' && current < max) {
-        current++;
-      } else if (action === 'dec' && current > 1) {
-        current--;
-      }
-      valueEl.textContent = String(current);
-    });
-  });
-
-  // Equip buttons
-  picker.querySelectorAll<HTMLElement>('.picker-equip-btn').forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const row = btn.closest<HTMLElement>('.picker-missile-row');
-      if (!row) return;
-
-      const weaponType = row.dataset.weaponType;
-      const valueEl = row.querySelector('.picker-qty-value');
-      const count = Number.parseInt(valueEl?.textContent ?? '1', 10);
-
-      if (!weaponType) return;
-
-      const storageIndex = findWeaponIndex(state, weaponType);
-      if (storageIndex < 0) return;
-
-      const newState = equipSecondary(
-        state,
-        shipId,
-        storageIndex,
-        slotIndex,
-        bankSize,
-        count,
-      );
-      if (newState !== state) {
-        onStateUpdate(newState);
-      }
-      closePopover();
-      onRerender();
-    });
-  });
 }
 
 /** Handle swapping pilot to a different stored ship */

@@ -289,6 +289,36 @@ export const AI_PROFILES: Record<string, AIProfile> = {
     // Kiting: Excellent range maintenance (reacts to closing enemy)
     fleeDistanceMultiplier: 1.1,
   },
+
+  /**
+   * Player - Used for multiplayer player-controlled pilots.
+   * These values are never used (players don't use AI) but exist
+   * for type safety and display purposes.
+   */
+  player: {
+    name: 'Player',
+    // Use regular-like values (these are never actually used)
+    aimErrorBase: 0.0,
+    aimErrorDriftSpeed: 0.0,
+    aimErrorAngularFactor: 0.0,
+    beamTrackingSpeed: 1.0,
+    engageRange: 600,
+    breakOffRange: 1200,
+    combatRangeMultiplier: 1.0,
+    heatSwitchThreshold: 0.7,
+    minFiringAngle: 25,
+    linkedFireHeatThreshold: 0.6,
+    evadeShieldThreshold: 0.3,
+    regroupShieldThreshold: 0.15,
+    recoverShieldThreshold: 0.5,
+    evadeCooldown: 3.5,
+    regroupMinTime: 2.5,
+    decoyCooldown: 2.5,
+    burstDuration: 2.5,
+    repositionCooldown: 5.0,
+    maxRepositionTime: 5.0,
+    fleeDistanceMultiplier: 0.85,
+  },
 };
 
 /** Profile names for type safety */

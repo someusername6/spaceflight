@@ -573,12 +573,12 @@ This phase implements **game-specific** messages only.
 
 ### Success Criteria
 
-- [ ] Permissions enforced on all actions (client and host validation)
-- [ ] UI reflects current permissions (buttons disabled appropriately)
-- [ ] Ship assignment works correctly
-- [ ] Host cannot be unassigned from commander ship
-- [ ] Player pilots appear in roster with "Player" skill
-- [ ] Permission changes sync and log in chat
+- [x] Permissions enforced on all actions (client and host validation)
+- [x] UI reflects current permissions (buttons disabled appropriately)
+- [x] Ship assignment works correctly
+- [x] Host cannot be unassigned from commander ship
+- [x] Player pilots appear in roster with "Player" skill
+- [x] Permission changes sync and log in chat
 
 ---
 

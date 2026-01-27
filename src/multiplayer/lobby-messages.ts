@@ -20,15 +20,20 @@ import {
   type LobbyPlayer,
   type LobbyState,
   removePlayer,
+  setPlayerPermissions,
   setPlayerReady,
+  setPlayerShip,
 } from './lobby-state';
+import { DEFAULT_GUEST_PERMISSIONS, HOST_PERMISSIONS } from './permissions';
 import type {
   ChatMessageMessage,
   GameMessage,
   GamePlayerInfo,
+  PermissionUpdateMessage,
   PlayerJoinedExtMessage,
   PlayerLeftExtMessage,
   ReadyStateMessage,
+  ShipAssignmentMessage,
   WelcomeMessage,
 } from './protocol/messages';
 import { GameMessageType } from './protocol/types';
@@ -70,6 +75,20 @@ export function isChatMessageMessage(
   return msg.type === GameMessageType.ChatMessage;
 }
 
+/** Check if message is PermissionUpdate */
+export function isPermissionUpdateMessage(
+  msg: GameMessage,
+): msg is PermissionUpdateMessage {
+  return msg.type === GameMessageType.PermissionUpdate;
+}
+
+/** Check if message is ShipAssignment */
+export function isShipAssignmentMessage(
+  msg: GameMessage,
+): msg is ShipAssignmentMessage {
+  return msg.type === GameMessageType.ShipAssignment;
+}
+
 // =============================================================================
 // Conversion Helpers
 // =============================================================================
@@ -82,10 +101,15 @@ export function gamePlayerToLobbyPlayer(
   return {
     playerId: player.playerId,
     callsign: player.callsign,
-    shipId: player.shipId !== null ? parseInt(player.shipId, 10) : null,
+    shipId: player.shipId,
     isReady: player.ready,
     isHost,
     ping: 0,
+    // Host always has full permissions, guests use their assigned permissions
+    // Fallback to defaults for older messages that may not have permissions
+    permissions: isHost
+      ? HOST_PERMISSIONS
+      : (player.permissions ?? DEFAULT_GUEST_PERMISSIONS),
   };
 }
 
@@ -94,14 +118,29 @@ export function lobbyPlayerToGamePlayer(player: LobbyPlayer): GamePlayerInfo {
   return {
     playerId: player.playerId,
     callsign: player.callsign,
-    shipId: player.shipId !== null ? String(player.shipId) : null,
+    shipId: player.shipId,
     ready: player.isReady,
-    permissions: {
-      shipEdit: player.isHost ? 'any' : 'own',
-      canBuy: true,
-      canSell: true,
-      canConvertScrap: true,
-    },
+    // Host always has full permissions, guests use their stored permissions
+    permissions: player.isHost ? HOST_PERMISSIONS : player.permissions,
+  };
+}
+
+/**
+ * Create a new LobbyPlayer with default permissions.
+ * Used when a guest joins.
+ */
+export function createGuestLobbyPlayer(
+  playerId: string,
+  callsign: string,
+): LobbyPlayer {
+  return {
+    playerId,
+    callsign,
+    shipId: null,
+    isReady: false,
+    isHost: false,
+    ping: 0,
+    permissions: DEFAULT_GUEST_PERMISSIONS,
   };
 }
 
@@ -232,6 +271,82 @@ export function handleChatMessage(
 }
 
 /**
+ * Handle PermissionUpdate message.
+ * Updates player permissions and shows system message.
+ */
+export function handlePermissionUpdate(
+  state: LobbyState,
+  msg: PermissionUpdateMessage,
+): MessageHandlerResult {
+  const player = state.players.find((p) => p.playerId === msg.playerId);
+  if (!player) {
+    return { state };
+  }
+
+  // Don't update host permissions (they're always full)
+  if (player.isHost) {
+    return { state };
+  }
+
+  const callsign = player.callsign;
+  const newState = setPlayerPermissions(state, msg.playerId, msg.permissions);
+  const systemMessage = `Host updated ${callsign}'s permissions`;
+
+  return {
+    state: addSystemMessage(newState, systemMessage),
+    systemMessage,
+  };
+}
+
+/**
+ * Handle ShipAssignment message.
+ * Updates player ship assignment and shows system message.
+ */
+export function handleShipAssignment(
+  state: LobbyState,
+  msg: ShipAssignmentMessage,
+  getShipName?: (shipId: string) => string,
+): MessageHandlerResult {
+  const player = state.players.find((p) => p.playerId === msg.playerId);
+  if (!player) {
+    return { state };
+  }
+
+  const callsign = player.callsign;
+  let newState = state;
+
+  // If assigning to a ship, unassign any other player from that ship first
+  if (msg.shipId !== null) {
+    const currentOwner = state.players.find((p) => p.shipId === msg.shipId);
+    if (currentOwner && currentOwner.playerId !== msg.playerId) {
+      newState = setPlayerShip(newState, currentOwner.playerId, null);
+    }
+  }
+
+  newState = setPlayerShip(newState, msg.playerId, msg.shipId);
+
+  // Build system message
+  let systemMessage: string;
+  if (msg.shipId === null) {
+    systemMessage = `${callsign} unassigned from ship`;
+  } else {
+    const shipName = getShipName?.(msg.shipId) ?? `Ship ${msg.shipId}`;
+    systemMessage = `${callsign} assigned to ${shipName}`;
+  }
+
+  return {
+    state: addSystemMessage(newState, systemMessage),
+    systemMessage,
+  };
+}
+
+/** Options for processing lobby messages */
+export interface ProcessLobbyMessageOptions {
+  /** Function to get ship name from ID (for system messages) */
+  getShipName?: (shipId: string) => string;
+}
+
+/**
  * Process any lobby-related message.
  * Returns updated state and optional system message.
  */
@@ -239,6 +354,7 @@ export function processLobbyMessage(
   state: LobbyState,
   msg: GameMessage,
   hostPeerId: string,
+  options?: ProcessLobbyMessageOptions,
 ): MessageHandlerResult | null {
   if (isWelcomeMessage(msg)) {
     return handleWelcome(state, msg, hostPeerId);
@@ -255,34 +371,22 @@ export function processLobbyMessage(
   if (isChatMessageMessage(msg)) {
     return handleChatMessage(state, msg);
   }
+  if (isPermissionUpdateMessage(msg)) {
+    return handlePermissionUpdate(state, msg);
+  }
+  if (isShipAssignmentMessage(msg)) {
+    return handleShipAssignment(state, msg, options?.getShipName);
+  }
   return null;
 }
 
 // =============================================================================
-// Outgoing Message Creators
+// Outgoing Message Creators (re-exported from lobby-message-creators.ts)
 // =============================================================================
 
-/** Create a ReadyState message */
-export function createReadyStateMessage(
-  playerId: string,
-  ready: boolean,
-): ReadyStateMessage {
-  return {
-    type: GameMessageType.ReadyState,
-    playerId,
-    ready,
-  };
-}
-
-/** Create a ChatMessage message */
-export function createChatMessageMessage(
-  fromPlayerId: string,
-  text: string,
-): ChatMessageMessage {
-  return {
-    type: GameMessageType.ChatMessage,
-    fromPlayerId,
-    text,
-    timestamp: Date.now(),
-  };
-}
+export {
+  createChatMessageMessage,
+  createPermissionUpdateMessage,
+  createReadyStateMessage,
+  createShipAssignmentMessage,
+} from './lobby-message-creators';

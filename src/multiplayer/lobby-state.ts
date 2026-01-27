@@ -7,6 +7,8 @@
  * - State update functions (immutable pattern)
  */
 
+import type { Permission } from './protocol/types';
+
 // =============================================================================
 // Types
 // =============================================================================
@@ -16,11 +18,13 @@ export interface LobbyPlayer {
   playerId: string;
   callsign: string;
   /** Assigned ship ID (null = spectator/unassigned) */
-  shipId: number | null;
+  shipId: string | null;
   isReady: boolean;
   isHost: boolean;
   /** Ping in milliseconds */
   ping: number;
+  /** Player permissions (host always has full permissions) */
+  permissions: Permission;
 }
 
 /** Chat entry type */
@@ -133,12 +137,26 @@ export function setPlayerPing(
 export function setPlayerShip(
   state: LobbyState,
   playerId: string,
-  shipId: number | null,
+  shipId: string | null,
 ): LobbyState {
   return {
     ...state,
     players: state.players.map((p) =>
       p.playerId === playerId ? { ...p, shipId } : p,
+    ),
+  };
+}
+
+/** Update a player's permissions */
+export function setPlayerPermissions(
+  state: LobbyState,
+  playerId: string,
+  permissions: Permission,
+): LobbyState {
+  return {
+    ...state,
+    players: state.players.map((p) =>
+      p.playerId === playerId ? { ...p, permissions } : p,
     ),
   };
 }

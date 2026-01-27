@@ -10,6 +10,7 @@
  */
 
 import type { LobbyState } from '../../../multiplayer/lobby-state';
+import type { Permission } from '../../../multiplayer/protocol/types';
 import {
   createScreen,
   type Screen,
@@ -30,6 +31,8 @@ export interface LobbyCallbacks {
   onReady: (ready: boolean) => void;
   onSendChat: (text: string) => void;
   onBack: () => void;
+  /** Called when host changes a player's permissions (host only) */
+  onPermissionChange?: (playerId: string, permissions: Permission) => void;
 }
 
 // =============================================================================
@@ -92,6 +95,41 @@ const LobbyScreenComponent: Screen<LobbyViewState, LobbyCallbacks> = {
     if (state.isHost) {
       let activePopover: HTMLElement | null = null;
 
+      // Helper to bind permission checkbox events
+      const bindPopoverEvents = (popoverEl: HTMLElement) => {
+        const checkboxes = popoverEl.querySelectorAll<HTMLInputElement>(
+          'input[data-permission]',
+        );
+        for (const checkbox of checkboxes) {
+          checkbox.addEventListener('change', () => {
+            const playerId = checkbox.getAttribute('data-player');
+            const permissionType = checkbox.getAttribute('data-permission');
+            if (!playerId || !permissionType) return;
+
+            const currentState = api.getState();
+            const player = currentState.players.find(
+              (p) => p.playerId === playerId,
+            );
+            if (!player) return;
+
+            // Build updated permissions
+            const newPermissions: Permission = { ...player.permissions };
+            if (permissionType === 'canBuy') {
+              newPermissions.canBuy = checkbox.checked;
+            } else if (permissionType === 'canSell') {
+              newPermissions.canSell = checkbox.checked;
+            } else if (permissionType === 'canConvertScrap') {
+              newPermissions.canConvertScrap = checkbox.checked;
+            } else if (permissionType === 'shipEdit') {
+              // Toggle between 'own' (can edit) and 'none' (cannot edit)
+              newPermissions.shipEdit = checkbox.checked ? 'own' : 'none';
+            }
+
+            props.onPermissionChange?.(playerId, newPermissions);
+          });
+        }
+      };
+
       api.onDirect('.player-row[data-player-id]', 'mouseenter', (_e, el) => {
         const playerId = el.getAttribute('data-player-id');
         if (!playerId) return;
@@ -102,11 +140,18 @@ const LobbyScreenComponent: Screen<LobbyViewState, LobbyCallbacks> = {
         );
         if (!player) return;
 
+        // Don't show popover for host (self)
+        if (player.isHost) return;
+
         // Remove any existing popover
         activePopover?.remove();
 
-        // Create new popover
-        const popoverHtml = renderHostPopover(player.playerId, player.callsign);
+        // Create new popover with current permissions
+        const popoverHtml = renderHostPopover({
+          playerId: player.playerId,
+          callsign: player.callsign,
+          permissions: player.permissions,
+        });
         const popoverContainer = document.createElement('div');
         popoverContainer.innerHTML = popoverHtml;
         const popoverEl = popoverContainer.firstElementChild as HTMLElement;
@@ -114,6 +159,9 @@ const LobbyScreenComponent: Screen<LobbyViewState, LobbyCallbacks> = {
         document.body.appendChild(popoverEl);
         positionPopover(popoverEl, el);
         activePopover = popoverEl;
+
+        // Bind permission checkbox events
+        bindPopoverEvents(popoverEl);
       });
 
       api.onDirect('.player-row[data-player-id]', 'mouseleave', () => {
@@ -187,6 +235,7 @@ export function renderLobbyScreen(element: HTMLElement): void {
     onReady: () => {},
     onSendChat: () => {},
     onBack: () => {},
+    onPermissionChange: () => {},
   });
 }
 

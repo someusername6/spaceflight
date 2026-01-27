@@ -11,6 +11,7 @@ import type {
   EquippedPrimary,
   EquippedSecondary,
 } from '../../../campaign/types';
+import { canEditShip } from '../../../multiplayer/multiplayer-context';
 import { getBankSize } from '../popover/equip';
 import {
   closePopovers,
@@ -80,6 +81,9 @@ export function bindHardpointEvents(
     const ship = props.campaignState.ships.find((s) => s.id === shipId);
     if (!ship) return;
 
+    // Check if player can edit this ship's loadout
+    const canEdit = canEditShip(ship.pilot?.id ?? null);
+
     if (isFilled) {
       // Filled slot: unified popover (hover to preview, click to pin)
       const weapon =
@@ -109,10 +113,12 @@ export function bindHardpointEvents(
         }
       });
 
-      // Click: pin the popover
+      // Click: pin the popover (only if can edit)
       addListener(el, 'click', (e) => {
         e.stopPropagation();
-        pinCurrentPopover();
+        if (canEdit) {
+          pinCurrentPopover();
+        }
       });
 
       // Leave: hide only if not pinned
@@ -120,6 +126,9 @@ export function bindHardpointEvents(
         hidePopoverIfNotPinned();
       });
     } else {
+      // Empty slot: only show picker if can edit
+      if (!canEdit) return;
+
       // Empty slot: hover to preview, click to pin
       addListener(el, 'mouseenter', () => {
         // Get bank size for this specific slot from ship archetype

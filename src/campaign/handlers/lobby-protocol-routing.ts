@@ -6,17 +6,22 @@
  * - Route incoming messages to appropriate handlers
  * - Manage message subscriptions on transport layer
  * - Broadcast messages to connected peers
+ * - Provide MessageRouter for campaign state synchronization
  */
 
 import { getStoredCallsign } from '../../multiplayer/callsign-storage';
 import {
+  type CampaignSyncManager,
+  createCampaignSyncManager,
+} from '../../multiplayer/campaign-sync';
+import {
+  createGuestLobbyPlayer,
   lobbyPlayerToGamePlayer,
   processLobbyMessage,
 } from '../../multiplayer/lobby-messages';
 import {
   addPlayer,
   addSystemMessage,
-  type LobbyPlayer,
   type LobbyState,
 } from '../../multiplayer/lobby-state';
 import type { ConnectionFlow } from '../../multiplayer/networking/connection-flow';
@@ -28,6 +33,10 @@ import type {
   PlayerJoinedExtMessage,
   WelcomeMessage,
 } from '../../multiplayer/protocol/messages';
+import {
+  createMessageRouter,
+  type MessageRouter,
+} from '../../multiplayer/protocol/router';
 import { GameMessageType } from '../../multiplayer/protocol/types';
 import type { CampaignState } from '../types';
 
@@ -42,6 +51,15 @@ export interface MessageHandlerContext {
   getLobbyState: () => LobbyState | null;
   setLobbyState: (state: LobbyState) => void;
   updateUI: () => void;
+  /** Callback when campaign state is updated by sync manager */
+  onCampaignUpdate?: (state: CampaignState) => void;
+}
+
+/** Result of setting up message handling */
+export interface MessageHandlingResult {
+  cleanup: () => void;
+  router: MessageRouter;
+  syncManager: CampaignSyncManager;
 }
 
 // =============================================================================
@@ -83,47 +101,65 @@ export function encodeGameMessage(message: GameMessage): Uint8Array {
 
 /**
  * Setup message handling for lobby-related protocol messages.
- * Returns a cleanup function.
+ * Returns cleanup function, message router, and campaign sync manager.
  */
 export function setupMessageHandling(
   ctx: MessageHandlerContext,
   hostPeerId: string,
   isHost: boolean,
-): () => void {
+): MessageHandlingResult {
   const transport = ctx.connectionFlow.getTransport();
-  if (!transport) return () => {};
+  if (!transport) {
+    // Return dummy objects if no transport
+    const dummyRouter = createMessageRouter({
+      transport: {} as never,
+      hostPeerId,
+      isHost,
+    });
+    const dummySyncManager = createCampaignSyncManager(dummyRouter, isHost);
+    return {
+      cleanup: () => {},
+      router: dummyRouter,
+      syncManager: dummySyncManager,
+    };
+  }
 
   // Store the original handlers
   const originalOnMessage = transport.onMessage;
   const originalOnConnect = transport.onConnect;
 
-  // Wrap the onMessage handler to process lobby messages
-  transport.onMessage = (peerId: string, data: Uint8Array) => {
-    const lobbyState = ctx.getLobbyState();
+  // Create message router
+  const router = createMessageRouter({
+    transport,
+    hostPeerId,
+    isHost,
+  });
 
-    // Try to decode as a game message
-    try {
-      const message = decodeGameMessage(data);
-      if (message && lobbyState) {
-        // Host handles CallsignAnnounce specially - this triggers Welcome
-        if (isHost && message.type === GameMessageType.CallsignAnnounce) {
-          const announceMsg = message as CallsignAnnounceMessage;
-          handleCallsignAnnounce(ctx, peerId, announceMsg.callsign);
-        } else {
-          const result = processLobbyMessage(lobbyState, message, hostPeerId);
-          if (result) {
-            ctx.setLobbyState(result.state);
-            ctx.updateUI();
-          }
-        }
-      }
-    } catch {
-      // Not a game message, ignore
-    }
+  // Create campaign sync manager
+  const syncManager = createCampaignSyncManager(router, isHost);
 
-    // Call original handler
-    originalOnMessage?.(peerId, data);
-  };
+  // Set up campaign update callback
+  if (ctx.onCampaignUpdate) {
+    syncManager.onCampaignUpdate = ctx.onCampaignUpdate;
+  }
+
+  // Initialize with current campaign state (for host)
+  if (isHost && ctx.campaignState) {
+    syncManager.setCampaignState(ctx.campaignState);
+  }
+
+  // Register lobby message handlers on the router
+  if (isHost) {
+    router.onCallsignAnnounce((msg, peerId) => {
+      handleCallsignAnnounce(ctx, syncManager, peerId, msg.callsign);
+    });
+  }
+
+  // Register common lobby message handlers (chat, ready state, etc.)
+  registerLobbyMessageHandlers(router, ctx, hostPeerId);
+
+  // Wire router to transport with fallback to original handler
+  router.wireToTransport(originalOnMessage ?? undefined);
 
   // For host: handle peer connections (we wait for CallsignAnnounce)
   if (isHost) {
@@ -134,11 +170,55 @@ export function setupMessageHandling(
     };
   }
 
-  // Return cleanup function
-  return () => {
-    transport.onMessage = originalOnMessage;
-    transport.onConnect = originalOnConnect;
+  // Return cleanup function and references
+  return {
+    cleanup: () => {
+      router.unwireFromTransport(originalOnMessage ?? undefined);
+      transport.onConnect = originalOnConnect;
+      syncManager.dispose();
+      router.dispose();
+    },
+    router,
+    syncManager,
   };
+}
+
+/**
+ * Create a standard lobby message handler.
+ * All lobby messages follow the same pattern: get state, process, update UI.
+ */
+function createLobbyHandler(
+  ctx: MessageHandlerContext,
+  hostPeerId: string,
+): (msg: GameMessage) => void {
+  return (msg: GameMessage) => {
+    const lobbyState = ctx.getLobbyState();
+    if (!lobbyState) return;
+    const result = processLobbyMessage(lobbyState, msg, hostPeerId);
+    if (result) {
+      ctx.setLobbyState(result.state);
+      ctx.updateUI();
+    }
+  };
+}
+
+/**
+ * Register handlers for common lobby messages (chat, ready state, permissions, etc.)
+ */
+function registerLobbyMessageHandlers(
+  router: MessageRouter,
+  ctx: MessageHandlerContext,
+  hostPeerId: string,
+): void {
+  const handler = createLobbyHandler(ctx, hostPeerId);
+
+  router.onChatMessage(handler);
+  router.onReadyState(handler);
+  router.onPermissionUpdate(handler);
+  router.onPlayerJoined(handler);
+  router.onPlayerLeft(handler);
+  router.onWelcome(handler);
+  router.onShipAssignment(handler);
 }
 
 // =============================================================================
@@ -151,6 +231,7 @@ export function setupMessageHandling(
  */
 function handleCallsignAnnounce(
   ctx: MessageHandlerContext,
+  syncManager: CampaignSyncManager,
   peerId: string,
   callsign: string,
 ): void {
@@ -165,21 +246,17 @@ function handleCallsignAnnounce(
     return;
   }
 
-  // Create a new player with the announced callsign
-  const newPlayer: LobbyPlayer = {
-    playerId: peerId,
-    callsign,
-    shipId: null,
-    isReady: false,
-    isHost: false,
-    ping: 0,
-  };
+  // Create a new player with the announced callsign and default permissions
+  const newPlayer = createGuestLobbyPlayer(peerId, callsign);
 
   // Add player to local state with system message
   let newState = addPlayer(lobbyState, newPlayer);
   newState = addSystemMessage(newState, `${newPlayer.callsign} joined`);
   ctx.setLobbyState(newState);
   ctx.updateUI();
+
+  // Register player in sync manager for permission validation
+  syncManager.setPlayerInfo(peerId, lobbyPlayerToGamePlayer(newPlayer));
 
   // Send Welcome message to the new peer
   const welcomeMessage: WelcomeMessage = {

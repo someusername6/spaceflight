@@ -10,6 +10,11 @@ import type { CampaignState } from '../../../campaign/types';
 import { SCRAP_PER_SHIP } from '../../../data/prices';
 import { PRIMARY_WEAPONS } from '../../../data/weapons';
 import {
+  canBuy as hasCanBuyPermission,
+  canConvertScrap as hasCanConvertPermission,
+  canSell as hasCanSellPermission,
+} from '../../../multiplayer/multiplayer-context';
+import {
   getItemPrice,
   getStorageCount,
   renderAmmoStats,
@@ -46,11 +51,15 @@ function renderScrapDetail(
   sellPrice: number,
   statsHtml: string,
 ): string {
-  const canSell = storageCount > 0;
-  const canSellBulk10 = storageCount >= 10;
-  const canSellBulk100 = storageCount >= 100;
+  // Check multiplayer permissions
+  const hasSellPerm = hasCanSellPermission();
+  const hasConvertPerm = hasCanConvertPermission();
+
+  const canSell = storageCount > 0 && hasSellPerm;
+  const canSellBulk10 = storageCount >= 10 && hasSellPerm;
+  const canSellBulk100 = storageCount >= 100 && hasSellPerm;
   const conversionFee = getScrapConversionFee(itemId);
-  const canConvert = canConvertScrapToShip(state, itemId);
+  const canConvert = canConvertScrapToShip(state, itemId) && hasConvertPerm;
   const storageText = storageCount > 0 ? `In storage: ${storageCount}` : '';
   const displayName = itemId.charAt(0).toUpperCase() + itemId.slice(1);
   const previewHtml = renderItemPreview(category, itemId);
@@ -96,8 +105,13 @@ function renderStandardDetail(
   sellPrice: number,
   statsHtml: string,
 ): string {
-  const canAfford = state.credits >= buyPrice && storeStockCount > 0;
-  const canSell = storageCount > 0;
+  // Check multiplayer permissions
+  const hasBuyPerm = hasCanBuyPermission();
+  const hasSellPerm = hasCanSellPermission();
+
+  const canAfford =
+    state.credits >= buyPrice && storeStockCount > 0 && hasBuyPerm;
+  const canSell = storageCount > 0 && hasSellPerm;
   const storageText = storageCount > 0 ? `In storage: ${storageCount}` : '';
   const previewHtml = renderItemPreview(category, itemId);
 
@@ -120,8 +134,8 @@ function renderStandardDetail(
   const bulkSellPrice = Math.round(sellPrice * bulkAmount);
 
   const canAffordBulk =
-    state.credits >= bulkPrice && storeStockCount >= bulkAmount;
-  const canSellBulk = storageCount >= bulkAmount;
+    state.credits >= bulkPrice && storeStockCount >= bulkAmount && hasBuyPerm;
+  const canSellBulk = storageCount >= bulkAmount && hasSellPerm;
 
   // For ammo, use the ammoName field; for primaries, use the full name
   const isPrimary = category === 'primaries';

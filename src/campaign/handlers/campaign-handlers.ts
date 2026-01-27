@@ -5,6 +5,7 @@
  * - Squadron screen setup and navigation
  * - Store screen setup and navigation
  * - Contracts screen setup, navigation, and mission launching
+ * - Syncing campaign state changes to multiplayer guests
  */
 
 import type { NavDestination } from '../../ui/common/nav-bar';
@@ -33,8 +34,23 @@ import {
   refreshContracts,
 } from '../state';
 import { autoSave, getActiveSlotId, saveCheckpoint } from '../storage';
-import type { Contract } from '../types';
+import type { CampaignState, Contract } from '../types';
+import { isInLobby, updateAndSyncCampaignState } from './lobby-handlers';
 import { handleRetirement } from './mission-handlers';
+
+/**
+ * Update campaign state and sync to multiplayer guests if in lobby.
+ */
+function updateStateWithSync(
+  screenManager: CampaignController['screenManager'],
+  newState: CampaignState,
+): void {
+  updateCampaignState(screenManager, newState);
+  // Sync to multiplayer guests if in lobby
+  if (isInLobby()) {
+    updateAndSyncCampaignState(newState);
+  }
+}
 
 /**
  * Setup squadron screen.
@@ -71,9 +87,9 @@ export function setupSquadronScreen(
     }
   };
 
-  // State update handler with auto-save
+  // State update handler with auto-save and multiplayer sync
   const onStateUpdate = (newState: typeof screenManager.campaignState) => {
-    updateCampaignState(screenManager, newState);
+    updateStateWithSync(screenManager, newState);
     void autoSave(newState, 'loadout-change');
   };
 
@@ -122,9 +138,9 @@ export function setupStoreScreen(
     }
   };
 
-  // State update handler with auto-save
+  // State update handler with auto-save and multiplayer sync
   const onStateUpdate = (newState: typeof screenManager.campaignState) => {
-    updateCampaignState(screenManager, newState);
+    updateStateWithSync(screenManager, newState);
     void autoSave(newState, 'store-purchase');
   };
 
@@ -206,7 +222,7 @@ export function setupContractsScreen(controller: CampaignController): void {
         screenManager.campaignState,
         contract.id,
       );
-      updateCampaignState(screenManager, stateWithAttempt);
+      updateStateWithSync(screenManager, stateWithAttempt);
 
       // Await save before starting mission to ensure state is persisted
       await autoSave(stateWithAttempt, 'mission-started');
@@ -223,7 +239,7 @@ export function setupContractsScreen(controller: CampaignController): void {
     () => {
       // Advance to next sector
       const newState = advanceSector(screenManager.campaignState);
-      updateCampaignState(screenManager, newState);
+      updateStateWithSync(screenManager, newState);
       void autoSave(newState, 'sector-advance');
       // Refresh contracts screen with new sector's missions
       setupContractsScreen(controller);
@@ -231,7 +247,7 @@ export function setupContractsScreen(controller: CampaignController): void {
     () => {
       // Refresh contracts (pay credits, get new selection)
       const newState = refreshContracts(screenManager.campaignState);
-      updateCampaignState(screenManager, newState);
+      updateStateWithSync(screenManager, newState);
       void autoSave(newState, 'contracts-refresh');
       // Refresh contracts screen with new selection
       setupContractsScreen(controller);

@@ -230,6 +230,25 @@ const SquadronScreenComponent: Screen<SquadronState, SquadronProps> = {
 
 /** Screen handle for external control */
 let screenHandle: ScreenHandle<SquadronState, SquadronProps> | null = null;
+/** Store current props for state updates */
+let currentProps: SquadronProps | null = null;
+
+/**
+ * Refresh squadron UI with new campaign state (for multiplayer sync).
+ * Call when campaign state changes externally (e.g., from network).
+ */
+export function refreshSquadronUI(newCampaignState: CampaignState): void {
+  if (!screenHandle || !currentProps) return;
+  currentProps = { ...currentProps, campaignState: newCampaignState };
+  screenHandle.setProps(currentProps);
+}
+
+/**
+ * Check if the squadron UI is currently active.
+ */
+export function isSquadronUIActive(): boolean {
+  return screenHandle !== null;
+}
 
 /** Create squadron UI */
 export function createSquadronUI(
@@ -249,19 +268,18 @@ export function createSquadronUI(
     activeTab: 'loadout',
   };
 
-  // Props object updated via closure
-  let props: SquadronProps;
-
   // Wrap onStateUpdate to also update the screen props
   const wrappedOnStateUpdate = onStateUpdate
     ? (newCampaignState: CampaignState) => {
         onStateUpdate(newCampaignState);
-        props = { ...props, campaignState: newCampaignState };
-        screenHandle?.setProps(props);
+        if (currentProps) {
+          currentProps = { ...currentProps, campaignState: newCampaignState };
+          screenHandle?.setProps(currentProps);
+        }
       }
     : undefined;
 
-  props = {
+  currentProps = {
     campaignState: state,
     onNavigate,
     onStateUpdate: wrappedOnStateUpdate,
@@ -271,12 +289,12 @@ export function createSquadronUI(
     SquadronScreenComponent,
     element,
     initialState,
-    props,
+    currentProps,
   );
 
   // Mount popover layer for weapon management
   mountPopoverLayer(
-    () => props.campaignState,
+    () => currentProps?.campaignState ?? state,
     (newState) => {
       if (wrappedOnStateUpdate) {
         wrappedOnStateUpdate(newState);
@@ -292,14 +310,17 @@ export function createSquadronUI(
     onStateUpdate,
     update(newState: CampaignState) {
       ui.state = newState;
-      props = { ...props, campaignState: newState };
-      screenHandle?.setProps(props);
+      if (currentProps) {
+        currentProps = { ...currentProps, campaignState: newState };
+        screenHandle?.setProps(currentProps);
+      }
     },
     destroy() {
       destroyHardpointListeners();
       destroyViewerTabListeners();
       unmountPopoverLayer();
       screenHandle?.destroy();
+      currentProps = null;
     },
   };
 

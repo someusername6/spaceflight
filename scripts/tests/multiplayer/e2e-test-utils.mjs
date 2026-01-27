@@ -101,20 +101,41 @@ export async function waitForViteReady(timeoutMs = 10000) {
  * Stop Vite server.
  */
 export async function stopViteServer() {
-  if (!viteProcess || viteProcess.killed) {
+  if (!viteProcess) {
+    return;
+  }
+
+  const proc = viteProcess;
+  viteProcess = null;
+
+  if (proc.killed) {
     return;
   }
 
   return new Promise((resolve) => {
-    viteProcess.on('exit', () => {
-      resolve();
-    });
+    let resolved = false;
 
-    viteProcess.kill('SIGTERM');
+    const onExit = () => {
+      if (!resolved) {
+        resolved = true;
+        resolve();
+      }
+    };
+
+    proc.once('exit', onExit);
+    proc.once('close', onExit);
+
+    proc.kill('SIGTERM');
 
     setTimeout(() => {
-      if (viteProcess && !viteProcess.killed) {
-        viteProcess.kill('SIGKILL');
+      if (!resolved) {
+        try {
+          proc.kill('SIGKILL');
+        } catch {
+          // Process may already be dead
+        }
+        resolved = true;
+        resolve();
       }
     }, 3000);
   });
@@ -193,20 +214,41 @@ export async function waitForSignalingReady(timeoutMs = 10000) {
  * Stop signaling server.
  */
 export async function stopSignalingServer() {
-  if (!signalingProcess || signalingProcess.killed) {
+  if (!signalingProcess) {
+    return;
+  }
+
+  const proc = signalingProcess;
+  signalingProcess = null;
+
+  if (proc.killed) {
     return;
   }
 
   return new Promise((resolve) => {
-    signalingProcess.on('exit', () => {
-      resolve();
-    });
+    let resolved = false;
 
-    signalingProcess.kill('SIGTERM');
+    const onExit = () => {
+      if (!resolved) {
+        resolved = true;
+        resolve();
+      }
+    };
+
+    proc.once('exit', onExit);
+    proc.once('close', onExit);
+
+    proc.kill('SIGTERM');
 
     setTimeout(() => {
-      if (signalingProcess && !signalingProcess.killed) {
-        signalingProcess.kill('SIGKILL');
+      if (!resolved) {
+        try {
+          proc.kill('SIGKILL');
+        } catch {
+          // Process may already be dead
+        }
+        resolved = true;
+        resolve();
       }
     }, 3000);
   });
@@ -228,12 +270,42 @@ export async function startServers() {
 }
 
 /**
+ * Wait for a port to be available.
+ */
+async function waitForPortAvailable(port, timeoutMs = 5000) {
+  const startTime = Date.now();
+
+  while (Date.now() - startTime < timeoutMs) {
+    try {
+      await fetch(`http://localhost:${port}`, {
+        signal: AbortSignal.timeout(500),
+      });
+      // Port still in use
+      await sleep(200);
+    } catch {
+      // Port is free (connection refused)
+      return;
+    }
+  }
+  // Timeout reached but port might still be releasing
+}
+
+/**
  * Stop both servers.
  */
 export async function stopServers() {
   console.log('\nStopping servers...');
-  await stopViteServer();
-  await stopSignalingServer();
+  await Promise.all([stopViteServer(), stopSignalingServer()]);
+
+  // Wait for ports to be released
+  await Promise.all([
+    waitForPortAvailable(VITE_PORT, 3000),
+    waitForPortAvailable(SIGNALING_PORT, 3000),
+  ]);
+
+  // Extra delay to ensure OS releases the ports
+  await sleep(500);
+
   console.log('Servers stopped');
 }
 

@@ -42,9 +42,9 @@ function renderPing(ping: number): string {
 }
 
 /** Render ship/spectator status */
-function renderShipStatus(shipId: number | null): string {
+function renderShipStatus(shipId: string | null): string {
   if (shipId !== null) {
-    return `<span class="ship-status assigned">Ship ${shipId}</span>`;
+    return `<span class="ship-status assigned">Ship assigned</span>`;
   }
   return '<span class="ship-status spectator">Spectator</span>';
 }

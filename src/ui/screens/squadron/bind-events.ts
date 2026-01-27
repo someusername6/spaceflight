@@ -15,6 +15,7 @@ import {
   resupplyShipConstrained,
 } from '../../../campaign/resupply/resupply-constrained';
 import type { CampaignState } from '../../../campaign/types';
+import { canEditShip } from '../../../multiplayer/multiplayer-context';
 import type { NavDestination } from '../../common/nav-bar';
 import { showNotification } from '../../common/notification';
 import type { ScreenAPI } from '../../framework/screen';
@@ -117,6 +118,14 @@ export function bindSquadronEvents(
     const shipId = el.dataset.ship;
     if (!pilotId || !shipId) return;
 
+    // Check permission
+    if (!canEditShip(pilotId)) {
+      showNotification('You do not have permission to change this ship', {
+        type: 'warning',
+      });
+      return;
+    }
+
     showShipPicker(
       el,
       pilotId,
@@ -138,6 +147,15 @@ export function bindSquadronEvents(
     e.stopPropagation();
     const shipId = el.dataset.ship;
     if (!shipId) return;
+
+    // Check permission
+    const ship = props.campaignState.ships.find((s) => s.id === shipId);
+    if (!canEditShip(ship?.pilot?.id ?? null)) {
+      showNotification('You do not have permission to resupply this ship', {
+        type: 'warning',
+      });
+      return;
+    }
 
     const result = resupplyShipConstrained(props.campaignState, shipId);
     if (result.state !== props.campaignState) {
@@ -250,6 +268,14 @@ export function bindSquadronEvents(
     const pilotId = el.dataset.pilot;
     const shipId = el.dataset.ship;
     if (!pilotId || !shipId) return;
+
+    // Check permission
+    if (!canEditShip(pilotId)) {
+      showNotification('You do not have permission to unassign this pilot', {
+        type: 'warning',
+      });
+      return;
+    }
 
     const newState = unassignPilot(props.campaignState, shipId);
     if (newState !== props.campaignState) {

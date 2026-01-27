@@ -3,15 +3,27 @@
  *
  * Features:
  * - Kick button (UI only - wired in Phase 13)
- * - Permission toggles (UI only - wired in Phase 8)
- *
- * Note: This is currently UI-only, functionality will be added later.
+ * - Permission toggles (enabled in Phase 8)
  */
 
+import type { Permission } from '../../../multiplayer/protocol/types';
 import { escapeHtml } from '../../utils';
 
+/** Options for rendering the host popover */
+export interface HostPopoverOptions {
+  playerId: string;
+  callsign: string;
+  permissions: Permission;
+}
+
 /** Render the host popover content */
-export function renderHostPopover(playerId: string, callsign: string): string {
+export function renderHostPopover(options: HostPopoverOptions): string {
+  const { playerId, callsign, permissions } = options;
+
+  // Convert shipEdit permission to boolean for checkbox
+  // 'own' or 'any' = can edit, 'none' = cannot edit
+  const canEditLoadouts = permissions.shipEdit !== 'none';
+
   return `
     <div class="host-popover" data-target-player="${escapeHtml(playerId)}">
       <div class="popover-header">
@@ -25,19 +37,37 @@ export function renderHostPopover(playerId: string, callsign: string): string {
       <div class="popover-permissions">
         <div class="permission-row">
           <label class="permission-label">
-            <input type="checkbox" checked disabled title="Coming in Phase 8" />
+            <input type="checkbox"
+                   data-permission="canBuy"
+                   data-player="${escapeHtml(playerId)}"
+                   ${permissions.canBuy ? 'checked' : ''} />
             Can buy items
           </label>
         </div>
         <div class="permission-row">
           <label class="permission-label">
-            <input type="checkbox" checked disabled title="Coming in Phase 8" />
+            <input type="checkbox"
+                   data-permission="canSell"
+                   data-player="${escapeHtml(playerId)}"
+                   ${permissions.canSell ? 'checked' : ''} />
             Can sell items
           </label>
         </div>
         <div class="permission-row">
           <label class="permission-label">
-            <input type="checkbox" checked disabled title="Coming in Phase 8" />
+            <input type="checkbox"
+                   data-permission="canConvertScrap"
+                   data-player="${escapeHtml(playerId)}"
+                   ${permissions.canConvertScrap ? 'checked' : ''} />
+            Can convert scrap
+          </label>
+        </div>
+        <div class="permission-row">
+          <label class="permission-label">
+            <input type="checkbox"
+                   data-permission="shipEdit"
+                   data-player="${escapeHtml(playerId)}"
+                   ${canEditLoadouts ? 'checked' : ''} />
             Can edit loadouts
           </label>
         </div>
