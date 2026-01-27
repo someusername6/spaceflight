@@ -2,47 +2,54 @@
  * Replay Viewer Auto-Hide Controls
  *
  * Handles auto-hiding of replay UI controls after inactivity.
- * Separated from viewer-input.ts to keep files under 400 lines.
+ * Uses ViewerContext for all state access.
  */
 
-// ============================================================================
-// Auto-Hide Controls
-// ============================================================================
+import { getViewerContext } from './viewer-context';
+
+// =============================================================================
+// Constants
+// =============================================================================
 
 /** Time in ms before controls auto-hide while playing */
 const CONTROLS_HIDE_DELAY = 3000;
 
-/** Timer ID for auto-hide */
-let hideTimer: number | null = null;
-
-/** Whether controls are currently hidden */
-let controlsHidden = false;
-
-/** Reference to get playing state (set by initAutoHide) */
-let getPlayingState: (() => boolean) | null = null;
+// =============================================================================
+// Auto-Hide Controls
+// =============================================================================
 
 /** Initialize auto-hide with state getter */
 export function initAutoHide(getPlaying: () => boolean): void {
-  getPlayingState = getPlaying;
-  controlsHidden = false;
+  const ctx = getViewerContext();
+  if (!ctx) return;
+
+  ctx.autoHide.getPlayingState = getPlaying;
+  ctx.autoHide.controlsHidden = false;
   resetControlsTimer();
 }
 
 /** Clean up auto-hide timer */
 export function cleanupAutoHide(): void {
-  if (hideTimer !== null) {
-    window.clearTimeout(hideTimer);
-    hideTimer = null;
+  const ctx = getViewerContext();
+  if (!ctx) return;
+
+  if (ctx.autoHide.hideTimer !== null) {
+    window.clearTimeout(ctx.autoHide.hideTimer);
+    ctx.autoHide.hideTimer = null;
   }
-  getPlayingState = null;
-  controlsHidden = false;
+  ctx.autoHide.getPlayingState = null;
+  ctx.autoHide.controlsHidden = false;
   // Ensure controls are visible on cleanup
   setControlsHidden(false);
 }
 
 /** Set controls hidden state and update DOM */
 function setControlsHidden(hidden: boolean): void {
-  controlsHidden = hidden;
+  const ctx = getViewerContext();
+  if (ctx) {
+    ctx.autoHide.controlsHidden = hidden;
+  }
+
   const replayHud = document.querySelector('.replay-hud');
   const replayViewer = document.querySelector('.replay-viewer');
 
@@ -57,22 +64,26 @@ function setControlsHidden(hidden: boolean): void {
 
 /** Reset the auto-hide timer (call on any user activity) */
 export function resetControlsTimer(): void {
+  const ctx = getViewerContext();
+  if (!ctx) return;
+
   // Clear existing timer
-  if (hideTimer !== null) {
-    window.clearTimeout(hideTimer);
-    hideTimer = null;
+  if (ctx.autoHide.hideTimer !== null) {
+    window.clearTimeout(ctx.autoHide.hideTimer);
+    ctx.autoHide.hideTimer = null;
   }
 
   // Show controls if hidden
-  if (controlsHidden) {
+  if (ctx.autoHide.controlsHidden) {
     setControlsHidden(false);
   }
 
   // Only start hide timer if playing
-  if (getPlayingState?.()) {
-    hideTimer = window.setTimeout(() => {
+  if (ctx.autoHide.getPlayingState?.()) {
+    ctx.autoHide.hideTimer = window.setTimeout(() => {
+      const currentCtx = getViewerContext();
       // Double-check still playing before hiding
-      if (getPlayingState?.()) {
+      if (currentCtx?.autoHide.getPlayingState?.()) {
         setControlsHidden(true);
       }
     }, CONTROLS_HIDE_DELAY);
@@ -81,14 +92,17 @@ export function resetControlsTimer(): void {
 
 /** Called when play state changes */
 export function onPlayStateChange(playing: boolean): void {
+  const ctx = getViewerContext();
+  if (!ctx) return;
+
   if (playing) {
     // Start hide timer when playing
     resetControlsTimer();
   } else {
     // Show controls and clear timer when paused
-    if (hideTimer !== null) {
-      window.clearTimeout(hideTimer);
-      hideTimer = null;
+    if (ctx.autoHide.hideTimer !== null) {
+      window.clearTimeout(ctx.autoHide.hideTimer);
+      ctx.autoHide.hideTimer = null;
     }
     setControlsHidden(false);
   }

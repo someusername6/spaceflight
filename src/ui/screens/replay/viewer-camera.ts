@@ -2,7 +2,7 @@
  * Replay Viewer Camera and Spectator Helpers
  *
  * Camera controls and spectator overlay helpers for replay viewer.
- * Extracted from viewer-playback.ts to keep files under 400 lines.
+ * Uses ViewerContext for all state access.
  */
 
 import * as THREE from 'three';
@@ -12,7 +12,6 @@ import {
   getInterpolatedPosition,
   type Renderer,
 } from '../../../rendering/renderer';
-import type { ReplayPlayback } from '../../../replay/playback';
 import {
   type CameraInput,
   CameraMode,
@@ -24,67 +23,54 @@ import {
   resetToPlayer,
   toggleCameraMode,
 } from './replay-camera';
+import { getViewerContext } from './viewer-context';
 
-// ============================================================================
-// Shared State Management
-// ============================================================================
-
-/** Refs to module state (set by viewer-playback.ts) */
-let cameraStateRef: ReplayCameraState | null = null;
-let playbackRef: ReplayPlayback | null = null;
-let cameraInputRef: CameraInput | null = null;
-
-/** Set state refs (called by viewer-playback on init/cleanup) */
-export function setViewerRefs(
-  state: ReplayCameraState | null,
-  playback: ReplayPlayback | null,
-  input: CameraInput | null,
-): void {
-  cameraStateRef = state;
-  playbackRef = playback;
-  cameraInputRef = input;
-}
-
-// ============================================================================
+// =============================================================================
 // Camera Controls
-// ============================================================================
+// =============================================================================
 
 /** Set camera input state */
 export function setCameraInput(key: keyof CameraInput, pressed: boolean): void {
-  if (cameraInputRef) cameraInputRef[key] = pressed;
+  const ctx = getViewerContext();
+  if (ctx) ctx.cameraInput[key] = pressed;
 }
 
 /** Cycle to next entity */
 export function cameraNextEntity(): void {
-  if (cameraStateRef && playbackRef) {
-    nextEntity(cameraStateRef, playbackRef.getWorld());
+  const ctx = getViewerContext();
+  if (ctx?.cameraState && ctx.playback) {
+    nextEntity(ctx.cameraState, ctx.playback.getWorld());
   }
 }
 
 /** Cycle to previous entity */
 export function cameraPrevEntity(): void {
-  if (cameraStateRef && playbackRef) {
-    prevEntity(cameraStateRef, playbackRef.getWorld());
+  const ctx = getViewerContext();
+  if (ctx?.cameraState && ctx.playback) {
+    prevEntity(ctx.cameraState, ctx.playback.getWorld());
   }
 }
 
 /** Reset camera to player */
 export function cameraResetToPlayer(): void {
-  if (cameraStateRef && playbackRef) {
-    resetToPlayer(cameraStateRef, playbackRef.getWorld());
+  const ctx = getViewerContext();
+  if (ctx?.cameraState && ctx.playback) {
+    resetToPlayer(ctx.cameraState, ctx.playback.getWorld());
   }
 }
 
 /** Toggle camera mode */
 export function cameraToggleMode(): void {
-  if (cameraStateRef && playbackRef) {
-    toggleCameraMode(cameraStateRef, playbackRef.getWorld());
+  const ctx = getViewerContext();
+  if (ctx?.cameraState && ctx.playback) {
+    toggleCameraMode(ctx.cameraState, ctx.playback.getWorld());
   }
 }
 
 /** Get current camera mode */
 export function getCameraMode(): CameraMode | null {
-  return cameraStateRef?.mode ?? null;
+  const ctx = getViewerContext();
+  return ctx?.cameraState?.mode ?? null;
 }
 
 /** Get display name for a camera mode */
@@ -103,12 +89,10 @@ function getModeName(mode: CameraMode): string {
 function getTargetName(state: ReplayCameraState, world: World): string {
   if (state.targetEntity === null) return 'None';
 
-  // Check if it's the player
   if (hasComponent(world, state.targetEntity, 'playerControlled')) {
     return 'Player';
   }
 
-  // Get ship identity for name
   const identity = getComponent(world, state.targetEntity, 'shipIdentity');
   if (identity && typeof identity === 'object' && 'callsign' in identity) {
     return String(identity.callsign);
@@ -119,25 +103,28 @@ function getTargetName(state: ReplayCameraState, world: World): string {
 
 /** Get current camera mode display name */
 export function getCameraModeDisplay(): string {
-  return cameraStateRef ? getModeName(cameraStateRef.mode) : '';
+  const ctx = getViewerContext();
+  return ctx?.cameraState ? getModeName(ctx.cameraState.mode) : '';
 }
 
 /** Get current target display name */
 export function getCameraTargetDisplay(): string {
-  if (!cameraStateRef || !playbackRef) return '';
-  return getTargetName(cameraStateRef, playbackRef.getWorld());
+  const ctx = getViewerContext();
+  if (!ctx?.cameraState || !ctx.playback) return '';
+  return getTargetName(ctx.cameraState, ctx.playback.getWorld());
 }
 
-// ============================================================================
+// =============================================================================
 // Spectator Mode Helpers
-// ============================================================================
+// =============================================================================
 
 /** Check if currently viewing the player ship */
 export function isViewingPlayer(): boolean {
-  if (!cameraStateRef || !playbackRef) return true;
-  const entity = cameraStateRef.targetEntity;
+  const ctx = getViewerContext();
+  if (!ctx?.cameraState || !ctx.playback) return true;
+  const entity = ctx.cameraState.targetEntity;
   if (entity === null) return true;
-  return hasComponent(playbackRef.getWorld(), entity, 'playerControlled');
+  return hasComponent(ctx.playback.getWorld(), entity, 'playerControlled');
 }
 
 /** Get current camera target position (for dust system centering) */
@@ -148,29 +135,18 @@ export function getCameraTargetPosition(
 ): THREE.Vector3 | null {
   if (state.targetEntity === null) return null;
 
-  // Try interpolated position first
   const interpPos = renderer
     ? getInterpolatedPosition(renderer, state.targetEntity)
     : null;
   if (interpPos) return interpPos;
 
-  // Fall back to transform position
   const transform = getComponent(world, state.targetEntity, 'transform');
   return transform?.position ?? null;
 }
 
-// ============================================================================
+// =============================================================================
 // Orbit Camera Mouse Drag
-// ============================================================================
-
-/** Drag state for orbit camera mouse control */
-interface OrbitDragState {
-  active: boolean;
-  lastX: number;
-  lastY: number;
-}
-
-const dragState: OrbitDragState = { active: false, lastX: 0, lastY: 0 };
+// =============================================================================
 
 /** Mouse sensitivity (radians per pixel) */
 const MOUSE_SENSITIVITY = 0.005;
@@ -184,110 +160,158 @@ const mouseDeltaQuat = new THREE.Quaternion();
  */
 export function startOrbitDrag(e: MouseEvent): boolean {
   if (e.button !== 0) return false; // Left button only
-  if (!cameraStateRef || cameraStateRef.mode !== CameraMode.Orbit) return false;
+  const ctx = getViewerContext();
+  if (!ctx?.cameraState || ctx.cameraState.mode !== CameraMode.Orbit)
+    return false;
 
-  dragState.active = true;
-  dragState.lastX = e.clientX;
-  dragState.lastY = e.clientY;
+  ctx.orbitDrag.active = true;
+  ctx.orbitDrag.lastX = e.clientX;
+  ctx.orbitDrag.lastY = e.clientY;
   return true;
 }
 
 /** Update orbit camera rotation from mouse drag */
 export function updateOrbitDrag(e: MouseEvent): void {
-  if (!dragState.active || !cameraStateRef) return;
-  if (cameraStateRef.mode !== CameraMode.Orbit) {
+  const ctx = getViewerContext();
+  if (!ctx || !ctx.orbitDrag.active || !ctx.cameraState) return;
+  if (ctx.cameraState.mode !== CameraMode.Orbit) {
     // Mode changed mid-drag, cancel
-    dragState.active = false;
+    ctx.orbitDrag.active = false;
     return;
   }
 
-  const deltaX = e.clientX - dragState.lastX;
-  const deltaY = e.clientY - dragState.lastY;
-  dragState.lastX = e.clientX;
-  dragState.lastY = e.clientY;
+  const deltaX = e.clientX - ctx.orbitDrag.lastX;
+  const deltaY = e.clientY - ctx.orbitDrag.lastY;
+  ctx.orbitDrag.lastX = e.clientX;
+  ctx.orbitDrag.lastY = e.clientY;
 
   // Horizontal drag = yaw around world Y (premultiply)
   if (deltaX !== 0) {
     mouseDeltaQuat.setFromAxisAngle(orbitAxisY, -deltaX * MOUSE_SENSITIVITY);
-    cameraStateRef.orbitRotation.premultiply(mouseDeltaQuat);
+    ctx.cameraState.orbitRotation.premultiply(mouseDeltaQuat);
   }
 
   // Vertical drag = pitch around local X (postmultiply)
   if (deltaY !== 0) {
     mouseDeltaQuat.setFromAxisAngle(orbitAxisX, -deltaY * MOUSE_SENSITIVITY);
-    cameraStateRef.orbitRotation.multiply(mouseDeltaQuat);
+    ctx.cameraState.orbitRotation.multiply(mouseDeltaQuat);
   }
 
-  cameraStateRef.orbitRotation.normalize();
+  ctx.cameraState.orbitRotation.normalize();
 }
 
 /** End orbit camera drag */
 export function endOrbitDrag(): void {
-  dragState.active = false;
+  const ctx = getViewerContext();
+  if (ctx) ctx.orbitDrag.active = false;
 }
 
 /** Check if currently dragging orbit camera */
 export function isOrbitDragging(): boolean {
-  return dragState.active;
+  const ctx = getViewerContext();
+  return ctx?.orbitDrag.active ?? false;
 }
 
-// ============================================================================
+// =============================================================================
 // UI Updates
-// ============================================================================
-
-/** Cached DOM element references */
-let cachedModeDisplay: HTMLElement | null = null;
-let cachedTargetDisplay: HTMLElement | null = null;
-let cachedViewer: HTMLElement | null = null;
-
-/** Last applied class state (to avoid redundant classList updates) */
-let lastAppliedMode: CameraMode | null = null;
-let lastAppliedDragging = false;
+// =============================================================================
 
 /** Update camera status display in UI */
 export function updateCameraStatus(): void {
+  const ctx = getViewerContext();
+  if (!ctx) return;
+
   // Lazy cache initialization
-  if (!cachedModeDisplay) {
-    cachedModeDisplay = document.getElementById('camera-mode-display');
-    cachedTargetDisplay = document.getElementById('camera-target-display');
+  if (!ctx.domCache) {
+    ctx.domCache = {
+      playPauseBtn: document.getElementById('btn-play-pause'),
+      speedBtn: document.getElementById('btn-speed'),
+      timeline: document.getElementById(
+        'replay-timeline',
+      ) as HTMLInputElement | null,
+      progress: document.querySelector('.replay-timeline-progress'),
+      timeDisplay: document.querySelector('.replay-time'),
+      hud: document.querySelector('.replay-hud'),
+      modeDisplay: document.getElementById('camera-mode-display'),
+      targetDisplay: document.getElementById('camera-target-display'),
+      viewer: document.querySelector('.replay-viewer'),
+    };
   }
 
-  if (cachedModeDisplay) {
-    cachedModeDisplay.textContent = getCameraModeDisplay();
+  if (ctx.domCache.modeDisplay) {
+    ctx.domCache.modeDisplay.textContent = getCameraModeDisplay();
   }
-  if (cachedTargetDisplay) {
-    cachedTargetDisplay.textContent = getCameraTargetDisplay();
+  if (ctx.domCache.targetDisplay) {
+    ctx.domCache.targetDisplay.textContent = getCameraTargetDisplay();
   }
-}
-
-/** Clear cached DOM elements and reset drag state (call on viewer cleanup) */
-export function clearCameraStatusCache(): void {
-  cachedModeDisplay = null;
-  cachedTargetDisplay = null;
-  cachedViewer = null;
-  dragState.active = false;
-  lastAppliedMode = null;
-  lastAppliedDragging = false;
 }
 
 /** Update viewer element classes based on camera mode and drag state */
 export function updateViewerClasses(): void {
-  const mode = cameraStateRef?.mode ?? null;
-  const dragging = dragState.active;
+  const ctx = getViewerContext();
+  if (!ctx) return;
+
+  const mode = ctx.cameraState?.mode ?? null;
+  const dragging = ctx.orbitDrag.active;
 
   // Skip if nothing changed
-  if (mode === lastAppliedMode && dragging === lastAppliedDragging) return;
-
-  if (!cachedViewer) {
-    cachedViewer = document.querySelector('.replay-viewer');
+  if (
+    mode === ctx.cameraUI.lastAppliedMode &&
+    dragging === ctx.cameraUI.lastAppliedDragging
+  ) {
+    return;
   }
-  if (!cachedViewer) return;
 
-  cachedViewer.classList.toggle('camera-chase', mode === CameraMode.Chase);
-  cachedViewer.classList.toggle('camera-orbit', mode === CameraMode.Orbit);
-  cachedViewer.classList.toggle('camera-free', mode === CameraMode.Free);
-  cachedViewer.classList.toggle('dragging', dragging);
+  if (!ctx.domCache?.viewer) {
+    if (!ctx.domCache) {
+      ctx.domCache = {
+        playPauseBtn: null,
+        speedBtn: null,
+        timeline: null,
+        progress: null,
+        timeDisplay: null,
+        hud: null,
+        modeDisplay: null,
+        targetDisplay: null,
+        viewer: document.querySelector('.replay-viewer'),
+      };
+    }
+  }
+  if (!ctx.domCache.viewer) return;
 
-  lastAppliedMode = mode;
-  lastAppliedDragging = dragging;
+  ctx.domCache.viewer.classList.toggle(
+    'camera-chase',
+    mode === CameraMode.Chase,
+  );
+  ctx.domCache.viewer.classList.toggle(
+    'camera-orbit',
+    mode === CameraMode.Orbit,
+  );
+  ctx.domCache.viewer.classList.toggle('camera-free', mode === CameraMode.Free);
+  ctx.domCache.viewer.classList.toggle('dragging', dragging);
+
+  ctx.cameraUI.lastAppliedMode = mode;
+  ctx.cameraUI.lastAppliedDragging = dragging;
+}
+
+// =============================================================================
+// Legacy API (for backwards compatibility during transition)
+// =============================================================================
+
+/**
+ * @deprecated Use ViewerContext directly. This is a no-op now.
+ */
+export function setViewerRefs(
+  _state: ReplayCameraState | null,
+  _playback: unknown,
+  _input: CameraInput | null,
+): void {
+  // No-op - context is now used directly
+}
+
+/**
+ * @deprecated Use ViewerContext directly. This is a no-op now.
+ */
+export function clearCameraStatusCache(): void {
+  // No-op - context handles cleanup
 }

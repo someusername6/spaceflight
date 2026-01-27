@@ -2,31 +2,23 @@
  * Replay Viewer DOM Updates
  *
  * DOM manipulation functions for replay viewer UI elements.
- * Separated from viewer-input.ts to keep files under 400 lines.
+ * Uses ViewerContext for DOM cache.
  */
 
+import { getViewerContext } from './viewer-context';
 import { formatTime } from './viewer-playback';
 
-// ============================================================================
-// Cached DOM Element References
-// ============================================================================
-
-/** Cached element references (populated on first use, cleared on cleanup) */
-interface DOMCache {
-  playPauseBtn: HTMLElement | null;
-  speedBtn: HTMLElement | null;
-  timeline: HTMLInputElement | null;
-  progress: HTMLElement | null;
-  timeDisplay: HTMLElement | null;
-  hud: HTMLElement | null;
-}
-
-let cache: DOMCache | null = null;
+// =============================================================================
+// DOM Cache Helpers
+// =============================================================================
 
 /** Get or create element cache */
-function getCache(): DOMCache {
-  if (!cache) {
-    cache = {
+function getCache() {
+  const ctx = getViewerContext();
+  if (!ctx) return null;
+
+  if (!ctx.domCache) {
+    ctx.domCache = {
       playPauseBtn: document.getElementById('btn-play-pause'),
       speedBtn: document.getElementById('btn-speed'),
       timeline: document.getElementById(
@@ -35,47 +27,53 @@ function getCache(): DOMCache {
       progress: document.querySelector('.replay-timeline-progress'),
       timeDisplay: document.querySelector('.replay-time'),
       hud: document.querySelector('.replay-hud'),
+      modeDisplay: document.getElementById('camera-mode-display'),
+      targetDisplay: document.getElementById('camera-target-display'),
+      viewer: document.querySelector('.replay-viewer'),
     };
   }
-  return cache;
+  return ctx.domCache;
 }
 
 /** Clear cached element references (call on viewer cleanup) */
 export function clearDOMCache(): void {
-  cache = null;
+  const ctx = getViewerContext();
+  if (ctx) {
+    ctx.domCache = null;
+  }
 }
 
-// ============================================================================
+// =============================================================================
 // DOM Update Functions
-// ============================================================================
+// =============================================================================
 
 /** Update play/pause button without re-render */
 export function updatePlayPauseButton(playing: boolean): void {
-  const { playPauseBtn } = getCache();
-  if (playPauseBtn) {
-    playPauseBtn.innerHTML = playing ? '&#10074;&#10074;' : '&#9658;';
+  const cache = getCache();
+  if (cache?.playPauseBtn) {
+    cache.playPauseBtn.innerHTML = playing ? '&#10074;&#10074;' : '&#9658;';
   }
 }
 
 /** Update speed button without re-render */
 export function updateSpeedButton(speed: number): void {
-  const { speedBtn } = getCache();
-  if (speedBtn) {
-    speedBtn.textContent = `${speed}x`;
+  const cache = getCache();
+  if (cache?.speedBtn) {
+    cache.speedBtn.textContent = `${speed}x`;
   }
 }
 
 /** Update seeking indicator without re-render */
 export function updateSeekingIndicator(seeking: boolean): void {
-  const { hud } = getCache();
-  if (!hud) return;
+  const cache = getCache();
+  if (!cache?.hud) return;
 
   let indicator = document.querySelector('.replay-seeking');
   if (seeking && !indicator) {
     indicator = document.createElement('div');
     indicator.className = 'replay-seeking';
     indicator.textContent = 'Seeking...';
-    hud.appendChild(indicator);
+    cache.hud.appendChild(indicator);
   } else if (!seeking && indicator) {
     indicator.remove();
   }
@@ -86,17 +84,18 @@ export function updateTimelineUI(
   currentTick: number,
   totalTicks: number,
 ): void {
-  const { timeline, progress, timeDisplay } = getCache();
+  const cache = getCache();
+  if (!cache) return;
 
-  if (timeline) {
-    timeline.value = String(currentTick);
+  if (cache.timeline) {
+    cache.timeline.value = String(currentTick);
   }
-  if (progress && totalTicks > 0) {
-    progress.style.width = `${(currentTick / totalTicks) * 100}%`;
+  if (cache.progress && totalTicks > 0) {
+    cache.progress.style.width = `${(currentTick / totalTicks) * 100}%`;
   }
-  if (timeDisplay) {
+  if (cache.timeDisplay) {
     const currentTime = formatTime(currentTick / 60);
     const totalTime = formatTime(totalTicks / 60);
-    timeDisplay.textContent = `${currentTime} / ${totalTime}`;
+    cache.timeDisplay.textContent = `${currentTime} / ${totalTime}`;
   }
 }

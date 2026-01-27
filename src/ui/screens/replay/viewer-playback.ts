@@ -2,13 +2,12 @@
  * Replay Viewer Playback Loop
  *
  * Handles the animation frame loop, seeking, and rendering updates.
- * Separated from replay-viewer.ts to keep files under 400 lines.
+ * Uses ViewerContext for all state management.
  */
 
 import {
   createMissionRenderers,
   disposeMissionRenderers,
-  type MissionRenderers,
   type RenderMissionFrameOptions,
   renderMissionFrame,
   resetMissionRenderers,
@@ -18,33 +17,25 @@ import { resetLeadIndicatorSmoothing } from '../../../rendering/reticle/lead-ind
 import { ReplayPlayback } from '../../../replay/playback';
 import type { FullReplayData } from '../../../replay/types';
 import { TICK_MS, VIEWER_SEEK_TICKS_PER_FRAME } from '../../../replay/types';
+import { createCameraState, updateCamera } from './replay-camera';
 import {
-  type CameraInput,
-  createCameraState,
-  type ReplayCameraState,
-  updateCamera,
-} from './replay-camera';
-import {
-  cameraNextEntity,
-  cameraPrevEntity,
-  cameraResetToPlayer,
-  cameraToggleMode,
-  clearCameraStatusCache,
-  endOrbitDrag,
-  getCameraMode,
-  getCameraModeDisplay,
-  getCameraTargetDisplay,
   getCameraTargetPosition,
   isViewingPlayer,
-  setCameraInput,
-  setViewerRefs,
-  startOrbitDrag,
   updateCameraStatus,
-  updateOrbitDrag,
   updateViewerClasses,
 } from './viewer-camera';
+import {
+  createViewerContext,
+  getViewerContext,
+  resetViewerContext,
+  setViewerContext,
+  type ViewerContext,
+} from './viewer-context';
 
-// Re-export camera controls for external use
+// =============================================================================
+// Re-exports for external use
+// =============================================================================
+
 export {
   cameraNextEntity,
   cameraPrevEntity,
@@ -54,11 +45,17 @@ export {
   getCameraMode,
   getCameraModeDisplay,
   getCameraTargetDisplay,
+  getCameraTargetPosition,
+  isViewingPlayer,
   setCameraInput,
   startOrbitDrag,
   updateCameraStatus,
   updateOrbitDrag,
-};
+} from './viewer-camera';
+
+// =============================================================================
+// Types
+// =============================================================================
 
 /** Threshold for detecting time discontinuities (in seconds) */
 const DISCONTINUITY_THRESHOLD = 1.0;
@@ -81,34 +78,9 @@ export interface PlaybackCallbacks {
   onTimeUpdate: (currentTick: number, totalTicks: number) => void;
 }
 
-/** Active playback and rendering state */
-let viewerPlayback: ReplayPlayback | null = null;
-let viewerRenderers: MissionRenderers | null = null;
-let animationFrameId: number | null = null;
-let callbacks: PlaybackCallbacks | null = null;
-
-/** Track last rendered game time for discontinuity detection */
-let lastRenderedGameTime: number | null = null;
-
-/** Accumulated time for interpolation (milliseconds) */
-let accumulator = 0;
-
-/** Camera state */
-let cameraState: ReplayCameraState | null = null;
-
-/** Current camera input state (updated by replay-viewer.ts) */
-const cameraInput: CameraInput = {
-  up: false,
-  down: false,
-  left: false,
-  right: false,
-  forward: false,
-  back: false,
-  rollLeft: false,
-  rollRight: false,
-  zoomIn: false,
-  zoomOut: false,
-};
+// =============================================================================
+// Utility Functions
+// =============================================================================
 
 /** Format time as MM:SS */
 export function formatTime(seconds: number): string {
@@ -117,141 +89,139 @@ export function formatTime(seconds: number): string {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
+// =============================================================================
+// Playback Loop
+// =============================================================================
+
 /** Start the playback loop */
-function startPlaybackLoop(): void {
-  if (animationFrameId !== null) return;
+function startPlaybackLoop(ctx: ViewerContext): void {
+  if (ctx.animationFrameId !== null) return;
 
   let lastFrameTime = 0;
 
   function loop(time: number) {
-    animationFrameId = requestAnimationFrame(loop);
+    ctx.animationFrameId = requestAnimationFrame(loop);
 
-    if (!viewerPlayback || !viewerRenderers || !callbacks) return;
+    if (!ctx.playback || !ctx.renderers || !ctx.callbacks) return;
 
-    const state = callbacks.getState();
+    const state = ctx.callbacks.getState();
 
-    // Calculate frame delta first (needed for camera even during seek)
     if (lastFrameTime === 0) lastFrameTime = time;
     const frameDelta = time - lastFrameTime;
     lastFrameTime = time;
 
-    // Handle seeking - don't render during seek to avoid fast-forward visual
-    if (viewerPlayback.isSeeking()) {
+    // Handle seeking
+    if (ctx.playback.isSeeking()) {
       try {
-        const stillSeeking = viewerPlayback.processSeek(
+        const stillSeeking = ctx.playback.processSeek(
           VIEWER_SEEK_TICKS_PER_FRAME,
         );
         if (!stillSeeking) {
-          const currentTick = viewerPlayback.getCurrentTick();
-          callbacks.updateState({ seeking: false, currentTick });
-          callbacks.onSeekComplete(currentTick, state.totalTicks);
-          // Reset accumulator and render target frame immediately
-          accumulator = 0;
-          updateRendering(1, frameDelta); // alpha=1 to snap to exact tick position
+          const currentTick = ctx.playback.getCurrentTick();
+          ctx.callbacks.updateState({ seeking: false, currentTick });
+          ctx.callbacks.onSeekComplete(currentTick, state.totalTicks);
+          ctx.accumulator = 0;
+          updateRendering(ctx, 1, frameDelta);
         }
       } catch {
-        // If seek processing fails, reset seeking state
-        callbacks.updateState({ seeking: false });
-        callbacks.onSeekComplete(
-          viewerPlayback.getCurrentTick(),
+        ctx.callbacks.updateState({ seeking: false });
+        ctx.callbacks.onSeekComplete(
+          ctx.playback.getCurrentTick(),
           state.totalTicks,
         );
-        accumulator = 0;
-        updateRendering(1, frameDelta);
+        ctx.accumulator = 0;
+        updateRendering(ctx, 1, frameDelta);
       }
-      return; // Don't render during seek
+      return;
     }
 
-    // Handle playback with proper interpolation
+    // Handle playback with interpolation
     if (state.playing) {
-      // Add scaled time to accumulator
-      accumulator += frameDelta * state.speed;
+      ctx.accumulator += frameDelta * state.speed;
 
-      // Process fixed timestep ticks
       let ticksProcessed = 0;
       let playbackEnded = false;
 
-      while (accumulator >= TICK_MS) {
-        const hasMore = viewerPlayback.tick();
-        accumulator -= TICK_MS;
+      while (ctx.accumulator >= TICK_MS) {
+        const hasMore = ctx.playback.tick();
+        ctx.accumulator -= TICK_MS;
         ticksProcessed++;
 
         if (!hasMore) {
           playbackEnded = true;
-          accumulator = 0; // Clamp to end
+          ctx.accumulator = 0;
           break;
         }
       }
 
       if (playbackEnded) {
-        const currentTick = viewerPlayback.getCurrentTick();
-        callbacks.updateState({ playing: false, currentTick });
-        callbacks.onPlayPauseChange(false);
-        callbacks.onTimeUpdate(currentTick, state.totalTicks);
+        const currentTick = ctx.playback.getCurrentTick();
+        ctx.callbacks.updateState({ playing: false, currentTick });
+        ctx.callbacks.onPlayPauseChange(false);
+        ctx.callbacks.onTimeUpdate(currentTick, state.totalTicks);
       } else if (ticksProcessed > 0) {
-        const currentTick = viewerPlayback.getCurrentTick();
-        callbacks.updateState({ currentTick });
-        callbacks.onTimeUpdate(currentTick, state.totalTicks);
+        const currentTick = ctx.playback.getCurrentTick();
+        ctx.callbacks.updateState({ currentTick });
+        ctx.callbacks.onTimeUpdate(currentTick, state.totalTicks);
       }
     } else {
-      // Paused - keep accumulator at 0 to show exact tick position
-      accumulator = 0;
+      ctx.accumulator = 0;
     }
 
-    // Calculate interpolation alpha (0-1, how far between prev and current tick)
-    const alpha = state.playing ? Math.min(accumulator / TICK_MS, 1) : 1;
-    updateRendering(alpha, frameDelta);
+    const alpha = state.playing ? Math.min(ctx.accumulator / TICK_MS, 1) : 1;
+    updateRendering(ctx, alpha, frameDelta);
   }
 
-  animationFrameId = requestAnimationFrame(loop);
+  ctx.animationFrameId = requestAnimationFrame(loop);
 }
 
 /** Update the rendering with interpolation */
-function updateRendering(alpha: number, frameDt: number): void {
-  if (!viewerRenderers || !viewerPlayback || !cameraState) return;
+function updateRendering(
+  ctx: ViewerContext,
+  alpha: number,
+  frameDt: number,
+): void {
+  if (!ctx.renderers || !ctx.playback || !ctx.cameraState) return;
 
   const container = document.getElementById('replay-canvas');
   if (!container) return;
 
-  const world = viewerPlayback.getWorld();
+  const world = ctx.playback.getWorld();
   const currentGameTime = world.systemState.gameTime;
 
-  // Detect time discontinuity (seeking, large jumps)
+  // Detect time discontinuity
   const isDiscontinuity =
-    lastRenderedGameTime !== null &&
-    Math.abs(currentGameTime - lastRenderedGameTime) > DISCONTINUITY_THRESHOLD;
+    ctx.lastRenderedGameTime !== null &&
+    Math.abs(currentGameTime - ctx.lastRenderedGameTime) >
+      DISCONTINUITY_THRESHOLD;
 
   if (isDiscontinuity) {
-    // Reset lead indicator smoothing so indicators snap to new positions
     resetLeadIndicatorSmoothing();
 
-    // Temporarily disable CSS transitions on HUD
     const hudElement = document.getElementById('hud');
     if (hudElement) {
       hudElement.classList.add('no-transitions');
-      // Remove class after one frame to allow subsequent transitions
       requestAnimationFrame(() => {
         hudElement.classList.remove('no-transitions');
       });
     }
   }
 
-  lastRenderedGameTime = currentGameTime;
+  ctx.lastRenderedGameTime = currentGameTime;
 
   const containerWidth = container.clientWidth;
   const containerHeight = container.clientHeight;
 
-  // Get target position for dust system (follows viewed entity, not player)
+  // Get target position for dust system
   const dustCenter = getCameraTargetPosition(
-    cameraState,
+    ctx.cameraState,
     world,
-    viewerRenderers.renderer,
+    ctx.renderers.renderer,
   );
 
-  // Update scene and effects, but skip camera follow and render
-  // so we can use our custom replay camera
+  // Update scene and effects
   updateMissionRenderers(
-    viewerRenderers,
+    ctx.renderers,
     world,
     containerWidth,
     containerHeight,
@@ -261,47 +231,48 @@ function updateRendering(alpha: number, frameDt: number): void {
       : { skipCameraAndRender: true },
   );
 
-  // Update camera based on replay camera mode
-  const dt = frameDt / 1000; // Convert ms to seconds
+  // Update camera
+  const dt = frameDt / 1000;
   updateCamera(
-    cameraState,
-    viewerRenderers.renderer.camera,
+    ctx.cameraState,
+    ctx.renderers.renderer.camera,
     world,
-    cameraInput,
+    ctx.cameraInput,
     dt,
-    viewerRenderers.renderer,
+    ctx.renderers.renderer,
   );
 
-  // Skip HUD if: not viewing player, OR user pressed H to hide
+  // Render frame
   const viewingPlayer = isViewingPlayer();
-  const hudVisible = callbacks?.getState().hudVisible ?? true;
+  const hudVisible = ctx.callbacks?.getState().hudVisible ?? true;
   const renderOptions: RenderMissionFrameOptions = {
     skipHUD: !viewingPlayer || !hudVisible,
   };
 
-  // Now render the frame with our custom camera position
   renderMissionFrame(
-    viewerRenderers,
+    ctx.renderers,
     world,
     containerWidth,
     containerHeight,
     renderOptions,
   );
 
-  // Update camera status display (mode and target may change due to lost targets)
+  // Update UI
   updateCameraStatus();
-
-  // Update viewer classes for cursor feedback
   updateViewerClasses();
 }
 
 /** Stop the playback loop */
-function stopPlaybackLoop(): void {
-  if (animationFrameId !== null) {
-    cancelAnimationFrame(animationFrameId);
-    animationFrameId = null;
+function stopPlaybackLoop(ctx: ViewerContext): void {
+  if (ctx.animationFrameId !== null) {
+    cancelAnimationFrame(ctx.animationFrameId);
+    ctx.animationFrameId = null;
   }
 }
+
+// =============================================================================
+// Public API
+// =============================================================================
 
 /** Initialize viewer with replay data */
 export function initializeViewer(
@@ -309,73 +280,43 @@ export function initializeViewer(
   container: HTMLElement,
   playbackCallbacks: PlaybackCallbacks,
 ): void {
-  callbacks = playbackCallbacks;
+  const ctx = createViewerContext();
 
-  // Create playback controller
-  viewerPlayback = new ReplayPlayback(replay);
+  ctx.callbacks = playbackCallbacks;
+  ctx.playback = new ReplayPlayback(replay);
+  ctx.renderers = createMissionRenderers(container, replay.seed);
+  ctx.cameraState = createCameraState();
 
-  // Create renderers
-  viewerRenderers = createMissionRenderers(container, replay.seed);
-
-  // Create camera state
-  cameraState = createCameraState();
-
-  // Set refs for viewer-camera module
-  setViewerRefs(cameraState, viewerPlayback, cameraInput);
-
-  // Start playback loop
-  startPlaybackLoop();
+  setViewerContext(ctx);
+  startPlaybackLoop(ctx);
 }
 
 /** Clean up viewer resources */
 export function cleanupViewer(): void {
-  stopPlaybackLoop();
+  const ctx = getViewerContext();
+  if (!ctx) return;
 
-  // Clear viewer-camera refs and cache
-  setViewerRefs(null, null, null);
-  clearCameraStatusCache();
+  stopPlaybackLoop(ctx);
 
-  if (viewerRenderers) {
-    disposeMissionRenderers(viewerRenderers);
-    viewerRenderers = null;
+  if (ctx.renderers) {
+    disposeMissionRenderers(ctx.renderers);
   }
 
-  viewerPlayback = null;
-  callbacks = null;
-  lastRenderedGameTime = null;
-  accumulator = 0;
-  cameraState = null;
-
-  // Reset camera input
-  cameraInput.up = false;
-  cameraInput.down = false;
-  cameraInput.left = false;
-  cameraInput.right = false;
-  cameraInput.forward = false;
-  cameraInput.back = false;
-  cameraInput.rollLeft = false;
-  cameraInput.rollRight = false;
-  cameraInput.zoomIn = false;
-  cameraInput.zoomOut = false;
+  resetViewerContext(ctx);
+  setViewerContext(null);
 }
 
-/**
- * Seek to a specific tick.
- * Returns true if seeking started, false if it was skipped (e.g., same position).
- */
+/** Seek to a specific tick. Returns true if seeking started. */
 export function seekTo(targetTick: number): boolean {
-  if (viewerPlayback && viewerRenderers) {
-    // Reset all renderers before seeking to clear stale visual effects
-    // This must happen before seekTo() which reinitializes the world
-    resetMissionRenderers(viewerRenderers);
-    viewerPlayback.seekTo(targetTick);
-    // Check if seeking actually started
-    return viewerPlayback.isSeeking();
-  }
-  return false;
+  const ctx = getViewerContext();
+  if (!ctx || !ctx.playback || !ctx.renderers) return false;
+
+  resetMissionRenderers(ctx.renderers);
+  ctx.playback.seekTo(targetTick);
+  return ctx.playback.isSeeking();
 }
 
-/** Get the playback instance (for direct access if needed) */
+/** Get the playback instance */
 export function getPlayback(): ReplayPlayback | null {
-  return viewerPlayback;
+  return getViewerContext()?.playback ?? null;
 }
