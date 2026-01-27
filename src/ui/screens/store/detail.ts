@@ -13,7 +13,7 @@ import {
   canBuy as hasCanBuyPermission,
   canConvertScrap as hasCanConvertPermission,
   canSell as hasCanSellPermission,
-} from '../../../multiplayer/multiplayer-context';
+} from '../../../multiplayer/context-permissions';
 import {
   getItemPrice,
   getStorageCount,

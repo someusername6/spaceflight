@@ -15,9 +15,9 @@ import {
 } from './e2e-test-utils.mjs';
 import { setupHostAndGuest } from './e2e-tests-connection-helpers.mjs';
 import {
-  testMultiplePermissionChangesReceived,
-  testPermissionChangeUpdatesContext,
-} from './e2e-tests-state-sync-permissions.mjs';
+  testMultiplePermissionChangesSync,
+  testPermissionChangeSync,
+} from './e2e-tests-permission-sync.mjs';
 
 // =============================================================================
 // Tests
@@ -257,13 +257,13 @@ async function main() {
     });
 
     results.push({
-      name: 'Permission change updates context',
-      passed: await testPermissionChangeUpdatesContext(),
+      name: 'Permission change syncs to guest',
+      passed: await testPermissionChangeSync(),
     });
 
     results.push({
-      name: 'Multiple permission changes received',
-      passed: await testMultiplePermissionChangesReceived(),
+      name: 'Multiple permission changes sync',
+      passed: await testMultiplePermissionChangesSync(),
     });
 
     results.push({

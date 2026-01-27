@@ -55,21 +55,23 @@ import {
   setupMessageHandling,
 } from './lobby-protocol-routing';
 import {
+  setLobbyState as setLobbyStateWithEffects,
+  updateAndSyncCampaignState,
+} from './lobby-state-effects';
+import {
   clearModuleState,
   getActiveCampaignState,
   getActiveConnectionFlow,
   getCampaignSyncManager,
-  getLobbyState as getLobbyStateFromSync,
+  getLobbyState as getLobbyStateFromHolder,
   getMessageHandlingResult,
   getMessageRouter,
   isInLobby,
-  setActiveCampaignState,
+  setActiveCampaignStateInternal,
   setActiveConnectionFlow,
-  setLobbyState as setLobbyStateInSync,
   setLobbyStateInternal,
   setMessageHandlingResult,
-  updateAndSyncCampaignState,
-} from './lobby-state-sync';
+} from './lobby-state-holder';
 
 // =============================================================================
 // Re-exports for external use
@@ -103,7 +105,7 @@ export function setupLobbyScreenForHost(
   setActiveConnectionFlow(connectionFlow);
 
   // Store campaign state for sending to guests
-  setActiveCampaignState(screenManager.campaignState ?? null);
+  setActiveCampaignStateInternal(screenManager.campaignState ?? null);
 
   // Create host player
   const hostCallsign = getStoredCallsign() ?? 'Host';
@@ -212,7 +214,7 @@ export function setupLobbyScreenForGuest(
   const ctx = createMessageHandlerContext((newCampaignState) => {
     // Update screen manager's campaign state when host syncs
     screenManager.campaignState = newCampaignState;
-    setActiveCampaignState(newCampaignState);
+    setActiveCampaignStateInternal(newCampaignState);
 
     // Refresh the current screen if it's active
     if (isStoreUIActive()) {
@@ -256,12 +258,12 @@ function createMessageHandlerContext(
   const ctx: MessageHandlerContext = {
     connectionFlow,
     campaignState: getActiveCampaignState(),
-    getLobbyState: () => getLobbyStateFromSync(),
+    getLobbyState: () => getLobbyStateFromHolder(),
     setLobbyState: (state: LobbyState) => {
       setLobbyStateInternal(state);
     },
     updateUI: () => {
-      const lobbyState = getLobbyStateFromSync();
+      const lobbyState = getLobbyStateFromHolder();
       if (lobbyState) {
         updateLobbyState(lobbyState);
       }
@@ -316,10 +318,10 @@ export function cleanupLobby(): void {
 
 /** Get current lobby state (for testing) */
 export function getLobbyState(): LobbyState | null {
-  return getLobbyStateFromSync();
+  return getLobbyStateFromHolder();
 }
 
 /** Update lobby state externally (for protocol handlers) */
 export function setLobbyState(state: LobbyState): void {
-  setLobbyStateInSync(state);
+  setLobbyStateWithEffects(state);
 }

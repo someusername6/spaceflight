@@ -15,7 +15,7 @@ import {
   resupplyShipConstrained,
 } from '../../../campaign/resupply/resupply-constrained';
 import type { CampaignState } from '../../../campaign/types';
-import { canEditShip } from '../../../multiplayer/multiplayer-context';
+import { canEditShip } from '../../../multiplayer/context-permissions';
 import type { NavDestination } from '../../common/nav-bar';
 import { showNotification } from '../../common/notification';
 import type { ScreenAPI } from '../../framework/screen';

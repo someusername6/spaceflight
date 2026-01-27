@@ -20,15 +20,26 @@ import type { LobbyPlayer } from './lobby-state';
 // Types
 // =============================================================================
 
-/** Result of a ship assignment operation */
-export interface ShipAssignmentResult {
-  success: boolean;
-  error?: string;
-  /** Updated campaign state (only if success) */
-  newState?: CampaignState;
+/** Successful ship assignment result */
+export interface ShipAssignmentSuccess {
+  success: true;
+  /** Updated campaign state */
+  newState: CampaignState;
   /** Player that was previously assigned (swapped out) */
   previousPlayerId?: string;
 }
+
+/** Failed ship assignment result */
+export interface ShipAssignmentFailure {
+  success: false;
+  /** Error message describing why assignment failed */
+  error: string;
+}
+
+/** Result of a ship assignment operation (discriminated union) */
+export type ShipAssignmentResult =
+  | ShipAssignmentSuccess
+  | ShipAssignmentFailure;
 
 // =============================================================================
 // Player Pilot Creation
@@ -148,7 +159,7 @@ export function assignPlayerToShip(
     return s;
   });
 
-  const result: ShipAssignmentResult = {
+  const result: ShipAssignmentSuccess = {
     success: true,
     newState: { ...state, ships, pilots },
   };

@@ -11,7 +11,7 @@ import type {
   EquippedPrimary,
   EquippedSecondary,
 } from '../../../campaign/types';
-import { canEditShip } from '../../../multiplayer/multiplayer-context';
+import { canEditShip } from '../../../multiplayer/context-permissions';
 import { getBankSize } from '../popover/equip';
 import {
   closePopovers,

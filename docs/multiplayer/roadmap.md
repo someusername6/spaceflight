@@ -561,15 +561,20 @@ This phase implements **game-specific** messages only.
    - Permission toggles now functional
    - Changes broadcast via PermissionUpdate message
 
-### Files to Create/Modify
+### Files Created/Modified
 
 | File | Action |
 |------|--------|
-| `src/multiplayer/permissions.ts` | Create - permission logic |
-| `src/multiplayer/ship-assignment.ts` | Create - assignment logic |
-| `src/ui/screens/squadron.ts` | Modify - permission checks, assignment UI |
-| `src/ui/screens/store.ts` | Modify - permission checks |
-| `src/campaign/pilots.ts` | Modify - create player pilots |
+| `src/multiplayer/permissions.ts` | Create - permission defaults and types |
+| `src/multiplayer/ship-assignment.ts` | Create - assignment logic, player pilots |
+| `src/multiplayer/context-permissions.ts` | Create - UI permission helpers (canBuy, canSell, canEditShip) |
+| `src/multiplayer/multiplayer-context.ts` | Modify - context management (split from permissions) |
+| `src/campaign/handlers/lobby-state-holder.ts` | Create - pure state storage |
+| `src/campaign/handlers/lobby-state-effects.ts` | Create - state changes with side effects |
+| `src/ui/screens/squadron/bind-events.ts` | Modify - permission checks for ship changes |
+| `src/ui/screens/squadron/hardpoint.ts` | Modify - permission checks for loadout edits |
+| `src/ui/screens/store/store-bind.ts` | Modify - permission checks for buy/sell |
+| `src/ui/screens/store/detail.ts` | Modify - disable buttons based on permissions |
 
 ### Success Criteria
 

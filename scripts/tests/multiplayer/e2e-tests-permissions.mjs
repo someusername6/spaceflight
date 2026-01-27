@@ -298,6 +298,13 @@ async function testShipEditCheckbox() {
   }
 }
 
+// Permission sync tests moved to e2e-tests-permission-sync.mjs
+// Re-export for use by e2e-tests-state-sync.mjs
+export {
+  testMultiplePermissionChangesSync,
+  testPermissionChangeSync,
+} from './e2e-tests-permission-sync.mjs';
+
 // =============================================================================
 // Main
 // =============================================================================
@@ -317,6 +324,7 @@ async function main() {
   const results = [];
 
   try {
+    // UI tests
     results.push({
       name: 'Host sees permission checkboxes',
       passed: await testHostSeesPermissionCheckboxes(),
@@ -336,6 +344,9 @@ async function main() {
       name: 'Ship edit checkbox works',
       passed: await testShipEditCheckbox(),
     });
+
+    // Note: Sync tests are in e2e-tests-permission-sync.mjs
+    // and called from e2e-tests-state-sync.mjs
   } finally {
     await stopServers();
   }

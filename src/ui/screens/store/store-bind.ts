@@ -17,7 +17,7 @@ import {
   canBuy,
   canConvertScrap,
   canSell,
-} from '../../../multiplayer/multiplayer-context';
+} from '../../../multiplayer/context-permissions';
 import { bindNavBar, type NavDestination } from '../../common/nav-bar';
 import type { ScreenAPI } from '../../framework/screen';
 import { initShipConnectors } from '../../ship/connectors';

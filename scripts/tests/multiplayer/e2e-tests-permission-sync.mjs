@@ -1,8 +1,8 @@
 /**
- * E2E Tests - State Sync Permissions
+ * Lobby E2E UI Tests - Permission Sync
  *
- * Permission-related state synchronization tests.
- * Extracted from e2e-tests-state-sync.mjs to keep files under 400 lines.
+ * Tests for permission synchronization between host and guests.
+ * Split from e2e-tests-permissions.mjs to stay under 400 line limit.
  */
 
 import { chromium } from 'playwright';
@@ -14,18 +14,22 @@ import {
 } from './e2e-test-utils.mjs';
 import { setupHostAndGuest } from './e2e-tests-connection-helpers.mjs';
 
+// =============================================================================
+// Tests
+// =============================================================================
+
 /**
- * Test: Permission change updates multiplayer context.
+ * Test: Permission change syncs to guest via system message.
  * Verifies the permission sync triggers context update.
  */
-export async function testPermissionChangeUpdatesContext() {
-  console.log('\n=== Test: Permission Change Updates Context ===\n');
+export async function testPermissionChangeSync() {
+  console.log('\n=== Test: Permission Change Sync ===\n');
 
   const browser = await chromium.launch({ headless: true });
 
   try {
     const { hostContext, hostPage, guestContext, guestPage } =
-      await setupHostAndGuest(browser, 'PermCtxGuest');
+      await setupHostAndGuest(browser, 'PermSyncGuest');
     console.log('  Both players connected');
 
     // Get initial guest permissions via chat system message
@@ -74,7 +78,7 @@ export async function testPermissionChangeUpdatesContext() {
     );
 
     if (permissionMessageReceived) {
-      console.log('\n  Permission change updates context test PASSED\n');
+      console.log('\n  Permission change sync test PASSED\n');
       await hostContext.close();
       await guestContext.close();
       return true;
@@ -83,7 +87,7 @@ export async function testPermissionChangeUpdatesContext() {
     }
   } catch (error) {
     console.error(
-      '\n  Permission change updates context test FAILED:',
+      '\n  Permission change sync test FAILED:',
       error.message,
       '\n',
     );
@@ -94,16 +98,16 @@ export async function testPermissionChangeUpdatesContext() {
 }
 
 /**
- * Test: Multiple permission changes are all received.
+ * Test: Multiple permission changes are all received by guest.
  */
-export async function testMultiplePermissionChangesReceived() {
-  console.log('\n=== Test: Multiple Permission Changes Received ===\n');
+export async function testMultiplePermissionChangesSync() {
+  console.log('\n=== Test: Multiple Permission Changes Sync ===\n');
 
   const browser = await chromium.launch({ headless: true });
 
   try {
     const { hostContext, hostPage, guestContext, guestPage } =
-      await setupHostAndGuest(browser, 'MultiPermGuest');
+      await setupHostAndGuest(browser, 'MultiPermSyncGuest');
     console.log('  Both players connected');
 
     // Count initial system messages
@@ -154,7 +158,7 @@ export async function testMultiplePermissionChangesReceived() {
     console.log(`  Guest received ${newMessages} permission messages`);
 
     if (newMessages >= 2) {
-      console.log('\n  Multiple permission changes test PASSED\n');
+      console.log('\n  Multiple permission changes sync test PASSED\n');
       await hostContext.close();
       await guestContext.close();
       return true;
@@ -165,7 +169,7 @@ export async function testMultiplePermissionChangesReceived() {
     }
   } catch (error) {
     console.error(
-      '\n  Multiple permission changes test FAILED:',
+      '\n  Multiple permission changes sync test FAILED:',
       error.message,
       '\n',
     );
@@ -176,12 +180,12 @@ export async function testMultiplePermissionChangesReceived() {
 }
 
 // =============================================================================
-// Main (for standalone execution)
+// Main
 // =============================================================================
 
 async function main() {
   console.log('\n============================================');
-  console.log('   E2E Tests - State Sync Permissions');
+  console.log('   Lobby E2E Tests - Permission Sync');
   console.log('============================================\n');
 
   try {
@@ -195,29 +199,24 @@ async function main() {
 
   try {
     results.push({
-      name: 'Permission change updates context',
-      passed: await testPermissionChangeUpdatesContext(),
+      name: 'Permission change syncs to guest',
+      passed: await testPermissionChangeSync(),
     });
 
     results.push({
-      name: 'Multiple permission changes received',
-      passed: await testMultiplePermissionChangesReceived(),
+      name: 'Multiple permission changes sync',
+      passed: await testMultiplePermissionChangesSync(),
     });
   } finally {
     await stopServers();
   }
 
   const { failed } = printResults(results);
+
   process.exit(failed > 0 ? 1 : 0);
 }
 
-// Run if executed directly
-const isMain = process.argv[1]?.endsWith(
-  'e2e-tests-state-sync-permissions.mjs',
-);
-if (isMain) {
-  main().catch((error) => {
-    console.error('Test runner error:', error);
-    process.exit(1);
-  });
-}
+main().catch((error) => {
+  console.error('Test runner error:', error);
+  process.exit(1);
+});

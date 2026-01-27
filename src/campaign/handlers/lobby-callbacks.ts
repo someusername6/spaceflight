@@ -17,7 +17,7 @@ import {
   getActiveConnectionFlow,
   getLobbyState,
   setLobbyStateInternal,
-} from './lobby-state-sync';
+} from './lobby-state-holder';
 
 /**
  * Handle ready button toggle.
