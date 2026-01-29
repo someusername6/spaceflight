@@ -148,6 +148,79 @@ function testUnreadyAbortsCountdown() {
 }
 
 /**
+ * Test: Escape during countdown makes player unready.
+ * Verifies: Pressing Escape during countdown sets player to not ready (aborting countdown)
+ * instead of opening the pause menu.
+ */
+function testEscapeDuringCountdownMakesUnready() {
+  return runTest('Escape During Countdown Makes Unready', async (browser) => {
+    const { hostContext, hostPage, guestContext, guestPage } =
+      await setupHostAndGuest(browser, 'EscapeGuest');
+    console.log('  Both players connected');
+
+    // Make both players ready
+    await readyBothPlayers(hostPage, guestPage);
+    console.log('  Both players ready');
+
+    // Verify guest is ready
+    const guestReadyBefore = await guestPage
+      .locator('#btn-ready')
+      .evaluate((el) => el.classList.contains('ready-active'));
+    console.log(`  Guest ready button active before: ${guestReadyBefore}`);
+
+    if (!guestReadyBefore) {
+      throw new Error('Guest should be ready before test');
+    }
+
+    // Host navigates to contracts and accepts
+    await acceptFirstContract(hostPage);
+    console.log('  Host accepted contract (countdown starting)');
+
+    // Wait for countdown to start on guest
+    await waitForSystemMessage(guestPage, 'Launching in', 5000);
+    console.log('  Countdown started (guest sees it)');
+
+    // Guest presses Escape - should make them unready, not open pause menu
+    await guestPage.keyboard.press('Escape');
+    console.log('  Guest pressed Escape');
+
+    // Wait a moment for the state change
+    await sleep(500);
+
+    // Verify guest is now NOT ready
+    const guestReadyAfter = await guestPage
+      .locator('#btn-ready')
+      .evaluate((el) => el.classList.contains('ready-active'));
+    console.log(`  Guest ready button active after Escape: ${guestReadyAfter}`);
+
+    if (guestReadyAfter) {
+      throw new Error(
+        'Guest should be unready after pressing Escape during countdown',
+      );
+    }
+
+    // Verify no pause menu opened (pause menu would have a specific class/element)
+    const pauseMenuVisible = await guestPage
+      .locator('.pause-menu, .modal-pause')
+      .count();
+    console.log(`  Pause menu elements visible: ${pauseMenuVisible}`);
+
+    if (pauseMenuVisible > 0) {
+      throw new Error(
+        'Pause menu should not open when pressing Escape during countdown',
+      );
+    }
+
+    // Verify countdown was aborted
+    await waitForSystemMessage(guestPage, 'Launch aborted', 5000);
+    console.log('  Countdown aborted (as expected)');
+
+    await hostContext.close();
+    await guestContext.close();
+  });
+}
+
+/**
  * Test: Launch blocked when players not ready.
  * Verifies: Host clicking Accept when guest not ready shows blocking message.
  */
@@ -211,6 +284,10 @@ function testLaunchBlockedIfNotReady() {
 export const ALL_TESTS = [
   { name: 'Countdown displays in chat', fn: testCountdownDisplaysInChat },
   { name: 'Unready player aborts countdown', fn: testUnreadyAbortsCountdown },
+  {
+    name: 'Escape during countdown makes unready',
+    fn: testEscapeDuringCountdownMakesUnready,
+  },
   { name: 'Launch blocked if not all ready', fn: testLaunchBlockedIfNotReady },
 ];
 

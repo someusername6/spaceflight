@@ -42,6 +42,8 @@ export interface LobbyCallbacks {
     success: boolean;
     error?: string;
   };
+  /** Returns true if a launch countdown is currently active */
+  isCountdownActive?: () => boolean;
 }
 
 // =============================================================================
@@ -209,9 +211,24 @@ const LobbyScreenComponent: Screen<LobbyViewState, LobbyCallbacks> = {
       const key = (e as KeyboardEvent).code;
 
       if (key === 'Escape') {
+        e.preventDefault();
+
+        // During countdown, Escape makes player unready (aborts countdown)
+        // instead of opening the pause menu
+        if (props.isCountdownActive?.()) {
+          const currentState = api.getState();
+          const localPlayer = currentState.players.find(
+            (p) => p.playerId === currentState.localPlayerId,
+          );
+          if (localPlayer?.isReady) {
+            props.onReady(false);
+            return;
+          }
+        }
+
+        // Otherwise, dismiss error message if present
         const currentState = api.getState();
         if (currentState.errorMessage) {
-          e.preventDefault();
           api.setState({ errorMessage: null });
         }
       }

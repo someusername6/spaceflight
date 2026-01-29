@@ -43,6 +43,7 @@ import {
 import {
   changeCallsign,
   changePermissions,
+  isLaunchCountdownActive,
   refreshCurrentScreen,
   sendChat,
   toggleReady,
@@ -211,6 +212,7 @@ export function setupLobbyScreenForHost(
         'lobby',
         setupContractsScreen,
       ),
+      isCountdownActive: isLaunchCountdownActive,
     },
     campaignInfo,
   );
@@ -309,6 +311,7 @@ export function setupLobbyScreenForGuest(
       'lobby',
       setupContractsScreen,
     ),
+    isCountdownActive: isLaunchCountdownActive,
   });
 
   // Send CallsignAnnounce to host
