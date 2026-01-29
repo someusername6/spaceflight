@@ -14,6 +14,7 @@ import {
   type ActionRequestMessage,
   type ActionResponseMessage,
   type CallsignAnnounceMessage,
+  type CallsignUpdateMessage,
   type CampaignSyncMessage,
   type ChatMessage,
   type ContractAcceptedMessage,
@@ -64,6 +65,7 @@ interface MessageHandlers {
   [GameMessageType.SessionEnded]?: MessageHandler<SessionEndedMessage>;
   [GameMessageType.KickNotification]?: MessageHandler<KickNotificationMessage>;
   [GameMessageType.CallsignAnnounce]?: MessageHandler<CallsignAnnounceMessage>;
+  [GameMessageType.CallsignUpdate]?: MessageHandler<CallsignUpdateMessage>;
 }
 
 /** Configuration for MessageRouter */
@@ -201,6 +203,11 @@ export class MessageRouter {
 
   onCallsignAnnounce(handler: MessageHandler<CallsignAnnounceMessage>): this {
     this.handlers[GameMessageType.CallsignAnnounce] = handler;
+    return this;
+  }
+
+  onCallsignUpdate(handler: MessageHandler<CallsignUpdateMessage>): this {
+    this.handlers[GameMessageType.CallsignUpdate] = handler;
     return this;
   }
 

@@ -41,6 +41,7 @@ import {
   setupContractsScreen,
 } from './campaign-handlers';
 import {
+  changeCallsign,
   changePermissions,
   refreshCurrentScreen,
   sendChat,
@@ -200,6 +201,11 @@ export function setupLobbyScreenForHost(
         const currentCtx = getLobbyContext();
         if (currentCtx) changePermissions(currentCtx, playerId, permissions);
       },
+      onCallsignChange: (newCallsign) => {
+        const currentCtx = getLobbyContext();
+        if (currentCtx) return changeCallsign(currentCtx, newCallsign);
+        return { success: false, error: 'Not connected' };
+      },
       onNavigate: createNavigationHandler(
         controller,
         'lobby',
@@ -293,6 +299,11 @@ export function setupLobbyScreenForGuest(
       if (currentCtx) sendChat(currentCtx, text);
     },
     onBack: () => handleLeave(controller),
+    onCallsignChange: (newCallsign) => {
+      const currentCtx = getLobbyContext();
+      if (currentCtx) return changeCallsign(currentCtx, newCallsign);
+      return { success: false, error: 'Not connected' };
+    },
     onNavigate: createNavigationHandler(
       controller,
       'lobby',

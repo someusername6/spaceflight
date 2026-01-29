@@ -255,6 +255,24 @@ export interface CallsignAnnounceMessage {
   callsign: string;
 }
 
+/**
+ * CallsignUpdate - Any → All
+ * Player updates their callsign.
+ *
+ * @mp-operation callsignUpdate
+ * @mp-actor host | guest
+ * @mp-permission none (can only change own callsign)
+ * @mp-flow Player changes callsign → broadcasts to all → host validates and rebroadcasts
+ * @mp-ui Lobby: Click own row → popover with input → save → callsign updates everywhere
+ * @mp-tested scripts/tests/multiplayer/unit/test-encoding-callsign.mjs
+ * @mp-status implemented
+ */
+export interface CallsignUpdateMessage {
+  type: GameMessageType.CallsignUpdate;
+  playerId: string;
+  callsign: string;
+}
+
 // =============================================================================
 // Union Type
 // =============================================================================
@@ -278,7 +296,8 @@ export type GameMessage =
   | MissionEndedMessage
   | SessionEndedMessage
   | KickNotificationMessage
-  | CallsignAnnounceMessage;
+  | CallsignAnnounceMessage
+  | CallsignUpdateMessage;
 
 // =============================================================================
 // Host-only Message Check

@@ -21,6 +21,7 @@ import {
   type ActionRequestMessage,
   type ActionResponseMessage,
   type CallsignAnnounceMessage,
+  type CallsignUpdateMessage,
   type CampaignSyncMessage,
   type ChatMessage,
   type ContractAcceptedMessage,
@@ -108,6 +109,8 @@ export function decodeMessage(data: Uint8Array): GameMessage {
       return decodeKickNotification(rb);
     case GameMessageType.CallsignAnnounce:
       return decodeCallsignAnnounce(rb);
+    case GameMessageType.CallsignUpdate:
+      return decodeCallsignUpdate(rb);
     default: {
       // Cast to number for error message (type is 'never' due to exhaustive switch)
       const unknownType = type as number;
@@ -278,6 +281,14 @@ function decodeKickNotification(rb: ReadBuffer): KickNotificationMessage {
 function decodeCallsignAnnounce(rb: ReadBuffer): CallsignAnnounceMessage {
   return {
     type: GameMessageType.CallsignAnnounce,
+    callsign: readString(rb),
+  };
+}
+
+function decodeCallsignUpdate(rb: ReadBuffer): CallsignUpdateMessage {
+  return {
+    type: GameMessageType.CallsignUpdate,
+    playerId: readString(rb),
     callsign: readString(rb),
   };
 }

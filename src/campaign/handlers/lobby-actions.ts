@@ -6,14 +6,12 @@
  */
 
 import {
-  abortCountdown,
-  canLaunch,
-  isCountdownInProgress,
-  resetLaunchState,
-  shouldAbortOnUnready,
-  startCountdown,
-} from '../../multiplayer/launch-flow';
+  isCallsignConflict,
+  setStoredCallsign,
+  validateCallsign,
+} from '../../multiplayer/callsign-storage';
 import {
+  createCallsignUpdateMessage,
   createChatMessage,
   createPermissionUpdateMessage,
   createReadyStateMessage,
@@ -21,22 +19,15 @@ import {
   processLobbyMessage,
 } from '../../multiplayer/lobby-messages';
 import {
-  addSystemMessage,
   type LobbyState,
+  setErrorMessage,
 } from '../../multiplayer/lobby-state';
-import { createMissionStartData } from '../../multiplayer/mission-sync';
 import {
   getMultiplayerContext,
   setMultiplayerContext,
 } from '../../multiplayer/multiplayer-context';
 import { encodeMessage } from '../../multiplayer/protocol/encode';
-import type {
-  LaunchAbortedMessage,
-  LaunchCountdownMessage,
-  MissionStartedMessage,
-} from '../../multiplayer/protocol/messages';
 import type { Permission } from '../../multiplayer/protocol/types';
-import { GameMessageType } from '../../multiplayer/protocol/types';
 import {
   isContractsUIActive,
   refreshContractsUI,
@@ -229,159 +220,46 @@ export function changePermissions(
   broadcastAndApply(ctx, createPermissionUpdateMessage(playerId, permissions));
 }
 
-// =============================================================================
-// Launch Countdown (Host Only)
-// =============================================================================
-
-/** Callback when mission should start */
-export type OnMissionStart = (contractId: string, seed: number) => void;
-
 /**
- * Check if all players are ready and launch is possible.
+ * Handle callsign change.
+ * Returns validation result: true if change was broadcast, false if rejected.
  */
-export function checkCanLaunch(ctx: LobbyContext): {
-  canLaunch: boolean;
-  reason?: string;
-} {
-  return canLaunch(ctx.lobbyState.players);
-}
-
-/**
- * Start the launch countdown (host only).
- * Returns false if countdown cannot be started.
- */
-export function startLaunchCountdown(
+export function changeCallsign(
   ctx: LobbyContext,
-  contractId: string,
-  onMissionStart: OnMissionStart,
-): boolean {
-  if (!ctx.isHost) return false;
-  if (!ctx.screenManager.campaignState) return false;
+  newCallsign: string,
+): { success: boolean; error?: string } {
+  const trimmed = newCallsign.trim();
 
-  // Check if all players are ready
-  const launchCheck = canLaunch(ctx.lobbyState.players);
-  if (!launchCheck.canLaunch) {
-    const newState = addSystemMessage(
-      ctx.lobbyState,
-      launchCheck.reason ?? 'Cannot launch',
-    );
-    setLobbyState(ctx, newState);
-    return false;
+  // Validate callsign format
+  const validation = validateCallsign(trimmed);
+  if (!validation.valid) {
+    const error = validation.error ?? 'Invalid callsign';
+    setLobbyState(ctx, setErrorMessage(ctx.lobbyState, error));
+    return { success: false, error };
   }
 
-  // Start the countdown
-  const started = startCountdown(contractId, {
-    onTick: (seconds) => {
-      // Broadcast countdown to all players
-      const message: LaunchCountdownMessage = {
-        type: GameMessageType.LaunchCountdown,
-        secondsRemaining: seconds,
-      };
-      broadcastMessage(ctx, message);
-
-      // Add to local chat
-      const newState = addSystemMessage(
-        ctx.lobbyState,
-        `Launching in ${seconds}...`,
-      );
-      setLobbyState(ctx, newState);
-    },
-    onComplete: () => {
-      // campaignState was verified at function start, but check again for safety
-      if (!ctx.screenManager.campaignState) return;
-
-      // Generate mission start data
-      const missionData = createMissionStartData(
-        contractId,
-        ctx.screenManager.campaignState,
-      );
-
-      // Broadcast mission start with campaign state hash for verification
-      const message: MissionStartedMessage = {
-        type: GameMessageType.MissionStarted,
-        contractId: missionData.contractId,
-        seed: missionData.seed,
-        campaignStateHash: missionData.campaignStateHash,
-      };
-      broadcastMessage(ctx, message);
-
-      // Update room state to prevent mid-mission joins
-      setRoomStatePlaying(ctx);
-
-      // Call the mission start callback
-      onMissionStart(missionData.contractId, missionData.seed);
-    },
-    onAbort: (reason) => {
-      // Broadcast abort to all players
-      const message: LaunchAbortedMessage = {
-        type: GameMessageType.LaunchAborted,
-        reason,
-      };
-      broadcastMessage(ctx, message);
-
-      // Add to local chat
-      const newState = addSystemMessage(
-        ctx.lobbyState,
-        `Launch aborted: ${reason}`,
-      );
-      setLobbyState(ctx, newState);
-    },
-  });
-
-  return started;
-}
-
-/**
- * Abort the current launch countdown (host only).
- */
-export function abortLaunchCountdown(ctx: LobbyContext, reason: string): void {
-  if (!ctx.isHost) return;
-  abortCountdown(reason);
-}
-
-/**
- * Handle player becoming unready during countdown.
- * If a countdown is in progress, this will abort it.
- */
-export function handlePlayerUnready(ctx: LobbyContext, playerId: string): void {
-  if (!ctx.isHost) return;
-
-  const result = shouldAbortOnUnready(playerId, ctx.lobbyState.players);
-  if (result.shouldAbort && result.reason) {
-    abortCountdown(result.reason);
+  // Check for conflicts (case-insensitive)
+  if (isCallsignConflict(ctx.lobbyState.players, trimmed, ctx.localPlayerId)) {
+    const error = 'Callsign already taken';
+    setLobbyState(ctx, setErrorMessage(ctx.lobbyState, error));
+    return { success: false, error };
   }
-}
 
-/**
- * Check if a countdown is currently in progress.
- */
-export function isLaunchCountdownActive(): boolean {
-  return isCountdownInProgress();
-}
+  // Save to localStorage
+  setStoredCallsign(trimmed);
 
-/**
- * Reset launch state (call when leaving lobby).
- */
-export function resetLaunch(): void {
-  resetLaunchState();
+  // Broadcast and apply
+  broadcastAndApply(
+    ctx,
+    createCallsignUpdateMessage(ctx.localPlayerId, trimmed),
+  );
+
+  return { success: true };
 }
 
 // =============================================================================
 // Network Utilities
 // =============================================================================
-
-/**
- * Set room state to 'playing' on the signaling server.
- * Prevents new players from joining mid-mission.
- */
-function setRoomStatePlaying(ctx: LobbyContext): void {
-  const signalingClient = ctx.connectionFlow.getSignalingClient();
-  if (signalingClient) {
-    signalingClient.setState('playing').catch((err) => {
-      console.warn('[lobby-actions] Failed to set room state to playing:', err);
-    });
-  }
-}
 
 /**
  * Broadcast a game message to all connected peers.
@@ -396,3 +274,17 @@ function broadcastMessage(
   const data = encodeMessage(message);
   transport.broadcast(data, true);
 }
+
+// =============================================================================
+// Re-exports from lobby-launch-actions
+// =============================================================================
+
+export {
+  abortLaunchCountdown,
+  checkCanLaunch,
+  handlePlayerUnready,
+  isLaunchCountdownActive,
+  type OnMissionStart,
+  resetLaunch,
+  startLaunchCountdown,
+} from './lobby-launch-actions';

@@ -5,6 +5,7 @@
  */
 
 import type {
+  CallsignUpdateMessage,
   ChatMessage,
   PermissionUpdateMessage,
   ReadyStateMessage,
@@ -58,5 +59,17 @@ export function createShipAssignmentMessage(
     type: GameMessageType.ShipAssignment,
     playerId,
     shipId,
+  };
+}
+
+/** Create a CallsignUpdate message */
+export function createCallsignUpdateMessage(
+  playerId: string,
+  callsign: string,
+): CallsignUpdateMessage {
+  return {
+    type: GameMessageType.CallsignUpdate,
+    playerId,
+    callsign,
   };
 }

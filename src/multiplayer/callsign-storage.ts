@@ -70,3 +70,26 @@ export function validateCallsign(callsign: string): CallsignValidation {
 
   return { valid: true };
 }
+
+/** Player info for conflict checking */
+export interface PlayerCallsignInfo {
+  playerId: string;
+  callsign: string;
+}
+
+/**
+ * Check if a callsign conflicts with existing players.
+ * Comparison is case-insensitive and normalizes whitespace.
+ */
+export function isCallsignConflict(
+  players: PlayerCallsignInfo[],
+  newCallsign: string,
+  excludePlayerId: string,
+): boolean {
+  const normalizedNew = newCallsign.trim().toLowerCase();
+  return players.some(
+    (p) =>
+      p.playerId !== excludePlayerId &&
+      p.callsign.trim().toLowerCase() === normalizedNew,
+  );
+}

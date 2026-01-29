@@ -21,6 +21,7 @@ import {
   type ActionRequestMessage,
   type ActionResponseMessage,
   type CallsignAnnounceMessage,
+  type CallsignUpdateMessage,
   type CampaignSyncMessage,
   type ChatMessage,
   type ContractAcceptedMessage,
@@ -81,6 +82,8 @@ export function encodeMessage(msg: GameMessage): Uint8Array {
       return encodeKickNotification(msg);
     case GameMessageType.CallsignAnnounce:
       return encodeCallsignAnnounce(msg);
+    case GameMessageType.CallsignUpdate:
+      return encodeCallsignUpdate(msg);
     default: {
       const exhaustive: never = msg;
       throw new Error(`Unknown message type: ${exhaustive}`);
@@ -279,6 +282,15 @@ function encodeCallsignAnnounce(msg: CallsignAnnounceMessage): Uint8Array {
   const size = 1 + stringSize(msg.callsign);
   const wb = createWriteBuffer(size);
   writeByte(wb, msg.type);
+  writeString(wb, msg.callsign);
+  return wb.buffer;
+}
+
+function encodeCallsignUpdate(msg: CallsignUpdateMessage): Uint8Array {
+  const size = 1 + stringSize(msg.playerId) + stringSize(msg.callsign);
+  const wb = createWriteBuffer(size);
+  writeByte(wb, msg.type);
+  writeString(wb, msg.playerId);
   writeString(wb, msg.callsign);
   return wb.buffer;
 }

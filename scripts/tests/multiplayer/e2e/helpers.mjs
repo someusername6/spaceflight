@@ -226,6 +226,74 @@ export async function getChatMessages(page) {
 }
 
 /**
+ * Get all player callsigns from the lobby.
+ * @param {import('playwright').Page} page
+ * @returns {Promise<string[]>}
+ */
+export async function getPlayerCallsigns(page) {
+  const callsigns = await page
+    .locator('.player-row .player-callsign')
+    .allTextContents();
+  return callsigns.map((c) => c.trim());
+}
+
+/**
+ * Change the local player's callsign via the callsign popover.
+ * Clicks the self row, enters new callsign, and saves.
+ * @param {import('playwright').Page} page
+ * @param {string} newCallsign
+ * @returns {Promise<boolean>} Whether the change was successful
+ */
+export async function changeCallsign(page, newCallsign) {
+  // Click on self row to open callsign popover
+  const selfRow = page.locator('.player-row.self');
+  await selfRow.click();
+  await sleep(300);
+
+  // Wait for popover to appear
+  const popover = page.locator('.callsign-popover');
+  await popover.waitFor({ state: 'visible', timeout: 3000 });
+
+  // Clear and fill input
+  const input = page.locator('#callsign-input');
+  await input.fill(newCallsign);
+  await sleep(100);
+
+  // Click save
+  await page.click('#btn-callsign-save');
+  await sleep(300);
+
+  // Check if popover closed (success) or still visible (validation error)
+  const isPopoverVisible = await popover.isVisible().catch(() => false);
+  return !isPopoverVisible;
+}
+
+/**
+ * Get the callsign error message from the popover.
+ * @param {import('playwright').Page} page
+ * @returns {Promise<string|null>}
+ */
+export async function getCallsignError(page) {
+  const errorEl = page.locator('#callsign-error');
+  const isVisible = await errorEl.isVisible().catch(() => false);
+  if (!isVisible) return null;
+  const text = await errorEl.textContent();
+  return text?.trim() || null;
+}
+
+/**
+ * Close the callsign popover by clicking cancel or outside.
+ * @param {import('playwright').Page} page
+ */
+export async function closeCallsignPopover(page) {
+  const cancelBtn = page.locator('#btn-callsign-cancel');
+  if (await cancelBtn.isVisible().catch(() => false)) {
+    await cancelBtn.click();
+    await sleep(200);
+  }
+}
+
+/**
  * Wait for a system message containing specific text.
  * @param {import('playwright').Page} page
  * @param {string} text

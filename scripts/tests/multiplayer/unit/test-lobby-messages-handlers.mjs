@@ -7,6 +7,7 @@
 import assert from 'node:assert';
 import { describe, it } from 'node:test';
 import {
+  handleCallsignUpdate,
   handleChatMessage,
   handlePlayerJoined,
   handlePlayerLeft,
@@ -215,6 +216,90 @@ describe('Lobby Message Handlers', () => {
       assert.strictEqual(result.state.players[0].isHost, true);
       assert.strictEqual(result.state.players[1].callsign, 'GuestPlayer');
       assert.strictEqual(result.state.players[1].isHost, false);
+    });
+  });
+
+  describe('handleCallsignUpdate', () => {
+    it('updates player callsign and generates system message', () => {
+      const state = createLobbyState({
+        roomCode: 'TEST1234',
+        localPlayerId: 'player-1',
+        isHost: false,
+        initialPlayers: [
+          {
+            playerId: 'player-1',
+            callsign: 'OldCallsign',
+            shipId: null,
+            isReady: false,
+            isHost: false,
+            ping: 0,
+          },
+        ],
+      });
+
+      const msg = {
+        type: GameMessageType.CallsignUpdate,
+        playerId: 'player-1',
+        callsign: 'NewCallsign',
+      };
+
+      const result = handleCallsignUpdate(state, msg);
+
+      assert.strictEqual(result.state.players[0].callsign, 'NewCallsign');
+      assert.ok(result.systemMessage);
+      assert.ok(result.systemMessage.includes('OldCallsign'));
+      assert.ok(result.systemMessage.includes('NewCallsign'));
+    });
+
+    it('does not update state if callsign unchanged', () => {
+      const state = createLobbyState({
+        roomCode: 'TEST1234',
+        localPlayerId: 'player-1',
+        isHost: false,
+        initialPlayers: [
+          {
+            playerId: 'player-1',
+            callsign: 'SameCallsign',
+            shipId: null,
+            isReady: false,
+            isHost: false,
+            ping: 0,
+          },
+        ],
+      });
+
+      const msg = {
+        type: GameMessageType.CallsignUpdate,
+        playerId: 'player-1',
+        callsign: 'SameCallsign',
+      };
+
+      const result = handleCallsignUpdate(state, msg);
+
+      // Should return original state, no system message
+      assert.strictEqual(result.state, state);
+      assert.strictEqual(result.systemMessage, undefined);
+    });
+
+    it('handles unknown playerId gracefully', () => {
+      const state = createLobbyState({
+        roomCode: 'TEST1234',
+        localPlayerId: 'player-1',
+        isHost: false,
+        initialPlayers: [],
+      });
+
+      const msg = {
+        type: GameMessageType.CallsignUpdate,
+        playerId: 'unknown-player',
+        callsign: 'NewCallsign',
+      };
+
+      const result = handleCallsignUpdate(state, msg);
+
+      // Should return original state, no changes
+      assert.strictEqual(result.state, state);
+      assert.strictEqual(result.systemMessage, undefined);
     });
   });
 

@@ -14,21 +14,32 @@
  */
 
 import {
+  gamePlayerToLobbyPlayer,
+  isCallsignUpdateMessage,
+  isChatMessage,
+  isPermissionUpdateMessage,
+  isPlayerJoinedExtMessage,
+  isPlayerLeftExtMessage,
+  isReadyStateMessage,
+  isShipAssignmentMessage,
+  isWelcomeMessage,
+} from './lobby-message-utils';
+import {
   addChatMessage,
   addPlayer,
   addSystemMessage,
   type LobbyPlayer,
   type LobbyState,
   removePlayer,
+  setPlayerCallsign,
   setPlayerPermissions,
   setPlayerReady,
   setPlayerShip,
 } from './lobby-state';
-import { DEFAULT_GUEST_PERMISSIONS, HOST_PERMISSIONS } from './permissions';
 import type {
+  CallsignUpdateMessage,
   ChatMessage,
   GameMessage,
-  GamePlayerInfo,
   PermissionUpdateMessage,
   PlayerJoinedExtMessage,
   PlayerLeftExtMessage,
@@ -36,111 +47,21 @@ import type {
   ShipAssignmentMessage,
   WelcomeMessage,
 } from './protocol/messages';
-import { GameMessageType } from './protocol/types';
 
-// =============================================================================
-// Message Type Guards
-// =============================================================================
-
-/** Check if message is Welcome */
-export function isWelcomeMessage(msg: GameMessage): msg is WelcomeMessage {
-  return msg.type === GameMessageType.Welcome;
-}
-
-/** Check if message is PlayerJoinedExt */
-export function isPlayerJoinedExtMessage(
-  msg: GameMessage,
-): msg is PlayerJoinedExtMessage {
-  return msg.type === GameMessageType.PlayerJoinedExt;
-}
-
-/** Check if message is PlayerLeftExt */
-export function isPlayerLeftExtMessage(
-  msg: GameMessage,
-): msg is PlayerLeftExtMessage {
-  return msg.type === GameMessageType.PlayerLeftExt;
-}
-
-/** Check if message is ReadyState */
-export function isReadyStateMessage(
-  msg: GameMessage,
-): msg is ReadyStateMessage {
-  return msg.type === GameMessageType.ReadyState;
-}
-
-/** Check if message is ChatMessage */
-export function isChatMessage(msg: GameMessage): msg is ChatMessage {
-  return msg.type === GameMessageType.ChatMessage;
-}
-
-/** Check if message is PermissionUpdate */
-export function isPermissionUpdateMessage(
-  msg: GameMessage,
-): msg is PermissionUpdateMessage {
-  return msg.type === GameMessageType.PermissionUpdate;
-}
-
-/** Check if message is ShipAssignment */
-export function isShipAssignmentMessage(
-  msg: GameMessage,
-): msg is ShipAssignmentMessage {
-  return msg.type === GameMessageType.ShipAssignment;
-}
-
-// =============================================================================
-// Conversion Helpers
-// =============================================================================
-
-/** Convert GamePlayerInfo to LobbyPlayer */
-export function gamePlayerToLobbyPlayer(
-  player: GamePlayerInfo,
-  isHost: boolean,
-): LobbyPlayer {
-  return {
-    playerId: player.playerId,
-    callsign: player.callsign,
-    shipId: player.shipId,
-    isReady: player.ready,
-    isHost,
-    ping: 0,
-    // Host always has full permissions, guests use their assigned permissions
-    // Fallback to defaults for older messages that may not have permissions
-    permissions: isHost
-      ? HOST_PERMISSIONS
-      : (player.permissions ?? DEFAULT_GUEST_PERMISSIONS),
-  };
-}
-
-/** Convert LobbyPlayer to GamePlayerInfo */
-export function lobbyPlayerToGamePlayer(player: LobbyPlayer): GamePlayerInfo {
-  return {
-    playerId: player.playerId,
-    callsign: player.callsign,
-    shipId: player.shipId,
-    ready: player.isReady,
-    // Host always has full permissions, guests use their stored permissions
-    permissions: player.isHost ? HOST_PERMISSIONS : player.permissions,
-  };
-}
-
-/**
- * Create a new LobbyPlayer with default permissions.
- * Used when a guest joins.
- */
-export function createGuestLobbyPlayer(
-  playerId: string,
-  callsign: string,
-): LobbyPlayer {
-  return {
-    playerId,
-    callsign,
-    shipId: null,
-    isReady: false,
-    isHost: false,
-    ping: 0,
-    permissions: DEFAULT_GUEST_PERMISSIONS,
-  };
-}
+// Re-export from lobby-message-utils for backwards compatibility
+export {
+  createGuestLobbyPlayer,
+  gamePlayerToLobbyPlayer,
+  isCallsignUpdateMessage,
+  isChatMessage,
+  isPermissionUpdateMessage,
+  isPlayerJoinedExtMessage,
+  isPlayerLeftExtMessage,
+  isReadyStateMessage,
+  isShipAssignmentMessage,
+  isWelcomeMessage,
+  lobbyPlayerToGamePlayer,
+} from './lobby-message-utils';
 
 // =============================================================================
 // Incoming Message Handlers
@@ -338,6 +259,36 @@ export function handleShipAssignment(
   };
 }
 
+/**
+ * Handle CallsignUpdate message.
+ * Updates player callsign and shows system message.
+ */
+export function handleCallsignUpdate(
+  state: LobbyState,
+  msg: CallsignUpdateMessage,
+): MessageHandlerResult {
+  const player = state.players.find((p) => p.playerId === msg.playerId);
+  if (!player) {
+    return { state };
+  }
+
+  const oldCallsign = player.callsign;
+  const newCallsign = msg.callsign;
+
+  // Don't update if callsign hasn't changed
+  if (oldCallsign === newCallsign) {
+    return { state };
+  }
+
+  const newState = setPlayerCallsign(state, msg.playerId, newCallsign);
+  const systemMessage = `${oldCallsign} is now ${newCallsign}`;
+
+  return {
+    state: addSystemMessage(newState, systemMessage),
+    systemMessage,
+  };
+}
+
 /** Options for processing lobby messages */
 export interface ProcessLobbyMessageOptions {
   /** Function to get ship name from ID (for system messages) */
@@ -375,6 +326,9 @@ export function processLobbyMessage(
   if (isShipAssignmentMessage(msg)) {
     return handleShipAssignment(state, msg, options?.getShipName);
   }
+  if (isCallsignUpdateMessage(msg)) {
+    return handleCallsignUpdate(state, msg);
+  }
   return null;
 }
 
@@ -383,6 +337,7 @@ export function processLobbyMessage(
 // =============================================================================
 
 export {
+  createCallsignUpdateMessage,
   createChatMessage,
   createPermissionUpdateMessage,
   createReadyStateMessage,

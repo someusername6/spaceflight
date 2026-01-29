@@ -58,8 +58,14 @@ export function renderPlayerRow(
   showHostPopover: boolean,
 ): string {
   const rowClass = isLocalPlayer ? 'player-row self' : 'player-row';
-  const dataAttr = showHostPopover
-    ? `data-player-id="${escapeHtml(player.playerId)}"`
+  // Add data-player-id for host popover OR for self row (callsign change)
+  const dataAttr =
+    showHostPopover || isLocalPlayer
+      ? `data-player-id="${escapeHtml(player.playerId)}"`
+      : '';
+  // Add edit hint for self row
+  const editHint = isLocalPlayer
+    ? '<span class="edit-callsign-hint" title="Click to change callsign">&#9998;</span>'
     : '';
 
   return `
@@ -67,6 +73,7 @@ export function renderPlayerRow(
       <div class="player-info">
         ${renderHostIndicator(player.isHost)}
         <span class="player-callsign">${escapeHtml(player.callsign)}</span>
+        ${editHint}
       </div>
       <div class="player-status">
         ${renderShipStatus(player.shipId)}

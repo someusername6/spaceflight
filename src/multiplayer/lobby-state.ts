@@ -161,6 +161,20 @@ export function setPlayerPermissions(
   };
 }
 
+/** Update a player's callsign */
+export function setPlayerCallsign(
+  state: LobbyState,
+  playerId: string,
+  callsign: string,
+): LobbyState {
+  return {
+    ...state,
+    players: state.players.map((p) =>
+      p.playerId === playerId ? { ...p, callsign } : p,
+    ),
+  };
+}
+
 /** Get a player by ID */
 export function getPlayer(
   state: LobbyState,

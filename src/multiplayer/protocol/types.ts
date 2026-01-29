@@ -28,6 +28,7 @@ export enum GameMessageType {
   SessionEnded = 0x8f,
   KickNotification = 0x90,
   CallsignAnnounce = 0x91,
+  CallsignUpdate = 0x92,
 }
 
 // =============================================================================

@@ -116,6 +116,18 @@
   font-style: italic;
 }
 
+.edit-callsign-hint {
+  margin-left: var(--space-2);
+  color: var(--text-dim);
+  font-size: var(--text-sm);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.player-row.self:hover .edit-callsign-hint {
+  opacity: 0.7;
+}
+
 /* ========================================
    PERMISSIONS INDICATOR
    ======================================== */

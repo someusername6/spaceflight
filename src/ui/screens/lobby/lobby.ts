@@ -19,6 +19,7 @@ import {
   type ScreenHandle,
 } from '../../framework/screen';
 import { copyToClipboard } from '../../utils/clipboard';
+import { bindCallsignPopover } from './callsign-popover';
 import { scrollChatToBottom } from './chat-panel';
 import { positionPopover, renderHostPopover } from './host-popover';
 import { type LobbyViewState, renderLobbyView } from './lobby-render';
@@ -36,6 +37,11 @@ export interface LobbyCallbacks {
   onPermissionChange?: (playerId: string, permissions: Permission) => void;
   /** Called when navigating to another campaign screen */
   onNavigate?: (destination: NavDestination) => void;
+  /** Called when player changes their own callsign. Returns success/error. */
+  onCallsignChange?: (newCallsign: string) => {
+    success: boolean;
+    error?: string;
+  };
 }
 
 // =============================================================================
@@ -193,6 +199,11 @@ const LobbyScreenComponent: Screen<LobbyViewState, LobbyCallbacks> = {
       });
     }
 
+    // Callsign change popover for self row
+    if (props.onCallsignChange) {
+      bindCallsignPopover(api, props.onCallsignChange);
+    }
+
     // Keyboard navigation
     api.onGlobal('keydown', (e) => {
       const key = (e as KeyboardEvent).code;
@@ -309,8 +320,12 @@ export function forceRenderLobbyScreen(): void {
 /** Cleanup lobby screen */
 export function cleanupLobbyScreen(): void {
   // Remove any orphaned popovers
-  const popovers = document.querySelectorAll('.host-popover');
-  for (const popover of popovers) {
+  const hostPopovers = document.querySelectorAll('.host-popover');
+  for (const popover of hostPopovers) {
+    popover.remove();
+  }
+  const callsignPopovers = document.querySelectorAll('.callsign-popover');
+  for (const popover of callsignPopovers) {
     popover.remove();
   }
 

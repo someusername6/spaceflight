@@ -20,6 +20,7 @@ export {
   // Action types
   type BuyAction,
   type CallsignAnnounceMessage,
+  type CallsignUpdateMessage,
   type CampaignSyncMessage,
   type ChatMessage,
   type ContractAcceptedMessage,
