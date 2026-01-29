@@ -26,20 +26,25 @@ import {
   goBackFromLobby,
   goToLobby,
   Screen,
+  updateCampaignState,
 } from '../../ui/common/screens';
 import {
   bindLobbyScreen,
   cleanupLobbyScreen,
   renderLobbyScreen,
+  updateLobbyCampaignInfo,
 } from '../../ui/screens/lobby';
 import type { CampaignController } from '../controller-types';
 import type { CampaignState } from '../types';
+import {
+  createNavigationHandler,
+  setupContractsScreen,
+} from './campaign-handlers';
 import {
   changePermissions,
   refreshCurrentScreen,
   sendChat,
   toggleReady,
-  updateCampaignState as updateCampaignStateAction,
 } from './lobby-actions';
 import {
   getCampaignSyncManager,
@@ -62,15 +67,28 @@ import {
 
 export { getCampaignSyncManager, getLobbyState, getMessageRouter, isInLobby };
 
+// Re-export from lobby-actions (moved there to break circular dependencies)
+export { updateAndSyncCampaignState } from './lobby-actions';
+
+// =============================================================================
+// Campaign Update Handler
+// =============================================================================
+
 /**
- * Update campaign state and sync to all guests (host only).
- * Wrapper that gets context and calls the action.
+ * Create a shared onCampaignUpdate callback for the sync manager.
+ * Updates screenManager (single source of truth), refreshes UI.
  */
-export function updateAndSyncCampaignState(newState: CampaignState): void {
-  const ctx = getLobbyContext();
-  if (ctx) {
-    updateCampaignStateAction(ctx, newState);
-  }
+function createCampaignUpdateHandler(
+  screenManager: CampaignController['screenManager'],
+): (newCampaignState: CampaignState) => void {
+  return (newCampaignState) => {
+    updateCampaignState(screenManager, newCampaignState);
+    refreshCurrentScreen(newCampaignState);
+    updateLobbyCampaignInfo(
+      newCampaignState.credits,
+      newCampaignState.currentSector,
+    );
+  };
 }
 
 // =============================================================================
@@ -79,12 +97,13 @@ export function updateAndSyncCampaignState(newState: CampaignState): void {
 
 /**
  * Setup lobby screen for host.
+ *
+ * Note: onStartGameplay reserved for future gameplay start callback integration.
  */
 export function setupLobbyScreenForHost(
   controller: CampaignController,
   connectionResult: ConnectionResult,
   connectionFlow: ConnectionFlow,
-  _onStartGameplay: () => void,
 ): void {
   const { screenManager } = controller;
   const lobbyElement = getScreenElement(screenManager, Screen.LOBBY);
@@ -116,6 +135,7 @@ export function setupLobbyScreenForHost(
     hostPeerId: connectionResult.hostPeerId,
     isHost: true,
     campaignState,
+    onCampaignUpdate: createCampaignUpdateHandler(screenManager),
   });
 
   // Create the context
@@ -126,7 +146,7 @@ export function setupLobbyScreenForHost(
     isHost: true,
     localPlayerId: connectionResult.localPeerId,
     lobbyState: initialLobbyState,
-    campaignState,
+    screenManager,
     cleanup,
   };
 
@@ -143,10 +163,12 @@ export function setupLobbyScreenForHost(
   );
 
   // Set multiplayer context for permission checks
+  // Host doesn't have an assigned ship (they control the commander)
   setMultiplayerContext({
     playerId: connectionResult.localPeerId,
     permissions: HOST_PERMISSIONS,
     isHost: true,
+    assignedShipId: null,
   });
 
   // Render and navigate
@@ -154,31 +176,49 @@ export function setupLobbyScreenForHost(
   goToLobby(screenManager);
 
   // Bind screen callbacks
-  bindLobbyScreen(lobbyElement, initialLobbyState, {
-    onReady: (ready) => {
-      const currentCtx = getLobbyContext();
-      if (currentCtx) toggleReady(currentCtx, ready);
+  const campaignInfo = campaignState
+    ? {
+        credits: campaignState.credits,
+        currentSector: campaignState.currentSector,
+      }
+    : undefined;
+
+  bindLobbyScreen(
+    lobbyElement,
+    initialLobbyState,
+    {
+      onReady: (ready) => {
+        const currentCtx = getLobbyContext();
+        if (currentCtx) toggleReady(currentCtx, ready);
+      },
+      onSendChat: (text) => {
+        const currentCtx = getLobbyContext();
+        if (currentCtx) sendChat(currentCtx, text);
+      },
+      onBack: () => handleLeave(controller),
+      onPermissionChange: (playerId, permissions) => {
+        const currentCtx = getLobbyContext();
+        if (currentCtx) changePermissions(currentCtx, playerId, permissions);
+      },
+      onNavigate: createNavigationHandler(
+        controller,
+        'lobby',
+        setupContractsScreen,
+      ),
     },
-    onSendChat: (text) => {
-      const currentCtx = getLobbyContext();
-      if (currentCtx) sendChat(currentCtx, text);
-    },
-    onBack: () => handleLeave(controller),
-    onPermissionChange: (playerId, permissions) => {
-      const currentCtx = getLobbyContext();
-      if (currentCtx) changePermissions(currentCtx, playerId, permissions);
-    },
-  });
+    campaignInfo,
+  );
 }
 
 /**
  * Setup lobby screen for guest.
+ *
+ * Note: onStartGameplay reserved for future gameplay start callback integration.
  */
 export function setupLobbyScreenForGuest(
   controller: CampaignController,
   connectionResult: ConnectionResult,
   connectionFlow: ConnectionFlow,
-  _onStartGameplay: () => void,
 ): void {
   const { screenManager } = controller;
   const lobbyElement = getScreenElement(screenManager, Screen.LOBBY);
@@ -209,17 +249,7 @@ export function setupLobbyScreenForGuest(
     hostPeerId: connectionResult.hostPeerId,
     isHost: false,
     campaignState: null,
-    onCampaignUpdate: (newCampaignState) => {
-      // Update context and screen manager when host syncs
-      const ctx = getLobbyContext();
-      if (ctx) {
-        ctx.campaignState = newCampaignState;
-      }
-      screenManager.campaignState = newCampaignState;
-
-      // Refresh current screen
-      refreshCurrentScreen(newCampaignState);
-    },
+    onCampaignUpdate: createCampaignUpdateHandler(screenManager),
   });
 
   // Create the context
@@ -230,7 +260,7 @@ export function setupLobbyScreenForGuest(
     isHost: false,
     localPlayerId: connectionResult.localPeerId,
     lobbyState: initialLobbyState,
-    campaignState: null,
+    screenManager,
     cleanup,
   };
 
@@ -240,11 +270,12 @@ export function setupLobbyScreenForGuest(
   // Wire message handlers
   wireMessageHandlers(ctx, connectionResult.hostPeerId);
 
-  // Set multiplayer context
+  // Set multiplayer context (shipId will be updated via ShipAssignment message)
   setMultiplayerContext({
     playerId: connectionResult.localPeerId,
     permissions: DEFAULT_GUEST_PERMISSIONS,
     isHost: false,
+    assignedShipId: null,
   });
 
   // Render and navigate
@@ -262,6 +293,11 @@ export function setupLobbyScreenForGuest(
       if (currentCtx) sendChat(currentCtx, text);
     },
     onBack: () => handleLeave(controller),
+    onNavigate: createNavigationHandler(
+      controller,
+      'lobby',
+      setupContractsScreen,
+    ),
   });
 
   // Send CallsignAnnounce to host

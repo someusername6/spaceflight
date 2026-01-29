@@ -12,6 +12,7 @@ import type { CampaignSyncManager } from '../../multiplayer/campaign-sync';
 import type { LobbyState } from '../../multiplayer/lobby-state';
 import type { ConnectionFlow } from '../../multiplayer/networking/connection-flow';
 import type { MessageRouter } from '../../multiplayer/protocol/router';
+import type { ScreenManager } from '../../ui/common/screens';
 import type { CampaignState } from '../types';
 
 // =============================================================================
@@ -41,8 +42,8 @@ export interface LobbyContext {
   /** Mutable lobby state (players, chat, ready states) */
   lobbyState: LobbyState;
 
-  /** Mutable campaign state (ships, credits, etc.) */
-  campaignState: CampaignState | null;
+  /** Screen manager — single source of truth for campaign state */
+  readonly screenManager: ScreenManager;
 
   /** Cleanup function for message handling */
   readonly cleanup: () => void;
@@ -86,6 +87,14 @@ export function isInLobby(): boolean {
 // LobbyContext (e.g., UI callbacks, external modules). For code within the
 // lobby handlers, prefer passing LobbyContext explicitly to maintain clear
 // dependencies and testability.
+
+/**
+ * Get the current campaign state from the lobby context.
+ * Reads from screenManager (single source of truth).
+ */
+export function getLobbyCampaignState(): CampaignState | null {
+  return activeContext?.screenManager.campaignState ?? null;
+}
 
 /**
  * Get the current lobby state.

@@ -216,12 +216,7 @@ export function setupJoinGameScreen(
     onJoined: (result: ConnectionResult, connectionFlow: ConnectionFlow) => {
       // Successfully joined - transition to multiplayer lobby
       cleanupJoinGameScreen();
-      setupLobbyScreenForGuest(
-        controller,
-        result,
-        connectionFlow,
-        onStartGameplay,
-      );
+      setupLobbyScreenForGuest(controller, result, connectionFlow);
     },
   });
 }
@@ -248,12 +243,7 @@ export async function setupRoomCreatedScreen(
 
     // Transition directly to lobby screen instead of room-created
     cleanupRoomCreatedScreen();
-    setupLobbyScreenForHost(
-      controller,
-      result,
-      connectionFlow,
-      onStartGameplay,
-    );
+    setupLobbyScreenForHost(controller, result, connectionFlow);
   } catch (error) {
     // Failed to create room - stay on load campaign (hosting mode)
     logError('Failed to create room:', error);

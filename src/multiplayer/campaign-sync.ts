@@ -12,6 +12,7 @@
  * - Host broadcasts CampaignSync after every change
  */
 
+import { reconstituteCampaignState } from '../campaign/storage/campaign-utils';
 import type { CampaignState } from '../campaign/types';
 import { processAction, validateActionPermission } from './action-processing';
 import type { MessageRouter } from './protocol';
@@ -47,6 +48,14 @@ export class CampaignSyncManager {
   private campaignState: CampaignState | null = null;
   private players = new Map<string, GamePlayerInfo>();
 
+  /**
+   * Track whether Welcome has been processed (guest only).
+   * Used to prevent CampaignSync messages from being processed before
+   * the initial Welcome state is received, which could lead to
+   * inconsistent state.
+   */
+  private welcomeReceived = false;
+
   /** Called when campaign state is updated (for UI refresh) */
   onCampaignUpdate: CampaignUpdateCallback | null = null;
 
@@ -59,14 +68,9 @@ export class CampaignSyncManager {
       this.router.onActionRequest(this.handleActionRequest.bind(this));
     } else {
       this.router.onCampaignSync(this.handleCampaignSync.bind(this));
-      this.router.onWelcome((msg) => {
-        this.campaignState = msg.campaignState;
-        this.players.clear();
-        for (const player of msg.players) {
-          this.players.set(player.playerId, player);
-        }
-        this.onCampaignUpdate?.(msg.campaignState);
-      });
+      // Note: Welcome handler is registered in wireMessageHandlers
+      // (lobby-protocol-routing.ts) which combines lobby state + campaign
+      // state processing, since the router only supports one handler per type.
     }
   }
 
@@ -77,9 +81,16 @@ export class CampaignSyncManager {
   /**
    * Host: Set the current campaign state.
    * Call this when loading a campaign or after local changes.
+   *
+   * Guest: Also called from Welcome handler to set initial state.
+   * When called for guest, also marks Welcome as received.
    */
   setCampaignState(state: CampaignState): void {
     this.campaignState = state;
+    // For guests, setting campaign state from Welcome marks it as received
+    if (!this.isHost) {
+      this.welcomeReceived = true;
+    }
   }
 
   /**
@@ -108,6 +119,13 @@ export class CampaignSyncManager {
    */
   removePlayerInfo(playerId: string): void {
     this.players.delete(playerId);
+  }
+
+  /**
+   * Get the players map (for permission validation).
+   */
+  getPlayers(): Map<string, GamePlayerInfo> {
+    return this.players;
   }
 
   /**
@@ -190,10 +208,21 @@ export class CampaignSyncManager {
 
   /**
    * Guest: Handle campaign sync message from host.
+   * Ignores messages received before Welcome to prevent race conditions.
    */
   private handleCampaignSync(msg: CampaignSyncMessage): void {
-    this.campaignState = msg.campaignState;
-    this.onCampaignUpdate?.(msg.campaignState);
+    // Ignore CampaignSync if Welcome hasn't been received yet.
+    // The Welcome message provides the authoritative initial state.
+    if (!this.welcomeReceived) {
+      console.warn(
+        '[CampaignSyncManager] Ignoring CampaignSync received before Welcome',
+      );
+      return;
+    }
+
+    const state = reconstituteCampaignState(msg.campaignState);
+    this.campaignState = state;
+    this.onCampaignUpdate?.(state);
   }
 
   // ===========================================================================
@@ -207,6 +236,7 @@ export class CampaignSyncManager {
     this.onCampaignUpdate = null;
     this.campaignState = null;
     this.players.clear();
+    this.welcomeReceived = false;
   }
 }
 

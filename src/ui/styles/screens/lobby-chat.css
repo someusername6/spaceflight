@@ -143,6 +143,37 @@
   cursor: not-allowed;
 }
 
+.permission-row-select {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+}
+
+.permission-row-select .permission-label {
+  cursor: default;
+}
+
+.permission-select {
+  width: 100%;
+  padding: var(--space-1) var(--space-2);
+  background: rgba(10, 14, 20, 0.8);
+  border: 1px solid var(--border-dim);
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+
+.permission-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.permission-select option {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
 /* ========================================
    ERROR OVERLAY
    ======================================== */

@@ -14,10 +14,8 @@ import {
   type ActionRequestMessage,
   type ActionResponseMessage,
   type CallsignAnnounceMessage,
-  type CallsignChangedMessage,
-  type CallsignChangeRequestMessage,
   type CampaignSyncMessage,
-  type ChatMessageMessage,
+  type ChatMessage,
   type ContractAcceptedMessage,
   type GameMessage,
   GameMessageType,
@@ -51,7 +49,7 @@ interface MessageHandlers {
   [GameMessageType.Welcome]?: MessageHandler<WelcomeMessage>;
   [GameMessageType.PlayerJoinedExt]?: MessageHandler<PlayerJoinedExtMessage>;
   [GameMessageType.PlayerLeftExt]?: MessageHandler<PlayerLeftExtMessage>;
-  [GameMessageType.ChatMessage]?: MessageHandler<ChatMessageMessage>;
+  [GameMessageType.ChatMessage]?: MessageHandler<ChatMessage>;
   [GameMessageType.ReadyState]?: MessageHandler<ReadyStateMessage>;
   [GameMessageType.PermissionUpdate]?: MessageHandler<PermissionUpdateMessage>;
   [GameMessageType.ShipAssignment]?: MessageHandler<ShipAssignmentMessage>;
@@ -66,8 +64,6 @@ interface MessageHandlers {
   [GameMessageType.SessionEnded]?: MessageHandler<SessionEndedMessage>;
   [GameMessageType.KickNotification]?: MessageHandler<KickNotificationMessage>;
   [GameMessageType.CallsignAnnounce]?: MessageHandler<CallsignAnnounceMessage>;
-  [GameMessageType.CallsignChangeRequest]?: MessageHandler<CallsignChangeRequestMessage>;
-  [GameMessageType.CallsignChanged]?: MessageHandler<CallsignChangedMessage>;
 }
 
 /** Configuration for MessageRouter */
@@ -133,7 +129,7 @@ export class MessageRouter {
     return this;
   }
 
-  onChatMessage(handler: MessageHandler<ChatMessageMessage>): this {
+  onChatMessage(handler: MessageHandler<ChatMessage>): this {
     this.handlers[GameMessageType.ChatMessage] = handler;
     return this;
   }
@@ -205,18 +201,6 @@ export class MessageRouter {
 
   onCallsignAnnounce(handler: MessageHandler<CallsignAnnounceMessage>): this {
     this.handlers[GameMessageType.CallsignAnnounce] = handler;
-    return this;
-  }
-
-  onCallsignChangeRequest(
-    handler: MessageHandler<CallsignChangeRequestMessage>,
-  ): this {
-    this.handlers[GameMessageType.CallsignChangeRequest] = handler;
-    return this;
-  }
-
-  onCallsignChanged(handler: MessageHandler<CallsignChangedMessage>): this {
-    this.handlers[GameMessageType.CallsignChanged] = handler;
     return this;
   }
 

@@ -11,6 +11,7 @@
 
 import type { LobbyState } from '../../../multiplayer/lobby-state';
 import type { Permission } from '../../../multiplayer/protocol/types';
+import { bindNavBar, type NavDestination } from '../../common/nav-bar';
 import {
   createScreen,
   type Screen,
@@ -33,6 +34,8 @@ export interface LobbyCallbacks {
   onBack: () => void;
   /** Called when host changes a player's permissions (host only) */
   onPermissionChange?: (playerId: string, permissions: Permission) => void;
+  /** Called when navigating to another campaign screen */
+  onNavigate?: (destination: NavDestination) => void;
 }
 
 // =============================================================================
@@ -91,44 +94,45 @@ const LobbyScreenComponent: Screen<LobbyViewState, LobbyCallbacks> = {
       api.setState({ errorMessage: null });
     });
 
+    // Nav bar navigation
+    if (props.onNavigate) {
+      bindNavBar(api, props.onNavigate);
+    }
+
     // Host popover on guest row hover
     if (state.isHost) {
       let activePopover: HTMLElement | null = null;
 
-      // Helper to bind permission checkbox events
-      const bindPopoverEvents = (popoverEl: HTMLElement) => {
-        const checkboxes = popoverEl.querySelectorAll<HTMLInputElement>(
-          'input[data-permission]',
+      // Permission change handler (checkboxes and select)
+      api.onGlobal('change', (e) => {
+        const target = e.target as HTMLElement;
+        if (!target.closest?.('.host-popover')) return;
+
+        const playerId = target.getAttribute('data-player');
+        const permissionType = target.getAttribute('data-permission');
+        if (!playerId || !permissionType) return;
+
+        const currentState = api.getState();
+        const player = currentState.players.find(
+          (p) => p.playerId === playerId,
         );
-        for (const checkbox of checkboxes) {
-          checkbox.addEventListener('change', () => {
-            const playerId = checkbox.getAttribute('data-player');
-            const permissionType = checkbox.getAttribute('data-permission');
-            if (!playerId || !permissionType) return;
+        if (!player) return;
 
-            const currentState = api.getState();
-            const player = currentState.players.find(
-              (p) => p.playerId === playerId,
-            );
-            if (!player) return;
-
-            // Build updated permissions
-            const newPermissions: Permission = { ...player.permissions };
-            if (permissionType === 'canBuy') {
-              newPermissions.canBuy = checkbox.checked;
-            } else if (permissionType === 'canSell') {
-              newPermissions.canSell = checkbox.checked;
-            } else if (permissionType === 'canConvertScrap') {
-              newPermissions.canConvertScrap = checkbox.checked;
-            } else if (permissionType === 'shipEdit') {
-              // Toggle between 'own' (can edit) and 'none' (cannot edit)
-              newPermissions.shipEdit = checkbox.checked ? 'own' : 'none';
-            }
-
-            props.onPermissionChange?.(playerId, newPermissions);
-          });
+        const newPermissions: Permission = { ...player.permissions };
+        if (permissionType === 'canBuy') {
+          newPermissions.canBuy = (target as HTMLInputElement).checked;
+        } else if (permissionType === 'canSell') {
+          newPermissions.canSell = (target as HTMLInputElement).checked;
+        } else if (permissionType === 'canConvertScrap') {
+          newPermissions.canConvertScrap = (target as HTMLInputElement).checked;
+        } else if (permissionType === 'shipEdit') {
+          // shipEdit uses a select element with 'none' | 'own' | 'any' values
+          const value = (target as HTMLSelectElement).value;
+          newPermissions.shipEdit = value as 'none' | 'own' | 'any';
         }
-      };
+
+        props.onPermissionChange?.(playerId, newPermissions);
+      });
 
       api.onDirect('.player-row[data-player-id]', 'mouseenter', (_e, el) => {
         const playerId = el.getAttribute('data-player-id');
@@ -159,9 +163,6 @@ const LobbyScreenComponent: Screen<LobbyViewState, LobbyCallbacks> = {
         document.body.appendChild(popoverEl);
         positionPopover(popoverEl, el);
         activePopover = popoverEl;
-
-        // Bind permission checkbox events
-        bindPopoverEvents(popoverEl);
       });
 
       api.onDirect('.player-row[data-player-id]', 'mouseleave', () => {
@@ -229,6 +230,8 @@ export function renderLobbyScreen(element: HTMLElement): void {
     chatMessages: [],
     errorMessage: null,
     copied: false,
+    credits: 0,
+    currentSector: 1,
   };
 
   element.innerHTML = LobbyScreenComponent.render(initialState, {
@@ -244,6 +247,7 @@ export function bindLobbyScreen(
   element: HTMLElement,
   initialState: LobbyState,
   callbacks: LobbyCallbacks,
+  campaignInfo?: { credits: number; currentSector: number },
 ): void {
   // Clean up previous handle if exists
   screenHandle?.destroy();
@@ -251,6 +255,8 @@ export function bindLobbyScreen(
   const viewState: LobbyViewState = {
     ...initialState,
     copied: false,
+    credits: campaignInfo?.credits ?? 0,
+    currentSector: campaignInfo?.currentSector ?? 1,
   };
 
   screenHandle = createScreen(
@@ -269,6 +275,8 @@ export function updateLobbyState(state: LobbyState): void {
   screenHandle.setState({
     ...state,
     copied: currentState.copied,
+    credits: currentState.credits,
+    currentSector: currentState.currentSector,
   });
 
   // Auto-scroll chat
@@ -277,9 +285,25 @@ export function updateLobbyState(state: LobbyState): void {
   });
 }
 
+/** Update campaign info (credits/sector) displayed in the lobby nav bar */
+export function updateLobbyCampaignInfo(
+  credits: number,
+  currentSector: number,
+): void {
+  screenHandle?.setState({ credits, currentSector });
+}
+
 /** Show error message */
 export function showLobbyError(message: string): void {
   screenHandle?.setState({ errorMessage: message });
+}
+
+/** Force the lobby screen to re-render (after navigating back to it). */
+export function forceRenderLobbyScreen(): void {
+  if (!screenHandle) return;
+  const state = screenHandle.getState();
+  // setState triggers render(); works because the element is now visible
+  screenHandle.setState(state);
 }
 
 /** Cleanup lobby screen */

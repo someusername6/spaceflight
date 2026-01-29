@@ -20,10 +20,6 @@ export interface HostPopoverOptions {
 export function renderHostPopover(options: HostPopoverOptions): string {
   const { playerId, callsign, permissions } = options;
 
-  // Convert shipEdit permission to boolean for checkbox
-  // 'own' or 'any' = can edit, 'none' = cannot edit
-  const canEditLoadouts = permissions.shipEdit !== 'none';
-
   return `
     <div class="host-popover" data-target-player="${escapeHtml(playerId)}">
       <div class="popover-header">
@@ -62,14 +58,15 @@ export function renderHostPopover(options: HostPopoverOptions): string {
             Can convert scrap
           </label>
         </div>
-        <div class="permission-row">
-          <label class="permission-label">
-            <input type="checkbox"
-                   data-permission="shipEdit"
-                   data-player="${escapeHtml(playerId)}"
-                   ${canEditLoadouts ? 'checked' : ''} />
-            Can edit loadouts
-          </label>
+        <div class="permission-row permission-row-select">
+          <label class="permission-label">Edit loadouts:</label>
+          <select class="permission-select"
+                  data-permission="shipEdit"
+                  data-player="${escapeHtml(playerId)}">
+            <option value="none" ${permissions.shipEdit === 'none' ? 'selected' : ''}>None</option>
+            <option value="own" ${permissions.shipEdit === 'own' ? 'selected' : ''}>Own ship</option>
+            <option value="any" ${permissions.shipEdit === 'any' ? 'selected' : ''}>Any ship</option>
+          </select>
         </div>
       </div>
     </div>

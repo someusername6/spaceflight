@@ -13,6 +13,7 @@ import { showError } from '../../ui/common/notification';
 import {
   getScreenElement,
   goToContracts,
+  goToLobby,
   goToSquadron,
   goToStore,
   Screen,
@@ -20,6 +21,7 @@ import {
   updateCampaignState,
 } from '../../ui/common/screens';
 import { createContractsUI } from '../../ui/screens/contracts';
+import { forceRenderLobbyScreen } from '../../ui/screens/lobby';
 import {
   createSquadronUI,
   type ListSelection,
@@ -35,8 +37,52 @@ import {
 } from '../state';
 import { autoSave, getActiveSlotId, saveCheckpoint } from '../storage';
 import type { CampaignState, Contract } from '../types';
-import { isInLobby, updateAndSyncCampaignState } from './lobby-handlers';
+import {
+  startLaunchCountdown,
+  updateAndSyncCampaignState,
+} from './lobby-actions';
+import { getLobbyContext, isInLobby } from './lobby-context';
 import { handleRetirement } from './mission-handlers';
+
+/**
+ * Create a navigation handler for campaign screens.
+ * Handles switching between lobby, squadron, store, and contracts.
+ * The currentScreen destination is a no-op (already there).
+ */
+export function createNavigationHandler(
+  controller: CampaignController,
+  currentScreen: NavDestination,
+  setupContracts: (ctrl: CampaignController) => void,
+): (destination: NavDestination) => void {
+  const { screenManager } = controller;
+
+  return (destination: NavDestination) => {
+    if (destination === currentScreen) return;
+
+    switch (destination) {
+      case 'lobby':
+        goToLobby(screenManager);
+        forceRenderLobbyScreen();
+        break;
+      case 'squadron': {
+        goToSquadron(screenManager);
+        const el = getScreenElement(screenManager, Screen.SQUADRON);
+        setupSquadronScreen(controller, el, setupContracts);
+        break;
+      }
+      case 'store': {
+        goToStore(screenManager);
+        const el = getScreenElement(screenManager, Screen.STORE);
+        setupStoreScreen(controller, el, setupContracts);
+        break;
+      }
+      case 'contracts':
+        goToContracts(screenManager);
+        setupContracts(controller);
+        break;
+    }
+  };
+}
 
 /**
  * Update campaign state and sync to multiplayer guests if in lobby.
@@ -67,25 +113,11 @@ export function setupSquadronScreen(
   initialSelection?: ListSelection,
 ): void {
   const { screenManager } = controller;
-
-  // Navigation handler for all screens
-  const onNavigate = (destination: NavDestination) => {
-    switch (destination) {
-      case 'squadron':
-        // Already on squadron, no-op
-        break;
-      case 'store': {
-        goToStore(screenManager);
-        const storeElement = getScreenElement(screenManager, Screen.STORE);
-        setupStoreScreen(controller, storeElement, setupContractsScreen);
-        break;
-      }
-      case 'contracts':
-        goToContracts(screenManager);
-        setupContractsScreen(controller);
-        break;
-    }
-  };
+  const onNavigate = createNavigationHandler(
+    controller,
+    'squadron',
+    setupContractsScreen,
+  );
 
   // State update handler with auto-save and multiplayer sync
   const onStateUpdate = (newState: typeof screenManager.campaignState) => {
@@ -115,28 +147,11 @@ export function setupStoreScreen(
   setupContractsScreen: (controller: CampaignController) => void,
 ): void {
   const { screenManager } = controller;
-
-  // Navigation handler for all screens
-  const onNavigate = (destination: NavDestination) => {
-    switch (destination) {
-      case 'squadron': {
-        goToSquadron(screenManager);
-        const squadronElement = getScreenElement(
-          screenManager,
-          Screen.SQUADRON,
-        );
-        setupSquadronScreen(controller, squadronElement, setupContractsScreen);
-        break;
-      }
-      case 'store':
-        // Already on store, no-op
-        break;
-      case 'contracts':
-        goToContracts(screenManager);
-        setupContractsScreen(controller);
-        break;
-    }
-  };
+  const onNavigate = createNavigationHandler(
+    controller,
+    'store',
+    setupContractsScreen,
+  );
 
   // State update handler with auto-save and multiplayer sync
   const onStateUpdate = (newState: typeof screenManager.campaignState) => {
@@ -152,6 +167,96 @@ export function setupStoreScreen(
   );
 }
 
+// =============================================================================
+// Accept Mission Handlers
+// =============================================================================
+
+/**
+ * Handle accept mission in multiplayer mode.
+ * Routes through the launch countdown flow.
+ */
+function handleMultiplayerAccept(
+  controller: CampaignController,
+  contract: Contract,
+  setupContracts: (ctrl: CampaignController) => void,
+): void {
+  const ctx = getLobbyContext();
+  if (!ctx) return;
+
+  const { screenManager } = controller;
+
+  // All ships are deployed in multiplayer (no squad selection modal)
+  const allShipIds = screenManager.campaignState.ships.map((s) => s.id);
+
+  startLaunchCountdown(ctx, contract.id, () => {
+    // Countdown complete — launch the mission
+    const stateWithAttempt = markContractAttempted(
+      screenManager.campaignState,
+      contract.id,
+    );
+    updateStateWithSync(screenManager, stateWithAttempt);
+    void autoSave(stateWithAttempt, 'mission-started');
+
+    startMission(screenManager, contract);
+    launchMission(controller, contract, allShipIds, setupContracts);
+  });
+}
+
+/**
+ * Handle accept mission in single-player mode.
+ * Shows squad selection modal, saves checkpoint, launches directly.
+ */
+async function handleSinglePlayerAccept(
+  controller: CampaignController,
+  contract: Contract,
+  setupContracts: (ctrl: CampaignController) => void,
+): Promise<void> {
+  const { screenManager } = controller;
+
+  // Show squad selection modal
+  const result = await showSquadSelection(
+    screenManager.campaignState,
+    contract,
+  );
+
+  if (!result.confirmed) {
+    // User cancelled, stay on contracts screen
+    return;
+  }
+
+  // Save checkpoint for non-ironman campaigns (allows retry on defeat)
+  if (!screenManager.campaignState.settings.ironmanMode) {
+    const slotId = getActiveSlotId();
+    if (slotId) {
+      try {
+        await saveCheckpoint(screenManager.campaignState, slotId);
+      } catch {
+        // Block mission start - don't risk campaign without checkpoint
+        showError('Unable to save checkpoint. Please try again.', 5000);
+        return;
+      }
+    }
+  }
+
+  // Mark contract as attempted (for "fresh" indicator)
+  const stateWithAttempt = markContractAttempted(
+    screenManager.campaignState,
+    contract.id,
+  );
+  updateStateWithSync(screenManager, stateWithAttempt);
+
+  // Await save before starting mission to ensure state is persisted
+  await autoSave(stateWithAttempt, 'mission-started');
+
+  // Start mission with selected ships
+  startMission(screenManager, contract);
+  launchMission(controller, contract, result.deployedShipIds, setupContracts);
+}
+
+// =============================================================================
+// Screen Setup
+// =============================================================================
+
 /**
  * Setup contracts screen with callbacks.
  *
@@ -165,76 +270,25 @@ export function setupContractsScreen(controller: CampaignController): void {
   const setupContracts = (ctrl: CampaignController) =>
     setupContractsScreen(ctrl);
 
+  const onNavigate = createNavigationHandler(
+    controller,
+    'contracts',
+    setupContracts,
+  );
+
   createContractsUI(
     contractsElement,
     screenManager.campaignState,
-    (destination) => {
-      // Navigation handler for contracts screen
-      switch (destination) {
-        case 'squadron': {
-          goToSquadron(screenManager);
-          const squadronElement = getScreenElement(
-            screenManager,
-            Screen.SQUADRON,
-          );
-          setupSquadronScreen(controller, squadronElement, setupContracts);
-          break;
-        }
-        case 'store': {
-          goToStore(screenManager);
-          const storeElement = getScreenElement(screenManager, Screen.STORE);
-          setupStoreScreen(controller, storeElement, setupContracts);
-          break;
-        }
-        case 'contracts':
-          // Already on contracts, no-op
-          break;
-      }
-    },
+    onNavigate,
     async (contract: Contract) => {
-      // Show squad selection modal
-      const result = await showSquadSelection(
-        screenManager.campaignState,
-        contract,
-      );
-
-      if (!result.confirmed) {
-        // User cancelled, stay on contracts screen
+      // In multiplayer, route through the launch countdown flow
+      if (isInLobby()) {
+        handleMultiplayerAccept(controller, contract, setupContracts);
         return;
       }
 
-      // Save checkpoint for non-ironman campaigns (allows retry on defeat)
-      if (!screenManager.campaignState.settings.ironmanMode) {
-        const slotId = getActiveSlotId();
-        if (slotId) {
-          try {
-            await saveCheckpoint(screenManager.campaignState, slotId);
-          } catch {
-            // Block mission start - don't risk campaign without checkpoint
-            showError('Unable to save checkpoint. Please try again.', 5000);
-            return;
-          }
-        }
-      }
-
-      // Mark contract as attempted (for "fresh" indicator)
-      const stateWithAttempt = markContractAttempted(
-        screenManager.campaignState,
-        contract.id,
-      );
-      updateStateWithSync(screenManager, stateWithAttempt);
-
-      // Await save before starting mission to ensure state is persisted
-      await autoSave(stateWithAttempt, 'mission-started');
-
-      // Start mission with selected ships
-      startMission(screenManager, contract);
-      launchMission(
-        controller,
-        contract,
-        result.deployedShipIds,
-        setupContracts,
-      );
+      // Single-player: launch directly
+      await handleSinglePlayerAccept(controller, contract, setupContracts);
     },
     () => {
       // Advance to next sector

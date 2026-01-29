@@ -5,7 +5,7 @@
  */
 
 import type {
-  ChatMessageMessage,
+  ChatMessage,
   PermissionUpdateMessage,
   ReadyStateMessage,
   ShipAssignmentMessage,
@@ -25,10 +25,10 @@ export function createReadyStateMessage(
 }
 
 /** Create a ChatMessage message */
-export function createChatMessageMessage(
+export function createChatMessage(
   fromPlayerId: string,
   text: string,
-): ChatMessageMessage {
+): ChatMessage {
   return {
     type: GameMessageType.ChatMessage,
     fromPlayerId,

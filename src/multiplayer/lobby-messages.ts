@@ -26,7 +26,7 @@ import {
 } from './lobby-state';
 import { DEFAULT_GUEST_PERMISSIONS, HOST_PERMISSIONS } from './permissions';
 import type {
-  ChatMessageMessage,
+  ChatMessage,
   GameMessage,
   GamePlayerInfo,
   PermissionUpdateMessage,
@@ -69,9 +69,7 @@ export function isReadyStateMessage(
 }
 
 /** Check if message is ChatMessage */
-export function isChatMessageMessage(
-  msg: GameMessage,
-): msg is ChatMessageMessage {
+export function isChatMessage(msg: GameMessage): msg is ChatMessage {
   return msg.type === GameMessageType.ChatMessage;
 }
 
@@ -254,7 +252,7 @@ export function handleReadyState(
  */
 export function handleChatMessage(
   state: LobbyState,
-  msg: ChatMessageMessage,
+  msg: ChatMessage,
 ): MessageHandlerResult {
   const player = state.players.find((p) => p.playerId === msg.fromPlayerId);
   const callsign = player?.callsign ?? 'Unknown';
@@ -368,7 +366,7 @@ export function processLobbyMessage(
   if (isReadyStateMessage(msg)) {
     return handleReadyState(state, msg);
   }
-  if (isChatMessageMessage(msg)) {
+  if (isChatMessage(msg)) {
     return handleChatMessage(state, msg);
   }
   if (isPermissionUpdateMessage(msg)) {
@@ -385,7 +383,7 @@ export function processLobbyMessage(
 // =============================================================================
 
 export {
-  createChatMessageMessage,
+  createChatMessage,
   createPermissionUpdateMessage,
   createReadyStateMessage,
   createShipAssignmentMessage,

@@ -15,6 +15,7 @@ import {
   PRIMARY_WEAPONS,
   type WeaponStats,
 } from '../../../data/weapons';
+import { canEditShip } from '../../../multiplayer/context-permissions';
 
 /** Effective range for beam weapons (full damage at this distance or closer) */
 const BEAM_EFFECTIVE_RANGE = 100;
@@ -181,10 +182,10 @@ export function renderPrimaryPopover(
     </div>
     ${ammoStats}
     <div class="manager-actions">
-      <button class="btn btn-small btn-change-weapon" data-ship="${shipId}" data-type="primary" data-index="${slotIndex}" ${hasAlternativePrimary(state, weapon.weaponType, weapon.bankSize) ? '' : 'disabled'}>
+      <button class="btn btn-small btn-change-weapon" data-ship="${shipId}" data-type="primary" data-index="${slotIndex}" ${hasAlternativePrimary(state, weapon.weaponType, weapon.bankSize) && canEditShip(shipId) ? '' : 'disabled'}>
         Change
       </button>
-      <button class="btn btn-small btn-unequip" data-ship="${shipId}" data-type="primary" data-index="${slotIndex}">
+      <button class="btn btn-small btn-unequip" data-ship="${shipId}" data-type="primary" data-index="${slotIndex}" ${canEditShip(shipId) ? '' : 'disabled'}>
         Unequip
       </button>
     </div>
@@ -237,10 +238,10 @@ export function renderSecondaryPopover(
       </div>
     </div>
     <div class="manager-actions">
-      <button class="btn btn-small btn-change-weapon" data-ship="${shipId}" data-type="secondary" data-index="${slotIndex}" ${hasAlternativeSecondary(state, weapon.weaponType, weapon.count) ? '' : 'disabled'}>
+      <button class="btn btn-small btn-change-weapon" data-ship="${shipId}" data-type="secondary" data-index="${slotIndex}" ${hasAlternativeSecondary(state, weapon.weaponType, weapon.count) && canEditShip(shipId) ? '' : 'disabled'}>
         Change
       </button>
-      <button class="btn btn-small btn-unequip" data-ship="${shipId}" data-type="secondary" data-index="${slotIndex}">
+      <button class="btn btn-small btn-unequip" data-ship="${shipId}" data-type="secondary" data-index="${slotIndex}" ${canEditShip(shipId) ? '' : 'disabled'}>
         Unequip
       </button>
     </div>

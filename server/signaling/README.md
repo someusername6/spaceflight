@@ -53,6 +53,22 @@ npm run test:signaling:cleanup
 | POST | `/rooms/:code/state` | Set room state (host only) |
 | POST | `/debug/cleanup` | Trigger cleanup (dev only) |
 
+## What the Server Tracks
+
+The signaling server tracks minimal state for room management:
+
+| Data | Purpose | Storage |
+|------|---------|---------|
+| Room metadata | Code, host, version, state (`lobby`/`playing`) | Per-room |
+| Peers in room | Capacity limits, event notifications | Per-room |
+| Pending signals | WebRTC SDP/ICE relay | TTL-based cleanup |
+| Room events | Join/leave/kick notifications | TTL-based cleanup |
+
+**Not tracked by the server:**
+- Player callsigns (exchanged via WebRTC after mesh forms)
+- Game state beyond lobby/playing
+- Player permissions or assignments
+
 ## Authentication
 
 All endpoints except `POST /rooms` and `GET /health` require a bearer token:

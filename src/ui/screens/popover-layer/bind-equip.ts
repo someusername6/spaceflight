@@ -15,6 +15,12 @@ import type {
   EquippedPrimary,
   EquippedSecondary,
 } from '../../../campaign/types';
+import {
+  requestEquipAction,
+  requestUnequipAction,
+  shouldUseActionRequest,
+} from '../../../multiplayer/action-client';
+import { canEditShip } from '../../../multiplayer/context-permissions';
 import type { ScreenAPI } from '../../framework/screen';
 import { getBankSize } from '../popover/equip';
 import { closeAll } from './bind-ammo';
@@ -59,6 +65,7 @@ export function bindChangeWeaponHandler(
     const slotType = el.dataset.type as 'primary' | 'secondary' | undefined;
     const slotIndexStr = el.dataset.index;
     if (!shipId || !slotType || !slotIndexStr) return;
+    if (!canEditShip(shipId)) return;
     const slotIndex = Number.parseInt(slotIndexStr, 10);
     const weaponType =
       content.type === 'primary'
@@ -124,15 +131,19 @@ export function bindUnequipHandler(
     const slotType = el.dataset.type as 'primary' | 'secondary' | undefined;
     const slotIndexStr = el.dataset.index;
     if (!shipId || !slotType || !slotIndexStr) return;
-    const slotIndex = Number.parseInt(slotIndexStr, 10);
 
     const campState = props.getCampaignState();
+    if (!canEditShip(shipId)) return;
+    const slotIndex = Number.parseInt(slotIndexStr, 10);
     const newState =
       slotType === 'primary'
         ? unequipPrimary(campState, shipId, slotIndex)
         : unequipSecondary(campState, shipId, slotIndex);
 
     props.onStateChange(newState);
+    if (shouldUseActionRequest()) {
+      void requestUnequipAction(campState, shipId, slotIndex, slotType);
+    }
     closeAll(api);
   });
 }
@@ -155,6 +166,7 @@ export function bindPickerItemHandler(
 
     if (!content) return;
     const campState = props.getCampaignState();
+    if (!canEditShip(content.shipId)) return;
     let newState: CampaignState | null = null;
 
     if (content.type === 'swap' && content.slotType === 'primary') {
@@ -200,6 +212,23 @@ export function bindPickerItemHandler(
 
     if (newState) {
       props.onStateChange(newState);
+      if (content.type === 'empty' && shouldUseActionRequest()) {
+        const si = findStorageIndex(campState, weaponType, 'primary');
+        const bs = getBankSize(
+          campState,
+          content.shipId,
+          'primary',
+          content.slotIndex,
+        );
+        void requestEquipAction(
+          campState,
+          content.shipId,
+          content.slotIndex,
+          si,
+          bs,
+          'primary',
+        );
+      }
       closeAll(api);
     }
   });
@@ -247,6 +276,7 @@ export function bindMissileEquipHandler(
 
     if (!content) return;
     const campState = props.getCampaignState();
+    if (!canEditShip(content.shipId)) return;
     let newState: CampaignState | null = null;
 
     if (content.type === 'swap' && content.slotType === 'secondary') {
@@ -294,6 +324,23 @@ export function bindMissileEquipHandler(
 
     if (newState) {
       props.onStateChange(newState);
+      if (content.type === 'empty' && shouldUseActionRequest()) {
+        const si = findStorageIndex(campState, weaponType, 'secondary');
+        const bs = getBankSize(
+          campState,
+          content.shipId,
+          'secondary',
+          content.slotIndex,
+        );
+        void requestEquipAction(
+          campState,
+          content.shipId,
+          content.slotIndex,
+          si,
+          bs,
+          'secondary',
+        );
+      }
       closeAll(api);
     }
   });

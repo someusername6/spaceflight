@@ -8,9 +8,11 @@
  * - Ready status (check/cross)
  * - Host indicator (star)
  * - Self highlight
+ * - Permissions indicator (for guests)
  */
 
 import type { LobbyPlayer } from '../../../multiplayer/lobby-state';
+import { getPermissionSummary } from '../../../multiplayer/permissions';
 import { escapeHtml } from '../../utils';
 
 /** Render ready indicator */
@@ -75,6 +77,24 @@ export function renderPlayerRow(
   `;
 }
 
+/** Render permissions indicator for guests */
+function renderPermissionsIndicator(
+  localPlayer: LobbyPlayer | undefined,
+): string {
+  if (!localPlayer || localPlayer.isHost) {
+    return '';
+  }
+
+  const summary = getPermissionSummary(localPlayer.permissions);
+
+  return `
+    <div class="permissions-indicator">
+      <span class="permissions-label">Your permissions:</span>
+      <span class="permissions-value">${escapeHtml(summary)}</span>
+    </div>
+  `;
+}
+
 /** Render the full players panel */
 export function renderPlayersPanel(
   players: LobbyPlayer[],
@@ -83,6 +103,7 @@ export function renderPlayersPanel(
 ): string {
   const playerCount = players.length;
   const readyCount = players.filter((p) => p.isReady).length;
+  const localPlayer = players.find((p) => p.playerId === localPlayerId);
 
   const playerRows = players
     .map((player) => {
@@ -93,6 +114,8 @@ export function renderPlayersPanel(
     })
     .join('');
 
+  const permissionsIndicator = renderPermissionsIndicator(localPlayer);
+
   return `
     <div class="players-panel">
       <div class="panel-header">
@@ -102,6 +125,7 @@ export function renderPlayersPanel(
       <div class="player-list">
         ${playerRows || '<div class="no-players">No players connected</div>'}
       </div>
+      ${permissionsIndicator}
     </div>
   `;
 }

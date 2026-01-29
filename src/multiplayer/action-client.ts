@@ -8,32 +8,25 @@
  * in multiplayer mode.
  */
 
+import { updateAndSyncCampaignState } from '../campaign/handlers/lobby-actions';
 import {
+  getCampaignSyncManager,
   getMessageRouter,
   isInLobby,
-  updateAndSyncCampaignState,
-} from '../campaign/handlers/lobby-handlers';
+} from '../campaign/handlers/lobby-context';
 import type { CampaignState } from '../campaign/types';
-import { processAction } from './action-processing';
+import {
+  type ActionResult,
+  processAction,
+  validateActionPermission,
+} from './action-processing';
 import { getMultiplayerContext } from './multiplayer-context';
 import type { ActionRequestData } from './protocol/messages';
 import { GameMessageType } from './protocol/types';
 
-// =============================================================================
-// Types
-// =============================================================================
-
-/** Result of an action request */
-export interface ActionClientResult {
-  success: boolean;
-  error?: string;
-  /** New campaign state (only for host, guests get state via CampaignSync) */
-  newState?: CampaignState;
-}
-
 /** Pending action request waiting for response */
 interface PendingRequest {
-  resolve: (result: ActionClientResult) => void;
+  resolve: (result: ActionResult) => void;
   timeout: ReturnType<typeof setTimeout>;
 }
 
@@ -76,7 +69,7 @@ function ensureResponseHandlerSetUp(): void {
     pendingRequests.delete(msg.requestId);
 
     // Resolve with result
-    const result: ActionClientResult = { success: msg.success };
+    const result: ActionResult = { success: msg.success };
     if (msg.error !== undefined) {
       result.error = msg.error;
     }
@@ -113,7 +106,7 @@ export function shouldUseActionRequest(): boolean {
 export async function sendAction(
   action: ActionRequestData,
   currentState: CampaignState,
-): Promise<ActionClientResult> {
+): Promise<ActionResult> {
   const context = getMultiplayerContext();
 
   // Not in multiplayer - should not be called
@@ -121,8 +114,20 @@ export async function sendAction(
     return { success: false, error: 'Not in multiplayer mode' };
   }
 
-  // Host: process directly and sync
+  // Host: validate permissions, then process directly and sync
   if (context.isHost) {
+    const syncManager = getCampaignSyncManager();
+    const players = syncManager?.getPlayers() ?? new Map();
+    const permissionError = validateActionPermission(
+      action,
+      context.playerId,
+      context.permissions,
+      players,
+    );
+    if (permissionError) {
+      return { success: false, error: permissionError };
+    }
+
     const result = processAction(action, currentState);
     if (result.success && result.newState) {
       updateAndSyncCampaignState(result.newState);
@@ -141,7 +146,7 @@ export async function sendAction(
 
   const requestId = nextRequestId++;
 
-  return new Promise<ActionClientResult>((resolve) => {
+  return new Promise<ActionResult>((resolve) => {
     // Set up timeout
     const timeout = setTimeout(() => {
       pendingRequests.delete(requestId);
@@ -184,7 +189,7 @@ export function requestBuyAction(
   itemType: 'ship' | 'primary' | 'secondary' | 'ammo',
   itemId: string,
   quantity = 1,
-): Promise<ActionClientResult> {
+): Promise<ActionResult> {
   return sendAction({ type: 'buy', itemType, itemId, quantity }, currentState);
 }
 
@@ -196,7 +201,7 @@ export function requestSellAction(
   itemType: 'ship' | 'primary' | 'secondary' | 'ammo' | 'scrap',
   itemId: string,
   quantity = 1,
-): Promise<ActionClientResult> {
+): Promise<ActionResult> {
   return sendAction({ type: 'sell', itemType, itemId, quantity }, currentState);
 }
 
@@ -210,7 +215,7 @@ export function requestEquipAction(
   storageIndex: number,
   bankSize: number,
   category: 'primary' | 'secondary',
-): Promise<ActionClientResult> {
+): Promise<ActionResult> {
   return sendAction(
     { type: 'equip', shipId, slotIndex, storageIndex, bankSize, category },
     currentState,
@@ -225,7 +230,7 @@ export function requestUnequipAction(
   shipId: string,
   slotIndex: number,
   category: 'primary' | 'secondary',
-): Promise<ActionClientResult> {
+): Promise<ActionResult> {
   return sendAction(
     { type: 'unequip', shipId, slotIndex, category },
     currentState,
@@ -239,7 +244,7 @@ export function requestConvertScrapAction(
   currentState: CampaignState,
   shipClass: string,
   quantity = 1,
-): Promise<ActionClientResult> {
+): Promise<ActionResult> {
   return sendAction(
     { type: 'convertScrap', shipClass, quantity },
     currentState,
@@ -252,6 +257,41 @@ export function requestConvertScrapAction(
 export function requestResupplyAction(
   currentState: CampaignState,
   shipId: string,
-): Promise<ActionClientResult> {
+): Promise<ActionResult> {
   return sendAction({ type: 'resupply', shipId }, currentState);
+}
+
+/**
+ * Request an assign pilot action.
+ */
+export function requestAssignPilotAction(
+  currentState: CampaignState,
+  pilotId: string,
+  shipId: string,
+): Promise<ActionResult> {
+  return sendAction({ type: 'assignPilot', pilotId, shipId }, currentState);
+}
+
+/**
+ * Request a deploy stored ship action.
+ */
+export function requestDeployStoredShipAction(
+  currentState: CampaignState,
+  pilotId: string,
+  storedShipIndex: number,
+): Promise<ActionResult> {
+  return sendAction(
+    { type: 'deployStoredShip', pilotId, storedShipIndex },
+    currentState,
+  );
+}
+
+/**
+ * Request a resupply all action.
+ */
+export function requestResupplyAllAction(
+  currentState: CampaignState,
+  commanderId: string,
+): Promise<ActionResult> {
+  return sendAction({ type: 'resupplyAll', commanderId }, currentState);
 }

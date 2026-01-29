@@ -7,6 +7,7 @@ import type {
   HireablePilot,
   SkillLevel,
 } from '../../../campaign/types';
+import { isHost } from '../../../multiplayer/context-permissions';
 
 /** Get skill description for display */
 function getSkillDescription(skill: SkillLevel): string {
@@ -32,6 +33,13 @@ export function renderRecruitViewer(
   state: CampaignState,
 ): string {
   const canAfford = state.credits >= recruit.price;
+  const hostOnly = !isHost();
+  const canHire = canAfford && !hostOnly;
+  const hireDisabled = canHire
+    ? ''
+    : hostOnly
+      ? 'disabled title="Only the host can hire recruits"'
+      : 'disabled';
 
   return `
     <div class="recruit-viewer">
@@ -55,7 +63,7 @@ export function renderRecruitViewer(
           class="btn btn-large btn-success btn-hire-pilot"
           id="btn-hire-recruit"
           data-recruit-id="${recruit.id}"
-          ${canAfford ? '' : 'disabled'}
+          ${hireDisabled}
         >
           Hire Pilot
         </button>

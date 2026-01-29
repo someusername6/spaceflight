@@ -41,25 +41,27 @@ export function canConvertScrap(): boolean {
  * Check if the current player can edit a specific ship.
  * Returns true in single-player mode.
  *
- * @param shipPilotId - The pilot ID assigned to the ship (or null if unassigned)
+ * @param shipId - The ID of the ship to check
  */
-export function canEditShip(shipPilotId: string | null): boolean {
+export function canEditShip(shipId: string | null): boolean {
   const context = getMultiplayerContext();
   if (!context) return true;
 
-  const { permissions, playerId } = context;
+  const { permissions, assignedShipId } = context;
 
   switch (permissions.shipEdit) {
     case 'none':
       return false;
     case 'own':
-      // Can edit if the ship's pilot is the player pilot for this player
-      // Player pilots have ID format "mp-pilot-{playerId}"
-      return shipPilotId === `mp-pilot-${playerId}`;
+      // Can edit only if this ship is assigned to the current player
+      return shipId !== null && shipId === assignedShipId;
     case 'any':
       return true;
-    default:
+    default: {
+      // Exhaustive check - will error if new shipEdit types are added
+      permissions.shipEdit satisfies never;
       return false;
+    }
   }
 }
 
@@ -71,4 +73,14 @@ export function canEditAnyShip(): boolean {
   const context = getMultiplayerContext();
   if (!context) return true;
   return context.permissions.shipEdit !== 'none';
+}
+
+/**
+ * Check if the current player is the host.
+ * Returns true in single-player mode (no multiplayer context).
+ */
+export function isHost(): boolean {
+  const context = getMultiplayerContext();
+  if (!context) return true;
+  return context.isHost;
 }

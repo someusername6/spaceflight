@@ -144,18 +144,43 @@ function showScreen(manager: ScreenManager, screen: Screen): void {
   manager.currentScreen = screen;
 }
 
+/**
+ * Screens that share a nav bar and are re-rendered via setup*Screen() on
+ * every visit. Their hidden DOM must be cleared so duplicate nav-bar IDs
+ * don't accumulate across the page. Overlay screens (settings, replays)
+ * are excluded because they return to the previous screen without re-setup.
+ */
+const NAV_SCREENS: readonly Screen[] = [
+  Screen.LOBBY,
+  Screen.SQUADRON,
+  Screen.STORE,
+  Screen.CONTRACTS,
+];
+
+/** Clear the innerHTML of all nav-bar screens except the given target. */
+function clearOtherNavScreens(manager: ScreenManager, target: Screen): void {
+  for (const s of NAV_SCREENS) {
+    if (s === target) continue;
+    const el = manager.container.querySelector<HTMLElement>(`#screen-${s}`);
+    if (el) el.innerHTML = '';
+  }
+}
+
 /** Transition to squadron screen */
 export function goToSquadron(manager: ScreenManager): void {
+  clearOtherNavScreens(manager, Screen.SQUADRON);
   showScreen(manager, Screen.SQUADRON);
 }
 
 /** Transition to store screen */
 export function goToStore(manager: ScreenManager): void {
+  clearOtherNavScreens(manager, Screen.STORE);
   showScreen(manager, Screen.STORE);
 }
 
 /** Transition to contracts screen */
 export function goToContracts(manager: ScreenManager): void {
+  clearOtherNavScreens(manager, Screen.CONTRACTS);
   showScreen(manager, Screen.CONTRACTS);
 }
 
@@ -294,6 +319,7 @@ export function goBackFromRoomCreated(manager: ScreenManager): void {
 /** Transition to lobby screen (remembers previous screen for back navigation) */
 export function goToLobby(manager: ScreenManager): void {
   manager.previousScreen = manager.currentScreen;
+  clearOtherNavScreens(manager, Screen.LOBBY);
   showScreen(manager, Screen.LOBBY);
 }
 

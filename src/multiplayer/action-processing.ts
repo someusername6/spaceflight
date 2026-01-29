@@ -6,11 +6,14 @@
  */
 
 import {
+  assignPilotToShip,
+  assignPilotToStoredShip,
   equipPrimary,
   equipSecondary,
   unequipPrimary,
   unequipSecondary,
 } from '../campaign/loadout';
+import { resupplyAllShipsConstrained } from '../campaign/resupply/resupply-constrained';
 import { resupplyShipConstrained } from '../campaign/resupply/resupply-ship';
 import {
   buyPrimaryWeapon,
@@ -26,8 +29,12 @@ import { buyAmmo, sellAmmo } from '../campaign/store/store-ammo';
 import type { CampaignState } from '../campaign/types';
 import type {
   ActionRequestData,
+  BuyAction,
+  EquipAction,
   GamePlayerInfo,
   Permission,
+  SellAction,
+  UnequipAction,
 } from './protocol/messages';
 
 // =============================================================================
@@ -45,6 +52,31 @@ export interface ActionResult {
 // =============================================================================
 // Permission Validation
 // =============================================================================
+
+/**
+ * Validate ship edit permission for a specific ship.
+ * Used by equip, unequip, and resupply actions.
+ */
+function validateShipEditPermission(
+  playerId: string,
+  shipId: string,
+  permissions: Permission,
+  players: Map<string, GamePlayerInfo>,
+): { allowed: boolean; reason?: string } {
+  if (permissions.shipEdit === 'none') {
+    return {
+      allowed: false,
+      reason: 'You do not have permission to edit ship loadouts',
+    };
+  }
+  if (permissions.shipEdit === 'own') {
+    const playerInfo = players.get(playerId);
+    if (!playerInfo || playerInfo.shipId !== shipId) {
+      return { allowed: false, reason: 'You can only edit your own ship' };
+    }
+  }
+  return { allowed: true };
+}
 
 /**
  * Check if a player has permission to perform an action.
@@ -71,28 +103,17 @@ export function validateActionPermission(
 
     case 'equip':
     case 'unequip': {
-      if (permissions.shipEdit === 'none') {
-        return 'You do not have permission to edit ship loadouts';
+      const result = validateShipEditPermission(
+        playerId,
+        action.shipId,
+        permissions,
+        players,
+      );
+      if (!result.allowed) {
+        return result.reason ?? 'Ship edit permission denied';
       }
-      if (permissions.shipEdit === 'own') {
-        // Check if player owns the ship
-        const playerInfo = players.get(playerId);
-        if (!playerInfo || playerInfo.shipId !== action.shipId) {
-          return 'You can only edit your own ship';
-        }
-      }
-      // 'any' permission allows editing any ship
       break;
     }
-
-    case 'assignShip':
-      // Players can only assign themselves to ships.
-      // Ship assignment updates GamePlayerInfo (handled by CampaignSyncManager),
-      // not CampaignState, so no additional permission check is needed here.
-      if (action.playerId !== playerId) {
-        return 'You can only assign ships to yourself';
-      }
-      break;
 
     case 'convertScrap':
       if (!permissions.canConvertScrap) {
@@ -101,18 +122,30 @@ export function validateActionPermission(
       break;
 
     case 'resupply': {
-      // Check ship edit permission for resupply
-      if (permissions.shipEdit === 'none') {
-        return 'You do not have permission to resupply ships';
-      }
-      if (permissions.shipEdit === 'own') {
-        const playerInfo = players.get(playerId);
-        if (!playerInfo || playerInfo.shipId !== action.shipId) {
-          return 'You can only resupply your own ship';
-        }
+      const result = validateShipEditPermission(
+        playerId,
+        action.shipId,
+        permissions,
+        players,
+      );
+      if (!result.allowed) {
+        return result.reason ?? 'Ship edit permission denied';
       }
       break;
     }
+
+    case 'assignPilot':
+    case 'deployStoredShip':
+      if (permissions.shipEdit === 'none') {
+        return 'You do not have permission to assign pilots';
+      }
+      break;
+
+    case 'resupplyAll':
+      if (permissions.shipEdit === 'none') {
+        return 'You do not have permission to resupply ships';
+      }
+      break;
   }
 
   return null; // No permission error
@@ -151,11 +184,6 @@ export function processAction(
         newState = processUnequipAction(action, state);
         break;
 
-      case 'assignShip':
-        // Ship assignment updates GamePlayerInfo, not CampaignState.
-        // The caller (CampaignSyncManager) handles player info separately.
-        return { success: true, newState: state };
-
       case 'convertScrap':
         newState = convertScrapToShip(state, action.shipClass);
         break;
@@ -163,6 +191,27 @@ export function processAction(
       case 'resupply': {
         const result = resupplyShipConstrained(state, action.shipId);
         newState = result.state;
+        break;
+      }
+
+      case 'assignPilot':
+        newState = assignPilotToShip(state, action.pilotId, action.shipId);
+        break;
+
+      case 'deployStoredShip':
+        newState = assignPilotToStoredShip(
+          state,
+          action.pilotId,
+          action.storedShipIndex,
+        );
+        break;
+
+      case 'resupplyAll': {
+        const resupplyAllResult = resupplyAllShipsConstrained(
+          state,
+          action.commanderId,
+        );
+        newState = resupplyAllResult.state;
         break;
       }
 
@@ -191,7 +240,7 @@ export function processAction(
 // =============================================================================
 
 function processBuyAction(
-  action: { type: 'buy'; itemType: string; itemId: string; quantity: number },
+  action: BuyAction,
   state: CampaignState,
 ): CampaignState {
   switch (action.itemType) {
@@ -209,7 +258,7 @@ function processBuyAction(
 }
 
 function processSellAction(
-  action: { type: 'sell'; itemType: string; itemId: string; quantity: number },
+  action: SellAction,
   state: CampaignState,
 ): CampaignState {
   // itemId is the storage index for most items
@@ -234,14 +283,7 @@ function processSellAction(
 }
 
 function processEquipAction(
-  action: {
-    type: 'equip';
-    shipId: string;
-    slotIndex: number;
-    storageIndex: number;
-    bankSize: number;
-    category: 'primary' | 'secondary';
-  },
+  action: EquipAction,
   state: CampaignState,
 ): CampaignState {
   // Validate storage index
@@ -271,12 +313,7 @@ function processEquipAction(
 }
 
 function processUnequipAction(
-  action: {
-    type: 'unequip';
-    shipId: string;
-    slotIndex: number;
-    category: 'primary' | 'secondary';
-  },
+  action: UnequipAction,
   state: CampaignState,
 ): CampaignState {
   if (action.category === 'primary') {

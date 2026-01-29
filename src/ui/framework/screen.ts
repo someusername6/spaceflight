@@ -215,8 +215,9 @@ export function createScreen<S, P>(
     globalListeners.length = 0;
   };
 
-  /** Render and bind */
+  /** Render and bind. Skips if element is hidden (navigated away). */
   const render = () => {
+    if (element.style.display === 'none') return;
     clearHandlers();
     element.innerHTML = screen.render(state, props);
     screen.bind(createAPI(), props);

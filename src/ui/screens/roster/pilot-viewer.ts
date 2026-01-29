@@ -13,6 +13,7 @@ import type {
   Pilot,
   SkillLevel,
 } from '../../../campaign/types';
+import { canEditShip } from '../../../multiplayer/context-permissions';
 import { getShipIconPath, iconErrorHandler } from '../../ship/viewer';
 
 /** Get display label for the next skill level */
@@ -117,13 +118,18 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
     : '';
 
   // Unassign button for assigned pilots (including commander)
+  const canUnassign = canEditShip(pilot.id);
+  const unassignDisabled = canUnassign
+    ? ''
+    : 'disabled title="You do not have permission to edit this ship"';
   const unassignSection =
     isAssigned && currentShip
       ? `
         <div class="pilot-unassign-section">
           <button class="btn btn-large btn-danger btn-unassign-pilot"
                   data-pilot="${pilot.id}"
-                  data-ship="${currentShip.id}">
+                  data-ship="${currentShip.id}"
+                  ${unassignDisabled}>
             Unassign Pilot
           </button>
         </div>

@@ -7,6 +7,7 @@ import {
   needsAmmoResupply,
 } from '../../../campaign/resupply/resupply-constrained';
 import type { CampaignState, OwnedShip } from '../../../campaign/types';
+import { canEditShip } from '../../../multiplayer/context-permissions';
 import { renderShipStatsRows } from '../../ship/stats';
 import { renderShipViewer } from '../../ship/viewer';
 
@@ -56,19 +57,25 @@ export function renderShipViewerWithActions(
 ): string {
   let viewerHtml = renderShipViewer(ship, state);
 
+  // Check if current player can edit this ship
+  const canEdit = canEditShip(ship.id);
+  const disabledAttr = canEdit
+    ? ''
+    : 'disabled title="You do not have permission to edit this ship"';
+
   // Build header right content with buttons (resupply only for ammo/missiles, not empty slots)
   const showResupply = needsAmmoResupply(ship);
   let resupplyBtn = '';
   if (showResupply) {
     const estimate = estimateShipResupplyCost(state, ship.id);
     const costLabel = estimate.cost > 0 ? ` (${estimate.cost} cr)` : '';
-    resupplyBtn = `<button class="btn btn-small btn-resupply-ship" data-ship="${ship.id}">Resupply${costLabel}</button>`;
+    resupplyBtn = `<button class="btn btn-small btn-resupply-ship" data-ship="${ship.id}" ${disabledAttr}>Resupply${costLabel}</button>`;
   }
 
   const headerButtons = ship.pilot
     ? `<div class="schematic-header-right">
         ${resupplyBtn}
-        <button class="btn btn-small btn-change-ship" data-pilot="${ship.pilot.id}" data-ship="${ship.id}">Change Ship</button>
+        <button class="btn btn-small btn-change-ship" data-pilot="${ship.pilot.id}" data-ship="${ship.id}" ${disabledAttr}>Change Ship</button>
        </div>`
     : '';
 

@@ -158,11 +158,12 @@ This roadmap breaks implementation into phases, each scoped to complete in a sin
 
 ### Design Philosophy
 
-The signaling server is intentionally minimal:
+The signaling server is minimal but tracks room-level state:
 - **Relays WebRTC signals** (SDP offers/answers, ICE candidates)
-- **Does not track peer connections** - mesh formation handled by clients
+- **Tracks room state** (`lobby` | `playing`) to prevent mid-game joins
+- **Tracks peers in room** for capacity limits and event notifications
 - **Does not track callsigns** - identity managed by clients via WebRTC
-- **HTTP polling** - simple, stateless, Lambda-compatible
+- **HTTP polling** - simple, Lambda-compatible
 
 ### Deliverables
 
@@ -613,8 +614,8 @@ This phase implements **game-specific** messages only.
    - Chat messages: "10... 9... 8..." etc.
    - Abort on any player becoming unready
    - LaunchAborted message with reason
-   - **Esc menu during countdown:** Disabled (or opens without auto-unready)
-   - Only explicit "Cancel" button or "Unready" can abort
+   - **Esc menu during countdown:** Disabled
+   - Only explicit "Cancel" button or "Unready" can abort; pressing Esc is like pressing unready.
 
 4. **Mission start sync** (`src/multiplayer/mission-sync.ts`)
    - MissionStarted message with seed + contractId
@@ -639,12 +640,12 @@ This phase implements **game-specific** messages only.
 
 ### Success Criteria
 
-- [ ] Only host can accept/refresh contracts and advance sector
-- [ ] Launch blocked until all players ready
-- [ ] Countdown displays in chat (10... 9... 8...)
-- [ ] Unready player aborts countdown with message
-- [ ] Mission starts identically on all clients (verify with hash)
-- [ ] Room state updated to prevent mid-mission joins
+- [x] Only host can accept/refresh contracts and advance sector
+- [x] Launch blocked until all players ready
+- [x] Countdown displays in chat (10... 9... 8...)
+- [x] Unready player aborts countdown with message
+- [x] Mission starts identically on all clients (verify with hash)
+- [x] Room state updated to prevent mid-mission joins
 
 ---
 

@@ -6,17 +6,19 @@
  */
 
 import { MAX_SECTOR } from '../../campaign/types';
+import { isMultiplayerMode } from '../../multiplayer/multiplayer-context';
 import type { ScreenAPI } from '../framework/screen';
 
 /** Navigation destinations */
-export type NavDestination = 'squadron' | 'store' | 'contracts';
+export type NavDestination = 'lobby' | 'squadron' | 'store' | 'contracts';
 
 /** Props for nav bar rendering */
 export interface NavBarProps {
   activeTab: NavDestination;
   credits: number;
   sector: number;
-  onNavigate: (destination: NavDestination) => void;
+  /** Navigation callback. Optional for render-only use (binding handled separately). */
+  onNavigate?: (destination: NavDestination) => void;
   onPause?: () => void;
 }
 
@@ -43,16 +45,24 @@ function renderStatusDisplay(credits: number, sector: number): string {
 export function renderNavBar(props: NavBarProps): string {
   const { activeTab, credits, sector, onPause } = props;
 
-  const tabs: { id: NavDestination; label: string; icon: string }[] = [
+  const tabs: { id: NavDestination; label: string; icon: string }[] = [];
+
+  // Show lobby tab only in multiplayer mode
+  if (isMultiplayerMode()) {
+    tabs.push({ id: 'lobby', label: 'LOBBY', icon: '◇' });
+  }
+
+  tabs.push(
     { id: 'squadron', label: 'SQUADRON', icon: '◈' },
     { id: 'store', label: 'STORE', icon: '⬡' },
     { id: 'contracts', label: 'CONTRACTS', icon: '▶' },
-  ];
+  );
 
   const tabsHtml = tabs
     .map(
       (tab) => `
       <button
+        id="nav-${tab.id}"
         class="nav-tab ${activeTab === tab.id ? 'active' : ''}"
         data-nav="${tab.id}"
         role="tab"

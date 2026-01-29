@@ -82,6 +82,25 @@ const QUICK_TESTS = [
   'ui/framework/test-screen-state.mjs',
   'ui/common/test-nav-bar.mjs',
   'ui/screens/test-ship-picker.mjs',
+
+  // Multiplayer unit tests
+  'multiplayer/unit/test-encoding-lobby.mjs',
+  'multiplayer/unit/test-encoding-session.mjs',
+  'multiplayer/unit/test-lobby-messages.mjs',
+  'multiplayer/unit/test-lobby-messages-encoding.mjs',
+  'multiplayer/unit/test-lobby-messages-handlers.mjs',
+  'multiplayer/unit/test-lobby-state.mjs',
+  'multiplayer/unit/test-permissions.mjs',
+  'multiplayer/unit/test-callsign-storage.mjs',
+  'multiplayer/unit/test-ship-assignment.mjs',
+  'multiplayer/unit/test-ship-assignment-queries.mjs',
+  'multiplayer/unit/test-protocol-router.mjs',
+  'multiplayer/unit/test-protocol-manager.mjs',
+  'multiplayer/unit/test-protocol-sync.mjs',
+  'multiplayer/unit/test-protocol-validation.mjs',
+  'multiplayer/unit/test-input-format.mjs',
+  'multiplayer/unit/test-game-adapter.mjs',
+  'multiplayer/unit/test-session-sync.mjs',
 ];
 
 // Balance/simulation tests - run multiple fights, take longer

@@ -15,7 +15,18 @@ import {
   resupplyShipConstrained,
 } from '../../../campaign/resupply/resupply-constrained';
 import type { CampaignState } from '../../../campaign/types';
-import { canEditShip } from '../../../multiplayer/context-permissions';
+import {
+  requestAssignPilotAction,
+  requestDeployStoredShipAction,
+  requestResupplyAction,
+  requestResupplyAllAction,
+  shouldUseActionRequest,
+} from '../../../multiplayer/action-client';
+import {
+  canEditAnyShip,
+  canEditShip,
+  isHost,
+} from '../../../multiplayer/context-permissions';
 import type { NavDestination } from '../../common/nav-bar';
 import { showNotification } from '../../common/notification';
 import type { ScreenAPI } from '../../framework/screen';
@@ -160,6 +171,9 @@ export function bindSquadronEvents(
     const result = resupplyShipConstrained(props.campaignState, shipId);
     if (result.state !== props.campaignState) {
       updateCampaignState(api, props, result.state);
+      if (shouldUseActionRequest()) {
+        void requestResupplyAction(props.campaignState, shipId);
+      }
       const type = result.success ? 'success' : 'warning';
       for (const msg of result.messages) {
         showNotification(msg, { type });
@@ -173,12 +187,23 @@ export function bindSquadronEvents(
     const commanderId = el.dataset.commander;
     if (!commanderId) return;
 
+    // Check permission
+    if (!canEditAnyShip()) {
+      showNotification('You do not have permission to resupply ships', {
+        type: 'warning',
+      });
+      return;
+    }
+
     const result = resupplyAllShipsConstrained(
       props.campaignState,
       commanderId,
     );
     if (result.state !== props.campaignState) {
       updateCampaignState(api, props, result.state);
+      if (shouldUseActionRequest()) {
+        void requestResupplyAllAction(props.campaignState, commanderId);
+      }
       const type = result.success ? 'success' : 'warning';
       for (const msg of result.messages) {
         showNotification(msg, { type });
@@ -193,6 +218,14 @@ export function bindSquadronEvents(
     const shipId = el.dataset.ship;
     if (!pilotId || !shipId) return;
 
+    // Check permission
+    if (!canEditAnyShip()) {
+      showNotification('You do not have permission to assign pilots', {
+        type: 'warning',
+      });
+      return;
+    }
+
     const newState = assignPilotToShip(props.campaignState, pilotId, shipId);
     if (newState !== props.campaignState) {
       updateCampaignState(
@@ -202,6 +235,9 @@ export function bindSquadronEvents(
         { type: 'deployed', id: shipId },
         'loadout',
       );
+      if (shouldUseActionRequest()) {
+        void requestAssignPilotAction(props.campaignState, pilotId, shipId);
+      }
     }
   });
 
@@ -214,6 +250,14 @@ export function bindSquadronEvents(
       10,
     );
     if (!pilotId) return;
+
+    // Check permission
+    if (!canEditAnyShip()) {
+      showNotification('You do not have permission to deploy ships', {
+        type: 'warning',
+      });
+      return;
+    }
 
     const newState = assignPilotToStoredShip(
       props.campaignState,
@@ -233,13 +277,26 @@ export function bindSquadronEvents(
       } else {
         updateCampaignState(api, props, newState);
       }
+      if (shouldUseActionRequest()) {
+        void requestDeployStoredShipAction(
+          props.campaignState,
+          pilotId,
+          storedShipIndex,
+        );
+      }
     }
   });
 
-  // Hire recruit
+  // Hire recruit (host only)
   api.on('#btn-hire-recruit', 'click', (_e, el) => {
     const recruitId = el.dataset.recruitId;
     if (!recruitId) return;
+
+    // Only host can hire recruits
+    if (!isHost()) {
+      showNotification('Only the host can hire recruits', { type: 'warning' });
+      return;
+    }
 
     const recruit = props.campaignState.availableRecruits.find(
       (r) => r.id === recruitId,

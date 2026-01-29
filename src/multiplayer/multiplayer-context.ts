@@ -17,6 +17,8 @@ export interface MultiplayerContext {
   permissions: Permission;
   /** Whether this player is the host */
   isHost: boolean;
+  /** ID of ship assigned to this player (null if unassigned) */
+  assignedShipId: string | null;
 }
 
 /** Module-level context (null in single-player mode) */

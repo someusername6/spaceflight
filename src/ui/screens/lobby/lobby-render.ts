@@ -8,6 +8,7 @@
  */
 
 import type { LobbyState } from '../../../multiplayer/lobby-state';
+import { renderNavBar } from '../../common/nav-bar';
 import { escapeHtml } from '../../utils';
 import { renderChatPanel } from './chat-panel';
 import { renderPlayersPanel } from './players-panel';
@@ -76,6 +77,8 @@ function renderError(errorMessage: string): string {
 /** Extended state with UI-only fields */
 export interface LobbyViewState extends LobbyState {
   copied: boolean;
+  credits: number;
+  currentSector: number;
 }
 
 /** Render the full lobby view */
@@ -103,22 +106,31 @@ export function renderLobbyView(state: LobbyViewState): string {
     ? renderError(state.errorMessage)
     : '';
 
+  const navBar = renderNavBar({
+    activeTab: 'lobby',
+    credits: state.credits,
+    sector: state.currentSector,
+  });
+
   return `
-    <div class="lobby-screen scanline-overlay-screen">
-      <div class="lobby-wrapper">
-        <div class="lobby-content">
-          ${roomCodeHeader}
-          <div class="lobby-main">
-            <div class="lobby-left">
-              ${playersPanel}
+    <div class="campaign-page">
+      ${navBar}
+      <div class="lobby-screen scanline-overlay-screen">
+        <div class="lobby-wrapper">
+          <div class="lobby-content">
+            ${roomCodeHeader}
+            <div class="lobby-main">
+              <div class="lobby-left">
+                ${playersPanel}
+              </div>
+              <div class="lobby-right">
+                ${chatPanel}
+              </div>
             </div>
-            <div class="lobby-right">
-              ${chatPanel}
-            </div>
+            ${actions}
           </div>
-          ${actions}
+          ${errorOverlay}
         </div>
-        ${errorOverlay}
       </div>
     </div>
   `;

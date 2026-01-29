@@ -21,10 +21,8 @@ import {
   type ActionRequestMessage,
   type ActionResponseMessage,
   type CallsignAnnounceMessage,
-  type CallsignChangedMessage,
-  type CallsignChangeRequestMessage,
   type CampaignSyncMessage,
-  type ChatMessageMessage,
+  type ChatMessage,
   type ContractAcceptedMessage,
   type GameMessage,
   GameMessageType,
@@ -83,10 +81,6 @@ export function encodeMessage(msg: GameMessage): Uint8Array {
       return encodeKickNotification(msg);
     case GameMessageType.CallsignAnnounce:
       return encodeCallsignAnnounce(msg);
-    case GameMessageType.CallsignChangeRequest:
-      return encodeCallsignChangeRequest(msg);
-    case GameMessageType.CallsignChanged:
-      return encodeCallsignChanged(msg);
     default: {
       const exhaustive: never = msg;
       throw new Error(`Unknown message type: ${exhaustive}`);
@@ -138,7 +132,7 @@ function encodePlayerLeft(msg: PlayerLeftExtMessage): Uint8Array {
   return wb.buffer;
 }
 
-function encodeChatMessage(msg: ChatMessageMessage): Uint8Array {
+function encodeChatMessage(msg: ChatMessage): Uint8Array {
   const size = 1 + stringSize(msg.fromPlayerId) + stringSize(msg.text) + 8;
   const wb = createWriteBuffer(size);
   writeByte(wb, msg.type);
@@ -241,11 +235,12 @@ function encodeLaunchAborted(msg: LaunchAbortedMessage): Uint8Array {
 }
 
 function encodeMissionStarted(msg: MissionStartedMessage): Uint8Array {
-  const size = 1 + stringSize(msg.contractId) + 4;
+  const size = 1 + stringSize(msg.contractId) + 4 + 4;
   const wb = createWriteBuffer(size);
   writeByte(wb, msg.type);
   writeString(wb, msg.contractId);
   writeUint32(wb, msg.seed);
+  writeUint32(wb, msg.campaignStateHash);
   return wb.buffer;
 }
 
@@ -285,29 +280,5 @@ function encodeCallsignAnnounce(msg: CallsignAnnounceMessage): Uint8Array {
   const wb = createWriteBuffer(size);
   writeByte(wb, msg.type);
   writeString(wb, msg.callsign);
-  return wb.buffer;
-}
-
-function encodeCallsignChangeRequest(
-  msg: CallsignChangeRequestMessage,
-): Uint8Array {
-  const size = 1 + stringSize(msg.newCallsign);
-  const wb = createWriteBuffer(size);
-  writeByte(wb, msg.type);
-  writeString(wb, msg.newCallsign);
-  return wb.buffer;
-}
-
-function encodeCallsignChanged(msg: CallsignChangedMessage): Uint8Array {
-  const size =
-    1 +
-    stringSize(msg.playerId) +
-    stringSize(msg.oldCallsign) +
-    stringSize(msg.newCallsign);
-  const wb = createWriteBuffer(size);
-  writeByte(wb, msg.type);
-  writeString(wb, msg.playerId);
-  writeString(wb, msg.oldCallsign);
-  writeString(wb, msg.newCallsign);
   return wb.buffer;
 }

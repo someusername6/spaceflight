@@ -7,11 +7,8 @@ import {
   getSectorAdvanceCost,
   isCommanderAssigned,
 } from '../../campaign/state';
-import {
-  type CampaignState,
-  type Contract,
-  MAX_SECTOR,
-} from '../../campaign/types';
+import type { CampaignState, Contract } from '../../campaign/types';
+import { isHost } from '../../multiplayer/context-permissions';
 import {
   bindNavBar,
   type NavDestination,
@@ -23,6 +20,11 @@ import {
   type ScreenAPI,
   type ScreenHandle,
 } from '../framework/screen';
+import {
+  renderAdvanceButton,
+  renderRefreshButton,
+  renderRetireButton,
+} from './contracts-buttons';
 import { generateContracts } from './contracts-data';
 import {
   renderContractDetail,
@@ -70,6 +72,10 @@ export interface ContractsUI {
 export type { NavDestination } from '../common/nav-bar';
 export { generateContracts };
 
+// =============================================================================
+// Screen Component
+// =============================================================================
+
 /** Contracts screen component */
 const ContractsScreenComponent: Screen<ContractsState, ContractsProps> = {
   render(state, props) {
@@ -82,9 +88,9 @@ const ContractsScreenComponent: Screen<ContractsState, ContractsProps> = {
       onNavigate,
     } = props;
     const currentSector = campaignState.currentSector;
-    const canAdvance = currentSector < MAX_SECTOR;
     const canAffordRefresh = campaignState.credits >= refreshCost;
     const canAffordAdvance = campaignState.credits >= advanceCost;
+    const isNotHost = !isHost();
 
     const navBar = renderNavBar({
       activeTab: 'contracts',
@@ -96,10 +102,9 @@ const ContractsScreenComponent: Screen<ContractsState, ContractsProps> = {
     const selectedContract = state.selectedContractId
       ? contracts.find((c) => c.id === state.selectedContractId)
       : null;
-
     const canLaunch = isCommanderAssigned(campaignState);
 
-    // Pool counter showing completed missions (no total shown for replayability)
+    // Pool counter
     const completedCount = campaignState.sectorMissionsCompleted;
     const completedText =
       completedCount === 0
@@ -107,48 +112,11 @@ const ContractsScreenComponent: Screen<ContractsState, ContractsProps> = {
         : completedCount === 1
           ? '1 contract completed'
           : `${completedCount} contracts completed`;
-    // Sector 5 has no replay penalty (final sector)
     const replayText =
       currentSector >= 5 ? 'Replay mode' : 'Replay mode (50% rewards)';
     const poolCounter = isReplayMode
       ? `<div class="contracts-pool-counter replay">${replayText}</div>`
       : `<div class="contracts-pool-counter">${completedText}</div>`;
-
-    // Refresh button
-    const refreshButton = `
-      <button
-        class="btn btn-secondary contracts-refresh-btn ${!canAffordRefresh ? 'disabled' : ''}"
-        id="btn-refresh-contracts"
-        ${!canAffordRefresh ? 'disabled' : ''}
-        title="${canAffordRefresh ? 'Get different contracts' : 'Not enough credits'}"
-      >
-        Refresh (${refreshCost} cr)
-      </button>
-    `;
-
-    // Advance sector button (only show if not at max sector)
-    const advanceButton = canAdvance
-      ? `<button
-           class="btn btn-secondary contracts-advance-btn ${!canAffordAdvance ? 'disabled' : ''}"
-           id="btn-advance-sector"
-           ${!canAffordAdvance ? 'disabled' : ''}
-           title="${canAffordAdvance ? `Advance to sector ${currentSector + 1}` : 'Not enough credits'}"
-         >
-           Advance&nbsp;to&nbsp;Sector&nbsp;${currentSector + 1} (${advanceCost.toLocaleString()}&nbsp;cr)&nbsp;→
-         </button>`
-      : '';
-
-    // Retire button (only show at max sector)
-    const retireButton =
-      currentSector >= MAX_SECTOR
-        ? `<button
-             class="btn btn-primary contracts-retire-btn"
-             id="btn-retire"
-             title="End your campaign and retire"
-           >
-             Retire Squadron
-           </button>`
-        : '';
 
     return `
       <div class="campaign-page">
@@ -159,9 +127,9 @@ const ContractsScreenComponent: Screen<ContractsState, ContractsProps> = {
               ${poolCounter}
               ${contracts.map((c) => renderContractListItem(c, c.id === state.selectedContractId, isReplayMode)).join('')}
               <div class="contracts-actions">
-                ${refreshButton}
-                ${advanceButton}
-                ${retireButton}
+                ${renderRefreshButton(refreshCost, canAffordRefresh, isNotHost)}
+                ${renderAdvanceButton(currentSector, advanceCost, canAffordAdvance, isNotHost)}
+                ${renderRetireButton(currentSector, isNotHost)}
               </div>
             </aside>
             <section class="contracts-detail-panel" aria-label="Contract details">
@@ -199,8 +167,11 @@ const ContractsScreenComponent: Screen<ContractsState, ContractsProps> = {
       }
     });
 
-    // Accept mission button (launches mission)
+    // Accept mission button (launches mission) - host only in multiplayer
     api.on('#btn-accept-mission', 'click', () => {
+      // Guard: only host can accept in multiplayer
+      if (!isHost()) return;
+
       const state = api.getState();
       if (state.selectedContractId) {
         const contract = contracts.find(
@@ -217,13 +188,16 @@ const ContractsScreenComponent: Screen<ContractsState, ContractsProps> = {
       onNavigate('squadron');
     });
 
-    // Refresh contracts button
+    // Refresh contracts button - host only in multiplayer
     api.on('#btn-refresh-contracts', 'click', () => {
+      if (!isHost()) return;
       onRefresh();
     });
 
-    // Advance sector button - show confirmation modal
+    // Advance sector button - show confirmation modal - host only in multiplayer
     api.on('#btn-advance-sector', 'click', () => {
+      if (!isHost()) return;
+
       const advanceCost = props.advanceCost;
       const playerCredits = props.campaignState.credits;
       showSectorAdvanceModal(currentSector, advanceCost, playerCredits).then(
@@ -235,8 +209,10 @@ const ContractsScreenComponent: Screen<ContractsState, ContractsProps> = {
       );
     });
 
-    // Retire button - show retirement modal (sector 5 only)
+    // Retire button - show retirement modal (sector 5 only) - host only in multiplayer
     api.on('#btn-retire', 'click', () => {
+      if (!isHost()) return;
+
       const playerCredits = props.campaignState.credits;
       const isIronman = props.campaignState.settings?.ironmanMode ?? false;
       showRetirementModal(playerCredits, isIronman).then((result) => {
@@ -259,6 +235,23 @@ export function getCurrentContractIds(): string[] {
   if (!screenHandle) return [];
   const props = screenHandle.getProps();
   return props.contracts.map((c: Contract) => c.id);
+}
+
+/**
+ * Refresh the contracts UI with new campaign state.
+ * Call when campaign state changes externally (e.g., from network).
+ */
+export function refreshContractsUI(newCampaignState: CampaignState): void {
+  if (!screenHandle) return;
+  const currentProps = screenHandle.getProps();
+  screenHandle.setProps({ ...currentProps, campaignState: newCampaignState });
+}
+
+/**
+ * Check if the contracts UI is currently active.
+ */
+export function isContractsUIActive(): boolean {
+  return screenHandle !== null;
 }
 
 /** Create contracts UI */
@@ -335,7 +328,7 @@ export function updateContractsUI(
   ui.contracts = generated.contracts;
 
   if (screenHandle) {
-    screenHandle.setProps({
+    const newProps: ContractsProps = {
       campaignState: state,
       contracts: generated.contracts,
       isReplayMode: generated.isReplayMode,
@@ -346,6 +339,7 @@ export function updateContractsUI(
       onAdvanceSector: ui.onAdvanceSector,
       onRefresh,
       onRetire: ui.onRetire,
-    });
+    };
+    screenHandle.setProps(newProps);
   }
 }

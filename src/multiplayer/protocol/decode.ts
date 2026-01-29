@@ -21,10 +21,8 @@ import {
   type ActionRequestMessage,
   type ActionResponseMessage,
   type CallsignAnnounceMessage,
-  type CallsignChangedMessage,
-  type CallsignChangeRequestMessage,
   type CampaignSyncMessage,
-  type ChatMessageMessage,
+  type ChatMessage,
   type ContractAcceptedMessage,
   type GameMessage,
   GameMessageType,
@@ -45,12 +43,33 @@ import {
   type WelcomeMessage,
 } from './messages';
 
+// =============================================================================
+// Constants
+// =============================================================================
+
+/** Derived range of GameMessageType values (auto-updated when enum changes) */
+const _gameMessageTypeValues = Object.values(GameMessageType).filter(
+  (v): v is number => typeof v === 'number',
+);
+const GAME_MSG_MIN = Math.min(..._gameMessageTypeValues);
+const GAME_MSG_MAX = Math.max(..._gameMessageTypeValues);
+
+// =============================================================================
+// Decoding
+// =============================================================================
+
 /**
  * Decode a binary message to a game message object.
  */
 export function decodeMessage(data: Uint8Array): GameMessage {
   const rb = createReadBuffer(data);
-  const type = readByte(rb) as GameMessageType;
+  const typeByte = readByte(rb);
+
+  // Validate that the byte is in the game message range before casting
+  if (typeByte < GAME_MSG_MIN || typeByte > GAME_MSG_MAX) {
+    throw new Error(`Invalid game message type: 0x${typeByte.toString(16)}`);
+  }
+  const type = typeByte as GameMessageType;
 
   switch (type) {
     case GameMessageType.Welcome:
@@ -89,10 +108,6 @@ export function decodeMessage(data: Uint8Array): GameMessage {
       return decodeKickNotification(rb);
     case GameMessageType.CallsignAnnounce:
       return decodeCallsignAnnounce(rb);
-    case GameMessageType.CallsignChangeRequest:
-      return decodeCallsignChangeRequest(rb);
-    case GameMessageType.CallsignChanged:
-      return decodeCallsignChanged(rb);
     default: {
       // Cast to number for error message (type is 'never' due to exhaustive switch)
       const unknownType = type as number;
@@ -141,7 +156,7 @@ function decodePlayerLeft(rb: ReadBuffer): PlayerLeftExtMessage {
   };
 }
 
-function decodeChatMessage(rb: ReadBuffer): ChatMessageMessage {
+function decodeChatMessage(rb: ReadBuffer): ChatMessage {
   return {
     type: GameMessageType.ChatMessage,
     fromPlayerId: readString(rb),
@@ -232,6 +247,7 @@ function decodeMissionStarted(rb: ReadBuffer): MissionStartedMessage {
     type: GameMessageType.MissionStarted,
     contractId: readString(rb),
     seed: readUint32(rb),
+    campaignStateHash: readUint32(rb),
   };
 }
 
@@ -266,24 +282,6 @@ function decodeCallsignAnnounce(rb: ReadBuffer): CallsignAnnounceMessage {
   };
 }
 
-function decodeCallsignChangeRequest(
-  rb: ReadBuffer,
-): CallsignChangeRequestMessage {
-  return {
-    type: GameMessageType.CallsignChangeRequest,
-    newCallsign: readString(rb),
-  };
-}
-
-function decodeCallsignChanged(rb: ReadBuffer): CallsignChangedMessage {
-  return {
-    type: GameMessageType.CallsignChanged,
-    playerId: readString(rb),
-    oldCallsign: readString(rb),
-    newCallsign: readString(rb),
-  };
-}
-
 // =============================================================================
 // Utility
 // =============================================================================
@@ -295,7 +293,7 @@ function decodeCallsignChanged(rb: ReadBuffer): CallsignChangedMessage {
 export function isGameMessage(data: Uint8Array): boolean {
   const typeByte = data[0];
   if (typeByte === undefined) return false;
-  return typeByte >= 0x80 && typeByte <= 0x93;
+  return typeByte >= GAME_MSG_MIN && typeByte <= GAME_MSG_MAX;
 }
 
 /**

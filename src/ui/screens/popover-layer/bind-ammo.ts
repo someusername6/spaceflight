@@ -20,6 +20,7 @@ import type {
   EquippedPrimary,
   EquippedSecondary,
 } from '../../../campaign/types';
+import { canEditShip } from '../../../multiplayer/context-permissions';
 import type { ScreenAPI } from '../../framework/screen';
 import type { PopoverLayerProps, PopoverLayerState } from './types';
 
@@ -52,6 +53,7 @@ export function bindAmmoHandlers(
     if (content.type !== 'primary' && content.type !== 'secondary') return;
 
     const campState = props.getCampaignState();
+    if (!canEditShip(content.shipId)) return;
     let newState: CampaignState | null = null;
 
     if (content.type === 'primary') {

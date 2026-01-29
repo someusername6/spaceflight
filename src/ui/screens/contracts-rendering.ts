@@ -3,6 +3,10 @@
  */
 
 import type { Contract } from '../../campaign/types';
+import {
+  getMultiplayerContext,
+  isMultiplayerMode,
+} from '../../multiplayer/multiplayer-context';
 
 /** Count total enemies across all waves */
 export function countTotalEnemies(contract: Contract): number {
@@ -254,10 +258,19 @@ export function renderContractDetail(
   const isAttackStation =
     contract.missionType === 'attack-station' && contract.attackStationData;
 
+  // In multiplayer, only the host can accept contracts
+  const mpContext = getMultiplayerContext();
+  const isHostOnly = isMultiplayerMode() && !mpContext?.isHost;
+
   // Accept button or commander warning (hard block)
-  const acceptButton = canLaunch
-    ? `<button class="btn btn-large btn-success" id="btn-accept-mission">ACCEPT MISSION</button>`
-    : `<button class="btn btn-warning btn-goto-squadron">⚠ ASSIGN COMMANDER IN SQUADRON</button>`;
+  let acceptButton: string;
+  if (isHostOnly) {
+    acceptButton = `<button class="btn btn-large btn-success disabled" id="btn-accept-mission" disabled title="Only the host can accept missions">ACCEPT MISSION</button>`;
+  } else if (canLaunch) {
+    acceptButton = `<button class="btn btn-large btn-success" id="btn-accept-mission">ACCEPT MISSION</button>`;
+  } else {
+    acceptButton = `<button class="btn btn-warning btn-goto-squadron">⚠ ASSIGN COMMANDER IN SQUADRON</button>`;
+  }
 
   let missionInfo: string;
   if (isEscort) {
