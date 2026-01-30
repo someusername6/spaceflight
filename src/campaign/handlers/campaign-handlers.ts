@@ -87,15 +87,18 @@ export function createNavigationHandler(
 
 /**
  * Update campaign state and sync to multiplayer guests if in lobby.
+ * Captures old state before updating to detect player pilot unassignments.
  */
 function updateStateWithSync(
   screenManager: CampaignController['screenManager'],
   newState: CampaignState,
 ): void {
+  // Capture old state before updating (for detecting player pilot unassignments)
+  const oldState = screenManager.campaignState;
   updateCampaignState(screenManager, newState);
   // Sync to multiplayer guests if in lobby
   if (isInLobby()) {
-    updateAndSyncCampaignState(newState);
+    updateAndSyncCampaignState(newState, oldState);
   }
 }
 

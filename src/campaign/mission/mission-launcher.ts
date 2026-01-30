@@ -3,15 +3,18 @@
  */
 
 import { logDebug } from '../../core/logger';
+import { findLocalPlayer } from '../../core/player-utils';
 import { deriveKey } from '../../core/prng';
 import { createGame, startGame } from '../../game';
 import { InputRecorder } from '../../input/input-recorder';
+import { render } from '../../rendering/renderer';
 import { getPlayerAutoaim } from '../../settings/game-settings';
 import { startRecording } from '../../systems/input';
 import { initMatchStats } from '../../systems/stats';
 import { setMissionContainer } from '../../ui/common/screens';
 import { cleanupTitleScreen } from '../../ui/screens/title';
 import type { CampaignController } from '../controller-types';
+import { getLobbyContext } from '../handlers/lobby-context';
 import { shipToReplayLoadout } from '../ship-spawning';
 import type { Contract } from '../types';
 import {
@@ -37,8 +40,16 @@ import {
 import {
   createMissionRenderers,
   updateMissionRenderers,
+  updateSpectatorRendering,
 } from './mission-renderer';
 import { spawnMissionSquadron } from './mission-spawning';
+import {
+  checkMidMissionDeath,
+  checkSpectatorMode,
+  clearMissionSpectator,
+  getSpectatorState,
+  initializeMissionSpectator,
+} from './mission-spectator';
 import {
   createMissionEndState,
   createWaveState,
@@ -128,18 +139,74 @@ export function launchMission(
   // Initialize match stats for debrief
   initMatchStats(game.world);
 
+  // Clear any previous spectator state and check for spectator mode
+  clearMissionSpectator();
+  const { isSpectator } = checkSpectatorMode();
+
+  if (isSpectator && controller.missionContainer) {
+    initializeMissionSpectator(
+      game.world,
+      renderers,
+      controller.missionContainer,
+    );
+  }
+
+  // Cache local player entity for mid-mission death detection (avoids per-frame entity search)
+  const lobbyCtx = getLobbyContext();
+  const cachedLocalPlayer = lobbyCtx ? findLocalPlayer(game.world) : null;
+
   // Mission end state for delayed transition (shared by all mission types)
   const missionEndState = createMissionEndState();
 
+  // Track last frame time for spectator dt calculation
+  let lastFrameTime = performance.now();
+
   // Set render callback with alpha for interpolation
   game.onRender = (world, alpha) => {
-    updateMissionRenderers(
-      renderers,
-      world,
-      controller.missionContainer?.clientWidth ?? 800,
-      controller.missionContainer?.clientHeight ?? 600,
-      alpha,
-    );
+    const containerWidth = controller.missionContainer?.clientWidth ?? 800;
+    const containerHeight = controller.missionContainer?.clientHeight ?? 600;
+
+    // Calculate dt for spectator camera (render is called at variable rate)
+    const now = performance.now();
+    const dt = (now - lastFrameTime) / 1000;
+    lastFrameTime = now;
+
+    // Check for mid-mission death transition to spectator (multiplayer only)
+    const spectator = controller.missionContainer
+      ? checkMidMissionDeath(
+          cachedLocalPlayer,
+          world,
+          renderers,
+          controller.missionContainer,
+        )
+      : getSpectatorState();
+
+    if (spectator?.isActive) {
+      // Spectator rendering with custom camera
+      updateMissionRenderers(
+        renderers,
+        world,
+        containerWidth,
+        containerHeight,
+        alpha,
+        {
+          skipCameraAndRender: true,
+        },
+      );
+      updateSpectatorRendering(renderers, spectator, world, dt);
+
+      // Complete the frame render
+      render(renderers.renderer);
+    } else {
+      // Normal player rendering
+      updateMissionRenderers(
+        renderers,
+        world,
+        containerWidth,
+        containerHeight,
+        alpha,
+      );
+    }
   };
 
   // Create mission end executor (shared by all mission types)

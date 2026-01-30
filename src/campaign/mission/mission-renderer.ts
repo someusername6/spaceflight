@@ -60,6 +60,7 @@ import {
   updateBoltRenderer,
 } from '../../rendering/effects/trails';
 import { createHUD, updateHUD } from '../../rendering/hud/hud';
+import type { SpectatorHUD } from '../../rendering/hud/spectator-hud';
 import { updateTargetCamera } from '../../rendering/hud/target-camera';
 import {
   createExhaustRenderer,
@@ -74,6 +75,22 @@ import {
   render,
   syncScene,
 } from '../../rendering/renderer';
+
+// Import spectator functions (disposeSpectatorRendering used locally)
+import {
+  disposeSpectatorRendering,
+  initSpectatorRendering,
+  isEntityDead,
+  updateSpectatorRendering,
+} from './spectator-rendering';
+
+// Re-export spectator functions for external use
+export {
+  disposeSpectatorRendering,
+  initSpectatorRendering,
+  isEntityDead,
+  updateSpectatorRendering,
+};
 
 /** All rendering systems for a mission */
 export interface MissionRenderers {
@@ -90,6 +107,8 @@ export interface MissionRenderers {
   torchRenderer: ReturnType<typeof createTorchRenderer>;
   projectileHitRenderer: ReturnType<typeof createProjectileHitRenderer>;
   hud: ReturnType<typeof createHUD>;
+  /** Spectator HUD (created on demand when spectator mode starts) */
+  spectatorHud?: SpectatorHUD;
 }
 
 /** Create all rendering systems for a mission */
@@ -329,4 +348,7 @@ export function disposeMissionRenderers(renderers: MissionRenderers): void {
   if (renderers.hud.container.parentNode) {
     renderers.hud.container.parentNode.removeChild(renderers.hud.container);
   }
+
+  // Dispose spectator HUD and restore normal HUD visibility
+  disposeSpectatorRendering(renderers);
 }

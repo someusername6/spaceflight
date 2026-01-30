@@ -692,12 +692,12 @@ This phase implements **game-specific** messages only.
 
 ### Success Criteria
 
-- [ ] Each player controls only their assigned ship
-- [ ] Remote player ships move correctly (via rollback)
-- [ ] Spectators can tab through ships
-- [ ] Spectator camera modes work
-- [ ] HUD shows player callsigns above ships
-- [ ] Target sharing visible ("[Player]'s target")
+- [x] Each player controls only their assigned ship
+- [x] Remote player ships move correctly (via rollback)
+- [x] Spectators can tab through ships
+- [x] Spectator camera modes work (Chase/Orbit/Free)
+- [x] HUD shows player callsigns above ships
+- [x] Target sharing visible ("[Player]'s target")
 
 ---
 

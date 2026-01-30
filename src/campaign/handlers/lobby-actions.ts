@@ -15,6 +15,7 @@ import {
   createChatMessage,
   createPermissionUpdateMessage,
   createReadyStateMessage,
+  createShipAssignmentMessage,
   lobbyPlayerToGamePlayer,
   processLobbyMessage,
 } from '../../multiplayer/lobby-messages';
@@ -43,6 +44,10 @@ import {
 import { isStoreUIActive, refreshStoreUI } from '../../ui/screens/store/store';
 import type { CampaignState } from '../types';
 import { getLobbyContext, type LobbyContext } from './lobby-context';
+import {
+  detectMissingShipAssignments,
+  detectPlayerPilotChanges,
+} from './lobby-sync-detection';
 
 // =============================================================================
 // UI Helpers
@@ -143,25 +148,50 @@ export function setLobbyState(ctx: LobbyContext, newState: LobbyState): void {
  * screenManager is the single source of truth — it is already updated
  * by the caller via screens.updateCampaignState(). This function only
  * pushes the state to the sync manager for network distribution.
+ *
+ * Also detects player pilot assignment changes and sends ShipAssignment
+ * messages to keep lobby state in sync with campaign state.
  */
 export function syncCampaignState(
   ctx: LobbyContext,
   newState: CampaignState,
+  oldState?: CampaignState | null,
 ): void {
-  if (ctx.isHost) {
-    ctx.syncManager.setCampaignState(newState);
-    ctx.syncManager.syncCampaign();
+  if (!ctx.isHost) return;
+
+  // Detect and broadcast player pilot assignment changes (for player pilots in campaign state)
+  const changes = detectPlayerPilotChanges(oldState ?? null, newState);
+  for (const change of changes) {
+    const msg = createShipAssignmentMessage(change.playerId, change.shipId);
+    broadcastAndApply(ctx, msg);
   }
+
+  // Detect lobby players whose assigned ship was removed from campaign state
+  // (e.g., ship moved to storage via squadron screen unassign)
+  const missingPlayers = detectMissingShipAssignments(ctx, newState);
+  for (const playerId of missingPlayers) {
+    const msg = createShipAssignmentMessage(playerId, null);
+    broadcastAndApply(ctx, msg);
+  }
+
+  ctx.syncManager.setCampaignState(newState);
+  ctx.syncManager.syncCampaign();
 }
 
 /**
  * Sync campaign state to all guests (host only).
  * Wrapper that gets context and calls the action.
+ *
+ * @param newState - The updated campaign state
+ * @param oldState - The previous campaign state (for detecting player pilot unassignments)
  */
-export function updateAndSyncCampaignState(newState: CampaignState): void {
+export function updateAndSyncCampaignState(
+  newState: CampaignState,
+  oldState?: CampaignState | null,
+): void {
   const ctx = getLobbyContext();
   if (ctx) {
-    syncCampaignState(ctx, newState);
+    syncCampaignState(ctx, newState, oldState);
   }
 }
 

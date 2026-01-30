@@ -35,6 +35,7 @@ import {
   updateLobbyCampaignInfo,
 } from '../../ui/screens/lobby';
 import { cleanupTitleScreen } from '../../ui/screens/title';
+import { startCampaignGameplay } from '../controller';
 import type { CampaignController } from '../controller-types';
 import type { CampaignState, Contract } from '../types';
 import {
@@ -203,7 +204,7 @@ export function setupLobbyScreenForHost(
         const currentCtx = getLobbyContext();
         if (currentCtx) sendChat(currentCtx, text);
       },
-      onBack: () => handleLeave(controller),
+      onBack: () => void handleLeave(controller),
       onPermissionChange: (playerId, permissions) => {
         const currentCtx = getLobbyContext();
         if (currentCtx) changePermissions(currentCtx, playerId, permissions);
@@ -314,7 +315,7 @@ export function setupLobbyScreenForGuest(
       const currentCtx = getLobbyContext();
       if (currentCtx) sendChat(currentCtx, text);
     },
-    onBack: () => handleLeave(controller),
+    onBack: () => void handleLeave(controller),
     onCallsignChange: (newCallsign) => {
       const currentCtx = getLobbyContext();
       if (currentCtx) return changeCallsign(currentCtx, newCallsign);
@@ -337,9 +338,14 @@ export function setupLobbyScreenForGuest(
 // =============================================================================
 
 /** Handle leave/back button */
-function handleLeave(controller: CampaignController): void {
+async function handleLeave(controller: CampaignController): Promise<void> {
   cleanupLobby();
   goBackFromLobby(controller.screenManager);
+
+  // Re-setup title screen event handlers (they were destroyed when entering lobby)
+  const { setupTitleScreen } = await import('./menu-handlers');
+  const onStartGameplay = () => startCampaignGameplay(controller);
+  void setupTitleScreen(controller, onStartGameplay);
 }
 
 export function cleanupLobby(): void {

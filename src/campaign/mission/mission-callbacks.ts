@@ -12,6 +12,8 @@ import {
   resetMissionState,
   stopGame,
 } from '../../game';
+import { cleanupSpectatorInput } from '../../multiplayer/spectator-input';
+import { clearSpectatorState } from '../../multiplayer/spectator-state';
 import { buildReplayData } from '../../replay/replay-builder';
 import { saveReplay } from '../../replay/storage';
 import type { FullReplayData } from '../../replay/types';
@@ -84,6 +86,10 @@ export function createMissionEndExecutor(
       controller.missionRenderers = null;
     }
     controller.game = null;
+
+    // Clean up spectator mode if active
+    cleanupSpectatorInput();
+    clearSpectatorState();
 
     // Build replay data if we were recording (save happens after salvage calc)
     let fullReplay: FullReplayData | null = null;
