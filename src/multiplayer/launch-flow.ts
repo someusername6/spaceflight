@@ -129,8 +129,16 @@ export function shouldAbortOnUnready(
 // Countdown Control
 // =============================================================================
 
-/** Countdown duration in seconds */
-const COUNTDOWN_SECONDS = 10;
+/** Countdown duration in seconds (can be shortened via window.__TEST_COUNTDOWN_SECONDS__) */
+function getCountdownSeconds(): number {
+  if (
+    typeof window !== 'undefined' &&
+    window.__TEST_COUNTDOWN_SECONDS__ !== undefined
+  ) {
+    return window.__TEST_COUNTDOWN_SECONDS__;
+  }
+  return 10;
+}
 
 /**
  * Start the launch countdown.
@@ -145,17 +153,19 @@ export function startCountdown(
     return false;
   }
 
+  const countdownSeconds = getCountdownSeconds();
+
   // Initialize state
   launchState = {
     isCountingDown: true,
-    countdownSeconds: COUNTDOWN_SECONDS,
+    countdownSeconds,
     contractId,
     abortReason: null,
   };
   activeCallbacks = callbacks;
 
   // Emit initial tick
-  callbacks.onTick(COUNTDOWN_SECONDS);
+  callbacks.onTick(countdownSeconds);
 
   // Start interval
   countdownInterval = setInterval(() => {

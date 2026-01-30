@@ -8,6 +8,7 @@
  * - Syncing campaign state changes to multiplayer guests
  */
 
+import { getGuestShipIds } from '../../multiplayer/mission-setup';
 import type { NavDestination } from '../../ui/common/nav-bar';
 import { showError } from '../../ui/common/notification';
 import {
@@ -188,6 +189,12 @@ function handleMultiplayerAccept(
   // All ships are deployed in multiplayer (no squad selection modal)
   const allShipIds = screenManager.campaignState.ships.map((s) => s.id);
 
+  // Get guest ship IDs for spawning with PlayerControlled instead of AIControlled
+  const guestShipIds = getGuestShipIds(
+    ctx.lobbyState.players,
+    ctx.localPlayerId,
+  );
+
   startLaunchCountdown(ctx, contract.id, () => {
     // Countdown complete — launch the mission
     const stateWithAttempt = markContractAttempted(
@@ -198,7 +205,13 @@ function handleMultiplayerAccept(
     void autoSave(stateWithAttempt, 'mission-started');
 
     startMission(screenManager, contract);
-    launchMission(controller, contract, allShipIds, setupContracts);
+    launchMission(
+      controller,
+      contract,
+      allShipIds,
+      setupContracts,
+      guestShipIds,
+    );
   });
 }
 

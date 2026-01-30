@@ -5,7 +5,7 @@
 
 import * as THREE from 'three';
 import { DECOY_LIFETIME, DECOY_SPEED } from '../../components/decoy';
-import { getComponent, hasComponent } from '../../core/ecs';
+import { getComponent, hasComponent, queryEntities } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
 import { requireElement } from './dom-utils';
 
@@ -23,6 +23,8 @@ export interface TargetStatsDisplay {
   shieldBar: HTMLElement;
   shieldValue: HTMLElement;
   aspectEl: HTMLElement;
+  /** Target sharing display (shows when other players target same enemy) */
+  targetSharingEl: HTMLElement;
 }
 
 // Reusable vectors for aspect calculation
@@ -53,6 +55,7 @@ export function createTargetStats(parent: HTMLElement): TargetStatsDisplay {
       <span class="target-bar-value"></span>
     </div>
     <div class="target-aspect"></div>
+    <div class="target-sharing"></div>
   `;
 
   parent.appendChild(container);
@@ -76,7 +79,34 @@ export function createTargetStats(parent: HTMLElement): TargetStatsDisplay {
       '.target-bar.shield + .target-bar-value',
     ),
     aspectEl: requireElement(container, '.target-aspect'),
+    targetSharingEl: requireElement(container, '.target-sharing'),
   };
+}
+
+/**
+ * Find other players targeting the same entity.
+ * Returns callsign of the first other player found, or null if none.
+ */
+function getTargetSharingInfo(
+  world: World,
+  localTarget: Entity,
+  localPlayer: Entity,
+): string | null {
+  for (const entity of queryEntities(world, [
+    'playerControlled',
+    'targeting',
+    'shipIdentity',
+  ])) {
+    // Skip local player
+    if (entity === localPlayer) continue;
+
+    const targeting = getComponent(world, entity, 'targeting');
+    if (targeting?.currentTarget === localTarget) {
+      const identity = getComponent(world, entity, 'shipIdentity');
+      return identity?.callsign ?? null;
+    }
+  }
+  return null;
 }
 
 /** Update target stats display */
@@ -99,6 +129,7 @@ export function updateTargetStats(
     display.shieldBar.style.width = '0%';
     display.shieldValue.textContent = '';
     display.aspectEl.textContent = '';
+    display.targetSharingEl.textContent = '';
     display.container.classList.remove('has-target');
     return;
   }
@@ -208,6 +239,16 @@ export function updateTargetStats(
   } else {
     display.aspectEl.textContent = '';
     display.aspectEl.className = 'target-aspect';
+  }
+
+  // Target sharing - show when another player is targeting the same entity
+  const sharingCallsign = getTargetSharingInfo(world, target, player);
+  if (sharingCallsign) {
+    display.targetSharingEl.textContent = `${sharingCallsign}'s target`;
+    display.targetSharingEl.style.display = '';
+  } else {
+    display.targetSharingEl.textContent = '';
+    display.targetSharingEl.style.display = 'none';
   }
 }
 
@@ -330,6 +371,13 @@ export function getTargetStatsStyles(): string {
     }
     .target-aspect.separating {
       color: #0af;
+    }
+    .target-sharing {
+      margin-top: 4px;
+      font-size: 10px;
+      color: #0f0;
+      text-align: center;
+      font-style: italic;
     }
   `;
 }

@@ -364,6 +364,12 @@ export function disposeRenderer(renderer: Renderer): void {
   }
   renderer.beamLines.clear();
 
+  // Remove canvas from DOM to fully release WebGL context
+  const canvas = renderer.webglRenderer.domElement;
+  if (canvas.parentElement) {
+    canvas.parentElement.removeChild(canvas);
+  }
+
   renderer.webglRenderer.dispose();
   renderer.entityMeshes.clear();
 }

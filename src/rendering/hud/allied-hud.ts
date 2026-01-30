@@ -112,9 +112,8 @@ export function updateAlliedDisplay(
     'transform',
     'shipIdentity',
   ])) {
-    // Skip player
+    // Skip local player (remote players with playerControlled should still show)
     if (entity === player) continue;
-    if (hasComponent(world, entity, 'playerControlled')) continue;
 
     // Skip structures (stations are displayed separately)
     if (hasComponent(world, entity, 'structure')) continue;

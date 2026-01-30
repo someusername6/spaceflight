@@ -34,12 +34,14 @@ import {
   renderLobbyScreen,
   updateLobbyCampaignInfo,
 } from '../../ui/screens/lobby';
+import { cleanupTitleScreen } from '../../ui/screens/title';
 import type { CampaignController } from '../controller-types';
-import type { CampaignState } from '../types';
+import type { CampaignState, Contract } from '../types';
 import {
   createNavigationHandler,
   setupContractsScreen,
 } from './campaign-handlers';
+import { launchGuestMission } from './guest-mission';
 import {
   changeCallsign,
   changePermissions,
@@ -107,6 +109,10 @@ export function setupLobbyScreenForHost(
   connectionResult: ConnectionResult,
   connectionFlow: ConnectionFlow,
 ): void {
+  // Free title screen WebGL resources before entering lobby
+  // This reduces GPU contention when mission renderer is created later
+  cleanupTitleScreen();
+
   const { screenManager } = controller;
   const lobbyElement = getScreenElement(screenManager, Screen.LOBBY);
   const campaignState = screenManager.campaignState ?? null;
@@ -228,6 +234,10 @@ export function setupLobbyScreenForGuest(
   connectionResult: ConnectionResult,
   connectionFlow: ConnectionFlow,
 ): void {
+  // Free title screen WebGL resources before entering lobby
+  // This reduces GPU contention when mission renderer is created later
+  cleanupTitleScreen();
+
   const { screenManager } = controller;
   const lobbyElement = getScreenElement(screenManager, Screen.LOBBY);
 
@@ -270,6 +280,10 @@ export function setupLobbyScreenForGuest(
     lobbyState: initialLobbyState,
     screenManager,
     cleanup,
+    // Mission start callback for guests - called when MissionStarted received
+    onMissionStart: (contract: Contract, _seed: number) => {
+      launchGuestMission(controller, contract);
+    },
   };
 
   // Store the context
@@ -328,9 +342,6 @@ function handleLeave(controller: CampaignController): void {
   goBackFromLobby(controller.screenManager);
 }
 
-/**
- * Cleanup lobby state and connections.
- */
 export function cleanupLobby(): void {
   const ctx = getLobbyContext();
   if (ctx) {

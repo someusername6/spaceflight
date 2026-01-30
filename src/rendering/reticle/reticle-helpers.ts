@@ -34,6 +34,10 @@ export interface TargetInfo {
   isMissile: boolean;
   /** Missile targeting the player (renders as red threat indicator) */
   isThreatMissile: boolean;
+  /** Remote player in multiplayer (shows nameplate) */
+  isRemotePlayer: boolean;
+  /** Callsign for nameplate display */
+  callsign: string | null;
 }
 
 // Pool of reusable TargetInfo objects (avoids per-frame object allocation)
@@ -59,6 +63,8 @@ export function getTargetInfo(): TargetInfo {
       lockProgress: 0,
       isMissile: false,
       isThreatMissile: false,
+      isRemotePlayer: false,
+      callsign: null,
     });
   }
   return targetPool[targetPoolIndex++] as TargetInfo;

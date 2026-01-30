@@ -10,6 +10,7 @@ import { getPlayerAutoaim } from '../../settings/game-settings';
 import { startRecording } from '../../systems/input';
 import { initMatchStats } from '../../systems/stats';
 import { setMissionContainer } from '../../ui/common/screens';
+import { cleanupTitleScreen } from '../../ui/screens/title';
 import type { CampaignController } from '../controller-types';
 import { shipToReplayLoadout } from '../ship-spawning';
 import type { Contract } from '../types';
@@ -52,12 +53,17 @@ import {
 /** Callback type for contracts screen setup */
 export type SetupContractsCallback = (controller: CampaignController) => void;
 
-/** Launch a mission with the selected contract */
+/**
+ * Launch a mission with the selected contract.
+ * @param localShipId - Ship ID of the local player (for multiplayer). If not provided, commander is local.
+ */
 export function launchMission(
   controller: CampaignController,
   contract: Contract,
   deployedShipIds: string[],
   setupContractsScreen: SetupContractsCallback,
+  guestShipMap?: Map<string, string>,
+  localShipId?: string,
 ): void {
   const { container, screenManager } = controller;
 
@@ -92,6 +98,11 @@ export function launchMission(
   // Capture playerAutoaim at mission start for replay determinism
   const recorder = new InputRecorder(seed, contract.id, getPlayerAutoaim());
 
+  // Dispose title screen battle simulation before creating mission renderer
+  // This frees the WebGL context and avoids GPU contention delay
+  // Note: For multiplayer, this is also called when entering lobby for earlier cleanup
+  cleanupTitleScreen();
+
   // Create all renderers and store in controller for disposal
   const renderers = createMissionRenderers(controller.missionContainer, seed);
   controller.missionRenderers = renderers;
@@ -102,6 +113,8 @@ export function launchMission(
     campaignState,
     contract,
     deployedShipIds,
+    guestShipMap,
+    localShipId,
   );
 
   // Store deployment data in recorder for replay reconstruction

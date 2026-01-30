@@ -13,7 +13,18 @@ import type { LobbyState } from '../../multiplayer/lobby-state';
 import type { ConnectionFlow } from '../../multiplayer/networking/connection-flow';
 import type { MessageRouter } from '../../multiplayer/protocol/router';
 import type { ScreenManager } from '../../ui/common/screens';
-import type { CampaignState } from '../types';
+import type { CampaignState, Contract } from '../types';
+
+// =============================================================================
+// Callback Types
+// =============================================================================
+
+/**
+ * Callback invoked when mission should start (for guests receiving MissionStarted).
+ * @param contract - The contract being launched
+ * @param seed - The PRNG seed for deterministic simulation
+ */
+export type OnMissionStartCallback = (contract: Contract, seed: number) => void;
 
 // =============================================================================
 // Context Type
@@ -47,6 +58,13 @@ export interface LobbyContext {
 
   /** Cleanup function for message handling */
   readonly cleanup: () => void;
+
+  /**
+   * Callback for guest mission launch.
+   * Set by the campaign controller, invoked when MissionStarted is received.
+   * Only used by guests - host launches mission via countdown callback.
+   */
+  onMissionStart?: OnMissionStartCallback;
 }
 
 // =============================================================================

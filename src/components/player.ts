@@ -14,16 +14,23 @@ export interface PlayerControlled extends ComponentBase {
   prevTargetDistance: number;
   /** Previous target entity (to detect target changes) */
   prevMatchSpeedTarget: Entity | undefined;
+  /**
+   * True if this is the local player's entity (for multiplayer).
+   * In single player, the first playerControlled entity is the local player.
+   * In multiplayer, this flag distinguishes which ship the local player controls.
+   */
+  isLocalPlayer: boolean;
 }
 
 /** Creates a PlayerControlled marker component */
-export function createPlayerControlled(): PlayerControlled {
+export function createPlayerControlled(isLocalPlayer = true): PlayerControlled {
   return {
     type: 'playerControlled',
     input: createInputState(),
     matchSpeed: false,
     prevTargetDistance: 0,
     prevMatchSpeedTarget: undefined,
+    isLocalPlayer,
   };
 }
 
@@ -43,6 +50,7 @@ export interface SerializedPlayerControlled {
   m: boolean; // matchSpeed
   pd: number; // prevTargetDistance
   pt: Entity | null; // prevMatchSpeedTarget
+  lp?: boolean; // isLocalPlayer (optional for backwards compat, defaults true)
 }
 
 // Input state field order for bitmask serialization
@@ -89,13 +97,18 @@ function deserializeInputState(s: SerializedInputState): InputState {
 export function serializePlayerControlled(
   c: PlayerControlled,
 ): SerializedPlayerControlled {
-  return {
+  const result: SerializedPlayerControlled = {
     t: 6,
     i: serializeInputState(c.input),
     m: c.matchSpeed,
     pd: c.prevTargetDistance,
     pt: c.prevMatchSpeedTarget ?? null,
   };
+  // Only serialize if false (defaults to true for backwards compat)
+  if (!c.isLocalPlayer) {
+    result.lp = false;
+  }
+  return result;
 }
 
 export function deserializePlayerControlled(
@@ -107,5 +120,6 @@ export function deserializePlayerControlled(
     matchSpeed: s.m,
     prevTargetDistance: s.pd,
     prevMatchSpeedTarget: s.pt ?? undefined,
+    isLocalPlayer: s.lp !== false, // Defaults to true for backwards compat
   };
 }

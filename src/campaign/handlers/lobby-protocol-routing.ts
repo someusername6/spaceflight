@@ -19,7 +19,10 @@ import {
 } from '../../multiplayer/launch-flow';
 import { processLobbyMessage } from '../../multiplayer/lobby-messages';
 import { addSystemMessage } from '../../multiplayer/lobby-state';
-import { hashCampaignState } from '../../multiplayer/mission-sync';
+import {
+  findContractById,
+  hashCampaignState,
+} from '../../multiplayer/mission-sync';
 import type { ConnectionFlow } from '../../multiplayer/networking/connection-flow';
 import { encodeMessage } from '../../multiplayer/protocol/encode';
 import type {
@@ -28,6 +31,10 @@ import type {
 } from '../../multiplayer/protocol/messages';
 import { createMessageRouter } from '../../multiplayer/protocol/router';
 import { GameMessageType } from '../../multiplayer/protocol/types';
+import {
+  CONTRACTS_PER_SCREEN,
+  generateContracts,
+} from '../../ui/screens/contracts-data';
 import { reconstituteCampaignState } from '../storage/campaign-utils';
 import type { CampaignState } from '../types';
 import { handlePlayerUnready, setLobbyState } from './lobby-actions';
@@ -258,24 +265,53 @@ export function wireMessageHandlers(
     });
 
     ctx.router.onMissionStarted((msg) => {
-      // Verify campaign state hash matches local state
-      if (ctx.screenManager.campaignState) {
-        const localHash = hashCampaignState(ctx.screenManager.campaignState);
-        if (msg.campaignStateHash !== localHash) {
-          console.warn(
-            `[lobby-routing] Campaign state hash mismatch at mission start: host=${msg.campaignStateHash}, local=${localHash}`,
-          );
-          const warnState = addSystemMessage(
-            ctx.lobbyState,
-            'Warning: Campaign state may be out of sync with host',
-          );
-          setLobbyState(ctx, warnState);
-        }
+      const campaignState = ctx.screenManager.campaignState;
+      if (!campaignState) {
+        console.error('[lobby-routing] No campaign state at mission start');
+        return;
       }
 
-      // Mission start will be handled by the campaign controller
+      // Verify campaign state hash matches local state
+      const localHash = hashCampaignState(campaignState);
+      if (msg.campaignStateHash !== localHash) {
+        console.warn(
+          `[lobby-routing] Campaign state hash mismatch at mission start: host=${msg.campaignStateHash}, local=${localHash}`,
+        );
+        const warnState = addSystemMessage(
+          ctx.lobbyState,
+          'Warning: Campaign state may be out of sync with host',
+        );
+        setLobbyState(ctx, warnState);
+      }
+
+      // Add system message
       const newState = addSystemMessage(ctx.lobbyState, 'Mission starting...');
       setLobbyState(ctx, newState);
+
+      // Find the contract and launch the mission (guest only)
+      if (!ctx.isHost && ctx.onMissionStart) {
+        // Generate contracts deterministically (same as host)
+        const { contracts } = generateContracts(
+          campaignState.currentSector,
+          campaignState.seed,
+          campaignState.sectorMissionsCompleted,
+          CONTRACTS_PER_SCREEN,
+          campaignState.completedContracts,
+          campaignState.contractRefreshCount,
+        );
+
+        const lookup = findContractById(msg.contractId, contracts);
+        if (lookup.found && lookup.contract) {
+          ctx.onMissionStart(lookup.contract, msg.seed);
+        } else {
+          console.error(
+            `[lobby-routing] CONTRACT MISMATCH - Host requested: "${msg.contractId}" but guest generated: [${contracts.map((c) => c.id).join(', ')}]. ` +
+              `Guest state: seed=${campaignState.seed}, sector=${campaignState.currentSector}, ` +
+              `missionsCompleted=${campaignState.sectorMissionsCompleted}, completedContracts=${campaignState.completedContracts.length}, ` +
+              `refreshCount=${campaignState.contractRefreshCount}`,
+          );
+        }
+      }
     });
   }
 

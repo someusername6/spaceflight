@@ -30,9 +30,136 @@ export function isMainModule(importMetaUrl) {
 
 /**
  * Sleep utility.
+ * @deprecated Prefer condition-based waiting (waitFor*) over arbitrary delays
  */
 export function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// =============================================================================
+// Condition-Based Waiting Utilities
+// =============================================================================
+
+/**
+ * Wait for a page function to return truthy.
+ * Use this instead of sleep() when waiting for state changes.
+ *
+ * @param {import('playwright').Page} page
+ * @param {Function} fn - Function to evaluate in page context
+ * @param {any} arg - Argument to pass to function
+ * @param {object} options
+ * @param {number} [options.timeout=5000] - Max wait time in ms
+ * @param {number} [options.polling=50] - Poll interval in ms
+ */
+export async function waitFor(page, fn, arg = undefined, options = {}) {
+  const { timeout = 5000, polling = 50 } = options;
+  await page.waitForFunction(fn, arg, { timeout, polling });
+}
+
+/**
+ * Wait for element count to reach expected value.
+ * Replaces: await sleep(X); const count = await locator.count();
+ *
+ * @param {import('playwright').Page} page
+ * @param {string} selector
+ * @param {number} expectedCount
+ * @param {object} options
+ * @param {number} [options.timeout=5000]
+ * @param {'eq'|'gte'|'lte'|'gt'|'lt'} [options.comparison='eq']
+ */
+export async function waitForCount(
+  page,
+  selector,
+  expectedCount,
+  options = {},
+) {
+  const { timeout = 5000, comparison = 'eq' } = options;
+  await page.waitForFunction(
+    ({ sel, count, cmp }) => {
+      const actual = document.querySelectorAll(sel).length;
+      switch (cmp) {
+        case 'gte':
+          return actual >= count;
+        case 'lte':
+          return actual <= count;
+        case 'gt':
+          return actual > count;
+        case 'lt':
+          return actual < count;
+        default:
+          return actual === count;
+      }
+    },
+    { sel: selector, count: expectedCount, cmp: comparison },
+    { timeout, polling: 50 },
+  );
+}
+
+/**
+ * Wait for element text to contain a string.
+ * Replaces: await sleep(X); const text = await locator.textContent();
+ *
+ * @param {import('playwright').Page} page
+ * @param {string} selector
+ * @param {string} text
+ * @param {object} options
+ * @param {number} [options.timeout=5000]
+ */
+export async function waitForText(page, selector, text, options = {}) {
+  const { timeout = 5000 } = options;
+  await page.waitForFunction(
+    ({ sel, txt }) => {
+      const el = document.querySelector(sel);
+      return el?.textContent?.includes(txt) ?? false;
+    },
+    { sel: selector, txt: text },
+    { timeout, polling: 50 },
+  );
+}
+
+/**
+ * Wait for an element to have a specific attribute value.
+ * Replaces: await sleep(X); check attribute
+ *
+ * @param {import('playwright').Page} page
+ * @param {string} selector
+ * @param {string} attr
+ * @param {string|null} value - null means attribute should not exist
+ * @param {object} options
+ * @param {number} [options.timeout=5000]
+ */
+export async function waitForAttribute(
+  page,
+  selector,
+  attr,
+  value,
+  options = {},
+) {
+  const { timeout = 5000 } = options;
+  await page.waitForFunction(
+    ({ sel, a, v }) => {
+      const el = document.querySelector(sel);
+      if (!el) return false;
+      if (v === null) return !el.hasAttribute(a);
+      return el.getAttribute(a) === v;
+    },
+    { sel: selector, a: attr, v: value },
+    { timeout, polling: 50 },
+  );
+}
+
+/**
+ * Wait for element to be visible and stable (no layout changes).
+ * Use after animations or transitions.
+ *
+ * @param {import('playwright').Locator} locator
+ * @param {object} options
+ * @param {number} [options.timeout=5000]
+ */
+export async function waitForStable(locator, options = {}) {
+  const { timeout = 5000 } = options;
+  await locator.waitFor({ state: 'visible', timeout });
+  // Playwright's waitFor with 'visible' ensures element is stable
 }
 
 // =============================================================================

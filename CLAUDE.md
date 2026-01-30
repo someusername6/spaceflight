@@ -190,3 +190,7 @@ npx tsx scripts/tests/run-tests.mjs --balance --strict  # Balance tests with str
 Tests use Node.js built-in test runner (`node:test`) with `describe`/`it` pattern. See existing tests in `scripts/tests/` for examples.
 
 For browser API tests (IndexedDB, localStorage), see `test-campaign-storage.mjs` for polyfill patterns using `fake-indexeddb`.
+
+### Test Implementation Rule
+
+When a plan or request specifies test files by path (e.g., `scripts/tests/foo/bar.mjs`), each file is a separate deliverable. Create individual tasks per test file. A testing task is only complete when the specified file exists and its tests pass.

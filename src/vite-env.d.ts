@@ -40,3 +40,13 @@ declare module '*.gif' {
   const src: string;
   export default src;
 }
+
+/**
+ * Test-only Window Extensions
+ *
+ * These properties are set by E2E tests to control game behavior.
+ */
+interface Window {
+  /** Override countdown duration for E2E tests (in seconds) */
+  __TEST_COUNTDOWN_SECONDS__?: number;
+}

@@ -25,10 +25,13 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // Files that are utilities, not test suites
 const EXCLUDED_FILES = new Set([
   'run-all.mjs',
+  'run-n-times.mjs',
   'utils.mjs',
   'helpers.mjs',
   'connection-helpers.mjs',
   'loadout-helpers.mjs',
+  'servers.mjs',
+  'test-config.mjs',
 ]);
 
 /**

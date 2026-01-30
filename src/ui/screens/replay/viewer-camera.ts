@@ -15,6 +15,8 @@ import {
 import {
   type CameraInput,
   CameraMode,
+  getModeDisplayName,
+  getTargetDisplayName,
   nextEntity,
   orbitAxisX,
   orbitAxisY,
@@ -73,45 +75,26 @@ export function getCameraMode(): CameraMode | null {
   return ctx?.cameraState?.mode ?? null;
 }
 
-/** Get display name for a camera mode */
-function getModeName(mode: CameraMode): string {
-  switch (mode) {
-    case CameraMode.Chase:
-      return 'Chase';
-    case CameraMode.Orbit:
-      return 'Orbit';
-    case CameraMode.Free:
-      return 'Free';
-  }
-}
-
-/** Get display name for current target */
-function getTargetName(state: ReplayCameraState, world: World): string {
-  if (state.targetEntity === null) return 'None';
-
-  if (hasComponent(world, state.targetEntity, 'playerControlled')) {
-    return 'Player';
-  }
-
-  const identity = getComponent(world, state.targetEntity, 'shipIdentity');
-  if (identity && typeof identity === 'object' && 'callsign' in identity) {
-    return String(identity.callsign);
-  }
-
-  return `Ship ${state.entityIndex + 1}`;
-}
-
 /** Get current camera mode display name */
 export function getCameraModeDisplay(): string {
   const ctx = getViewerContext();
-  return ctx?.cameraState ? getModeName(ctx.cameraState.mode) : '';
+  return ctx?.cameraState ? getModeDisplayName(ctx.cameraState.mode) : '';
 }
 
 /** Get current target display name */
 export function getCameraTargetDisplay(): string {
   const ctx = getViewerContext();
   if (!ctx?.cameraState || !ctx.playback) return '';
-  return getTargetName(ctx.cameraState, ctx.playback.getWorld());
+
+  // For replay, show "Player" for playerControlled entities
+  const entity = ctx.cameraState.targetEntity;
+  if (entity !== null) {
+    if (hasComponent(ctx.playback.getWorld(), entity, 'playerControlled')) {
+      return 'Player';
+    }
+  }
+
+  return getTargetDisplayName(ctx.cameraState, ctx.playback.getWorld());
 }
 
 // =============================================================================

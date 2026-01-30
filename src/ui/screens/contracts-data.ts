@@ -15,6 +15,9 @@ import type { Contract } from '../../campaign/types';
 import { createDerivedPRNG, shuffle } from '../../core/prng';
 import { ALL_MISSIONS } from './missions';
 
+/** Number of contracts shown on the contracts screen */
+export const CONTRACTS_PER_SCREEN = 5;
+
 /** Result of contract generation with metadata */
 export interface GeneratedContracts {
   /** The contracts available to the player */

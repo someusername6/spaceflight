@@ -21,37 +21,38 @@ import { createShields } from '../components/shields';
 import { createShipIdentity } from '../components/ship-identity';
 import { createTargeting } from '../components/targeting';
 import { createTransform } from '../components/transform';
-import {
-  addComponent,
-  createEntity,
-  getComponent,
-  queryEntities,
-} from '../core/ecs';
+import { addComponent, createEntity, getComponent } from '../core/ecs';
 import type { Entity, World } from '../core/types';
 import { Faction } from '../core/types';
 import { getProfileForPlaystyle, type ProfileName } from '../data/ai-profiles';
 import { SHIP_CLASSES } from '../data/ships';
 import { addHullColliderFromClass } from '../factories/ship';
-import type {
-  ReplayPrimaryWeapon,
-  ReplaySecondaryWeapon,
-  ReplayShipLoadout,
-} from '../replay/types';
 import { initWeaponAmmoCounts } from '../systems/stats';
 import {
   createPrimaryWeaponsFromCampaign,
   createSecondaryWeaponsFromCampaign,
 } from './campaign-weapons';
 import { getOccupiedWeapons } from './slot-array';
-import type { EquippedPrimary, EquippedSecondary, OwnedShip } from './types';
+import type { OwnedShip } from './types';
 
-/** Spawn player ship from campaign state */
+// Re-export ammo and replay functions
+export {
+  type ExtractedAmmo,
+  extractAmmoFromWorld,
+  shipToReplayLoadout,
+} from './ship-ammo';
+
+/**
+ * Spawn player ship from campaign state.
+ * @param isLocalPlayer - Whether this is the local player's ship (for multiplayer)
+ */
 export function spawnPlayerFromCampaign(
   world: World,
   ship: OwnedShip,
   position?: Vector3,
   rotation?: Quaternion,
   initialSpeed?: number,
+  isLocalPlayer = true,
 ): Entity {
   const stats = SHIP_CLASSES[ship.shipClass];
   if (!stats) {
@@ -100,7 +101,7 @@ export function spawnPlayerFromCampaign(
   );
   addComponent(world, entity, createShieldHit());
   addComponent(world, entity, createFaction(Faction.Player));
-  addComponent(world, entity, createPlayerControlled());
+  addComponent(world, entity, createPlayerControlled(isLocalPlayer));
   addComponent(
     world,
     entity,
@@ -124,6 +125,106 @@ export function spawnPlayerFromCampaign(
   }
 
   addComponent(world, entity, createCollision(stats.collisionRadius));
+  addHullColliderFromClass(world, entity, ship.shipClass, false);
+  addComponent(world, entity, createCombatStats());
+  initWeaponAmmoCounts(world, entity);
+
+  return entity;
+}
+
+/**
+ * Spawn a player-controlled wingman (for multiplayer guests).
+ * Same as spawnWingmanFromCampaign but with PlayerControlled instead of AIControlled.
+ *
+ * @param callsign - Optional callsign override (player's lobby callsign). If not provided, uses pilot name.
+ * @param isLocalPlayer - Whether this is the local player's ship (for multiplayer)
+ */
+export function spawnGuestFromCampaign(
+  world: World,
+  ship: OwnedShip,
+  position?: Vector3,
+  rotation?: Quaternion,
+  initialSpeed?: number,
+  callsign?: string,
+  isLocalPlayer = false,
+): Entity {
+  const stats = SHIP_CLASSES[ship.shipClass];
+  if (!stats) {
+    throw new Error(`Unknown ship class: ${ship.shipClass}`);
+  }
+
+  const entity = createEntity(world);
+  const shipRotation = rotation ?? new Quaternion();
+  const spawnSpeed = initialSpeed ?? INITIAL_SPAWN_SPEED;
+
+  addComponent(
+    world,
+    entity,
+    createTransform(
+      position?.x ?? 0,
+      position?.y ?? 0,
+      position?.z ?? 0,
+      shipRotation,
+    ),
+  );
+
+  addComponent(
+    world,
+    entity,
+    createPhysics({
+      maxSpeed: stats.maxSpeed,
+      acceleration: stats.acceleration,
+      turnRate: stats.turnRate,
+      rollRate: stats.rollRate,
+      afterburnerHeatRate: stats.afterburnerHeatRate,
+      initialSpeed: spawnSpeed,
+    }),
+  );
+
+  // Set initial velocity in forward direction
+  const physics = getComponent(world, entity, 'physics');
+  if (physics) {
+    setInitialVelocity(physics, shipRotation, spawnSpeed);
+  }
+
+  addComponent(world, entity, createHealth(stats.hull, stats.hull));
+  addComponent(
+    world,
+    entity,
+    createShields(stats.shields, stats.shieldRegen, stats.shieldDelay),
+  );
+  addComponent(world, entity, createShieldHit());
+  addComponent(world, entity, createFaction(Faction.Player));
+
+  // Player-controlled (no AI, no aim error)
+  addComponent(world, entity, createPlayerControlled(isLocalPlayer));
+
+  // Use provided callsign (player's lobby callsign) or fall back to pilot name
+  const displayCallsign = callsign ?? ship.pilot?.name ?? 'Wingman';
+  addComponent(
+    world,
+    entity,
+    createShipIdentity(ship.shipClass, displayCallsign, ship.id),
+  );
+
+  addComponent(world, entity, createTargeting());
+  addComponent(world, entity, createHeat(stats.maxHeat, stats.coolingRate));
+
+  // Use campaign loadout (filter out empty slots)
+  const primaries = getOccupiedWeapons(ship.primaryWeapons);
+  const secondaries = getOccupiedWeapons(ship.secondaryWeapons);
+
+  addComponent(world, entity, createPrimaryWeaponsFromCampaign(primaries));
+
+  if (secondaries.length > 0) {
+    addComponent(
+      world,
+      entity,
+      createSecondaryWeaponsFromCampaign(secondaries),
+    );
+  }
+
+  addComponent(world, entity, createCollision(stats.collisionRadius * 1.5));
   addHullColliderFromClass(world, entity, ship.shipClass, false);
   addComponent(world, entity, createCombatStats());
   initWeaponAmmoCounts(world, entity);
@@ -232,87 +333,4 @@ export function spawnWingmanFromCampaign(
   initWeaponAmmoCounts(world, entity);
 
   return entity;
-}
-
-/** Result of extracting ammo from a ship entity */
-export interface ExtractedAmmo {
-  campaignShipId: string;
-  primaryAmmo: Map<number, number>; // bankIndex -> remaining ammo
-  secondaryAmmo: Map<number, number>; // bankIndex -> remaining count
-}
-
-/** Extract remaining ammo from all player faction ships */
-export function extractAmmoFromWorld(world: World): ExtractedAmmo[] {
-  const results: ExtractedAmmo[] = [];
-
-  // Query all entities with shipIdentity
-  for (const entity of queryEntities(world, ['shipIdentity'])) {
-    const identity = getComponent(world, entity, 'shipIdentity');
-    if (!identity?.campaignShipId) continue;
-
-    const extracted: ExtractedAmmo = {
-      campaignShipId: identity.campaignShipId,
-      primaryAmmo: new Map(),
-      secondaryAmmo: new Map(),
-    };
-
-    // Extract primary ammo
-    const primaries = getComponent(world, entity, 'primaryWeapons');
-    if (primaries) {
-      for (let i = 0; i < primaries.weapons.length; i++) {
-        const weapon = primaries.weapons[i];
-        if (weapon?.ammo !== undefined) {
-          extracted.primaryAmmo.set(i, weapon.ammo);
-        }
-      }
-    }
-
-    // Extract secondary ammo
-    const secondaries = getComponent(world, entity, 'secondaryWeapons');
-    if (secondaries) {
-      for (let i = 0; i < secondaries.weapons.length; i++) {
-        const weapon = secondaries.weapons[i];
-        if (weapon) {
-          extracted.secondaryAmmo.set(i, weapon.count);
-        }
-      }
-    }
-
-    results.push(extracted);
-  }
-
-  return results;
-}
-
-/**
- * Convert campaign ship loadout to replay format.
- * Used when recording replays to capture exact weapon configurations.
- */
-export function shipToReplayLoadout(ship: OwnedShip): ReplayShipLoadout {
-  const primaries = getOccupiedWeapons(ship.primaryWeapons);
-  const secondaries = getOccupiedWeapons(ship.secondaryWeapons);
-
-  return {
-    shipClass: ship.shipClass,
-    primaryWeapons: primaries.map((p: EquippedPrimary): ReplayPrimaryWeapon => {
-      const weapon: ReplayPrimaryWeapon = {
-        weaponId: p.weaponType,
-        bankSize: p.bankSize,
-      };
-      // Only include ammo for ballistic weapons (has finite ammo)
-      if (p.currentAmmo !== undefined) {
-        weapon.ammo = p.currentAmmo;
-        weapon.maxAmmo = p.currentAmmo; // At mission start, current = max
-      }
-      return weapon;
-    }),
-    secondaryWeapons: secondaries.map(
-      (s: EquippedSecondary): ReplaySecondaryWeapon => ({
-        weaponId: s.weaponType,
-        bankSize: s.bankSize,
-        ammo: s.count,
-        maxAmmo: s.maxCount,
-      }),
-    ),
-  };
 }

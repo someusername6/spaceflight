@@ -24,6 +24,7 @@ import {
 import {
   drawCenterCrosshair,
   drawLockIndicator,
+  drawNameplate,
   drawOffScreenArrow,
   drawOnScreenReticle,
 } from './reticle-drawing';
@@ -175,6 +176,11 @@ export function updateReticles(
     // Check if this is a missile targeting the player
     const isThreatMissile = isMissile && threatMissiles.has(entity);
 
+    // Check if this is a remote player (has playerControlled but isn't the local player)
+    const isRemotePlayer = hasComponent(world, entity, 'playerControlled');
+    const shipIdentity = getComponent(world, entity, 'shipIdentity');
+    const callsign = isRemotePlayer ? (shipIdentity?.callsign ?? null) : null;
+
     // Get reusable object from pool (avoids per-frame allocation)
     const target = getTargetInfo();
     target.entity = entity;
@@ -197,6 +203,8 @@ export function updateReticles(
     target.lockProgress = isLockTarget ? lockProgress : 0;
     target.isMissile = isMissile;
     target.isThreatMissile = isThreatMissile;
+    target.isRemotePlayer = isRemotePlayer;
+    target.callsign = callsign;
     targets.push(target);
   }
 
@@ -296,6 +304,11 @@ function renderTarget(
     const weaponRequiresLock = currentSecondary?.requiresLock ?? false;
     if (target.isLockTarget && target.lockProgress > 0 && weaponRequiresLock) {
       drawLockIndicator(ctx, bounds, target.lockProgress, color);
+    }
+
+    // Draw nameplate for remote players (multiplayer)
+    if (target.isRemotePlayer && target.callsign) {
+      drawNameplate(ctx, target.callsign, bounds, color);
     }
 
     // Draw lead indicator(s) for selected target (not for missiles)

@@ -4,6 +4,7 @@
  * Shared helpers for setting up host/guest connections in E2E tests.
  */
 
+import { injectTestConfig, TIMEOUTS } from './test-config.mjs';
 import { VITE_URL } from './utils.mjs';
 
 /**
@@ -19,18 +20,19 @@ export async function setupHostInLobby(browser) {
   });
 
   await hostPage.goto(VITE_URL, { waitUntil: 'networkidle' });
+  await injectTestConfig(hostPage);
 
   // Host: Click Host Game
   await hostPage.waitForSelector('#btn-host-game', {
     state: 'visible',
-    timeout: 15000,
+    timeout: TIMEOUTS.navigation,
   });
   await hostPage.click('#btn-host-game');
 
   // Host: Select campaign
   await hostPage.waitForSelector('.saves-list', {
     state: 'visible',
-    timeout: 5000,
+    timeout: TIMEOUTS.ui,
   });
   const hostOccupiedSlot = await hostPage
     .locator('.save-slot.occupied')
@@ -43,7 +45,7 @@ export async function setupHostInLobby(browser) {
     await hostPage.locator('.save-slot.empty').first().click();
     await hostPage.waitForSelector('.campaign-create-modal', {
       state: 'visible',
-      timeout: 5000,
+      timeout: TIMEOUTS.ui,
     });
     await hostPage.click('#btn-start');
   }
@@ -51,7 +53,7 @@ export async function setupHostInLobby(browser) {
   // Host: Wait for lobby
   await hostPage.waitForSelector('.lobby-screen', {
     state: 'visible',
-    timeout: 30000,
+    timeout: TIMEOUTS.connection,
   });
 
   // Host: Get room code
@@ -61,7 +63,8 @@ export async function setupHostInLobby(browser) {
       const el = lobbyScreen?.querySelector('.room-code-value');
       return el?.textContent && el.textContent.trim().length >= 4;
     },
-    { timeout: 15000 },
+    null,
+    { timeout: TIMEOUTS.connection },
   );
 
   const roomCode = (
@@ -82,19 +85,28 @@ export async function joinGuestToLobby(browser, roomCode) {
     console.log(`  [Guest Error] ${err.message}`);
   });
 
+  // Capture lobby-routing logs
+  guestPage.on('console', (msg) => {
+    const text = msg.text();
+    if (text.includes('lobby-routing')) {
+      console.log(`  [Guest] ${text}`);
+    }
+  });
+
   await guestPage.goto(VITE_URL, { waitUntil: 'networkidle' });
+  await injectTestConfig(guestPage);
 
   // Guest: Click Join Game
   await guestPage.waitForSelector('#btn-join-game', {
     state: 'visible',
-    timeout: 15000,
+    timeout: TIMEOUTS.navigation,
   });
   await guestPage.click('#btn-join-game');
 
   // Guest: Enter room code
   await guestPage.waitForSelector('.join-game-screen', {
     state: 'visible',
-    timeout: 5000,
+    timeout: TIMEOUTS.ui,
   });
   const roomCodeWithoutSpace = roomCode.replace(/\s+/g, '');
   await guestPage.fill('input', roomCodeWithoutSpace);
@@ -113,7 +125,7 @@ export async function joinGuestToLobby(browser, roomCode) {
   // Guest: Wait for lobby
   await guestPage.waitForSelector('.lobby-screen', {
     state: 'visible',
-    timeout: 30000,
+    timeout: TIMEOUTS.connection,
   });
 
   return { guestContext, guestPage };
@@ -133,17 +145,32 @@ export async function setupHostAndGuest(browser) {
   // in joinGuestToLobby. For specific callsign input, we override after join.
   // Note: The callsign is set during join, so this is handled by joinGuestToLobby.
 
-  // Wait for both to see each other
+  // Wait for both to see each other in the player list
   await Promise.all([
     hostPage.waitForFunction(
       () => document.querySelectorAll('.player-row').length >= 2,
-      { timeout: 15000 },
+      null,
+      { timeout: TIMEOUTS.connection },
     ),
     guestPage.waitForFunction(
       () => document.querySelectorAll('.player-row').length >= 2,
-      { timeout: 15000 },
+      null,
+      { timeout: TIMEOUTS.connection },
     ),
   ]);
+
+  // Wait for the "joined" system message on host - this confirms WebRTC data channel is active
+  // The message format is "${callsign} joined"
+  await hostPage.waitForFunction(
+    () => {
+      const messages = document.querySelectorAll('.chat-message.system');
+      return Array.from(messages).some((m) =>
+        m.textContent?.includes('joined'),
+      );
+    },
+    null,
+    { timeout: TIMEOUTS.sync },
+  );
 
   return { hostContext, hostPage, guestContext, guestPage, roomCode };
 }

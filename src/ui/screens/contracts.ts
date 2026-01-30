@@ -25,7 +25,7 @@ import {
   renderRefreshButton,
   renderRetireButton,
 } from './contracts-buttons';
-import { generateContracts } from './contracts-data';
+import { CONTRACTS_PER_SCREEN, generateContracts } from './contracts-data';
 import {
   renderContractDetail,
   renderContractListItem,
@@ -271,7 +271,7 @@ export function createContractsUI(
     state.currentSector,
     state.seed,
     state.sectorMissionsCompleted,
-    5,
+    CONTRACTS_PER_SCREEN,
     state.completedContracts,
     state.contractRefreshCount,
   );
@@ -321,7 +321,7 @@ export function updateContractsUI(
     state.currentSector,
     state.seed,
     state.sectorMissionsCompleted,
-    5,
+    CONTRACTS_PER_SCREEN,
     state.completedContracts,
     state.contractRefreshCount,
   );

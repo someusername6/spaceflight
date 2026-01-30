@@ -15,6 +15,9 @@ export const LEAD_INDICATOR_SIZE = 6;
 export const CENTER_CROSSHAIR_SIZE = 8;
 export const CENTER_CROSSHAIR_GAP = 3;
 
+/** Nameplate font size (smaller than distance labels) */
+const NAMEPLATE_FONT_SIZE = 14;
+
 /** Draw text with black outline for readability (uses strokeText for efficiency) */
 export function drawOutlinedText(
   ctx: CanvasRenderingContext2D,
@@ -35,6 +38,32 @@ export function drawOutlinedText(
   // Draw colored text on top
   ctx.fillStyle = color;
   ctx.fillText(upperText, x, y);
+}
+
+/** Draw player nameplate above a ship */
+export function drawNameplate(
+  ctx: CanvasRenderingContext2D,
+  callsign: string,
+  bounds: { minX: number; maxX: number; minY: number; maxY: number },
+  color: string,
+): void {
+  ctx.font = `bold ${NAMEPLATE_FONT_SIZE}px ${FONT_FAMILY}`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'bottom';
+
+  const centerX = (bounds.minX + bounds.maxX) / 2;
+  // Position above the top of the bounding box
+  const topY = bounds.minY - RETICLE_PADDING - 4;
+
+  // Draw black outline
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 3;
+  ctx.lineJoin = 'round';
+  ctx.strokeText(callsign, centerX, topY);
+
+  // Draw colored text on top
+  ctx.fillStyle = color;
+  ctx.fillText(callsign, centerX, topY);
 }
 
 /** Draw center crosshair (fixed aiming point at screen center) */

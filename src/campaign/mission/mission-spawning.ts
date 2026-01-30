@@ -9,6 +9,7 @@ import { getConvoyMaxSpeed } from '../../factories/convoy-ship';
 import type { ReplayWingman } from '../../replay/types';
 import {
   shipToReplayLoadout,
+  spawnGuestFromCampaign,
   spawnPlayerFromCampaign,
   spawnWingmanFromCampaign,
 } from '../ship-spawning';
@@ -79,12 +80,17 @@ export function getMissionSpawnConfig(contract: Contract): {
 /**
  * Spawn player and wingmen for a mission.
  * Returns replay-compatible wingman data.
+ *
+ * @param guestShipMap - Map of ship ID → callsign for multiplayer guests (spawned as PlayerControlled)
+ * @param localShipId - Ship ID of the local player (for multiplayer). If not provided, commander is local.
  */
 export function spawnMissionSquadron(
   world: World,
   campaignState: CampaignState,
   contract: Contract,
   deployedShipIds: string[],
+  guestShipMap?: Map<string, string>,
+  localShipId?: string,
 ): MissionSpawnResult {
   const playerShip = getCommanderShip(campaignState);
   const allWingmen = getWingmanShips(campaignState);
@@ -94,6 +100,11 @@ export function spawnMissionSquadron(
   const spawnConfig = getMissionSpawnConfig(contract);
   const { position: playerPos, rotation, initialSpeed } = spawnConfig;
 
+  // Determine if commander is the local player
+  // If localShipId is not provided or matches commander ship, commander is local
+  const commanderIsLocal =
+    !localShipId || (playerShip && localShipId === playerShip.id);
+
   // Spawn player
   if (playerShip) {
     spawnPlayerFromCampaign(
@@ -102,6 +113,7 @@ export function spawnMissionSquadron(
       playerPos,
       rotation,
       initialSpeed,
+      commanderIsLocal,
     );
   } else {
     logError('[Mission] No commander ship found!', {
@@ -122,13 +134,30 @@ export function spawnMissionSquadron(
     wingmen.forEach((wingman, index) => {
       const spawn = wingmenSpawns[index];
       if (!spawn) return;
-      spawnWingmanFromCampaign(
-        world,
-        wingman,
-        spawn.position,
-        spawn.rotation,
-        initialSpeed,
-      );
+
+      // Use guest spawn for multiplayer guests (PlayerControlled instead of AI)
+      const guestCallsign = guestShipMap?.get(wingman.id);
+      if (guestCallsign !== undefined) {
+        const isLocal = localShipId === wingman.id;
+        spawnGuestFromCampaign(
+          world,
+          wingman,
+          spawn.position,
+          spawn.rotation,
+          initialSpeed,
+          guestCallsign,
+          isLocal,
+        );
+      } else {
+        spawnWingmanFromCampaign(
+          world,
+          wingman,
+          spawn.position,
+          spawn.rotation,
+          initialSpeed,
+        );
+      }
+
       const replayWingman: ReplayWingman = {
         loadout: shipToReplayLoadout(wingman),
         position: {
@@ -147,13 +176,30 @@ export function spawnMissionSquadron(
       const xOffset = 30 * side;
       const zRelative = -15 - Math.floor(index / 2) * 20;
       const zPosition = playerPos.z + zRelative;
-      spawnWingmanFromCampaign(
-        world,
-        wingman,
-        new Vector3(xOffset, 0, zPosition),
-        rotation,
-        initialSpeed,
-      );
+
+      // Use guest spawn for multiplayer guests (PlayerControlled instead of AI)
+      const guestCallsign = guestShipMap?.get(wingman.id);
+      if (guestCallsign !== undefined) {
+        const isLocal = localShipId === wingman.id;
+        spawnGuestFromCampaign(
+          world,
+          wingman,
+          new Vector3(xOffset, 0, zPosition),
+          rotation,
+          initialSpeed,
+          guestCallsign,
+          isLocal,
+        );
+      } else {
+        spawnWingmanFromCampaign(
+          world,
+          wingman,
+          new Vector3(xOffset, 0, zPosition),
+          rotation,
+          initialSpeed,
+        );
+      }
+
       const replayWingman: ReplayWingman = {
         loadout: shipToReplayLoadout(wingman),
         position: { x: xOffset, y: 0, z: zPosition },

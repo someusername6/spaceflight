@@ -8,15 +8,29 @@
  */
 
 import * as THREE from 'three';
-import { getComponent, queryEntities } from '../../../core/ecs';
+import { getComponent } from '../../../core/ecs';
 import type { Entity, World } from '../../../core/types';
 import {
   getInterpolatedPosition,
-  getInterpolatedRotation,
   type Renderer,
 } from '../../../rendering/renderer';
+import { updateChaseCamera } from './camera-chase';
+import {
+  findAllEntities,
+  findFriendlyEntities,
+  setEntityList,
+  updateEntityList,
+} from './camera-entities';
 import { updateFreeCamera } from './camera-free';
 import { orbitAxisX, orbitAxisY, updateOrbitCamera } from './camera-orbit';
+
+// Re-export entity functions for external use
+export {
+  findAllEntities,
+  findFriendlyEntities,
+  setEntityList,
+  updateEntityList,
+};
 
 // Re-export orbit axis vectors for viewer-camera.ts
 export { orbitAxisX, orbitAxisY };
@@ -57,15 +71,13 @@ export interface ReplayCameraState {
 }
 
 /** Camera movement speeds */
-const CHASE_ZOOM_SPEED = 1.0; // multiplier per second
 const ROLL_SPEED = 2.0; // radians per second
 
 /** Orbit distance constraints (used for default distance calculation) */
 const MIN_ORBIT_DISTANCE = 10;
 const MAX_ORBIT_DISTANCE = 500;
 
-/** Chase camera constraints */
-const MIN_CHASE_DISTANCE = 0.5; // multiplier (half default distance)
+/** Chase camera constraints (for default distance calculation) */
 const MAX_CHASE_DISTANCE = 10.0; // multiplier (10x default distance)
 const DEFAULT_CHASE_DISTANCE = 1.0;
 
@@ -80,9 +92,6 @@ const ORBIT_DISTANCE_MULTIPLIER = 8; // orbit distance = radius * multiplier
 
 /** Multiplier for chase distance based on ship size ratio */
 const CHASE_DISTANCE_MULTIPLIER = 0.15; // chase multiplier scales with size ratio
-
-/** Chase camera base offset (scaled by chaseDistance) */
-const CHASE_OFFSET = new THREE.Vector3(0, 5, 20);
 
 /** Input state for camera controls */
 export interface CameraInput {
@@ -146,41 +155,46 @@ function getDefaultDistances(
   return { orbit: orbitDist, chase: chaseDist };
 }
 
-/** Update entity list from world (call when entities change) */
-export function updateEntityList(state: ReplayCameraState, world: World): void {
-  const entities: Entity[] = [];
+/** Create empty camera input state */
+export function createCameraInput(): CameraInput {
+  return {
+    up: false,
+    down: false,
+    left: false,
+    right: false,
+    forward: false,
+    back: false,
+    rollLeft: false,
+    rollRight: false,
+    zoomIn: false,
+    zoomOut: false,
+  };
+}
 
-  // Find player first
-  for (const entity of queryEntities(world, [
-    'playerControlled',
-    'transform',
-  ])) {
-    entities.push(entity);
+/** Get display name for current camera target */
+export function getTargetDisplayName(
+  state: ReplayCameraState,
+  world: World,
+): string {
+  if (state.targetEntity === null) return 'None';
+
+  const identity = getComponent(world, state.targetEntity, 'shipIdentity');
+  if (identity?.callsign) {
+    return identity.callsign;
   }
 
-  // Then add other ships (wingmen and enemies)
-  for (const entity of queryEntities(world, ['transform', 'shipIdentity'])) {
-    if (!entities.includes(entity)) {
-      entities.push(entity);
-    }
-  }
+  return `Ship ${state.entityIndex + 1}`;
+}
 
-  state.entityList = entities;
-
-  // Update target entity if needed
-  if (state.targetEntity === null && entities.length > 0) {
-    state.entityIndex = 0;
-    state.targetEntity = entities[0] ?? null;
-  } else if (state.targetEntity !== null) {
-    // Check if target still exists
-    const idx = entities.indexOf(state.targetEntity);
-    if (idx === -1) {
-      // Target no longer exists, clear it
-      // (updateCamera will switch to free mode)
-      state.targetEntity = null;
-    } else {
-      state.entityIndex = idx;
-    }
+/** Get display name for current camera mode */
+export function getModeDisplayName(mode: CameraMode): string {
+  switch (mode) {
+    case CameraMode.Chase:
+      return 'Chase';
+    case CameraMode.Orbit:
+      return 'Orbit';
+    case CameraMode.Free:
+      return 'Free';
   }
 }
 
@@ -287,25 +301,15 @@ function getTargetPosition(
   return transform?.position ?? null;
 }
 
-/** Get target entity rotation (interpolated) */
-function getTargetRotation(
-  entity: Entity,
-  world: World,
-  renderer?: Renderer,
-): THREE.Quaternion | null {
-  const interpRot = renderer ? getInterpolatedRotation(renderer, entity) : null;
-  if (interpRot) return interpRot;
-
-  const transform = getComponent(world, entity, 'transform');
-  return transform?.rotation ?? null;
-}
-
 // Reusable vectors to avoid allocations
-const tempOffset = new THREE.Vector3();
-const tempQuat = new THREE.Quaternion();
 const tempEuler = new THREE.Euler();
 
-/** Update camera based on input and mode */
+/**
+ * Update camera based on input and mode.
+ *
+ * @param autoUpdateEntities - If true (default), automatically discovers all entities.
+ *   Set to false when using setEntityList() for custom filtering (e.g., spectator mode).
+ */
 export function updateCamera(
   state: ReplayCameraState,
   camera: THREE.Camera,
@@ -313,9 +317,12 @@ export function updateCamera(
   input: CameraInput,
   dt: number,
   renderer?: Renderer,
+  autoUpdateEntities = true,
 ): void {
-  // Update entity list
-  updateEntityList(state, world);
+  // Update entity list (skip if caller manages entities externally)
+  if (autoUpdateEntities) {
+    updateEntityList(state, world);
+  }
 
   // If target was lost while in chase/orbit mode, switch to free camera
   if (state.targetEntity === null && state.mode !== CameraMode.Free) {
@@ -343,47 +350,5 @@ export function updateCamera(
     case CameraMode.Free:
       updateFreeCamera(state, camera, input, dt);
       break;
-  }
-}
-
-/** Update chase camera (follow behind entity with zoom) */
-function updateChaseCamera(
-  state: ReplayCameraState,
-  camera: THREE.Camera,
-  world: World,
-  input: CameraInput,
-  dt: number,
-  renderer?: Renderer,
-): void {
-  if (state.targetEntity === null) return;
-
-  const targetPos = getTargetPosition(state.targetEntity, world, renderer);
-  const targetRot = getTargetRotation(state.targetEntity, world, renderer);
-
-  if (!targetPos || !targetRot) return;
-
-  // Update chase distance from zoom input (zoomIn/zoomOut or forward/back keys)
-  const zoomIn = input.zoomIn || input.forward;
-  const zoomOut = input.zoomOut || input.back;
-  if (zoomIn) state.chaseDistance -= CHASE_ZOOM_SPEED * dt;
-  if (zoomOut) state.chaseDistance += CHASE_ZOOM_SPEED * dt;
-  state.chaseDistance = Math.max(
-    MIN_CHASE_DISTANCE,
-    Math.min(MAX_CHASE_DISTANCE, state.chaseDistance),
-  );
-
-  // Calculate camera position behind entity (offset scaled by chase distance)
-  tempOffset.copy(CHASE_OFFSET).multiplyScalar(state.chaseDistance);
-  tempOffset.applyQuaternion(targetRot);
-  camera.position.copy(targetPos).add(tempOffset);
-
-  // Match entity rotation with optional roll
-  if (state.roll !== 0) {
-    tempQuat.copy(targetRot);
-    tempEuler.setFromQuaternion(tempQuat, 'YXZ');
-    tempEuler.z += state.roll;
-    camera.quaternion.setFromEuler(tempEuler);
-  } else {
-    camera.quaternion.copy(targetRot);
   }
 }
