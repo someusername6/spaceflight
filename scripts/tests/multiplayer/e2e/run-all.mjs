@@ -6,8 +6,8 @@
  * Runs all multiplayer E2E test suites with shared server infrastructure.
  * Starts servers once, runs all suites, then stops servers.
  *
- * Test files are auto-discovered from this directory. Any .mjs file that
- * exports ALL_TESTS is treated as a test suite.
+ * Test files are auto-discovered from the tests/ directory. Any .mjs file
+ * that exports ALL_TESTS is treated as a test suite.
  *
  * Usage:
  *   node scripts/tests/multiplayer/e2e/run-all.mjs            # Run all suites
@@ -15,24 +15,13 @@
  */
 
 import { readdir } from 'node:fs/promises';
-import { dirname } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { printResults, startServers, stopServers } from './utils.mjs';
+import { printResults, startServers, stopServers } from './core/index.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-
-// Files that are utilities, not test suites
-const EXCLUDED_FILES = new Set([
-  'run-all.mjs',
-  'run-n-times.mjs',
-  'utils.mjs',
-  'helpers.mjs',
-  'connection-helpers.mjs',
-  'loadout-helpers.mjs',
-  'servers.mjs',
-  'test-config.mjs',
-]);
+const TESTS_DIR = join(__dirname, 'tests');
 
 /**
  * Convert filename to suite name: "state-sync-host.mjs" -> "State Sync Host"
@@ -46,17 +35,15 @@ function fileToSuiteName(filename) {
 }
 
 /**
- * Discover all test suites by scanning the e2e directory
+ * Discover all test suites by scanning the tests/ directory
  */
 async function discoverSuites() {
-  const files = await readdir(__dirname);
-  const testFiles = files
-    .filter((f) => f.endsWith('.mjs') && !EXCLUDED_FILES.has(f))
-    .sort(); // Alphabetical order for consistent runs
+  const files = await readdir(TESTS_DIR);
+  const testFiles = files.filter((f) => f.endsWith('.mjs')).sort();
 
   const suites = [];
   for (const file of testFiles) {
-    const mod = await import(`./${file}`);
+    const mod = await import(`./tests/${file}`);
     if (mod.ALL_TESTS) {
       suites.push({ name: fileToSuiteName(file), tests: mod.ALL_TESTS });
     }
