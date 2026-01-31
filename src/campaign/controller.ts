@@ -64,6 +64,7 @@ export function startCampaign(container: HTMLElement): CampaignController {
     screenManager,
     missionContainer: null,
     game: null,
+    multiplayerGameState: null,
     missionRenderers: null,
     missionEnded: false,
     pausedMissionForSettings: false,

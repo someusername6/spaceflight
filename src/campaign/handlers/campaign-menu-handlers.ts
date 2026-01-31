@@ -187,6 +187,9 @@ export async function setupLoadCampaignScreenForHosting(
         finalSlotId,
       );
 
+      // Clean up load campaign screen before transitioning
+      cleanupLoadCampaignScreen();
+
       // After creating, go directly to hosting
       void setupRoomCreatedScreen(controller, onStartGameplay);
     },

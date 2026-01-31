@@ -60,6 +60,7 @@ import {
   type LobbyContext,
   setLobbyContext,
 } from './lobby-context';
+import { setupMultiplayerEscapeHandler } from './lobby-escape-handler';
 import {
   sendCallsignAnnounce,
   setupMessageHandling,
@@ -223,6 +224,9 @@ export function setupLobbyScreenForHost(
     },
     campaignInfo,
   );
+
+  // Setup escape handler for multiplayer pause
+  setupMultiplayerEscapeHandler(controller);
 }
 
 /**
@@ -328,6 +332,9 @@ export function setupLobbyScreenForGuest(
     ),
     isCountdownActive: isLaunchCountdownActive,
   });
+
+  // Setup escape handler for multiplayer pause
+  setupMultiplayerEscapeHandler(controller);
 
   // Send CallsignAnnounce to host
   sendCallsignAnnounce(connectionFlow);

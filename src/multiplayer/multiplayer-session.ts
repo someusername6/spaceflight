@@ -213,6 +213,41 @@ export class MultiplayerSession {
   destroy(): void {
     this.session.destroy();
   }
+
+  // ===========================================================================
+  // Pause/Resume (convenience methods that delegate to session)
+  // ===========================================================================
+
+  /**
+   * Pause the game simulation.
+   * Note: Actual pause state coordination is handled by PauseCoordinator.
+   * This is a low-level method for the underlying session.
+   */
+  pause(): void {
+    // The rollback-netcode session may have a pause method
+    // If not available, pausing is handled at the game level
+    if ('pause' in this.session && typeof this.session.pause === 'function') {
+      (this.session as { pause: () => void }).pause();
+    }
+  }
+
+  /**
+   * Resume the game simulation (host only).
+   * Note: Actual resume coordination is handled by PauseCoordinator.
+   */
+  resume(): void {
+    if (!this._isHost) return;
+    if ('resume' in this.session && typeof this.session.resume === 'function') {
+      (this.session as { resume: () => void }).resume();
+    }
+  }
+
+  /**
+   * Check if session supports pause/resume.
+   */
+  get supportsPause(): boolean {
+    return 'pause' in this.session && typeof this.session.pause === 'function';
+  }
 }
 
 /**

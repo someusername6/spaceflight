@@ -52,6 +52,13 @@ export class SpaceflightGameAdapter implements Game<Uint8Array> {
   }
 
   /**
+   * Get the current player-to-entity mapping.
+   */
+  getPlayerEntityMap(): Map<PlayerId, Entity> {
+    return this.playerEntityMap;
+  }
+
+  /**
    * Update the player-to-entity mapping.
    * Call this when players join or their ships change.
    */

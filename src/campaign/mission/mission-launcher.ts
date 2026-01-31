@@ -7,6 +7,12 @@ import { findLocalPlayer } from '../../core/player-utils';
 import { deriveKey } from '../../core/prng';
 import { createGame, startGame } from '../../game';
 import { InputRecorder } from '../../input/input-recorder';
+import { buildPlayerEntityMap } from '../../multiplayer/mission-setup';
+import {
+  createMultiplayerGameState,
+  startMultiplayerGameLoop,
+} from '../../multiplayer/multiplayer-game-loop';
+import { createMultiplayerSession } from '../../multiplayer/multiplayer-session';
 import { render } from '../../rendering/renderer';
 import { getPlayerAutoaim } from '../../settings/game-settings';
 import { startRecording } from '../../systems/input';
@@ -15,28 +21,10 @@ import { setMissionContainer } from '../../ui/common/screens';
 import { cleanupTitleScreen } from '../../ui/screens/title';
 import type { CampaignController } from '../controller-types';
 import { getLobbyContext } from '../handlers/lobby-context';
+import { setupMultiplayerMissionPause } from '../handlers/multiplayer-pause-handler';
 import { shipToReplayLoadout } from '../ship-spawning';
 import type { Contract } from '../types';
-import {
-  createAmbushMissionEndCallback,
-  createAmbushTickCallback,
-  setupAmbushMission,
-} from './ambush-launcher';
-import {
-  createAttackStationMissionEndCallback,
-  createAttackStationTickCallback,
-} from './attack-station-callbacks';
-import { setupAttackStationMission } from './attack-station-launcher';
-import {
-  createEscortMissionEndCallback,
-  createEscortTickCallback,
-  setupEscortMission,
-} from './escort-launcher';
-import {
-  createMissionEndCallback,
-  createMissionEndExecutor,
-  createTickCallback,
-} from './mission-callbacks';
+import { createMissionEndExecutor } from './mission-callbacks';
 import {
   createMissionRenderers,
   updateMissionRenderers,
@@ -50,16 +38,8 @@ import {
   getSpectatorState,
   initializeMissionSpectator,
 } from './mission-spectator';
-import {
-  createMissionEndState,
-  createWaveState,
-  initializeFirstWave,
-} from './mission-waves';
-import {
-  createStationDefenseMissionEndCallback,
-  createStationDefenseTickCallback,
-  setupStationDefenseMission,
-} from './station-defense-launcher';
+import { setupMissionTypeCallbacks } from './mission-type-setup';
+import { createMissionEndState } from './mission-waves';
 
 /** Callback type for contracts screen setup */
 export type SetupContractsCallback = (controller: CampaignController) => void;
@@ -104,6 +84,13 @@ export function launchMission(
   );
   const game = createGame(seed);
   controller.game = game;
+
+  // Setup multiplayer pause coordination if in lobby
+  const lobbyCtx = getLobbyContext();
+  if (lobbyCtx) {
+    const pauseCoordinator = setupMultiplayerMissionPause(controller, lobbyCtx);
+    lobbyCtx.pauseCoordinator = pauseCoordinator;
+  }
 
   // Create input recorder (will capture deployment data below)
   // Capture playerAutoaim at mission start for replay determinism
@@ -152,7 +139,7 @@ export function launchMission(
   }
 
   // Cache local player entity for mid-mission death detection (avoids per-frame entity search)
-  const lobbyCtx = getLobbyContext();
+  // Note: lobbyCtx is already defined above for pause coordination
   const cachedLocalPlayer = lobbyCtx ? findLocalPlayer(game.world) : null;
 
   // Mission end state for delayed transition (shared by all mission types)
@@ -218,174 +205,68 @@ export function launchMission(
     setupContractsScreen,
   );
 
-  // Branch based on mission type
-  const missionType = contract.missionType ?? 'elimination';
+  // Setup mission type-specific callbacks (onTick, onMissionEnd)
+  setupMissionTypeCallbacks(
+    controller,
+    game,
+    contract,
+    missionEndState,
+    executeMissionEnd,
+  );
 
-  if (missionType === 'escort' && contract.escortData) {
-    // === ESCORT MISSION ===
-    const escortState = setupEscortMission(game.world, contract);
-
-    game.onTick = createEscortTickCallback(
-      controller,
-      game,
-      contract,
-      escortState,
-      missionEndState,
-      executeMissionEnd,
-    );
-
-    game.onMissionEnd = createEscortMissionEndCallback(
-      controller,
-      escortState,
-      missionEndState,
-    );
-
-    logDebug(
-      `[MISSION ${performance.now().toFixed(0)}ms] Escort mission started: ${contract.name}`,
-    );
-    logDebug(
-      `[MISSION ${performance.now().toFixed(0)}ms] ${contract.escortData.convoySize} convoy ships to protect`,
-    );
-  } else if (missionType === 'station-defense' && contract.stationDefenseData) {
-    // === STATION DEFENSE MISSION ===
-    const stationState = setupStationDefenseMission(game.world, contract);
-
-    game.onTick = createStationDefenseTickCallback(
-      controller,
-      game,
-      contract,
-      stationState,
-      missionEndState,
-      executeMissionEnd,
-    );
-
-    game.onMissionEnd = createStationDefenseMissionEndCallback(
-      controller,
-      game,
-      stationState,
-      missionEndState,
-    );
-
-    const totalEnemies = contract.stationDefenseData.waves.reduce(
-      (sum, w) => sum + w.enemies.reduce((s, e) => s + e.count, 0),
-      0,
-    );
-    logDebug(
-      `[MISSION ${performance.now().toFixed(0)}ms] Station defense mission started: ${contract.name}`,
-    );
-    logDebug(
-      `[MISSION ${performance.now().toFixed(0)}ms] ${totalEnemies} enemies across ${contract.stationDefenseData.waves.length} waves`,
-    );
-  } else if (missionType === 'attack-station' && contract.attackStationData) {
-    // === ATTACK STATION MISSION ===
-    const attackState = setupAttackStationMission(game.world, contract);
-
-    game.onTick = createAttackStationTickCallback(
-      controller,
-      game,
-      contract,
-      attackState,
-      missionEndState,
-      executeMissionEnd,
-    );
-
-    game.onMissionEnd = createAttackStationMissionEndCallback(
-      controller,
-      game,
-      contract,
-      attackState,
-      missionEndState,
-    );
-
-    const totalDefenders = contract.attackStationData.initialDefenders.reduce(
-      (sum, e) => sum + e.count,
-      0,
-    );
-    const totalReinforcements =
-      contract.attackStationData.reinforcementWaves.reduce(
-        (sum, w) => sum + w.allies.reduce((s, a) => s + a.count, 0),
-        0,
-      );
-    logDebug(
-      `[MISSION ${performance.now().toFixed(0)}ms] Attack station mission started: ${contract.name}`,
-    );
-    logDebug(
-      `[MISSION ${performance.now().toFixed(0)}ms] ${totalDefenders} defenders, ${totalReinforcements} reinforcements`,
-    );
-  } else if (missionType === 'ambush' && contract.ambushData) {
-    // === AMBUSH MISSION ===
-    const ambushState = setupAmbushMission(game.world, contract);
-
-    game.onTick = createAmbushTickCallback(
-      controller,
-      game,
-      contract,
-      ambushState,
-      missionEndState,
-      executeMissionEnd,
-    );
-
-    game.onMissionEnd = createAmbushMissionEndCallback(
-      controller,
-      game,
-      ambushState,
-      missionEndState,
-    );
-
-    const totalEscorts = contract.ambushData.escorts.reduce(
-      (sum, e) => sum + e.count,
-      0,
-    );
-    logDebug(
-      `[MISSION ${performance.now().toFixed(0)}ms] Ambush mission started: ${contract.name}`,
-    );
-    logDebug(
-      `[MISSION ${performance.now().toFixed(0)}ms] ${contract.ambushData.convoySize} convoy targets, ${totalEscorts} escorts`,
-    );
-  } else {
-    // === ELIMINATION MISSION (default) ===
-    const waves = contract.waves ?? [];
-    const waveState = createWaveState(waves.length);
-
-    // Handle first wave - spawn immediately or after delay (shared with replay)
-    initializeFirstWave(game.world, waveState, waves);
-    if (waveState.delayRemaining > 0) {
+  // === START GAME LOOP ===
+  if (lobbyCtx) {
+    // Multiplayer: Use rollback-netcode session
+    const transport = lobbyCtx.connectionFlow.getTransport();
+    if (!transport) {
       logDebug(
-        `[WAVE ${performance.now().toFixed(0)}ms] First wave in ${waveState.delayRemaining.toFixed(1)}s`,
+        '[MISSION] ERROR: No transport available for multiplayer session',
       );
-    } else {
-      logDebug(
-        `[WAVE ${performance.now().toFixed(0)}ms] Wave 1/${waveState.totalWaves} spawned`,
-      );
+      startGame(game);
+      return;
     }
 
-    game.onTick = createTickCallback(
-      controller,
-      game,
-      contract,
-      waveState,
-      missionEndState,
-      executeMissionEnd,
+    const { playerEntityMap } = buildPlayerEntityMap(
+      game.world,
+      lobbyCtx.lobbyState.players,
+      lobbyCtx.localPlayerId,
     );
 
-    game.onMissionEnd = createMissionEndCallback(
-      controller,
-      waveState,
-      missionEndState,
-    );
+    const session = createMultiplayerSession({
+      world: game.world,
+      transport,
+      localPlayerId: lobbyCtx.localPlayerId,
+      isHost: lobbyCtx.isHost,
+      playerEntityMap,
+    });
 
-    const totalEnemies = waves.reduce(
-      (sum, w) => sum + w.enemies.reduce((s, e) => s + e.count, 0),
-      0,
-    );
+    // Re-wire router after session creation.
+    // The rollback-netcode session sets its own onMessage handler, which overwrites
+    // the router's handler. We need to re-wire so the router can dispatch game
+    // messages (like PauseRequest) while passing rollback messages to the session.
+    lobbyCtx.router.wireToTransport(transport.onMessage ?? undefined);
+
+    const mpState = createMultiplayerGameState(session);
+    controller.multiplayerGameState = mpState;
+
+    // Wire callbacks (they are guaranteed to be set by setupMissionTypeCallbacks)
+    if (game.onRender) mpState.onRender = game.onRender;
+    if (game.onTick) mpState.onTick = game.onTick;
+    if (game.onMissionEnd) mpState.onMissionEnd = game.onMissionEnd;
+
+    // Wire lagReport for auto-pause (>0.5 seconds behind = 30 ticks at 60fps)
+    session.on('lagReport', (_laggyPlayerId, ticksBehind) => {
+      if (ticksBehind > 30) {
+        lobbyCtx.pauseCoordinator?.requestPause('lag-detected');
+      }
+    });
+
     logDebug(
-      `[MISSION ${performance.now().toFixed(0)}ms] Mission started: ${contract.name}`,
+      `[MISSION ${performance.now().toFixed(0)}ms] Started multiplayer game loop`,
     );
-    logDebug(
-      `[MISSION ${performance.now().toFixed(0)}ms] ${totalEnemies} enemies across ${waves.length} waves`,
-    );
+    startMultiplayerGameLoop(mpState);
+  } else {
+    // Single-player: Use standard game loop
+    startGame(game);
   }
-
-  // Start the game
-  startGame(game);
 }

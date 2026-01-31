@@ -32,12 +32,22 @@ export {
 } from './lobby.mjs';
 // Mission helpers
 export {
+  clickReadyToResume,
+  getCountdownNumber,
+  getPauseReason,
   getPlayerCallsign,
+  getShipSpeed,
   getWingmanCallsigns,
+  holdKey,
+  isCountdownVisible,
+  isReadyToResume,
   isSpectatorMode,
   launchMissionAndWait,
   playerHasShipAssigned,
+  triggerPause,
   waitForMissionScreen,
+  waitForPauseModal,
+  waitForResume,
 } from './mission.mjs';
 // Navigation helpers
 export {

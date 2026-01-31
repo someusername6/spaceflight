@@ -126,6 +126,9 @@
 /* Pause menu modal */
 @import "./screens/pause-menu.css";
 
+/* Multiplayer pause modal */
+@import "./screens/multiplayer-pause.css";
+
 /* Alert modal */
 @import "./screens/alert-modal.css";
 

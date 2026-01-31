@@ -3,6 +3,8 @@
  */
 
 import type { createGame } from '../game';
+import type { MultiplayerGameState } from '../multiplayer/multiplayer-game-loop';
+import type { PauseCoordinatorHandle } from '../multiplayer/pause-coordinator';
 import type { createScreenManager } from '../ui/common/screens';
 import type { MissionRenderers } from './mission/mission-renderer';
 
@@ -12,8 +14,12 @@ export interface CampaignController {
   screenManager: ReturnType<typeof createScreenManager>;
   missionContainer: HTMLElement | null;
   game: ReturnType<typeof createGame> | null;
+  /** Multiplayer game state (used instead of game when in multiplayer) */
+  multiplayerGameState: MultiplayerGameState | null;
   missionRenderers: MissionRenderers | null;
   missionEnded: boolean;
   /** Tracks if we paused a mission to go to settings (for proper resume) */
   pausedMissionForSettings: boolean;
+  /** Pause coordinator for multiplayer missions */
+  pauseCoordinator?: PauseCoordinatorHandle;
 }

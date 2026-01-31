@@ -28,6 +28,7 @@ import {
   type GameMessage,
   GameMessageType,
   type GamePlayerInfo,
+  type GuestQuitRequestMessage,
   type KickNotificationMessage,
   type LaunchAbortedMessage,
   type LaunchCountdownMessage,
@@ -35,7 +36,10 @@ import {
   type MissionEndedMessage,
   type MissionOutcomeData,
   type MissionStartedMessage,
+  type PauseReadyStateMessage,
+  type PauseRequestMessage,
   type PermissionUpdateMessage,
+  type PlayerDroppedMessage,
   type PlayerJoinedExtMessage,
   type PlayerLeftExtMessage,
   type ReadyStateMessage,
@@ -111,6 +115,14 @@ export function decodeMessage(data: Uint8Array): GameMessage {
       return decodeCallsignAnnounce(rb);
     case GameMessageType.CallsignUpdate:
       return decodeCallsignUpdate(rb);
+    case GameMessageType.PauseReadyState:
+      return decodePauseReadyState(rb);
+    case GameMessageType.PlayerDropped:
+      return decodePlayerDropped(rb);
+    case GameMessageType.GuestQuitRequest:
+      return decodeGuestQuitRequest(rb);
+    case GameMessageType.PauseRequest:
+      return decodePauseRequest(rb);
     default: {
       // Cast to number for error message (type is 'never' due to exhaustive switch)
       const unknownType = type as number;
@@ -290,6 +302,47 @@ function decodeCallsignUpdate(rb: ReadBuffer): CallsignUpdateMessage {
     type: GameMessageType.CallsignUpdate,
     playerId: readString(rb),
     callsign: readString(rb),
+  };
+}
+
+function decodePauseReadyState(rb: ReadBuffer): PauseReadyStateMessage {
+  return {
+    type: GameMessageType.PauseReadyState,
+    playerId: readString(rb),
+    ready: readBool(rb),
+  };
+}
+
+function decodePlayerDropped(rb: ReadBuffer): PlayerDroppedMessage {
+  return {
+    type: GameMessageType.PlayerDropped,
+    playerId: readString(rb),
+    aiSkill: readByte(rb),
+  };
+}
+
+function decodeGuestQuitRequest(rb: ReadBuffer): GuestQuitRequestMessage {
+  return {
+    type: GameMessageType.GuestQuitRequest,
+    playerId: readString(rb),
+  };
+}
+
+function decodePauseRequest(rb: ReadBuffer): PauseRequestMessage {
+  const playerId = readString(rb);
+  const callsign = readString(rb);
+  const reasonByte = readByte(rb);
+  const reason =
+    reasonByte === 0
+      ? 'player-request'
+      : reasonByte === 1
+        ? 'player-disconnect'
+        : 'lag-detected';
+  return {
+    type: GameMessageType.PauseRequest,
+    playerId,
+    callsign,
+    reason,
   };
 }
 

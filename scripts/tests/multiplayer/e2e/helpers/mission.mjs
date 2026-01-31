@@ -144,3 +144,168 @@ export async function isSpectatorMode(page) {
 
   return !hasWeaponDisplay || hasSpectatorInfo;
 }
+
+// =============================================================================
+// Pause Helpers
+// =============================================================================
+
+/**
+ * Trigger pause by pressing Escape on given page.
+ * @param {import('playwright').Page} page
+ * @param {number} timeout
+ */
+export async function triggerPause(page, timeout = 3000) {
+  await page.keyboard.press('Escape');
+
+  // Use waitForFunction with DOM check since waitForSelector can be flaky
+  // with dynamically created fixed-position overlays
+  const startTime = Date.now();
+  while (Date.now() - startTime < timeout) {
+    const found = await page.evaluate(() => {
+      const overlay = document.querySelector('.multiplayer-pause-overlay');
+      if (!overlay) return false;
+      const rect = overlay.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0;
+    });
+    if (found) return;
+    await new Promise((r) => setTimeout(r, 100));
+  }
+
+  // Final debug info before throwing
+  const debugInfo = await page.evaluate(() => {
+    const overlay = document.querySelector('.multiplayer-pause-overlay');
+    const modal = document.querySelector('.multiplayer-pause-modal');
+    const modalContainer = document.querySelector('.modal-container');
+    return {
+      hasOverlay: !!overlay,
+      hasModal: !!modal,
+      hasContainer: !!modalContainer,
+      overlayRect: overlay ? overlay.getBoundingClientRect() : null,
+      containerChildren: modalContainer ? modalContainer.children.length : 0,
+      bodyModals: document.querySelectorAll('.modal-container').length,
+    };
+  });
+  throw new Error(`Pause modal did not appear: ${JSON.stringify(debugInfo)}`);
+}
+
+/**
+ * Wait for pause modal to appear on a page.
+ * @param {import('playwright').Page} page
+ * @param {number} timeout
+ */
+export async function waitForPauseModal(page, timeout = 5000) {
+  // Use evaluate-based check for more reliable detection
+  const startTime = Date.now();
+  while (Date.now() - startTime < timeout) {
+    const found = await page.evaluate(() => {
+      const overlay = document.querySelector('.multiplayer-pause-overlay');
+      if (!overlay) return false;
+      const rect = overlay.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0;
+    });
+    if (found) return;
+    await new Promise((r) => setTimeout(r, 100));
+  }
+  throw new Error('Pause modal did not appear in time');
+}
+
+/**
+ * Click ready-to-resume button.
+ * @param {import('playwright').Page} page
+ */
+export async function clickReadyToResume(page) {
+  await page.click('#btn-pause-ready');
+}
+
+/**
+ * Wait for countdown to complete and game to resume.
+ * @param {import('playwright').Page} page
+ * @param {number} timeout
+ */
+export async function waitForResume(page, timeout = 10000) {
+  await page.waitForSelector(
+    '.multiplayer-pause-modal, .multiplayer-pause-overlay',
+    {
+      state: 'hidden',
+      timeout,
+    },
+  );
+}
+
+/**
+ * Check if the ready button shows ready state.
+ * @param {import('playwright').Page} page
+ * @returns {Promise<boolean>}
+ */
+export async function isReadyToResume(page) {
+  const btn = page.locator('#btn-pause-ready');
+  const hasClass = await btn.evaluate((el) =>
+    el.classList.contains('ready-active'),
+  );
+  return hasClass;
+}
+
+/**
+ * Get the pause reason text from the modal.
+ * @param {import('playwright').Page} page
+ * @returns {Promise<string>}
+ */
+export async function getPauseReason(page) {
+  const reason = await page.locator('.pause-reason').textContent();
+  return reason?.trim() ?? '';
+}
+
+/**
+ * Check if countdown is visible.
+ * @param {import('playwright').Page} page
+ * @returns {Promise<boolean>}
+ */
+export async function isCountdownVisible(page) {
+  return page
+    .locator('.pause-countdown')
+    .isVisible()
+    .catch(() => false);
+}
+
+/**
+ * Get current countdown number.
+ * @param {import('playwright').Page} page
+ * @returns {Promise<number|null>}
+ */
+export async function getCountdownNumber(page) {
+  const text = await page.locator('.pause-countdown-number').textContent();
+  if (!text) return null;
+  const num = parseInt(text, 10);
+  return Number.isNaN(num) ? null : num;
+}
+
+// =============================================================================
+// Input Helpers
+// =============================================================================
+
+/**
+ * Hold a key for a specified duration.
+ * @param {import('playwright').Page} page
+ * @param {string} key
+ * @param {number} holdMs
+ */
+export async function holdKey(page, key, holdMs = 100) {
+  await page.keyboard.down(key);
+  await new Promise((r) => setTimeout(r, holdMs));
+  await page.keyboard.up(key);
+}
+
+/**
+ * Get ship speed from the HUD speedometer.
+ * @param {import('playwright').Page} page
+ * @returns {Promise<number>}
+ */
+export async function getShipSpeed(page) {
+  const speed = await page.evaluate(() => {
+    const speedEl = document.querySelector('.speed-value, .speedometer-value');
+    if (!speedEl) return 0;
+    const text = speedEl.textContent?.replace(/[^\d.-]/g, '') ?? '0';
+    return parseFloat(text) || 0;
+  });
+  return speed;
+}

@@ -29,6 +29,10 @@ export enum GameMessageType {
   KickNotification = 0x90,
   CallsignAnnounce = 0x91,
   CallsignUpdate = 0x92,
+  PauseReadyState = 0x93,
+  PlayerDropped = 0x94,
+  GuestQuitRequest = 0x95,
+  PauseRequest = 0x96,
 }
 
 // =============================================================================

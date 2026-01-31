@@ -20,13 +20,17 @@ import {
   type ContractAcceptedMessage,
   type GameMessage,
   GameMessageType,
+  type GuestQuitRequestMessage,
   isHostOnlyMessage,
   type KickNotificationMessage,
   type LaunchAbortedMessage,
   type LaunchCountdownMessage,
   type MissionEndedMessage,
   type MissionStartedMessage,
+  type PauseReadyStateMessage,
+  type PauseRequestMessage,
   type PermissionUpdateMessage,
+  type PlayerDroppedMessage,
   type PlayerJoinedExtMessage,
   type PlayerLeftExtMessage,
   type ReadyStateMessage,
@@ -34,49 +38,14 @@ import {
   type ShipAssignmentMessage,
   type WelcomeMessage,
 } from './messages';
+import type {
+  MessageHandler,
+  MessageHandlers,
+  MessageRouterConfig,
+} from './router-types';
 
-// =============================================================================
-// Types
-// =============================================================================
-
-/** Handler function type */
-type MessageHandler<T extends GameMessage> = (
-  msg: T,
-  fromPeerId: string,
-) => void;
-
-/** Map of message types to their handlers */
-interface MessageHandlers {
-  [GameMessageType.Welcome]?: MessageHandler<WelcomeMessage>;
-  [GameMessageType.PlayerJoinedExt]?: MessageHandler<PlayerJoinedExtMessage>;
-  [GameMessageType.PlayerLeftExt]?: MessageHandler<PlayerLeftExtMessage>;
-  [GameMessageType.ChatMessage]?: MessageHandler<ChatMessage>;
-  [GameMessageType.ReadyState]?: MessageHandler<ReadyStateMessage>;
-  [GameMessageType.PermissionUpdate]?: MessageHandler<PermissionUpdateMessage>;
-  [GameMessageType.ShipAssignment]?: MessageHandler<ShipAssignmentMessage>;
-  [GameMessageType.CampaignSync]?: MessageHandler<CampaignSyncMessage>;
-  [GameMessageType.ActionRequest]?: MessageHandler<ActionRequestMessage>;
-  [GameMessageType.ActionResponse]?: MessageHandler<ActionResponseMessage>;
-  [GameMessageType.ContractAccepted]?: MessageHandler<ContractAcceptedMessage>;
-  [GameMessageType.LaunchCountdown]?: MessageHandler<LaunchCountdownMessage>;
-  [GameMessageType.LaunchAborted]?: MessageHandler<LaunchAbortedMessage>;
-  [GameMessageType.MissionStarted]?: MessageHandler<MissionStartedMessage>;
-  [GameMessageType.MissionEnded]?: MessageHandler<MissionEndedMessage>;
-  [GameMessageType.SessionEnded]?: MessageHandler<SessionEndedMessage>;
-  [GameMessageType.KickNotification]?: MessageHandler<KickNotificationMessage>;
-  [GameMessageType.CallsignAnnounce]?: MessageHandler<CallsignAnnounceMessage>;
-  [GameMessageType.CallsignUpdate]?: MessageHandler<CallsignUpdateMessage>;
-}
-
-/** Configuration for MessageRouter */
-export interface MessageRouterConfig {
-  /** Transport adapter for sending messages */
-  transport: TransportAdapter;
-  /** Host peer ID for validation */
-  hostPeerId: string;
-  /** Whether local peer is the host */
-  isHost: boolean;
-}
+// Re-export config type for consumers
+export type { MessageRouterConfig } from './router-types';
 
 // =============================================================================
 // MessageRouter Class
@@ -105,6 +74,9 @@ export class MessageRouter {
   onError:
     | ((error: Error, data: Uint8Array, fromPeerId: string) => void)
     | null = null;
+
+  /** Called when a peer disconnects */
+  onPeerDisconnect: ((peerId: string) => void) | null = null;
 
   constructor(config: MessageRouterConfig) {
     this.transport = config.transport;
@@ -211,6 +183,26 @@ export class MessageRouter {
     return this;
   }
 
+  onPauseReadyState(handler: MessageHandler<PauseReadyStateMessage>): this {
+    this.handlers[GameMessageType.PauseReadyState] = handler;
+    return this;
+  }
+
+  onPlayerDropped(handler: MessageHandler<PlayerDroppedMessage>): this {
+    this.handlers[GameMessageType.PlayerDropped] = handler;
+    return this;
+  }
+
+  onGuestQuitRequest(handler: MessageHandler<GuestQuitRequestMessage>): this {
+    this.handlers[GameMessageType.GuestQuitRequest] = handler;
+    return this;
+  }
+
+  onPauseRequest(handler: MessageHandler<PauseRequestMessage>): this {
+    this.handlers[GameMessageType.PauseRequest] = handler;
+    return this;
+  }
+
   // ===========================================================================
   // Message Dispatch
   // ===========================================================================
@@ -310,6 +302,9 @@ export class MessageRouter {
   // Transport Integration
   // ===========================================================================
 
+  /** Store existing disconnect handler for unwiring */
+  private existingDisconnectHandler: ((peerId: string) => void) | null = null;
+
   /**
    * Wire the router to a transport's onMessage callback.
    *
@@ -326,6 +321,13 @@ export class MessageRouter {
       }
     };
     this.transport.onMessage = this.boundMessageHandler;
+
+    // Wire disconnect handler
+    this.existingDisconnectHandler = this.transport.onDisconnect ?? null;
+    this.transport.onDisconnect = (peerId: string) => {
+      this.existingDisconnectHandler?.(peerId);
+      this.onPeerDisconnect?.(peerId);
+    };
   }
 
   /**
@@ -336,7 +338,9 @@ export class MessageRouter {
     previousHandler?: (peerId: string, data: Uint8Array) => void,
   ): void {
     this.transport.onMessage = previousHandler ?? null;
+    this.transport.onDisconnect = this.existingDisconnectHandler ?? null;
     this.boundMessageHandler = null;
+    this.existingDisconnectHandler = null;
   }
 
   // ===========================================================================
@@ -350,7 +354,9 @@ export class MessageRouter {
     this.handlers = {};
     this.onUnauthorizedMessage = null;
     this.onError = null;
+    this.onPeerDisconnect = null;
     this.boundMessageHandler = null;
+    this.existingDisconnectHandler = null;
   }
 }
 

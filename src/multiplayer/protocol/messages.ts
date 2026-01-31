@@ -43,6 +43,21 @@ export type {
   SessionEndedMessage,
 };
 
+// Import and re-export pause messages
+import type {
+  GuestQuitRequestMessage,
+  PauseReadyStateMessage,
+  PauseRequestMessage,
+  PlayerDroppedMessage,
+} from './messages-pause';
+
+export type {
+  GuestQuitRequestMessage,
+  PauseReadyStateMessage,
+  PauseRequestMessage,
+  PlayerDroppedMessage,
+};
+
 // =============================================================================
 // Message Interfaces
 // =============================================================================
@@ -297,7 +312,11 @@ export type GameMessage =
   | SessionEndedMessage
   | KickNotificationMessage
   | CallsignAnnounceMessage
-  | CallsignUpdateMessage;
+  | CallsignUpdateMessage
+  | PauseReadyStateMessage
+  | PlayerDroppedMessage
+  | GuestQuitRequestMessage
+  | PauseRequestMessage;
 
 // =============================================================================
 // Host-only Message Check
@@ -319,6 +338,7 @@ export const HOST_ONLY_MESSAGES = new Set<GameMessageType>([
   GameMessageType.MissionEnded,
   GameMessageType.SessionEnded,
   GameMessageType.KickNotification,
+  GameMessageType.PlayerDropped,
 ]);
 
 /** Check if a message type can only be sent by the host */

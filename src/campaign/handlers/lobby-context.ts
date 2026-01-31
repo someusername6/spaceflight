@@ -11,6 +11,7 @@
 import type { CampaignSyncManager } from '../../multiplayer/campaign-sync';
 import type { LobbyState } from '../../multiplayer/lobby-state';
 import type { ConnectionFlow } from '../../multiplayer/networking/connection-flow';
+import type { PauseCoordinatorHandle } from '../../multiplayer/pause-coordinator';
 import type { MessageRouter } from '../../multiplayer/protocol/router';
 import type { ScreenManager } from '../../ui/common/screens';
 import type { CampaignState, Contract } from '../types';
@@ -65,6 +66,12 @@ export interface LobbyContext {
    * Only used by guests - host launches mission via countdown callback.
    */
   onMissionStart?: OnMissionStartCallback;
+
+  /**
+   * Pause coordinator for multiplayer missions.
+   * Set when mission starts, cleared when mission ends.
+   */
+  pauseCoordinator?: PauseCoordinatorHandle;
 }
 
 // =============================================================================

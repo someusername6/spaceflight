@@ -15,6 +15,11 @@ import { closePopovers } from '../../ui/screens/popover-layer';
 import { cleanupTitleScreen, resetTitleScreen } from '../../ui/screens/title';
 import type { CampaignController } from '../controller-types';
 import { disposeMissionRenderers } from '../mission/mission-renderer';
+import { getLobbyContext, isInLobby } from './lobby-context';
+import {
+  handleMultiplayerPause,
+  storeMultiplayerPauseCallbacks,
+} from './multiplayer-pause-handler';
 
 /** Module-level escape key handler reference for cleanup */
 let escapeHandler: ((e: KeyboardEvent) => void) | null = null;
@@ -36,6 +41,9 @@ export function setupEscapeHandler(
 ): void {
   // Remove any existing handler
   cleanupEscapeHandler();
+
+  // Store callbacks for multiplayer pause handling (externally triggered pauses)
+  storeMultiplayerPauseCallbacks(setupSettingsScreen, setupTitleScreen);
 
   escapeHandler = async (e: KeyboardEvent) => {
     const { screenManager } = controller;
@@ -62,6 +70,27 @@ export function setupEscapeHandler(
 
       const inMission = screenManager.currentScreen === Screen.MISSION;
 
+      // Check for multiplayer mission mode
+      if (inMission && isInLobby()) {
+        const lobbyContext = getLobbyContext();
+        if (lobbyContext) {
+          // Use multiplayer pause handler
+          pauseMenuOpen = true;
+          try {
+            await handleMultiplayerPause(
+              controller,
+              lobbyContext,
+              setupSettingsScreen,
+              setupTitleScreen,
+            );
+          } finally {
+            pauseMenuOpen = false;
+          }
+          return;
+        }
+      }
+
+      // Single-player pause handling
       // Pause game during mission
       if (inMission && controller.game) {
         pauseGame(controller.game);

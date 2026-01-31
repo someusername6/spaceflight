@@ -1,0 +1,297 @@
+/**
+ * Multiplayer Pause Screen Styles
+ *
+ * Modal overlay shown during multiplayer mission pause.
+ * Includes players panel, chat panel, and action buttons.
+ */
+
+/* ========================================
+   OVERLAY & MODAL
+   ======================================== */
+
+.multiplayer-pause-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.multiplayer-pause-modal {
+  background: var(--bg-overlay);
+  border: 1px solid var(--color-primary);
+  padding: var(--space-4);
+  width: 800px;
+  max-width: 95vw;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* ========================================
+   HEADER
+   ======================================== */
+
+.pause-header {
+  text-align: center;
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border-dim);
+}
+
+.pause-header h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+  color: var(--color-warning);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.pause-reason {
+  margin-top: var(--space-2);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+/* ========================================
+   MAIN CONTENT LAYOUT
+   ======================================== */
+
+.pause-content {
+  display: flex;
+  gap: var(--space-4);
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.pause-left {
+  flex: 0 0 45%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.pause-right {
+  flex: 0 0 55%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* ========================================
+   PAUSE PLAYERS PANEL
+   ======================================== */
+
+.pause-players-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: rgba(10, 14, 20, 0.5);
+  border: 1px solid var(--border-dim);
+  min-height: 0;
+}
+
+.pause-player-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border-dim);
+}
+
+.pause-player-row:last-child {
+  border-bottom: none;
+}
+
+.pause-player-row.self {
+  background: rgba(0, 245, 255, 0.1);
+}
+
+.pause-player-row.disconnected {
+  opacity: 0.6;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.pause-player-row.dropped {
+  opacity: 0.5;
+  background: rgba(100, 100, 100, 0.1);
+}
+
+.pause-player-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.pause-player-callsign {
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  color: var(--text-primary);
+}
+
+.pause-player-status {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--text-dim);
+  margin-left: var(--space-2);
+}
+
+.pause-player-status.disconnected {
+  color: var(--color-danger);
+}
+
+.pause-player-status.ai {
+  color: var(--color-warning);
+}
+
+.pause-player-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Ready indicator in pause modal */
+.pause-ready-indicator {
+  font-size: var(--text-lg);
+  width: 24px;
+  text-align: center;
+}
+
+.pause-ready-indicator.ready {
+  color: var(--color-success);
+}
+
+.pause-ready-indicator.not-ready {
+  color: var(--text-dim);
+}
+
+/* Drop player button (host only) */
+.btn-drop-player {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-xs);
+}
+
+/* ========================================
+   PAUSE CHAT PANEL
+   ======================================== */
+
+.pause-chat-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: rgba(10, 14, 20, 0.5);
+  border: 1px solid var(--border-dim);
+  min-height: 0;
+}
+
+.pause-chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-2);
+  min-height: 150px;
+}
+
+/* ========================================
+   COUNTDOWN DISPLAY
+   ======================================== */
+
+.pause-countdown {
+  text-align: center;
+  padding: var(--space-3);
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid var(--color-success);
+  margin-top: var(--space-3);
+}
+
+.pause-countdown-text {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  color: var(--color-success);
+}
+
+.pause-countdown-number {
+  font-size: var(--text-3xl);
+  font-weight: var(--font-bold);
+}
+
+/* ========================================
+   ACTION BUTTONS
+   ======================================== */
+
+.pause-actions {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-dim);
+}
+
+.pause-actions .btn {
+  min-width: 140px;
+}
+
+/* Ready to Resume button states */
+.btn-ready-to-resume {
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.btn-ready-to-resume.ready-active {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
+/* Host quit button disabled state */
+.btn-quit:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ========================================
+   DROP PLAYER DROPDOWN
+   ======================================== */
+
+.drop-player-dropdown {
+  position: relative;
+}
+
+.drop-player-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: var(--bg-deep);
+  border: 1px solid var(--border-color);
+  min-width: 120px;
+  z-index: 10;
+}
+
+.drop-player-menu button {
+  display: block;
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.drop-player-menu button:hover {
+  background: rgba(0, 245, 255, 0.1);
+}

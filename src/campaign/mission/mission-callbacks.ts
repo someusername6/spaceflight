@@ -30,6 +30,7 @@ import {
   showGameOver,
   showResults,
 } from '../handlers/mission-handlers';
+import { cleanupMultiplayerPause } from '../handlers/multiplayer-pause-handler';
 import { refreshRecruits } from '../recruits';
 import { applySalvage, calculateSalvage } from '../salvage';
 import { extractAmmoFromWorld } from '../ship-spawning';
@@ -90,6 +91,9 @@ export function createMissionEndExecutor(
     // Clean up spectator mode if active
     cleanupSpectatorInput();
     clearSpectatorState();
+
+    // Clean up multiplayer pause coordination
+    cleanupMultiplayerPause();
 
     // Build replay data if we were recording (save happens after salvage calc)
     let fullReplay: FullReplayData | null = null;

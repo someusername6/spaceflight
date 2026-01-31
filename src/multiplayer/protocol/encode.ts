@@ -27,12 +27,16 @@ import {
   type ContractAcceptedMessage,
   type GameMessage,
   GameMessageType,
+  type GuestQuitRequestMessage,
   type KickNotificationMessage,
   type LaunchAbortedMessage,
   type LaunchCountdownMessage,
   type MissionEndedMessage,
   type MissionStartedMessage,
+  type PauseReadyStateMessage,
+  type PauseRequestMessage,
   type PermissionUpdateMessage,
+  type PlayerDroppedMessage,
   type PlayerJoinedExtMessage,
   type PlayerLeftExtMessage,
   type ReadyStateMessage,
@@ -84,6 +88,14 @@ export function encodeMessage(msg: GameMessage): Uint8Array {
       return encodeCallsignAnnounce(msg);
     case GameMessageType.CallsignUpdate:
       return encodeCallsignUpdate(msg);
+    case GameMessageType.PauseReadyState:
+      return encodePauseReadyState(msg);
+    case GameMessageType.PlayerDropped:
+      return encodePlayerDropped(msg);
+    case GameMessageType.GuestQuitRequest:
+      return encodeGuestQuitRequest(msg);
+    case GameMessageType.PauseRequest:
+      return encodePauseRequest(msg);
     default: {
       const exhaustive: never = msg;
       throw new Error(`Unknown message type: ${exhaustive}`);
@@ -292,5 +304,48 @@ function encodeCallsignUpdate(msg: CallsignUpdateMessage): Uint8Array {
   writeByte(wb, msg.type);
   writeString(wb, msg.playerId);
   writeString(wb, msg.callsign);
+  return wb.buffer;
+}
+
+function encodePauseReadyState(msg: PauseReadyStateMessage): Uint8Array {
+  const size = 1 + stringSize(msg.playerId) + 1;
+  const wb = createWriteBuffer(size);
+  writeByte(wb, msg.type);
+  writeString(wb, msg.playerId);
+  writeBool(wb, msg.ready);
+  return wb.buffer;
+}
+
+function encodePlayerDropped(msg: PlayerDroppedMessage): Uint8Array {
+  const size = 1 + stringSize(msg.playerId) + 1;
+  const wb = createWriteBuffer(size);
+  writeByte(wb, msg.type);
+  writeString(wb, msg.playerId);
+  writeByte(wb, msg.aiSkill);
+  return wb.buffer;
+}
+
+function encodeGuestQuitRequest(msg: GuestQuitRequestMessage): Uint8Array {
+  const size = 1 + stringSize(msg.playerId);
+  const wb = createWriteBuffer(size);
+  writeByte(wb, msg.type);
+  writeString(wb, msg.playerId);
+  return wb.buffer;
+}
+
+function encodePauseRequest(msg: PauseRequestMessage): Uint8Array {
+  // Reason is encoded as a single byte: 0=player-request, 1=player-disconnect, 2=lag-detected
+  const reasonByte =
+    msg.reason === 'player-request'
+      ? 0
+      : msg.reason === 'player-disconnect'
+        ? 1
+        : 2;
+  const size = 1 + stringSize(msg.playerId) + stringSize(msg.callsign) + 1;
+  const wb = createWriteBuffer(size);
+  writeByte(wb, msg.type);
+  writeString(wb, msg.playerId);
+  writeString(wb, msg.callsign);
+  writeByte(wb, reasonByte);
   return wb.buffer;
 }

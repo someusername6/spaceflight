@@ -16,6 +16,12 @@ import type {
 } from '../campaign/types';
 import type { LobbyPlayer } from './lobby-state';
 
+// Re-export entity conversion functions for backward compatibility
+export {
+  convertPlayerShipToAIMission,
+  findPlayerShipEntity,
+} from './ship-entity-conversion';
+
 // =============================================================================
 // Types
 // =============================================================================

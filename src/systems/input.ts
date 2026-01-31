@@ -103,8 +103,9 @@ export function stopRecording(world: World): InputRecorder | null {
 
 /**
  * Read live input from keyboard and write to InputState.
+ * Exported for multiplayer game loop to capture input before tick.
  */
-function readLiveInput(input: InputState): void {
+export function readLiveInput(input: InputState): void {
   const bindings = getKeyBindings();
 
   // Movement
@@ -135,6 +136,10 @@ export function inputSystem(world: World, _dt: number): void {
   for (const entity of queryEntities(world, ['playerControlled'])) {
     const player = getComponent(world, entity, 'playerControlled');
     if (!player) continue;
+
+    // Only apply keyboard input to local player
+    // In multiplayer, remote players get input via MultiplayerSession.tick() → GameAdapter.step()
+    if (!player.isLocalPlayer) continue;
 
     const input = player.input;
 
