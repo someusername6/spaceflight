@@ -815,14 +815,14 @@ This phase implements **game-specific** messages only.
 
 ### Success Criteria
 
-- [ ] Debrief shows for all players simultaneously
-- [ ] Chat works during debrief (separate history)
-- [ ] Host Continue returns all to lobby
-- [ ] Guests wait for host to continue
-- [ ] Host quit ends session for all with message
-- [ ] Campaign end (ironman death) ends session
-- [ ] Return to lobby resets state correctly
-- [ ] Room state allows new joins after returning to lobby
+- [x] Debrief shows for all players simultaneously
+- [x] Chat works during debrief (separate history)
+- [x] Host Continue returns all to lobby
+- [x] Guests wait for host to continue
+- [x] Host quit ends session for all with message
+- [x] Campaign end (ironman death) ends session
+- [x] Return to lobby resets state correctly
+- [x] Room state allows new joins after returning to lobby
 
 ---
 

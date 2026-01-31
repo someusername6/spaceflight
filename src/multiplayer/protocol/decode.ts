@@ -43,6 +43,7 @@ import {
   type PlayerJoinedExtMessage,
   type PlayerLeftExtMessage,
   type ReadyStateMessage,
+  type ReturnToLobbyMessage,
   type SessionEndedMessage,
   type ShipAssignmentMessage,
   type WelcomeMessage,
@@ -123,6 +124,8 @@ export function decodeMessage(data: Uint8Array): GameMessage {
       return decodeGuestQuitRequest(rb);
     case GameMessageType.PauseRequest:
       return decodePauseRequest(rb);
+    case GameMessageType.ReturnToLobby:
+      return decodeReturnToLobby();
     default: {
       // Cast to number for error message (type is 'never' due to exhaustive switch)
       const unknownType = type as number;
@@ -343,6 +346,12 @@ function decodePauseRequest(rb: ReadBuffer): PauseRequestMessage {
     playerId,
     callsign,
     reason,
+  };
+}
+
+function decodeReturnToLobby(): ReturnToLobbyMessage {
+  return {
+    type: GameMessageType.ReturnToLobby,
   };
 }
 

@@ -7,6 +7,11 @@ import { findLocalPlayer } from '../../core/player-utils';
 import { deriveKey } from '../../core/prng';
 import { createGame, startGame } from '../../game';
 import { InputRecorder } from '../../input/input-recorder';
+import {
+  setActiveGame,
+  setActiveMissionEndState,
+  setActiveMultiplayerState,
+} from '../../multiplayer/active-game';
 import { buildPlayerEntityMap } from '../../multiplayer/mission-setup';
 import {
   createMultiplayerGameState,
@@ -84,6 +89,9 @@ export function launchMission(
   );
   const game = createGame(seed);
   controller.game = game;
+
+  // Store active game reference for test utilities
+  setActiveGame(game);
 
   // Setup multiplayer pause coordination if in lobby
   const lobbyCtx = getLobbyContext();
@@ -205,6 +213,9 @@ export function launchMission(
     setupContractsScreen,
   );
 
+  // Store mission end state reference for test utilities (forceVictory)
+  setActiveMissionEndState(missionEndState);
+
   // Setup mission type-specific callbacks (onTick, onMissionEnd)
   setupMissionTypeCallbacks(
     controller,
@@ -248,6 +259,9 @@ export function launchMission(
 
     const mpState = createMultiplayerGameState(session);
     controller.multiplayerGameState = mpState;
+
+    // Store active multiplayer state for test utilities
+    setActiveMultiplayerState(mpState);
 
     // Wire callbacks (they are guaranteed to be set by setupMissionTypeCallbacks)
     if (game.onRender) mpState.onRender = game.onRender;

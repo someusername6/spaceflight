@@ -8,6 +8,8 @@
  */
 
 import { getLobbyContext } from '../campaign/handlers/lobby-context';
+import type { DestroyedShipRecord } from '../components/combat-stats';
+import { getActiveGame, getActiveMissionEndState } from './active-game';
 import type { PauseReason } from './pause-state';
 
 /**
@@ -39,6 +41,35 @@ export interface TestUtilities {
     reason: string | null;
     playerCount: number;
   } | null;
+
+  /**
+   * Force mission victory for faster E2E testing.
+   * Configures the mission end state to trigger immediate victory.
+   * Returns true if successful, false if no mission is running.
+   */
+  forceVictory: () => boolean;
+
+  /**
+   * Force mission defeat for E2E testing.
+   * Ends the mission as a loss without killing anyone.
+   * Use this for testing non-elimination defeat scenarios (e.g., convoy escapes).
+   * Returns true if successful, false if no mission is running.
+   */
+  forceDefeat: () => boolean;
+
+  /**
+   * Force commander death for E2E testing.
+   * Records the commander's ship as destroyed, triggering game over in ironman.
+   * This is different from forceDefeat - it specifically kills the commander.
+   * Returns true if successful, false if no mission is running.
+   */
+  forceCommanderDeath: () => boolean;
+
+  /**
+   * Check if the current campaign is in ironman mode.
+   * Returns true if ironman, false otherwise or if no campaign is loaded.
+   */
+  isIronmanCampaign: () => boolean;
 }
 
 /**
@@ -93,6 +124,103 @@ function createTestUtilities(): TestUtilities {
         reason: state.reason,
         playerCount: state.players.length,
       };
+    },
+
+    forceVictory(): boolean {
+      const missionEndState = getActiveMissionEndState();
+      if (!missionEndState) {
+        return false;
+      }
+
+      // Configure mission end state to trigger immediate victory
+      // The normal tick callback will call executeMissionEnd() on the next tick
+      missionEndState.pending = true;
+      missionEndState.victory = true;
+      missionEndState.delayRemaining = 0;
+
+      return true;
+    },
+
+    forceDefeat(): boolean {
+      const missionEndState = getActiveMissionEndState();
+      if (!missionEndState) {
+        return false;
+      }
+
+      // Configure mission end state to trigger immediate defeat
+      // Commander survives - this is just a mission loss (e.g., convoy escaped)
+      missionEndState.pending = true;
+      missionEndState.victory = false;
+      missionEndState.delayRemaining = 0;
+
+      return true;
+    },
+
+    forceCommanderDeath(): boolean {
+      const missionEndState = getActiveMissionEndState();
+      if (!missionEndState) {
+        return false;
+      }
+
+      const game = getActiveGame();
+      if (!game) {
+        return false;
+      }
+
+      const ctx = getLobbyContext();
+      const campaignState = ctx?.screenManager.campaignState;
+      if (!campaignState) {
+        return false;
+      }
+
+      // Find the commander's ship and add it to destroyedShips
+      // This is needed so applyMissionResults recognizes the commander died
+      const commanderShip = campaignState.ships.find(
+        (s) => s.pilot?.id === campaignState.commanderId,
+      );
+
+      if (!commanderShip || !commanderShip.pilot) {
+        return false;
+      }
+
+      if (!game.world.systemState.matchStats) {
+        return false;
+      }
+
+      const record: DestroyedShipRecord = {
+        entityId: 0,
+        archetype: commanderShip.shipClass,
+        callsign: commanderShip.pilot.name ?? 'Commander',
+        wasPlayer: true,
+        isWingman: false,
+        campaignShipId: commanderShip.id,
+        pilotId: commanderShip.pilot.id,
+        stats: {
+          kills: 0,
+          assists: 0,
+          damageDealt: 0,
+          damageReceived: 0,
+          weaponStats: [],
+        },
+        hullMax: 100,
+        timeOfDeath: game.world.systemState.gameTime,
+      };
+      game.world.systemState.matchStats.destroyedShips.push(record);
+
+      // Configure mission end state to trigger immediate defeat
+      missionEndState.pending = true;
+      missionEndState.victory = false;
+      missionEndState.delayRemaining = 0;
+
+      return true;
+    },
+
+    isIronmanCampaign(): boolean {
+      const ctx = getLobbyContext();
+      if (!ctx?.screenManager.campaignState) {
+        return false;
+      }
+      return ctx.screenManager.campaignState.settings.ironmanMode;
     },
   };
 }

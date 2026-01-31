@@ -98,8 +98,8 @@ describe('Message Type Validation', () => {
   });
 
   describe('HOST_ONLY_MESSAGES set', () => {
-    it('should contain 15 host-only message types', () => {
-      assert.strictEqual(HOST_ONLY_MESSAGES.size, 15);
+    it('should contain 16 host-only message types', () => {
+      assert.strictEqual(HOST_ONLY_MESSAGES.size, 16);
     });
   });
 

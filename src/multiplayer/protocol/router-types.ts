@@ -27,6 +27,7 @@ import type {
   PlayerJoinedExtMessage,
   PlayerLeftExtMessage,
   ReadyStateMessage,
+  ReturnToLobbyMessage,
   SessionEndedMessage,
   ShipAssignmentMessage,
   WelcomeMessage,
@@ -68,6 +69,7 @@ export interface MessageHandlers {
   [GameMessageType.PlayerDropped]?: MessageHandler<PlayerDroppedMessage>;
   [GameMessageType.GuestQuitRequest]?: MessageHandler<GuestQuitRequestMessage>;
   [GameMessageType.PauseRequest]?: MessageHandler<PauseRequestMessage>;
+  [GameMessageType.ReturnToLobby]?: MessageHandler<ReturnToLobbyMessage>;
 }
 
 /** Configuration for MessageRouter */

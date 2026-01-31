@@ -11,10 +11,7 @@ import {
   createLobbyState,
   type LobbyPlayer,
 } from '../../multiplayer/lobby-state';
-import {
-  clearMultiplayerContext,
-  setMultiplayerContext,
-} from '../../multiplayer/multiplayer-context';
+import { setMultiplayerContext } from '../../multiplayer/multiplayer-context';
 import type { ConnectionFlow } from '../../multiplayer/networking/connection-flow';
 import type { ConnectionResult } from '../../multiplayer/networking/types';
 import {
@@ -30,7 +27,6 @@ import {
 } from '../../ui/common/screens';
 import {
   bindLobbyScreen,
-  cleanupLobbyScreen,
   renderLobbyScreen,
   updateLobbyCampaignInfo,
 } from '../../ui/screens/lobby';
@@ -66,6 +62,7 @@ import {
   setupMessageHandling,
   wireMessageHandlers,
 } from './lobby-protocol-routing';
+import { cleanupLobby, handleSessionEndedForGuest } from './lobby-session';
 
 // =============================================================================
 // Re-exports for external use
@@ -75,6 +72,9 @@ export { getCampaignSyncManager, getLobbyState, getMessageRouter, isInLobby };
 
 // Re-export from lobby-actions (moved there to break circular dependencies)
 export { updateAndSyncCampaignState } from './lobby-actions';
+
+// Re-export from lobby-session
+export { cleanupLobby } from './lobby-session';
 
 // =============================================================================
 // Campaign Update Handler
@@ -289,6 +289,10 @@ export function setupLobbyScreenForGuest(
     onMissionStart: (contract: Contract, _seed: number) => {
       launchGuestMission(controller, contract);
     },
+    // Session ended callback for guests - called when host quits or campaign ends
+    onSessionEnded: (reason: string) => {
+      void handleSessionEndedForGuest(controller, reason);
+    },
   };
 
   // Store the context
@@ -353,27 +357,4 @@ async function handleLeave(controller: CampaignController): Promise<void> {
   const { setupTitleScreen } = await import('./menu-handlers');
   const onStartGameplay = () => startCampaignGameplay(controller);
   void setupTitleScreen(controller, onStartGameplay);
-}
-
-export function cleanupLobby(): void {
-  const ctx = getLobbyContext();
-  if (ctx) {
-    // Run cleanup (router, sync manager, transport handlers)
-    ctx.cleanup();
-
-    // Disconnect and dispose connection flow
-    ctx.connectionFlow.disconnect().catch(() => {
-      // Ignore disconnect errors
-    });
-    ctx.connectionFlow.dispose();
-  }
-
-  // Cleanup screen
-  cleanupLobbyScreen();
-
-  // Clear multiplayer context
-  clearMultiplayerContext();
-
-  // Clear lobby context
-  setLobbyContext(null);
 }

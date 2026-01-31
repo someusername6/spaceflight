@@ -34,6 +34,7 @@ import {
   type PlayerJoinedExtMessage,
   type PlayerLeftExtMessage,
   type ReadyStateMessage,
+  type ReturnToLobbyMessage,
   type SessionEndedMessage,
   type ShipAssignmentMessage,
   type WelcomeMessage,
@@ -82,6 +83,11 @@ export class MessageRouter {
     this.transport = config.transport;
     this.hostPeerId = config.hostPeerId;
     this.isHost = config.isHost;
+  }
+
+  /** Get the host peer ID */
+  getHostPeerId(): string {
+    return this.hostPeerId;
   }
 
   // ===========================================================================
@@ -200,6 +206,11 @@ export class MessageRouter {
 
   onPauseRequest(handler: MessageHandler<PauseRequestMessage>): this {
     this.handlers[GameMessageType.PauseRequest] = handler;
+    return this;
+  }
+
+  onReturnToLobby(handler: MessageHandler<ReturnToLobbyMessage>): this {
+    this.handlers[GameMessageType.ReturnToLobby] = handler;
     return this;
   }
 
@@ -322,13 +333,24 @@ export class MessageRouter {
     };
     this.transport.onMessage = this.boundMessageHandler;
 
-    // Wire disconnect handler
-    this.existingDisconnectHandler = this.transport.onDisconnect ?? null;
-    this.transport.onDisconnect = (peerId: string) => {
-      this.existingDisconnectHandler?.(peerId);
+    // Wire disconnect handler - capture in closure to avoid circular reference
+    // when wireToTransport is called multiple times (mission start/end)
+    const previousDisconnectHandler = this.transport.onDisconnect;
+    // Only capture if it's not already our own handler (avoid self-reference)
+    const isOurHandler =
+      previousDisconnectHandler === this.boundDisconnectHandler;
+    const existingDisconnect = isOurHandler ? null : previousDisconnectHandler;
+    this.existingDisconnectHandler = existingDisconnect ?? null;
+
+    this.boundDisconnectHandler = (peerId: string) => {
+      existingDisconnect?.(peerId);
       this.onPeerDisconnect?.(peerId);
     };
+    this.transport.onDisconnect = this.boundDisconnectHandler;
   }
+
+  /** Bound disconnect handler for detecting self-reference */
+  private boundDisconnectHandler: ((peerId: string) => void) | null = null;
 
   /**
    * Remove the router from the transport.
@@ -340,6 +362,7 @@ export class MessageRouter {
     this.transport.onMessage = previousHandler ?? null;
     this.transport.onDisconnect = this.existingDisconnectHandler ?? null;
     this.boundMessageHandler = null;
+    this.boundDisconnectHandler = null;
     this.existingDisconnectHandler = null;
   }
 
@@ -356,6 +379,7 @@ export class MessageRouter {
     this.onError = null;
     this.onPeerDisconnect = null;
     this.boundMessageHandler = null;
+    this.boundDisconnectHandler = null;
     this.existingDisconnectHandler = null;
   }
 }

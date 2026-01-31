@@ -134,3 +134,19 @@ export interface KickNotificationMessage {
   /** Optional reason for kick */
   reason?: string;
 }
+
+/**
+ * ReturnToLobby - Host → All
+ * Host triggers return to lobby for all players after debrief.
+ *
+ * @mp-operation returnToLobby
+ * @mp-actor host
+ * @mp-permission none (host-only action)
+ * @mp-flow Host clicks Continue on results → broadcasts ReturnToLobby → all navigate to lobby
+ * @mp-ui Results screen: Host Continue button triggers; guests navigate automatically
+ * @mp-tested e2e/debrief-flow.mjs:testHostContinueReturnsToLobby
+ * @mp-status implemented
+ */
+export interface ReturnToLobbyMessage {
+  type: GameMessageType.ReturnToLobby;
+}

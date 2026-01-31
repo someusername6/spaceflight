@@ -313,6 +313,58 @@ export function wireMessageHandlers(
         }
       }
     });
+
+    // MissionEnded handler: store outcome for results display
+    ctx.router.onMissionEnded((msg) => {
+      console.log(
+        '[MissionEnded] Guest received message, victory:',
+        msg.outcome.victory,
+      );
+      // Store the outcome in debrief state
+      ctx.debriefState = {
+        missionComplete: true,
+        outcome: msg.outcome,
+      };
+
+      const newState = addSystemMessage(
+        ctx.lobbyState,
+        msg.outcome.victory ? 'Mission complete!' : 'Mission failed.',
+      );
+      setLobbyState(ctx, newState);
+    });
+
+    // SessionEnded handler: cleanup and return to title
+    ctx.router.onSessionEnded((msg) => {
+      console.log('[lobby-routing] Guest received SessionEnded:', msg.reason);
+
+      // Invoke callback to cleanup and navigate to title
+      if (ctx.onSessionEnded) {
+        ctx.onSessionEnded(msg.reason);
+      }
+    });
+
+    // ReturnToLobby handler: navigate back to lobby when host continues
+    ctx.router.onReturnToLobby(() => {
+      console.log('[lobby-routing] Guest received ReturnToLobby');
+      // Reset lobby state
+      const newState = {
+        ...ctx.lobbyState,
+        chatMessages: [],
+        players: ctx.lobbyState.players.map((p) => ({
+          ...p,
+          isReady: false,
+        })),
+      };
+      setLobbyState(ctx, newState);
+
+      // Clear debrief state
+      delete ctx.debriefState;
+
+      // Trigger navigation callback
+      if (ctx.onReturnToLobby) {
+        ctx.onReturnToLobby();
+      }
+    });
   }
 
   // Wire router to transport (cleanup handled by setupMessageHandling)

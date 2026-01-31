@@ -96,6 +96,8 @@ export function encodeMessage(msg: GameMessage): Uint8Array {
       return encodeGuestQuitRequest(msg);
     case GameMessageType.PauseRequest:
       return encodePauseRequest(msg);
+    case GameMessageType.ReturnToLobby:
+      return encodeReturnToLobby();
     default: {
       const exhaustive: never = msg;
       throw new Error(`Unknown message type: ${exhaustive}`);
@@ -347,5 +349,12 @@ function encodePauseRequest(msg: PauseRequestMessage): Uint8Array {
   writeString(wb, msg.playerId);
   writeString(wb, msg.callsign);
   writeByte(wb, reasonByte);
+  return wb.buffer;
+}
+
+function encodeReturnToLobby(): Uint8Array {
+  const size = 1; // Just the type byte
+  const wb = createWriteBuffer(size);
+  writeByte(wb, GameMessageType.ReturnToLobby);
   return wb.buffer;
 }

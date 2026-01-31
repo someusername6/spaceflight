@@ -30,6 +30,7 @@ import type {
   LaunchCountdownMessage,
   MissionEndedMessage,
   MissionStartedMessage,
+  ReturnToLobbyMessage,
   SessionEndedMessage,
 } from './messages-mission';
 
@@ -40,6 +41,7 @@ export type {
   LaunchCountdownMessage,
   MissionEndedMessage,
   MissionStartedMessage,
+  ReturnToLobbyMessage,
   SessionEndedMessage,
 };
 
@@ -316,7 +318,8 @@ export type GameMessage =
   | PauseReadyStateMessage
   | PlayerDroppedMessage
   | GuestQuitRequestMessage
-  | PauseRequestMessage;
+  | PauseRequestMessage
+  | ReturnToLobbyMessage;
 
 // =============================================================================
 // Host-only Message Check
@@ -339,6 +342,7 @@ export const HOST_ONLY_MESSAGES = new Set<GameMessageType>([
   GameMessageType.SessionEnded,
   GameMessageType.KickNotification,
   GameMessageType.PlayerDropped,
+  GameMessageType.ReturnToLobby,
 ]);
 
 /** Check if a message type can only be sent by the host */

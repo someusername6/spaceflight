@@ -10,18 +10,34 @@
 import type { SalvageResult } from '../../../campaign/salvage';
 import type { CampaignState, Contract } from '../../../campaign/types';
 import type { World } from '../../../core/types';
+import type { ChatEntry } from '../../../multiplayer/lobby-state';
 import {
   createScreen,
   type Screen,
   type ScreenAPI,
   type ScreenHandle,
 } from '../../framework/screen';
+import { renderChatFooter, scrollChatFooterToBottom } from './chat-footer';
 import {
   collectDebriefData,
   type MissionDebriefData,
   renderDebrief,
 } from './debrief';
-import { renderSalvageSection } from './results-salvage';
+import {
+  type AmbushResultsDisplay,
+  type AttackStationResultsDisplay,
+  type EscortResultsDisplay,
+  renderRewards,
+  type StationDefenseResultsDisplay,
+} from './results-rewards';
+
+// Re-export result display types for external use
+export type {
+  AmbushResultsDisplay,
+  AttackStationResultsDisplay,
+  EscortResultsDisplay,
+  StationDefenseResultsDisplay,
+} from './results-rewards';
 
 /** Results tab type */
 export type ResultsTab = 'debrief' | 'rewards';
@@ -29,35 +45,6 @@ export type ResultsTab = 'debrief' | 'rewards';
 /** Results screen state */
 interface ResultsState {
   selectedTab: ResultsTab;
-}
-
-/** Escort mission results for display */
-export interface EscortResultsDisplay {
-  convoySurvived: number;
-  convoyTotal: number;
-}
-
-/** Ambush mission results for display */
-export interface AmbushResultsDisplay {
-  convoyDestroyed: number;
-  convoyStopped: number;
-  convoyEscaped: number;
-  totalConvoy: number;
-}
-
-/** Station defense mission results for display */
-export interface StationDefenseResultsDisplay {
-  stationHealthPercent: number;
-  reinforcementsArrived: boolean;
-}
-
-/** Attack station mission results for display */
-export interface AttackStationResultsDisplay {
-  stationDestroyed: boolean;
-  stationDamagePercent: number;
-  reinforcementsReceived: number;
-  totalReinforcements: number;
-  overwhelmed: boolean;
 }
 
 /** Results screen props */
@@ -78,6 +65,15 @@ interface ResultsProps {
   stationDefenseResults: StationDefenseResultsDisplay | undefined;
   /** Attack station results */
   attackStationResults: AttackStationResultsDisplay | undefined;
+  // Multiplayer props (optional)
+  /** Whether this is a multiplayer session */
+  isMultiplayer?: boolean;
+  /** Whether local player is the host */
+  isHost?: boolean;
+  /** Chat messages for debrief chat footer */
+  chatMessages?: ChatEntry[];
+  /** Callback to send chat message */
+  onSendChat?: (text: string) => void;
 }
 
 /** Legacy UI interface for backwards compatibility */
@@ -140,120 +136,40 @@ function renderResultsTabBar(
   `;
 }
 
-/** Render the rewards tab content */
-function renderRewards(
+/** Render the footer for singleplayer or multiplayer */
+function renderResultsFooter(
   victory: boolean,
-  contract: Contract | null,
-  salvage: SalvageResult | null,
-  earnedReward?: number,
-  escortResults?: EscortResultsDisplay,
-  ambushResults?: AmbushResultsDisplay,
-  stationDefenseResults?: StationDefenseResultsDisplay,
-  attackStationResults?: AttackStationResultsDisplay,
+  isMultiplayer?: boolean,
+  isHost?: boolean,
+  chatMessages?: ChatEntry[],
 ): string {
-  const titleClass = victory ? 'victory' : 'defeat';
-  const titleText = victory ? 'VICTORY' : 'DEFEAT';
-
-  // Use actual earned reward if provided, otherwise fall back to contract base
-  const displayReward =
-    earnedReward ?? (victory && contract ? contract.reward : 0);
-
-  // Escort mission details
-  const escortHtml = escortResults
-    ? `
-      <div class="rewards-escort-details">
-        <span class="escort-survival">Convoy: ${escortResults.convoySurvived}/${escortResults.convoyTotal} survived</span>
-        ${
-          escortResults.convoySurvived < escortResults.convoyTotal
-            ? `<span class="escort-penalty">(${Math.round((escortResults.convoySurvived / escortResults.convoyTotal) * 100)}% reward)</span>`
-            : ''
-        }
-      </div>
-    `
-    : '';
-
-  // Ambush mission details
-  let ambushHtml = '';
-  if (ambushResults) {
-    const destroyed = ambushResults.convoyDestroyed;
-    const stopped = ambushResults.convoyStopped;
-    const escaped = ambushResults.convoyEscaped;
-    const total = ambushResults.totalConvoy;
-    const neutralized = destroyed + stopped;
-    const rewardPct = Math.round(((stopped + destroyed * 0.5) / total) * 100);
-    ambushHtml = `
-      <div class="rewards-ambush-details">
-        <span class="ambush-result">${neutralized}/${total} targets neutralized</span>
-        <span class="ambush-breakdown">(${stopped} stopped, ${destroyed} destroyed${escaped > 0 ? `, ${escaped} escaped` : ''})</span>
-        ${rewardPct < 100 ? `<span class="ambush-reward">(${rewardPct}% reward)</span>` : ''}
-      </div>
+  // Singleplayer: just the continue button
+  if (!isMultiplayer) {
+    const buttonText = victory ? 'Return to Hangar' : 'Continue';
+    return `
+      <footer class="results-footer">
+        <button class="btn btn-xl btn-primary" id="btn-continue">
+          ${buttonText}
+        </button>
+      </footer>
     `;
   }
 
-  // Station defense mission details
-  let stationDefenseHtml = '';
-  if (stationDefenseResults) {
-    // stationHealthPercent is already 0-100, no multiplication needed
-    const healthPct = Math.round(stationDefenseResults.stationHealthPercent);
-    const reinforced = stationDefenseResults.reinforcementsArrived;
-    const statusText = reinforced
-      ? 'Reinforcements arrived'
-      : 'Enemies repelled';
-    stationDefenseHtml = `
-      <div class="rewards-station-details">
-        <span class="station-health">Station: ${healthPct}% hull remaining</span>
-        <span class="station-reinforcements">${statusText}</span>
-      </div>
-    `;
-  }
+  // Multiplayer: chat footer + action area
+  const chatHtml = renderChatFooter(chatMessages ?? []);
 
-  // Attack station mission details
-  let attackStationHtml = '';
-  if (attackStationResults) {
-    const destroyed = attackStationResults.stationDestroyed;
-    const damagePct = attackStationResults.stationDamagePercent;
-    const reinforcements = attackStationResults.reinforcementsReceived;
-    const totalReinforcements = attackStationResults.totalReinforcements;
-    const overwhelmed = attackStationResults.overwhelmed;
-    attackStationHtml = `
-      <div class="rewards-attack-station-details">
-        <span class="attack-result">${destroyed ? 'Station Destroyed' : `Station Damage: ${damagePct}%`}</span>
-        <span class="attack-reinforcements">Reinforcements: ${reinforcements}/${totalReinforcements} waves</span>
-        ${overwhelmed ? '<span class="attack-overwhelmed">Overwhelming force deployed</span>' : ''}
-      </div>
-    `;
-  }
-
-  const contractRewardHtml = contract
-    ? `
-      <div class="rewards-contract">
-        <div class="rewards-section-header">
-          <span class="rewards-section-icon" aria-hidden="true">▶</span>
-          <span class="rewards-section-title">CONTRACT REWARD</span>
-        </div>
-        <div class="rewards-contract-details">
-          <div class="rewards-contract-name">${contract.name}</div>
-          ${escortHtml}
-          ${ambushHtml}
-          ${stationDefenseHtml}
-          ${attackStationHtml}
-          <div class="rewards-contract-amount ${victory ? 'earned' : 'failed'}">
-            ${victory ? `+${displayReward.toLocaleString()} cr` : 'Mission Failed'}
-          </div>
-        </div>
-      </div>
-    `
-    : '';
-
-  // Salvage section
-  const salvageHtml = renderSalvageSection(salvage);
+  // Host gets Continue button, guest gets waiting message
+  const actionHtml = isHost
+    ? `<button class="btn btn-xl btn-primary" id="btn-continue">Continue</button>`
+    : `<div class="results-waiting">Waiting for host to continue...</div>`;
 
   return `
-    <div class="rewards-content">
-      <div class="rewards-title ${titleClass}">${titleText}</div>
-      ${contractRewardHtml}
-      ${salvageHtml}
-    </div>
+    <footer class="results-footer results-footer-multiplayer">
+      ${chatHtml}
+      <div class="results-footer-action">
+        ${actionHtml}
+      </div>
+    </footer>
   `;
 }
 
@@ -271,6 +187,9 @@ const ResultsScreenComponent: Screen<ResultsState, ResultsProps> = {
       ambushResults,
       stationDefenseResults,
       attackStationResults,
+      isMultiplayer,
+      isHost,
+      chatMessages,
     } = props;
 
     const tabBar = renderResultsTabBar(
@@ -296,27 +215,28 @@ const ResultsScreenComponent: Screen<ResultsState, ResultsProps> = {
             attackStationResults,
           );
 
-    const buttonText = victory ? 'Return to Hangar' : 'Continue';
+    const footerHtml = renderResultsFooter(
+      victory,
+      isMultiplayer,
+      isHost,
+      chatMessages,
+    );
 
     return `
-      <div class="results-screen">
+      <div class="results-screen${isMultiplayer ? ' results-screen-multiplayer' : ''}">
         ${tabBar}
         <main class="results-main" aria-label="Mission results">
           <div class="results-content-scroll">
             ${tabContent}
           </div>
         </main>
-        <footer class="results-footer">
-          <button class="btn btn-xl btn-primary" id="btn-continue">
-            ${buttonText}
-          </button>
-        </footer>
+        ${footerHtml}
       </div>
     `;
   },
 
   bind(api: ScreenAPI<ResultsState>, props: ResultsProps) {
-    // Continue button
+    // Continue button (only enabled for host in multiplayer, always enabled in singleplayer)
     api.on('#btn-continue', 'click', () => {
       props.onContinue();
     });
@@ -331,11 +251,36 @@ const ResultsScreenComponent: Screen<ResultsState, ResultsProps> = {
         }
       }
     });
+
+    // Multiplayer chat form
+    if (props.isMultiplayer && props.onSendChat) {
+      api.on('#chat-footer-form', 'submit', (e) => {
+        e.preventDefault();
+        const input = document.getElementById(
+          'chat-footer-input',
+        ) as HTMLInputElement | null;
+        if (input?.value.trim()) {
+          props.onSendChat?.(input.value.trim());
+          input.value = '';
+        }
+      });
+
+      // Scroll chat to bottom after render
+      scrollChatFooterToBottom();
+    }
   },
 };
 
 /** Screen handle for external control */
 let resultsScreenHandle: ScreenHandle<ResultsState, ResultsProps> | null = null;
+
+/** Multiplayer options for results UI */
+export interface ResultsMultiplayerOptions {
+  isMultiplayer: boolean;
+  isHost: boolean;
+  chatMessages: ChatEntry[];
+  onSendChat: (text: string) => void;
+}
 
 /** Create results UI */
 export function createResultsUI(
@@ -351,6 +296,7 @@ export function createResultsUI(
   ambushResults?: AmbushResultsDisplay,
   stationDefenseResults?: StationDefenseResultsDisplay,
   attackStationResults?: AttackStationResultsDisplay,
+  multiplayerOptions?: ResultsMultiplayerOptions,
 ): ResultsUI {
   // Clean up previous handle
   resultsScreenHandle?.destroy();
@@ -369,6 +315,13 @@ export function createResultsUI(
     ambushResults,
     stationDefenseResults,
     attackStationResults,
+    // Multiplayer props - only set if options provided
+    ...(multiplayerOptions && {
+      isMultiplayer: multiplayerOptions.isMultiplayer,
+      isHost: multiplayerOptions.isHost,
+      chatMessages: multiplayerOptions.chatMessages,
+      onSendChat: multiplayerOptions.onSendChat,
+    }),
   };
 
   resultsScreenHandle = createScreen(
@@ -384,4 +337,19 @@ export function createResultsUI(
     onContinue,
     selectedTab: 'debrief',
   };
+}
+
+/**
+ * Update chat messages in the results screen.
+ * Called when lobby state changes to keep chat up to date.
+ */
+export function updateResultsChatMessages(messages: ChatEntry[]): void {
+  if (!resultsScreenHandle) return;
+
+  // Get current props, update messages, and re-render
+  const currentProps = resultsScreenHandle.getProps();
+  resultsScreenHandle.setProps({
+    ...currentProps,
+    chatMessages: messages,
+  });
 }

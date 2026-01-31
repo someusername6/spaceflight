@@ -13,8 +13,24 @@ import type { LobbyState } from '../../multiplayer/lobby-state';
 import type { ConnectionFlow } from '../../multiplayer/networking/connection-flow';
 import type { PauseCoordinatorHandle } from '../../multiplayer/pause-coordinator';
 import type { MessageRouter } from '../../multiplayer/protocol/router';
+import type { MissionOutcomeData } from '../../multiplayer/protocol/types';
 import type { ScreenManager } from '../../ui/common/screens';
 import type { CampaignState, Contract } from '../types';
+
+// =============================================================================
+// Debrief State
+// =============================================================================
+
+/**
+ * State for tracking debrief screen during multiplayer.
+ * Used to coordinate host Continue action with guests.
+ */
+export interface DebriefState {
+  /** Whether mission has completed and debrief is showing */
+  missionComplete: boolean;
+  /** Mission outcome data for displaying results */
+  outcome: MissionOutcomeData | null;
+}
 
 // =============================================================================
 // Callback Types
@@ -72,6 +88,24 @@ export interface LobbyContext {
    * Set when mission starts, cleared when mission ends.
    */
   pauseCoordinator?: PauseCoordinatorHandle;
+
+  /**
+   * Debrief state for tracking post-mission results screen.
+   * Set when mission ends, cleared when returning to lobby.
+   */
+  debriefState?: DebriefState;
+
+  /**
+   * Callback to navigate back to lobby after debrief.
+   * Set by the results screen setup, invoked when host clicks Continue.
+   */
+  onReturnToLobby?: () => void;
+
+  /**
+   * Callback to handle session end (host left or campaign ended).
+   * Set by guest lobby setup, invoked when SessionEnded is received.
+   */
+  onSessionEnded?: (reason: string) => void;
 }
 
 // =============================================================================

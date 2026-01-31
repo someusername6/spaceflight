@@ -37,6 +37,7 @@ import {
   updateLobbyCampaignInfo,
   updateLobbyState,
 } from '../../ui/screens/lobby';
+import { updateResultsChatMessages } from '../../ui/screens/results/results';
 import {
   isSquadronUIActive,
   refreshSquadronUI,
@@ -132,6 +133,11 @@ function syncPlayerInfoToManager(
 export function setLobbyState(ctx: LobbyContext, newState: LobbyState): void {
   ctx.lobbyState = newState;
   updateLobbyState(newState);
+
+  // Update results chat if in debrief mode
+  if (ctx.debriefState?.missionComplete) {
+    updateResultsChatMessages(newState.chatMessages);
+  }
 
   const contextUpdated = syncLocalPlayerContext(ctx, newState);
   if (contextUpdated && ctx.screenManager.campaignState) {

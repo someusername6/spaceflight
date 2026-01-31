@@ -17,6 +17,11 @@ export async function setupHostInLobby(browser) {
 
   hostPage.on('pageerror', (err) => {
     console.log(`  [Host Error] ${err.message}`);
+    if (err.stack) {
+      console.log(
+        `  [Host Stack] ${err.stack.split('\n').slice(0, 10).join('\n  ')}`,
+      );
+    }
   });
 
   await hostPage.goto(VITE_URL, { waitUntil: 'networkidle' });

@@ -33,6 +33,7 @@ export enum GameMessageType {
   PlayerDropped = 0x94,
   GuestQuitRequest = 0x95,
   PauseRequest = 0x96,
+  ReturnToLobby = 0x97,
 }
 
 // =============================================================================

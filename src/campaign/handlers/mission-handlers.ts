@@ -1,35 +1,39 @@
 /**
- * Mission Handlers - Post-mission results and game-over screen setup.
+ * Mission Handlers - Post-mission special case handlers.
  *
  * Handles:
- * - Mission results display (victory/defeat, salvage)
- * - Game over screen with restart option
+ * - Non-ironman defeat (checkpoint restore)
+ * - Game over screen (ironman permadeath)
+ * - Retirement screen (campaign victory)
+ *
+ * For regular results screens, see mission-results.ts
  */
 
 import { logError } from '../../core/logger';
 import type { World } from '../../core/types';
 import {
+  broadcastSessionEnded,
+  triggerReturnToLobby,
+} from '../../multiplayer/session-lifecycle';
+import {
   getScreenElement,
   goToGameOver,
+  goToLobby,
   goToSquadron,
   goToTitle,
   Screen,
   updateCampaignState,
 } from '../../ui/common/screens';
+import { bindLobbyScreen, renderLobbyScreen } from '../../ui/screens/lobby';
 import { collectDebriefData } from '../../ui/screens/results/debrief';
 import {
-  type AmbushResultsDisplay,
-  type AttackStationResultsDisplay,
   createGameOverUI,
   createResultsUI,
   createRetirementUI,
-  type EscortResultsDisplay,
-  type StationDefenseResultsDisplay,
 } from '../../ui/screens/results/results';
 import { resetTitleScreen } from '../../ui/screens/title';
 import { startCampaignGameplay } from '../controller';
 import type { CampaignController } from '../controller-types';
-import type { SalvageResult } from '../salvage';
 import {
   deleteCampaign,
   deleteCheckpoint,
@@ -37,64 +41,28 @@ import {
   loadCheckpoint,
 } from '../storage';
 import type { Contract } from '../types';
-import { setupSquadronScreen } from './campaign-handlers';
+import {
+  createNavigationHandler,
+  setupSquadronScreen,
+} from './campaign-handlers';
+import {
+  changeCallsign,
+  changePermissions,
+  isLaunchCountdownActive,
+  sendChat,
+  toggleReady,
+} from './lobby-actions';
+import { getLobbyContext, setLobbyContext } from './lobby-context';
+import { cleanupLobby } from './lobby-handlers';
 import { setupTitleScreen } from './menu-handlers';
 
-/**
- * Show results screen after mission.
- *
- * @param controller - Campaign controller instance
- * @param victory - Whether the mission was won
- * @param contract - The contract that was completed
- * @param setupContractsScreen - Callback to setup contracts screen
- * @param world - Optional world reference for stats extraction
- * @param salvage - Optional salvage results from the mission
- * @param earnedReward - Actual reward earned (with multipliers applied)
- * @param escortResults - Convoy survival results for escort missions
- * @param ambushResults - Convoy results for ambush missions
- * @param stationDefenseResults - Station defense results
- * @param attackStationResults - Attack station results
- */
-export function showResults(
-  controller: CampaignController,
-  victory: boolean,
-  contract: Contract,
-  setupContractsScreen: (controller: CampaignController) => void,
-  world?: World,
-  salvage?: SalvageResult | null,
-  earnedReward?: number,
-  escortResults?: EscortResultsDisplay,
-  ambushResults?: AmbushResultsDisplay,
-  stationDefenseResults?: StationDefenseResultsDisplay,
-  attackStationResults?: AttackStationResultsDisplay,
-): void {
-  const { screenManager } = controller;
-  const resultsElement = getScreenElement(screenManager, Screen.RESULTS);
-
-  createResultsUI(
-    resultsElement,
-    victory,
-    contract,
-    screenManager.campaignState,
-    () => {
-      // Return to squadron screen (sector advancement is now manual via contracts)
-      goToSquadron(screenManager);
-      const squadronElement = getScreenElement(screenManager, Screen.SQUADRON);
-      setupSquadronScreen(controller, squadronElement, setupContractsScreen);
-    },
-    world,
-    salvage,
-    earnedReward,
-    escortResults,
-    ambushResults,
-    stationDefenseResults,
-    attackStationResults,
-  );
-}
+// Re-export results functions for backwards compatibility
+export { showMultiplayerResults, showResults } from './mission-results';
 
 /**
  * Handle non-ironman defeat by showing debrief then restoring from checkpoint.
- * Shows results screen with combat stats, then returns to squadron for retry.
+ * Shows results screen with combat stats, then returns to squadron (singleplayer)
+ * or lobby (multiplayer) for retry.
  *
  * @param controller - Campaign controller instance
  * @param setupContractsScreen - Callback to setup contracts screen
@@ -108,49 +76,154 @@ export function handleNonIronmanDefeat(
   world: World,
 ): void {
   const { screenManager } = controller;
+  const lobbyCtx = getLobbyContext();
 
   // Show results screen with debrief (no salvage on defeat)
   const resultsElement = getScreenElement(screenManager, Screen.RESULTS);
 
-  createResultsUI(
-    resultsElement,
-    false, // victory = false
-    contract,
-    screenManager.campaignState,
-    async () => {
-      // On continue: restore checkpoint and return to squadron
-      const slotId = getActiveSlotId();
-      const checkpoint = slotId ? await loadCheckpoint(slotId) : null;
+  // Restore checkpoint helper (shared between singleplayer and multiplayer)
+  const restoreCheckpoint = async (): Promise<boolean> => {
+    const slotId = getActiveSlotId();
+    const checkpoint = slotId ? await loadCheckpoint(slotId) : null;
 
-      if (checkpoint && slotId) {
-        // Restore the pre-mission state
-        updateCampaignState(screenManager, checkpoint);
+    if (checkpoint && slotId) {
+      updateCampaignState(screenManager, checkpoint);
+      await deleteCheckpoint(slotId);
+      return true;
+    }
+    return false;
+  };
 
-        // Clean up checkpoint
-        await deleteCheckpoint(slotId);
-
-        // Return to squadron screen (player can retry the mission)
-        goToSquadron(screenManager);
-        const squadronElement = getScreenElement(
-          screenManager,
-          Screen.SQUADRON,
-        );
-        setupSquadronScreen(controller, squadronElement, setupContractsScreen);
-      } else {
-        // No checkpoint available - fall back to game over screen
-        logError(
-          'No checkpoint found for non-ironman defeat - falling back to game over',
-        );
-        await showGameOver(controller);
+  if (lobbyCtx) {
+    // Multiplayer path: show results with chat, return to lobby on continue
+    lobbyCtx.onReturnToLobby = async () => {
+      // Restore checkpoint before returning to lobby
+      const restored = await restoreCheckpoint();
+      if (!restored) {
+        logError('No checkpoint found for non-ironman defeat in multiplayer');
       }
-    },
-    world,
-    null, // no salvage on defeat
-  );
+
+      // Navigate to lobby and re-setup screen
+      const lobbyElement = getScreenElement(screenManager, Screen.LOBBY);
+      const campaignState = screenManager.campaignState;
+
+      renderLobbyScreen(lobbyElement);
+      goToLobby(screenManager);
+
+      // Re-bind lobby screen with callbacks
+      const campaignInfo = campaignState
+        ? {
+            credits: campaignState.credits,
+            currentSector: campaignState.currentSector,
+          }
+        : undefined;
+
+      bindLobbyScreen(
+        lobbyElement,
+        lobbyCtx.lobbyState,
+        {
+          onReady: (ready) => {
+            const ctx = getLobbyContext();
+            if (ctx) toggleReady(ctx, ready);
+          },
+          onSendChat: (text) => {
+            const ctx = getLobbyContext();
+            if (ctx) sendChat(ctx, text);
+          },
+          onBack: () => {
+            cleanupLobby();
+            void resetTitleScreen();
+            goToTitle(screenManager);
+            const onStartGameplay = () => startCampaignGameplay(controller);
+            void setupTitleScreen(controller, onStartGameplay);
+          },
+          onPermissionChange: (playerId, permissions) => {
+            const ctx = getLobbyContext();
+            if (ctx) changePermissions(ctx, playerId, permissions);
+          },
+          onCallsignChange: (newCallsign) => {
+            const ctx = getLobbyContext();
+            if (ctx) return changeCallsign(ctx, newCallsign);
+            return { success: false, error: 'Not connected' };
+          },
+          onNavigate: createNavigationHandler(
+            controller,
+            'lobby',
+            setupContractsScreen,
+          ),
+          isCountdownActive: isLaunchCountdownActive,
+        },
+        campaignInfo,
+      );
+    };
+
+    const onContinue = () => {
+      if (lobbyCtx.isHost) {
+        triggerReturnToLobby(lobbyCtx);
+      }
+    };
+
+    const onSendChat = (text: string) => {
+      sendChat(lobbyCtx, text);
+    };
+
+    createResultsUI(
+      resultsElement,
+      false, // victory = false
+      contract,
+      screenManager.campaignState,
+      onContinue,
+      world,
+      null, // no salvage on defeat
+      undefined, // earnedReward
+      undefined, // escortResults
+      undefined, // ambushResults
+      undefined, // stationDefenseResults
+      undefined, // attackStationResults
+      {
+        isMultiplayer: true,
+        isHost: lobbyCtx.isHost,
+        chatMessages: lobbyCtx.lobbyState.chatMessages,
+        onSendChat,
+      },
+    );
+  } else {
+    // Singleplayer path: return to squadron for retry
+    createResultsUI(
+      resultsElement,
+      false, // victory = false
+      contract,
+      screenManager.campaignState,
+      async () => {
+        const restored = await restoreCheckpoint();
+        if (restored) {
+          goToSquadron(screenManager);
+          const squadronElement = getScreenElement(
+            screenManager,
+            Screen.SQUADRON,
+          );
+          setupSquadronScreen(
+            controller,
+            squadronElement,
+            setupContractsScreen,
+          );
+        } else {
+          logError(
+            'No checkpoint found for non-ironman defeat - falling back to game over',
+          );
+          await showGameOver(controller);
+        }
+      },
+      world,
+      null, // no salvage on defeat
+    );
+  }
 }
 
 /**
  * Show game over screen (ironman mode only - permadeath).
+ *
+ * In multiplayer, this ends the session for all players.
  *
  * @param controller - Campaign controller instance
  * @param world - Optional world for collecting debrief stats
@@ -176,10 +249,30 @@ export async function showGameOver(
     }
   }
 
+  // Show the game over screen FIRST (element must be visible for createScreen to render)
+  goToGameOver(screenManager);
+
   createGameOverUI(
     gameOverElement,
     screenManager.campaignState,
     async () => {
+      // In multiplayer, broadcast session end to guests when host clicks the button
+      // (not earlier, so guests have time to show their own game over screen)
+      const lobbyCtx = getLobbyContext();
+      if (lobbyCtx?.isHost) {
+        broadcastSessionEnded(lobbyCtx, 'Campaign ended (commander died)');
+      }
+
+      // Clean up lobby connection if in multiplayer
+      if (lobbyCtx) {
+        lobbyCtx.cleanup();
+        lobbyCtx.connectionFlow.disconnect().catch(() => {
+          // Ignore disconnect errors
+        });
+        lobbyCtx.connectionFlow.dispose();
+        setLobbyContext(null);
+      }
+
       // Return to title screen - user can start new game or load another campaign
       void resetTitleScreen();
       goToTitle(screenManager);
@@ -190,8 +283,6 @@ export async function showGameOver(
     },
     debriefData,
   );
-
-  goToGameOver(screenManager);
 }
 
 /**
