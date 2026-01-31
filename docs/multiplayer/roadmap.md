@@ -759,14 +759,14 @@ This phase implements **game-specific** messages only.
 
 ### Success Criteria
 
-- [ ] Any player can pause with Escape
-- [ ] Pause screen shows all players with ready status
-- [ ] Resume requires all ready + 5s countdown
-- [ ] LagReport events trigger auto-pause when appropriate
-- [ ] Disconnect triggers pause with "Disconnected" status
-- [ ] Host can drop player with AI skill selection
-- [ ] Guest can quit voluntarily with AI replacement
-- [ ] Dropped/quit player's ship becomes AI-controlled
+- [x] Any player can pause with Escape
+- [x] Pause screen shows all players with ready status
+- [x] Resume requires all ready + 5s countdown
+- [x] LagReport events trigger auto-pause when appropriate
+- [x] Disconnect triggers pause with "Disconnected" status
+- [x] Host can drop player with AI skill selection
+- [x] Guest can quit voluntarily with AI replacement
+- [x] Dropped/quit player's ship becomes AI-controlled
 
 ---
 

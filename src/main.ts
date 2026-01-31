@@ -6,6 +6,10 @@
 import './ui/styles/index.css';
 
 import { startCampaign } from './campaign/controller';
+import { installTestUtilities } from './multiplayer/test-utilities';
+
+// Install test utilities for E2E tests
+installTestUtilities();
 
 /** Maximum time to wait for fonts before proceeding with fallbacks */
 const FONT_LOAD_TIMEOUT_MS = 3000;

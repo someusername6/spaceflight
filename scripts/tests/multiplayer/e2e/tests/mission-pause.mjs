@@ -5,19 +5,21 @@
  *
  * Core tests: mission-pause-core.mjs (9 tests)
  * Disconnect tests: mission-pause-disconnect.mjs (3 tests)
+ * Lag tests: mission-pause-lag.mjs (3 tests)
  *
- * Total: 12 tests
+ * Total: 15 tests
  */
 
 import { isMainModule, runTestSuite } from '../core/index.mjs';
 import { ALL_TESTS as CORE_TESTS } from './mission-pause-core.mjs';
 import { ALL_TESTS as DISCONNECT_TESTS } from './mission-pause-disconnect.mjs';
+import { ALL_TESTS as LAG_TESTS } from './mission-pause-lag.mjs';
 
 // Re-export for backwards compatibility
-export { CORE_TESTS, DISCONNECT_TESTS };
+export { CORE_TESTS, DISCONNECT_TESTS, LAG_TESTS };
 
 // All tests combined
-export const ALL_TESTS = [...CORE_TESTS, ...DISCONNECT_TESTS];
+export const ALL_TESTS = [...CORE_TESTS, ...DISCONNECT_TESTS, ...LAG_TESTS];
 
 if (isMainModule(import.meta.url)) {
   // Run all tests with --all flag, otherwise just core tests

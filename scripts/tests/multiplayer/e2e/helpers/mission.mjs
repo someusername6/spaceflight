@@ -309,3 +309,45 @@ export async function getShipSpeed(page) {
   });
   return speed;
 }
+
+// =============================================================================
+// Test Utilities (for accessing game internals)
+// =============================================================================
+
+/**
+ * Simulate a lag report triggering auto-pause.
+ * Uses the test utilities exposed on window.__TEST__.
+ * @param {import('playwright').Page} page
+ * @returns {Promise<boolean>} true if pause was triggered
+ */
+export async function simulateLagReport(page) {
+  return page.evaluate(() => {
+    if (typeof window.__TEST__?.simulateLagReport === 'function') {
+      return window.__TEST__.simulateLagReport();
+    }
+    return false;
+  });
+}
+
+/**
+ * Check if test utilities are available.
+ * @param {import('playwright').Page} page
+ * @returns {Promise<boolean>}
+ */
+export async function hasTestUtilities(page) {
+  return page.evaluate(() => typeof window.__TEST__ !== 'undefined');
+}
+
+/**
+ * Get current pause state from test utilities.
+ * @param {import('playwright').Page} page
+ * @returns {Promise<{isPaused: boolean, reason: string|null, playerCount: number}|null>}
+ */
+export async function getTestPauseState(page) {
+  return page.evaluate(() => {
+    if (typeof window.__TEST__?.getPauseState === 'function') {
+      return window.__TEST__.getPauseState();
+    }
+    return null;
+  });
+}
