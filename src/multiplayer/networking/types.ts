@@ -157,6 +157,6 @@ export const DEFAULT_NETWORKING_CONFIG: NetworkingConfig = {
       { urls: 'stun:stun.l.google.com:19302' },
       { urls: 'stun:stun1.l.google.com:19302' },
     ],
-    meshTimeoutMs: 10000,
+    meshTimeoutMs: 30000,
   },
 };

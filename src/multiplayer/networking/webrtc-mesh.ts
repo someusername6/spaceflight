@@ -7,18 +7,30 @@
  * - 'unreliable': unordered, no retransmit (reserved for future optimization)
  */
 
+import { logDebug } from '../../core/logger';
+import {
+  handleAnswer,
+  handleIceCandidate,
+  handleOffer,
+} from './mesh-signaling';
 import {
   cleanupPeerConnection,
   createPeerConnection,
   type OutgoingSignal,
   type PeerState,
-  processBufferedIceCandidates,
   toArrayBuffer,
 } from './peer-connection';
+import { ReconnectionManager } from './reconnection';
 import type { SignalType, WebRTCMeshConfig } from './types';
 
 // Re-export for external use
 export type { OutgoingSignal } from './peer-connection';
+
+/** Result of a broadcast operation */
+export interface BroadcastResult {
+  success: number;
+  failed: string[];
+}
 
 /** Events emitted by the mesh */
 export interface WebRTCMeshEvents {
@@ -28,6 +40,10 @@ export interface WebRTCMeshEvents {
   onMeshComplete: () => void;
   onMeshFailed: (error: Error) => void;
   onSignalNeeded: (signal: OutgoingSignal) => void;
+  onPeerReconnecting?: (peerId: string) => void;
+  onPeerReconnectionAttempt?: (peerId: string) => void;
+  onPeerReconnectionFailed?: (peerId: string) => void;
+  onBroadcastError?: (peerId: string, error: unknown) => void;
 }
 
 /**
@@ -38,6 +54,7 @@ export class WebRTCMesh {
   private readonly events: Partial<WebRTCMeshEvents>;
   private readonly peers = new Map<string, PeerState>();
   private readonly _connectedPeers = new Set<string>();
+  private readonly reconnectionManager = new ReconnectionManager();
 
   private _localPeerId: string | null = null;
   private expectedPeers = new Set<string>();
@@ -160,58 +177,17 @@ export class WebRTCMesh {
     }
 
     switch (type) {
-      case 'offer':
-        await this.handleOffer(fromPeerId, state, data);
+      case 'offer': {
+        const signal = await handleOffer(fromPeerId, state, data);
+        this.emitSignal(signal);
         break;
+      }
       case 'answer':
-        await this.handleAnswer(state, data);
+        await handleAnswer(state, data);
         break;
       case 'ice':
-        await this.handleIceCandidate(state, data);
+        await handleIceCandidate(state, data);
         break;
-    }
-  }
-
-  private async handleOffer(
-    fromPeerId: string,
-    state: PeerState,
-    data: string,
-  ): Promise<void> {
-    const offer = JSON.parse(data) as RTCSessionDescriptionInit;
-    await state.connection.setRemoteDescription(offer);
-    state.remoteDescriptionSet = true;
-
-    await processBufferedIceCandidates(state);
-
-    const answer = await state.connection.createAnswer();
-    await state.connection.setLocalDescription(answer);
-
-    this.emitSignal({
-      toPeerId: fromPeerId,
-      type: 'answer',
-      data: JSON.stringify(answer),
-    });
-  }
-
-  private async handleAnswer(state: PeerState, data: string): Promise<void> {
-    const answer = JSON.parse(data) as RTCSessionDescriptionInit;
-    await state.connection.setRemoteDescription(answer);
-    state.remoteDescriptionSet = true;
-
-    await processBufferedIceCandidates(state);
-  }
-
-  private async handleIceCandidate(
-    state: PeerState,
-    data: string,
-  ): Promise<void> {
-    const candidate = JSON.parse(data) as RTCIceCandidateInit;
-    const iceCandidate = new RTCIceCandidate(candidate);
-
-    if (state.remoteDescriptionSet) {
-      await state.connection.addIceCandidate(iceCandidate);
-    } else {
-      state.iceCandidateBuffer.push(iceCandidate);
     }
   }
 
@@ -240,15 +216,24 @@ export class WebRTCMesh {
 
   /**
    * Broadcast a message to all connected peers.
+   * Returns the number of successful sends and list of failed peer IDs.
    */
-  broadcast(data: Uint8Array, reliable: boolean): void {
+  broadcast(data: Uint8Array, reliable: boolean): BroadcastResult {
+    const failed: string[] = [];
+    let success = 0;
+
     for (const peerId of this._connectedPeers) {
       try {
         this.send(peerId, data, reliable);
-      } catch {
-        // Ignore send errors during broadcast
+        success++;
+      } catch (error) {
+        console.warn(`Broadcast to ${peerId} failed:`, error);
+        failed.push(peerId);
+        this.events.onBroadcastError?.(peerId, error);
       }
     }
+
+    return { success, failed };
   }
 
   // ===========================================================================
@@ -286,6 +271,8 @@ export class WebRTCMesh {
       this.meshTimeoutId = null;
     }
 
+    this.reconnectionManager.reset();
+
     for (const state of this.peers.values()) {
       cleanupPeerConnection(state);
     }
@@ -312,13 +299,43 @@ export class WebRTCMesh {
         onPeerConnected: (id) => this.handlePeerConnected(id),
         onPeerDisconnected: (id) => this.handlePeerDisconnected(id),
         onMessage: (id, data) => this.events.onMessage?.(id, data),
+        onReconnecting: (id) => this.events.onPeerReconnecting?.(id),
+        onReconnectionAttempt: (id) =>
+          this.events.onPeerReconnectionAttempt?.(id),
+        onReconnectionFailed: (id) =>
+          this.events.onPeerReconnectionFailed?.(id),
       },
       () => {
         // State change callback - not needed for mesh tracking
       },
+      this.reconnectionManager,
+      (id) => this.initiateReconnection(id),
     );
 
     this.peers.set(peerId, state);
+  }
+
+  /**
+   * Initiate a reconnection attempt for a peer.
+   * Uses tie-breaker: lower peer ID initiates to prevent dual-offer deadlock.
+   */
+  private initiateReconnection(peerId: string): void {
+    // Clean up old connection
+    const oldState = this.peers.get(peerId);
+    if (oldState) {
+      cleanupPeerConnection(oldState);
+    }
+    this.peers.delete(peerId);
+
+    // Tie-breaker: lower peer ID becomes the initiator
+    // This prevents both peers from sending offers simultaneously
+    const shouldInitiate = this.localPeerId < peerId;
+
+    logDebug(
+      `[Mesh] Reconnect: attempting to ${peerId} (initiator: ${shouldInitiate})`,
+    );
+
+    this.createPeer(peerId, shouldInitiate);
   }
 
   private handlePeerConnected(peerId: string): void {

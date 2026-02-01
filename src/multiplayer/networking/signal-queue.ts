@@ -10,10 +10,19 @@ import type { OutgoingSignal } from './webrtc-mesh';
 /** Signal with retry tracking */
 export interface PendingSignal extends OutgoingSignal {
   retryCount: number;
+  nextRetryAt: number;
 }
 
 /** Maximum retry attempts for failed signals */
-export const MAX_SIGNAL_RETRIES = 3;
+export const MAX_SIGNAL_RETRIES = 10;
+
+/**
+ * Get retry delay using exponential backoff.
+ * Starts at 100ms and doubles each retry, capped at 5000ms.
+ */
+function getRetryDelay(retryCount: number): number {
+  return Math.min(100 * 2 ** retryCount, 5000);
+}
 
 /**
  * Queue that manages outgoing signals with automatic retry on failure.
@@ -25,22 +34,30 @@ export class SignalQueue {
    * Add a signal to the queue.
    */
   queue(signal: OutgoingSignal): void {
-    this.pendingSignals.push({ ...signal, retryCount: 0 });
+    this.pendingSignals.push({ ...signal, retryCount: 0, nextRetryAt: 0 });
   }
 
   /**
    * Flush all pending signals, sending them via the signaling client.
-   * Failed signals are re-queued with incremented retry count.
+   * Failed signals are re-queued with incremented retry count and exponential backoff.
    */
   async flush(signalingClient: SignalingClient): Promise<void> {
     if (this.pendingSignals.length === 0) return;
 
+    const now = Date.now();
     const signals = [...this.pendingSignals];
     this.pendingSignals = [];
 
     const failedSignals: PendingSignal[] = [];
+    const deferredSignals: PendingSignal[] = [];
 
     for (const signal of signals) {
+      // Skip signals that are not yet ready to retry
+      if (now < signal.nextRetryAt) {
+        deferredSignals.push(signal);
+        continue;
+      }
+
       try {
         await signalingClient.postSignal(
           signal.toPeerId,
@@ -51,9 +68,17 @@ export class SignalQueue {
         console.error('Error sending signal:', error);
         // Re-queue with incremented retry count if under max retries
         if (signal.retryCount < MAX_SIGNAL_RETRIES) {
+          const newRetryCount = signal.retryCount + 1;
+          // Log warning at retry 5
+          if (newRetryCount === 5) {
+            console.warn(
+              `Signal to ${signal.toPeerId} has failed 5 times, continuing retries...`,
+            );
+          }
           failedSignals.push({
             ...signal,
-            retryCount: signal.retryCount + 1,
+            retryCount: newRetryCount,
+            nextRetryAt: now + getRetryDelay(newRetryCount),
           });
         } else {
           console.error(
@@ -63,9 +88,9 @@ export class SignalQueue {
       }
     }
 
-    // Re-queue failed signals for next flush cycle
-    if (failedSignals.length > 0) {
-      this.pendingSignals.push(...failedSignals);
+    // Re-queue deferred and failed signals for next flush cycle
+    if (deferredSignals.length > 0 || failedSignals.length > 0) {
+      this.pendingSignals.push(...deferredSignals, ...failedSignals);
     }
   }
 

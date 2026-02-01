@@ -4,6 +4,7 @@
  * Creates and manages RTCPeerConnection instances with data channels.
  */
 
+import type { ReconnectionManager } from './reconnection';
 import type { SignalType, WebRTCMeshConfig } from './types';
 
 /** Outgoing signal to be sent via signaling server */
@@ -29,6 +30,9 @@ export interface PeerConnectionCallbacks {
   onPeerConnected: (peerId: string) => void;
   onPeerDisconnected: (peerId: string) => void;
   onMessage: (peerId: string, data: Uint8Array) => void;
+  onReconnecting?: (peerId: string) => void;
+  onReconnectionAttempt?: (peerId: string) => void;
+  onReconnectionFailed?: (peerId: string) => void;
 }
 
 /** Convert Uint8Array to ArrayBuffer for DataChannel.send() */
@@ -48,6 +52,8 @@ export function createPeerConnection(
   config: WebRTCMeshConfig,
   callbacks: PeerConnectionCallbacks,
   onStateChange: (peerId: string, state: PeerState) => void,
+  reconnectionManager?: ReconnectionManager,
+  onInitiateReconnection?: (peerId: string) => void,
 ): PeerState {
   const connection = new RTCPeerConnection({
     iceServers: config.iceServers,
@@ -75,7 +81,13 @@ export function createPeerConnection(
 
   // Handle connection state changes
   connection.onconnectionstatechange = () => {
-    handleConnectionStateChange(peerId, state, callbacks);
+    handleConnectionStateChange(
+      peerId,
+      state,
+      callbacks,
+      reconnectionManager,
+      onInitiateReconnection,
+    );
   };
 
   // Handle incoming data channels (for non-initiators)
@@ -208,12 +220,33 @@ function handleConnectionStateChange(
   peerId: string,
   state: PeerState,
   callbacks: PeerConnectionCallbacks,
+  reconnectionManager?: ReconnectionManager,
+  onInitiateReconnection?: (peerId: string) => void,
 ): void {
   const connState = state.connection.connectionState;
 
-  if (connState === 'failed' || connState === 'disconnected') {
+  if (connState === 'connected') {
+    // Clear reconnection state on successful connection
+    reconnectionManager?.clearPeer(peerId);
+  } else if (connState === 'failed' || connState === 'disconnected') {
     if (state.connected) {
       handlePeerDisconnected(peerId, state, callbacks);
+    }
+
+    // Attempt reconnection if manager is available
+    if (reconnectionManager && onInitiateReconnection) {
+      if (reconnectionManager.shouldRetry(peerId)) {
+        callbacks.onReconnecting?.(peerId);
+        const scheduled = reconnectionManager.scheduleRetry(peerId, () => {
+          callbacks.onReconnectionAttempt?.(peerId);
+          onInitiateReconnection(peerId);
+        });
+        if (!scheduled) {
+          callbacks.onReconnectionFailed?.(peerId);
+        }
+      } else {
+        callbacks.onReconnectionFailed?.(peerId);
+      }
     }
   }
 }
