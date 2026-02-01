@@ -1,0 +1,97 @@
+/**
+ * Pilot Skills - Ship skill bars and upgrade UI
+ */
+
+/* ========================================
+   SHIP SKILLS SECTION
+   ======================================== */
+
+.pilot-ship-skills {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border-color);
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.ship-skills-header {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-widest);
+  margin-bottom: var(--space-2);
+}
+
+.ship-skills-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.ship-skill-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ship-skill-name {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  width: 80px;
+  flex-shrink: 0;
+}
+
+.ship-skill-bar-container {
+  flex: 1;
+  min-width: 0;
+}
+
+.ship-skill-actions {
+  flex-shrink: 0;
+  width: 120px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ========================================
+   SKILL BAR (Segmented)
+   ======================================== */
+
+.skill-bar {
+  display: flex;
+  gap: 2px;
+  height: 12px;
+}
+
+.skill-segment {
+  flex: 1;
+  background: color-mix(in srgb, var(--color-primary) 25%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 40%, transparent);
+  border-radius: 1px;
+  transition: background-color var(--duration-base) var(--ease-out);
+}
+
+.skill-segment.filled {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 4px var(--color-primary-glow);
+}
+
+/* Elite segment - gold styling */
+.skill-segment.elite {
+  background: color-mix(in srgb, gold 20%, transparent);
+  border-color: color-mix(in srgb, gold 40%, transparent);
+}
+
+.skill-segment.elite.filled {
+  background: gold;
+  border-color: gold;
+  box-shadow: 0 0 6px rgba(255, 215, 0, 0.6);
+}
+
+/* Upgrade button styling */
+.btn-upgrade-skill {
+  font-size: var(--text-2xs);
+  padding: var(--space-1) var(--space-2);
+  white-space: nowrap;
+}

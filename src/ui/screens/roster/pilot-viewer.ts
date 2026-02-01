@@ -17,11 +17,33 @@ import {
 } from '../../../multiplayer/ship-assignment';
 import { getShipIconPath, iconErrorHandler } from '../../ship/viewer';
 
-/** Render skill stars for a skill level */
-function renderSkillStars(skill: SkillLevel): string {
-  const levels: SkillLevel[] = ['rookie', 'regular', 'veteran', 'ace', 'elite'];
-  const index = levels.indexOf(skill);
-  return '★'.repeat(index + 1) + '☆'.repeat(4 - index);
+/** Skill levels in order */
+const SKILL_LEVELS: SkillLevel[] = [
+  'rookie',
+  'regular',
+  'veteran',
+  'ace',
+  'elite',
+];
+
+/** Render segmented skill bar for a skill level */
+function renderSkillBar(skill: SkillLevel | undefined): string {
+  const filledCount = skill ? SKILL_LEVELS.indexOf(skill) + 1 : 0;
+
+  const segments = SKILL_LEVELS.map((level, i) => {
+    const isFilled = i < filledCount;
+    const isElite = level === 'elite';
+    const classes = [
+      'skill-segment',
+      isFilled ? 'filled' : '',
+      isElite ? 'elite' : '',
+    ]
+      .filter(Boolean)
+      .join(' ');
+    return `<div class="${classes}" title="${level}"></div>`;
+  }).join('');
+
+  return `<div class="skill-bar">${segments}</div>`;
 }
 
 /** Format ship class name for display */
@@ -123,28 +145,23 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
             return `
               <div class="ship-skill-row">
                 <span class="ship-skill-name">${formatShipClass(shipClass)}</span>
-                ${
-                  skill
-                    ? `
-                  <span class="ship-skill-stars">${renderSkillStars(skill)}</span>
-                  <span class="ship-skill-label">${skill}</span>
-                `
-                    : `
-                  <span class="ship-skill-untrained">Not Trained</span>
-                `
-                }
-                ${
-                  showButton
-                    ? `
-                  <button class="btn btn-small btn-upgrade-skill ${canAfford ? '' : 'btn-disabled'}"
-                          data-pilot-id="${pilot.id}"
-                          data-ship-class="${shipClass}"
-                          ${disabledAttr}>
-                    ${buttonLabel} (${upgradeCost} XP)
-                  </button>
-                `
-                    : ''
-                }
+                <div class="ship-skill-bar-container">
+                  ${renderSkillBar(skill)}
+                </div>
+                <div class="ship-skill-actions">
+                  ${
+                    showButton
+                      ? `
+                    <button class="btn btn-small btn-upgrade-skill ${canAfford ? '' : 'btn-disabled'}"
+                            data-pilot-id="${pilot.id}"
+                            data-ship-class="${shipClass}"
+                            ${disabledAttr}>
+                      ${buttonLabel} (${upgradeCost} XP)
+                    </button>
+                  `
+                      : ''
+                  }
+                </div>
               </div>
             `;
           }).join('')}
