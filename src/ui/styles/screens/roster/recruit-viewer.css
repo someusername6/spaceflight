@@ -72,31 +72,6 @@
   letter-spacing: var(--tracking-wide);
 }
 
-.recruit-description {
-  padding: var(--space-4);
-  border-bottom: 1px solid var(--border-color);
-}
-
-.recruit-description-title {
-  font-family: var(--font-display);
-  font-size: var(--text-2xs);
-  font-weight: var(--font-medium);
-  color: var(--text-dim);
-  letter-spacing: var(--tracking-wider);
-  margin-bottom: var(--space-2);
-}
-
-.recruit-description-text {
-  font-family: var(--font-body);
-  font-size: var(--text-xs);
-  color: var(--text-secondary);
-  line-height: var(--leading-normal);
-}
-
-.recruit-description-text + .recruit-description-text {
-  margin-top: var(--space-2);
-}
-
 .recruit-hire-section {
   padding: var(--space-5) var(--space-4);
   display: flex;

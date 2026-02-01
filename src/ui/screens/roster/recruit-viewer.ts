@@ -2,6 +2,7 @@
  * Recruit Viewer - renders hireable pilot details and hire option.
  */
 
+import { COMBAT_SHIP_CLASSES } from '../../../campaign/constants';
 import type {
   CampaignState,
   HireablePilot,
@@ -9,27 +10,38 @@ import type {
 } from '../../../campaign/types';
 import { isHost } from '../../../multiplayer/context-permissions';
 
+/** Skill levels in order */
+const SKILL_LEVELS: SkillLevel[] = [
+  'rookie',
+  'regular',
+  'veteran',
+  'ace',
+  'elite',
+];
+
+/** Render segmented skill bar for a skill level */
+function renderSkillBar(skill: SkillLevel | undefined): string {
+  const filledCount = skill ? SKILL_LEVELS.indexOf(skill) + 1 : 0;
+
+  const segments = SKILL_LEVELS.map((level, i) => {
+    const isFilled = i < filledCount;
+    const isElite = level === 'elite';
+    const classes = [
+      'skill-segment',
+      isFilled ? 'filled' : '',
+      isElite ? 'elite' : '',
+    ]
+      .filter(Boolean)
+      .join(' ');
+    return `<div class="${classes}" title="${level}"></div>`;
+  }).join('');
+
+  return `<div class="skill-bar">${segments}</div>`;
+}
+
 /** Format ship class name for display */
 function formatShipClass(shipClass: string): string {
   return shipClass.charAt(0).toUpperCase() + shipClass.slice(1);
-}
-
-/** Get skill description for display */
-function getSkillDescription(skill: SkillLevel): string {
-  switch (skill) {
-    case 'rookie':
-      return 'New to combat. Lower accuracy and slower reactions, but eager to prove themselves.';
-    case 'regular':
-      return 'Competent pilot with solid fundamentals. Reliable in standard engagements.';
-    case 'veteran':
-      return 'Battle-hardened with excellent situational awareness. Rarely misses a shot.';
-    case 'ace':
-      return 'Elite combatant with exceptional skills. Deadly accurate with lightning reflexes.';
-    case 'elite':
-      return 'Legendary pilot. Masters of evasion and precision. Worth every credit.';
-    default:
-      return 'Standard combat training.';
-  }
 }
 
 /** Render recruit viewer with details and hire button */
@@ -46,6 +58,41 @@ export function renderRecruitViewer(
       ? 'disabled title="Only the host can hire recruits"'
       : 'disabled';
 
+  // XP section showing bonus XP the recruit brings
+  const xpSection = `
+    <div class="pilot-xp-section">
+      <div class="xp-header">
+        <span class="xp-label">Bonus XP</span>
+        <span class="xp-value">${recruit.bonusXP}</span>
+      </div>
+    </div>
+  `;
+
+  // Ship skills section (read-only, no upgrade buttons)
+  const shipSkillsSection = `
+    <div class="pilot-ship-skills">
+      <div class="ship-skills-header">Ship Skills</div>
+      <div class="ship-skills-grid">
+        ${COMBAT_SHIP_CLASSES.map((shipClass) => {
+          // Recruit only has skill on their starting ship
+          const skill =
+            shipClass === recruit.startingShip
+              ? (recruit.skill as SkillLevel)
+              : undefined;
+
+          return `
+            <div class="ship-skill-row recruit-skill-row">
+              <span class="ship-skill-name">${formatShipClass(shipClass)}</span>
+              <div class="ship-skill-bar-container">
+                ${renderSkillBar(skill)}
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  `;
+
   return `
     <div class="recruit-viewer">
       <div class="recruit-viewer-header">
@@ -55,11 +102,8 @@ export function renderRecruitViewer(
         </div>
       </div>
 
-      <div class="recruit-description">
-        <div class="recruit-description-title">Profile</div>
-        <div class="recruit-description-text">${getSkillDescription(recruit.skill)}</div>
-        <div class="recruit-description-text">Trained on ${formatShipClass(recruit.startingShip)}. Bonus XP +${recruit.bonusXP}.</div>
-      </div>
+      ${xpSection}
+      ${shipSkillsSection}
 
       <div class="recruit-hire-section">
         <div class="recruit-price-large${canAfford ? '' : ' expensive'}">
