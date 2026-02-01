@@ -9,7 +9,8 @@ import type { WebRTCTransport } from './webrtc-transport';
 
 /** Callbacks for guest mesh events */
 export interface GuestMeshCallbacks {
-  getTransport: () => WebRTCTransport | null;
+  /** Get raw transport for mesh event callbacks (before TransformingTransport wrapper) */
+  getRawTransport: () => WebRTCTransport | null;
   startPolling: () => void;
   setState: (state: ConnectionState) => void;
   signalQueue: SignalQueue;
@@ -37,7 +38,9 @@ export function createGuestMesh(
         reject(error);
       },
       onPeerConnected: (peerId: string) => {
-        callbacks.getTransport()?.onConnect?.(peerId);
+        // Note: rawTransport is null during mesh formation, but that's OK -
+        // the session queries connectedPeers on startup to get initial state.
+        callbacks.getRawTransport()?.onConnect?.(peerId);
         const connected = mesh.connectedPeers.size;
         callbacks.setState({
           status: 'forming-mesh',
@@ -47,10 +50,10 @@ export function createGuestMesh(
         });
       },
       onPeerDisconnected: (peerId: string) => {
-        callbacks.getTransport()?.onDisconnect?.(peerId);
+        callbacks.getRawTransport()?.onDisconnect?.(peerId);
       },
       onMessage: (peerId: string, data: Uint8Array) => {
-        callbacks.getTransport()?.onMessage?.(peerId, data);
+        callbacks.getRawTransport()?.onMessage?.(peerId, data);
       },
       onSignalNeeded: (signal: OutgoingSignal) => {
         callbacks.signalQueue.queue(signal);

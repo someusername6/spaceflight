@@ -7,11 +7,16 @@
  * 2. Exchange WebRTC signals (SDP offers/answers, ICE candidates)
  * 3. Form mesh with all peers
  * 4. Return transport adapter for rollback-netcode
+ *
+ * The transport is wrapped with TransformingTransport from rollback-netcode,
+ * which provides automatic gzip compression and message segmentation for
+ * payloads exceeding WebRTC's ~16KB DataChannel limit.
  */
 
-import type { TransportAdapter } from 'rollback-netcode';
+import { TransformingTransport, type TransportAdapter } from 'rollback-netcode';
 import { toConnectionError } from './connection-errors';
 import { createGuestMesh } from './guest-mesh';
+import { createSignalPoller } from './signal-poller';
 import { SignalQueue } from './signal-queue';
 import {
   createSignalingClient,
@@ -21,7 +26,6 @@ import type {
   ConnectionResult,
   ConnectionState,
   NetworkingConfig,
-  RoomEvent,
 } from './types';
 import { DEFAULT_NETWORKING_CONFIG } from './types';
 import { WebRTCMesh } from './webrtc-mesh';
@@ -44,13 +48,14 @@ export class ConnectionFlow {
 
   private signalingClient: SignalingClient | null = null;
   private mesh: WebRTCMesh | null = null;
-  private transport: WebRTCTransport | null = null;
+  private rawTransport: WebRTCTransport | null = null;
+  private transport: TransportAdapter | null = null;
 
   private _state: ConnectionState = { status: 'idle' };
-  private pollIntervalId: ReturnType<typeof setInterval> | null = null;
   private disposed = false;
 
   private readonly signalQueue = new SignalQueue();
+  private readonly poller: ReturnType<typeof createSignalPoller>;
 
   constructor(
     config: Partial<NetworkingConfig> = {},
@@ -64,6 +69,13 @@ export class ConnectionFlow {
       webrtc: { ...DEFAULT_NETWORKING_CONFIG.webrtc, ...config.webrtc },
     };
     this.events = events;
+    this.poller = createSignalPoller({
+      getSignalingClient: () => this.signalingClient,
+      getMesh: () => this.mesh,
+      getRawTransport: () => this.rawTransport,
+      signalQueue: this.signalQueue,
+      pollIntervalMs: this.config.signaling.pollIntervalMs,
+    });
   }
 
   // ===========================================================================
@@ -103,11 +115,12 @@ export class ConnectionFlow {
       this.mesh = this.createMesh();
       this.mesh.initializeAsHost(result.hostId);
 
-      // Create transport
-      this.transport = createWebRTCTransport(this.mesh);
+      // Create transport with compression and segmentation wrapper
+      this.rawTransport = createWebRTCTransport(this.mesh);
+      this.transport = new TransformingTransport(this.rawTransport);
 
       // Start polling for signals and events
-      this.startPolling();
+      this.poller.start();
 
       this.setState({ status: 'connected', roomCode: result.roomCode });
 
@@ -167,8 +180,8 @@ export class ConnectionFlow {
         roomCode,
         totalPeers,
         {
-          getTransport: () => this.transport,
-          startPolling: () => this.startPolling(),
+          getRawTransport: () => this.rawTransport,
+          startPolling: () => this.poller.start(),
           setState: (state) => this.setState(state),
           signalQueue: this.signalQueue,
           setMesh: (mesh) => {
@@ -177,8 +190,9 @@ export class ConnectionFlow {
         },
       );
 
-      // Create transport
-      this.transport = createWebRTCTransport(meshResult.mesh);
+      // Create transport with compression and segmentation wrapper
+      this.rawTransport = createWebRTCTransport(meshResult.mesh);
+      this.transport = new TransformingTransport(this.rawTransport);
 
       this.setState({ status: 'connected', roomCode });
 
@@ -200,7 +214,7 @@ export class ConnectionFlow {
    * Disconnect from the current session.
    */
   async disconnect(): Promise<void> {
-    this.stopPolling();
+    this.poller.stop();
 
     if (this.signalingClient) {
       try {
@@ -213,8 +227,13 @@ export class ConnectionFlow {
     }
 
     if (this.transport) {
-      this.transport.dispose();
+      this.transport.dispose?.();
       this.transport = null;
+    }
+
+    if (this.rawTransport) {
+      this.rawTransport.dispose();
+      this.rawTransport = null;
     }
 
     if (this.mesh) {
@@ -251,12 +270,14 @@ export class ConnectionFlow {
     if (this.disposed) return;
     this.disposed = true;
 
-    this.stopPolling();
-    this.transport?.dispose();
+    this.poller.stop();
+    this.transport?.dispose?.();
+    this.rawTransport?.dispose();
     this.mesh?.dispose();
     this.signalingClient?.dispose();
 
     this.transport = null;
+    this.rawTransport = null;
     this.mesh = null;
     this.signalingClient = null;
     this.signalQueue.clear();
@@ -267,98 +288,23 @@ export class ConnectionFlow {
   // ===========================================================================
 
   private createMesh(): WebRTCMesh {
+    // Mesh callbacks invoke rawTransport's handlers. When the session sets
+    // transport.onMessage (on TransformingTransport), it replaces rawTransport's
+    // handlers with internal ones that decompress/reassemble before forwarding.
     return new WebRTCMesh(this.config.webrtc, {
       onPeerConnected: (peerId) => {
-        this.transport?.onConnect?.(peerId);
+        this.rawTransport?.onConnect?.(peerId);
       },
       onPeerDisconnected: (peerId) => {
-        this.transport?.onDisconnect?.(peerId);
+        this.rawTransport?.onDisconnect?.(peerId);
       },
       onMessage: (peerId, data) => {
-        this.transport?.onMessage?.(peerId, data);
+        this.rawTransport?.onMessage?.(peerId, data);
       },
       onSignalNeeded: (signal) => {
         this.signalQueue.queue(signal);
       },
     });
-  }
-
-  // ===========================================================================
-  // Private: Signal Polling
-  // ===========================================================================
-
-  private startPolling(): void {
-    if (this.pollIntervalId) return;
-
-    this.pollIntervalId = setInterval(() => {
-      this.pollAndProcess().catch((error) => {
-        console.error('Polling error:', error);
-      });
-    }, this.config.signaling.pollIntervalMs);
-
-    // Initial poll
-    this.pollAndProcess().catch((error) => {
-      console.error('Initial polling error:', error);
-    });
-  }
-
-  private stopPolling(): void {
-    if (this.pollIntervalId) {
-      clearInterval(this.pollIntervalId);
-      this.pollIntervalId = null;
-    }
-  }
-
-  private async pollAndProcess(): Promise<void> {
-    if (!this.signalingClient || !this.mesh) return;
-
-    // Send any pending outgoing signals
-    await this.signalQueue.flush(this.signalingClient);
-
-    // Poll for incoming signals
-    try {
-      const signals = await this.signalingClient.pollSignals();
-      for (const signal of signals) {
-        await this.mesh.handleSignal(
-          signal.fromPeerId,
-          signal.type,
-          signal.data,
-        );
-      }
-    } catch (error) {
-      console.error('Error polling signals:', error);
-    }
-
-    // Poll for events (host only needs this to track peer joins)
-    if (this.signalingClient.isHost) {
-      try {
-        const events = await this.signalingClient.pollEvents();
-        for (const event of events) {
-          this.handleRoomEvent(event);
-        }
-      } catch (error) {
-        console.error('Error polling events:', error);
-      }
-    }
-  }
-
-  private handleRoomEvent(event: RoomEvent): void {
-    if (!this.mesh) return;
-
-    switch (event.type) {
-      case 'peer_joined':
-        if (event.data.peerId) {
-          this.mesh.addPeer(event.data.peerId);
-        }
-        break;
-      case 'peer_left':
-      case 'peer_kicked':
-        if (event.data.peerId) {
-          this.mesh.removePeer(event.data.peerId);
-          this.transport?.onDisconnect?.(event.data.peerId);
-        }
-        break;
-    }
   }
 
   // ===========================================================================
