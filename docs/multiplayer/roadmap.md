@@ -882,13 +882,13 @@ This phase implements **game-specific** messages only.
 
 ### Success Criteria
 
-- [ ] Kicked players cannot rejoin with same callsign
-- [ ] Kick shows appropriate message to kicked player
-- [ ] Stats persist correctly across sessions
-- [ ] Chat rate limiting works (1 msg/sec)
-- [ ] All system events generate chat messages
-- [ ] Auto-unready triggers on equipment/assignment changes
-- [ ] Error messages are clear and actionable
+- [x] Kicked players cannot rejoin with same callsign
+- [x] Kick shows appropriate message to kicked player
+- [x] Stats persist correctly across sessions
+- [x] Chat rate limiting works (1 msg/sec)
+- [x] All system events generate chat messages
+- [x] Auto-unready triggers on equipment/assignment changes
+- [x] Error messages are clear and actionable
 
 ---
 

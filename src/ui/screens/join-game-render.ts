@@ -35,6 +35,8 @@ export function getErrorMessage(errorCode: string): string {
     case 'peer_connection_failed':
     case 'signaling_error':
       return 'Connection failed. Please try again.';
+    case 'callsign_kicked':
+      return 'Your callsign has been kicked from this room.';
     default:
       return 'Could not reach server. Check your connection.';
   }

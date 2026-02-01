@@ -89,6 +89,18 @@ export async function kick(
 
   const now = Date.now();
 
+  // Track kicked callsign (if available)
+  if (peer.callsign) {
+    const kickedCallsigns = [...(room.kickedCallsigns ?? [])];
+    const normalizedCallsign = peer.callsign.toLowerCase();
+    if (!kickedCallsigns.includes(normalizedCallsign)) {
+      kickedCallsigns.push(normalizedCallsign);
+    }
+    await storage.updateRoom(code, { kickedCallsigns, lastActivity: now });
+  } else {
+    await storage.updateRoom(code, { lastActivity: now });
+  }
+
   // Remove the peer
   await storage.removePeer(code, request.peerId);
 
@@ -98,9 +110,6 @@ export async function kick(
     data: { peerId: request.peerId },
     timestamp: now,
   });
-
-  // Update room activity
-  await storage.updateRoom(code, { lastActivity: now });
 
   return {
     status: 200,

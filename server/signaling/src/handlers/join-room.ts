@@ -81,6 +81,20 @@ export async function joinRoom(
     };
   }
 
+  // Check if callsign has been kicked
+  if (request.callsign && room.kickedCallsigns?.length) {
+    const normalizedCallsign = request.callsign.toLowerCase();
+    if (room.kickedCallsigns.includes(normalizedCallsign)) {
+      return {
+        status: 403,
+        body: {
+          error: 'callsign_kicked',
+          message: 'This callsign has been kicked from the room',
+        },
+      };
+    }
+  }
+
   // Get existing peers
   const peers = await storage.getPeers(code);
 
@@ -104,6 +118,7 @@ export async function joinRoom(
     peerId: guestId,
     token: guestToken,
     joinedAt: now,
+    callsign: request.callsign,
   });
 
   // Update room activity

@@ -4,12 +4,14 @@
  * Extracted from equip.ts to keep file under 400 lines.
  */
 
+import { triggerAutoUnready } from '../../../campaign/handlers/lobby-actions';
 import { equipPrimary, equipSecondary } from '../../../campaign/loadout';
 import type { CampaignState } from '../../../campaign/types';
 import {
   requestEquipAction,
   shouldUseActionRequest,
 } from '../../../multiplayer/action-client';
+import { addEquipmentSystemMessage } from '../../../multiplayer/system-messages';
 import { closePopover } from './weapon';
 
 /** Find first storage index for a weapon type */
@@ -46,6 +48,8 @@ export function bindPrimaryPickerEvents(
       );
       if (newState !== state) {
         onStateUpdate(newState);
+        triggerAutoUnready();
+        addEquipmentSystemMessage('equipped', weaponType);
       }
 
       // For guests: also notify host (fire-and-forget)
@@ -124,6 +128,8 @@ export function bindSecondaryPickerEvents(
       );
       if (newState !== state) {
         onStateUpdate(newState);
+        triggerAutoUnready();
+        addEquipmentSystemMessage('equipped', weaponType);
       }
 
       // For guests: also notify host (fire-and-forget)

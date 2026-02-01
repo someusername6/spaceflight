@@ -89,7 +89,8 @@ export type ConnectionErrorCode =
   | 'mesh_timeout'
   | 'network_error'
   | 'signaling_error'
-  | 'peer_connection_failed';
+  | 'peer_connection_failed'
+  | 'callsign_kicked';
 
 /** Connection error */
 export interface ConnectionError {

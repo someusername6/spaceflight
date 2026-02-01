@@ -18,6 +18,10 @@ import {
   canConvertScrap,
   canSell,
 } from '../../../multiplayer/context-permissions';
+import {
+  addScrapConversionMessage,
+  addTransactionSystemMessage,
+} from '../../../multiplayer/system-messages';
 import { bindNavBar, type NavDestination } from '../../common/nav-bar';
 import type { ScreenAPI } from '../../framework/screen';
 import { initShipConnectors } from '../../ship/connectors';
@@ -129,6 +133,7 @@ export function bindStoreEvents(
     );
     if (newState !== props.campaignState) {
       onStateUpdate(newState);
+      addTransactionSystemMessage('bought', currentState.selectedItem);
     }
 
     if (shouldUseActionRequest()) {
@@ -161,6 +166,7 @@ export function bindStoreEvents(
     );
     if (newState !== props.campaignState) {
       onStateUpdate(newState);
+      addTransactionSystemMessage('sold', currentState.selectedItem);
     }
 
     if (shouldUseActionRequest()) {
@@ -204,6 +210,13 @@ export function bindStoreEvents(
     );
     if (newState !== props.campaignState) {
       onStateUpdate(newState);
+      const bulkQty =
+        currentState.selectedCategory === 'secondaries'
+          ? 10
+          : currentState.selectedItem === 'autocannon'
+            ? 100
+            : 10;
+      addTransactionSystemMessage('bought', currentState.selectedItem, bulkQty);
     }
 
     if (shouldUseActionRequest()) {
@@ -239,6 +252,7 @@ export function bindStoreEvents(
     );
     if (newState !== props.campaignState) {
       onStateUpdate(newState);
+      addTransactionSystemMessage('sold', currentState.selectedItem, 10);
     }
 
     if (shouldUseActionRequest()) {
@@ -282,6 +296,7 @@ export function bindStoreEvents(
     );
     if (newState !== props.campaignState) {
       onStateUpdate(newState);
+      addTransactionSystemMessage('sold', currentState.selectedItem, 100);
     }
 
     if (shouldUseActionRequest()) {
@@ -312,6 +327,7 @@ export function bindStoreEvents(
     );
     if (newState !== props.campaignState) {
       onStateUpdate(newState);
+      addScrapConversionMessage(currentState.selectedItem);
     }
 
     if (shouldUseActionRequest()) {

@@ -16,6 +16,8 @@ export interface Room {
   state: RoomState;
   createdAt: number;
   lastActivity: number;
+  /** Callsigns that have been kicked from this room (lowercase for comparison) */
+  kickedCallsigns: string[];
 }
 
 /** Peer in a room */
@@ -23,6 +25,8 @@ export interface Peer {
   peerId: string;
   token: string;
   joinedAt: number;
+  /** Player callsign (for tracking kicked callsigns) */
+  callsign?: string;
 }
 
 /** WebRTC signal */
@@ -76,7 +80,8 @@ export type ErrorCode =
   | 'forbidden'
   | 'rate_limited'
   | 'bad_request'
-  | 'internal_error';
+  | 'internal_error'
+  | 'callsign_kicked';
 
 /** Standard error response */
 export interface ErrorResponse {
@@ -99,6 +104,8 @@ export interface CreateRoomResponse {
 /** Join room request */
 export interface JoinRoomRequest {
   gameVersion: string;
+  /** Player callsign (for kicked callsign blocking) */
+  callsign?: string;
 }
 
 /** Existing peer info for join response */

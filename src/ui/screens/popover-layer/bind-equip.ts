@@ -4,12 +4,14 @@
  * Event handlers for weapon equipping, unequipping, and swapping.
  */
 
+import { triggerAutoUnready } from '../../../campaign/handlers/lobby-actions';
 import {
   equipPrimary,
   equipSecondary,
   unequipPrimary,
   unequipSecondary,
 } from '../../../campaign/loadout';
+import { getSlot } from '../../../campaign/slot-array';
 import type {
   CampaignState,
   EquippedPrimary,
@@ -21,6 +23,7 @@ import {
   shouldUseActionRequest,
 } from '../../../multiplayer/action-client';
 import { canEditShip } from '../../../multiplayer/context-permissions';
+import { addEquipmentSystemMessage } from '../../../multiplayer/system-messages';
 import type { ScreenAPI } from '../../framework/screen';
 import { getBankSize } from '../popover/equip';
 import { closeAll } from './bind-ammo';
@@ -135,12 +138,24 @@ export function bindUnequipHandler(
     const campState = props.getCampaignState();
     if (!canEditShip(shipId)) return;
     const slotIndex = Number.parseInt(slotIndexStr, 10);
+
+    // Get weapon name before unequipping for system message
+    const ship = campState.ships.find((s) => s.id === shipId);
+    const slot = ship
+      ? slotType === 'primary'
+        ? getSlot(ship.primaryWeapons, slotIndex)
+        : getSlot(ship.secondaryWeapons, slotIndex)
+      : null;
+    const weaponName = slot?.weaponType ?? 'weapon';
+
     const newState =
       slotType === 'primary'
         ? unequipPrimary(campState, shipId, slotIndex)
         : unequipSecondary(campState, shipId, slotIndex);
 
     props.onStateChange(newState);
+    triggerAutoUnready();
+    addEquipmentSystemMessage('unequipped', weaponName);
     if (shouldUseActionRequest()) {
       void requestUnequipAction(campState, shipId, slotIndex, slotType);
     }
@@ -212,6 +227,8 @@ export function bindPickerItemHandler(
 
     if (newState) {
       props.onStateChange(newState);
+      triggerAutoUnready();
+      addEquipmentSystemMessage('equipped', weaponType);
       if (content.type === 'empty' && shouldUseActionRequest()) {
         const si = findStorageIndex(campState, weaponType, 'primary');
         const bs = getBankSize(
@@ -324,6 +341,8 @@ export function bindMissileEquipHandler(
 
     if (newState) {
       props.onStateChange(newState);
+      triggerAutoUnready();
+      addEquipmentSystemMessage('equipped', weaponType);
       if (content.type === 'empty' && shouldUseActionRequest()) {
         const si = findStorageIndex(campState, weaponType, 'secondary');
         const bs = getBankSize(

@@ -26,9 +26,7 @@ export function renderHostPopover(options: HostPopoverOptions): string {
         <span class="popover-title">${escapeHtml(callsign)}</span>
       </div>
       <div class="popover-actions">
-        <button class="btn btn-sm btn-danger" id="btn-kick" disabled title="Coming in Phase 13">
-          Kick
-        </button>
+        <button class="btn btn-sm btn-danger" id="btn-kick">Kick</button>
       </div>
       <div class="popover-permissions">
         <div class="permission-row">

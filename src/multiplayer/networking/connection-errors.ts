@@ -39,6 +39,8 @@ function mapSignalingErrorCode(code: string): ConnectionError['code'] {
       return 'game_in_progress';
     case 'version_mismatch':
       return 'version_mismatch';
+    case 'callsign_kicked':
+      return 'callsign_kicked';
     default:
       return 'signaling_error';
   }

@@ -7,6 +7,7 @@
 import { clearMultiplayerContext } from '../../multiplayer/multiplayer-context';
 import { broadcastSessionEnded } from '../../multiplayer/session-lifecycle';
 import { goBackFromLobby, Screen } from '../../ui/common/screens';
+import { showAlert } from '../../ui/screens/alert-modal';
 import { cleanupLobbyScreen } from '../../ui/screens/lobby';
 import { startCampaignGameplay } from '../controller';
 import type { CampaignController } from '../controller-types';
@@ -21,7 +22,7 @@ import { getLobbyContext, setLobbyContext } from './lobby-context';
  */
 export async function handleSessionEndedForGuest(
   controller: CampaignController,
-  _reason: string,
+  reason: string,
 ): Promise<void> {
   // Clean up lobby (don't broadcast - we're the guest receiving the end message)
   const ctx = getLobbyContext();
@@ -47,6 +48,9 @@ export async function handleSessionEndedForGuest(
   const { setupTitleScreen } = await import('./menu-handlers');
   const onStartGameplay = () => startCampaignGameplay(controller);
   void setupTitleScreen(controller, onStartGameplay);
+
+  // Show notification about why session ended
+  await showAlert('Session Ended', reason, 'OK');
 }
 
 /**

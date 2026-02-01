@@ -9,6 +9,7 @@
  * - Host popover on guest hover (UI only)
  */
 
+import { clearAllRateLimits } from '../../../multiplayer/chat-validation';
 import type { LobbyState } from '../../../multiplayer/lobby-state';
 import type { Permission } from '../../../multiplayer/protocol/types';
 import { bindNavBar, type NavDestination } from '../../common/nav-bar';
@@ -44,6 +45,8 @@ export interface LobbyCallbacks {
   };
   /** Returns true if a launch countdown is currently active */
   isCountdownActive?: () => boolean;
+  /** Called when host kicks a player (host only) */
+  onKick?: (playerId: string) => void;
 }
 
 // =============================================================================
@@ -140,6 +143,21 @@ const LobbyScreenComponent: Screen<LobbyViewState, LobbyCallbacks> = {
         }
 
         props.onPermissionChange?.(playerId, newPermissions);
+      });
+
+      // Kick button handler
+      api.onGlobal('click', (e) => {
+        const target = e.target as HTMLElement;
+        if (target.id !== 'btn-kick') return;
+
+        const popover = target.closest('.host-popover');
+        const playerId = popover?.getAttribute('data-target-player');
+        if (playerId && props.onKick) {
+          props.onKick(playerId);
+          // Remove the popover after kick
+          activePopover?.remove();
+          activePopover = null;
+        }
       });
 
       api.onDirect('.player-row[data-player-id]', 'mouseenter', (_e, el) => {
@@ -345,6 +363,9 @@ export function cleanupLobbyScreen(): void {
   for (const popover of callsignPopovers) {
     popover.remove();
   }
+
+  // Clear chat rate limit tracking
+  clearAllRateLimits();
 
   screenHandle?.destroy();
   screenHandle = null;

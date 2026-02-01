@@ -208,8 +208,9 @@ async function handleJoin(
       },
     );
 
-    // Attempt to join
-    const result = await connectionFlow.joinRoom(state.roomCode);
+    // Attempt to join with callsign for kicked callsign blocking
+    const callsign = getStoredCallsign() ?? undefined;
+    const result = await connectionFlow.joinRoom(state.roomCode, callsign);
 
     // Success - pass to callback
     // Clear the module-level reference BEFORE calling onJoined

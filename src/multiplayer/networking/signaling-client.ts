@@ -109,14 +109,18 @@ export class SignalingClient {
   /**
    * Join an existing room.
    * @param code - The room code to join
+   * @param callsign - Player callsign (for kicked callsign blocking)
    * @returns Guest ID, token, host ID, and list of existing peer IDs
    */
-  async joinRoom(code: string): Promise<JoinRoomResult> {
+  async joinRoom(code: string, callsign?: string): Promise<JoinRoomResult> {
     this.checkNotDisposed();
 
     const response = await this.fetch(`/rooms/${code}/join`, {
       method: 'POST',
-      body: JSON.stringify({ gameVersion: this.config.gameVersion }),
+      body: JSON.stringify({
+        gameVersion: this.config.gameVersion,
+        callsign,
+      }),
     });
 
     const data = (await response.json()) as JoinRoomResponse;

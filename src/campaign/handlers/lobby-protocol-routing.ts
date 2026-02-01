@@ -13,16 +13,7 @@ import {
   validateCallsign,
 } from '../../multiplayer/callsign-storage';
 import { createCampaignSyncManager } from '../../multiplayer/campaign-sync';
-import {
-  handleCountdownAbort,
-  handleCountdownTick,
-} from '../../multiplayer/launch-flow';
 import { processLobbyMessage } from '../../multiplayer/lobby-messages';
-import { addSystemMessage } from '../../multiplayer/lobby-state';
-import {
-  findContractById,
-  hashCampaignState,
-} from '../../multiplayer/mission-sync';
 import type { ConnectionFlow } from '../../multiplayer/networking/connection-flow';
 import { encodeMessage } from '../../multiplayer/protocol/encode';
 import type {
@@ -31,14 +22,15 @@ import type {
 } from '../../multiplayer/protocol/messages';
 import { createMessageRouter } from '../../multiplayer/protocol/router';
 import { GameMessageType } from '../../multiplayer/protocol/types';
-import {
-  CONTRACTS_PER_SCREEN,
-  generateContracts,
-} from '../../ui/screens/contracts-data';
 import { reconstituteCampaignState } from '../storage/campaign-utils';
 import type { CampaignState } from '../types';
-import { handlePlayerUnready, setLobbyState } from './lobby-actions';
+import {
+  autoUnreadyIfNeeded,
+  handlePlayerUnready,
+  setLobbyState,
+} from './lobby-actions';
 import type { LobbyContext } from './lobby-context';
+import { wireGuestHandlers } from './lobby-guest-handlers';
 import { handleCallsignAnnounce } from './lobby-host-handlers';
 
 // =============================================================================
@@ -142,7 +134,19 @@ export function wireMessageHandlers(
   ctx.router.onPermissionUpdate(handler);
   ctx.router.onPlayerJoined(handler);
   ctx.router.onPlayerLeft(handler);
-  ctx.router.onShipAssignment(handler);
+
+  // ShipAssignment handler: process lobby state AND trigger auto-unready if local player
+  ctx.router.onShipAssignment((msg) => {
+    const result = processLobbyMessage(ctx.lobbyState, msg, hostPeerId);
+    if (result) {
+      setLobbyState(ctx, result.state);
+    }
+
+    // If local player's ship assignment changed, auto-unready
+    if (msg.playerId === ctx.localPlayerId) {
+      autoUnreadyIfNeeded(ctx);
+    }
+  });
 
   // ReadyState handler: process lobby state AND check countdown abort
   ctx.router.onReadyState((msg) => {
@@ -233,138 +237,9 @@ export function wireMessageHandlers(
     }
   });
 
-  // Launch countdown handlers (guest only - host manages countdown locally)
+  // Guest-only handlers (host manages these differently)
   if (!ctx.isHost) {
-    ctx.router.onLaunchCountdown((msg) => {
-      handleCountdownTick(msg.secondsRemaining, null);
-      // Display countdown in chat
-      if (msg.secondsRemaining > 0) {
-        const newState = addSystemMessage(
-          ctx.lobbyState,
-          `Launching in ${msg.secondsRemaining}...`,
-        );
-        setLobbyState(ctx, newState);
-      }
-    });
-
-    ctx.router.onLaunchAborted((msg) => {
-      handleCountdownAbort(msg.reason);
-      const newState = addSystemMessage(
-        ctx.lobbyState,
-        `Launch aborted: ${msg.reason}`,
-      );
-      setLobbyState(ctx, newState);
-    });
-
-    ctx.router.onContractAccepted((msg) => {
-      const newState = addSystemMessage(
-        ctx.lobbyState,
-        `Contract selected: ${msg.contractId}`,
-      );
-      setLobbyState(ctx, newState);
-    });
-
-    ctx.router.onMissionStarted((msg) => {
-      const campaignState = ctx.screenManager.campaignState;
-      if (!campaignState) {
-        console.error('[lobby-routing] No campaign state at mission start');
-        return;
-      }
-
-      // Verify campaign state hash matches local state
-      const localHash = hashCampaignState(campaignState);
-      if (msg.campaignStateHash !== localHash) {
-        console.warn(
-          `[lobby-routing] Campaign state hash mismatch at mission start: host=${msg.campaignStateHash}, local=${localHash}`,
-        );
-        const warnState = addSystemMessage(
-          ctx.lobbyState,
-          'Warning: Campaign state may be out of sync with host',
-        );
-        setLobbyState(ctx, warnState);
-      }
-
-      // Add system message
-      const newState = addSystemMessage(ctx.lobbyState, 'Mission starting...');
-      setLobbyState(ctx, newState);
-
-      // Find the contract and launch the mission (guest only)
-      if (!ctx.isHost && ctx.onMissionStart) {
-        // Generate contracts deterministically (same as host)
-        const { contracts } = generateContracts(
-          campaignState.currentSector,
-          campaignState.seed,
-          campaignState.sectorMissionsCompleted,
-          CONTRACTS_PER_SCREEN,
-          campaignState.completedContracts,
-          campaignState.contractRefreshCount,
-        );
-
-        const lookup = findContractById(msg.contractId, contracts);
-        if (lookup.found && lookup.contract) {
-          ctx.onMissionStart(lookup.contract, msg.seed);
-        } else {
-          console.error(
-            `[lobby-routing] CONTRACT MISMATCH - Host requested: "${msg.contractId}" but guest generated: [${contracts.map((c) => c.id).join(', ')}]. ` +
-              `Guest state: seed=${campaignState.seed}, sector=${campaignState.currentSector}, ` +
-              `missionsCompleted=${campaignState.sectorMissionsCompleted}, completedContracts=${campaignState.completedContracts.length}, ` +
-              `refreshCount=${campaignState.contractRefreshCount}`,
-          );
-        }
-      }
-    });
-
-    // MissionEnded handler: store outcome for results display
-    ctx.router.onMissionEnded((msg) => {
-      console.log(
-        '[MissionEnded] Guest received message, victory:',
-        msg.outcome.victory,
-      );
-      // Store the outcome in debrief state
-      ctx.debriefState = {
-        missionComplete: true,
-        outcome: msg.outcome,
-      };
-
-      const newState = addSystemMessage(
-        ctx.lobbyState,
-        msg.outcome.victory ? 'Mission complete!' : 'Mission failed.',
-      );
-      setLobbyState(ctx, newState);
-    });
-
-    // SessionEnded handler: cleanup and return to title
-    ctx.router.onSessionEnded((msg) => {
-      console.log('[lobby-routing] Guest received SessionEnded:', msg.reason);
-
-      // Invoke callback to cleanup and navigate to title
-      if (ctx.onSessionEnded) {
-        ctx.onSessionEnded(msg.reason);
-      }
-    });
-
-    // ReturnToLobby handler: navigate back to lobby when host continues
-    ctx.router.onReturnToLobby(() => {
-      console.log('[lobby-routing] Guest received ReturnToLobby');
-      // Reset lobby state
-      const newState = {
-        ...ctx.lobbyState,
-        chatMessages: [],
-        players: ctx.lobbyState.players.map((p) => ({
-          ...p,
-          isReady: false,
-        })),
-      };
-      setLobbyState(ctx, newState);
-
-      // Clear debrief state
-      delete ctx.debriefState;
-
-      // Trigger navigation callback
-      if (ctx.onReturnToLobby) {
-        ctx.onReturnToLobby();
-      }
-    });
+    wireGuestHandlers(ctx);
   }
 
   // Wire router to transport (cleanup handled by setupMessageHandling)

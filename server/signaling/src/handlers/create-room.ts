@@ -82,6 +82,7 @@ export async function createRoom(
     state: 'lobby',
     createdAt: now,
     lastActivity: now,
+    kickedCallsigns: [],
   });
 
   // Add host as first peer

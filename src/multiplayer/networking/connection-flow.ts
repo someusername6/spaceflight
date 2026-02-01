@@ -129,8 +129,13 @@ export class ConnectionFlow {
    * Join an existing room.
    *
    * Returns when the mesh is fully formed (connected to all peers).
+   * @param roomCode - The room code to join
+   * @param callsign - Player callsign (for kicked callsign blocking)
    */
-  async joinRoom(roomCode: string): Promise<ConnectionResult> {
+  async joinRoom(
+    roomCode: string,
+    callsign?: string,
+  ): Promise<ConnectionResult> {
     this.checkNotDisposed();
     this.ensureIdle();
 
@@ -141,7 +146,7 @@ export class ConnectionFlow {
       this.signalingClient = createSignalingClient(this.config.signaling);
 
       // Join room on signaling server
-      const result = await this.signalingClient.joinRoom(roomCode);
+      const result = await this.signalingClient.joinRoom(roomCode, callsign);
 
       const allPeerIds = [result.hostId, ...result.existingPeers];
       const totalPeers = allPeerIds.length;

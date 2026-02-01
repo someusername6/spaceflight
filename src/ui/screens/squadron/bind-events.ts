@@ -27,6 +27,7 @@ import {
   canEditShip,
   isHost,
 } from '../../../multiplayer/context-permissions';
+import { addResupplyMessage } from '../../../multiplayer/system-messages';
 import type { NavDestination } from '../../common/nav-bar';
 import { showNotification } from '../../common/notification';
 import type { ScreenAPI } from '../../framework/screen';
@@ -174,6 +175,7 @@ export function bindSquadronEvents(
       if (shouldUseActionRequest()) {
         void requestResupplyAction(props.campaignState, shipId);
       }
+      addResupplyMessage(ship?.shipClass ?? 'ship');
       const type = result.success ? 'success' : 'warning';
       for (const msg of result.messages) {
         showNotification(msg, { type });
@@ -204,6 +206,7 @@ export function bindSquadronEvents(
       if (shouldUseActionRequest()) {
         void requestResupplyAllAction(props.campaignState, commanderId);
       }
+      addResupplyMessage('all ships', true);
       const type = result.success ? 'success' : 'warning';
       for (const msg of result.messages) {
         showNotification(msg, { type });

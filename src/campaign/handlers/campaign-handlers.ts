@@ -9,6 +9,10 @@
  */
 
 import { getGuestShipIds } from '../../multiplayer/mission-setup';
+import {
+  addContractAcceptedMessage,
+  addSectorAdvancedMessage,
+} from '../../multiplayer/system-messages';
 import type { NavDestination } from '../../ui/common/nav-bar';
 import { showError } from '../../ui/common/notification';
 import {
@@ -198,6 +202,9 @@ function handleMultiplayerAccept(
     ctx.localPlayerId,
   );
 
+  // Add system message for contract acceptance
+  addContractAcceptedMessage(contract.name);
+
   startLaunchCountdown(ctx, contract.id, () => {
     // Countdown complete — launch the mission
     const stateWithAttempt = markContractAttempted(
@@ -311,6 +318,7 @@ export function setupContractsScreen(controller: CampaignController): void {
       const newState = advanceSector(screenManager.campaignState);
       updateStateWithSync(screenManager, newState);
       void autoSave(newState, 'sector-advance');
+      addSectorAdvancedMessage(newState.currentSector);
       // Refresh contracts screen with new sector's missions
       setupContractsScreen(controller);
     },

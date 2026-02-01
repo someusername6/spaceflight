@@ -74,6 +74,9 @@ function testChatBidirectionalSync() {
     );
     console.log(`  Host received guest message: ${guestMsgReceived}`);
 
+    // Wait for rate limit to expire (1 second) before sending second message
+    await sleep(1000);
+
     await guestPage.fill('#chat-input', 'Another guest message');
     await guestPage.click('#chat-form button[type="submit"]');
     console.log('  Guest: Sent second message');

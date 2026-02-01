@@ -10,6 +10,7 @@ import {
   setStoredCallsign,
   validateCallsign,
 } from '../../multiplayer/callsign-storage';
+import { validateChatMessage } from '../../multiplayer/chat-validation';
 import {
   createCallsignUpdateMessage,
   createChatMessage,
@@ -232,9 +233,39 @@ export function toggleReady(ctx: LobbyContext, ready: boolean): void {
 }
 
 /**
+ * Auto-unready the local player if they're ready.
+ * Called on loadout changes, ship reassignment, etc.
+ */
+export function autoUnreadyIfNeeded(ctx: LobbyContext): void {
+  const localPlayer = ctx.lobbyState.players.find(
+    (p) => p.playerId === ctx.localPlayerId,
+  );
+  if (localPlayer?.isReady) {
+    toggleReady(ctx, false);
+  }
+}
+
+/**
+ * Convenience wrapper that gets context and calls autoUnreadyIfNeeded.
+ * Use from UI code that doesn't have direct access to LobbyContext.
+ */
+export function triggerAutoUnready(): void {
+  const ctx = getLobbyContext();
+  if (ctx) {
+    autoUnreadyIfNeeded(ctx);
+  }
+}
+
+/**
  * Handle chat message send.
+ * Validates message length and rate limits.
  */
 export function sendChat(ctx: LobbyContext, text: string): void {
+  const validation = validateChatMessage(ctx.localPlayerId, text);
+  if (!validation.valid) {
+    setLobbyState(ctx, setErrorMessage(ctx.lobbyState, validation.error ?? ''));
+    return;
+  }
   broadcastAndApply(ctx, createChatMessage(ctx.localPlayerId, text));
 }
 
@@ -312,9 +343,10 @@ function broadcastMessage(
 }
 
 // =============================================================================
-// Re-exports from lobby-launch-actions
+// Re-exports
 // =============================================================================
 
+export { kickPlayer } from './lobby-kick';
 export {
   abortLaunchCountdown,
   checkCanLaunch,

@@ -43,6 +43,7 @@ import {
   changeCallsign,
   changePermissions,
   isLaunchCountdownActive,
+  kickPlayer,
   refreshCurrentScreen,
   sendChat,
   toggleReady,
@@ -209,6 +210,10 @@ export function setupLobbyScreenForHost(
       onPermissionChange: (playerId, permissions) => {
         const currentCtx = getLobbyContext();
         if (currentCtx) changePermissions(currentCtx, playerId, permissions);
+      },
+      onKick: (playerId) => {
+        const currentCtx = getLobbyContext();
+        if (currentCtx) void kickPlayer(currentCtx, playerId);
       },
       onCallsignChange: (newCallsign) => {
         const currentCtx = getLobbyContext();
