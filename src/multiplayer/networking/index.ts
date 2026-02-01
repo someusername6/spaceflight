@@ -70,7 +70,6 @@ export {
 // =============================================================================
 
 export {
-  createWebRTCMesh,
   type OutgoingSignal,
   WebRTCMesh,
   type WebRTCMeshEvents,

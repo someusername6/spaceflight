@@ -132,6 +132,12 @@ export class WebRTCMesh {
    */
   addPeer(peerId: string): void {
     this.checkNotDisposed();
+
+    // Skip if we already have this peer (prevents duplicate connections)
+    if (this.peers.has(peerId)) {
+      return;
+    }
+
     this.expectedPeers.add(peerId);
 
     // Create connection but don't initiate - wait for their offer
@@ -290,6 +296,11 @@ export class WebRTCMesh {
   }
 
   private createPeer(peerId: string, initiator: boolean): void {
+    // Clean up any existing connection first to prevent leaks
+    if (this.peers.has(peerId)) {
+      cleanupPeerConnection(this.peers.get(peerId)!);
+      this.peers.delete(peerId);
+    }
     const state = createPeerConnection(
       peerId,
       initiator,
@@ -386,14 +397,4 @@ export class WebRTCMesh {
       throw new Error('WebRTCMesh has been disposed');
     }
   }
-}
-
-/**
- * Create a WebRTC mesh with the given configuration.
- */
-export function createWebRTCMesh(
-  config: WebRTCMeshConfig,
-  events?: Partial<WebRTCMeshEvents>,
-): WebRTCMesh {
-  return new WebRTCMesh(config, events);
 }
