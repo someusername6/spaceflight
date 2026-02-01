@@ -197,6 +197,8 @@ export interface ShipAssignmentMessage {
   type: GameMessageType.ShipAssignment;
   playerId: string;
   shipId: string | null;
+  /** Expected state version for conflict detection (optional) */
+  expectedVersion?: number;
 }
 
 /**

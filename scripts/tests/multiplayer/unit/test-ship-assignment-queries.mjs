@@ -39,10 +39,10 @@ describe('Ship Assignment Queries', () => {
       assert.ok(!available.some((s) => s.id === 'ship1'));
     });
 
-    it('excludes ships already assigned to players', () => {
+    it('excludes ships with player pilots (uses campaign state)', () => {
       let state = createTestCampaignState();
 
-      // Assign player to ship3
+      // Assign player to ship3 (creates player pilot in campaign state)
       const assignResult = assignPlayerToShip(
         state,
         'player1',
@@ -51,15 +51,39 @@ describe('Ship Assignment Queries', () => {
       );
       state = assignResult.newState;
 
-      const players = [
-        { playerId: 'host', shipId: null, callsign: 'Host' },
-        { playerId: 'player1', shipId: 'ship3', callsign: 'Test' },
-      ];
-
+      // Pass empty players array to prove we check campaign state, not lobby
+      const players = [];
       const available = getAvailableShipsForAssignment(state, players, 'host');
 
-      // Should NOT include ship3 (assigned to player1)
+      // Should NOT include ship3 (has player pilot in campaign state)
       assert.ok(!available.some((s) => s.id === 'ship3'));
+      // Should include ship2 (has AI pilot, not player pilot)
+      assert.ok(available.some((s) => s.id === 'ship2'));
+    });
+
+    it('excludes commander ship', () => {
+      const state = createTestCampaignState();
+      const available = getAvailableShipsForAssignment(state, [], 'host');
+
+      // Should NOT include ship1 (commander ship)
+      const commanderShipId = getCommanderShipId(state);
+      assert.ok(!available.some((s) => s.id === commanderShipId));
+    });
+
+    it('includes ships with AI pilots', () => {
+      const state = createTestCampaignState();
+      const available = getAvailableShipsForAssignment(state, [], 'host');
+
+      // ship2 has an AI pilot (wingman1), should be available for assignment
+      assert.ok(available.some((s) => s.id === 'ship2'));
+    });
+
+    it('includes unassigned ships', () => {
+      const state = createTestCampaignState();
+      const available = getAvailableShipsForAssignment(state, [], 'host');
+
+      // ship3 has no pilot, should be available
+      assert.ok(available.some((s) => s.id === 'ship3'));
     });
   });
 

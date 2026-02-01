@@ -161,6 +161,7 @@ describe('Protocol Encoding', () => {
       const decoded = decodeMessage(encodeMessage(msg));
       assert.strictEqual(decoded.playerId, 'peer-2');
       assert.strictEqual(decoded.shipId, 'ship-5');
+      assert.strictEqual(decoded.expectedVersion, undefined);
     });
 
     it('should round-trip encode/decode with null ship', () => {
@@ -172,6 +173,20 @@ describe('Protocol Encoding', () => {
 
       const decoded = decodeMessage(encodeMessage(msg));
       assert.strictEqual(decoded.shipId, null);
+    });
+
+    it('should round-trip encode/decode with expectedVersion', () => {
+      const msg = {
+        type: GameMessageType.ShipAssignment,
+        playerId: 'peer-2',
+        shipId: 'ship-5',
+        expectedVersion: 42,
+      };
+
+      const decoded = decodeMessage(encodeMessage(msg));
+      assert.strictEqual(decoded.playerId, 'peer-2');
+      assert.strictEqual(decoded.shipId, 'ship-5');
+      assert.strictEqual(decoded.expectedVersion, 42);
     });
   });
 

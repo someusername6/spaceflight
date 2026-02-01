@@ -337,6 +337,8 @@ export interface CampaignState {
   /** Number of contract refreshes used in current sector (resets on sector advance) */
   contractRefreshCount: number;
   missionCount: number;
+  /** Version counter for optimistic concurrency control (multiplayer) */
+  stateVersion: number;
 }
 
 /** A weapon in storage (not equipped) */

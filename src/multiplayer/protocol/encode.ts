@@ -20,21 +20,25 @@ import {
   writeUint32,
 } from './buffer-utils';
 import {
+  encodeContractAccepted,
+  encodeKickNotification,
+  encodeLaunchAborted,
+  encodeLaunchCountdown,
+  encodeMissionEnded,
+  encodeMissionStarted,
+  encodeReturnToLobby,
+  encodeSessionEnded,
+} from './encode-mission';
+import {
   type ActionRequestMessage,
   type ActionResponseMessage,
   type CallsignAnnounceMessage,
   type CallsignUpdateMessage,
   type CampaignSyncMessage,
   type ChatMessage,
-  type ContractAcceptedMessage,
   type GameMessage,
   GameMessageType,
   type GuestQuitRequestMessage,
-  type KickNotificationMessage,
-  type LaunchAbortedMessage,
-  type LaunchCountdownMessage,
-  type MissionEndedMessage,
-  type MissionStartedMessage,
   type PauseReadyStateMessage,
   type PauseRequestMessage,
   type PermissionUpdateMessage,
@@ -42,7 +46,6 @@ import {
   type PlayerJoinedExtMessage,
   type PlayerLeftExtMessage,
   type ReadyStateMessage,
-  type SessionEndedMessage,
   type ShipAssignmentMessage,
   type WelcomeMessage,
 } from './messages';
@@ -219,12 +222,21 @@ function encodeShipAssignment(msg: ShipAssignmentMessage): Uint8Array {
   if (msg.shipId !== null) {
     size += stringSize(msg.shipId);
   }
+  // Add space for optional expectedVersion (1 byte flag + 4 bytes for uint32)
+  size += 1;
+  if (msg.expectedVersion !== undefined) {
+    size += 4;
+  }
   const wb = createWriteBuffer(size);
   writeByte(wb, msg.type);
   writeString(wb, msg.playerId);
   writeBool(wb, msg.shipId !== null);
   if (msg.shipId !== null) {
     writeString(wb, msg.shipId);
+  }
+  writeBool(wb, msg.expectedVersion !== undefined);
+  if (msg.expectedVersion !== undefined) {
+    writeUint32(wb, msg.expectedVersion);
   }
   return wb.buffer;
 }
@@ -260,71 +272,6 @@ function encodeActionResponse(msg: ActionResponseMessage): Uint8Array {
   writeBool(wb, msg.error !== undefined);
   if (msg.error !== undefined) {
     writeString(wb, msg.error);
-  }
-  return wb.buffer;
-}
-
-function encodeContractAccepted(msg: ContractAcceptedMessage): Uint8Array {
-  const size = 1 + stringSize(msg.contractId);
-  const wb = createWriteBuffer(size);
-  writeByte(wb, msg.type);
-  writeString(wb, msg.contractId);
-  return wb.buffer;
-}
-
-function encodeLaunchCountdown(msg: LaunchCountdownMessage): Uint8Array {
-  const size = 1 + 2;
-  const wb = createWriteBuffer(size);
-  writeByte(wb, msg.type);
-  writeUint16(wb, msg.secondsRemaining);
-  return wb.buffer;
-}
-
-function encodeLaunchAborted(msg: LaunchAbortedMessage): Uint8Array {
-  const size = 1 + stringSize(msg.reason);
-  const wb = createWriteBuffer(size);
-  writeByte(wb, msg.type);
-  writeString(wb, msg.reason);
-  return wb.buffer;
-}
-
-function encodeMissionStarted(msg: MissionStartedMessage): Uint8Array {
-  const size = 1 + stringSize(msg.contractId) + 4 + 4;
-  const wb = createWriteBuffer(size);
-  writeByte(wb, msg.type);
-  writeString(wb, msg.contractId);
-  writeUint32(wb, msg.seed);
-  writeUint32(wb, msg.campaignStateHash);
-  return wb.buffer;
-}
-
-function encodeMissionEnded(msg: MissionEndedMessage): Uint8Array {
-  const outcomeJson = encodeJson(msg.outcome);
-  const size = 1 + stringSize(outcomeJson);
-  const wb = createWriteBuffer(size);
-  writeByte(wb, msg.type);
-  writeString(wb, outcomeJson);
-  return wb.buffer;
-}
-
-function encodeSessionEnded(msg: SessionEndedMessage): Uint8Array {
-  const size = 1 + stringSize(msg.reason);
-  const wb = createWriteBuffer(size);
-  writeByte(wb, msg.type);
-  writeString(wb, msg.reason);
-  return wb.buffer;
-}
-
-function encodeKickNotification(msg: KickNotificationMessage): Uint8Array {
-  let size = 1 + 1; // type + hasReason
-  if (msg.reason !== undefined) {
-    size += stringSize(msg.reason);
-  }
-  const wb = createWriteBuffer(size);
-  writeByte(wb, msg.type);
-  writeBool(wb, msg.reason !== undefined);
-  if (msg.reason !== undefined) {
-    writeString(wb, msg.reason);
   }
   return wb.buffer;
 }
@@ -386,12 +333,5 @@ function encodePauseRequest(msg: PauseRequestMessage): Uint8Array {
   writeString(wb, msg.playerId);
   writeString(wb, msg.callsign);
   writeByte(wb, reasonByte);
-  return wb.buffer;
-}
-
-function encodeReturnToLobby(): Uint8Array {
-  const size = 1; // Just the type byte
-  const wb = createWriteBuffer(size);
-  writeByte(wb, GameMessageType.ReturnToLobby);
   return wb.buffer;
 }

@@ -214,11 +214,17 @@ function decodeShipAssignment(rb: ReadBuffer): ShipAssignmentMessage {
   const playerId = readString(rb);
   const hasShipId = readBool(rb);
   const shipId = hasShipId ? readString(rb) : null;
-  return {
+  const hasExpectedVersion = readBool(rb);
+  const expectedVersion = hasExpectedVersion ? readUint32(rb) : undefined;
+  const msg: ShipAssignmentMessage = {
     type: GameMessageType.ShipAssignment,
     playerId,
     shipId,
   };
+  if (expectedVersion !== undefined) {
+    msg.expectedVersion = expectedVersion;
+  }
+  return msg;
 }
 
 function decodeCampaignSync(rb: ReadBuffer): CampaignSyncMessage {

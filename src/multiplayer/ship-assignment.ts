@@ -26,20 +26,24 @@ export {
 // Types
 // =============================================================================
 
+/** Error codes for ship assignment failures */
+export type ShipAssignmentError =
+  | 'ship_not_found'
+  | 'version_mismatch'
+  | 'ship_occupied';
+
 /** Successful ship assignment result */
 export interface ShipAssignmentSuccess {
   success: true;
   /** Updated campaign state */
   newState: CampaignState;
-  /** Player that was previously assigned (swapped out) */
-  previousPlayerId?: string;
 }
 
 /** Failed ship assignment result */
 export interface ShipAssignmentFailure {
   success: false;
-  /** Error message describing why assignment failed */
-  error: string;
+  /** Error code describing why assignment failed */
+  error: ShipAssignmentError;
 }
 
 /** Result of a ship assignment operation (discriminated union) */
@@ -108,6 +112,7 @@ export function getPlayerIdFromPilot(pilot: Pilot): string | null {
  * @param playerId - Player's peer ID
  * @param callsign - Player's callsign
  * @param shipId - Ship ID to assign to
+ * @param expectedVersion - Optional expected state version for conflict detection
  * @returns Assignment result with updated state
  */
 export function assignPlayerToShip(
@@ -115,19 +120,27 @@ export function assignPlayerToShip(
   playerId: string,
   callsign: string,
   shipId: string,
+  expectedVersion?: number,
 ): ShipAssignmentResult {
+  // Version check (if provided)
+  if (expectedVersion !== undefined && expectedVersion !== state.stateVersion) {
+    return { success: false, error: 'version_mismatch' };
+  }
+
   // Find the target ship
   const shipIndex = state.ships.findIndex((s) => s.id === shipId);
   const ship = state.ships[shipIndex];
   if (shipIndex === -1 || !ship) {
-    return { success: false, error: 'Ship not found' };
+    return { success: false, error: 'ship_not_found' };
   }
-
-  let previousPlayerId: string | undefined;
 
   // Check if ship is already assigned to another player
   if (ship.pilot && isPlayerPilot(ship.pilot)) {
-    previousPlayerId = getPlayerIdFromPilot(ship.pilot) ?? undefined;
+    const existingPlayerId = getPlayerIdFromPilot(ship.pilot);
+    if (existingPlayerId && existingPlayerId !== playerId) {
+      // Ship is occupied by a different player
+      return { success: false, error: 'ship_occupied' };
+    }
   }
 
   // Find or create player pilot
@@ -165,14 +178,18 @@ export function assignPlayerToShip(
     return s;
   });
 
-  const result: ShipAssignmentSuccess = {
-    success: true,
-    newState: { ...state, ships, pilots },
+  // Increment version on successful change
+  const newState: CampaignState = {
+    ...state,
+    ships,
+    pilots,
+    stateVersion: state.stateVersion + 1,
   };
-  if (previousPlayerId !== undefined) {
-    result.previousPlayerId = previousPlayerId;
-  }
-  return result;
+
+  return {
+    success: true,
+    newState,
+  };
 }
 
 /**
@@ -272,33 +289,30 @@ export function convertPlayerPilotToAI(
 
 /**
  * Get ships available for player assignment.
- * Excludes the commander's ship (which is always host-only).
+ * Excludes the commander's ship and ships already assigned to players.
  *
  * @param state - Current campaign state
- * @param players - Current lobby players
- * @param hostPlayerId - Host's player ID (host can be assigned to commander)
+ * @param _players - Current lobby players (kept for API compatibility)
+ * @param _hostPlayerId - Host's player ID (kept for API compatibility)
  * @returns List of ships available for assignment
  */
 export function getAvailableShipsForAssignment(
   state: CampaignState,
-  players: LobbyPlayer[],
+  _players: LobbyPlayer[],
   _hostPlayerId: string,
 ): OwnedShip[] {
-  // Get player IDs who already have ships
-  const assignedShipIds = new Set(
-    players.filter((p) => p.shipId !== null).map((p) => p.shipId),
-  );
-
   return state.ships.filter((ship) => {
-    // Ship must not already be assigned to a player
-    if (assignedShipIds.has(ship.id)) {
+    // Skip commander's ship
+    if (ship.pilot?.id === state.commanderId) {
       return false;
     }
 
-    // Commander's ship (first ship with commander pilot) is host-only
-    const isCommanderShip = ship.pilot?.id === state.commanderId;
+    // Skip ships with player pilots (check campaign state, not lobby)
+    if (ship.pilot && isPlayerPilot(ship.pilot)) {
+      return false;
+    }
 
-    return !isCommanderShip;
+    return true;
   });
 }
 

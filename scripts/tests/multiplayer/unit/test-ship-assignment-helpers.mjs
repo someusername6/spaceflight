@@ -69,6 +69,7 @@ export function createTestCampaignState(options = {}) {
     attemptedContracts: [],
     contractRefreshCount: 0,
     missionCount: 0,
+    stateVersion: 0,
     ...options,
   };
 }

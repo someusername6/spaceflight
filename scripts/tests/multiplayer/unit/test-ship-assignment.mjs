@@ -149,8 +149,7 @@ describe('Ship Assignment', () => {
       );
 
       assert.strictEqual(result.success, false);
-      assert.ok(result.error);
-      assert.ok(result.error.includes('Ship not found'));
+      assert.strictEqual(result.error, 'ship_not_found');
     });
 
     it('unassigns from previous ship when reassigning', () => {
@@ -301,6 +300,88 @@ describe('Ship Assignment', () => {
       // Check ship's pilot also updated
       const ship = state.ships.find((s) => s.id === 'ship3');
       assert.strictEqual(ship.pilot.skill, 'regular');
+    });
+  });
+
+  describe('Version checking', () => {
+    it('rejects assignment with stale version', () => {
+      const state = createTestCampaignState({ stateVersion: 5 });
+      const result = assignPlayerToShip(state, 'p1', 'Maverick', 'ship3', 4);
+
+      assert.strictEqual(result.success, false);
+      assert.strictEqual(result.error, 'version_mismatch');
+    });
+
+    it('accepts assignment with current version', () => {
+      const state = createTestCampaignState({ stateVersion: 5 });
+      const result = assignPlayerToShip(state, 'p1', 'Maverick', 'ship3', 5);
+
+      assert.strictEqual(result.success, true);
+      assert.strictEqual(result.newState.stateVersion, 6);
+    });
+
+    it('accepts assignment without version (backward compat)', () => {
+      const state = createTestCampaignState({ stateVersion: 5 });
+      const result = assignPlayerToShip(state, 'p1', 'Maverick', 'ship3');
+
+      assert.strictEqual(result.success, true);
+      // Version still increments on successful assignment
+      assert.strictEqual(result.newState.stateVersion, 6);
+    });
+
+    it('increments version on each successful assignment', () => {
+      let state = createTestCampaignState({ stateVersion: 0 });
+
+      // First assignment
+      let result = assignPlayerToShip(state, 'p1', 'Maverick', 'ship3');
+      assert.strictEqual(result.success, true);
+      assert.strictEqual(result.newState.stateVersion, 1);
+      state = result.newState;
+
+      // Clear ship2's AI pilot and assign second player
+      state = {
+        ...state,
+        ships: state.ships.map((s) =>
+          s.id === 'ship2' ? { ...s, pilot: null } : s,
+        ),
+      };
+      result = assignPlayerToShip(state, 'p2', 'Iceman', 'ship2');
+      assert.strictEqual(result.success, true);
+      assert.strictEqual(result.newState.stateVersion, 2);
+    });
+  });
+
+  describe('Ship occupation', () => {
+    it('rejects assignment to ship occupied by another player', () => {
+      let state = createTestCampaignState();
+
+      // First player takes ship3
+      let result = assignPlayerToShip(state, 'p2', 'Iceman', 'ship3');
+      assert.strictEqual(result.success, true);
+      state = result.newState;
+
+      // Second player tries to take the same ship
+      result = assignPlayerToShip(state, 'p1', 'Maverick', 'ship3');
+      assert.strictEqual(result.success, false);
+      assert.strictEqual(result.error, 'ship_occupied');
+    });
+
+    it('allows reassignment to own ship (no-op with version bump)', () => {
+      let state = createTestCampaignState({ stateVersion: 0 });
+
+      // Player takes ship3
+      let result = assignPlayerToShip(state, 'p1', 'Maverick', 'ship3');
+      assert.strictEqual(result.success, true);
+      assert.strictEqual(result.newState.stateVersion, 1);
+      state = result.newState;
+
+      // Same player reassigns to same ship (updates callsign)
+      result = assignPlayerToShip(state, 'p1', 'Maverick2', 'ship3');
+      assert.strictEqual(result.success, true);
+      assert.strictEqual(result.newState.stateVersion, 2);
+
+      const ship = result.newState.ships.find((s) => s.id === 'ship3');
+      assert.strictEqual(ship.pilot.name, 'Maverick2');
     });
   });
 
