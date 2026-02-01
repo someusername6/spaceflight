@@ -262,6 +262,7 @@ export function handleShipAssignment(
 /**
  * Handle CallsignUpdate message.
  * Updates player callsign and shows system message.
+ * Detects callsign collisions and appends a number suffix to resolve them.
  */
 export function handleCallsignUpdate(
   state: LobbyState,
@@ -273,15 +274,42 @@ export function handleCallsignUpdate(
   }
 
   const oldCallsign = player.callsign;
-  const newCallsign = msg.callsign;
+  let newCallsign = msg.callsign;
 
   // Don't update if callsign hasn't changed
   if (oldCallsign === newCallsign) {
     return { state };
   }
 
+  // Check for collision with other players (case-insensitive)
+  const normalizedNew = newCallsign.trim().toLowerCase();
+  const collision = state.players.find(
+    (p) =>
+      p.playerId !== msg.playerId &&
+      p.callsign.trim().toLowerCase() === normalizedNew,
+  );
+
+  if (collision) {
+    // Append number to make unique
+    let suffix = 2;
+    while (
+      state.players.some(
+        (p) =>
+          p.playerId !== msg.playerId &&
+          p.callsign.trim().toLowerCase() ===
+            `${msg.callsign} ${suffix}`.toLowerCase(),
+      )
+    ) {
+      suffix++;
+    }
+    newCallsign = `${msg.callsign} ${suffix}`;
+  }
+
   const newState = setPlayerCallsign(state, msg.playerId, newCallsign);
-  const systemMessage = `${oldCallsign} is now ${newCallsign}`;
+  const systemMessage =
+    newCallsign !== msg.callsign
+      ? `${oldCallsign} is now ${newCallsign} (${msg.callsign} was taken)`
+      : `${oldCallsign} is now ${newCallsign}`;
 
   return {
     state: addSystemMessage(newState, systemMessage),

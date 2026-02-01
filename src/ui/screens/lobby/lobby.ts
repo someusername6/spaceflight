@@ -22,7 +22,13 @@ import {
 import { copyToClipboard } from '../../utils/clipboard';
 import { bindCallsignPopover } from './callsign-popover';
 import { scrollChatToBottom } from './chat-panel';
-import { positionPopover, renderHostPopover } from './host-popover';
+import {
+  getActivePopovers,
+  hideAllPopovers,
+  hidePopover,
+  positionPopover,
+  renderHostPopover,
+} from './host-popover';
 import { type LobbyViewState, renderLobbyView } from './lobby-render';
 
 // =============================================================================
@@ -112,8 +118,6 @@ const LobbyScreenComponent: Screen<LobbyViewState, LobbyCallbacks> = {
 
     // Host popover on guest row hover
     if (state.isHost) {
-      let activePopover: HTMLElement | null = null;
-
       // Permission change handler (checkboxes and select)
       api.onGlobal('change', (e) => {
         const target = e.target as HTMLElement;
@@ -155,8 +159,7 @@ const LobbyScreenComponent: Screen<LobbyViewState, LobbyCallbacks> = {
         if (playerId && props.onKick) {
           props.onKick(playerId);
           // Remove the popover after kick
-          activePopover?.remove();
-          activePopover = null;
+          hidePopover(playerId);
         }
       });
 
@@ -173,8 +176,8 @@ const LobbyScreenComponent: Screen<LobbyViewState, LobbyCallbacks> = {
         // Don't show popover for host (self)
         if (player.isHost) return;
 
-        // Remove any existing popover
-        activePopover?.remove();
+        // Remove existing popover for this player
+        hidePopover(playerId);
 
         // Create new popover with current permissions
         const popoverHtml = renderHostPopover({
@@ -188,19 +191,22 @@ const LobbyScreenComponent: Screen<LobbyViewState, LobbyCallbacks> = {
 
         document.body.appendChild(popoverEl);
         positionPopover(popoverEl, el);
-        activePopover = popoverEl;
+        getActivePopovers().set(playerId, popoverEl);
       });
 
-      api.onDirect('.player-row[data-player-id]', 'mouseleave', () => {
+      api.onDirect('.player-row[data-player-id]', 'mouseleave', (_e, el) => {
+        const playerId = el.getAttribute('data-player-id');
+        if (!playerId) return;
+
         // Small delay to allow moving to the popover
         setTimeout(() => {
+          const popover = getActivePopovers().get(playerId);
           if (
-            activePopover &&
-            !activePopover.matches(':hover') &&
+            popover &&
+            !popover.matches(':hover') &&
             !document.querySelector('.player-row:hover')
           ) {
-            activePopover.remove();
-            activePopover = null;
+            hidePopover(playerId);
           }
         }, 100);
       });
@@ -209,12 +215,10 @@ const LobbyScreenComponent: Screen<LobbyViewState, LobbyCallbacks> = {
       api.onGlobal('click', (e) => {
         const target = e.target as HTMLElement;
         if (
-          activePopover &&
-          !activePopover.contains(target) &&
+          !target.closest('.host-popover') &&
           !target.closest('.player-row[data-player-id]')
         ) {
-          activePopover.remove();
-          activePopover = null;
+          hideAllPopovers();
         }
       });
     }
@@ -354,7 +358,10 @@ export function forceRenderLobbyScreen(): void {
 
 /** Cleanup lobby screen */
 export function cleanupLobbyScreen(): void {
-  // Remove any orphaned popovers
+  // Remove tracked popovers
+  hideAllPopovers();
+
+  // Also clean up any orphaned popovers not in tracking (defensive cleanup)
   const hostPopovers = document.querySelectorAll('.host-popover');
   for (const popover of hostPopovers) {
     popover.remove();

@@ -91,3 +91,32 @@ export function positionPopover(
   popoverEl.style.left = `${left}px`;
   popoverEl.style.top = `${rect.top}px`;
 }
+
+// =============================================================================
+// Popover Tracking
+// =============================================================================
+
+/** Track active host popovers by player ID for targeted cleanup */
+const activePopovers = new Map<string, HTMLElement>();
+
+/** Get the active popovers map (for adding new popovers) */
+export function getActivePopovers(): Map<string, HTMLElement> {
+  return activePopovers;
+}
+
+/** Hide popover for a specific player */
+export function hidePopover(playerId: string): void {
+  const popover = activePopovers.get(playerId);
+  if (popover) {
+    popover.remove();
+    activePopovers.delete(playerId);
+  }
+}
+
+/** Hide all active popovers */
+export function hideAllPopovers(): void {
+  for (const popover of activePopovers.values()) {
+    popover.remove();
+  }
+  activePopovers.clear();
+}

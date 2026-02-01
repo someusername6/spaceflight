@@ -147,6 +147,7 @@ export function setupLobbyScreenForHost(
     isHost: true,
     campaignState,
     onCampaignUpdate: createCampaignUpdateHandler(screenManager),
+    getLobbyState,
   });
 
   // Create the context

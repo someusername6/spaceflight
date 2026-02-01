@@ -1,23 +1,26 @@
 /**
  * Authentication utilities.
  *
- * Tokens are UUIDv4 strings. Validation is done by looking up the peer in storage.
+ * Tokens use crypto.randomBytes for strong entropy.
+ * Validation is done by looking up the peer in storage.
  */
 
-import { v4 as uuidv4 } from 'uuid';
+import crypto from 'node:crypto';
 
 /**
  * Generate a new authentication token.
+ * Uses 32 random bytes encoded as 64 hex characters.
  */
 export function generateToken(): string {
-  return uuidv4();
+  return crypto.randomBytes(32).toString('hex');
 }
 
 /**
  * Generate a new peer ID.
+ * Uses 16 random bytes with 'peer-' prefix for readability.
  */
 export function generatePeerId(): string {
-  return uuidv4();
+  return `peer-${crypto.randomBytes(16).toString('hex')}`;
 }
 
 /**

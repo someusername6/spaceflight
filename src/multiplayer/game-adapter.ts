@@ -34,16 +34,23 @@ export class SpaceflightGameAdapter implements Game<Uint8Array> {
   private world: World;
   private playerEntityMap: Map<PlayerId, Entity>;
   private inputRecorder: MultiplayerInputRecorder | null = null;
+  private debug: boolean;
 
   /**
    * Create a new game adapter.
    *
    * @param world - The ECS world to simulate
    * @param playerEntityMap - Map from player IDs to their controlled entities
+   * @param debug - Enable debug logging for troubleshooting
    */
-  constructor(world: World, playerEntityMap: Map<PlayerId, Entity>) {
+  constructor(
+    world: World,
+    playerEntityMap: Map<PlayerId, Entity>,
+    debug = false,
+  ) {
     this.world = world;
     this.playerEntityMap = playerEntityMap;
+    this.debug = debug;
   }
 
   /**
@@ -154,10 +161,22 @@ export class SpaceflightGameAdapter implements Game<Uint8Array> {
    */
   private applyInputToEntity(entity: Entity, inputBytes: Uint8Array): void {
     const player = getComponent(this.world, entity, 'playerControlled');
-    if (!player) return;
+    if (!player) {
+      if (this.debug) {
+        console.warn(`[GameAdapter] Entity ${entity} missing playerControlled`);
+      }
+      return;
+    }
 
     // Decode network input bits and apply to player's input state
-    if (inputBytes.length < 4) return;
+    if (inputBytes.length < 4) {
+      if (this.debug) {
+        console.warn(
+          `[GameAdapter] Input too short: ${inputBytes.length} bytes`,
+        );
+      }
+      return;
+    }
     const bits = new DataView(
       inputBytes.buffer,
       inputBytes.byteOffset,
@@ -175,11 +194,13 @@ export class SpaceflightGameAdapter implements Game<Uint8Array> {
  *
  * @param world - The ECS world
  * @param localPlayerId - The local player's ID
+ * @param debug - Enable debug logging for troubleshooting
  * @returns A new SpaceflightGameAdapter
  */
 export function createGameAdapter(
   world: World,
   localPlayerId: PlayerId,
+  debug = false,
 ): SpaceflightGameAdapter {
   const playerEntityMap = new Map<PlayerId, Entity>();
 
@@ -192,5 +213,5 @@ export function createGameAdapter(
     // Additional player mappings will be set via setPlayerEntityMap
   }
 
-  return new SpaceflightGameAdapter(world, playerEntityMap);
+  return new SpaceflightGameAdapter(world, playerEntityMap, debug);
 }

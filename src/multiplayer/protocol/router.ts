@@ -9,7 +9,6 @@
 
 import type { TransportAdapter } from 'rollback-netcode';
 import { decodeMessage, isGameMessage } from './decode';
-import { encodeMessage } from './encode';
 import {
   type ActionRequestMessage,
   type ActionResponseMessage,
@@ -39,6 +38,12 @@ import {
   type ShipAssignmentMessage,
   type WelcomeMessage,
 } from './messages';
+import {
+  broadcastExcept as broadcastExceptFn,
+  broadcastMessage,
+  sendToHost as sendToHostFn,
+  sendToPeer as sendToPeerFn,
+} from './router-send';
 import type {
   MessageHandler,
   MessageHandlers,
@@ -65,6 +70,7 @@ export class MessageRouter {
   private boundMessageHandler:
     | ((peerId: string, data: Uint8Array) => void)
     | null = null;
+  private errorCount = 0;
 
   /** Called when a host-only message is received from a non-host peer */
   onUnauthorizedMessage:
@@ -72,9 +78,14 @@ export class MessageRouter {
     | null = null;
 
   /** Called when an error occurs during message processing */
-  onError:
-    | ((error: Error, data: Uint8Array, fromPeerId: string) => void)
-    | null = null;
+  onError: (error: Error, data: Uint8Array, fromPeerId: string) => void = (
+    error,
+    _data,
+    fromPeerId,
+  ) => {
+    console.error(`[MessageRouter] Error from ${fromPeerId}:`, error.message);
+    this.errorCount++;
+  };
 
   /** Called when a peer disconnects */
   onPeerDisconnect: ((peerId: string) => void) | null = null;
@@ -83,6 +94,16 @@ export class MessageRouter {
     this.transport = config.transport;
     this.hostPeerId = config.hostPeerId;
     this.isHost = config.isHost;
+  }
+
+  /** Get the number of errors that have occurred */
+  getErrorCount(): number {
+    return this.errorCount;
+  }
+
+  /** Reset the error count to zero */
+  resetErrorCount(): void {
+    this.errorCount = 0;
   }
 
   /** Get the host peer ID */
@@ -234,7 +255,7 @@ export class MessageRouter {
     try {
       msg = decodeMessage(data);
     } catch (error) {
-      this.onError?.(
+      this.onError(
         error instanceof Error ? error : new Error(String(error)),
         data,
         fromPeerId,
@@ -255,7 +276,7 @@ export class MessageRouter {
         // TypeScript knows the handler matches the message type
         (handler as MessageHandler<GameMessage>)(msg, fromPeerId);
       } catch (error) {
-        this.onError?.(
+        this.onError(
           error instanceof Error ? error : new Error(String(error)),
           data,
           fromPeerId,
@@ -267,46 +288,27 @@ export class MessageRouter {
   }
 
   // ===========================================================================
-  // Send Helpers
+  // Send Helpers (delegates to router-send.ts)
   // ===========================================================================
 
-  /**
-   * Send a message to the host.
-   * No-op if local peer is the host.
-   */
+  /** Send a message to the host. No-op if local peer is the host. */
   sendToHost(msg: GameMessage): void {
-    if (this.isHost) return;
-    const data = encodeMessage(msg);
-    this.transport.send(this.hostPeerId, data, true);
+    sendToHostFn(this.transport, this.hostPeerId, this.isHost, msg);
   }
 
-  /**
-   * Send a message to a specific peer.
-   */
+  /** Send a message to a specific peer. */
   sendToPeer(peerId: string, msg: GameMessage): void {
-    const data = encodeMessage(msg);
-    this.transport.send(peerId, data, true);
+    sendToPeerFn(this.transport, peerId, msg);
   }
 
-  /**
-   * Broadcast a message to all connected peers.
-   */
+  /** Broadcast a message to all connected peers. */
   broadcast(msg: GameMessage): void {
-    const data = encodeMessage(msg);
-    this.transport.broadcast(data, true);
+    broadcastMessage(this.transport, msg);
   }
 
-  /**
-   * Broadcast a message to all peers except one.
-   * Useful for host broadcasting after receiving a message from a guest.
-   */
+  /** Broadcast a message to all peers except one. */
   broadcastExcept(msg: GameMessage, excludePeerId: string): void {
-    const data = encodeMessage(msg);
-    for (const peerId of this.transport.connectedPeers) {
-      if (peerId !== excludePeerId) {
-        this.transport.send(peerId, data, true);
-      }
-    }
+    broadcastExceptFn(this.transport, msg, excludePeerId);
   }
 
   // ===========================================================================
@@ -371,16 +373,16 @@ export class MessageRouter {
   // ===========================================================================
 
   /**
-   * Clear all handlers and error callbacks.
+   * Clear all handlers and reset state.
    */
   dispose(): void {
     this.handlers = {};
     this.onUnauthorizedMessage = null;
-    this.onError = null;
     this.onPeerDisconnect = null;
     this.boundMessageHandler = null;
     this.boundDisconnectHandler = null;
     this.existingDisconnectHandler = null;
+    this.errorCount = 0;
   }
 }
 

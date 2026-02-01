@@ -19,6 +19,7 @@ import { encodeMessage } from '../../multiplayer/protocol/encode';
 import type {
   CallsignAnnounceMessage,
   GameMessage,
+  PermissionUpdateMessage,
 } from '../../multiplayer/protocol/messages';
 import { createMessageRouter } from '../../multiplayer/protocol/router';
 import { GameMessageType } from '../../multiplayer/protocol/types';
@@ -44,6 +45,10 @@ export interface MessageHandlingConfig {
   isHost: boolean;
   campaignState: CampaignState | null;
   onCampaignUpdate?: (state: CampaignState) => void;
+  /** Function to get current lobby state (for permission resync on reconnect) */
+  getLobbyState?: () =>
+    | import('../../multiplayer/lobby-state').LobbyState
+    | null;
 }
 
 /** Result of setting up message handling */
@@ -70,6 +75,7 @@ export function setupMessageHandling(
     isHost,
     campaignState,
     onCampaignUpdate,
+    getLobbyState,
   } = config;
 
   const transport = connectionFlow.getTransport();
@@ -93,6 +99,28 @@ export function setupMessageHandling(
   // Initialize with current campaign state (for host)
   if (isHost && campaignState) {
     syncManager.setCampaignState(campaignState);
+  }
+
+  // Host: resync permissions when a peer reconnects
+  if (isHost && getLobbyState) {
+    transport.onConnect = (peerId: string) => {
+      originalOnConnect?.(peerId);
+
+      // Check if this is a known player (reconnecting)
+      const lobbyState = getLobbyState();
+      if (!lobbyState) return;
+
+      const player = lobbyState.players.find((p) => p.playerId === peerId);
+      if (player && !player.isHost) {
+        // Resend permissions to reconnected peer
+        const permissionMsg: PermissionUpdateMessage = {
+          type: GameMessageType.PermissionUpdate,
+          playerId: peerId,
+          permissions: player.permissions,
+        };
+        transport.send(peerId, encodeMessage(permissionMsg), true);
+      }
+    };
   }
 
   return {

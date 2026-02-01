@@ -8,7 +8,7 @@
 // Message Type Enum
 // =============================================================================
 
-/** Game message type bytes (0x80-0x93 range, avoids rollback-netcode range) */
+/** Game message type bytes (0x80-0x97 range, avoids rollback-netcode range) */
 export enum GameMessageType {
   Welcome = 0x80,
   PlayerJoinedExt = 0x81,
