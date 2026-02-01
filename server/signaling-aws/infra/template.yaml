@@ -1,0 +1,311 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Spaceflight multiplayer signaling server infrastructure
+
+##############################################################################
+# Parameters
+##############################################################################
+
+Parameters:
+  AllowedOrigin:
+    Type: String
+    Description: >-
+      CORS allowed origin. Use '*' for itch.io deployments since games run
+      in iframes from *.itch.zone domains.
+    Default: '*'
+
+  MaxPeersPerRoom:
+    Type: Number
+    Description: Maximum players per room
+    Default: 4
+
+  RoomExpirySeconds:
+    Type: Number
+    Description: Room TTL in seconds (1 hour default)
+    Default: 3600
+
+  SignalExpirySeconds:
+    Type: Number
+    Description: Signal TTL in seconds
+    Default: 60
+
+  JoinRateLimitPerSecond:
+    Type: Number
+    Description: Max join requests per IP per second
+    Default: 5
+
+  CreateRateLimitPerMinute:
+    Type: Number
+    Description: Max room creations per IP per minute
+    Default: 10
+
+  SignalRateLimitPerSecond:
+    Type: Number
+    Description: Max signal posts per IP per second
+    Default: 20
+
+  InvocationAlarmThreshold:
+    Type: Number
+    Description: Invocations per hour before auto-disable triggers
+    Default: 30000
+
+##############################################################################
+# Globals
+##############################################################################
+
+Globals:
+  Function:
+    Runtime: nodejs20.x
+    Architectures:
+      - arm64
+    Tracing: PassThrough
+
+##############################################################################
+# Resources
+##############################################################################
+
+Resources:
+  #############################################################################
+  # DynamoDB Table
+  #############################################################################
+
+  SignalingTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: spaceflight-signaling
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        # Free tier: 25 RCU/WCU
+        ReadCapacityUnits: 25
+        WriteCapacityUnits: 25
+      AttributeDefinitions:
+        - AttributeName: PK
+          AttributeType: S
+        - AttributeName: SK
+          AttributeType: S
+      KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+        - AttributeName: SK
+          KeyType: RANGE
+      TimeToLiveSpecification:
+        AttributeName: expiresAt
+        Enabled: true
+
+  #############################################################################
+  # Signaling Lambda Function
+  #############################################################################
+
+  SignalingFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2022
+        Sourcemap: false
+        EntryPoints:
+          - src/index.ts
+    Properties:
+      FunctionName: spaceflight-signaling
+      Handler: index.handler
+      CodeUri: ../
+      Timeout: 30
+      MemorySize: 256
+      # Limit concurrent executions for DDoS protection
+      ReservedConcurrentExecutions: 50
+      FunctionUrlConfig:
+        AuthType: NONE
+        Cors:
+          AllowOrigins:
+            - !Ref AllowedOrigin
+          AllowMethods:
+            - GET
+            - POST
+            - DELETE
+          AllowHeaders:
+            - Content-Type
+            - Authorization
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref SignalingTable
+          MAX_PEERS_PER_ROOM: !Ref MaxPeersPerRoom
+          ROOM_EXPIRY_SECONDS: !Ref RoomExpirySeconds
+          SIGNAL_EXPIRY_SECONDS: !Ref SignalExpirySeconds
+          JOIN_RATE_LIMIT_PER_SECOND: !Ref JoinRateLimitPerSecond
+          CREATE_RATE_LIMIT_PER_MINUTE: !Ref CreateRateLimitPerMinute
+          SIGNAL_RATE_LIMIT_PER_SECOND: !Ref SignalRateLimitPerSecond
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:GetItem
+                - dynamodb:PutItem
+                - dynamodb:UpdateItem
+                - dynamodb:DeleteItem
+                - dynamodb:Query
+                - dynamodb:TransactWriteItems
+                - dynamodb:BatchWriteItem
+              Resource:
+                - !GetAtt SignalingTable.Arn
+
+  SignalingLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${SignalingFunction}
+      RetentionInDays: 7
+
+  #############################################################################
+  # Auto-Disable Lambda Function
+  #############################################################################
+
+  DisableFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2022
+        Sourcemap: false
+        EntryPoints:
+          - src/disable.ts
+    Properties:
+      FunctionName: spaceflight-signaling-disable
+      Handler: disable.handler
+      CodeUri: ../
+      Timeout: 30
+      MemorySize: 128
+      # Only needs to run once when triggered
+      ReservedConcurrentExecutions: 1
+      DeadLetterQueue:
+        Type: SQS
+        TargetArn: !GetAtt DisableDLQ.Arn
+      Environment:
+        Variables:
+          TARGET_FUNCTION_NAME: !Ref SignalingFunction
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action: lambda:PutFunctionConcurrency
+              Resource: !GetAtt SignalingFunction.Arn
+            - Effect: Allow
+              Action: sqs:SendMessage
+              Resource: !GetAtt DisableDLQ.Arn
+
+  DisableLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${DisableFunction}
+      # Keep disable logs longer for investigation
+      RetentionInDays: 30
+
+  #############################################################################
+  # Dead Letter Queue for Disable Function
+  #############################################################################
+
+  DisableDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: spaceflight-signaling-disable-dlq
+      MessageRetentionPeriod: 1209600  # 14 days
+
+  #############################################################################
+  # CloudWatch Alarm for Invocation Limit
+  #############################################################################
+
+  InvocationAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: spaceflight-signaling-invocation-limit
+      AlarmDescription: >-
+        Triggers when signaling Lambda invocations exceed threshold per hour.
+        This protects against unexpected costs by auto-disabling the service.
+      MetricName: Invocations
+      Namespace: AWS/Lambda
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref SignalingFunction
+      Statistic: Sum
+      Period: 3600  # 1 hour
+      EvaluationPeriods: 1
+      Threshold: !Ref InvocationAlarmThreshold
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+
+  #############################################################################
+  # EventBridge Rule to Trigger Disable Lambda
+  #############################################################################
+
+  DisableRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: spaceflight-signaling-disable-rule
+      Description: Triggers disable Lambda when invocation alarm enters ALARM state
+      EventPattern:
+        source:
+          - aws.cloudwatch
+        detail-type:
+          - CloudWatch Alarm State Change
+        detail:
+          alarmName:
+            - spaceflight-signaling-invocation-limit
+          state:
+            value:
+              - ALARM
+      Targets:
+        - Id: DisableLambda
+          Arn: !GetAtt DisableFunction.Arn
+
+  DisableFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref DisableFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt DisableRule.Arn
+
+  #############################################################################
+  # DLQ Alarm (alerts if disable function fails)
+  #############################################################################
+
+  DLQAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: spaceflight-signaling-disable-dlq-alert
+      AlarmDescription: >-
+        CRITICAL: Disable Lambda failed! The signaling service may be running
+        without cost protection. Investigate immediately.
+      MetricName: ApproximateNumberOfMessagesVisible
+      Namespace: AWS/SQS
+      Dimensions:
+        - Name: QueueName
+          Value: !GetAtt DisableDLQ.QueueName
+      Statistic: Sum
+      Period: 60  # 1 minute
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+
+##############################################################################
+# Outputs
+##############################################################################
+
+Outputs:
+  SignalingUrl:
+    Description: Signaling server Function URL (use this in game client)
+    Value: !GetAtt SignalingFunctionUrl.FunctionUrl
+
+  TableName:
+    Description: DynamoDB table name
+    Value: !Ref SignalingTable
+
+  DisableFunctionName:
+    Description: Disable Lambda function name
+    Value: !Ref DisableFunction
+
+  DLQUrl:
+    Description: Dead letter queue URL
+    Value: !Ref DisableDLQ

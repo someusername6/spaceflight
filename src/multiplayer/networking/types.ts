@@ -162,8 +162,8 @@ function getSignalingServerUrl(): string {
     return envUrl;
   }
 
-  // Production default (TODO: replace with actual production server URL)
-  return 'https://spaceflight-signaling.example.com';
+  // Production default (AWS Lambda Function URL)
+  return 'https://7fgo4kpjpauc5nwfr7bj2zxw5a0yjjrg.lambda-url.us-east-1.on.aws/';
 }
 
 /** Default configuration */

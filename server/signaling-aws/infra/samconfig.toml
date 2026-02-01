@@ -1,0 +1,14 @@
+# SAM configuration for spaceflight-signaling
+# Run `sam deploy` from the infra/ directory to deploy
+
+version = 0.1
+
+[default.deploy.parameters]
+stack_name = "spaceflight-signaling"
+resolve_s3 = true
+s3_prefix = "spaceflight-signaling"
+region = "us-east-1"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "AllowedOrigin='*'"
+confirm_changeset = false
+fail_on_empty_changeset = false
