@@ -156,6 +156,17 @@ export function setupPauseHandlers(ctx: HandlerContext): void {
     }
   });
 
+  // Handle countdown abort from host (guests)
+  router.onLaunchAborted((msg) => {
+    const pauseState = ctx.getPauseState();
+    if (isHost || !pauseState) return;
+
+    let newState = setCountdown(pauseState, null);
+    const systemMsg = createSystemMessage(ctx, `Resume aborted: ${msg.reason}`);
+    newState = addPauseChatMessage(newState, systemMsg);
+    ctx.setPauseState(newState);
+  });
+
   // Handle peer disconnect
   router.onPeerDisconnect = (peerId: string) => {
     const player = lobbyState.players.find((p) => p.playerId === peerId);

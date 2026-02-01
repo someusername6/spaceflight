@@ -128,6 +128,15 @@ export function initPauseCoordination(
       if (!areAllPlayersReady(pauseState)) {
         stopCountdown();
         let abortedState = setCountdown(pauseState, null);
+
+        // Broadcast abort to guests so they know countdown was cancelled
+        if (isHost) {
+          router.broadcast({
+            type: GameMessageType.LaunchAborted,
+            reason: 'Player not ready',
+          });
+        }
+
         const abortMsg = createSystemMessage(
           'Countdown aborted - player not ready',
         );

@@ -44,7 +44,11 @@ export function getMultiplayerContext(): MultiplayerContext | null {
 
 /**
  * Clear the multiplayer context.
- * Call when leaving multiplayer session.
+ *
+ * IMPORTANT: This MUST be called when:
+ * - Leaving the lobby
+ * - Session ends (disconnect, kicked, etc.)
+ * - Returning to main menu
  */
 export function clearMultiplayerContext(): void {
   currentContext = null;

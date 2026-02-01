@@ -4,6 +4,7 @@
  * Handles session cleanup and navigation when sessions end.
  */
 
+import { resetLaunchState } from '../../multiplayer/launch-flow';
 import { clearMultiplayerContext } from '../../multiplayer/multiplayer-context';
 import { broadcastSessionEnded } from '../../multiplayer/session-lifecycle';
 import { goBackFromLobby, Screen } from '../../ui/common/screens';
@@ -35,6 +36,7 @@ export async function handleSessionEndedForGuest(
   }
   cleanupLobbyScreen();
   clearMultiplayerContext();
+  resetLaunchState();
   setLobbyContext(null);
 
   // If already on game over screen (ironman death), don't navigate away
@@ -80,6 +82,9 @@ export function cleanupLobby(): void {
 
   // Clear multiplayer context
   clearMultiplayerContext();
+
+  // Reset launch flow state
+  resetLaunchState();
 
   // Clear lobby context
   setLobbyContext(null);
