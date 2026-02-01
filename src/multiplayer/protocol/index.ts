@@ -67,6 +67,16 @@ export { decodeMessage, getMessageType, isGameMessage } from './decode';
 export { encodeMessage } from './encode';
 
 // =============================================================================
+// Buffer Utilities (exported for error handling and limits)
+// =============================================================================
+
+export {
+  MAX_MESSAGE_SIZE,
+  MAX_STRING_LENGTH,
+  ProtocolError,
+} from './buffer-utils';
+
+// =============================================================================
 // Router
 // =============================================================================
 

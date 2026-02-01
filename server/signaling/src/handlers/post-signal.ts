@@ -4,6 +4,7 @@
 
 import { extractBearerToken } from '../auth.js';
 import type { Config } from '../config.js';
+import type { RateLimiter } from '../rate-limiter.js';
 import type { SignalingStorage } from '../storage/types.js';
 import type {
   ErrorResponse,
@@ -20,6 +21,7 @@ const VALID_SIGNAL_TYPES = ['offer', 'answer', 'ice'] as const;
 
 export async function postSignal(
   storage: SignalingStorage,
+  rateLimiter: RateLimiter,
   config: Config,
   code: string,
   authHeader: string | undefined,
@@ -100,6 +102,17 @@ export async function postSignal(
       body: {
         error: 'unauthorized',
         message: 'Invalid token',
+      },
+    };
+  }
+
+  // Check signal rate limit (20 signals/second per peer)
+  if (!rateLimiter.checkSignal(code, senderPeer.peerId)) {
+    return {
+      status: 429,
+      body: {
+        error: 'rate_limited',
+        message: 'Signal rate limit exceeded',
       },
     };
   }

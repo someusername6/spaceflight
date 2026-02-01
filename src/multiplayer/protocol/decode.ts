@@ -6,6 +6,8 @@ import type { CampaignState } from '../../campaign/types';
 import {
   createReadBuffer,
   decodeJson,
+  MAX_MESSAGE_SIZE,
+  ProtocolError,
   type ReadBuffer,
   readBool,
   readByte,
@@ -66,14 +68,23 @@ const GAME_MSG_MAX = Math.max(..._gameMessageTypeValues);
 
 /**
  * Decode a binary message to a game message object.
+ * @throws {ProtocolError} if message exceeds MAX_MESSAGE_SIZE or is malformed
  */
 export function decodeMessage(data: Uint8Array): GameMessage {
+  if (data.length > MAX_MESSAGE_SIZE) {
+    throw new ProtocolError(
+      `Received message size ${data.length} exceeds maximum ${MAX_MESSAGE_SIZE}`,
+    );
+  }
+
   const rb = createReadBuffer(data);
   const typeByte = readByte(rb);
 
   // Validate that the byte is in the game message range before casting
   if (typeByte < GAME_MSG_MIN || typeByte > GAME_MSG_MAX) {
-    throw new Error(`Invalid game message type: 0x${typeByte.toString(16)}`);
+    throw new ProtocolError(
+      `Invalid game message type: 0x${typeByte.toString(16)}`,
+    );
   }
   const type = typeByte as GameMessageType;
 

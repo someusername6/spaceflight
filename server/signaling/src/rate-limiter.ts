@@ -12,12 +12,18 @@ interface RateLimitEntry {
   resetAt: number;
 }
 
+/** Signal rate limit: 20 signals per second per peer */
+const SIGNAL_RATE_LIMIT_PER_SECOND = 20;
+
 export class RateLimiter {
   /** Per-second limits (for join) */
   private perSecond = new Map<string, RateLimitEntry>();
 
   /** Per-minute limits (for create) */
   private perMinute = new Map<string, RateLimitEntry>();
+
+  /** Per-peer signal limits (for signal flood protection) */
+  private perPeerSignal = new Map<string, RateLimitEntry>();
 
   private config: Config;
 
@@ -48,6 +54,21 @@ export class RateLimiter {
       ip,
       this.config.createRateLimitPerMinute,
       60000,
+    );
+  }
+
+  /**
+   * Check if a signal from a peer is allowed.
+   * Returns true if allowed, false if rate limited.
+   * Limits to 20 signals per second per room:peer combination.
+   */
+  checkSignal(roomCode: string, peerId: string): boolean {
+    const key = `${roomCode}:${peerId}`;
+    return this.check(
+      this.perPeerSignal,
+      key,
+      SIGNAL_RATE_LIMIT_PER_SECOND,
+      1000,
     );
   }
 
@@ -91,6 +112,12 @@ export class RateLimiter {
     for (const [key, entry] of this.perMinute.entries()) {
       if (now >= entry.resetAt) {
         this.perMinute.delete(key);
+      }
+    }
+
+    for (const [key, entry] of this.perPeerSignal.entries()) {
+      if (now >= entry.resetAt) {
+        this.perPeerSignal.delete(key);
       }
     }
   }

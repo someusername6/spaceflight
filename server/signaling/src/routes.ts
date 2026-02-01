@@ -176,6 +176,7 @@ export function configureRoutes(
     }
     const result = await postSignal(
       storage,
+      rateLimiter,
       config,
       code,
       req.headers.authorization,

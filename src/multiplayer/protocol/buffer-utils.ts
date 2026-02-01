@@ -12,6 +12,31 @@
 import type { GamePlayerInfo, Permission } from './messages';
 
 // =============================================================================
+// Protocol Error
+// =============================================================================
+
+/**
+ * Error thrown when protocol parsing/encoding fails.
+ * Used for bounds validation, malformed data, and size limit violations.
+ */
+export class ProtocolError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ProtocolError';
+  }
+}
+
+// =============================================================================
+// Protocol Constants
+// =============================================================================
+
+/** Maximum string length in bytes (64KB) */
+export const MAX_STRING_LENGTH = 65536;
+
+/** Maximum message size in bytes (1MB) */
+export const MAX_MESSAGE_SIZE = 1048576;
+
+// =============================================================================
 // Text Encoder/Decoder (shared instances)
 // =============================================================================
 
@@ -64,6 +89,11 @@ export function writeFloat64(wb: WriteBuffer, value: number): void {
 
 export function writeString(wb: WriteBuffer, str: string): void {
   const encoded = textEncoder.encode(str);
+  if (encoded.length > MAX_STRING_LENGTH) {
+    throw new ProtocolError(
+      `String length ${encoded.length} exceeds maximum ${MAX_STRING_LENGTH}`,
+    );
+  }
   writeUint32(wb, encoded.length);
   wb.buffer.set(encoded, wb.offset);
   wb.offset += encoded.length;
@@ -85,7 +115,21 @@ export function createReadBuffer(data: Uint8Array): ReadBuffer {
   };
 }
 
+/**
+ * Validates that the buffer has enough bytes available for a read operation.
+ * @throws {ProtocolError} if not enough bytes available
+ */
+function ensureBytes(rb: ReadBuffer, needed: number): void {
+  const available = rb.view.byteLength - rb.offset;
+  if (available < needed) {
+    throw new ProtocolError(
+      `Buffer overflow: need ${needed} bytes at offset ${rb.offset}, but only ${available} available`,
+    );
+  }
+}
+
 export function readByte(rb: ReadBuffer): number {
+  ensureBytes(rb, 1);
   const value = rb.view.getUint8(rb.offset);
   rb.offset += 1;
   return value;
@@ -96,25 +140,36 @@ export function readBool(rb: ReadBuffer): boolean {
 }
 
 export function readUint16(rb: ReadBuffer): number {
+  ensureBytes(rb, 2);
   const value = rb.view.getUint16(rb.offset, false);
   rb.offset += 2;
   return value;
 }
 
 export function readUint32(rb: ReadBuffer): number {
+  ensureBytes(rb, 4);
   const value = rb.view.getUint32(rb.offset, false);
   rb.offset += 4;
   return value;
 }
 
 export function readFloat64(rb: ReadBuffer): number {
+  ensureBytes(rb, 8);
   const value = rb.view.getFloat64(rb.offset, false);
   rb.offset += 8;
   return value;
 }
 
 export function readString(rb: ReadBuffer): string {
-  const length = readUint32(rb);
+  const length = readUint32(rb); // readUint32 already calls ensureBytes
+
+  if (length > MAX_STRING_LENGTH) {
+    throw new ProtocolError(
+      `String length ${length} exceeds maximum ${MAX_STRING_LENGTH}`,
+    );
+  }
+
+  ensureBytes(rb, length);
   const bytes = new Uint8Array(
     rb.view.buffer,
     rb.view.byteOffset + rb.offset,
@@ -133,7 +188,13 @@ export function encodeJson<T>(value: T): string {
 }
 
 export function decodeJson<T>(str: string): T {
-  return JSON.parse(str) as T;
+  try {
+    return JSON.parse(str) as T;
+  } catch (error) {
+    throw new ProtocolError(
+      `Invalid JSON: ${error instanceof Error ? error.message : 'parse failed'}`,
+    );
+  }
 }
 
 // =============================================================================

@@ -5,6 +5,8 @@
 import {
   createWriteBuffer,
   encodeJson,
+  MAX_MESSAGE_SIZE,
+  ProtocolError,
   permissionSize,
   playerInfoSize,
   stringSize,
@@ -47,62 +49,97 @@ import {
 
 /**
  * Encode a game message to binary format.
+ * @throws {ProtocolError} if message exceeds MAX_MESSAGE_SIZE
  */
 export function encodeMessage(msg: GameMessage): Uint8Array {
+  let buffer: Uint8Array;
+
   switch (msg.type) {
     case GameMessageType.Welcome:
-      return encodeWelcome(msg);
+      buffer = encodeWelcome(msg);
+      break;
     case GameMessageType.PlayerJoinedExt:
-      return encodePlayerJoined(msg);
+      buffer = encodePlayerJoined(msg);
+      break;
     case GameMessageType.PlayerLeftExt:
-      return encodePlayerLeft(msg);
+      buffer = encodePlayerLeft(msg);
+      break;
     case GameMessageType.ChatMessage:
-      return encodeChatMessage(msg);
+      buffer = encodeChatMessage(msg);
+      break;
     case GameMessageType.ReadyState:
-      return encodeReadyState(msg);
+      buffer = encodeReadyState(msg);
+      break;
     case GameMessageType.PermissionUpdate:
-      return encodePermissionUpdate(msg);
+      buffer = encodePermissionUpdate(msg);
+      break;
     case GameMessageType.ShipAssignment:
-      return encodeShipAssignment(msg);
+      buffer = encodeShipAssignment(msg);
+      break;
     case GameMessageType.CampaignSync:
-      return encodeCampaignSync(msg);
+      buffer = encodeCampaignSync(msg);
+      break;
     case GameMessageType.ActionRequest:
-      return encodeActionRequest(msg);
+      buffer = encodeActionRequest(msg);
+      break;
     case GameMessageType.ActionResponse:
-      return encodeActionResponse(msg);
+      buffer = encodeActionResponse(msg);
+      break;
     case GameMessageType.ContractAccepted:
-      return encodeContractAccepted(msg);
+      buffer = encodeContractAccepted(msg);
+      break;
     case GameMessageType.LaunchCountdown:
-      return encodeLaunchCountdown(msg);
+      buffer = encodeLaunchCountdown(msg);
+      break;
     case GameMessageType.LaunchAborted:
-      return encodeLaunchAborted(msg);
+      buffer = encodeLaunchAborted(msg);
+      break;
     case GameMessageType.MissionStarted:
-      return encodeMissionStarted(msg);
+      buffer = encodeMissionStarted(msg);
+      break;
     case GameMessageType.MissionEnded:
-      return encodeMissionEnded(msg);
+      buffer = encodeMissionEnded(msg);
+      break;
     case GameMessageType.SessionEnded:
-      return encodeSessionEnded(msg);
+      buffer = encodeSessionEnded(msg);
+      break;
     case GameMessageType.KickNotification:
-      return encodeKickNotification(msg);
+      buffer = encodeKickNotification(msg);
+      break;
     case GameMessageType.CallsignAnnounce:
-      return encodeCallsignAnnounce(msg);
+      buffer = encodeCallsignAnnounce(msg);
+      break;
     case GameMessageType.CallsignUpdate:
-      return encodeCallsignUpdate(msg);
+      buffer = encodeCallsignUpdate(msg);
+      break;
     case GameMessageType.PauseReadyState:
-      return encodePauseReadyState(msg);
+      buffer = encodePauseReadyState(msg);
+      break;
     case GameMessageType.PlayerDropped:
-      return encodePlayerDropped(msg);
+      buffer = encodePlayerDropped(msg);
+      break;
     case GameMessageType.GuestQuitRequest:
-      return encodeGuestQuitRequest(msg);
+      buffer = encodeGuestQuitRequest(msg);
+      break;
     case GameMessageType.PauseRequest:
-      return encodePauseRequest(msg);
+      buffer = encodePauseRequest(msg);
+      break;
     case GameMessageType.ReturnToLobby:
-      return encodeReturnToLobby();
+      buffer = encodeReturnToLobby();
+      break;
     default: {
       const exhaustive: never = msg;
       throw new Error(`Unknown message type: ${exhaustive}`);
     }
   }
+
+  if (buffer.length > MAX_MESSAGE_SIZE) {
+    throw new ProtocolError(
+      `Message size ${buffer.length} exceeds maximum ${MAX_MESSAGE_SIZE}`,
+    );
+  }
+
+  return buffer;
 }
 
 // =============================================================================
