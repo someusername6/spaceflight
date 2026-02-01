@@ -8,7 +8,7 @@ import type { MissionType } from '../campaign/types';
 import type { PlayerAutoaim } from '../settings/game-settings';
 
 /** Current replay format version - bump when changing FullReplayData structure */
-export const REPLAY_VERSION = 3;
+export const REPLAY_VERSION = 4;
 
 /** Minimum supported replay version for loading */
 export const MIN_REPLAY_VERSION = 1;
@@ -221,6 +221,46 @@ export interface ReplayMetadata {
   };
 }
 
+// =============================================================================
+// Multiplayer Replay Types
+// =============================================================================
+
+/**
+ * Player entry in a multiplayer replay.
+ * Tracks which players were present and their ship assignments.
+ */
+export interface MultiplayerReplayPlayer {
+  /** Network player ID */
+  playerId: string;
+  /** Display name/callsign */
+  callsign: string;
+  /** Entity ID of the player's ship */
+  shipEntityId: number;
+  /** Campaign ship ID for loadout lookup */
+  campaignShipId: string;
+  /** Tick when player joined (0 for players present at start) */
+  joinTick: number;
+  /** Tick when player left (null if still present at end) */
+  leaveTick: number | null;
+  /** Whether this player was the host */
+  isHost: boolean;
+}
+
+/**
+ * Per-player input stream for multiplayer replays.
+ * Each player's inputs are stored and compressed separately.
+ */
+export interface MultiplayerReplayInputs {
+  /** Network player ID (matches MultiplayerReplayPlayer.playerId) */
+  playerId: string;
+  /** Input bitmasks (possibly RLE-compressed) */
+  inputs: number[];
+  /** Whether inputs array is RLE-compressed */
+  inputsCompressed: boolean;
+  /** First tick this player had inputs (matches joinTick) */
+  startTick: number;
+}
+
 /**
  * Full replay data including inputs and metadata.
  * This is what gets saved to storage and exported to files.
@@ -248,7 +288,32 @@ export interface FullReplayData {
   debriefData?: ReplayDebriefData;
   /** Salvage data (v2+, optional - null on defeat, undefined for v1 replays) */
   salvageData?: ReplaySalvageData | null;
+
+  /** Whether this is a multiplayer replay (v4+) */
+  isMultiplayer?: boolean;
 }
+
+/**
+ * Extended replay data for multiplayer missions.
+ * Contains per-player input streams and player roster.
+ */
+export interface MultiplayerReplayData extends Omit<FullReplayData, 'inputs'> {
+  /** Always true for multiplayer replays */
+  isMultiplayer: true;
+  /** Version must be REPLAY_VERSION (4+) for multiplayer */
+  version: typeof REPLAY_VERSION;
+  /** Players who participated in the mission */
+  players: MultiplayerReplayPlayer[];
+  /** Per-player input streams (replaces single 'inputs' array) */
+  playerInputs: MultiplayerReplayInputs[];
+  /** Player ID of the host */
+  hostPlayerId: string;
+  /** Single-player inputs field is not used in multiplayer */
+  inputs?: never;
+}
+
+/** Union type for any replay data (single-player or multiplayer) */
+export type AnyReplayData = FullReplayData | MultiplayerReplayData;
 
 /** Base fields shared by all stored replay formats */
 interface StoredReplayBase {
@@ -274,8 +339,8 @@ interface StoredReplayLegacy extends StoredReplayBase {
   metadata?: ReplayMetadata;
   /** Not present in legacy format */
   compressedData?: undefined;
-  /** Full uncompressed replay data */
-  data: FullReplayData;
+  /** Full uncompressed replay data (may be single-player or multiplayer) */
+  data: AnyReplayData;
 }
 
 /**
@@ -303,6 +368,13 @@ export interface ReplaySummary {
   shipType: string;
   /** Wingmen ship classes for silhouette display */
   wingmenShips?: string[];
+}
+
+/** Type guard to check if replay data is multiplayer. */
+export function isMultiplayerReplay(
+  replay: AnyReplayData,
+): replay is MultiplayerReplayData {
+  return 'isMultiplayer' in replay && replay.isMultiplayer === true;
 }
 
 /**

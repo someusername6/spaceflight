@@ -257,6 +257,13 @@ export function launchMission(
     // messages (like PauseRequest) while passing rollback messages to the session.
     lobbyCtx.router.wireToTransport(transport.onMessage ?? undefined);
 
+    // Enable input recording for multiplayer replays
+    const playerIds = lobbyCtx.lobbyState.players.map((p) => p.playerId);
+    session.enableRecording(seed, contract.id, playerIds);
+
+    // Store AI wingmen for replay reconstruction (replayWingmen now only contains AI, not guests)
+    session.setReplayWingmen(replayWingmen, getPlayerAutoaim());
+
     const mpState = createMultiplayerGameState(session);
     controller.multiplayerGameState = mpState;
 

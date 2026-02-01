@@ -12,12 +12,12 @@ import {
   validateReplayStructure,
   validateVersion,
 } from './storage-validation';
-import type { FullReplayData } from './types';
+import type { AnyReplayData, FullReplayData } from './types';
 
 /**
  * Export replay to JSON string (readable format).
  */
-export function exportReplayToJSON(replay: FullReplayData): string {
+export function exportReplayToJSON(replay: AnyReplayData): string {
   return JSON.stringify(replay, null, 2);
 }
 
@@ -25,7 +25,7 @@ export function exportReplayToJSON(replay: FullReplayData): string {
  * Export replay to compressed gzip bytes.
  */
 export async function exportReplayCompressed(
-  replay: FullReplayData,
+  replay: AnyReplayData,
 ): Promise<Uint8Array> {
   return compressJSON(replay);
 }
@@ -72,7 +72,7 @@ function validateReplay(data: unknown): FullReplayData {
  * Download replay as a compressed .replay.gz file (default).
  */
 export async function downloadReplay(
-  replay: FullReplayData,
+  replay: AnyReplayData,
   filename?: string,
 ): Promise<void> {
   const compressed = await exportReplayCompressed(replay);
@@ -98,7 +98,7 @@ export async function downloadReplay(
  * Download replay as a readable JSON file (for debugging).
  */
 export function downloadReplayJSON(
-  replay: FullReplayData,
+  replay: AnyReplayData,
   filename?: string,
 ): void {
   const json = exportReplayToJSON(replay);

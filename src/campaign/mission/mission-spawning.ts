@@ -148,6 +148,7 @@ export function spawnMissionSquadron(
           guestCallsign,
           isLocal,
         );
+        // Guest ships go in players array, not wingmen array for replay
       } else {
         spawnWingmanFromCampaign(
           world,
@@ -156,19 +157,21 @@ export function spawnMissionSquadron(
           spawn.rotation,
           initialSpeed,
         );
-      }
 
-      const replayWingman: ReplayWingman = {
-        loadout: shipToReplayLoadout(wingman),
-        position: {
-          x: spawn.position.x,
-          y: spawn.position.y,
-          z: spawn.position.z,
-        },
-      };
-      if (wingman.pilot?.name) replayWingman.pilotName = wingman.pilot.name;
-      if (wingman.pilot?.skill) replayWingman.pilotSkill = wingman.pilot.skill;
-      replayWingmen.push(replayWingman);
+        // Only AI wingmen go in replayWingmen (guests are in players array)
+        const replayWingman: ReplayWingman = {
+          loadout: shipToReplayLoadout(wingman),
+          position: {
+            x: spawn.position.x,
+            y: spawn.position.y,
+            z: spawn.position.z,
+          },
+        };
+        if (wingman.pilot?.name) replayWingman.pilotName = wingman.pilot.name;
+        if (wingman.pilot?.skill)
+          replayWingman.pilotSkill = wingman.pilot.skill;
+        replayWingmen.push(replayWingman);
+      }
     });
   } else {
     wingmen.forEach((wingman, index) => {
@@ -190,6 +193,7 @@ export function spawnMissionSquadron(
           guestCallsign,
           isLocal,
         );
+        // Guest ships go in players array, not wingmen array for replay
       } else {
         spawnWingmanFromCampaign(
           world,
@@ -198,15 +202,17 @@ export function spawnMissionSquadron(
           rotation,
           initialSpeed,
         );
-      }
 
-      const replayWingman: ReplayWingman = {
-        loadout: shipToReplayLoadout(wingman),
-        position: { x: xOffset, y: 0, z: zPosition },
-      };
-      if (wingman.pilot?.name) replayWingman.pilotName = wingman.pilot.name;
-      if (wingman.pilot?.skill) replayWingman.pilotSkill = wingman.pilot.skill;
-      replayWingmen.push(replayWingman);
+        // Only AI wingmen go in replayWingmen (guests are in players array)
+        const replayWingman: ReplayWingman = {
+          loadout: shipToReplayLoadout(wingman),
+          position: { x: xOffset, y: 0, z: zPosition },
+        };
+        if (wingman.pilot?.name) replayWingman.pilotName = wingman.pilot.name;
+        if (wingman.pilot?.skill)
+          replayWingman.pilotSkill = wingman.pilot.skill;
+        replayWingmen.push(replayWingman);
+      }
     });
   }
 

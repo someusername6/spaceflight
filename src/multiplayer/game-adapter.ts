@@ -21,6 +21,7 @@ import {
 import type { Entity, World } from '../core/types';
 import { SIMULATION_SYSTEMS, TICK_SEC } from '../game';
 import { applyDecodedInput } from '../input/input-encoding';
+import type { MultiplayerInputRecorder } from '../replay/multiplayer-replay';
 
 /**
  * Adapter that implements the rollback-netcode Game interface for spaceflight.
@@ -32,6 +33,7 @@ import { applyDecodedInput } from '../input/input-encoding';
 export class SpaceflightGameAdapter implements Game<Uint8Array> {
   private world: World;
   private playerEntityMap: Map<PlayerId, Entity>;
+  private inputRecorder: MultiplayerInputRecorder | null = null;
 
   /**
    * Create a new game adapter.
@@ -67,6 +69,21 @@ export class SpaceflightGameAdapter implements Game<Uint8Array> {
   }
 
   /**
+   * Set the input recorder for multiplayer replay support.
+   * When set, all player inputs are recorded each tick.
+   */
+  setInputRecorder(recorder: MultiplayerInputRecorder | null): void {
+    this.inputRecorder = recorder;
+  }
+
+  /**
+   * Get the current input recorder.
+   */
+  getInputRecorder(): MultiplayerInputRecorder | null {
+    return this.inputRecorder;
+  }
+
+  /**
    * Serialize the current world state to bytes for snapshot storage.
    */
   serialize(): Uint8Array {
@@ -91,11 +108,28 @@ export class SpaceflightGameAdapter implements Game<Uint8Array> {
    */
   step(inputs: Map<PlayerId, Uint8Array>): void {
     // 1. Apply each player's input to their entity
+    // Also record inputs if recorder is active
+    const inputBits: Map<PlayerId, number> = new Map();
+
     for (const [playerId, inputBytes] of inputs) {
       const entity = this.playerEntityMap.get(playerId);
       if (entity !== undefined) {
         this.applyInputToEntity(entity, inputBytes);
       }
+
+      // Decode bits for recording
+      if (this.inputRecorder && inputBytes.length >= 4) {
+        const bits = new DataView(
+          inputBytes.buffer,
+          inputBytes.byteOffset,
+        ).getUint32(0, true);
+        inputBits.set(playerId, bits);
+      }
+    }
+
+    // Record inputs if recorder is active
+    if (this.inputRecorder) {
+      this.inputRecorder.recordInputs(inputBits);
     }
 
     // 2. Advance game time

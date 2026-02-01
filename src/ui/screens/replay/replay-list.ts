@@ -16,7 +16,7 @@ import {
   openReplayFile,
   saveReplay,
 } from '../../../replay/storage';
-import type { FullReplayData } from '../../../replay/types';
+import type { AnyReplayData } from '../../../replay/types';
 import {
   createScreen,
   type Screen,
@@ -246,7 +246,7 @@ export function bindReplaysScreen(
     .then(async (replays) => {
       // Auto-select first replay if available
       let selectedId: string | null = null;
-      let selectedReplay: FullReplayData | null = null;
+      let selectedReplay: AnyReplayData | null = null;
       const firstReplay = replays[0];
       if (firstReplay) {
         selectedId = firstReplay.id;

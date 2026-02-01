@@ -21,6 +21,8 @@ import type {
 import { asPlayerId, createSession } from 'rollback-netcode';
 
 import type { Entity, InputState, World } from '../core/types';
+import { MultiplayerInputRecorder } from '../replay/multiplayer-replay';
+import type { PlayerAutoaim } from '../settings/game-settings';
 import { SpaceflightGameAdapter } from './game-adapter';
 import { serializeInput } from './input-format';
 
@@ -66,6 +68,9 @@ export class MultiplayerSession {
   /** Whether this session is the host */
   private _isHost: boolean;
 
+  /** Input recorder for multiplayer replays */
+  private _inputRecorder: MultiplayerInputRecorder | null = null;
+
   /**
    * Create a new multiplayer session.
    */
@@ -95,6 +100,45 @@ export class MultiplayerSession {
    */
   get isHost(): boolean {
     return this._isHost;
+  }
+
+  /**
+   * Enable input recording for multiplayer replays.
+   * Call after session creation, before gameplay starts.
+   *
+   * @param seed - World seed for replay reconstruction
+   * @param missionId - Contract/mission ID
+   * @param playerIds - List of player IDs to record
+   */
+  enableRecording(seed: number, missionId: string, playerIds: string[]): void {
+    this._inputRecorder = new MultiplayerInputRecorder(seed, missionId);
+    for (const playerId of playerIds) {
+      this._inputRecorder.addPlayer(playerId);
+    }
+    this.gameAdapter.setInputRecorder(this._inputRecorder);
+  }
+
+  /**
+   * Get the input recorder (for building replay data at mission end).
+   */
+  getInputRecorder(): MultiplayerInputRecorder | null {
+    return this._inputRecorder;
+  }
+
+  /**
+   * Store AI wingmen data for replay reconstruction.
+   * Call after spawning ships, before gameplay starts.
+   *
+   * @param wingmen - AI wingman data (excluding player-controlled ships)
+   * @param playerAutoaim - Autoaim setting for replay
+   */
+  setReplayWingmen(
+    wingmen: import('../replay/types').ReplayWingman[],
+    playerAutoaim: PlayerAutoaim,
+  ): void {
+    if (this._inputRecorder) {
+      this._inputRecorder.setWingmen(wingmen, playerAutoaim);
+    }
   }
 
   /**

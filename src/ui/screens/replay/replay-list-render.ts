@@ -5,7 +5,7 @@
  * Separated from replay-list.ts to keep files under 400 lines.
  */
 
-import type { FullReplayData, ReplaySummary } from '../../../replay/types';
+import type { AnyReplayData, ReplaySummary } from '../../../replay/types';
 import { escapeHtml } from '../../utils';
 import { getShipSvgInline } from '../../utils/inline-svg';
 import {
@@ -21,7 +21,7 @@ export type DetailTab = 'deploy' | 'debrief' | 'salvage';
 export interface ReplaysState {
   replays: ReplaySummary[];
   selectedId: string | null;
-  selectedReplay: FullReplayData | null;
+  selectedReplay: AnyReplayData | null;
   selectedTab: DetailTab;
   loading: boolean;
   error: string | null;
@@ -174,7 +174,7 @@ function renderTabs(selectedTab: DetailTab): string {
 }
 
 /** Render the tab content based on selected tab */
-function renderTabContent(replay: FullReplayData, tab: DetailTab): string {
+function renderTabContent(replay: AnyReplayData, tab: DetailTab): string {
   switch (tab) {
     case 'deploy':
       return renderDeployTab(replay);

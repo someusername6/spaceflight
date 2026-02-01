@@ -16,7 +16,7 @@
 
 import { logWarn } from '../core/logger';
 import { compressJSON, decompressJSON, isCompressionSupported } from './gzip';
-import type { FullReplayData, ReplaySummary, StoredReplay } from './types';
+import type { AnyReplayData, ReplaySummary, StoredReplay } from './types';
 import {
   MAX_STORED_REPLAYS,
   MIN_REPLAY_VERSION,
@@ -154,7 +154,7 @@ async function evictOldest(count: number): Promise<void> {
  * Compresses replay data with gzip if supported.
  * Returns the assigned ID.
  */
-export async function saveReplay(replay: FullReplayData): Promise<string> {
+export async function saveReplay(replay: AnyReplayData): Promise<string> {
   const db = await openDB();
 
   // Check count and evict if needed
@@ -167,7 +167,7 @@ export async function saveReplay(replay: FullReplayData): Promise<string> {
 
   // Update metadata with assigned ID
   const metadataWithId = { ...replay.metadata, id };
-  const replayWithId: FullReplayData = {
+  const replayWithId: AnyReplayData = {
     ...replay,
     metadata: metadataWithId,
   };
@@ -207,7 +207,7 @@ export async function saveReplay(replay: FullReplayData): Promise<string> {
  * Returns null if not found.
  * @throws Error if replay version is incompatible.
  */
-export async function loadReplay(id: string): Promise<FullReplayData | null> {
+export async function loadReplay(id: string): Promise<AnyReplayData | null> {
   const db = await openDB();
   const stored = await new Promise<StoredReplay | undefined>(
     (resolve, reject) => {
@@ -222,9 +222,9 @@ export async function loadReplay(id: string): Promise<FullReplayData | null> {
   if (!stored) return null;
 
   // Get replay data (decompress if needed)
-  let replay: FullReplayData | null;
+  let replay: AnyReplayData | null;
   if (stored.compressedData) {
-    replay = await decompressJSON<FullReplayData>(stored.compressedData);
+    replay = await decompressJSON<AnyReplayData>(stored.compressedData);
   } else {
     replay = stored.data ?? null;
   }
@@ -248,7 +248,7 @@ export async function loadReplay(id: string): Promise<FullReplayData | null> {
  * Migrate replay data from older versions to current format.
  * Modifies the replay in place.
  */
-function migrateReplay(replay: FullReplayData): void {
+function migrateReplay(replay: AnyReplayData): void {
   // v1-2 -> v3: Add missionType field (defaults to 'elimination')
   if (replay.version < 3) {
     if (!replay.metadata.missionType) {

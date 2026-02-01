@@ -11,9 +11,13 @@
  */
 
 import type { MissionRenderers } from '../../../campaign/mission/mission-renderer';
+import type { MultiplayerReplayPlayback } from '../../../replay/multiplayer-replay';
 import type { ReplayPlayback } from '../../../replay/playback';
 import type { CameraInput, ReplayCameraState } from './replay-camera';
 import type { PlaybackCallbacks } from './viewer-playback';
+
+/** Union type for single-player and multiplayer playback */
+export type AnyReplayPlayback = ReplayPlayback | MultiplayerReplayPlayback;
 
 // =============================================================================
 // Context Type
@@ -58,8 +62,8 @@ export interface OrbitDragState {
  */
 export interface ViewerContext {
   // === Playback state (from viewer-playback.ts) ===
-  /** Replay playback controller */
-  playback: ReplayPlayback | null;
+  /** Replay playback controller (single-player or multiplayer) */
+  playback: AnyReplayPlayback | null;
   /** Three.js renderers for mission display */
   renderers: MissionRenderers | null;
   /** Animation frame ID for playback loop */

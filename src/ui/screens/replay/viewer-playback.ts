@@ -14,9 +14,19 @@ import {
   updateMissionRenderers,
 } from '../../../campaign/mission/mission-renderer';
 import { resetLeadIndicatorSmoothing } from '../../../rendering/reticle/lead-indicators';
+import { setupReplayWorld } from '../../../replay/mission-setup';
+import {
+  createPlayerEntityMapFromReplay,
+  MultiplayerReplayPlayback,
+} from '../../../replay/multiplayer-replay';
 import { ReplayPlayback } from '../../../replay/playback';
-import type { FullReplayData } from '../../../replay/types';
-import { TICK_MS, VIEWER_SEEK_TICKS_PER_FRAME } from '../../../replay/types';
+import {
+  type FullReplayData,
+  isMultiplayerReplay,
+  type MultiplayerReplayData,
+  TICK_MS,
+  VIEWER_SEEK_TICKS_PER_FRAME,
+} from '../../../replay/types';
 import { createCameraState, updateCamera } from './replay-camera';
 import {
   getCameraTargetPosition,
@@ -25,6 +35,7 @@ import {
   updateViewerClasses,
 } from './viewer-camera';
 import {
+  type AnyReplayPlayback,
   createViewerContext,
   getViewerContext,
   resetViewerContext,
@@ -274,16 +285,40 @@ function stopPlaybackLoop(ctx: ViewerContext): void {
 // Public API
 // =============================================================================
 
-/** Initialize viewer with replay data */
+/** Initialize viewer with replay data (single-player or multiplayer) */
 export function initializeViewer(
-  replay: FullReplayData,
+  replay: FullReplayData | MultiplayerReplayData,
   container: HTMLElement,
   playbackCallbacks: PlaybackCallbacks,
 ): void {
   const ctx = createViewerContext();
 
   ctx.callbacks = playbackCallbacks;
-  ctx.playback = new ReplayPlayback(replay);
+
+  // Create appropriate playback type based on replay format
+  if (isMultiplayerReplay(replay)) {
+    // Multiplayer replay - need to set up player entity mapping
+    const playerMap = createPlayerEntityMapFromReplay(replay.players);
+    ctx.playback = new MultiplayerReplayPlayback(
+      replay,
+      () => {
+        const setup = setupReplayWorld(
+          replay.seed,
+          replay.metadata.missionId,
+          replay.playerLoadout,
+          replay.wingmen,
+          replay.playerAutoaim,
+          replay.metadata.missionType,
+        );
+        return setup.world;
+      },
+      (_world, playerId) => playerMap.get(playerId) ?? null,
+    );
+  } else {
+    // Single-player replay
+    ctx.playback = new ReplayPlayback(replay);
+  }
+
   ctx.renderers = createMissionRenderers(container, replay.seed);
   ctx.cameraState = createCameraState();
 
@@ -317,6 +352,6 @@ export function seekTo(targetTick: number): boolean {
 }
 
 /** Get the playback instance */
-export function getPlayback(): ReplayPlayback | null {
+export function getPlayback(): AnyReplayPlayback | null {
   return getViewerContext()?.playback ?? null;
 }

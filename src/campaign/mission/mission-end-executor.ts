@@ -35,6 +35,7 @@ import { autoSave, deleteCheckpoint, getActiveSlotId } from '../storage';
 import type { Contract } from '../types';
 import {
   applyPilotStatsFromDebrief,
+  buildMultiplayerReplayIfRecording,
   buildReplayIfRecording,
   extractShipsLost,
   handleGameOver,
@@ -100,14 +101,24 @@ export function createMissionEndExecutor(
     cleanupMultiplayerPause();
 
     // Build replay data if we were recording (save happens after salvage calc)
-    const fullReplay = buildReplayIfRecording(
-      recorder,
-      game.world,
-      contract,
-      screenManager.campaignState,
-      missionEndState,
-      debriefData,
-    );
+    // Use multiplayer replay builder for multiplayer sessions
+    const lobbyCtx = getLobbyContext();
+    const fullReplay = lobbyCtx
+      ? buildMultiplayerReplayIfRecording(
+          controller,
+          contract,
+          screenManager.campaignState,
+          missionEndState,
+          debriefData,
+        )
+      : buildReplayIfRecording(
+          recorder,
+          game.world,
+          contract,
+          screenManager.campaignState,
+          missionEndState,
+          debriefData,
+        );
 
     // Get match stats for death/salvage processing
     const matchStats = game.world.systemState.matchStats;
@@ -178,7 +189,6 @@ export function createMissionEndExecutor(
     }
 
     // Transition to appropriate screen
-    const lobbyCtx = getLobbyContext();
     const isMultiplayer = lobbyCtx !== null;
 
     if (gameOver) {

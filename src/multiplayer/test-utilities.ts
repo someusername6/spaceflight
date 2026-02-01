@@ -9,6 +9,12 @@
 
 import { getLobbyContext } from '../campaign/handlers/lobby-context';
 import type { DestroyedShipRecord } from '../components/combat-stats';
+import { listReplays, loadReplay } from '../replay/storage';
+import {
+  type FullReplayData,
+  isMultiplayerReplay,
+  type MultiplayerReplayData,
+} from '../replay/types';
 import { getActiveGame, getActiveMissionEndState } from './active-game';
 import type { PauseReason } from './pause-state';
 
@@ -70,6 +76,31 @@ export interface TestUtilities {
    * Returns true if ironman, false otherwise or if no campaign is loaded.
    */
   isIronmanCampaign: () => boolean;
+
+  /**
+   * Get the most recently saved replay.
+   * Returns the full replay data or null if no replays exist.
+   */
+  getMostRecentReplay: () => Promise<
+    FullReplayData | MultiplayerReplayData | null
+  >;
+
+  /**
+   * Get the number of saved replays.
+   */
+  getReplayCount: () => Promise<number>;
+
+  /**
+   * Check if a replay is a multiplayer replay.
+   * Takes a replay ID and returns true if multiplayer, false otherwise.
+   */
+  isMultiplayerReplay: (replayId: string) => Promise<boolean>;
+
+  /**
+   * Get player count from the most recent replay (multiplayer only).
+   * Returns 0 if not a multiplayer replay or no replays exist.
+   */
+  getMostRecentReplayPlayerCount: () => Promise<number>;
 }
 
 /**
@@ -221,6 +252,34 @@ function createTestUtilities(): TestUtilities {
         return false;
       }
       return ctx.screenManager.campaignState.settings.ironmanMode;
+    },
+
+    async getMostRecentReplay(): Promise<
+      FullReplayData | MultiplayerReplayData | null
+    > {
+      const replays = await listReplays();
+      // Replays are sorted newest first
+      const mostRecent = replays[0];
+      if (!mostRecent) return null;
+      return loadReplay(mostRecent.id);
+    },
+
+    async getReplayCount(): Promise<number> {
+      const replays = await listReplays();
+      return replays.length;
+    },
+
+    async isMultiplayerReplay(replayId: string): Promise<boolean> {
+      const replay = await loadReplay(replayId);
+      if (!replay) return false;
+      return isMultiplayerReplay(replay);
+    },
+
+    async getMostRecentReplayPlayerCount(): Promise<number> {
+      const replay = await this.getMostRecentReplay();
+      if (!replay) return 0;
+      if (!isMultiplayerReplay(replay)) return 0;
+      return replay.players.length;
     },
   };
 }

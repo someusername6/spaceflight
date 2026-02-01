@@ -4,17 +4,13 @@
  * Extracted from mission-end-executor.ts to keep file sizes manageable.
  */
 
-import { logError, logWarn } from '../../core/logger';
+import { logError } from '../../core/logger';
 import type { World } from '../../core/types';
 import {
   broadcastMissionEnded,
   clearLobbyChat,
   setDebriefState,
 } from '../../multiplayer/session-lifecycle';
-import { buildReplayData } from '../../replay/replay-builder';
-import { saveReplay } from '../../replay/storage';
-import type { FullReplayData } from '../../replay/types';
-import type { stopRecording } from '../../systems/input';
 import { endMission } from '../../ui/common/screens';
 import type { collectDebriefData } from '../../ui/screens/results/debrief';
 import type { CampaignController } from '../controller-types';
@@ -25,9 +21,16 @@ import {
   showMultiplayerResults,
 } from '../handlers/mission-handlers';
 import type { calculateSalvage } from '../salvage';
-import { applyPilotStats, getCommanderShip } from '../state';
+import { applyPilotStats } from '../state';
 import type { Contract } from '../types';
 import type { MissionEndState } from './mission-waves';
+
+// Re-export replay helpers from the replay module
+export {
+  buildMultiplayerReplayIfRecording,
+  buildReplayIfRecording,
+  saveReplayWithSalvage,
+} from './mission-end-replay';
 
 // =============================================================================
 // Router Cleanup
@@ -48,74 +51,6 @@ export function rewireRouterAfterMission(): void {
       },
     );
   }
-}
-
-// =============================================================================
-// Replay Helpers
-// =============================================================================
-
-/** Build replay data if we were recording */
-export function buildReplayIfRecording(
-  recorder: ReturnType<typeof stopRecording>,
-  world: World,
-  contract: Contract,
-  campaignState: CampaignController['screenManager']['campaignState'],
-  missionEndState: MissionEndState,
-  debriefData: ReturnType<typeof collectDebriefData>,
-): FullReplayData | null {
-  if (!recorder) return null;
-
-  const playerShip = getCommanderShip(campaignState);
-  const shipType = playerShip?.shipClass ?? 'fighter';
-
-  const contractInfo: import('../../replay/replay-builder').ReplayContractInfo =
-    {
-      id: contract.id,
-      name: contract.name,
-      sector: contract.sector,
-    };
-  if (contract.missionType) {
-    contractInfo.missionType = contract.missionType;
-  }
-
-  return buildReplayData({
-    recorder,
-    world,
-    contract: contractInfo,
-    shipType,
-    victory: missionEndState.victory,
-    debriefData,
-  });
-}
-
-/** Save replay with salvage data */
-export function saveReplayWithSalvage(
-  fullReplay: FullReplayData | null,
-  salvageResult: ReturnType<typeof calculateSalvage> | null,
-): void {
-  if (!fullReplay) return;
-
-  if (salvageResult) {
-    fullReplay.salvageData = {
-      scrap: { ...salvageResult.scrap },
-      weapons: salvageResult.weapons.map((w) => ({
-        weaponType: w.weaponType,
-        category: w.category,
-        count: w.count,
-      })),
-      ammo: salvageResult.ammo.map((a) => ({
-        weaponType: a.weaponType,
-        count: a.count,
-      })),
-      totalValue: salvageResult.totalValue,
-    };
-  } else {
-    fullReplay.salvageData = null;
-  }
-
-  saveReplay(fullReplay).catch((err) => {
-    logWarn('[Replay] Failed to save replay:', err);
-  });
 }
 
 // =============================================================================

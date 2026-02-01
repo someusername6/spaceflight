@@ -12,7 +12,7 @@ import {
   getWeaponDisplayName,
 } from '../../../data/weapons';
 import type {
-  FullReplayData,
+  AnyReplayData,
   ReplayPrimaryWeapon,
   ReplaySecondaryWeapon,
   ReplayShipLoadout,
@@ -100,7 +100,7 @@ function renderDeployShip(
 }
 
 /** Render Deploy tab content */
-export function renderDeployTab(replay: FullReplayData): string {
+export function renderDeployTab(replay: AnyReplayData): string {
   const ships: string[] = [];
 
   // Player ship (always first)
@@ -126,7 +126,7 @@ export function renderDeployTab(replay: FullReplayData): string {
 // ============================================================================
 
 /** Render Salvage tab content */
-export function renderSalvageTab(replay: FullReplayData): string {
+export function renderSalvageTab(replay: AnyReplayData): string {
   // Check for v1 replays without salvage data
   if (replay.salvageData === undefined) {
     return `

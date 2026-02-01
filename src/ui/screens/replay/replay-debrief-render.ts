@@ -6,7 +6,7 @@
  */
 
 import type {
-  FullReplayData,
+  AnyReplayData,
   ReplayPilotDebrief,
   ReplayWeaponStats,
 } from '../../../replay/types';
@@ -171,7 +171,7 @@ function renderPilotCard(pilot: ReplayPilotDebrief): string {
 }
 
 /** Render Debrief tab content */
-export function renderDebriefTab(replay: FullReplayData): string {
+export function renderDebriefTab(replay: AnyReplayData): string {
   // Check for v1 replays without debrief data
   if (!replay.debriefData) {
     return `

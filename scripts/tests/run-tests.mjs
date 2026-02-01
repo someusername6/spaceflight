@@ -101,6 +101,10 @@ const QUICK_TESTS = [
   'multiplayer/unit/test-input-format.mjs',
   'multiplayer/unit/test-game-adapter.mjs',
   'multiplayer/unit/test-session-sync.mjs',
+  'multiplayer/unit/test-replay-loadouts.mjs',
+  'multiplayer/unit/test-replay-wingmen.mjs',
+  'multiplayer/unit/test-replay-stats.mjs',
+  'multiplayer/unit/test-replay-playback.mjs',
 ];
 
 // Balance/simulation tests - run multiple fights, take longer
