@@ -88,7 +88,10 @@ aws lambda put-function-concurrency \
 
 ## Architecture
 
-See `docs/multiplayer/plans/aws-signaling-server.md` for full architecture documentation.
+- **Lambda Function URL** - HTTPS endpoint (bypasses API Gateway for cost)
+- **DynamoDB** - Provisioned at free tier (25 RCU/WCU)
+- **CloudWatch Alarm** - Auto-disables on excessive invocations
+- **EventBridge** - Triggers disable Lambda when alarm fires
 
 ### Cost Protection
 

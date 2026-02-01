@@ -25,8 +25,12 @@
 
 | Document | Contents |
 |----------|----------|
-| [architecture.md](architecture.md) | Client architecture, codebase state, what's ready |
+| [architecture.md](architecture.md) | Client architecture, codebase state |
 | [netcode.md](netcode.md) | Rollback algorithm, prediction, snapshots, input buffering |
-| [protocol.md](protocol.md) | Network messages, signaling flow, transport options |
+| [protocol.md](protocol.md) | Network messages, signaling flow, message types |
+| [webrtc-mesh-protocol.md](webrtc-mesh-protocol.md) | WebRTC mesh formation, reconnection, tie-breakers |
 | [ux.md](ux.md) | Player-facing flows: hosting, joining, lobby, permissions, pause |
-| [roadmap.md](roadmap.md) | Implementation phases, testing strategy |
+
+## AWS Signaling Server
+
+The production signaling server runs on AWS Lambda. See `server/signaling-aws/README.md` for deployment, monitoring, and operations.
