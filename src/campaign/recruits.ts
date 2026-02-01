@@ -5,42 +5,9 @@
 import { logWarn } from '../core/logger';
 import { COMBAT_SHIP_CLASSES } from './constants';
 import { generateCampaignId } from './id-generator';
+import { PILOT_NAMES } from './pilot-names';
 import { RECRUIT_BONUS_XP } from './pilot-skills';
 import type { CampaignState, HireablePilot, Pilot, SkillLevel } from './types';
-
-/** Pilot names pool for random generation */
-const PILOT_NAMES = [
-  'Vex',
-  'Nova',
-  'Rex',
-  'Kai',
-  'Zara',
-  'Hawk',
-  'Ash',
-  'Storm',
-  'Blaze',
-  'Frost',
-  'Raven',
-  'Phoenix',
-  'Viper',
-  'Ghost',
-  'Shadow',
-  'Bolt',
-  'Flint',
-  'Steel',
-  'Cinder',
-  'Drake',
-  'Sage',
-  'Echo',
-  'Jinx',
-  'Lynx',
-  'Onyx',
-  'Pyro',
-  'Quill',
-  'Razor',
-  'Siren',
-  'Talon',
-];
 
 /** Fixed prices per skill level */
 const SKILL_PRICES: Record<SkillLevel, number> = {

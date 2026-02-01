@@ -21,30 +21,16 @@ import {
   toArrayBuffer,
 } from './peer-connection';
 import { ReconnectionManager } from './reconnection';
-import type { SignalType, WebRTCMeshConfig } from './types';
+import type {
+  BroadcastResult,
+  SignalType,
+  WebRTCMeshConfig,
+  WebRTCMeshEvents,
+} from './types';
 
 // Re-export for external use
 export type { OutgoingSignal } from './peer-connection';
-
-/** Result of a broadcast operation */
-export interface BroadcastResult {
-  success: number;
-  failed: string[];
-}
-
-/** Events emitted by the mesh */
-export interface WebRTCMeshEvents {
-  onPeerConnected: (peerId: string) => void;
-  onPeerDisconnected: (peerId: string) => void;
-  onMessage: (peerId: string, data: Uint8Array) => void;
-  onMeshComplete: () => void;
-  onMeshFailed: (error: Error) => void;
-  onSignalNeeded: (signal: OutgoingSignal) => void;
-  onPeerReconnecting?: (peerId: string) => void;
-  onPeerReconnectionAttempt?: (peerId: string) => void;
-  onPeerReconnectionFailed?: (peerId: string) => void;
-  onBroadcastError?: (peerId: string, error: unknown) => void;
-}
+export type { BroadcastResult, WebRTCMeshEvents } from './types';
 
 /**
  * Manages WebRTC peer connections in a mesh topology.
@@ -297,8 +283,9 @@ export class WebRTCMesh {
 
   private createPeer(peerId: string, initiator: boolean): void {
     // Clean up any existing connection first to prevent leaks
-    if (this.peers.has(peerId)) {
-      cleanupPeerConnection(this.peers.get(peerId)!);
+    const existingPeer = this.peers.get(peerId);
+    if (existingPeer) {
+      cleanupPeerConnection(existingPeer);
       this.peers.delete(peerId);
     }
     const state = createPeerConnection(

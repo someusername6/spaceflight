@@ -232,17 +232,15 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
   const unassignDisabled = canUnassign
     ? ''
     : 'disabled title="You do not have permission to edit this ship"';
-  const unassignSection =
+  const unassignButton =
     isAssigned && currentShip
       ? `
-        <div class="pilot-unassign-section">
-          <button class="btn btn-large btn-danger btn-unassign-pilot"
+          <button class="btn btn-danger btn-unassign-pilot"
                   data-pilot="${pilot.id}"
                   data-ship="${currentShip.id}"
                   ${unassignDisabled}>
-            Unassign Pilot
+            Unassign
           </button>
-        </div>
       `
       : '';
 
@@ -314,14 +312,23 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
 
   // Dismiss button (host only, not for commander or player pilots)
   const canDismiss = !isCommander && !isPlayerPilot(pilot) && isHost();
-  const dismissSection = canDismiss
+  const dismissButton = canDismiss
     ? `
-        <div class="pilot-dismiss-section">
           <button class="btn btn-danger btn-dismiss-pilot"
                   data-pilot-id="${pilot.id}"
                   data-pilot-name="${pilot.name}">
-            Dismiss Pilot
+            Dismiss
           </button>
+      `
+    : '';
+
+  // Combined actions section (unassign + dismiss side by side)
+  const hasActions = unassignButton || dismissButton;
+  const actionsSection = hasActions
+    ? `
+        <div class="pilot-actions-section">
+          ${unassignButton}
+          ${dismissButton}
         </div>
       `
     : '';
@@ -374,11 +381,10 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
         </div>
       </div>
 
-      ${unassignSection}
       ${shipOptions}
       ${storedShipOptions}
       ${noShipsMessage}
-      ${dismissSection}
+      ${actionsSection}
     </div>
   `;
 }

@@ -234,6 +234,17 @@
   background: rgba(0, 0, 0, 0.15);
 }
 
+/* Actions section: unassign + dismiss side by side */
+.pilot-actions-section {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-3);
+  margin-top: auto;
+  border-top: 1px solid var(--border-color);
+  background: rgba(0, 0, 0, 0.15);
+}
+
 /* Unassign button: subdued by default, red on hover */
 .btn-unassign-pilot.btn-danger {
   border-color: var(--border-color);
@@ -261,7 +272,6 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--space-1-5);
 }
 
 .xp-label {

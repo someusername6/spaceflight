@@ -115,12 +115,12 @@ export function startCampaignGameplay(controller: CampaignController): void {
     await setupTitleScreen(ctrl, onStartGameplay);
   };
 
+  // Show squadron first (screen must be visible for render to work)
+  goToSquadron(screenManager);
+
   // Setup squadron screen
   const squadronElement = getScreenElement(screenManager, Screen.SQUADRON);
   setupSquadronScreen(controller, squadronElement, setupContracts);
-
-  // Show squadron
-  goToSquadron(screenManager);
 
   // Setup global escape key handler for pause menu
   setupEscapeHandler(controller, setupSettings, setupTitle);

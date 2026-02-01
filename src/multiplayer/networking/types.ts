@@ -4,6 +4,8 @@
  * These mirror the signaling server types for API communication.
  */
 
+import type { OutgoingSignal } from './peer-connection';
+
 // =============================================================================
 // Room Types
 // =============================================================================
@@ -137,6 +139,26 @@ export interface SignalingClientConfig {
 export interface WebRTCMeshConfig {
   iceServers: RTCIceServer[];
   meshTimeoutMs: number;
+}
+
+/** Result of a broadcast operation */
+export interface BroadcastResult {
+  success: number;
+  failed: string[];
+}
+
+/** Events emitted by the mesh */
+export interface WebRTCMeshEvents {
+  onPeerConnected: (peerId: string) => void;
+  onPeerDisconnected: (peerId: string) => void;
+  onMessage: (peerId: string, data: Uint8Array) => void;
+  onMeshComplete: () => void;
+  onMeshFailed: (error: Error) => void;
+  onSignalNeeded: (signal: OutgoingSignal) => void;
+  onPeerReconnecting?: (peerId: string) => void;
+  onPeerReconnectionAttempt?: (peerId: string) => void;
+  onPeerReconnectionFailed?: (peerId: string) => void;
+  onBroadcastError?: (peerId: string, error: unknown) => void;
 }
 
 /** Full networking configuration */

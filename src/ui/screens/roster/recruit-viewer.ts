@@ -58,17 +58,7 @@ export function renderRecruitViewer(
       <div class="recruit-description">
         <div class="recruit-description-title">Profile</div>
         <div class="recruit-description-text">${getSkillDescription(recruit.skill)}</div>
-      </div>
-
-      <div class="recruit-training-section">
-        <div class="recruit-training-row">
-          <span class="training-label">Trained on</span>
-          <span class="training-value">${formatShipClass(recruit.startingShip)}</span>
-        </div>
-        <div class="recruit-training-row">
-          <span class="training-label">Bonus XP</span>
-          <span class="training-value xp-bonus">+${recruit.bonusXP}</span>
-        </div>
+        <div class="recruit-description-text">Trained on ${formatShipClass(recruit.startingShip)}. Bonus XP +${recruit.bonusXP}.</div>
       </div>
 
       <div class="recruit-hire-section">

@@ -93,6 +93,10 @@
   line-height: var(--leading-normal);
 }
 
+.recruit-description-text + .recruit-description-text {
+  margin-top: var(--space-2);
+}
+
 .recruit-hire-section {
   padding: var(--space-5) var(--space-4);
   display: flex;
