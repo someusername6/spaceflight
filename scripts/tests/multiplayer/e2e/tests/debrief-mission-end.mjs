@@ -18,7 +18,7 @@ import {
 } from '../core/index.mjs';
 import {
   clickContinue,
-  forceCommanderDeath,
+  forceAllHumanPlayersDeath,
   forceDefeat,
   setupHostWithIronmanCampaign,
   waitForLobbyScreen,
@@ -78,13 +78,14 @@ function testIronmanDeathEndsSession() {
       await launchMissionAndWait(hostPage, guestPage);
       console.log('  Mission launched');
 
-      // Force commander death on both players
+      // Force ALL human player deaths on both players
+      // In multiplayer, ALL human players must die for defeat
       const [hostForced, guestForced] = await Promise.all([
-        forceCommanderDeath(hostPage),
-        forceCommanderDeath(guestPage),
+        forceAllHumanPlayersDeath(hostPage),
+        forceAllHumanPlayersDeath(guestPage),
       ]);
       console.log(
-        `  Commander death forced: host=${hostForced}, guest=${guestForced}`,
+        `  All human deaths forced: host=${hostForced}, guest=${guestForced}`,
       );
 
       // Wait for BOTH players to see game over screen
@@ -166,13 +167,14 @@ function testNonIronmanDeathReturnsToLobby() {
       await launchMissionAndWait(hostPage, guestPage);
       console.log('  Mission launched');
 
-      // Force commander death on both players
+      // Force ALL human player deaths on both players
+      // In multiplayer, ALL human players must die for defeat
       const [hostForced, guestForced] = await Promise.all([
-        forceCommanderDeath(hostPage),
-        forceCommanderDeath(guestPage),
+        forceAllHumanPlayersDeath(hostPage),
+        forceAllHumanPlayersDeath(guestPage),
       ]);
       console.log(
-        `  Commander death forced: host=${hostForced}, guest=${guestForced}`,
+        `  All human deaths forced: host=${hostForced}, guest=${guestForced}`,
       );
 
       // Wait for results screen (NOT game over - non-ironman restores from checkpoint)

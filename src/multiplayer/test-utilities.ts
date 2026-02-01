@@ -8,123 +8,58 @@
  */
 
 import { getLobbyContext } from '../campaign/handlers/lobby-context';
+import { getCommanderShip } from '../campaign/state';
 import type { DestroyedShipRecord } from '../components/combat-stats';
-import { getComponent } from '../core/ecs';
+import { getComponent, queryEntities } from '../core/ecs';
 import { findLocalPlayer } from '../core/player-utils';
-import { listReplays, loadReplay } from '../replay/storage';
-import {
-  type FullReplayData,
-  isMultiplayerReplay,
-  type MultiplayerReplayData,
-} from '../replay/types';
 import { getActiveGame, getActiveMissionEndState } from './active-game';
 import type { PauseReason } from './pause-state';
 import { isSpectating } from './spectator-state';
+import {
+  createReplayTestUtilities,
+  type ReplayTestUtilities,
+} from './test-utilities-replay';
 
 /**
  * Test utilities exposed to window for E2E tests.
  */
-export interface TestUtilities {
-  /**
-   * Simulate a lag report triggering auto-pause.
-   * This mimics what happens when rollback-netcode detects a lagging player.
-   */
+export interface TestUtilities extends ReplayTestUtilities {
+  /** Simulate a lag report triggering auto-pause. */
   simulateLagReport: () => boolean;
-
-  /**
-   * Request pause with a specific reason.
-   * Returns true if pause was triggered, false if already paused or not in mission.
-   */
+  /** Request pause with a specific reason. */
   requestPause: (reason: PauseReason) => boolean;
-
-  /**
-   * Check if currently in a multiplayer mission.
-   */
+  /** Check if currently in a multiplayer mission. */
   isInMultiplayerMission: () => boolean;
-
-  /**
-   * Get current pause state for assertions.
-   */
+  /** Get current pause state for assertions. */
   getPauseState: () => {
     isPaused: boolean;
     reason: string | null;
     playerCount: number;
   } | null;
-
-  /**
-   * Force mission victory for faster E2E testing.
-   * Configures the mission end state to trigger immediate victory.
-   * Returns true if successful, false if no mission is running.
-   */
+  /** Force mission victory for faster E2E testing. */
   forceVictory: () => boolean;
-
-  /**
-   * Force mission defeat for E2E testing.
-   * Ends the mission as a loss without killing anyone.
-   * Use this for testing non-elimination defeat scenarios (e.g., convoy escapes).
-   * Returns true if successful, false if no mission is running.
-   */
+  /** Force mission defeat without killing anyone. */
   forceDefeat: () => boolean;
-
-  /**
-   * Force commander death for E2E testing.
-   * Records the commander's ship as destroyed, triggering game over in ironman.
-   * This is different from forceDefeat - it specifically kills the commander.
-   * Returns true if successful, false if no mission is running.
-   */
+  /** Force commander death, triggering game over in ironman. */
   forceCommanderDeath: () => boolean;
-
-  /**
-   * Check if the current campaign is in ironman mode.
-   * Returns true if ironman, false otherwise or if no campaign is loaded.
-   */
+  /** Check if the current campaign is in ironman mode. */
   isIronmanCampaign: () => boolean;
-
-  /**
-   * Get the most recently saved replay.
-   * Returns the full replay data or null if no replays exist.
-   */
-  getMostRecentReplay: () => Promise<
-    FullReplayData | MultiplayerReplayData | null
-  >;
-
-  /**
-   * Get the number of saved replays.
-   */
-  getReplayCount: () => Promise<number>;
-
-  /**
-   * Check if a replay is a multiplayer replay.
-   * Takes a replay ID and returns true if multiplayer, false otherwise.
-   */
-  isMultiplayerReplay: (replayId: string) => Promise<boolean>;
-
-  /**
-   * Get player count from the most recent replay (multiplayer only).
-   * Returns 0 if not a multiplayer replay or no replays exist.
-   */
-  getMostRecentReplayPlayerCount: () => Promise<number>;
-
-  /**
-   * Force the local player's ship to die.
-   * Sets hull to 0, which triggers spectator mode on the next frame.
-   * Use this to test the death → spectator transition in multiplayer.
-   * Returns true if successful, false if no game or local player found.
-   */
+  /** Force the local player's ship to die (triggers spectator mode). */
   forceLocalPlayerDeath: () => boolean;
-
-  /**
-   * Check if currently in spectator mode.
-   * Returns true if the local player is spectating (ship destroyed or no ship assigned).
-   */
+  /** Check if currently in spectator mode. */
   isInSpectatorMode: () => boolean;
+  /** Force ALL human player deaths in a multiplayer mission. */
+  forceAllHumanPlayersDeath: () => boolean;
 }
 
 /**
  * Create test utilities object.
  */
 function createTestUtilities(): TestUtilities {
+  const replayUtils = createReplayTestUtilities();
   return {
+    ...replayUtils,
+
     simulateLagReport(): boolean {
       const ctx = getLobbyContext();
       if (!ctx?.pauseCoordinator) {
@@ -271,34 +206,6 @@ function createTestUtilities(): TestUtilities {
       return ctx.screenManager.campaignState.settings.ironmanMode;
     },
 
-    async getMostRecentReplay(): Promise<
-      FullReplayData | MultiplayerReplayData | null
-    > {
-      const replays = await listReplays();
-      // Replays are sorted newest first
-      const mostRecent = replays[0];
-      if (!mostRecent) return null;
-      return loadReplay(mostRecent.id);
-    },
-
-    async getReplayCount(): Promise<number> {
-      const replays = await listReplays();
-      return replays.length;
-    },
-
-    async isMultiplayerReplay(replayId: string): Promise<boolean> {
-      const replay = await loadReplay(replayId);
-      if (!replay) return false;
-      return isMultiplayerReplay(replay);
-    },
-
-    async getMostRecentReplayPlayerCount(): Promise<number> {
-      const replay = await this.getMostRecentReplay();
-      if (!replay) return 0;
-      if (!isMultiplayerReplay(replay)) return 0;
-      return replay.players.length;
-    },
-
     forceLocalPlayerDeath(): boolean {
       const game = getActiveGame();
       if (!game) {
@@ -322,6 +229,92 @@ function createTestUtilities(): TestUtilities {
 
     isInSpectatorMode(): boolean {
       return isSpectating();
+    },
+
+    forceAllHumanPlayersDeath(): boolean {
+      const game = getActiveGame();
+      const ctx = getLobbyContext();
+      if (!game || !ctx) {
+        return false;
+      }
+
+      const campaignState = ctx.screenManager.campaignState;
+      if (!campaignState) {
+        return false;
+      }
+
+      const missionEndState = getActiveMissionEndState();
+      if (!missionEndState) {
+        return false;
+      }
+
+      if (!game.world.systemState.matchStats) {
+        return false;
+      }
+
+      // Build set of all human player ship IDs
+      const humanShipIds = new Set<string>();
+      const commanderShip = getCommanderShip(campaignState);
+      if (commanderShip) {
+        humanShipIds.add(commanderShip.id);
+      }
+      for (const player of ctx.lobbyState.players) {
+        if (player.shipId) {
+          humanShipIds.add(player.shipId);
+        }
+      }
+
+      // Find and kill all human player entities
+      let killedCount = 0;
+      for (const entity of queryEntities(game.world, [
+        'shipIdentity',
+        'health',
+        'playerControlled',
+      ])) {
+        const identity = getComponent(game.world, entity, 'shipIdentity');
+        const health = getComponent(game.world, entity, 'health');
+        if (!identity?.campaignShipId || !health) continue;
+
+        // Check if this is a human player's ship
+        if (humanShipIds.has(identity.campaignShipId)) {
+          // Set hull to 0 to trigger death
+          health.hull = 0;
+
+          // Find ship info for destroyed record
+          const ship = campaignState.ships.find(
+            (s) => s.id === identity.campaignShipId,
+          );
+          if (ship?.pilot) {
+            const record: DestroyedShipRecord = {
+              entityId: entity,
+              archetype: ship.shipClass,
+              callsign: ship.pilot.name ?? 'Unknown',
+              wasPlayer: true,
+              isWingman: ship.pilot.id !== campaignState.commanderId,
+              campaignShipId: ship.id,
+              pilotId: ship.pilot.id,
+              stats: {
+                kills: 0,
+                assists: 0,
+                damageDealt: 0,
+                damageReceived: 0,
+                weaponStats: [],
+              },
+              hullMax: 100,
+              timeOfDeath: game.world.systemState.gameTime,
+            };
+            game.world.systemState.matchStats.destroyedShips.push(record);
+          }
+          killedCount++;
+        }
+      }
+
+      // Configure mission end state to trigger immediate defeat
+      missionEndState.pending = true;
+      missionEndState.victory = false;
+      missionEndState.delayRemaining = 0;
+
+      return killedCount > 0;
     },
   };
 }

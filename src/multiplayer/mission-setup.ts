@@ -7,6 +7,9 @@
 
 import type { PlayerId } from 'rollback-netcode';
 import { asPlayerId } from 'rollback-netcode';
+import { getLobbyContext } from '../campaign/handlers/lobby-context';
+import { getCommanderShip } from '../campaign/state';
+import { isDead } from '../components/health';
 import { getComponent, queryEntities } from '../core/ecs';
 import type { Entity, World } from '../core/types';
 import type { LobbyPlayer } from './lobby-state';
@@ -103,4 +106,122 @@ export function getGuestShipIds(
   }
 
   return guestShipMap;
+}
+
+// =============================================================================
+// Human Player Tracking (for defeat conditions)
+// =============================================================================
+
+/**
+ * Count living human players in a multiplayer mission.
+ *
+ * In multiplayer, defeat occurs when ALL human players are dead, not just
+ * the commander. This function counts how many human-controlled ships are
+ * still alive.
+ *
+ * Human players are:
+ * - The host (controls the commander ship)
+ * - Guests with assigned ships (their shipId in LobbyPlayer)
+ *
+ * @param world - The game world
+ * @param players - Lobby players from LobbyContext
+ * @param commanderShipId - The commander ship's campaign ID (host controls this)
+ * @returns Number of living human players (0 = defeat condition)
+ */
+export function countLivingHumanPlayers(
+  world: World,
+  players: LobbyPlayer[],
+  commanderShipId: string,
+): number {
+  // Build set of all human player ship IDs
+  const humanShipIds = new Set<string>();
+
+  // Host controls commander ship
+  humanShipIds.add(commanderShipId);
+
+  // Guests control their assigned ships
+  for (const player of players) {
+    if (player.shipId) {
+      humanShipIds.add(player.shipId);
+    }
+  }
+
+  // Count living human-controlled entities
+  let livingCount = 0;
+  for (const entity of queryEntities(world, [
+    'shipIdentity',
+    'health',
+    'playerControlled',
+  ])) {
+    const identity = getComponent(world, entity, 'shipIdentity');
+    const health = getComponent(world, entity, 'health');
+    if (!identity?.campaignShipId || !health) continue;
+    if (isDead(health)) continue;
+
+    // Check if this ship is controlled by a human
+    if (humanShipIds.has(identity.campaignShipId)) {
+      livingCount++;
+    }
+  }
+
+  return livingCount;
+}
+
+/**
+ * Check if ALL human players are dead in a multiplayer mission.
+ *
+ * This is the multiplayer-aware defeat condition check. Use this instead of
+ * checking if any playerControlled entity is dead.
+ *
+ * @param world - The game world
+ * @param players - Lobby players from LobbyContext
+ * @param commanderShipId - The commander ship's campaign ID
+ * @returns true if all human players are dead (defeat condition)
+ */
+export function areAllHumanPlayersDead(
+  world: World,
+  players: LobbyPlayer[],
+  commanderShipId: string,
+): boolean {
+  return countLivingHumanPlayers(world, players, commanderShipId) === 0;
+}
+
+/**
+ * Check if all playerControlled entities are dead (single-player defeat).
+ *
+ * @param world - The game world
+ * @returns true if no living playerControlled entities exist
+ */
+export function areAllPlayersDeadSinglePlayer(world: World): boolean {
+  for (const entity of queryEntities(world, ['playerControlled', 'health'])) {
+    const health = getComponent(world, entity, 'health');
+    if (health && !isDead(health)) return false;
+  }
+  return true;
+}
+
+/**
+ * Check if all players are dead (defeat condition).
+ *
+ * This is the multiplayer-aware defeat check used by all mission systems.
+ * In multiplayer: ALL human players must be dead for defeat.
+ * In single-player: Any player death triggers defeat.
+ *
+ * @param world - The game world
+ * @returns true if defeat condition is met
+ */
+export function isDefeatConditionMet(world: World): boolean {
+  const lobbyCtx = getLobbyContext();
+  if (lobbyCtx) {
+    const campaignState = lobbyCtx.screenManager.campaignState;
+    const commanderShip = campaignState && getCommanderShip(campaignState);
+    if (commanderShip) {
+      return areAllHumanPlayersDead(
+        world,
+        lobbyCtx.lobbyState.players,
+        commanderShip.id,
+      );
+    }
+  }
+  return areAllPlayersDeadSinglePlayer(world);
 }

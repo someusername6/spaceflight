@@ -18,6 +18,7 @@ import type { Entity, World } from '../../core/types';
 import { Faction, MissionResult } from '../../core/types';
 import { getStationStats } from '../../data/stations';
 import { createStationEntity } from '../../factories/station';
+import { isDefeatConditionMet } from '../../multiplayer/mission-setup';
 import { isHighDpsShip } from '../../systems/ai/ai-dps-utils';
 import type { Contract } from '../types';
 import {
@@ -76,15 +77,6 @@ export function createAttackStationMissionState(
     timeSinceMissionStart: 0,
     completed: false,
   };
-}
-
-/** Check if player is dead */
-function isPlayerDead(world: World): boolean {
-  for (const entity of queryEntities(world, ['playerControlled', 'health'])) {
-    const health = getComponent(world, entity, 'health');
-    if (health && !isDead(health)) return false;
-  }
-  return true;
 }
 
 /** Check if enemy station is destroyed */
@@ -252,7 +244,7 @@ export function processAttackStationMissionTick(
   state.timeSinceMissionStart += dt;
 
   // Check defeat condition (player dead)
-  if (isPlayerDead(world)) {
+  if (isDefeatConditionMet(world)) {
     state.completed = true;
     world.systemState.mission.result = MissionResult.Defeat;
     return true;

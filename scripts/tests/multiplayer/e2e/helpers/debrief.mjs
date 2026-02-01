@@ -183,6 +183,28 @@ export async function forceCommanderDeath(page) {
 }
 
 /**
+ * Force ALL human player deaths in multiplayer.
+ * This kills both the commander (host) and all guest players' ships.
+ * Use this to trigger defeat in multiplayer where all humans must die.
+ * @param {import('playwright').Page} page
+ * @returns {Promise<boolean>}
+ */
+export async function forceAllHumanPlayersDeath(page) {
+  const success = await page.evaluate(() => {
+    if (typeof window.__TEST__?.forceAllHumanPlayersDeath === 'function') {
+      return window.__TEST__.forceAllHumanPlayersDeath();
+    }
+    return false;
+  });
+
+  if (!success) {
+    console.log('  forceAllHumanPlayersDeath not available');
+  }
+
+  return success;
+}
+
+/**
  * Wait for mission to end (results screen or game over).
  * @param {import('playwright').Page} page
  * @param {number} timeout

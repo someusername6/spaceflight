@@ -6,9 +6,10 @@
 
 import { Faction } from '../components/faction';
 import { isDead } from '../components/health';
-import { countEntities, getComponent, queryEntities } from '../core/ecs';
+import { getComponent, queryEntities } from '../core/ecs';
 import type { World } from '../core/types';
 import { MissionResult } from '../core/types';
+import { isDefeatConditionMet } from '../multiplayer/mission-setup';
 
 // Re-export MissionResult for consumers
 export { MissionResult };
@@ -22,8 +23,7 @@ export function missionSystem(world: World, _dt: number): void {
   }
 
   // Check for player death (defeat)
-  const playerCount = countEntities(world, ['playerControlled', 'health']);
-  if (playerCount === 0) {
+  if (isDefeatConditionMet(world)) {
     mission.result = MissionResult.Defeat;
     return;
   }

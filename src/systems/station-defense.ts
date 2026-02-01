@@ -16,9 +16,10 @@ import {
 import { setEnemiesToStationHunter } from '../campaign/mission/station-defense-launcher';
 import type { Contract } from '../campaign/types';
 import { isDead } from '../components/health';
-import { getComponent, queryEntities } from '../core/ecs';
+import { getComponent } from '../core/ecs';
 import type { Entity, World } from '../core/types';
 import { MissionResult } from '../core/types';
+import { isDefeatConditionMet } from '../multiplayer/mission-setup';
 import { countLivingEnemyShips } from './mission';
 
 /** Station defense mission runtime state */
@@ -96,15 +97,6 @@ export function createStationDefenseMissionState(
   };
 }
 
-/** Check if player is dead */
-function isPlayerDead(world: World): boolean {
-  for (const entity of queryEntities(world, ['playerControlled', 'health'])) {
-    const health = getComponent(world, entity, 'health');
-    if (health && !isDead(health)) return false;
-  }
-  return true;
-}
-
 /** Check if station is destroyed */
 function isStationDestroyed(world: World, stationEntity: Entity): boolean {
   const health = getComponent(world, stationEntity, 'health');
@@ -153,7 +145,7 @@ export function processStationDefenseMissionTick(
   state.timeSinceMissionStart += dt;
 
   // Check defeat conditions (player dead OR station destroyed)
-  if (isPlayerDead(world)) {
+  if (isDefeatConditionMet(world)) {
     state.completed = true;
     world.systemState.mission.result = MissionResult.Defeat;
     return true;

@@ -1,12 +1,6 @@
 /**
  * Escort Mission System - Handles convoy escort mission logic.
- *
- * Tracks:
- * - Convoy ship survival
- * - Player position relative to escape zone
- * - Jump charge progress
- * - Continuous enemy spawning
- * - Victory/defeat conditions
+ * Tracks convoy survival, jump charging, enemy spawning, and victory/defeat.
  */
 
 import { Vector3 } from 'three';
@@ -20,6 +14,7 @@ import {
 } from '../core/ecs';
 import type { Entity, World } from '../core/types';
 import { Faction, MissionResult } from '../core/types';
+import { isDefeatConditionMet } from '../multiplayer/mission-setup';
 
 /** Fixed delay before enemies start spawning (seconds) */
 const INITIAL_SPAWN_DELAY = 10;
@@ -239,16 +234,6 @@ function isPlayerInZone(world: World, state: EscortMissionState): boolean {
   return false;
 }
 
-/** Check if the player is dead */
-function isPlayerDead(world: World): boolean {
-  for (const entity of queryEntities(world, ['playerControlled', 'health'])) {
-    const health = getComponent(world, entity, 'health');
-    if (health && !isDead(health)) return false; // Player is alive
-  }
-  // No living player found
-  return true;
-}
-
 /** Count living enemy ships */
 function countLivingEnemies(world: World): number {
   let count = 0;
@@ -289,7 +274,7 @@ export function processEscortMissionTick(
   let stateChanged = false;
 
   // Check defeat: player dead (check first, before convoy updates)
-  if (isPlayerDead(world)) {
+  if (isDefeatConditionMet(world)) {
     state.completed = true;
     world.systemState.mission.result = MissionResult.Defeat;
     return true;
