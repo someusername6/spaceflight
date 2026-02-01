@@ -120,8 +120,9 @@ export function setupLobbyScreenForHost(
   const lobbyElement = getScreenElement(screenManager, Screen.LOBBY);
   const campaignState = screenManager.campaignState ?? null;
 
-  // Create host player
-  const hostCallsign = getStoredCallsign() ?? 'Host';
+  // Create host player - use commander name from campaign if available
+  const hostCallsign =
+    campaignState?.settings.commanderName ?? getStoredCallsign() ?? 'Host';
   const hostPlayer: LobbyPlayer = {
     playerId: connectionResult.localPeerId,
     callsign: hostCallsign,
