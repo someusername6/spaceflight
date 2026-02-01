@@ -8,7 +8,7 @@ import type { MissionType } from '../campaign/types';
 import type { PlayerAutoaim } from '../settings/game-settings';
 
 /** Current replay format version - bump when changing FullReplayData structure */
-export const REPLAY_VERSION = 4;
+export const REPLAY_VERSION = 5;
 
 /** Minimum supported replay version for loading */
 export const MIN_REPLAY_VERSION = 1;

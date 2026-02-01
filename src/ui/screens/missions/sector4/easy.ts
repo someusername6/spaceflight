@@ -46,7 +46,7 @@ export const SECTOR_4_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3650,
+    reward: 4400,
   },
   {
     id: 's4-strike-a-pose',
@@ -82,7 +82,7 @@ export const SECTOR_4_EASY: Contract[] = [
         delay: [6, 10],
       },
     ],
-    reward: 3713,
+    reward: 4463,
   },
   {
     id: 's4-scope-creep',
@@ -124,7 +124,7 @@ export const SECTOR_4_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 4389,
+    reward: 5139,
   },
   {
     id: 's4-uninvited',
@@ -160,7 +160,7 @@ export const SECTOR_4_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 4468,
+    reward: 5218,
   },
   {
     id: 's4-watchtower',
@@ -199,6 +199,6 @@ export const SECTOR_4_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 6271,
+    reward: 7021,
   },
 ];

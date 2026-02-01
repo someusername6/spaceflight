@@ -1,38 +1,15 @@
 /**
  * Squadron Event Bindings - Event handlers for squadron screen.
  *
- * Extracted from squadron.ts to stay under 400 line limit.
+ * Main orchestration file that delegates to specialized event modules.
  */
 
-import {
-  assignPilotToShip,
-  assignPilotToStoredShip,
-  unassignPilot,
-} from '../../../campaign/loadout';
-import { hirePilot } from '../../../campaign/recruits';
-import {
-  resupplyAllShipsConstrained,
-  resupplyShipConstrained,
-} from '../../../campaign/resupply/resupply-constrained';
 import type { CampaignState } from '../../../campaign/types';
-import {
-  requestAssignPilotAction,
-  requestDeployStoredShipAction,
-  requestResupplyAction,
-  requestResupplyAllAction,
-  shouldUseActionRequest,
-} from '../../../multiplayer/action-client';
-import {
-  canEditAnyShip,
-  canEditShip,
-  isHost,
-} from '../../../multiplayer/context-permissions';
-import { addResupplyMessage } from '../../../multiplayer/system-messages';
 import type { NavDestination } from '../../common/nav-bar';
-import { showNotification } from '../../common/notification';
 import type { ScreenAPI } from '../../framework/screen';
 import { closePopovers } from '../popover-layer';
-import { showShipPicker } from '../ship-picker';
+import { bindPilotEvents } from './bind-pilot-events';
+import { bindShipEvents } from './bind-ship-events';
 import { bindHardpointEvents } from './hardpoint';
 import type { ListSelection } from './list';
 import type { ViewerTab } from './viewer';
@@ -48,25 +25,6 @@ export interface SquadronProps {
   campaignState: CampaignState;
   onNavigate: (destination: NavDestination) => void;
   onStateUpdate?: ((newState: CampaignState) => void) | undefined;
-}
-
-/** Helper to update campaign state and trigger re-render */
-function updateCampaignState(
-  api: ScreenAPI<SquadronState>,
-  props: SquadronProps,
-  newCampaignState: CampaignState,
-  newSelection?: ListSelection,
-  newActiveTab?: ViewerTab,
-): void {
-  if (props.onStateUpdate) {
-    props.onStateUpdate(newCampaignState);
-  }
-  if (newSelection !== undefined || newActiveTab !== undefined) {
-    api.setState({
-      ...(newSelection !== undefined && { selection: newSelection }),
-      ...(newActiveTab !== undefined && { activeTab: newActiveTab }),
-    });
-  }
 }
 
 /** Bind all squadron screen events */
@@ -123,227 +81,13 @@ export function bindSquadronEvents(
     }
   });
 
-  // Change ship button
-  api.on('.btn-change-ship', 'click', (e, el) => {
-    e.stopPropagation();
-    const pilotId = el.dataset.pilot;
-    const shipId = el.dataset.ship;
-    if (!pilotId || !shipId) return;
-
-    // Check permission
-    if (!canEditShip(pilotId)) {
-      showNotification('You do not have permission to change this ship', {
-        type: 'warning',
-      });
-      return;
-    }
-
-    showShipPicker(
-      el,
-      pilotId,
-      shipId,
-      props.campaignState,
-      (newState) => {
-        const newShip = newState.ships.find((s) => s.pilot?.id === pilotId);
-        const newSelection: ListSelection = newShip
-          ? { type: 'deployed', id: newShip.id }
-          : { type: 'available', id: pilotId };
-        updateCampaignState(api, props, newState, newSelection);
-      },
-      () => api.setState({}),
-    );
-  });
-
-  // Resupply ship button
-  api.on('.btn-resupply-ship', 'click', (e, el) => {
-    e.stopPropagation();
-    const shipId = el.dataset.ship;
-    if (!shipId) return;
-
-    // Check permission
-    const ship = props.campaignState.ships.find((s) => s.id === shipId);
-    if (!canEditShip(ship?.pilot?.id ?? null)) {
-      showNotification('You do not have permission to resupply this ship', {
-        type: 'warning',
-      });
-      return;
-    }
-
-    const result = resupplyShipConstrained(props.campaignState, shipId);
-    if (result.state !== props.campaignState) {
-      updateCampaignState(api, props, result.state);
-      if (shouldUseActionRequest()) {
-        void requestResupplyAction(props.campaignState, shipId);
-      }
-      addResupplyMessage(ship?.shipClass ?? 'ship');
-      const type = result.success ? 'success' : 'warning';
-      for (const msg of result.messages) {
-        showNotification(msg, { type });
-      }
-    }
-  });
-
-  // Resupply all button
-  api.on('.btn-resupply-all', 'click', (e, el) => {
-    e.stopPropagation();
-    const commanderId = el.dataset.commander;
-    if (!commanderId) return;
-
-    // Check permission
-    if (!canEditAnyShip()) {
-      showNotification('You do not have permission to resupply ships', {
-        type: 'warning',
-      });
-      return;
-    }
-
-    const result = resupplyAllShipsConstrained(
-      props.campaignState,
-      commanderId,
-    );
-    if (result.state !== props.campaignState) {
-      updateCampaignState(api, props, result.state);
-      if (shouldUseActionRequest()) {
-        void requestResupplyAllAction(props.campaignState, commanderId);
-      }
-      addResupplyMessage('all ships', true);
-      const type = result.success ? 'success' : 'warning';
-      for (const msg of result.messages) {
-        showNotification(msg, { type });
-      }
-    }
-  });
-
-  // Assign pilot to ship
-  api.on('.btn-assign-pilot', 'click', (e, el) => {
-    e.stopPropagation();
-    const pilotId = el.dataset.pilot;
-    const shipId = el.dataset.ship;
-    if (!pilotId || !shipId) return;
-
-    // Check permission
-    if (!canEditAnyShip()) {
-      showNotification('You do not have permission to assign pilots', {
-        type: 'warning',
-      });
-      return;
-    }
-
-    const newState = assignPilotToShip(props.campaignState, pilotId, shipId);
-    if (newState !== props.campaignState) {
-      updateCampaignState(
-        api,
-        props,
-        newState,
-        { type: 'deployed', id: shipId },
-        'loadout',
-      );
-      if (shouldUseActionRequest()) {
-        void requestAssignPilotAction(props.campaignState, pilotId, shipId);
-      }
-    }
-  });
-
-  // Deploy pilot with stored ship
-  api.on('.stored-ship-card-btn', 'click', (e, el) => {
-    e.stopPropagation();
-    const pilotId = el.dataset.pilot;
-    const storedShipIndex = Number.parseInt(
-      el.dataset.storedShipIndex ?? '0',
-      10,
-    );
-    if (!pilotId) return;
-
-    // Check permission
-    if (!canEditAnyShip()) {
-      showNotification('You do not have permission to deploy ships', {
-        type: 'warning',
-      });
-      return;
-    }
-
-    const newState = assignPilotToStoredShip(
-      props.campaignState,
-      pilotId,
-      storedShipIndex,
-    );
-    if (newState !== props.campaignState) {
-      const newShip = newState.ships.find((s) => s.pilot?.id === pilotId);
-      if (newShip) {
-        updateCampaignState(
-          api,
-          props,
-          newState,
-          { type: 'deployed', id: newShip.id },
-          'loadout',
-        );
-      } else {
-        updateCampaignState(api, props, newState);
-      }
-      if (shouldUseActionRequest()) {
-        void requestDeployStoredShipAction(
-          props.campaignState,
-          pilotId,
-          storedShipIndex,
-        );
-      }
-    }
-  });
-
-  // Hire recruit (host only)
-  api.on('#btn-hire-recruit', 'click', (_e, el) => {
-    const recruitId = el.dataset.recruitId;
-    if (!recruitId) return;
-
-    // Only host can hire recruits
-    if (!isHost()) {
-      showNotification('Only the host can hire recruits', { type: 'warning' });
-      return;
-    }
-
-    const recruit = props.campaignState.availableRecruits.find(
-      (r) => r.id === recruitId,
-    );
-    if (!recruit) return;
-    const recruitName = recruit.name;
-
-    const newState = hirePilot(props.campaignState, recruitId);
-    if (newState !== props.campaignState) {
-      const hiredPilot = newState.pilots.find((p) => p.name === recruitName);
-      const newSelection: ListSelection = hiredPilot
-        ? { type: 'available', id: hiredPilot.id }
-        : { type: 'none', id: null };
-      updateCampaignState(api, props, newState, newSelection);
-    }
-  });
+  // Delegate to specialized event handlers
+  bindShipEvents(api, props);
+  bindPilotEvents(api, props);
 
   // Go to store
   api.on('.btn-go-to-store', 'click', () => {
     onNavigate('store');
-  });
-
-  // Unassign pilot
-  api.on('.btn-unassign-pilot', 'click', (e, el) => {
-    e.stopPropagation();
-    const pilotId = el.dataset.pilot;
-    const shipId = el.dataset.ship;
-    if (!pilotId || !shipId) return;
-
-    // Check permission
-    if (!canEditShip(pilotId)) {
-      showNotification('You do not have permission to unassign this pilot', {
-        type: 'warning',
-      });
-      return;
-    }
-
-    const newState = unassignPilot(props.campaignState, shipId);
-    if (newState !== props.campaignState) {
-      updateCampaignState(api, props, newState, {
-        type: 'available',
-        id: pilotId,
-      });
-    }
   });
 
   // Hardpoint events (uses non-bubbling events, needs special handling)

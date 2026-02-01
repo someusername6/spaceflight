@@ -30,7 +30,7 @@ export const SECTOR_3_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 4479,
+    reward: 5079,
   },
   {
     id: 's3-break-on-through',
@@ -56,7 +56,7 @@ export const SECTOR_3_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 4719,
+    reward: 5319,
   },
   {
     id: 's3-the-final-countdown',
@@ -82,7 +82,7 @@ export const SECTOR_3_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 4990,
+    reward: 5590,
   },
   {
     id: 's3-riders-on-the-storm',
@@ -108,7 +108,7 @@ export const SECTOR_3_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 5206,
+    reward: 5806,
   },
   {
     id: 's3-das-boot',
@@ -134,6 +134,6 @@ export const SECTOR_3_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 5524,
+    reward: 6124,
   },
 ];

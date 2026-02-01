@@ -41,7 +41,7 @@ export const SECTOR_1_AMBUSH: Contract[] = [
         { archetype: 'mantis', skill: 'rookie', count: 1, role: 'aggressive' },
       ],
     },
-    reward: 1327,
+    reward: 1627,
   },
   {
     id: 's1-smash-and-grab',
@@ -64,7 +64,7 @@ export const SECTOR_1_AMBUSH: Contract[] = [
         { archetype: 'mantis', skill: 'rookie', count: 2, role: 'aggressive' },
       ],
     },
-    reward: 2455,
+    reward: 2755,
   },
   {
     id: 's1-fools-gold',
@@ -87,6 +87,6 @@ export const SECTOR_1_AMBUSH: Contract[] = [
         { archetype: 'wasp', skill: 'veteran', count: 4, role: 'aggressive' },
       ],
     },
-    reward: 3693,
+    reward: 3993,
   },
 ];

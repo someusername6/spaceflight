@@ -26,12 +26,13 @@ import {
 
 describe('Ship Assignment', () => {
   describe('createPlayerPilot', () => {
-    it('creates pilot with player skill', () => {
+    it('creates pilot with empty shipSkills (human-controlled)', () => {
       const pilot = createPlayerPilot('peer123', 'TestPlayer');
 
       assert.strictEqual(pilot.id, 'mp-pilot-peer123');
       assert.strictEqual(pilot.name, 'TestPlayer');
-      assert.strictEqual(pilot.skill, 'player');
+      // Player pilots have empty shipSkills - they're human-controlled
+      assert.deepStrictEqual(pilot.shipSkills, {});
       assert.strictEqual(pilot.kills, 0);
       assert.strictEqual(pilot.missionsFlown, 0);
     });
@@ -84,7 +85,8 @@ describe('Ship Assignment', () => {
       assert.ok(ship.pilot);
       assert.strictEqual(ship.pilot.id, 'mp-pilot-player1');
       assert.strictEqual(ship.pilot.name, 'Player One');
-      assert.strictEqual(ship.pilot.skill, 'player');
+      // Player pilots are identified by ID prefix, not skill
+      assert.ok(isPlayerPilot(ship.pilot));
 
       // Check pilot added to roster
       const pilot = result.newState.pilots.find(
@@ -194,7 +196,8 @@ describe('Ship Assignment', () => {
       const ship2 = result.newState.ships.find((s) => s.id === 'ship2');
       assert.ok(ship2.pilot);
       assert.strictEqual(ship2.pilot.id, 'mp-pilot-player1');
-      assert.strictEqual(ship2.pilot.skill, 'player');
+      // Player pilots are identified by ID prefix, not skill
+      assert.ok(isPlayerPilot(ship2.pilot));
     });
 
     it('handles assigning same player to same ship (no-op)', () => {
@@ -278,7 +281,7 @@ describe('Ship Assignment', () => {
   });
 
   describe('convertPlayerPilotToAI', () => {
-    it('changes player pilot skill to AI skill', () => {
+    it('changes player pilot shipSkills to AI skill for assigned ship class', () => {
       let state = createTestCampaignState();
 
       // Assign player first
@@ -290,16 +293,20 @@ describe('Ship Assignment', () => {
       );
       state = assignResult.newState;
 
+      // Get ship class for the assigned ship
+      const ship = state.ships.find((s) => s.id === 'ship3');
+      const shipClass = ship.shipClass;
+
       // Convert to AI
       state = convertPlayerPilotToAI(state, 'player1', 'regular');
 
-      // Check pilot skill changed
+      // Check pilot's shipSkills for this ship class changed
       const pilot = state.pilots.find((p) => p.id === 'mp-pilot-player1');
-      assert.strictEqual(pilot.skill, 'regular');
+      assert.strictEqual(pilot.shipSkills[shipClass], 'regular');
 
       // Check ship's pilot also updated
-      const ship = state.ships.find((s) => s.id === 'ship3');
-      assert.strictEqual(ship.pilot.skill, 'regular');
+      const updatedShip = state.ships.find((s) => s.id === 'ship3');
+      assert.strictEqual(updatedShip.pilot.shipSkills[shipClass], 'regular');
     });
   });
 

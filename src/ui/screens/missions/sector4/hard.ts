@@ -38,7 +38,7 @@ export const SECTOR_4_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 4627,
+    reward: 5377,
   },
   {
     id: 's4-ace-of-spades',
@@ -67,7 +67,7 @@ export const SECTOR_4_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 6090,
+    reward: 6840,
   },
   {
     id: 's4-radioactive',
@@ -107,7 +107,7 @@ export const SECTOR_4_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 6842,
+    reward: 7592,
   },
   {
     id: 's4-master-of-puppets',
@@ -143,6 +143,6 @@ export const SECTOR_4_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 7113,
+    reward: 7863,
   },
 ];

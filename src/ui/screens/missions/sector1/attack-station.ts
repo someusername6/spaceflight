@@ -61,7 +61,7 @@ export const SECTOR_1_ATTACK_STATION: Contract[] = [
       ],
       stationAttackDpsThreshold: 100,
     },
-    reward: 2768,
+    reward: 3068,
   },
   {
     id: 's1-wrecking-ball',
@@ -108,7 +108,7 @@ export const SECTOR_1_ATTACK_STATION: Contract[] = [
       ],
       stationAttackDpsThreshold: 100,
     },
-    reward: 3181,
+    reward: 3481,
   },
   {
     id: 's1-knockin-on-heavens-door',
@@ -157,6 +157,6 @@ export const SECTOR_1_ATTACK_STATION: Contract[] = [
       ],
       stationAttackDpsThreshold: 100,
     },
-    reward: 3649,
+    reward: 3949,
   },
 ];

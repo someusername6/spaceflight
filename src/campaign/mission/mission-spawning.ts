@@ -168,8 +168,9 @@ export function spawnMissionSquadron(
           },
         };
         if (wingman.pilot?.name) replayWingman.pilotName = wingman.pilot.name;
-        if (wingman.pilot?.skill)
-          replayWingman.pilotSkill = wingman.pilot.skill;
+        // Get pilot's skill for this ship class
+        const skill = wingman.pilot?.shipSkills[wingman.shipClass];
+        if (skill) replayWingman.pilotSkill = skill;
         replayWingmen.push(replayWingman);
       }
     });
@@ -209,8 +210,9 @@ export function spawnMissionSquadron(
           position: { x: xOffset, y: 0, z: zPosition },
         };
         if (wingman.pilot?.name) replayWingman.pilotName = wingman.pilot.name;
-        if (wingman.pilot?.skill)
-          replayWingman.pilotSkill = wingman.pilot.skill;
+        // Get pilot's skill for this ship class
+        const skill = wingman.pilot?.shipSkills[wingman.shipClass];
+        if (skill) replayWingman.pilotSkill = skill;
         replayWingmen.push(replayWingman);
       }
     });

@@ -6,8 +6,12 @@
  */
 
 import type { SalvageResult } from '../../../campaign/salvage';
+import type { SalaryInfo } from '../../../campaign/state-mission';
 import type { Contract } from '../../../campaign/types';
 import { renderSalvageSection } from './results-salvage';
+
+// Re-export salary types for external use
+export type { SalaryEntry, SalaryInfo } from '../../../campaign/state-mission';
 
 /** Escort mission results for display */
 export interface EscortResultsDisplay {
@@ -48,6 +52,7 @@ export function renderRewards(
   ambushResults?: AmbushResultsDisplay,
   stationDefenseResults?: StationDefenseResultsDisplay,
   attackStationResults?: AttackStationResultsDisplay,
+  salaryInfo?: SalaryInfo,
 ): string {
   const titleClass = victory ? 'victory' : 'defeat';
   const titleText = victory ? 'VICTORY' : 'DEFEAT';
@@ -143,6 +148,67 @@ export function renderRewards(
     `
     : '';
 
+  // Salary section (if any salaries were paid)
+  let salaryHtml = '';
+  if (salaryInfo && salaryInfo.breakdown.length > 0) {
+    const breakdownLines = salaryInfo.breakdown
+      .map(
+        (s) => `
+        <div class="salary-line">
+          <span class="salary-pilot-name">${s.name}</span>
+          <span class="salary-amount negative">-${s.salary.toLocaleString()} cr</span>
+        </div>
+      `,
+      )
+      .join('');
+
+    salaryHtml = `
+      <div class="rewards-salary">
+        <div class="rewards-section-header">
+          <span class="rewards-section-icon" aria-hidden="true">▶</span>
+          <span class="rewards-section-title">PILOT SALARIES</span>
+        </div>
+        <div class="rewards-salary-details">
+          ${breakdownLines}
+          <div class="salary-total">
+            <span>Total</span>
+            <span class="salary-amount negative">-${salaryInfo.total.toLocaleString()} cr</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // Net earnings section (if salaries were paid)
+  let netEarningsHtml = '';
+  if (victory && salaryInfo && salaryInfo.total > 0) {
+    const netCredits = displayReward - salaryInfo.total;
+    const netClass = netCredits >= 0 ? 'positive' : 'negative';
+    const netSign = netCredits >= 0 ? '+' : '';
+    netEarningsHtml = `
+      <div class="rewards-net-earnings">
+        <div class="rewards-section-header">
+          <span class="rewards-section-icon" aria-hidden="true">▶</span>
+          <span class="rewards-section-title">NET EARNINGS</span>
+        </div>
+        <div class="rewards-net-details">
+          <div class="net-line">
+            <span>Mission Reward</span>
+            <span class="positive">+${displayReward.toLocaleString()} cr</span>
+          </div>
+          <div class="net-line">
+            <span>Pilot Salaries</span>
+            <span class="negative">-${salaryInfo.total.toLocaleString()} cr</span>
+          </div>
+          <div class="net-total ${netClass}">
+            <span>Net</span>
+            <span>${netSign}${netCredits.toLocaleString()} cr</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   // Salvage section
   const salvageHtml = renderSalvageSection(salvage);
 
@@ -150,6 +216,8 @@ export function renderRewards(
     <div class="rewards-content">
       <div class="rewards-title ${titleClass}">${titleText}</div>
       ${contractRewardHtml}
+      ${salaryHtml}
+      ${netEarningsHtml}
       ${salvageHtml}
     </div>
   `;

@@ -3,7 +3,9 @@
  */
 
 import { logWarn } from '../core/logger';
+import { COMBAT_SHIP_CLASSES } from './constants';
 import { generateCampaignId } from './id-generator';
+import { RECRUIT_BONUS_XP } from './pilot-skills';
 import type { CampaignState, HireablePilot, Pilot, SkillLevel } from './types';
 
 /** Pilot names pool for random generation */
@@ -196,10 +198,20 @@ export function generateRecruits(
     const [id, newNextId] = generateCampaignId(currentNextId, 'recruit');
     currentNextId = newNextId;
 
+    // Get bonus XP for this skill level
+    const bonusXP =
+      RECRUIT_BONUS_XP[skill as keyof typeof RECRUIT_BONUS_XP] ?? 25;
+
+    // Pick random starting ship class
+    const startingShipIndex = Math.floor(rng() * COMBAT_SHIP_CLASSES.length);
+    const startingShip = COMBAT_SHIP_CLASSES[startingShipIndex] as string;
+
     recruits.push({
       id,
       name,
       skill,
+      startingShip,
+      bonusXP,
       price,
     });
   }
@@ -276,11 +288,14 @@ export function hirePilot(
   // Generate new pilot ID from state
   const [pilotId, nextId] = generateCampaignId(state.nextId, 'pilot');
 
-  // Create new pilot from recruit
+  // Create new pilot from recruit with ship-specific skill
   const newPilot: Pilot = {
     id: pilotId,
     name: recruit.name,
-    skill: recruit.skill,
+    // Pilot starts with their advertised skill on their starting ship
+    shipSkills: {
+      [recruit.startingShip]: recruit.skill,
+    },
     kills: 0,
     assists: 0,
     missionsFlown: 0,
@@ -289,7 +304,8 @@ export function hirePilot(
     damageReceived: 0,
     ejectionCount: 0,
     injuredMissionsLeft: 0,
-    xp: 0,
+    // Bonus XP is their unspent pool for training
+    xp: recruit.bonusXP,
   };
 
   return {

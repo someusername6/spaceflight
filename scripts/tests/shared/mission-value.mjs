@@ -272,13 +272,31 @@ export const PROFIT_MARGINS = {
   hard: 1000,
 };
 
+/** Expected salary overhead by sector (covers wingman salaries) */
+export const SALARY_OVERHEAD = {
+  1: 300,
+  2: 300,
+  3: 600,
+  4: 750,
+  5: 750,
+};
+
+/**
+ * Get expected salary overhead for a sector.
+ * @param {number} sector - Sector number (1-5)
+ * @returns {number} Expected salary overhead in credits
+ */
+export function getExpectedSalary(sector) {
+  return SALARY_OVERHEAD[sector] ?? 0;
+}
+
 /** Expected salvage rate (fraction of enemy value recovered) */
 export const SALVAGE_RATE = 0.05;
 
 /**
  * Calculate recommended reward for a mission based on simulation results.
  *
- * Formula: reward = expected_replacement_cost - expected_salvage + profit_margin
+ * Formula: reward = expected_replacement_cost - expected_salvage + profit_margin + salary_overhead
  *
  * @param {object} params - Calculation parameters
  * @param {string} params.difficulty - Mission difficulty (easy/medium/hard)
@@ -286,6 +304,7 @@ export const SALVAGE_RATE = 0.05;
  * @param {number} params.avgShipsLost - Average ships lost per mission
  * @param {number} params.avgShipValue - Average value of lost ships (hull + weapons + missiles + pilot)
  * @param {number} params.avgConsumablesUsed - Average consumables used by ALL ships (survivors + lost)
+ * @param {number} [params.sector] - Sector number (1-5) for salary overhead calculation
  * @returns {{ reward: number, breakdown: object }}
  */
 export function calculateReward({
@@ -294,6 +313,7 @@ export function calculateReward({
   avgShipsLost,
   avgShipValue,
   avgConsumablesUsed,
+  sector,
 }) {
   // Expected replacement cost = ships lost × average ship value + consumables used by all
   const replacementCost = avgShipsLost * avgShipValue + avgConsumablesUsed;
@@ -304,8 +324,13 @@ export function calculateReward({
   // Profit margin by difficulty
   const profitMargin = PROFIT_MARGINS[difficulty] ?? PROFIT_MARGINS.medium;
 
+  // Salary overhead for wingmen (sector-based)
+  const salaryOverhead = sector ? getExpectedSalary(sector) : 0;
+
   // Final reward
-  const reward = Math.round(replacementCost - expectedSalvage + profitMargin);
+  const reward = Math.round(
+    replacementCost - expectedSalvage + profitMargin + salaryOverhead,
+  );
 
   return {
     reward: Math.max(reward, 100), // Minimum 100 credits
@@ -317,6 +342,7 @@ export function calculateReward({
       enemyValue,
       expectedSalvage: Math.round(expectedSalvage),
       profitMargin,
+      salaryOverhead,
     },
   };
 }

@@ -295,3 +295,24 @@ export function requestResupplyAllAction(
 ): Promise<ActionResult> {
   return sendAction({ type: 'resupplyAll', commanderId }, currentState);
 }
+
+/**
+ * Request a dismiss pilot action.
+ */
+export function requestDismissPilotAction(
+  currentState: CampaignState,
+  pilotId: string,
+): Promise<ActionResult> {
+  return sendAction({ type: 'dismissPilot', pilotId }, currentState);
+}
+
+/**
+ * Request a spend XP action.
+ */
+export function requestSpendXPAction(
+  currentState: CampaignState,
+  pilotId: string,
+  shipClass: string,
+): Promise<ActionResult> {
+  return sendAction({ type: 'spendXP', pilotId, shipClass }, currentState);
+}

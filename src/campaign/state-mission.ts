@@ -6,16 +6,63 @@
  */
 
 import { logDebug } from '../core/logger';
-import { getRetirementChance, rollForRetirement } from './ejection';
-import {
-  applyXP,
-  calculateMissionXP,
-  isMaxSkillLevel,
-  XP_EJECTION_SURVIVAL,
-} from './pilot-xp';
+import { isPlayerPilot } from '../multiplayer/ship-assignment';
+import { rollEjectionOutcome } from './ejection';
+import { PILOT_SALARIES } from './pilot-skills';
+import { applyXP, calculateMissionXP, XP_EJECTION_SURVIVAL } from './pilot-xp';
 import { mapSlots } from './slot-array';
 import { applyStoreTrickle } from './store/store-trickle';
-import type { CampaignState } from './types';
+import type { CampaignState, SkillLevel } from './types';
+
+/** Salary breakdown entry for a single pilot */
+export interface SalaryEntry {
+  name: string;
+  salary: number;
+}
+
+/** Result of salary calculation */
+export interface SalaryInfo {
+  total: number;
+  breakdown: SalaryEntry[];
+}
+
+/**
+ * Calculate salaries for pilots who flew and survived.
+ * - Commander does not pay salary
+ * - Multiplayer player pilots do not pay salary
+ * - Ejected/dead pilots do not pay salary (ship was destroyed)
+ */
+export function calculateMissionSalaries(
+  state: CampaignState,
+  shipsLost: string[],
+): SalaryInfo {
+  const breakdown: SalaryEntry[] = [];
+  let total = 0;
+
+  for (const ship of state.ships) {
+    const pilot = ship.pilot;
+    if (!pilot) continue;
+
+    // Skip commander (no salary)
+    if (pilot.id === state.commanderId) continue;
+
+    // Skip multiplayer player pilots (no salary)
+    if (isPlayerPilot(pilot)) continue;
+
+    // Skip if ship was destroyed (pilot ejected or KIA)
+    if (shipsLost.includes(ship.id)) continue;
+
+    // Get salary based on skill for this ship
+    const skill = pilot.shipSkills[ship.shipClass] as SkillLevel | undefined;
+    if (!skill) continue;
+
+    const salary = PILOT_SALARIES[skill as keyof typeof PILOT_SALARIES];
+    breakdown.push({ name: pilot.name, salary });
+    total += salary;
+  }
+
+  return { total, breakdown };
+}
 
 /**
  * Apply mission results to campaign state.
@@ -25,12 +72,16 @@ import type { CampaignState } from './types';
  *
  * Ejection system:
  * - Commander death = game over (no ejection)
- * - Wingman ship destruction = ejection (pilot survives, but may retire)
- *   - Retirement chance increases with each ejection: 0%, 15%, 30%, 45%, 50% (capped)
- *   - If pilot doesn't retire, they're injured for 1 mission
+ * - Wingman ship destruction = ejection with three possible outcomes:
+ *   - Safe: Pilot survives unharmed
+ *   - Injured: Pilot survives but is unavailable for 1-3 missions
+ *   - KIA: Pilot is killed in action (permanent removal)
+ *   Risk increases with each ejection (0% KIA on first, up to 35% on 5th+)
  *
  * IMPORTANT: Caller must check `isGameOver(result)` after calling this function
  * to handle commander death appropriately (show game-over screen, etc.).
+ *
+ * @param salaryTotal - Total salary to deduct (calculated via calculateMissionSalaries)
  */
 export function applyMissionResults(
   state: CampaignState,
@@ -38,6 +89,7 @@ export function applyMissionResults(
   creditsEarned: number,
   shipsLost: string[],
   completedContractId?: string,
+  salaryTotal = 0,
 ): CampaignState {
   // Get pilot IDs from ships that flew the mission
   const pilotIdsInMission = new Set(
@@ -46,8 +98,9 @@ export function applyMissionResults(
 
   // Process ship losses - separate commander death from wingman ejection
   let commanderDied = false;
-  const ejectedPilotIds = new Set<string>(); // 1st ejection = injured
-  const retiringPilotIds = new Set<string>(); // 2nd ejection = retirement
+  const ejectedPilotIds = new Set<string>(); // Pilots who ejected safely
+  const injuredPilotIds = new Map<string, number>(); // Pilot ID -> injury duration
+  const kiaPilotIds = new Set<string>(); // Pilots killed in action
 
   for (const shipId of shipsLost) {
     const lostShip = state.ships.find((s) => s.id === shipId);
@@ -57,26 +110,37 @@ export function applyMissionResults(
         // Commander death = game over (no ejection)
         commanderDied = true;
         logDebug('Commander killed - game over state');
+      } else if (isPlayerPilot(pilot)) {
+        // Multiplayer player pilots always "safe" - they're temporary
+        // No ejection roll, no injury/KIA, just mark as ejected
+        ejectedPilotIds.add(pilot.id);
+        logDebug(
+          `Player pilot ${pilot.name} ejected safely (exempt from rolls)`,
+        );
       } else {
-        // Wingman ejection - roll for retirement based on ejection history
-        const retires = rollForRetirement(
+        // Wingman ejection - roll for outcome based on ejection history
+        const outcome = rollEjectionOutcome(
           state.seed,
           state.missionCount,
           pilot.id,
           pilot.ejectionCount,
         );
-        const chance = getRetirementChance(pilot.ejectionCount);
 
-        if (retires) {
-          retiringPilotIds.add(pilot.id);
+        if (outcome.type === 'kia') {
+          kiaPilotIds.add(pilot.id);
           logDebug(
-            `Pilot ${pilot.name} retiring (${Math.round(chance * 100)}% chance, ejection #${pilot.ejectionCount + 1})`,
+            `Pilot ${pilot.name} KIA (ejection #${pilot.ejectionCount + 1})`,
+          );
+        } else if (outcome.type === 'injured') {
+          injuredPilotIds.set(pilot.id, outcome.missions);
+          logDebug(
+            `Pilot ${pilot.name} injured for ${outcome.missions} mission(s) (ejection #${pilot.ejectionCount + 1})`,
           );
         } else {
-          // Survived ejection - injured for 1 mission
+          // Safe - still increment ejection count
           ejectedPilotIds.add(pilot.id);
           logDebug(
-            `Pilot ${pilot.name} ejected - injured for 1 mission (survived ${Math.round(chance * 100)}% retirement chance)`,
+            `Pilot ${pilot.name} ejected safely (ejection #${pilot.ejectionCount + 1})`,
           );
         }
       }
@@ -95,8 +159,8 @@ export function applyMissionResults(
       return null;
     }
 
-    // Retiring pilots - remove from roster
-    if (retiringPilotIds.has(pilot.id)) {
+    // KIA pilots - remove from roster permanently
+    if (kiaPilotIds.has(pilot.id)) {
       return null;
     }
 
@@ -110,12 +174,21 @@ export function applyMissionResults(
       };
     }
 
-    // Apply ejection effects (1st ejection = injured)
+    // Apply injury effects (injured for 1-3 missions)
+    const injuryDuration = injuredPilotIds.get(pilot.id);
+    if (injuryDuration !== undefined) {
+      updated = {
+        ...updated,
+        ejectionCount: updated.ejectionCount + 1,
+        injuredMissionsLeft: injuryDuration,
+      };
+    }
+
+    // Apply safe ejection (just increment ejection count)
     if (ejectedPilotIds.has(pilot.id)) {
       updated = {
         ...updated,
         ejectionCount: updated.ejectionCount + 1,
-        injuredMissionsLeft: 1,
       };
     }
 
@@ -127,11 +200,12 @@ export function applyMissionResults(
     .map(updatePilotAfterMission)
     .filter((p): p is (typeof state.pilots)[0] => p !== null);
 
-  // Apply injury recovery for pilots who were already injured (not newly ejected)
+  // Apply injury recovery for pilots who were already injured (not newly injured)
   // Injured pilots don't fly, so they recover while others are on missions
   const updatedPilots = pilotsAfterMission.map((pilot) => {
-    // Skip if pilot wasn't injured or just ejected this mission
-    if (pilot.injuredMissionsLeft <= 0 || ejectedPilotIds.has(pilot.id)) {
+    // Skip if pilot wasn't injured or just got injured this mission
+    const justInjured = injuredPilotIds.has(pilot.id);
+    if (pilot.injuredMissionsLeft <= 0 || justInjured) {
       return pilot;
     }
     // Decrement recovery time
@@ -157,10 +231,15 @@ export function applyMissionResults(
       ? [...state.completedContracts, completedContractId]
       : state.completedContracts;
 
+  // Calculate net credits: gross reward minus salaries
+  // Salaries are paid regardless of victory (pilots flew the mission)
+  const grossReward = victory ? creditsEarned : 0;
+  const netCredits = grossReward - salaryTotal;
+
   // Apply mission results first
   const afterMission: CampaignState = {
     ...state,
-    credits: state.credits + (victory ? creditsEarned : 0),
+    credits: state.credits + netCredits,
     ships: updatedShips,
     pilots: updatedPilots,
     missionCount: state.missionCount + 1,
@@ -262,8 +341,8 @@ export function applyPilotStats(
       damageReceived: pilot.damageReceived + extracted.damageReceived,
     };
 
-    // Apply XP for wingmen only (not commander)
-    if (pilot.id !== state.commanderId && !isMaxSkillLevel(pilot)) {
+    // Apply XP for roster wingmen only (not commander, not player pilots)
+    if (pilot.id !== state.commanderId && !isPlayerPilot(pilot)) {
       let xpGained = calculateMissionXP(extracted.kills, extracted.assists);
 
       // Ejection survival bonus
@@ -280,11 +359,13 @@ export function applyPilotStats(
   // Update pilots array
   const updatedPilots = state.pilots.map(applyStats);
 
-  // Log XP gains and promotions (only once, using pilots array)
+  // Log XP gains (only once, using pilots array)
   for (const pilot of state.pilots) {
     const extracted = statsByPilotId.get(pilot.id);
     if (!extracted) continue;
-    if (pilot.id === state.commanderId || isMaxSkillLevel(pilot)) continue;
+    // Skip commander and player pilots
+    if (pilot.id === state.commanderId) continue;
+    if (isPlayerPilot(pilot)) continue;
 
     let xpGained = calculateMissionXP(extracted.kills, extracted.assists);
     const hasEjectionBonus = ejectedPilotIds.has(pilot.id);
@@ -297,13 +378,7 @@ export function applyPilotStats(
       : '';
     logDebug(`Pilot ${pilot.name} gains ${xpGained} XP${bonusText}`);
 
-    // Check for promotion by finding the updated pilot
-    const updatedPilot = updatedPilots.find((p) => p.id === pilot.id);
-    if (updatedPilot && updatedPilot.skill !== pilot.skill) {
-      logDebug(
-        `Pilot ${pilot.name} promoted from ${pilot.skill} to ${updatedPilot.skill}!`,
-      );
-    }
+    // Note: XP is now pooled for manual spending - no auto-promotion
   }
 
   // Also update pilots embedded in ships (data is denormalized)

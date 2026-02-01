@@ -97,7 +97,7 @@ export const SECTOR_4_ATTACK_STATION: Contract[] = [
       ],
       stationAttackDpsThreshold: 400,
     },
-    reward: 9730,
+    reward: 10480,
   },
   {
     // Optimized: Win=68%, Time=124s, Surv=2.35
@@ -172,7 +172,7 @@ export const SECTOR_4_ATTACK_STATION: Contract[] = [
       ],
       stationAttackDpsThreshold: 400,
     },
-    reward: 10717,
+    reward: 11467,
   },
   {
     // Optimized: Win=56%, Time=139s, Surv=2.14
@@ -243,6 +243,6 @@ export const SECTOR_4_ATTACK_STATION: Contract[] = [
       ],
       stationAttackDpsThreshold: 400,
     },
-    reward: 11723,
+    reward: 12473,
   },
 ];

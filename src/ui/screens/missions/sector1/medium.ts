@@ -29,7 +29,7 @@ export const SECTOR_1_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 1935,
+    reward: 2235,
   },
   {
     id: 's1-another-day-in-paradise',
@@ -55,7 +55,7 @@ export const SECTOR_1_MEDIUM: Contract[] = [
         delay: [6, 10],
       },
     ],
-    reward: 2335,
+    reward: 2635,
   },
   {
     id: 's1-lead-serenade',
@@ -81,7 +81,7 @@ export const SECTOR_1_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 2849,
+    reward: 3149,
   },
   {
     id: 's1-purple-rain',
@@ -107,6 +107,6 @@ export const SECTOR_1_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 2961,
+    reward: 3261,
   },
 ];

@@ -42,7 +42,7 @@ export const SECTOR_3_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3950,
+    reward: 4550,
   },
   {
     id: 's3-crimson-tide',
@@ -68,7 +68,7 @@ export const SECTOR_3_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 4113,
+    reward: 4713,
   },
   {
     id: 's3-aces-high',
@@ -95,7 +95,7 @@ export const SECTOR_3_MEDIUM: Contract[] = [
         delay: [10, 15],
       },
     ],
-    reward: 4978,
+    reward: 5578,
   },
   {
     id: 's3-mothership-connection',
@@ -122,7 +122,7 @@ export const SECTOR_3_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 4987,
+    reward: 5587,
   },
   {
     id: 's3-ghost-riders-in-the-sky',
@@ -148,6 +148,6 @@ export const SECTOR_3_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 5158,
+    reward: 5758,
   },
 ];

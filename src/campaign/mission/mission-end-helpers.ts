@@ -22,6 +22,7 @@ import {
 } from '../handlers/mission-handlers';
 import type { calculateSalvage } from '../salvage';
 import { applyPilotStats } from '../state';
+import type { SalaryInfo } from '../state-mission';
 import type { Contract } from '../types';
 import type { MissionEndState } from './mission-waves';
 
@@ -109,9 +110,10 @@ export function applyPilotStatsFromDebrief(
   }
 
   // Get pilots who ejected and survived (for XP bonus)
+  // Includes both safe ejections and injured pilots (not KIA)
   const ejectedPilotIds = new Set<string>();
   for (const pilot of debriefData.pilots) {
-    if (pilot.isEjected && !pilot.isRetiring && pilot.campaignShipId) {
+    if (pilot.isEjected && !pilot.isKIA && pilot.campaignShipId) {
       const pilotId = shipToPilot.get(pilot.campaignShipId);
       if (pilotId) {
         ejectedPilotIds.add(pilotId);
@@ -180,6 +182,7 @@ export function handleMultiplayerResults(
   contract: Contract,
   setupContractsScreen: (controller: CampaignController) => void,
   salvageResult: ReturnType<typeof calculateSalvage> | null,
+  salaryInfo?: SalaryInfo,
 ): void {
   const { screenManager } = controller;
 
@@ -213,6 +216,7 @@ export function handleMultiplayerResults(
     missionEndState.ambushResults,
     missionEndState.stationDefenseResults,
     missionEndState.attackStationResults,
+    salaryInfo,
   );
 }
 

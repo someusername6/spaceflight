@@ -33,7 +33,10 @@ export type SkillLevel = ProfileName;
 export interface Pilot {
   id: string;
   name: string;
-  skill: SkillLevel;
+  // Ship-specific skills (missing = not trained)
+  // Commander can fly any ship at 'ace' level (checked via commanderId)
+  // Multiplayer player pilots have empty shipSkills (human-controlled)
+  shipSkills: Partial<Record<string, SkillLevel>>;
   // Career statistics
   kills: number;
   assists: number;
@@ -42,11 +45,10 @@ export interface Pilot {
   damageDealt: number;
   damageReceived: number;
   // Ejection tracking (wingmen eject on ship destruction, commander death = game over)
-  ejectionCount: number; // Number of times pilot has ejected (increases retirement chance)
+  ejectionCount: number; // Number of times pilot has ejected (increases KIA chance)
   injuredMissionsLeft: number; // 0 = active, 1+ = recovering
-  // XP system (wingmen only - commander doesn't track XP)
-  // XP toward next skill level; resets to 0 on promotion
-  // Skill progression: rookie → regular → veteran → ace → elite
+  // Unspent XP pool (wingmen only - commander doesn't earn/spend XP)
+  // XP is earned from missions and manually spent to unlock/upgrade ship skills
   xp: number;
 }
 
@@ -366,6 +368,8 @@ export interface MissionOutcome {
 export interface HireablePilot {
   id: string;
   name: string;
-  skill: SkillLevel;
+  skill: SkillLevel; // Advertised skill level (becomes their starting ship skill)
+  startingShip: string; // Ship class they're trained on
+  bonusXP: number; // Unspent XP pool when hired
   price: number;
 }

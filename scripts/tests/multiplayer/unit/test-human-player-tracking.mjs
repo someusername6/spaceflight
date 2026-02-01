@@ -28,7 +28,11 @@ function createTestOwnedShip(id, shipClass, pilotName = null) {
     id,
     shipClass,
     pilot: pilotName
-      ? { id: `pilot-${id}`, name: pilotName, skill: 'player' }
+      ? {
+          id: `pilot-${id}`,
+          name: pilotName,
+          shipSkills: { [shipClass]: 'regular' },
+        }
       : null,
     primaryWeapons: createSlotArray([
       { weaponType: 'plasma', bankSize: 2, currentAmmo: undefined },

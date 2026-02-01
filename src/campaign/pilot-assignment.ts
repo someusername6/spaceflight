@@ -2,11 +2,33 @@
  * Pilot assignment - assign/unassign pilots to ships.
  */
 
+import { canFlyShip } from './pilot-skills';
 import {
   createEmptyWeaponSlots,
   transferShipWeaponsToStorage,
 } from './ship-utils';
-import type { CampaignState, OwnedShip, StoredShip } from './types';
+import type { CampaignState, OwnedShip, Pilot, StoredShip } from './types';
+
+/** Result of checking if a pilot can be assigned */
+export interface CanAssignResult {
+  canAssign: boolean;
+  reason?: string;
+}
+
+/**
+ * Check if a pilot can be assigned to a ship.
+ * Returns false with reason if pilot is injured.
+ */
+export function canAssignPilot(pilot: Pilot): CanAssignResult {
+  if (pilot.injuredMissionsLeft > 0) {
+    const missions = pilot.injuredMissionsLeft;
+    return {
+      canAssign: false,
+      reason: `${pilot.name} is injured (${missions} mission${missions > 1 ? 's' : ''} remaining)`,
+    };
+  }
+  return { canAssign: true };
+}
 
 /** Move pilot from active ship to stored ship, current ship goes to storage */
 export function swapPilotToStoredShip(
@@ -18,6 +40,14 @@ export function swapPilotToStoredShip(
   const storedShip = state.storedShips[storedShipIndex];
   if (!ship || !storedShip || !ship.pilot) {
     return state; // Ship must have a pilot assigned
+  }
+
+  // Validate pilot can fly the target ship class (commander can fly any)
+  if (
+    ship.pilot.id !== state.commanderId &&
+    !canFlyShip(ship.pilot, storedShip.shipClass)
+  ) {
+    return state; // Pilot not trained on this ship class
   }
 
   // Get bank counts for new ship class
@@ -77,6 +107,14 @@ export function assignPilotToStoredShip(
     return state; // Pilot already assigned
   }
 
+  // Validate pilot can fly this ship class (commander can fly any)
+  if (
+    pilotId !== state.commanderId &&
+    !canFlyShip(pilot, storedShip.shipClass)
+  ) {
+    return state; // Pilot not trained on this ship class
+  }
+
   // Get bank counts for new ship class
   const { primaryWeapons, secondaryWeapons } = createEmptyWeaponSlots(
     storedShip.shipClass,
@@ -121,6 +159,11 @@ export function assignPilotToShip(
     return state; // Ship already has a pilot
   }
 
+  // Validate pilot can fly this ship class (commander can fly any)
+  if (pilotId !== state.commanderId && !canFlyShip(pilot, ship.shipClass)) {
+    return state; // Pilot not trained on this ship class
+  }
+
   // Assign pilot to ship
   return {
     ...state,
@@ -145,6 +188,14 @@ export function swapPilotToShip(
   // Target ship must be empty (no pilot)
   if (targetShip.pilot !== null) {
     return state;
+  }
+
+  // Validate pilot can fly the target ship class (commander can fly any)
+  if (
+    pilotId !== state.commanderId &&
+    !canFlyShip(pilot, targetShip.shipClass)
+  ) {
+    return state; // Pilot not trained on this ship class
   }
 
   // Old ship becomes a stored ship (weapons go to storage)
@@ -203,5 +254,39 @@ export function unassignPilot(
     storedShips: [...state.storedShips, storedShip],
     storedWeapons,
     storedAmmo,
+  };
+}
+
+/**
+ * Dismiss a pilot from the roster.
+ * Auto-unassigns from any ship first.
+ * Cannot dismiss commander.
+ */
+export function dismissPilot(
+  state: CampaignState,
+  pilotId: string,
+): CampaignState {
+  // Cannot dismiss commander
+  if (pilotId === state.commanderId) {
+    throw new Error('Cannot dismiss commander');
+  }
+
+  // Check if pilot exists
+  const pilot = state.pilots.find((p) => p.id === pilotId);
+  if (!pilot) {
+    return state; // Pilot not found, no change
+  }
+
+  // Auto-unassign from any ship first
+  let updatedState = state;
+  const assignedShip = state.ships.find((s) => s.pilot?.id === pilotId);
+  if (assignedShip) {
+    updatedState = unassignPilot(updatedState, assignedShip.id);
+  }
+
+  // Remove from roster
+  return {
+    ...updatedState,
+    pilots: updatedState.pilots.filter((p) => p.id !== pilotId),
   };
 }

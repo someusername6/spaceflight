@@ -28,6 +28,7 @@ import {
   type AttackStationResultsDisplay,
   type EscortResultsDisplay,
   renderRewards,
+  type SalaryInfo,
   type StationDefenseResultsDisplay,
 } from './results-rewards';
 
@@ -65,6 +66,8 @@ interface ResultsProps {
   stationDefenseResults: StationDefenseResultsDisplay | undefined;
   /** Attack station results */
   attackStationResults: AttackStationResultsDisplay | undefined;
+  /** Salary breakdown for display */
+  salaryInfo: SalaryInfo | undefined;
   // Multiplayer props (optional)
   /** Whether this is a multiplayer session */
   isMultiplayer?: boolean;
@@ -187,6 +190,7 @@ const ResultsScreenComponent: Screen<ResultsState, ResultsProps> = {
       ambushResults,
       stationDefenseResults,
       attackStationResults,
+      salaryInfo,
       isMultiplayer,
       isHost,
       chatMessages,
@@ -213,6 +217,7 @@ const ResultsScreenComponent: Screen<ResultsState, ResultsProps> = {
             ambushResults,
             stationDefenseResults,
             attackStationResults,
+            salaryInfo,
           );
 
     const footerHtml = renderResultsFooter(
@@ -297,6 +302,7 @@ export function createResultsUI(
   stationDefenseResults?: StationDefenseResultsDisplay,
   attackStationResults?: AttackStationResultsDisplay,
   multiplayerOptions?: ResultsMultiplayerOptions,
+  salaryInfo?: SalaryInfo,
 ): ResultsUI {
   // Clean up previous handle
   resultsScreenHandle?.destroy();
@@ -315,6 +321,7 @@ export function createResultsUI(
     ambushResults,
     stationDefenseResults,
     attackStationResults,
+    salaryInfo,
     // Multiplayer props - only set if options provided
     ...(multiplayerOptions && {
       isMultiplayer: multiplayerOptions.isMultiplayer,

@@ -2,31 +2,31 @@
  * Pilot Viewer - renders detailed pilot information and assignment options.
  */
 
-import {
-  getXPProgress,
-  isMaxSkillLevel,
-  XP_PER_LEVEL,
-} from '../../../campaign/pilot-xp';
+import { COMBAT_SHIP_CLASSES } from '../../../campaign/constants';
+import { getUpgradeCost } from '../../../campaign/pilot-skills';
 import type {
   CampaignState,
   OwnedShip,
   Pilot,
   SkillLevel,
 } from '../../../campaign/types';
-import { canEditShip } from '../../../multiplayer/context-permissions';
+import { canEditShip, isHost } from '../../../multiplayer/context-permissions';
+import {
+  isHumanControlled,
+  isPlayerPilot,
+} from '../../../multiplayer/ship-assignment';
 import { getShipIconPath, iconErrorHandler } from '../../ship/viewer';
 
-/** Get display label for the next skill level */
-function getNextSkillLabel(current: SkillLevel): string {
-  const progression: Record<SkillLevel, string> = {
-    green: 'Rookie',
-    rookie: 'Regular',
-    regular: 'Veteran',
-    veteran: 'Ace',
-    ace: 'Elite',
-    elite: 'Max',
-  };
-  return progression[current] ?? 'Next';
+/** Render skill stars for a skill level */
+function renderSkillStars(skill: SkillLevel): string {
+  const levels: SkillLevel[] = ['rookie', 'regular', 'veteran', 'ace', 'elite'];
+  const index = levels.indexOf(skill);
+  return '★'.repeat(index + 1) + '☆'.repeat(4 - index);
+}
+
+/** Format ship class name for display */
+function formatShipClass(shipClass: string): string {
+  return shipClass.charAt(0).toUpperCase() + shipClass.slice(1);
 }
 
 /** Get available ships for pilot assignment (ships without pilots) */
@@ -58,38 +58,131 @@ function groupStoredShipsByClass(
 /** Render pilot viewer with career stats and assignment options */
 export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
   const isCommander = pilot.id === state.commanderId;
+  const isPlayerControlled = isPlayerPilot(pilot) && isHumanControlled(pilot);
   const isAssigned = state.ships.some((s) => s.pilot?.id === pilot.id);
   const currentShip = state.ships.find((s) => s.pilot?.id === pilot.id);
   const availableShips = getAvailableShipsForPilot(state);
 
-  // Rank: "PLAYER" for commander, skill level for others
-  const rankText = isCommander ? 'PLAYER' : pilot.skill.toUpperCase();
+  // Get pilot's skill for current ship, or highest skill, or special display
+  let rankText = 'PLAYER';
+  if (isPlayerControlled) {
+    // Human-controlled player pilot shows as PLAYER
+    rankText = 'PLAYER';
+  } else if (!isCommander) {
+    const skills = Object.values(pilot.shipSkills);
+    if (currentShip && pilot.shipSkills[currentShip.shipClass]) {
+      rankText = (
+        pilot.shipSkills[currentShip.shipClass] as string
+      ).toUpperCase();
+    } else if (skills.length > 0) {
+      // Show highest skill level
+      const skillOrder = ['rookie', 'regular', 'veteran', 'ace', 'elite'];
+      const highest = skills.reduce(
+        (best, s) =>
+          skillOrder.indexOf(s ?? '') > skillOrder.indexOf(best ?? '')
+            ? s
+            : best,
+        skills[0],
+      );
+      rankText = (highest as string)?.toUpperCase() ?? 'ROOKIE';
+    } else {
+      rankText = 'UNTRAINED';
+    }
+  }
 
-  // XP progress bar (wingmen only, not shown for commander or elite pilots)
-  const showXPBar = !isCommander && !isMaxSkillLevel(pilot);
-  const xpProgress = getXPProgress(pilot);
-  const nextSkillLabel = getNextSkillLabel(pilot.skill);
-  const xpSection = showXPBar
+  // XP pool display (roster wingmen only - not commander, not player pilots)
+  const showXPSection = !isCommander && !isPlayerPilot(pilot);
+  const xpSection = showXPSection
     ? `
       <div class="pilot-xp-section">
         <div class="xp-header">
-          <span class="xp-label">XP to ${nextSkillLabel}</span>
-          <span class="xp-value">${pilot.xp} / ${XP_PER_LEVEL}</span>
-        </div>
-        <div class="xp-bar-container">
-          <div class="xp-bar-fill" style="width: ${xpProgress}%"></div>
+          <span class="xp-label">Available XP</span>
+          <span class="xp-value">${pilot.xp}</span>
         </div>
       </div>
     `
     : '';
 
-  // Elite badge (shown instead of XP bar for elite pilots)
+  // Ship skills section (roster wingmen only - not commander, not player pilots)
+  const showSkillsSection = !isCommander && !isPlayerPilot(pilot);
+  const hostCanUpgrade = isHost();
+  const shipSkillsSection = showSkillsSection
+    ? `
+      <div class="pilot-ship-skills">
+        <div class="ship-skills-header">Ship Skills</div>
+        <div class="ship-skills-grid">
+          ${COMBAT_SHIP_CLASSES.map((shipClass) => {
+            const skill = pilot.shipSkills[shipClass] as SkillLevel | undefined;
+            const upgradeCost = getUpgradeCost(skill ?? null);
+            const canAfford = pilot.xp >= upgradeCost;
+            const isMaxed = skill === 'elite';
+            const showButton = hostCanUpgrade && !isMaxed;
+            const buttonLabel = skill ? 'Upgrade' : 'Unlock';
+            const disabledAttr = canAfford ? '' : 'disabled';
+
+            return `
+              <div class="ship-skill-row">
+                <span class="ship-skill-name">${formatShipClass(shipClass)}</span>
+                ${
+                  skill
+                    ? `
+                  <span class="ship-skill-stars">${renderSkillStars(skill)}</span>
+                  <span class="ship-skill-label">${skill}</span>
+                `
+                    : `
+                  <span class="ship-skill-untrained">Not Trained</span>
+                `
+                }
+                ${
+                  showButton
+                    ? `
+                  <button class="btn btn-small btn-upgrade-skill ${canAfford ? '' : 'btn-disabled'}"
+                          data-pilot-id="${pilot.id}"
+                          data-ship-class="${shipClass}"
+                          ${disabledAttr}>
+                    ${buttonLabel} (${upgradeCost} XP)
+                  </button>
+                `
+                    : ''
+                }
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `
+    : '';
+
+  // Commander badge (shown for commander only)
+  const commanderBadge = isCommander
+    ? `
+      <div class="pilot-commander-badge">
+        <span class="commander-icon">★</span>
+        <span class="commander-text">Commander</span>
+        <div class="commander-note">Ace on all ships • No salary</div>
+      </div>
+    `
+    : '';
+
+  // Player badge (shown for human-controlled player pilots)
+  const playerBadge = isPlayerControlled
+    ? `
+      <div class="pilot-player-badge">
+        <span class="player-icon">●</span>
+        <span class="player-text">Player</span>
+        <div class="player-note">Human-controlled • No salary</div>
+      </div>
+    `
+    : '';
+
+  // Elite badge (shown if pilot has any elite skills)
+  const hasEliteSkill = Object.values(pilot.shipSkills).includes('elite');
   const eliteBadge =
-    !isCommander && isMaxSkillLevel(pilot)
+    !isCommander && hasEliteSkill
       ? `
       <div class="pilot-elite-badge">
         <span class="elite-icon">★</span>
-        <span class="elite-text">Elite - Max Rank</span>
+        <span class="elite-text">Elite Pilot</span>
       </div>
     `
       : '';
@@ -202,6 +295,20 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
       `
       : '';
 
+  // Dismiss button (host only, not for commander or player pilots)
+  const canDismiss = !isCommander && !isPlayerPilot(pilot) && isHost();
+  const dismissSection = canDismiss
+    ? `
+        <div class="pilot-dismiss-section">
+          <button class="btn btn-danger btn-dismiss-pilot"
+                  data-pilot-id="${pilot.id}"
+                  data-pilot-name="${pilot.name}">
+            Dismiss Pilot
+          </button>
+        </div>
+      `
+    : '';
+
   return `
     <div class="pilot-viewer">
       <div class="pilot-viewer-header">
@@ -211,7 +318,10 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
         </div>
       </div>
 
+      ${commanderBadge}
+      ${playerBadge}
       ${xpSection}
+      ${shipSkillsSection}
       ${eliteBadge}
       ${injuryBanner}
       ${closeCallBanner}
@@ -251,6 +361,7 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
       ${shipOptions}
       ${storedShipOptions}
       ${noShipsMessage}
+      ${dismissSection}
     </div>
   `;
 }

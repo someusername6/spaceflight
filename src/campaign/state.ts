@@ -63,12 +63,26 @@ export function createShipFromArchetype(
   };
 }
 
-/** Create a pilot with default stats */
-function createPilot(id: string, name: string, skill: Pilot['skill']): Pilot {
+/**
+ * Create a pilot with default stats.
+ * @param shipClass - Ship class the pilot is trained on (null for commander who can fly all)
+ * @param skill - Skill level for that ship class
+ */
+function createPilot(
+  id: string,
+  name: string,
+  shipClass: string | null,
+  skill: Pilot['shipSkills'][string],
+): Pilot {
+  // Commander has empty shipSkills (handled specially via commanderId)
+  // Regular pilots have one trained ship
+  const shipSkills: Pilot['shipSkills'] =
+    shipClass && skill ? { [shipClass]: skill } : {};
+
   return {
     id,
     name,
-    skill,
+    shipSkills,
     kills: 0,
     assists: 0,
     missionsFlown: 0,
@@ -106,10 +120,32 @@ export function createNewCampaign(
   };
 
   // Create all pilots (commander + wingmen)
-  const commander = createPilot(genId('pilot'), settings.commanderName, 'ace');
-  const wingman1Pilot = createPilot(genId('pilot'), 'Viper', 'regular');
-  const wingman2Pilot = createPilot(genId('pilot'), 'Ghost', 'regular');
-  const wingman3Pilot = createPilot(genId('pilot'), 'Shadow', 'regular');
+  // Commander has null shipClass - they can fly any ship at ace level (via commanderId)
+  const commander = createPilot(
+    genId('pilot'),
+    settings.commanderName,
+    null,
+    'ace',
+  );
+  // Wingmen start with fighter skill at regular level
+  const wingman1Pilot = createPilot(
+    genId('pilot'),
+    'Viper',
+    'fighter',
+    'regular',
+  );
+  const wingman2Pilot = createPilot(
+    genId('pilot'),
+    'Ghost',
+    'fighter',
+    'regular',
+  );
+  const wingman3Pilot = createPilot(
+    genId('pilot'),
+    'Shadow',
+    'fighter',
+    'regular',
+  );
   const allPilots = [commander, wingman1Pilot, wingman2Pilot, wingman3Pilot];
 
   // Create ships with assigned pilots

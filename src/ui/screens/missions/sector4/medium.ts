@@ -33,7 +33,7 @@ export const SECTOR_4_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 4610,
+    reward: 5360,
   },
   {
     id: 's4-spooky',
@@ -72,7 +72,7 @@ export const SECTOR_4_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 4649,
+    reward: 5399,
   },
   {
     id: 's4-brothers-in-arms',
@@ -107,7 +107,7 @@ export const SECTOR_4_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 4698,
+    reward: 5448,
   },
   {
     id: 's4-b-52s',
@@ -143,7 +143,7 @@ export const SECTOR_4_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 4892,
+    reward: 5642,
   },
   {
     id: 's4-clash-of-the-titans',
@@ -181,7 +181,7 @@ export const SECTOR_4_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 6121,
+    reward: 6871,
   },
   {
     id: 's4-rock-you-like-a-hurricane',
@@ -221,6 +221,6 @@ export const SECTOR_4_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 7155,
+    reward: 7905,
   },
 ];

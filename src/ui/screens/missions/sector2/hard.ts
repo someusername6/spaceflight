@@ -29,7 +29,7 @@ export const SECTOR_2_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3845,
+    reward: 4145,
   },
   {
     id: 's2-blinded-by-the-light',
@@ -68,7 +68,7 @@ export const SECTOR_2_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 4306,
+    reward: 4606,
   },
   {
     id: 's2-laser-floyd',
@@ -106,7 +106,7 @@ export const SECTOR_2_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 4363,
+    reward: 4663,
   },
   {
     id: 's2-the-predator-polka',
@@ -132,7 +132,7 @@ export const SECTOR_2_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 4420,
+    reward: 4720,
   },
   {
     id: 's2-buzz-aldrin',
@@ -158,6 +158,6 @@ export const SECTOR_2_HARD: Contract[] = [
         delay: [10, 15],
       },
     ],
-    reward: 4480,
+    reward: 4780,
   },
 ];

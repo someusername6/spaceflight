@@ -57,7 +57,7 @@ export const SECTOR_2_STATION_DEFENSE: Contract[] = [
         { archetype: 'interceptor', skill: 'regular', count: 1 },
       ],
     },
-    reward: 1846,
+    reward: 2146,
   },
   {
     id: 's2-tinderbox',
@@ -110,7 +110,7 @@ export const SECTOR_2_STATION_DEFENSE: Contract[] = [
         { archetype: 'defender', skill: 'regular', count: 1 },
       ],
     },
-    reward: 3314,
+    reward: 3614,
   },
   {
     id: 's2-blood-money',
@@ -164,6 +164,6 @@ export const SECTOR_2_STATION_DEFENSE: Contract[] = [
         { archetype: 'defender', skill: 'regular', count: 1 },
       ],
     },
-    reward: 4423,
+    reward: 4723,
   },
 ];

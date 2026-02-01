@@ -39,7 +39,7 @@ export const SECTOR_3_ESCORT: Contract[] = [
       initialSpawnCount: 4,
       spawnBatchSize: 1,
     },
-    reward: 4742,
+    reward: 5342,
   },
   {
     id: 's3-rockets-red-glare',
@@ -65,7 +65,7 @@ export const SECTOR_3_ESCORT: Contract[] = [
       initialSpawnCount: 3,
       spawnBatchSize: 1,
     },
-    reward: 8537,
+    reward: 9137,
   },
   {
     id: 's3-phantom-menace',
@@ -93,6 +93,6 @@ export const SECTOR_3_ESCORT: Contract[] = [
       initialSpawnCount: 3,
       spawnBatchSize: 1,
     },
-    reward: 13903,
+    reward: 14503,
   },
 ];

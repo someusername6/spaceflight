@@ -326,3 +326,4 @@ describe('Campaign Storage: Deletion', () => {
 });
 
 // Checkpoint System and SlotArray Reconstitution tests moved to test-checkpoint-storage.mjs
+// Legacy migration tests moved to test-legacy-migration-integration.mjs

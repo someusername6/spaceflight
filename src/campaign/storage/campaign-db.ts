@@ -187,13 +187,14 @@ export async function loadCampaign(
 
   if (!stored) return null;
 
-  // Version check
-  if (stored.version !== CAMPAIGN_STORAGE_VERSION) {
+  // Version check - support migration from older versions
+  if (stored.version > CAMPAIGN_STORAGE_VERSION) {
     logError(
-      `Campaign version ${stored.version} not supported (expected ${CAMPAIGN_STORAGE_VERSION})`,
+      `Campaign version ${stored.version} is newer than supported (max ${CAMPAIGN_STORAGE_VERSION})`,
     );
     return null;
   }
+  // Older versions are migrated in reconstituteCampaignState
 
   // Remember creation time for future saves
   campaignCreatedAtMap.set(slotId, stored.createdAt);

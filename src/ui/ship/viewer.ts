@@ -141,8 +141,14 @@ export function renderShipViewer(
   // Check if this is the commander's ship
   const isCommander = ship.pilot?.id === state.commanderId;
   const pilotName = ship.pilot?.name.toUpperCase() ?? 'NO PILOT';
+  // Get pilot's skill for this specific ship class
+  const shipSkill = ship.pilot?.shipSkills[ship.shipClass];
   const pilotSkill =
-    isCommander || !ship.pilot ? '' : ` • ${ship.pilot.skill.toUpperCase()}`;
+    isCommander || !ship.pilot
+      ? ''
+      : shipSkill
+        ? ` • ${shipSkill.toUpperCase()}`
+        : '';
 
   return `
     <div class="ship-viewer schematic">

@@ -32,7 +32,7 @@ export const SECTOR_5_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 6102,
+    reward: 6852,
   },
   {
     id: 's5-aces-wild',
@@ -59,7 +59,7 @@ export const SECTOR_5_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 6271,
+    reward: 7021,
   },
   {
     id: 's5-where-eagles-dare',
@@ -89,7 +89,7 @@ export const SECTOR_5_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 6351,
+    reward: 7101,
   },
   {
     id: 's5-blackout',
@@ -119,6 +119,6 @@ export const SECTOR_5_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 7091,
+    reward: 7841,
   },
 ];

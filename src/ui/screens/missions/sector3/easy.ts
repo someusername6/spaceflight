@@ -30,7 +30,7 @@ export const SECTOR_3_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 2909,
+    reward: 3509,
   },
   {
     id: 's3-rocket-man',
@@ -57,7 +57,7 @@ export const SECTOR_3_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3043,
+    reward: 3643,
   },
   {
     id: 's3-ride-the-lightning',
@@ -96,7 +96,7 @@ export const SECTOR_3_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3389,
+    reward: 3989,
   },
   {
     id: 's3-danger-zone',
@@ -122,7 +122,7 @@ export const SECTOR_3_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3406,
+    reward: 4006,
   },
   {
     id: 's3-light-my-fire',
@@ -148,7 +148,7 @@ export const SECTOR_3_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3719,
+    reward: 4319,
   },
   {
     id: 's3-war-pigs',
@@ -174,6 +174,6 @@ export const SECTOR_3_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3810,
+    reward: 4410,
   },
 ];

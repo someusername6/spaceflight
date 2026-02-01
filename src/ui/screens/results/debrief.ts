@@ -123,7 +123,12 @@ function renderPilotCard(pilot: PilotDebriefData): string {
   } else if (pilot.isEjected) {
     statusClass = 'ejected';
     statusText = 'EJECTED';
-    statusSubtext = pilot.isRetiring ? 'Retiring' : 'Injured';
+    // Show injury status or safe ejection
+    if (pilot.injuryMissions > 0) {
+      statusSubtext = `Injured ${pilot.injuryMissions} mission${pilot.injuryMissions > 1 ? 's' : ''}`;
+    } else {
+      statusSubtext = 'Safe';
+    }
   } else {
     statusClass = 'survived';
     statusText = 'Survived';

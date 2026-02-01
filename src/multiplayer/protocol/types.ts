@@ -243,6 +243,51 @@ export interface ResupplyAllAction {
   commanderId: string;
 }
 
+/**
+ * Dismiss pilot from roster.
+ *
+ * Removes a pilot from the campaign roster permanently. If the pilot is
+ * assigned to a ship, they are automatically unassigned first and the ship
+ * is moved to storage. Cannot dismiss the commander.
+ *
+ * @mp-operation dismissPilot
+ * @mp-actor host
+ * @mp-permission host-only (guests cannot dismiss pilots)
+ * @mp-flow ActionRequest → host validates host-only → processAction → CampaignSync broadcast
+ * @mp-ui Roster: Dismiss button (host only, not for commander)
+ * @mp-tested unit/test-pilot-dismissal.mjs
+ * @mp-status implemented
+ */
+export interface DismissPilotAction {
+  type: 'dismissPilot';
+  /** ID of the pilot to dismiss (cannot be commanderId) */
+  pilotId: string;
+}
+
+/**
+ * Spend XP to unlock/upgrade a ship skill for a pilot.
+ *
+ * Deducts XP from the pilot's pool and either unlocks a new ship class
+ * at rookie level or upgrades an existing skill to the next level.
+ * Cost varies by operation: unlock=25, rookie→regular=50, regular→veteran=100,
+ * veteran→ace=200, ace→elite=400.
+ *
+ * @mp-operation spendXP
+ * @mp-actor host
+ * @mp-permission host-only (guests cannot spend XP)
+ * @mp-flow ActionRequest → host validates host-only → processAction → CampaignSync broadcast
+ * @mp-ui Pilot viewer: Upgrade/Unlock buttons (host only)
+ * @mp-tested unit/test-pilot-skills.mjs
+ * @mp-status implemented
+ */
+export interface SpendXPAction {
+  type: 'spendXP';
+  /** ID of the pilot spending XP (cannot be commander) */
+  pilotId: string;
+  /** Ship class to unlock or upgrade skill for */
+  shipClass: string;
+}
+
 /** Union of all action request types */
 export type ActionRequestData =
   | BuyAction
@@ -253,7 +298,9 @@ export type ActionRequestData =
   | ResupplyAction
   | AssignPilotAction
   | DeployStoredShipAction
-  | ResupplyAllAction;
+  | ResupplyAllAction
+  | DismissPilotAction
+  | SpendXPAction;
 
 // =============================================================================
 // Mission Outcome Types

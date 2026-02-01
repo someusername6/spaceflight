@@ -115,7 +115,11 @@ describe('Save/Load: Data Structure Round-Trip', () => {
           { weaponType: 'seeker', bankSize: 2, count: 8, maxCount: 12 },
           null,
         ]),
-        pilot: { id: 'pilot-1', name: 'Test Pilot', skill: 'regular' },
+        pilot: {
+          id: 'pilot-1',
+          name: 'Test Pilot',
+          shipSkills: { fighter: 'regular' },
+        },
       };
 
       // Serialize (simulates saveGame)
@@ -320,3 +324,5 @@ describe('Save/Load: Full Campaign Round-Trip', () => {
     );
   });
 });
+
+// Legacy migration tests moved to test-legacy-migration-integration.mjs

@@ -16,40 +16,21 @@ import type {
 } from '../campaign/types';
 import type { LobbyPlayer } from './lobby-state';
 
+// Re-export types for backward compatibility
+export type {
+  ShipAssignmentError,
+  ShipAssignmentFailure,
+  ShipAssignmentResult,
+  ShipAssignmentSuccess,
+} from './ship-assignment-types';
+
+import type { ShipAssignmentResult } from './ship-assignment-types';
+
 // Re-export entity conversion functions for backward compatibility
 export {
   convertPlayerShipToAIMission,
   findPlayerShipEntity,
 } from './ship-entity-conversion';
-
-// =============================================================================
-// Types
-// =============================================================================
-
-/** Error codes for ship assignment failures */
-export type ShipAssignmentError =
-  | 'ship_not_found'
-  | 'version_mismatch'
-  | 'ship_occupied';
-
-/** Successful ship assignment result */
-export interface ShipAssignmentSuccess {
-  success: true;
-  /** Updated campaign state */
-  newState: CampaignState;
-}
-
-/** Failed ship assignment result */
-export interface ShipAssignmentFailure {
-  success: false;
-  /** Error code describing why assignment failed */
-  error: ShipAssignmentError;
-}
-
-/** Result of a ship assignment operation (discriminated union) */
-export type ShipAssignmentResult =
-  | ShipAssignmentSuccess
-  | ShipAssignmentFailure;
 
 // =============================================================================
 // Player Pilot Creation
@@ -62,13 +43,15 @@ function generatePlayerPilotId(playerId: string): string {
 
 /**
  * Create a new pilot for a multiplayer player.
- * Player pilots have skill: 'player' which displays as "Player" in the UI.
+ * Player pilots have empty shipSkills - they're human-controlled so AI skill doesn't apply.
+ * Player pilots are identified by their ID prefix 'mp-pilot-'.
  */
 export function createPlayerPilot(playerId: string, callsign: string): Pilot {
   return {
     id: generatePlayerPilotId(playerId),
     name: callsign,
-    skill: 'player',
+    // Empty shipSkills - human players don't use AI skill levels
+    shipSkills: {},
     // Fresh stats
     kills: 0,
     assists: 0,
@@ -84,9 +67,20 @@ export function createPlayerPilot(playerId: string, callsign: string): Pilot {
 
 /**
  * Check if a pilot is a player-controlled pilot.
+ * Player pilots are identified by their ID prefix 'mp-pilot-'.
  */
 export function isPlayerPilot(pilot: Pilot): boolean {
-  return pilot.skill === 'player';
+  return pilot.id.startsWith('mp-pilot-');
+}
+
+/**
+ * Check if a player pilot is currently human-controlled.
+ * Player pilots with empty shipSkills are human-controlled.
+ * Player pilots with populated shipSkills have been converted to AI.
+ */
+export function isHumanControlled(pilot: Pilot): boolean {
+  if (!isPlayerPilot(pilot)) return false;
+  return Object.keys(pilot.shipSkills).length === 0;
 }
 
 /**
@@ -248,6 +242,7 @@ export function removePlayerPilot(
 /**
  * Convert a player pilot to an AI pilot.
  * Used when a player disconnects but their ship should remain active.
+ * Populates shipSkills with the AI skill for the ship class they're flying.
  *
  * @param state - Current campaign state
  * @param playerId - Player's peer ID
@@ -261,23 +256,29 @@ export function convertPlayerPilotToAI(
 ): CampaignState {
   const pilotId = generatePlayerPilotId(playerId);
 
-  // Update pilot skill
-  const pilots = state.pilots.map((p) => {
-    if (p.id === pilotId) {
-      return { ...p, skill: aiSkill };
-    }
-    return p;
-  });
+  // Find the ship this pilot is assigned to
+  const ship = state.ships.find((s) => s.pilot?.id === pilotId);
+  if (!ship) return state;
 
-  // Update pilot in ship if assigned
+  // Update pilot's shipSkills for this ship class
+  const updatePilot = (p: Pilot): Pilot => {
+    if (p.id !== pilotId) return p;
+    return {
+      ...p,
+      shipSkills: {
+        ...p.shipSkills,
+        [ship.shipClass]: aiSkill,
+      },
+    };
+  };
+
+  // Update pilots array
+  const pilots = state.pilots.map(updatePilot);
+
+  // Update pilot in ship (denormalized data)
   const ships = state.ships.map((s) => {
-    if (s.pilot?.id === pilotId) {
-      return {
-        ...s,
-        pilot: { ...s.pilot, skill: aiSkill },
-      };
-    }
-    return s;
+    if (s.pilot?.id !== pilotId) return s;
+    return { ...s, pilot: updatePilot(s.pilot) };
   });
 
   return { ...state, ships, pilots };

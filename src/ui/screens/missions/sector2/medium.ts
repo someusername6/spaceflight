@@ -30,7 +30,7 @@ export const SECTOR_2_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 1973,
+    reward: 2273,
   },
   {
     id: 's2-dart-side-of-the-moon',
@@ -57,7 +57,7 @@ export const SECTOR_2_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3228,
+    reward: 3528,
   },
   {
     id: 's2-heavy-metal-queen',
@@ -83,7 +83,7 @@ export const SECTOR_2_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3350,
+    reward: 3650,
   },
   {
     id: 's2-backup-singers',
@@ -110,7 +110,7 @@ export const SECTOR_2_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3423,
+    reward: 3723,
   },
   {
     id: 's2-fangs-for-the-memories',
@@ -136,6 +136,6 @@ export const SECTOR_2_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3747,
+    reward: 4047,
   },
 ];

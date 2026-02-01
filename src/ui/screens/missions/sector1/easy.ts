@@ -30,7 +30,7 @@ export const SECTOR_1_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 1763,
+    reward: 2063,
   },
   {
     id: 's1-stray-scout-strut',
@@ -56,7 +56,7 @@ export const SECTOR_1_EASY: Contract[] = [
         delay: [4, 6],
       },
     ],
-    reward: 1777,
+    reward: 2077,
   },
   {
     id: 's1-ion-maiden',
@@ -82,7 +82,7 @@ export const SECTOR_1_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 2076,
+    reward: 2376,
   },
   {
     id: 's1-praying-for-time',
@@ -108,6 +108,6 @@ export const SECTOR_1_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 2501,
+    reward: 2801,
   },
 ];

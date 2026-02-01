@@ -31,6 +31,7 @@ import { refreshRecruits } from '../recruits';
 import { applySalvage, calculateSalvage } from '../salvage';
 import { extractAmmoFromWorld } from '../ship-spawning';
 import { applyAmmoUsage, applyMissionResults, isGameOver } from '../state';
+import { calculateMissionSalaries } from '../state-mission';
 import { autoSave, deleteCheckpoint, getActiveSlotId } from '../storage';
 import type { Contract } from '../types';
 import {
@@ -132,13 +133,20 @@ export function createMissionEndExecutor(
       ? Math.round(contract.reward * rewardMultiplier)
       : 0;
 
-    // Apply mission results to campaign state
+    // Calculate pilot salaries (before applying results to get correct ship state)
+    const salaryInfo = calculateMissionSalaries(
+      screenManager.campaignState,
+      shipsLost,
+    );
+
+    // Apply mission results to campaign state (including salary deduction)
     let newState = applyMissionResults(
       screenManager.campaignState,
       missionEndState.victory,
       baseReward,
       shipsLost,
       missionEndState.victory ? contract.id : undefined,
+      salaryInfo.total,
     );
 
     // Apply ammo usage to campaign state (persist remaining ammo)
@@ -216,6 +224,7 @@ export function createMissionEndExecutor(
         contract,
         setupContractsScreen,
         salvageResult,
+        salaryInfo,
       );
     } else {
       // Singleplayer path: show normal results
@@ -232,6 +241,7 @@ export function createMissionEndExecutor(
         missionEndState.ambushResults,
         missionEndState.stationDefenseResults,
         missionEndState.attackStationResults,
+        salaryInfo,
       );
     }
   };

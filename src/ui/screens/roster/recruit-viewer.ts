@@ -9,6 +9,11 @@ import type {
 } from '../../../campaign/types';
 import { isHost } from '../../../multiplayer/context-permissions';
 
+/** Format ship class name for display */
+function formatShipClass(shipClass: string): string {
+  return shipClass.charAt(0).toUpperCase() + shipClass.slice(1);
+}
+
 /** Get skill description for display */
 function getSkillDescription(skill: SkillLevel): string {
   switch (skill) {
@@ -55,6 +60,17 @@ export function renderRecruitViewer(
         <div class="recruit-description-text">${getSkillDescription(recruit.skill)}</div>
       </div>
 
+      <div class="recruit-training-section">
+        <div class="recruit-training-row">
+          <span class="training-label">Trained on</span>
+          <span class="training-value">${formatShipClass(recruit.startingShip)}</span>
+        </div>
+        <div class="recruit-training-row">
+          <span class="training-label">Bonus XP</span>
+          <span class="training-value xp-bonus">+${recruit.bonusXP}</span>
+        </div>
+      </div>
+
       <div class="recruit-hire-section">
         <div class="recruit-price-large${canAfford ? '' : ' expensive'}">
           ${recruit.price.toLocaleString()}<span class="currency">cr</span>
@@ -89,11 +105,11 @@ export function renderRecruitCard(
       role="option"
       aria-selected="${isSelected}"
       tabindex="0"
-      aria-label="${recruit.name}, ${recruit.skill} pilot, ${recruit.price} credits${canAfford ? '' : ', cannot afford'}"
+      aria-label="${recruit.name}, ${recruit.skill} ${recruit.startingShip} pilot, ${recruit.price} credits${canAfford ? '' : ', cannot afford'}"
     >
       <div class="roster-pilot-info">
         <div class="roster-pilot-name">${recruit.name}</div>
-        <div class="roster-pilot-status ${skillClass}">${recruit.skill}</div>
+        <div class="roster-pilot-status ${skillClass}">${recruit.skill} ${formatShipClass(recruit.startingShip)}</div>
       </div>
       <div class="recruit-price">${recruit.price} cr</div>
     </article>

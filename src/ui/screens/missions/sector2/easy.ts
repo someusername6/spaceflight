@@ -30,7 +30,7 @@ export const SECTOR_2_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 2436,
+    reward: 2736,
   },
   {
     id: 's2-borderline',
@@ -57,7 +57,7 @@ export const SECTOR_2_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 2807,
+    reward: 3107,
   },
   {
     id: 's2-running-down-a-dream',
@@ -83,7 +83,7 @@ export const SECTOR_2_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 2836,
+    reward: 3136,
   },
   {
     id: 's2-starburst',
@@ -110,7 +110,7 @@ export const SECTOR_2_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 2977,
+    reward: 3277,
   },
   {
     id: 's2-dust-in-the-wind',
@@ -137,7 +137,7 @@ export const SECTOR_2_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3247,
+    reward: 3547,
   },
   {
     id: 's2-locust-hocus-pocus',
@@ -164,6 +164,6 @@ export const SECTOR_2_EASY: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3366,
+    reward: 3666,
   },
 ];

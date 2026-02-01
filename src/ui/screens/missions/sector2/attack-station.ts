@@ -88,7 +88,7 @@ export const SECTOR_2_ATTACK_STATION: Contract[] = [
       ],
       stationAttackDpsThreshold: 260,
     },
-    reward: 6427,
+    reward: 6727,
   },
   {
     id: 's2-take-the-money',
@@ -169,7 +169,7 @@ export const SECTOR_2_ATTACK_STATION: Contract[] = [
       ],
       stationAttackDpsThreshold: 260,
     },
-    reward: 7000,
+    reward: 7300,
   },
   {
     id: 's2-burning-down-the-house',
@@ -243,6 +243,6 @@ export const SECTOR_2_ATTACK_STATION: Contract[] = [
       ],
       stationAttackDpsThreshold: 260,
     },
-    reward: 7648,
+    reward: 7948,
   },
 ];

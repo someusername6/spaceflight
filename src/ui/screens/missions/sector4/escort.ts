@@ -39,7 +39,7 @@ export const SECTOR_4_ESCORT: Contract[] = [
       initialSpawnCount: 3,
       spawnBatchSize: 1,
     },
-    reward: 5150,
+    reward: 5900,
   },
   {
     id: 's4-crosshairs',
@@ -65,7 +65,7 @@ export const SECTOR_4_ESCORT: Contract[] = [
       initialSpawnCount: 3,
       spawnBatchSize: 1,
     },
-    reward: 14502,
+    reward: 15252,
   },
   {
     id: 's4-ghost-protocol',
@@ -92,6 +92,6 @@ export const SECTOR_4_ESCORT: Contract[] = [
       initialSpawnCount: 3,
       spawnBatchSize: 1,
     },
-    reward: 18570,
+    reward: 19320,
   },
 ];

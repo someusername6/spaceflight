@@ -29,7 +29,7 @@ export const SECTOR_1_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3238,
+    reward: 3538,
   },
   {
     id: 's1-sniper-blues',
@@ -55,7 +55,7 @@ export const SECTOR_1_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3281,
+    reward: 3581,
   },
   {
     id: 's1-medley-of-mayhem',
@@ -82,7 +82,7 @@ export const SECTOR_1_HARD: Contract[] = [
         delay: [6, 10],
       },
     ],
-    reward: 3286,
+    reward: 3586,
   },
   {
     id: 's1-hunting-high-and-low',
@@ -108,7 +108,7 @@ export const SECTOR_1_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3419,
+    reward: 3719,
   },
   {
     id: 's1-hold-the-line',
@@ -134,7 +134,7 @@ export const SECTOR_1_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3649,
+    reward: 3949,
   },
   {
     id: 's1-flight-of-the-bumblebee',
@@ -160,6 +160,6 @@ export const SECTOR_1_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 3729,
+    reward: 4029,
   },
 ];

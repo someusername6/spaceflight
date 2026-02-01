@@ -7,8 +7,12 @@
 
 import type { CampaignState } from '../types';
 
-/** Current storage format version */
-export const CAMPAIGN_STORAGE_VERSION = 1;
+/**
+ * Current storage format version
+ * - v1: Initial version
+ * - v2: Pilot ship-specific skills migration (skill → shipSkills)
+ */
+export const CAMPAIGN_STORAGE_VERSION = 2;
 
 /** Valid save slot IDs (1, 2, or 3) */
 export type SlotId = 1 | 2 | 3;

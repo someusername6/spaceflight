@@ -39,7 +39,7 @@ export const SECTOR_2_ESCORT: Contract[] = [
       initialSpawnCount: 4,
       spawnBatchSize: 1,
     },
-    reward: 2847,
+    reward: 3147,
   },
   {
     id: 's2-death-blossom',
@@ -65,7 +65,7 @@ export const SECTOR_2_ESCORT: Contract[] = [
       initialSpawnCount: 4,
       spawnBatchSize: 1,
     },
-    reward: 10349,
+    reward: 10649,
   },
   {
     id: 's2-slugfest',
@@ -92,6 +92,6 @@ export const SECTOR_2_ESCORT: Contract[] = [
       initialSpawnCount: 3,
       spawnBatchSize: 1,
     },
-    reward: 17258,
+    reward: 17558,
   },
 ];

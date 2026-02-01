@@ -297,7 +297,9 @@ export function spawnWingmanFromCampaign(
   );
 
   // AI setup - default to brawler playstyle for campaign wingmen
-  const profileName: ProfileName = ship.pilot?.skill ?? 'regular';
+  // Get pilot's skill for this specific ship class, default to regular
+  const pilotSkill = ship.pilot?.shipSkills[ship.shipClass];
+  const profileName: ProfileName = pilotSkill ?? 'regular';
   const profile = getProfileForPlaystyle(profileName, 'brawler');
 
   const baseRange = 600; // Default combat range

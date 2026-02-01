@@ -10,11 +10,17 @@ import { createSlotArray } from '../../../../src/campaign/slot-array.ts';
 // Test Fixtures
 // =============================================================================
 
-export function createTestPilot(id, name = 'Test Pilot', skill = 'regular') {
+export function createTestPilot(
+  id,
+  name = 'Test Pilot',
+  skill = 'regular',
+  shipClass = 'fighter',
+) {
   return {
     id,
     name,
-    skill,
+    // Ship-specific skills
+    shipSkills: { [shipClass]: skill },
     kills: 0,
     assists: 0,
     missionsFlown: 0,
@@ -38,8 +44,27 @@ export function createTestShip(id, shipClass, pilot = null) {
 }
 
 export function createTestCampaignState(options = {}) {
-  const commanderPilot = createTestPilot('commander', 'Commander', 'elite');
-  const wingmanPilot = createTestPilot('wingman1', 'Wingman', 'regular');
+  // Commander has empty shipSkills (can fly any ship via commanderId check)
+  const commanderPilot = {
+    id: 'commander',
+    name: 'Commander',
+    shipSkills: {},
+    kills: 0,
+    assists: 0,
+    missionsFlown: 0,
+    missionsWon: 0,
+    damageDealt: 0,
+    damageReceived: 0,
+    ejectionCount: 0,
+    injuredMissionsLeft: 0,
+    xp: 0,
+  };
+  const wingmanPilot = createTestPilot(
+    'wingman1',
+    'Wingman',
+    'regular',
+    'striker',
+  );
 
   const commanderShip = createTestShip('ship1', 'interceptor', commanderPilot);
   const wingmanShip = createTestShip('ship2', 'striker', wingmanPilot);

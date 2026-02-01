@@ -254,6 +254,19 @@ function migrateReplay(replay: AnyReplayData): void {
     if (!replay.metadata.missionType) {
       replay.metadata.missionType = 'elimination';
     }
+    replay.version = 3;
+  }
+
+  // v3 -> v4: Added multiplayer replay support (no migration needed)
+  if (replay.version === 3) {
+    replay.version = 4;
+  }
+
+  // v4 -> v5: Skill capture changed from pilot.skill to pilot.shipSkills[shipClass]
+  // No structural changes - pilotSkill field values remain the same
+  // Old replays with pilotSkill from legacy single-skill pilots still work
+  if (replay.version === 4) {
+    replay.version = 5;
   }
 }
 

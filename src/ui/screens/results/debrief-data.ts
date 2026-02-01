@@ -5,7 +5,7 @@
  * to create debrief cards after a mission.
  */
 
-import { rollForRetirement } from '../../../campaign/ejection';
+import { rollEjectionOutcome } from '../../../campaign/ejection';
 import type { CampaignState } from '../../../campaign/types';
 import type { WeaponStats } from '../../../components/combat-stats';
 import { snapshotStats } from '../../../components/combat-stats';
@@ -21,8 +21,10 @@ export interface PilotDebriefData {
   isKIA: boolean;
   /** Ejected from destroyed ship (wingman only, not commander) */
   isEjected: boolean;
-  /** Retiring due to ejection (probability-based, shown in debrief, removed from roster after) */
+  /** @deprecated Use injuryMissions instead. Kept for backwards compatibility. */
   isRetiring: boolean;
+  /** Number of missions pilot is injured for (0 = safe ejection, >0 = injured) */
+  injuryMissions: number;
   kills: number;
   assists: number;
   damageDealt: number;
@@ -60,7 +62,8 @@ export function collectDebriefData(world: World): MissionDebriefData {
         isPlayer: record.wasPlayer,
         isKIA: true, // Will be updated for wingman ejections
         isEjected: false,
-        isRetiring: false,
+        isRetiring: false, // Deprecated
+        injuryMissions: 0,
         kills: record.stats.kills,
         assists: record.stats.assists,
         damageDealt: record.stats.damageDealt,
@@ -97,7 +100,8 @@ export function collectDebriefData(world: World): MissionDebriefData {
       isPlayer,
       isKIA: false,
       isEjected: false,
-      isRetiring: false,
+      isRetiring: false, // Deprecated
+      injuryMissions: 0,
       kills: snapshot.kills,
       assists: snapshot.assists,
       damageDealt: snapshot.damageDealt,
@@ -177,19 +181,32 @@ export function enhanceDebriefWithEjections(
       return pilotData;
     }
 
-    // Wingman destroyed = ejection - use shared retirement logic
-    const isRetiring = rollForRetirement(
+    // Wingman destroyed = ejection - use shared ejection outcome logic
+    const outcome = rollEjectionOutcome(
       campaignState.seed,
       campaignState.missionCount,
       campaignPilot.id,
       campaignPilot.ejectionCount,
     );
 
+    if (outcome.type === 'kia') {
+      // Ejection resulted in KIA
+      return {
+        ...pilotData,
+        isKIA: true,
+        isEjected: true,
+        isRetiring: true, // Deprecated, kept for backwards compat
+        injuryMissions: 0,
+      };
+    }
+
+    // Safe or injured ejection
     return {
       ...pilotData,
-      isKIA: false, // Not KIA, just ejected
+      isKIA: false,
       isEjected: true,
-      isRetiring,
+      isRetiring: false, // Deprecated
+      injuryMissions: outcome.type === 'injured' ? outcome.missions : 0,
     };
   });
 

@@ -29,7 +29,7 @@ export const SECTOR_5_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 5634,
+    reward: 6384,
   },
   {
     id: 's5-flight-of-the-valkyries',
@@ -64,7 +64,7 @@ export const SECTOR_5_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 5879,
+    reward: 6629,
   },
   {
     id: 's5-nuclear-express',
@@ -103,7 +103,7 @@ export const SECTOR_5_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 6824,
+    reward: 7574,
   },
   {
     id: 's5-another-brick-in-the-wall',
@@ -133,6 +133,6 @@ export const SECTOR_5_MEDIUM: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 7958,
+    reward: 8708,
   },
 ];

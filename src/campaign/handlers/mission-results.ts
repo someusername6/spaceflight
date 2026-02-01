@@ -23,6 +23,7 @@ import {
   type EscortResultsDisplay,
   type StationDefenseResultsDisplay,
 } from '../../ui/screens/results/results';
+import type { SalaryInfo } from '../../ui/screens/results/results-rewards';
 import { resetTitleScreen } from '../../ui/screens/title';
 import { startCampaignGameplay } from '../controller';
 import type { CampaignController } from '../controller-types';
@@ -58,6 +59,7 @@ import { setupTitleScreen } from './menu-handlers';
  * @param ambushResults - Convoy results for ambush missions
  * @param stationDefenseResults - Station defense results
  * @param attackStationResults - Attack station results
+ * @param salaryInfo - Pilot salary breakdown
  */
 export function showResults(
   controller: CampaignController,
@@ -71,6 +73,7 @@ export function showResults(
   ambushResults?: AmbushResultsDisplay,
   stationDefenseResults?: StationDefenseResultsDisplay,
   attackStationResults?: AttackStationResultsDisplay,
+  salaryInfo?: SalaryInfo,
 ): void {
   const { screenManager } = controller;
   const resultsElement = getScreenElement(screenManager, Screen.RESULTS);
@@ -93,6 +96,8 @@ export function showResults(
     ambushResults,
     stationDefenseResults,
     attackStationResults,
+    undefined, // multiplayerOptions
+    salaryInfo,
   );
 }
 
@@ -115,6 +120,7 @@ export function showMultiplayerResults(
   ambushResults?: AmbushResultsDisplay,
   stationDefenseResults?: StationDefenseResultsDisplay,
   attackStationResults?: AttackStationResultsDisplay,
+  salaryInfo?: SalaryInfo,
 ): void {
   const { screenManager } = controller;
   const resultsElement = getScreenElement(screenManager, Screen.RESULTS);
@@ -134,6 +140,7 @@ export function showMultiplayerResults(
       ambushResults,
       stationDefenseResults,
       attackStationResults,
+      salaryInfo,
     );
     return;
   }
@@ -232,6 +239,7 @@ export function showMultiplayerResults(
       chatMessages: lobbyCtx.lobbyState.chatMessages,
       onSendChat,
     },
+    salaryInfo,
   );
   const resultsInner = resultsElement.querySelector('.results-screen');
   console.log('[showMultiplayerResults] Results UI created');

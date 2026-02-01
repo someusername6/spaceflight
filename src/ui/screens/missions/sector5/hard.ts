@@ -32,7 +32,7 @@ export const SECTOR_5_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 9716,
+    reward: 10466,
   },
   {
     id: 's5-the-end',
@@ -61,7 +61,7 @@ export const SECTOR_5_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 10148,
+    reward: 10898,
   },
   {
     id: 's5-ghost-town',
@@ -93,7 +93,7 @@ export const SECTOR_5_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 11151,
+    reward: 11901,
   },
   {
     id: 's5-wont-back-down',
@@ -120,7 +120,7 @@ export const SECTOR_5_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 11642,
+    reward: 12392,
   },
   {
     id: 's5-dont-stop-me-now',
@@ -147,6 +147,6 @@ export const SECTOR_5_HARD: Contract[] = [
         delay: [8, 12],
       },
     ],
-    reward: 12061,
+    reward: 12811,
   },
 ];

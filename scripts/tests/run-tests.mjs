@@ -61,8 +61,16 @@ const QUICK_TESTS = [
   'campaign/test-resupply-needs.mjs',
   'campaign/test-resupply-ship.mjs',
   'campaign/test-resupply-estimate.mjs',
-  'campaign/test-ejection.mjs',
+  'campaign/test-ejection-outcomes.mjs',
+  'campaign/test-injury-system.mjs',
+  'campaign/test-pilot-dismissal.mjs',
+  'campaign/test-pilot-salaries.mjs',
+  'campaign/test-pilot-skills.mjs',
+  'campaign/test-pilot-assignment-validation.mjs',
+  'campaign/test-commander-special.mjs',
   'campaign/test-pilot-xp.mjs',
+  'campaign/test-pilot-migration.mjs',
+  'campaign/test-legacy-migration-integration.mjs',
 
   // Replay system tests
   'replay/test-compression.mjs',
@@ -105,6 +113,7 @@ const QUICK_TESTS = [
   'multiplayer/unit/test-replay-wingmen.mjs',
   'multiplayer/unit/test-replay-stats.mjs',
   'multiplayer/unit/test-replay-playback.mjs',
+  'multiplayer/unit/test-player-pilots.mjs',
 ];
 
 // Balance/simulation tests - run multiple fights, take longer

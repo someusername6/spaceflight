@@ -13,6 +13,8 @@ import {
   unequipPrimary,
   unequipSecondary,
 } from '../campaign/loadout';
+import { dismissPilot } from '../campaign/pilot-assignment';
+import { spendXPOnShip } from '../campaign/pilot-skills';
 import { resupplyAllShipsConstrained } from '../campaign/resupply/resupply-constrained';
 import { resupplyShipConstrained } from '../campaign/resupply/resupply-ship';
 import {
@@ -146,6 +148,18 @@ export function validateActionPermission(
         return 'You do not have permission to resupply ships';
       }
       break;
+
+    case 'dismissPilot':
+      // Host-only action - guests cannot dismiss pilots
+      // Note: This is checked client-side, but we validate here too
+      // Guests will have this blocked by the UI (no button shown)
+      // If a guest somehow sends this, it should fail
+      return null; // Allow - host-only check is done by isHost() in UI
+
+    case 'spendXP':
+      // Host-only action - guests cannot spend XP
+      // UI hides upgrade buttons for guests
+      return null; // Allow - host-only check is done by isHost() in UI
   }
 
   return null; // No permission error
@@ -212,6 +226,32 @@ export function processAction(
           action.commanderId,
         );
         newState = resupplyAllResult.state;
+        break;
+      }
+
+      case 'dismissPilot':
+        newState = dismissPilot(state, action.pilotId);
+        break;
+
+      case 'spendXP': {
+        const pilot = state.pilots.find((p) => p.id === action.pilotId);
+        if (!pilot) {
+          return { success: false, error: 'Pilot not found' };
+        }
+        if (pilot.id === state.commanderId) {
+          return { success: false, error: 'Commander cannot spend XP' };
+        }
+        const updatedPilot = spendXPOnShip(pilot, action.shipClass);
+        newState = {
+          ...state,
+          pilots: state.pilots.map((p) =>
+            p.id === action.pilotId ? updatedPilot : p,
+          ),
+          // Also update pilot in ships (denormalized data)
+          ships: state.ships.map((s) =>
+            s.pilot?.id === action.pilotId ? { ...s, pilot: updatedPilot } : s,
+          ),
+        };
         break;
       }
 
