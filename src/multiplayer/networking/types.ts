@@ -145,10 +145,31 @@ export interface NetworkingConfig {
   webrtc: WebRTCMeshConfig;
 }
 
+/**
+ * Get the signaling server URL.
+ * Uses VITE_SIGNALING_URL env var, falling back to production server.
+ * For local development, set VITE_SIGNALING_URL in .env.development
+ */
+function getSignalingServerUrl(): string {
+  // Environment variable takes precedence (set in .env.development for local testing)
+  // Note: import.meta.env is provided by Vite; may be undefined in Node.js tests
+  const envUrl =
+    typeof import.meta.env !== 'undefined'
+      ? import.meta.env.VITE_SIGNALING_URL
+      : undefined;
+
+  if (envUrl) {
+    return envUrl;
+  }
+
+  // Production default (TODO: replace with actual production server URL)
+  return 'https://spaceflight-signaling.example.com';
+}
+
 /** Default configuration */
 export const DEFAULT_NETWORKING_CONFIG: NetworkingConfig = {
   signaling: {
-    serverUrl: 'http://localhost:3001',
+    serverUrl: getSignalingServerUrl(),
     gameVersion: __APP_VERSION__,
     pollIntervalMs: 100,
   },

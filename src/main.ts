@@ -6,10 +6,6 @@
 import './ui/styles/index.css';
 
 import { startCampaign } from './campaign/controller';
-import { installTestUtilities } from './multiplayer/test-utilities';
-
-// Install test utilities for E2E tests
-installTestUtilities();
 
 /** Maximum time to wait for fonts before proceeding with fallbacks */
 const FONT_LOAD_TIMEOUT_MS = 3000;
@@ -39,6 +35,19 @@ async function waitForFonts(): Promise<void> {
 
 /** Initialize and start the campaign */
 async function main(): Promise<void> {
+  // Install test utilities in dev mode (before app starts)
+  // Dynamic import ensures this is tree-shaken from production builds
+  if (import.meta.env.DEV) {
+    try {
+      const { installTestUtilities } = await import(
+        './multiplayer/test-utilities'
+      );
+      installTestUtilities();
+    } catch (e) {
+      console.error('Failed to load test utilities:', e);
+    }
+  }
+
   // Get container
   const container = document.getElementById('game');
   if (!container) {

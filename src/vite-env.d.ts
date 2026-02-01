@@ -8,6 +8,21 @@
 declare const __APP_VERSION__: string;
 
 /**
+ * Vite Environment Variables
+ *
+ * Custom environment variables must be prefixed with VITE_ to be exposed.
+ * See: https://vitejs.dev/guide/env-and-mode.html
+ */
+interface ImportMetaEnv {
+  /** Signaling server URL for multiplayer (defaults to production if not set) */
+  readonly VITE_SIGNALING_URL?: string;
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}
+
+/**
  * Vite Asset Import Types
  *
  * These declarations tell TypeScript how to handle Vite's asset imports.
