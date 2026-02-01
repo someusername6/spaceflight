@@ -9,6 +9,8 @@
 
 import { getLobbyContext } from '../campaign/handlers/lobby-context';
 import type { DestroyedShipRecord } from '../components/combat-stats';
+import { getComponent } from '../core/ecs';
+import { findLocalPlayer } from '../core/player-utils';
 import { listReplays, loadReplay } from '../replay/storage';
 import {
   type FullReplayData,
@@ -17,6 +19,7 @@ import {
 } from '../replay/types';
 import { getActiveGame, getActiveMissionEndState } from './active-game';
 import type { PauseReason } from './pause-state';
+import { isSpectating } from './spectator-state';
 
 /**
  * Test utilities exposed to window for E2E tests.
@@ -101,6 +104,20 @@ export interface TestUtilities {
    * Returns 0 if not a multiplayer replay or no replays exist.
    */
   getMostRecentReplayPlayerCount: () => Promise<number>;
+
+  /**
+   * Force the local player's ship to die.
+   * Sets hull to 0, which triggers spectator mode on the next frame.
+   * Use this to test the death → spectator transition in multiplayer.
+   * Returns true if successful, false if no game or local player found.
+   */
+  forceLocalPlayerDeath: () => boolean;
+
+  /**
+   * Check if currently in spectator mode.
+   * Returns true if the local player is spectating (ship destroyed or no ship assigned).
+   */
+  isInSpectatorMode: () => boolean;
 }
 
 /**
@@ -280,6 +297,31 @@ function createTestUtilities(): TestUtilities {
       if (!replay) return 0;
       if (!isMultiplayerReplay(replay)) return 0;
       return replay.players.length;
+    },
+
+    forceLocalPlayerDeath(): boolean {
+      const game = getActiveGame();
+      if (!game) {
+        return false;
+      }
+
+      const localPlayer = findLocalPlayer(game.world);
+      if (localPlayer === null) {
+        return false;
+      }
+
+      const health = getComponent(game.world, localPlayer, 'health');
+      if (!health) {
+        return false;
+      }
+
+      // Set hull to 0 to trigger death detection
+      health.hull = 0;
+      return true;
+    },
+
+    isInSpectatorMode(): boolean {
+      return isSpectating();
     },
   };
 }

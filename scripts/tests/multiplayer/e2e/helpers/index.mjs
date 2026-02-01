@@ -33,6 +33,7 @@ export {
 // Mission helpers
 export {
   clickReadyToResume,
+  forceLocalPlayerDeath,
   getCountdownNumber,
   getPauseReason,
   getPlayerCallsign,
@@ -42,6 +43,7 @@ export {
   hasTestUtilities,
   holdKey,
   isCountdownVisible,
+  isInSpectatorModeInternal,
   isReadyToResume,
   isSpectatorMode,
   launchMissionAndWait,

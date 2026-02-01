@@ -351,3 +351,33 @@ export async function getTestPauseState(page) {
     return null;
   });
 }
+
+/**
+ * Force the local player's ship to die.
+ * Sets hull to 0, triggering spectator mode on the next frame.
+ * @param {import('playwright').Page} page
+ * @returns {Promise<boolean>} true if death was forced
+ */
+export async function forceLocalPlayerDeath(page) {
+  return page.evaluate(() => {
+    if (typeof window.__TEST__?.forceLocalPlayerDeath === 'function') {
+      return window.__TEST__.forceLocalPlayerDeath();
+    }
+    return false;
+  });
+}
+
+/**
+ * Check if the page is currently in spectator mode (via test utilities).
+ * This uses the game's internal spectator state, not UI detection.
+ * @param {import('playwright').Page} page
+ * @returns {Promise<boolean>}
+ */
+export async function isInSpectatorModeInternal(page) {
+  return page.evaluate(() => {
+    if (typeof window.__TEST__?.isInSpectatorMode === 'function') {
+      return window.__TEST__.isInSpectatorMode();
+    }
+    return false;
+  });
+}
