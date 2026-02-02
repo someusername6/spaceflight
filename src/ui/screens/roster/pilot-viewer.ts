@@ -292,12 +292,6 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
         </div>
       </div>
 
-      ${xpSection}
-      ${shipSkillsSection}
-      ${eliteBadge}
-      ${injuryBanner}
-      ${closeCallBanner}
-
       <div class="stat-grid pilot-viewer-stats">
         <div class="stat">
           <span class="stat-value">${pilot.missionsFlown}</span>
@@ -306,6 +300,10 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
         <div class="stat">
           <span class="stat-value">${pilot.missionsWon}</span>
           <span class="stat-label">Victories</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value">${pilot.ejectionCount}</span>
+          <span class="stat-label">Close Calls</span>
         </div>
         <div class="stat">
           <span class="stat-value">${pilot.kills}</span>
@@ -317,17 +315,15 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
         </div>
         <div class="stat">
           <span class="stat-value">${Math.round(pilot.damageDealt).toLocaleString()}</span>
-          <span class="stat-label">Dmg Dealt</span>
-        </div>
-        <div class="stat">
-          <span class="stat-value">${Math.round(pilot.damageReceived).toLocaleString()}</span>
-          <span class="stat-label">Dmg Recv</span>
-        </div>
-        <div class="stat">
-          <span class="stat-value">${pilot.ejectionCount}</span>
-          <span class="stat-label">Close Calls</span>
+          <span class="stat-label">Damage</span>
         </div>
       </div>
+
+      ${xpSection}
+      ${shipSkillsSection}
+      ${eliteBadge}
+      ${injuryBanner}
+      ${closeCallBanner}
 
       ${shipOptions}
       ${storedShipOptions}

@@ -28,6 +28,7 @@ import {
 } from '../../../multiplayer/context-permissions';
 import { showNotification } from '../../common/notification';
 import type { ScreenAPI } from '../../framework/screen';
+import { showConfirm } from '../confirm-modal';
 import type { SquadronProps, SquadronState } from './bind-events';
 import type { ListSelection } from './list';
 import type { ViewerTab } from './viewer';
@@ -160,7 +161,7 @@ export function bindPilotEvents(
   });
 
   // Dismiss pilot (host only)
-  api.on('.btn-dismiss-pilot', 'click', (_e, el) => {
+  api.on('.btn-dismiss-pilot', 'click', async (_e, el) => {
     const pilotId = el.dataset.pilotId;
     const pilotName = el.dataset.pilotName ?? 'this pilot';
     if (!pilotId) return;
@@ -172,9 +173,12 @@ export function bindPilotEvents(
     }
 
     // Confirmation dialog
-    if (!confirm(`Dismiss ${pilotName}? This cannot be undone.`)) {
-      return;
-    }
+    const confirmed = await showConfirm(
+      'Dismiss Pilot?',
+      `Dismiss ${pilotName}? This cannot be undone.`,
+      { confirmText: 'Dismiss', danger: true },
+    );
+    if (!confirmed) return;
 
     try {
       const newState = dismissPilot(props.campaignState, pilotId);
