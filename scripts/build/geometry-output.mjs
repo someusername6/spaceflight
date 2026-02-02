@@ -199,12 +199,12 @@ function generateIndexFile() {
 
 // Re-export types
 export type {
-  ShipClass,
-  MeshBounds,
-  SvgBounds,
   HullPlane,
-  SubHull,
+  MeshBounds,
+  ShipClass,
   ShipGeometryData,
+  SubHull,
+  SvgBounds,
 } from './ship-geometry-types';
 
 // Import data from split modules
