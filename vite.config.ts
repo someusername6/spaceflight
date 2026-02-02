@@ -38,6 +38,7 @@ export default defineConfig({
           'rollback-netcode': ['rollback-netcode'],
           multiplayer: ['./src/multiplayer/index.ts'],
           contracts: ['./src/campaign/contracts/index.ts'],
+          ui: ['./src/ui/index.ts'],
           'geometry-ships': ['./src/rendering/ship-geometry-ships.ts'],
           'geometry-structures': [
             './src/rendering/ship-geometry-structures.ts',
