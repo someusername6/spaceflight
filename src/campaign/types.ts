@@ -1,367 +1,51 @@
 /**
- * Campaign data types - persistent state between missions.
- */
-
-import type { ProfileName } from '../data/ai-profiles';
-import type { PlayerAutoaim } from '../settings/game-settings';
-import type { SlotArray } from './slot-array';
-
-/** Campaign creation settings (locked after creation) */
-export interface CampaignSettings {
-  /** Custom name for the commander pilot */
-  commanderName: string;
-  /**
-   * Ironman mode - true = permadeath (campaign ends on death, autoaim locked).
-   * false = mission failure returns to pre-mission state.
-   */
-  ironmanMode: boolean;
-  /** Autoaim assist in degrees (locked if ironman mode enabled) */
-  autoaimDegrees: PlayerAutoaim;
-}
-
-/** Default campaign settings */
-export const DEFAULT_CAMPAIGN_SETTINGS: CampaignSettings = {
-  commanderName: 'Commander',
-  ironmanMode: false,
-  autoaimDegrees: 2.5,
-};
-
-/** Skill level for pilots */
-export type SkillLevel = ProfileName;
-
-/** A pilot that can be assigned to a ship */
-export interface Pilot {
-  id: string;
-  name: string;
-  // Ship-specific skills (missing = not trained)
-  // Commander can fly any ship at 'ace' level (checked via commanderId)
-  // Multiplayer player pilots have empty shipSkills (human-controlled)
-  shipSkills: Partial<Record<string, SkillLevel>>;
-  // Career statistics
-  kills: number;
-  assists: number;
-  missionsFlown: number;
-  missionsWon: number;
-  damageDealt: number;
-  damageReceived: number;
-  // Ejection tracking (wingmen eject on ship destruction, commander death = game over)
-  ejectionCount: number; // Number of times pilot has ejected (increases KIA chance)
-  injuredMissionsLeft: number; // 0 = active, 1+ = recovering
-  // Unspent XP pool (wingmen only - commander doesn't earn/spend XP)
-  // XP is earned from missions and manually spent to unlock/upgrade ship skills
-  xp: number;
-}
-
-/** A weapon equipped in a primary bank */
-export interface EquippedPrimary {
-  weaponType: string; // e.g., 'plasma', 'autocannon'
-  bankSize: number; // 1, 2, or 3
-  currentAmmo?: number; // undefined = infinite, number = remaining
-}
-
-/** A weapon equipped in a secondary bank */
-export interface EquippedSecondary {
-  weaponType: string; // e.g., 'seeker', 'torpedo'
-  bankSize: number;
-  count: number; // remaining missiles/decoys
-  maxCount: number; // for resupply reference
-}
-
-/**
- * A ship owned by the player's squadron (active, with pilot assigned).
+ * Campaign data types - barrel exports for domain-specific type files.
  *
- * Note: SlotArray fields serialize via toJSON() and are reconstituted
- * automatically by the save system's reconstituteSave() function.
+ * Re-exports all types for backward compatibility.
  */
-export interface OwnedShip {
-  id: string;
-  shipClass: string; // 'interceptor', 'striker', etc. (from SHIP_CLASSES)
-  /** Opaque slot array - use slot-array helpers for access */
-  primaryWeapons: SlotArray<EquippedPrimary>;
-  /** Opaque slot array - use slot-array helpers for access */
-  secondaryWeapons: SlotArray<EquippedSecondary>;
-  pilot: Pilot | null; // null = unassigned (ship in reserve)
-}
 
-/** A ship in storage (no pilot, no weapons equipped) */
-export interface StoredShip {
-  id: string;
-  shipClass: string; // 'interceptor', 'striker', etc.
-}
+// Campaign settings
+export {
+  type CampaignSettings,
+  DEFAULT_CAMPAIGN_SETTINGS,
+} from './campaign-settings';
 
-/** Mission types supported by the game */
-export type MissionType =
-  | 'elimination'
-  | 'escort'
-  | 'station-defense'
-  | 'ambush'
-  | 'attack-station';
+// Campaign state
+export type { CampaignState } from './campaign-state';
 
-/** Escort mission specific data */
-export interface EscortMissionData {
-  /**
-   * Ratio of enemies that target player or player allies instead of convoy (0-1).
-   * 0.0 = all enemies attack convoy (current behavior)
-   * 0.5 = 50% attack player/allies, 50% attack convoy
-   * Default: 0 (backward compatible)
-   */
-  playerThreatRatio?: number;
-  /** Number of NPC convoy ships to protect */
-  convoySize: number;
-  /** Ship type for convoy ships ('freighter' or 'transport') */
-  convoyType: 'freighter' | 'transport';
-  /** Distance from start to escape zone (meters) */
-  escapeZoneDistance: number;
-  /** Radius of escape zone trigger (meters) */
-  escapeZoneRadius: number;
-  /** Time to charge jump drive once in zone (seconds) */
-  jumpChargeTime: number;
-  /** Seconds between enemy spawns */
-  spawnInterval: number;
-  /** Enemy pool for continuous spawning */
-  enemyPool: ContractEnemy[];
-  /** Maximum concurrent enemies (prevents performance issues) */
-  maxConcurrentEnemies: number;
-  /** Enemies to spawn when initial delay ends (default: 2) */
-  initialSpawnCount?: number;
-  /** Enemies to spawn per interval when below max (default: 1) */
-  spawnBatchSize?: number;
-}
+// Inventory types
+export type { StoredAmmo, StoredWeapon, StoreStock } from './inventory';
 
-/** Station defense mission specific data */
-export interface StationDefenseMissionData {
-  /**
-   * Ratio of enemies that target player or player allies instead of station (0-1).
-   * 0.0 = all enemies attack station (current behavior)
-   * 0.5 = 50% attack player/allies, 50% attack station
-   * Default: 0 (backward compatible)
-   */
-  playerThreatRatio?: number;
-  /** Station type (affects stats and display name) - defaults to 'mining' */
-  stationType?: 'mining' | 'refinery' | 'military';
-  /** Station hull health pool (overrides type default if specified) */
-  stationHealth?: number;
-  /** Station shield pool (overrides type default if specified) */
-  stationShields?: number;
-  /** Station position (Z distance from player spawn, negative = behind player) */
-  stationDistance: number;
-  /** Enemy waves before reinforcements */
-  waves: ContractWave[];
-  /** Time until reinforcements (seconds), or null for health-based trigger only */
-  reinforcementTime: number | null;
-  /** Station health threshold to trigger reinforcements (0-1) */
-  reinforcementHealthThreshold: number;
-  /** Number of reinforcement ships */
-  reinforcementCount: number;
-  /** Reinforcement ship archetypes */
-  reinforcementPool: ContractEnemy[];
-  /** Initial allied ships present at mission start (for military stations) */
-  initialAllies?: ContractEnemy[];
-}
+// Mission types
+export type {
+  AmbushEscort,
+  AmbushMissionData,
+  AttackStationMissionData,
+  AttackStationReinforcementWave,
+  Contract,
+  ContractEnemy,
+  ContractWave,
+  EscortMissionData,
+  EscortRole,
+  MissionType,
+  StationDefenseMissionData,
+} from './mission';
 
-/** Escort role determines engagement behavior in ambush missions */
-export type EscortRole = 'aggressive' | 'defensive';
+// Pilot types
+export type { HireablePilot, Pilot, SkillLevel } from './pilot';
 
-/** Escort ship configuration for ambush missions */
-export interface AmbushEscort {
-  archetype: string;
-  skill: SkillLevel;
-  count: number;
-  /**
-   * Escort role determines proactive behavior:
-   * - 'aggressive': Engages player within ~600m, plus all reactive triggers
-   * - 'defensive': Only reacts to damage/lock triggers, stays near convoy
-   */
-  role: EscortRole;
-}
+// Sector constants
+export {
+  getDeploymentLimit,
+  MAX_SECTOR,
+  SECTOR_DEPLOYMENT_LIMITS,
+  SECTOR_NAMES,
+} from './sector';
 
-/** Ambush mission specific data - player attacks enemy convoy */
-export interface AmbushMissionData {
-  /** Number of enemy convoy ships to destroy */
-  convoySize: number;
-  /** Ship type for convoy ships ('freighter' | 'transport') */
-  convoyType: 'freighter' | 'transport';
-  /**
-   * Distance from origin where convoy STARTS (positive Z, behind player).
-   * Convoy travels from +Z toward -Z (escape zone).
-   * Default: 500
-   */
-  convoyStartDistance?: number;
-  /**
-   * Distance from origin where convoy ESCAPES (negative Z).
-   * Convoy travels from convoyStartDistance toward -escapeZoneDistance.
-   * Example: convoyStartDistance=500, escapeZoneDistance=3500 → convoy travels 4000m total
-   */
-  escapeZoneDistance: number;
-  /** Radius of escape zone trigger (meters) */
-  escapeZoneRadius: number;
-  /**
-   * Distance threshold for convoy "stopped" behavior.
-   * If no escorts within this distance AND player within this distance,
-   * convoy ships will halt permanently.
-   * Default: 500
-   */
-  convoyStopDistance?: number;
-  /** Enemy escort ships that protect the convoy (with explicit roles) */
-  escorts: AmbushEscort[];
-}
-
-/** Reinforcement wave for attack station missions */
-export interface AttackStationReinforcementWave {
-  /** Allied ships to spawn as reinforcements */
-  allies: ContractEnemy[];
-  /** Delay in seconds before this wave spawns (cumulative from mission start) */
-  delay: number;
-}
-
-/** Attack station mission specific data - player attacks enemy station */
-export interface AttackStationMissionData {
-  /** Station type (affects stats and display name) - defaults to 'mining' */
-  stationType?: 'mining' | 'refinery' | 'military';
-  /** Station position (Z distance from player spawn, negative = in front of player) */
-  stationDistance: number;
-  /** Initial enemy defenders present at mission start */
-  initialDefenders: ContractEnemy[];
-  /** Initial allied NPC ships present at mission start (optional, already engaged) */
-  initialAllies?: ContractEnemy[];
-  /** Friendly reinforcement waves that arrive over time */
-  reinforcementWaves: AttackStationReinforcementWave[];
-  /** Time in seconds before overwhelming enemy wave spawns (soft time limit) */
-  overwhelmingSpawnTime: number;
-  /** Single overwhelming wave of enemies that spawns after timer */
-  overwhelmingWave: ContractEnemy[];
-  /**
-   * DPS threshold for AI targeting behavior.
-   * Ships with DPS >= this value attack station, others attack defenders.
-   */
-  stationAttackDpsThreshold: number;
-}
-
-/** A contract (mission) available to accept */
-export interface Contract {
-  id: string;
-  name: string;
-  description: string;
-  difficulty: 'easy' | 'medium' | 'hard';
-  /** Sector this mission belongs to (1-5) */
-  sector: number;
-  /** Mission type - defaults to 'elimination' for backward compatibility */
-  missionType?: MissionType;
-  /** Waves of enemies - required for elimination missions, optional for escort */
-  waves?: ContractWave[];
-  /** Escort mission data - required when missionType === 'escort' */
-  escortData?: EscortMissionData;
-  /** Station defense data - required when missionType === 'station-defense' */
-  stationDefenseData?: StationDefenseMissionData;
-  /** Ambush mission data - required when missionType === 'ambush' */
-  ambushData?: AmbushMissionData;
-  /** Attack station mission data - required when missionType === 'attack-station' */
-  attackStationData?: AttackStationMissionData;
-  reward: number; // credits
-}
-
-/** A wave of enemies in a contract */
-export interface ContractWave {
-  /** Enemies in this wave */
-  enemies: ContractEnemy[];
-  /**
-   * Optional delay before spawning (seconds) - gives player breathing room.
-   * Can be a single number or [min, max] range for random delay via PRNG.
-   */
-  delay?: number | [number, number];
-}
-
-/** Enemy specification for a contract */
-export interface ContractEnemy {
-  archetype: string;
-  skill: SkillLevel;
-  count: number;
-}
-
-/** Store inventory - stock of items available for purchase */
-export interface StoreStock {
-  ships: Record<string, number>; // shipClass -> count
-  primaries: Record<string, number>; // weaponType -> count
-  secondaries: Record<string, number>; // weaponType -> count (missiles)
-  ammo: Record<string, number>; // weaponType -> count (rounds)
-}
-
-/** Sector names for display */
-export const SECTOR_NAMES: Record<number, string> = {
-  1: 'Frontier',
-  2: 'Contested Zone',
-  3: 'Warzone',
-  4: 'Core Systems',
-  5: 'Endless',
-};
-
-/** Maximum sector (5 = endless mode) */
-export const MAX_SECTOR = 5;
-
-/** Maximum ships deployable per sector */
-export const SECTOR_DEPLOYMENT_LIMITS: Record<number, number> = {
-  1: 4,
-  2: 4,
-  3: 4,
-  4: 5,
-  5: 6,
-};
-
-/** Get deployment limit for a sector (defaults to 4 for unknown sectors) */
-export function getDeploymentLimit(sector: number): number {
-  return SECTOR_DEPLOYMENT_LIMITS[sector] ?? 4;
-}
-
-/** Full campaign state */
-export interface CampaignState {
-  /** Campaign settings chosen at creation (immutable after creation) */
-  settings: CampaignSettings;
-  /** Master seed for deterministic randomness (set at campaign creation) */
-  seed: number;
-  /** Next ID for entity generation (persisted for determinism) */
-  nextId: number;
-  credits: number;
-  commanderId: string; // ID of the commander pilot (player)
-  ships: OwnedShip[];
-  pilots: Pilot[]; // all pilots (assigned and unassigned)
-  storedShips: StoredShip[]; // ships in storage (no pilot/weapons)
-  storedWeapons: StoredWeapon[]; // weapons in storage
-  storedAmmo: StoredAmmo[]; // ammo in storage (for ballistic primaries)
-  storedScrap: Record<string, number>; // shipClass -> scrap count
-  storeStock: StoreStock; // store inventory (finite stock)
-  availableRecruits: HireablePilot[]; // pilots available for hire
-  currentSector: number;
-  /** Missions completed in current sector (resets on sector advance) */
-  sectorMissionsCompleted: number;
-  completedContracts: string[];
-  /** Contract IDs that have been attempted (win or lose) - for "fresh" indicator */
-  attemptedContracts: string[];
-  /** Number of contract refreshes used in current sector (resets on sector advance) */
-  contractRefreshCount: number;
-  missionCount: number;
-  /** Version counter for optimistic concurrency control (multiplayer) */
-  stateVersion: number;
-}
-
-/** A weapon in storage (not equipped) */
-export interface StoredWeapon {
-  weaponType: string;
-  category: 'primary' | 'secondary';
-  count: number; // for secondaries, missiles count; for primaries, always 1
-}
-
-/** Ammo in storage (for ballistic primaries) */
-export interface StoredAmmo {
-  weaponType: string; // 'autocannon', 'railgun', 'flak', 'nuclearLance'
-  count: number;
-}
-
-/** Hireable pilot available in the recruit pool */
-export interface HireablePilot {
-  id: string;
-  name: string;
-  skill: SkillLevel; // Advertised skill level (becomes their starting ship skill)
-  startingShip: string; // Ship class they're trained on
-  bonusXP: number; // Unspent XP pool when hired
-  price: number;
-}
+// Ship types
+export type {
+  EquippedPrimary,
+  EquippedSecondary,
+  OwnedShip,
+  StoredShip,
+} from './ship';
