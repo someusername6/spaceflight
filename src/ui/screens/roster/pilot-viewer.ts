@@ -2,8 +2,8 @@
  * Pilot Viewer - renders detailed pilot information and assignment options.
  */
 
-import { COMBAT_SHIP_CLASSES } from '../../../campaign/constants';
 import { getUpgradeCost } from '../../../campaign/pilot-skills';
+import { getUnlockedShipClasses } from '../../../campaign/store/store-unlocks';
 import type {
   CampaignState,
   OwnedShip,
@@ -16,40 +16,7 @@ import {
   isPlayerPilot,
 } from '../../../multiplayer/ship-assignment';
 import { getShipIconPath, iconErrorHandler } from '../../ship/viewer';
-
-/** Skill levels in order */
-const SKILL_LEVELS: SkillLevel[] = [
-  'rookie',
-  'regular',
-  'veteran',
-  'ace',
-  'elite',
-];
-
-/** Render segmented skill bar for a skill level */
-function renderSkillBar(skill: SkillLevel | undefined): string {
-  const filledCount = skill ? SKILL_LEVELS.indexOf(skill) + 1 : 0;
-
-  const segments = SKILL_LEVELS.map((level, i) => {
-    const isFilled = i < filledCount;
-    const isElite = level === 'elite';
-    const classes = [
-      'skill-segment',
-      isFilled ? 'filled' : '',
-      isElite ? 'elite' : '',
-    ]
-      .filter(Boolean)
-      .join(' ');
-    return `<div class="${classes}" title="${level}"></div>`;
-  }).join('');
-
-  return `<div class="skill-bar">${segments}</div>`;
-}
-
-/** Format ship class name for display */
-function formatShipClass(shipClass: string): string {
-  return shipClass.charAt(0).toUpperCase() + shipClass.slice(1);
-}
+import { formatShipClass, renderSkillBar } from './skill-rendering';
 
 /** Get available ships for pilot assignment (ships without pilots) */
 function getAvailableShipsForPilot(state: CampaignState): OwnedShip[] {
@@ -128,21 +95,25 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
   // Ship skills section (roster wingmen only - not commander, not player pilots)
   const showSkillsSection = !isCommander && !isPlayerPilot(pilot);
   const hostCanUpgrade = isHost();
+  const unlockedShips = getUnlockedShipClasses(state.currentSector);
   const shipSkillsSection = showSkillsSection
     ? `
       <div class="pilot-ship-skills">
         <div class="ship-skills-header">Ship Skills</div>
         <div class="ship-skills-grid">
-          ${COMBAT_SHIP_CLASSES.map((shipClass) => {
-            const skill = pilot.shipSkills[shipClass] as SkillLevel | undefined;
-            const upgradeCost = getUpgradeCost(skill ?? null);
-            const canAfford = pilot.xp >= upgradeCost;
-            const isMaxed = skill === 'elite';
-            const showButton = hostCanUpgrade && !isMaxed;
-            const buttonLabel = skill ? 'Upgrade' : 'Unlock';
-            const disabledAttr = canAfford ? '' : 'disabled';
+          ${unlockedShips
+            .map((shipClass) => {
+              const skill = pilot.shipSkills[shipClass] as
+                | SkillLevel
+                | undefined;
+              const upgradeCost = getUpgradeCost(skill ?? null);
+              const canAfford = pilot.xp >= upgradeCost;
+              const isMaxed = skill === 'elite';
+              const showButton = hostCanUpgrade && !isMaxed;
+              const buttonLabel = skill ? 'Upgrade' : 'Unlock';
+              const disabledAttr = canAfford ? '' : 'disabled';
 
-            return `
+              return `
               <div class="ship-skill-row">
                 <span class="ship-skill-name">${formatShipClass(shipClass)}</span>
                 <div class="ship-skill-bar-container">
@@ -164,30 +135,9 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
                 </div>
               </div>
             `;
-          }).join('')}
+            })
+            .join('')}
         </div>
-      </div>
-    `
-    : '';
-
-  // Commander badge (shown for commander only)
-  const commanderBadge = isCommander
-    ? `
-      <div class="pilot-commander-badge">
-        <span class="commander-icon">★</span>
-        <span class="commander-text">Commander</span>
-        <div class="commander-note">Ace on all ships • No salary</div>
-      </div>
-    `
-    : '';
-
-  // Player badge (shown for human-controlled player pilots)
-  const playerBadge = isPlayerControlled
-    ? `
-      <div class="pilot-player-badge">
-        <span class="player-icon">●</span>
-        <span class="player-text">Player</span>
-        <div class="player-note">Human-controlled • No salary</div>
       </div>
     `
     : '';
@@ -342,8 +292,6 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
         </div>
       </div>
 
-      ${commanderBadge}
-      ${playerBadge}
       ${xpSection}
       ${shipSkillsSection}
       ${eliteBadge}

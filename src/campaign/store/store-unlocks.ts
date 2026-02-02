@@ -11,6 +11,8 @@
  * Sector 5 (Endless): Everything available
  */
 
+import { COMBAT_SHIP_CLASSES } from '../constants';
+
 /** Sector at which each ship class first appears in store */
 export const SHIP_UNLOCK_SECTOR: Record<string, number> = {
   // Sector 1: Basic ships
@@ -76,3 +78,10 @@ export const SECONDARY_UNLOCK_SECTOR: Record<string, number> = {
   // Sector 4: Elite ordnance
   nuke: 4,
 };
+
+/** Get ship classes unlocked at or before the given sector */
+export function getUnlockedShipClasses(sector: number): string[] {
+  return COMBAT_SHIP_CLASSES.filter(
+    (shipClass) => (SHIP_UNLOCK_SECTOR[shipClass] ?? 1) <= sector,
+  );
+}

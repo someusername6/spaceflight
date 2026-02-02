@@ -3,10 +3,10 @@
  */
 
 import { logWarn } from '../core/logger';
-import { COMBAT_SHIP_CLASSES } from './constants';
 import { generateCampaignId } from './id-generator';
 import { PILOT_NAMES } from './pilot-names';
 import { RECRUIT_BONUS_XP } from './pilot-skills';
+import { getUnlockedShipClasses } from './store/store-unlocks';
 import type { CampaignState, HireablePilot, Pilot, SkillLevel } from './types';
 
 /** Fixed prices per skill level */
@@ -169,9 +169,12 @@ export function generateRecruits(
     const bonusXP =
       RECRUIT_BONUS_XP[skill as keyof typeof RECRUIT_BONUS_XP] ?? 25;
 
-    // Pick random starting ship class
-    const startingShipIndex = Math.floor(rng() * COMBAT_SHIP_CLASSES.length);
-    const startingShip = COMBAT_SHIP_CLASSES[startingShipIndex] as string;
+    // Pick random starting ship class from ships unlocked in current sector
+    const unlockedShips = getUnlockedShipClasses(sector);
+    const startingShip =
+      unlockedShips.length > 0
+        ? (unlockedShips[Math.floor(rng() * unlockedShips.length)] as string)
+        : 'fighter';
 
     recruits.push({
       id,

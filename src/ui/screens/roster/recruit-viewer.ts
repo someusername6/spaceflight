@@ -2,47 +2,14 @@
  * Recruit Viewer - renders hireable pilot details and hire option.
  */
 
-import { COMBAT_SHIP_CLASSES } from '../../../campaign/constants';
+import { getUnlockedShipClasses } from '../../../campaign/store/store-unlocks';
 import type {
   CampaignState,
   HireablePilot,
   SkillLevel,
 } from '../../../campaign/types';
 import { isHost } from '../../../multiplayer/context-permissions';
-
-/** Skill levels in order */
-const SKILL_LEVELS: SkillLevel[] = [
-  'rookie',
-  'regular',
-  'veteran',
-  'ace',
-  'elite',
-];
-
-/** Render segmented skill bar for a skill level */
-function renderSkillBar(skill: SkillLevel | undefined): string {
-  const filledCount = skill ? SKILL_LEVELS.indexOf(skill) + 1 : 0;
-
-  const segments = SKILL_LEVELS.map((level, i) => {
-    const isFilled = i < filledCount;
-    const isElite = level === 'elite';
-    const classes = [
-      'skill-segment',
-      isFilled ? 'filled' : '',
-      isElite ? 'elite' : '',
-    ]
-      .filter(Boolean)
-      .join(' ');
-    return `<div class="${classes}" title="${level}"></div>`;
-  }).join('');
-
-  return `<div class="skill-bar">${segments}</div>`;
-}
-
-/** Format ship class name for display */
-function formatShipClass(shipClass: string): string {
-  return shipClass.charAt(0).toUpperCase() + shipClass.slice(1);
-}
+import { formatShipClass, renderSkillBar } from './skill-rendering';
 
 /** Render recruit viewer with details and hire button */
 export function renderRecruitViewer(
@@ -69,18 +36,20 @@ export function renderRecruitViewer(
   `;
 
   // Ship skills section (read-only, no upgrade buttons)
+  const unlockedShips = getUnlockedShipClasses(state.currentSector);
   const shipSkillsSection = `
     <div class="pilot-ship-skills">
       <div class="ship-skills-header">Ship Skills</div>
       <div class="ship-skills-grid">
-        ${COMBAT_SHIP_CLASSES.map((shipClass) => {
-          // Recruit only has skill on their starting ship
-          const skill =
-            shipClass === recruit.startingShip
-              ? (recruit.skill as SkillLevel)
-              : undefined;
+        ${unlockedShips
+          .map((shipClass) => {
+            // Recruit only has skill on their starting ship
+            const skill =
+              shipClass === recruit.startingShip
+                ? (recruit.skill as SkillLevel)
+                : undefined;
 
-          return `
+            return `
             <div class="ship-skill-row recruit-skill-row">
               <span class="ship-skill-name">${formatShipClass(shipClass)}</span>
               <div class="ship-skill-bar-container">
@@ -88,7 +57,8 @@ export function renderRecruitViewer(
               </div>
             </div>
           `;
-        }).join('')}
+          })
+          .join('')}
       </div>
     </div>
   `;
