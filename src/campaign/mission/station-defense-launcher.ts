@@ -9,7 +9,6 @@
  */
 
 import { Quaternion, Vector3 } from 'three';
-import type { AIBehaviorMode } from '../../components/ai';
 import { getComponent, queryEntities } from '../../core/ecs';
 import { logDebug } from '../../core/logger';
 import { randomRange } from '../../core/prng';
@@ -27,10 +26,13 @@ import {
 } from '../../systems/station-defense';
 import type { CampaignController } from '../controller-types';
 import type { Contract, ContractEnemy } from '../types';
-import { createMissionResultOverlay } from '../utils';
+import {
+  handleMissionEndDelay,
+  setFactionBehaviorMode,
+  triggerMissionEnd,
+} from './mission-launcher-base';
 import {
   calculateWaveDelay,
-  MISSION_END_DELAY,
   type MissionEndState,
   spawnWave,
 } from './mission-waves';
@@ -44,25 +46,6 @@ const REINFORCEMENT_SPAWN_DISTANCE_MAX = 800;
 /** Initial allies spawn closer to station */
 const INITIAL_ALLY_SPAWN_DISTANCE = 150;
 const INITIAL_ALLY_SPAWN_DISTANCE_MAX = 250;
-
-/**
- * Set behavior mode for all ships of a faction.
- * Used to set wingmen to station-defense mode.
- */
-export function setFactionBehaviorMode(
-  world: World,
-  faction: Faction,
-  mode: AIBehaviorMode,
-): void {
-  for (const entity of queryEntities(world, ['aiControlled', 'faction'])) {
-    const factionComp = getComponent(world, entity, 'faction');
-    if (factionComp?.faction !== faction) continue;
-    const ai = getComponent(world, entity, 'aiControlled');
-    if (ai) {
-      ai.behaviorMode = mode;
-    }
-  }
-}
 
 /**
  * Set enemy ships behavior mode based on playerThreatRatio.
@@ -312,20 +295,8 @@ export function createStationDefenseTickCallback(
   }
 
   return (world: World) => {
-    // Skip if mission already ended
     if (controller.missionEnded) return;
-
-    // Handle mission end delay (same as wave missions)
-    if (missionEndState.pending) {
-      missionEndState.delayRemaining -= TICK_SEC;
-      if (missionEndState.delayRemaining <= 0) {
-        missionEndState.pending = false;
-        executeMissionEnd().catch((e) => {
-          throw e;
-        });
-      }
-      return;
-    }
+    if (handleMissionEndDelay(missionEndState, executeMissionEnd)) return;
 
     // Process station defense mission logic
     processStationDefenseMissionTick(
@@ -352,13 +323,11 @@ export function createStationDefenseMissionEndCallback(
   missionEndState: MissionEndState,
 ): () => void {
   return () => {
-    if (missionEndState.pending) return; // Already ending
+    if (missionEndState.pending) return;
 
     // Victory is determined by mission result (set by processStationDefenseMissionTick)
-    missionEndState.victory =
+    const victory =
       game.world.systemState.mission.result === MissionResult.Victory;
-    missionEndState.pending = true;
-    missionEndState.delayRemaining = MISSION_END_DELAY;
 
     // Get station health for display (flat reward, not scaled by health)
     const healthRatio =
@@ -369,20 +338,20 @@ export function createStationDefenseMissionEndCallback(
             stationState.initialStationHealth,
           )
         : 0;
+
+    // Store station defense results for display
     missionEndState.stationDefenseResults = {
       stationHealthPercent: Math.round(healthRatio * 100),
       reinforcementsArrived: stationState.reinforcementsArrived,
       reinforcementsSpawned: stationState.reinforcementsSpawned,
     };
 
-    // Show VICTORY/DEFEAT overlay
-    const isDefeat = !missionEndState.victory;
-    const overlay = createMissionResultOverlay(isDefeat);
-    controller.missionContainer?.appendChild(overlay);
-
-    logDebug(
-      `[STATION DEFENSE] Mission ${missionEndState.victory ? 'Victory' : 'Defeat'} - ` +
-        `Station health: ${Math.round(healthRatio * 100)}%`,
-    );
+    triggerMissionEnd({
+      missionEndState,
+      controller,
+      victory,
+      logPrefix: 'STATION DEFENSE',
+      logDetails: `Station health: ${Math.round(healthRatio * 100)}%`,
+    });
   };
 }

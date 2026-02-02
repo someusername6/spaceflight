@@ -10,8 +10,7 @@
  */
 
 import { Quaternion, Vector3 } from 'three';
-import type { AIBehaviorMode } from '../../components/ai';
-import { getComponent, queryEntities } from '../../core/ecs';
+import { getComponent } from '../../core/ecs';
 import { logDebug } from '../../core/logger';
 import { randomRange } from '../../core/prng';
 import type { Entity, World } from '../../core/types';
@@ -31,24 +30,15 @@ import {
 } from '../../systems/escort-mission';
 import type { CampaignController } from '../controller-types';
 import type { Contract, ContractEnemy, EscortMissionData } from '../types';
-import { createMissionResultOverlay } from '../utils';
-import { MISSION_END_DELAY, type MissionEndState } from './mission-waves';
+import {
+  handleMissionEndDelay,
+  setFactionBehaviorMode,
+  triggerMissionEnd,
+} from './mission-launcher-base';
+import type { MissionEndState } from './mission-waves';
 
-/** Set AI behavior mode for all entities with a given faction */
-export function setFactionBehaviorMode(
-  world: World,
-  faction: Faction,
-  mode: AIBehaviorMode,
-): void {
-  for (const entity of queryEntities(world, ['aiControlled', 'faction'])) {
-    const entityFaction = getComponent(world, entity, 'faction');
-    if (!entityFaction || entityFaction.faction !== faction) continue;
-
-    const ai = getComponent(world, entity, 'aiControlled');
-    if (!ai) continue;
-    ai.behaviorMode = mode;
-  }
-}
+// Re-export for backwards compatibility (used by ambush-launcher)
+export { setFactionBehaviorMode } from './mission-launcher-base';
 
 /** Maximum ships per row (side by side) for large convoys */
 const MAX_SHIPS_PER_ROW = 3;
@@ -331,17 +321,7 @@ export function createEscortTickCallback(
   const escapeZonePosition = escortState.escapeZonePosition.clone();
 
   return (world: World) => {
-    // Handle mission end delay (same as wave missions)
-    if (missionEndState.pending) {
-      missionEndState.delayRemaining -= TICK_SEC;
-      if (missionEndState.delayRemaining <= 0) {
-        missionEndState.pending = false;
-        executeMissionEnd().catch((e) => {
-          throw e;
-        });
-      }
-      return;
-    }
+    if (handleMissionEndDelay(missionEndState, executeMissionEnd)) return;
 
     // Process escort mission logic
     processEscortMissionTick(world, escortState, TICK_SEC, () =>
@@ -357,22 +337,16 @@ export function createEscortMissionEndCallback(
   missionEndState: MissionEndState,
 ): () => void {
   return () => {
-    if (missionEndState.pending) return; // Already ending
+    if (missionEndState.pending) return;
 
     // Victory if at least one convoy ship escaped (completed hyperspace jump)
-    missionEndState.victory =
-      escortState.completed && escortState.escapedConvoy > 0;
-    missionEndState.pending = true;
-    missionEndState.delayRemaining = MISSION_END_DELAY;
+    const victory = escortState.completed && escortState.escapedConvoy > 0;
 
     // Calculate reward multiplier based on convoy survival
-    // escapedConvoy = ships that completed hyperspace jump
-    if (escortState.totalConvoy > 0) {
-      missionEndState.rewardMultiplier =
-        escortState.escapedConvoy / escortState.totalConvoy;
-    } else {
-      missionEndState.rewardMultiplier = 0;
-    }
+    const rewardMultiplier =
+      escortState.totalConvoy > 0
+        ? escortState.escapedConvoy / escortState.totalConvoy
+        : 0;
 
     // Store escort results for display
     missionEndState.escortResults = {
@@ -380,14 +354,13 @@ export function createEscortMissionEndCallback(
       convoyTotal: escortState.totalConvoy,
     };
 
-    // Show VICTORY/DEFEAT overlay (same as wave missions)
-    const isDefeat = !missionEndState.victory;
-    const overlay = createMissionResultOverlay(isDefeat);
-    controller.missionContainer?.appendChild(overlay);
-
-    logDebug(
-      `[ESCORT] Mission ${missionEndState.victory ? 'Victory' : 'Defeat'} - ` +
-        `${escortState.convoyInZone}/${escortState.totalConvoy} convoy survived (${Math.round((missionEndState.rewardMultiplier ?? 0) * 100)}% reward)`,
-    );
+    triggerMissionEnd({
+      missionEndState,
+      controller,
+      victory,
+      rewardMultiplier,
+      logPrefix: 'ESCORT',
+      logDetails: `${escortState.escapedConvoy}/${escortState.totalConvoy} convoy survived (${Math.round(rewardMultiplier * 100)}% reward)`,
+    });
   };
 }

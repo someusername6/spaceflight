@@ -19,7 +19,7 @@ import { Faction, MissionResult } from '../../core/types';
 import { createConvoyShipEntity } from '../../factories/convoy-ship';
 import { createEnemyShip } from '../../factories/ship';
 import { createWaypointEntity } from '../../factories/waypoint';
-import { type Game, TICK_SEC } from '../../game';
+import type { Game } from '../../game';
 import {
   type AmbushMissionState,
   createAmbushMissionState,
@@ -28,9 +28,12 @@ import {
 } from '../../systems/ambush-mission';
 import type { CampaignController } from '../controller-types';
 import type { AmbushEscort, AmbushMissionData, Contract } from '../types';
-import { createMissionResultOverlay } from '../utils';
-import { setFactionBehaviorMode } from './escort-launcher';
-import { MISSION_END_DELAY, type MissionEndState } from './mission-waves';
+import {
+  handleMissionEndDelay,
+  setFactionBehaviorMode,
+  triggerMissionEnd,
+} from './mission-launcher-base';
+import type { MissionEndState } from './mission-waves';
 
 /** Spacing between convoy ships in formation (X-axis) */
 const CONVOY_SHIP_SPACING = 80;
@@ -260,20 +263,8 @@ export function createAmbushTickCallback(
   executeMissionEnd: () => Promise<void>,
 ): (world: World) => void {
   return (world: World) => {
-    // Skip if mission already ended
     if (controller.missionEnded) return;
-
-    // Handle mission end delay (same as wave missions)
-    if (missionEndState.pending) {
-      missionEndState.delayRemaining -= TICK_SEC;
-      if (missionEndState.delayRemaining <= 0) {
-        missionEndState.pending = false;
-        executeMissionEnd().catch((e) => {
-          throw e;
-        });
-      }
-      return;
-    }
+    if (handleMissionEndDelay(missionEndState, executeMissionEnd)) return;
 
     // Process ambush mission logic
     processAmbushMissionTick(world, ambushState);
@@ -288,20 +279,16 @@ export function createAmbushMissionEndCallback(
   missionEndState: MissionEndState,
 ): () => void {
   return () => {
-    if (missionEndState.pending) return; // Already ending
+    if (missionEndState.pending) return;
 
     // Victory is determined by mission result (set by processAmbushMissionTick)
-    missionEndState.victory =
+    const victory =
       game.world.systemState.mission.result === MissionResult.Victory;
-    missionEndState.pending = true;
-    missionEndState.delayRemaining = MISSION_END_DELAY;
 
     // Calculate reward multiplier based on convoy status
-    if (missionEndState.victory) {
-      missionEndState.rewardMultiplier = getAmbushRewardMultiplier(ambushState);
-    } else {
-      missionEndState.rewardMultiplier = 0;
-    }
+    const rewardMultiplier = victory
+      ? getAmbushRewardMultiplier(ambushState)
+      : 0;
 
     // Store ambush results for display
     missionEndState.ambushResults = {
@@ -311,16 +298,16 @@ export function createAmbushMissionEndCallback(
       totalConvoy: ambushState.totalConvoy,
     };
 
-    // Show VICTORY/DEFEAT overlay
-    const isDefeat = !missionEndState.victory;
-    const overlay = createMissionResultOverlay(isDefeat);
-    controller.missionContainer?.appendChild(overlay);
-
-    logDebug(
-      `[AMBUSH] Mission ${missionEndState.victory ? 'Victory' : 'Defeat'} - ` +
+    triggerMissionEnd({
+      missionEndState,
+      controller,
+      victory,
+      rewardMultiplier,
+      logPrefix: 'AMBUSH',
+      logDetails:
         `Destroyed: ${ambushState.destroyedConvoy}, Stopped: ${ambushState.stoppedConvoy}, ` +
-        `Escaped: ${ambushState.escapedConvoy} (${Math.round((missionEndState.rewardMultiplier ?? 0) * 100)}% reward)`,
-    );
+        `Escaped: ${ambushState.escapedConvoy} (${Math.round(rewardMultiplier * 100)}% reward)`,
+    });
   };
 }
 
