@@ -2,7 +2,11 @@
  * Skill Rendering - shared utilities for displaying pilot skills.
  */
 
-import type { SkillLevel } from '../../../campaign/types';
+import type { CampaignState, Pilot, SkillLevel } from '../../../campaign/types';
+import {
+  isHumanControlled,
+  isPlayerPilot,
+} from '../../../multiplayer/ship-assignment';
 
 /** Skill levels in order */
 export const SKILL_LEVELS: SkillLevel[] = [
@@ -36,4 +40,18 @@ export function renderSkillBar(skill: SkillLevel | undefined): string {
 /** Format ship class name for display */
 export function formatShipClass(shipClass: string): string {
   return shipClass.charAt(0).toUpperCase() + shipClass.slice(1);
+}
+
+/** Check if pilot can fly a ship class (has skill, is commander, or is player) */
+export function canPilotFlyShip(
+  pilot: Pilot,
+  shipClass: string,
+  state: CampaignState,
+): boolean {
+  // Commander can fly any ship
+  if (pilot.id === state.commanderId) return true;
+  // Player-controlled pilots can fly any ship
+  if (isPlayerPilot(pilot) && isHumanControlled(pilot)) return true;
+  // AI wingmen need the skill
+  return pilot.shipSkills[shipClass] !== undefined;
 }

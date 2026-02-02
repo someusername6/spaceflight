@@ -16,7 +16,11 @@ import {
   isPlayerPilot,
 } from '../../../multiplayer/ship-assignment';
 import { getShipIconPath, iconErrorHandler } from '../../ship/viewer';
-import { formatShipClass, renderSkillBar } from './skill-rendering';
+import {
+  canPilotFlyShip,
+  formatShipClass,
+  renderSkillBar,
+} from './skill-rendering';
 
 /** Get available ships for pilot assignment (ships without pilots) */
 function getAvailableShipsForPilot(state: CampaignState): OwnedShip[] {
@@ -202,15 +206,20 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
           <div class="assignment-label">Assign to ship</div>
           <div class="assignment-options">
             ${availableShips
-              .map(
-                (ship) => `
+              .map((ship) => {
+                const canFly = canPilotFlyShip(pilot, ship.shipClass, state);
+                const disabledAttr = canFly
+                  ? ''
+                  : `disabled title="Pilot needs ${formatShipClass(ship.shipClass)} skill"`;
+                return `
               <button class="btn btn-assign-pilot"
                       data-pilot="${pilot.id}"
-                      data-ship="${ship.id}">
-                ${ship.shipClass}
+                      data-ship="${ship.id}"
+                      ${disabledAttr}>
+                ${formatShipClass(ship.shipClass)}
               </button>
-            `,
-              )
+            `;
+              })
               .join('')}
           </div>
         </div>
@@ -232,10 +241,15 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
                   group.count > 1
                     ? `<span class="stored-ship-card-count">×${group.count}</span>`
                     : '';
+                const canFly = canPilotFlyShip(pilot, group.shipClass, state);
+                const disabledAttr = canFly
+                  ? ''
+                  : `disabled title="Pilot needs ${formatShipClass(group.shipClass)} skill"`;
                 return `
               <button class="stored-ship-card-btn"
                       data-pilot="${pilot.id}"
-                      data-stored-ship-index="${group.firstIndex}">
+                      data-stored-ship-index="${group.firstIndex}"
+                      ${disabledAttr}>
                 <div class="stored-ship-card-icon">
                   <img src="${iconPath}" alt="${group.shipClass}" class="stored-ship-icon-svg" ${iconErrorHandler()} />
                 </div>

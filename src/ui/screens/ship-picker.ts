@@ -16,6 +16,7 @@ import type { CampaignState } from '../../campaign/types';
 import type { Screen, ScreenHandle } from '../framework/screen';
 import { createScreen } from '../framework/screen';
 import { getShipIconPath, iconErrorHandler } from '../ship/viewer';
+import { canPilotFlyShip, formatShipClass } from './roster/skill-rendering';
 
 /** Ship picker state */
 interface ShipPickerState {
@@ -51,12 +52,16 @@ function renderShipCard(
   shipClass: string,
   dataAttrs: string,
   count = 1,
+  disabled = false,
 ): string {
   const iconPath = getShipIconPath(shipClass);
   const countBadge =
     count > 1 ? `<span class="ship-picker-count">×${count}</span>` : '';
+  const disabledAttr = disabled
+    ? `disabled title="Pilot needs ${formatShipClass(shipClass)} skill"`
+    : '';
   return `
-    <button class="ship-picker-card" ${dataAttrs}>
+    <button class="ship-picker-card" ${dataAttrs} ${disabledAttr}>
       <div class="ship-picker-icon">
         <img src="${iconPath}" alt="${shipClass}" class="ship-picker-svg"
              ${iconErrorHandler()} />
@@ -90,7 +95,8 @@ function groupStoredShipsByClass(
 /** The ship picker screen definition */
 const ShipPickerScreen: Screen<ShipPickerState, ShipPickerProps> = {
   render(state, _props) {
-    const { currentShipId, campaignState } = state;
+    const { pilotId, currentShipId, campaignState } = state;
+    const pilot = campaignState.pilots.find((p) => p.id === pilotId);
     const emptyShips = campaignState.ships.filter(
       (s) => s.pilot === null && s.id !== currentShipId,
     );
@@ -101,12 +107,17 @@ const ShipPickerScreen: Screen<ShipPickerState, ShipPickerProps> = {
     // Empty active ships section
     if (emptyShips.length > 0) {
       const shipCards = emptyShips
-        .map((ship) =>
-          renderShipCard(
+        .map((ship) => {
+          const canFly = pilot
+            ? canPilotFlyShip(pilot, ship.shipClass, campaignState)
+            : false;
+          return renderShipCard(
             ship.shipClass,
             `data-action="swap-to-ship" data-ship-id="${ship.id}"`,
-          ),
-        )
+            1,
+            !canFly,
+          );
+        })
         .join('');
 
       scrollableSections.push(`
@@ -121,13 +132,17 @@ const ShipPickerScreen: Screen<ShipPickerState, ShipPickerProps> = {
     if (storedShips.length > 0) {
       const groupedShips = groupStoredShipsByClass(storedShips);
       const shipCards = groupedShips
-        .map((group) =>
-          renderShipCard(
+        .map((group) => {
+          const canFly = pilot
+            ? canPilotFlyShip(pilot, group.shipClass, campaignState)
+            : false;
+          return renderShipCard(
             group.shipClass,
             `data-action="swap-to-stored-ship" data-stored-ship-index="${group.firstIndex}"`,
             group.count,
-          ),
-        )
+            !canFly,
+          );
+        })
         .join('');
 
       scrollableSections.push(`
