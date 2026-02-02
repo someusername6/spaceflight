@@ -1,8 +1,14 @@
 # AI Systems Review
 
+**Last updated:** February 2026
+
+## Overview
+
+The AI operates as a finite state machine with behavior modes for different mission types, combined with skill-based profiles that scale difficulty through accuracy, aggression, and defensive parameters.
+
 ## State Machine
 
-The AI operates as a finite state machine with 6 states:
+6 states defined in `src/systems/ai/ai.ts`:
 
 | State | Description |
 |-------|-------------|
@@ -11,82 +17,124 @@ The AI operates as a finite state machine with 6 states:
 | **Engage** | Attacking while maintaining distance |
 | **Evade** | Emergency escape when shields critical |
 | **Regroup** | Disengaging to recover (loop pattern) |
-| **Reposition** | Tactical retreat for long-range ships |
+| **Reposition** | Tactical burst-disengage for long-range ships |
 
-## Skill Levels
+State transitions are driven by shield thresholds, engagement ranges, and cooldown timers defined per skill profile.
 
-5 skill levels with distinct profiles:
+## Skill Profiles
 
-| Level | Accuracy | Engagement | Defensive |
-|-------|----------|------------|-----------|
-| **Rookie** | Poor (5.5°) | Conservative | Panicky (31% shields) |
-| **Regular** | Moderate (3°) | Standard | Balanced (25% shields) |
-| **Veteran** | Good (2°) | Aggressive | Calm (20% shields) |
-| **Ace** | Excellent (0.5°) | Very aggressive | Ice cold (12% shields) |
-| **Elite** | Near-perfect (0.23°) | Very aggressive | Ice cold (12% shields) |
+6 profiles in `src/data/ai-profiles.ts` with 20+ tunable parameters each:
+
+| Level | Aim Error | Engage Range | Evade Threshold | Notes |
+|-------|-----------|--------------|-----------------|-------|
+| **Green** | 0.14 rad (~8°) | 400m | 35% shields | Tutorial enemy |
+| **Rookie** | 0.095 rad (~5.5°) | 500m | 31% shields | Conservative, panicky |
+| **Regular** | 0.05 rad (~3°) | 600m | 25% shields | Balanced baseline |
+| **Veteran** | 0.032 rad (~2°) | 700m | 20% shields | Aggressive, calm |
+| **Ace** | 0.008 rad (~0.5°) | 800m | 12% shields | Ice cold under pressure |
+| **Elite** | 0.004 rad (~0.23°) | 800m | 12% shields | Near-perfect accuracy |
+
+## Playstyle System
+
+5 playstyles in `src/data/ai-playstyles.ts` address the "brave ace inversion" problem where higher-skill pilots shouldn't necessarily fight longer:
+
+| Playstyle | Ships | Skill Expression |
+|-----------|-------|------------------|
+| **Brawler** | Fighter, Striker | All parameters scale normally |
+| **Escape** | Scout, Raider | Constant defensive thresholds; skill via aim only |
+| **Kiting** | Interceptor, Sentinel | Skill via aim error + engagement range |
+| **Beam** | Lancer variant | Aggressive aim multiplier, constant defenses |
+| **Gunboat** | Bomber, Defender | Constant firing angle/heat; prevents volume advantage |
 
 ## Behavior Modes
 
-Mission-specific behaviors:
+11 mission-specific behaviors in `src/systems/ai/ai-idle.ts`:
 
-| Mode | Target Priority |
-|------|-----------------|
-| **standard** | Threats to player (wingmen), nearest (enemies) |
-| **defensive** | Threats to convoy within 800m |
-| **convoy-hunter** | Nearest convoy ship |
-| **station-hunter** | Enemy station |
-| **station-defense** | Threats to station within 1000m |
-| **station-defender** | Station attackers (load-balanced) |
+| Mode | Target Priority | Use Case |
+|------|-----------------|----------|
+| **standard** | Threats to player (wingmen), nearest (enemies) | Default combat |
+| **defensive** | Threats to convoy within 800m | Escort convoy guard |
+| **convoy-hunter** | Nearest convoy ship | Escort mission enemies |
+| **station-hunter** | Enemy station | Station defense attackers |
+| **station-defense** | Threats to station within 1000m | Station defense allies |
+| **station-defender** | Station attackers (load-balanced) | Military station guards |
+| **convoy-guard-aggressive** | Player within 600m or damage aggro | Ambush escorts |
+| **convoy-guard-defensive** | Only reactive triggers | Ambush escorts |
+| **convoy-interceptor** | Convoy escorts, then stop convoy | Player in ambush |
+| **station-assault** | High DPS → station, low DPS → defenders | Attack station allies |
 
 ## Aiming System
 
-### Aim Error
-- Base error varies by skill (0.008-0.095 radians)
-- Drift causes wobble (0.004-0.06 rad/s)
-- Target movement increases error
-- Beam tracking speed varies (0.8-4.0 rad/s)
+### Aim Error (`src/systems/aim-error.ts`)
+- Base error varies by skill (0.004-0.14 radians)
+- Angular velocity contribution: faster targets harder to track
+- Drift simulation: random walk within max error bounds
+- Beam tracking: separate interpolated direction for lock-on feel
 
 ### Lead Calculation
-- Calculates projectile intercept point
-- Applies aim error offset
-- Skips lead for hitscan/close targets
+- Calculates projectile intercept point using target velocity
+- Applies aim error offset after lead calculation
+- Skips lead for hitscan beams or close targets (<0.15 rad/s angular velocity)
 
 ## Weapon Selection
 
-Smart selection based on:
-1. Heat state (switch to cooler weapons when hot)
-2. Range match (prefer weapons suited to distance)
-3. Ammo conservation (prefer infinite when angle bad)
-4. Shield targeting (Ion bonus vs shields)
-5. Beam bonus at short/medium range
+`src/systems/ai/ai-weapon-selection.ts` scores weapons based on:
+
+1. **Range match** (+50 perfect, +25 adjacent category)
+2. **Heat efficiency** (+30 when hot, scales with weapon heat cost)
+3. **Ammo conservation** (+15 for infinite ammo weapons)
+4. **Shield targeting** (+40 Ion bonus vs shields)
+5. **Beam bonus** (+30 short range, +15 medium)
+6. **DPS at close range** (weapon.damage × 0.5)
+
+Heat-critical behavior (≥85%): Find coolest weapon under 3 heat cost.
 
 ## Strengths
 
-1. **Layered Complexity** - State machine + behaviors + skills
-2. **Mission Awareness** - AI adapts to mission type
-3. **Smart Targeting** - Load balancing prevents overkill
-4. **Meaningful Skills** - Clear skill expression in combat
-5. **Tactical Variety** - Kiting, burst-disengage, evasion
+1. **Layered Complexity** - State machine + behaviors + skills + playstyles
+2. **Mission Awareness** - AI adapts targeting to mission objectives
+3. **Smart Targeting** - Load balancing prevents overkill on single targets
+4. **Meaningful Skills** - Clear skill expression visible in combat
+5. **Tactical Variety** - Kiting, burst-disengage, evasion patterns
+6. **Deterministic** - Seeded PRNG for replay compatibility and multiplayer readiness
+
+## Defensive Systems
+
+### Decoy Launch (`src/systems/weapons/weapons-ai.ts`)
+
+AI pilots launch decoys defensively when:
+- Incoming missiles are detected targeting them
+- Decoy cooldown (per profile) has elapsed
+- Decoys remain in inventory
+
+Cooldown varies by skill profile, with higher-skill pilots using decoys more efficiently.
 
 ## Areas for Improvement
 
-1. **No Formation Flying** - Wingmen don't fly in formation
+1. **No Formation Flying** - Wingmen operate independently
 2. **Limited Coordination** - No voice callouts or squad tactics
-3. **Predictable Patterns** - Evade maneuver is consistent
-4. **No Learning** - AI doesn't adapt to player patterns
-5. **Convoy AI Simple** - Just flies straight to escape
+3. **Predictable Evade** - Maneuver patterns are consistent per profile
+4. **No Adaptive AI** - Doesn't learn player patterns mid-mission
+5. **Simple Convoy AI** - Just flies straight to escape zone
 
-## Balance Concerns
+## Balance Observations
 
-1. **Elite vs Ace Gap** - Elite is only slightly better than Ace
-2. **Rookie Too Weak** - 5.5° error makes them nearly harmless
-3. **Kiting Dominance** - Long-range ships hard to catch
-4. **Station Strafing** - AI missile approach can be exploited
+| Concern | Details |
+|---------|---------|
+| **Skill Gap** | Ace aim error 12× better than rookie; may be too wide |
+| **Heat Inversion** | Rookie sustains linked fire longer (95% vs 50% threshold) |
+| **Kiting Dominance** | Long-range ships with ace pilots hard to catch |
+| **Evade Duration** | Aces evade at 12% shields vs rookie at 31%; 2.5× fight time |
 
-## Recommendations
+## Key Files
 
-1. Add formation flying for wingmen
-2. Implement squad callouts ("I'm hit!", "Engaging target")
-3. Vary evade patterns based on attacker position
-4. Consider adaptive difficulty (hidden rubber banding)
-5. Make convoy take evasive action when attacked
+| File | Lines | Purpose |
+|------|-------|---------|
+| `systems/ai/ai.ts` | 327 | Main state machine |
+| `systems/ai/ai-idle.ts` | 288 | Target selection by behavior |
+| `systems/ai/ai-pursuit.ts` | 156 | Chase and lead calculation |
+| `systems/ai/ai-behaviors.ts` | 204 | Evade/regroup logic |
+| `systems/ai/ai-reposition.ts` | 229 | Burst-disengage for kiters |
+| `systems/ai/ai-weapon-selection.ts` | 227 | Weapon scoring |
+| `data/ai-profiles.ts` | 300+ | Skill profile definitions |
+| `data/ai-playstyles.ts` | 212 | Playstyle modifiers |

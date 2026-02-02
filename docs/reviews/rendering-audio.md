@@ -1,113 +1,232 @@
 # Rendering & Audio Review
 
+**Last updated:** February 2026
+
+## Overview
+
+The rendering system uses Three.js for 3D graphics with extensive visual effects for weapons, explosions, and environmental elements. The game currently has no audio implementation.
+
 ## 3D Rendering
 
-### Engine
-- Three.js WebGLRenderer
-- 60° FOV camera
-- Hermite interpolation for smooth positions
-- SLERP for rotations
+### Engine Configuration
 
-### Lighting
-- Ambient: 0x505050 at 0.6 intensity
-- Directional: 0xffffff at 1.4 intensity (from skybox sun)
+| Setting | Value |
+|---------|-------|
+| Renderer | Three.js WebGLRenderer |
+| FOV | 60° |
+| Near clip | 1 |
+| Far clip | 50,000 |
+| Interpolation | Hermite (position), SLERP (rotation) |
+
+### Lighting Setup
+
+| Light | Color | Intensity | Purpose |
+|-------|-------|-----------|---------|
+| Ambient | #505050 | 0.6 | Base illumination |
+| Directional | #ffffff | 1.4 | Sun shadow/highlight |
+
+Directional light position derived from procedural skybox sun.
 
 ### Ship Models
-- 14 ship classes (9 combat, 5 structures)
-- Embedded geometry data (positions, normals, indices)
+
+14 ship geometry definitions in `ship-geometries.ts`:
+
+**Combat Ships (9):**
+- scout, interceptor, fighter, striker
+- bomber, defender, raider, sentinel, patrol
+
+**Structures (5):**
+- convoy, station-mining, station-refinery
+- station-military, station-turret
+
+**Geometry Format:**
+- Embedded position/normal/index arrays
 - Hull collision data for physics
 - Faction-based coloring (Green/Red/Yellow)
 
 ## Visual Effects
 
-### Projectiles
-- Sphere geometry for energy weapons
-- Cylinder geometry for ballistic weapons
-- Capsule geometry for blaster-style
+### Projectile System
+
+| Weapon Type | Geometry | Trail Length |
+|-------------|----------|--------------|
+| Energy (Plasma, Pulse, Ion) | Sphere | 5-8 points |
+| Ballistic (Autocannon, Slug) | Cylinder | 3-15 points |
+| Special (Gyrojet) | Capsule | 10 points |
+
+**Trail Implementation:**
+- Ring buffer for position history
+- Color fades from dim (old) to bright (new)
 - Object pooling for performance
 
-### Explosions
-- Dual-layer: expanding sphere + radiating particles
-- 24 particles standard, 64 for nuclear
-- Color-coded by type
-- Object pooling
-
 ### Beam Weapons
-- Line2 for consistent cross-platform width
-- Lightning: midpoint displacement algorithm
-- Nuclear Lance: origin flash + beam + impact ring
+
+| Beam | Visual | Special |
+|------|--------|---------|
+| Red/Green/Blue Laser | Line2 | 0.15s fade-out |
+| Lightning | Midpoint displacement | Jagged electric effect |
+| Nuclear Lance | Line + origin flash | Impact ring effect |
+
+**Line2 Usage:** Provides consistent cross-platform line width.
+
+### Explosions
+
+**Standard Explosion:**
+- Dual-layer: expanding sphere + radiating particles
+- 24 particles, 0.8s duration
+- Orange color (#FF8010)
+
+**Nuclear Explosion:**
+- Multi-stage: flash → shockwave ring → fireball
+- 64 particles, 2.0s duration
+- Color progression: white → yellow → orange → red
+- Point light for illumination
 
 ### Shield Effects
-- Cyan-blue hit flash
-- Expands and fades over duration
+
+- Cyan-blue flash at impact point
+- Expands (1.0 → 3.0×) and fades
+- 0.3s duration
 - Multiple simultaneous hits supported
 
-### Other Effects
-- Muzzle flashes (weapon-specific colors)
-- Missile exhaust (glowing cone + point light)
-- Dust particles (tiled cube approach)
-- Jump effects (shader-based distortion)
+### Missile Exhaust
 
-## Skybox
+- Glowing cone at missile rear
+- Flickering intensity (overlapping sine waves)
+- Point light follows missile
+- Color: orange-yellow core, deep orange glow
 
-- Procedural generation from seed
-- 4D Perlin noise for seamless cubemap
-- Components: stars, nebulae, sun
-- 2048x2048 resolution
+### Muzzle Flash
+
+| Event | Duration | Animation |
+|-------|----------|-----------|
+| Projectile fire | 0.08s | Expand + fade |
+| Beam active | Continuous | Pulsing glow |
+
+Colors match weapon type.
+
+## Skybox Generation
+
+Procedural skybox from seed (`src/rendering/skybox/`):
+
+### Components
+
+1. **Stars:** Point sprites at random positions
+2. **Nebulae:** 4D Perlin noise for seamless cubemap
+3. **Sun:** Directional light source with glow
+
+### Technical Details
+
+| Parameter | Value |
+|-----------|-------|
+| Resolution | 2048×2048 per face |
+| Noise | 4D Perlin for seamlessness |
+| Generation | One-time at mission start |
 
 ## HUD Rendering
 
-- HTML/CSS overlay for menus
-- Canvas-based reticles and radar
-- WebGL for target camera PiP
+### Technologies
+
+| Element | Technology |
+|---------|------------|
+| Menus | HTML/CSS overlay |
+| Reticles | Canvas 2D |
+| Radar | Canvas 2D |
+| Target camera | WebGL PiP |
+
+### HUD Elements
+
+| Location | Content |
+|----------|---------|
+| Bottom center | Status bars (shields, hull, heat, speed) |
+| Top right | Target info + camera |
+| Bottom left | Radar (150×150 px) |
+| Top left | Wingman/convoy/station status |
+| Bottom right | Weapon banks |
 
 ## Performance Optimizations
 
-1. **Object Pooling** - Explosions, flashes, bolts
-2. **Geometry Caching** - Ships built once and reused
-3. **Lazy Loading** - Meshes created on first use
-4. **Interpolation** - Smooth 60fps independent of physics tick
-5. **Dust Tiling** - Infinite space with finite particles
+### Object Pooling
+
+| Effect | Pool Size |
+|--------|-----------|
+| Explosions | 20 |
+| Muzzle flashes | 50 |
+| Projectile trails | 100 |
+
+### Geometry Caching
+
+- Ship meshes built once, cloned for instances
+- Shared geometries for projectiles
+- Lazy initialization on first use
+
+### Rendering Optimizations
+
+| Technique | Purpose |
+|-----------|---------|
+| Interpolation | Smooth 60fps independent of physics tick |
+| Dust tiling | Infinite space with finite particles |
+| Frustum culling | Skip off-screen objects |
+| LOD (planned) | Reduce detail at distance |
+
+## Audio System
+
+### Current Status
+
+**No audio system is implemented.** This is a significant gap in the game experience.
+
+### Missing Audio Categories
+
+| Category | Examples |
+|----------|----------|
+| Weapon sounds | Fire, impact, reload |
+| Explosions | Size-scaled detonations |
+| Engine sounds | Thrust, afterburner |
+| Ambient | Space hum, radio chatter |
+| Music | Combat, menu, victory/defeat |
+| UI | Button clicks, notifications |
+
+### Recommended Implementation
+
+```
+Web Audio API
+     │
+     ├── SFX Manager
+     │   ├── Weapon sounds (positional)
+     │   ├── Explosion sounds (positional)
+     │   └── UI sounds (2D)
+     │
+     └── Music Manager
+         ├── Ambient tracks
+         ├── Combat intensity
+         └── Stingers (victory/defeat)
+```
+
+**Spatial audio** would enhance combat awareness by indicating threat directions.
+
+## Key Files
+
+| File | Purpose |
+|------|---------|
+| `src/rendering/renderer.ts` | Core scene management |
+| `src/rendering/ship-geometries.ts` | Ship model data |
+| `src/rendering/effects/` | Visual effect systems |
+| `src/rendering/hud/` | HUD elements |
+| `src/rendering/skybox/` | Procedural skybox |
+| `src/rendering/interpolation.ts` | Smooth motion |
 
 ## Strengths
 
-1. **Rich Visual Variety** - Each weapon type has distinct visuals
-2. **Procedural Skybox** - Infinite variety from seeds
-3. **Good Performance** - Pooling and caching throughout
-4. **Smooth Motion** - Hermite interpolation prevents jitter
-5. **Deterministic** - Replay-safe visual generation
+1. **Visual Variety:** Each weapon type has distinct visuals
+2. **Procedural Skybox:** Infinite variety from seeds
+3. **Good Performance:** Pooling and caching throughout
+4. **Smooth Motion:** Hermite interpolation prevents jitter
+5. **Deterministic Generation:** Replay-safe visuals
 
-## Critical Gap: No Audio
+## Areas for Improvement
 
-**There is no audio system implemented.** This is a significant gap:
-- No weapon sounds
-- No explosion sounds
-- No engine sounds
-- No music
-- No UI feedback sounds
-
-## Recommendations
-
-### Audio System (Priority)
-1. Add Web Audio API integration
-2. Implement spatial audio for 3D positioning
-3. Add sound effects:
-   - Weapon fire (per weapon type)
-   - Explosions (scaled by size)
-   - Shield impacts
-   - Engine hum
-   - Missile lock warning
-4. Add background music:
-   - Ambient space theme
-   - Combat intensity music
-   - Victory/defeat stings
-5. Add UI sounds:
-   - Button clicks
-   - Menu transitions
-   - Notifications
-
-### Visual Improvements
-1. Add weapon tracers for better visibility
-2. Consider bloom/glow post-processing
-3. Add damage sparks on hull hits
-4. Improve missile exhaust variety
+1. **No Audio:** Critical gap in game feel
+2. **No Post-Processing:** No bloom, HDR, or glow
+3. **Limited LOD:** All detail levels rendered always
+4. **Fixed Resolution:** No dynamic scaling
+5. **No Shadows:** Ships don't cast shadows
