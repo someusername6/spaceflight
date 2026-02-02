@@ -3,13 +3,19 @@
  *
  * Pilots have separate skill levels per ship class. XP is earned from missions
  * and manually spent to unlock new ships or upgrade existing skills.
+ *
+ * XP costs scale proportionally with ship price (fighter = baseline).
  */
 
+import { SHIP_PRICES } from '../data/prices';
 import {
   isHumanControlled,
   isPlayerPilot,
 } from '../multiplayer/ship-assignment';
 import type { Pilot, SkillLevel } from './types';
+
+/** Fighter price is the baseline for XP cost scaling */
+const BASELINE_SHIP_PRICE = SHIP_PRICES.fighter?.buy ?? 400;
 
 // XP costs for skill progression
 export const XP_COSTS = {
@@ -84,14 +90,27 @@ export function getShipSkill(
   return pilot.shipSkills[shipClass] ?? null;
 }
 
-/** Get XP cost to upgrade or unlock a skill */
-export function getUpgradeCost(currentSkill: SkillLevel | null): number {
-  if (currentSkill === null) return XP_COSTS.unlock;
-  if (currentSkill === 'rookie') return XP_COSTS.rookieToRegular;
-  if (currentSkill === 'regular') return XP_COSTS.regularToVeteran;
-  if (currentSkill === 'veteran') return XP_COSTS.veteranToAce;
-  if (currentSkill === 'ace') return XP_COSTS.aceToElite;
-  return Infinity; // Elite cannot upgrade
+/** Get XP cost multiplier for a ship class (based on price relative to fighter) */
+function getShipXPMultiplier(shipClass: string): number {
+  const shipPrice = SHIP_PRICES[shipClass]?.buy ?? BASELINE_SHIP_PRICE;
+  return shipPrice / BASELINE_SHIP_PRICE;
+}
+
+/** Get XP cost to upgrade or unlock a skill for a specific ship class */
+export function getUpgradeCost(
+  currentSkill: SkillLevel | null,
+  shipClass: string,
+): number {
+  let baseCost: number;
+  if (currentSkill === null) baseCost = XP_COSTS.unlock;
+  else if (currentSkill === 'rookie') baseCost = XP_COSTS.rookieToRegular;
+  else if (currentSkill === 'regular') baseCost = XP_COSTS.regularToVeteran;
+  else if (currentSkill === 'veteran') baseCost = XP_COSTS.veteranToAce;
+  else if (currentSkill === 'ace') baseCost = XP_COSTS.aceToElite;
+  else return Infinity; // Elite cannot upgrade
+
+  const multiplier = getShipXPMultiplier(shipClass);
+  return Math.round(baseCost * multiplier);
 }
 
 /** Get salary for a pilot flying a specific ship */
@@ -132,7 +151,7 @@ export function spendXPOnShip(pilot: Pilot, shipClass: string): Pilot {
     throw new Error('Already at elite level');
   }
 
-  const cost = getUpgradeCost(currentSkill);
+  const cost = getUpgradeCost(currentSkill, shipClass);
   if (pilot.xp < cost) {
     throw new Error(`Insufficient XP: need ${cost}, have ${pilot.xp}`);
   }

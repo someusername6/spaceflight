@@ -78,6 +78,7 @@
    ======================================== */
 
 .ship-picker-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -174,7 +175,8 @@
   position: relative;
 }
 
-/* Grayscale the ship icon when forbidden */
+/* Gray ship icon when forbidden (same luminosity as cyan, but desaturated) */
 .ship-picker-card.forbidden .ship-picker-svg {
-  filter: grayscale(0.8) brightness(0.6);
+  filter: var(--filter-gray) drop-shadow(0 0 4px #b0b0b0)
+    drop-shadow(0 0 8px rgba(180, 180, 180, 0.4));
 }

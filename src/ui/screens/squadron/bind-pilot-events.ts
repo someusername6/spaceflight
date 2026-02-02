@@ -28,6 +28,7 @@ import {
 } from '../../../multiplayer/context-permissions';
 import { showNotification } from '../../common/notification';
 import type { ScreenAPI } from '../../framework/screen';
+import { bindForbiddenTooltips } from '../../utils/forbidden-tooltip';
 import { showConfirm } from '../confirm-modal';
 import type { SquadronProps, SquadronState } from './bind-events';
 import type { ListSelection } from './list';
@@ -276,4 +277,7 @@ export function bindPilotEvents(
       });
     }
   });
+
+  // Position forbidden tooltips on hover (moves to body to escape overflow containers)
+  bindForbiddenTooltips(api);
 }

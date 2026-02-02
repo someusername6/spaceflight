@@ -160,28 +160,47 @@ describe('Pilot Ship Skills', () => {
   });
 
   describe('getUpgradeCost', () => {
-    it('returns unlock cost for null', () => {
-      assert.strictEqual(getUpgradeCost(null), XP_COSTS.unlock);
+    it('returns unlock cost for null (fighter baseline)', () => {
+      assert.strictEqual(getUpgradeCost(null, 'fighter'), XP_COSTS.unlock);
     });
 
-    it('returns correct cost for rookie', () => {
-      assert.strictEqual(getUpgradeCost('rookie'), XP_COSTS.rookieToRegular);
+    it('returns correct cost for rookie (fighter baseline)', () => {
+      assert.strictEqual(
+        getUpgradeCost('rookie', 'fighter'),
+        XP_COSTS.rookieToRegular,
+      );
     });
 
-    it('returns correct cost for regular', () => {
-      assert.strictEqual(getUpgradeCost('regular'), XP_COSTS.regularToVeteran);
+    it('returns correct cost for regular (fighter baseline)', () => {
+      assert.strictEqual(
+        getUpgradeCost('regular', 'fighter'),
+        XP_COSTS.regularToVeteran,
+      );
     });
 
-    it('returns correct cost for veteran', () => {
-      assert.strictEqual(getUpgradeCost('veteran'), XP_COSTS.veteranToAce);
+    it('returns correct cost for veteran (fighter baseline)', () => {
+      assert.strictEqual(
+        getUpgradeCost('veteran', 'fighter'),
+        XP_COSTS.veteranToAce,
+      );
     });
 
-    it('returns correct cost for ace', () => {
-      assert.strictEqual(getUpgradeCost('ace'), XP_COSTS.aceToElite);
+    it('returns correct cost for ace (fighter baseline)', () => {
+      assert.strictEqual(getUpgradeCost('ace', 'fighter'), XP_COSTS.aceToElite);
     });
 
     it('returns Infinity for elite', () => {
-      assert.strictEqual(getUpgradeCost('elite'), Infinity);
+      assert.strictEqual(getUpgradeCost('elite', 'fighter'), Infinity);
+    });
+
+    it('scales cost based on ship price', () => {
+      // Defender costs 900, fighter costs 400, ratio = 2.25
+      const defenderUnlock = getUpgradeCost(null, 'defender');
+      assert.strictEqual(defenderUnlock, Math.round(XP_COSTS.unlock * 2.25));
+
+      // Patrol costs 200, fighter costs 400, ratio = 0.5
+      const patrolUnlock = getUpgradeCost(null, 'patrol');
+      assert.strictEqual(patrolUnlock, Math.round(XP_COSTS.unlock * 0.5));
     });
   });
 
@@ -252,10 +271,21 @@ describe('Pilot Ship Skills', () => {
   });
 
   describe('spendXPOnShip', () => {
-    it('unlocks new ship at rookie', () => {
+    it('unlocks new ship at rookie (fighter baseline)', () => {
+      // Using fighter as baseline - unlock cost is 25 XP
+      const pilot = createTestPilot({ bomber: 'veteran' }, 50);
+      const updated = spendXPOnShip(pilot, 'fighter');
+      assert.strictEqual(updated.xp, 25); // 50 - 25 = 25
+      assert.strictEqual(updated.shipSkills.fighter, 'rookie');
+      assert.strictEqual(updated.shipSkills.bomber, 'veteran'); // unchanged
+    });
+
+    it('unlocks expensive ship with scaled cost', () => {
+      // Bomber costs 700, fighter costs 400, ratio = 1.75
+      // Unlock cost = 25 * 1.75 = 44 XP (rounded)
       const pilot = createTestPilot({ fighter: 'veteran' }, 50);
       const updated = spendXPOnShip(pilot, 'bomber');
-      assert.strictEqual(updated.xp, 25);
+      assert.strictEqual(updated.xp, 6); // 50 - 44 = 6
       assert.strictEqual(updated.shipSkills.bomber, 'rookie');
       assert.strictEqual(updated.shipSkills.fighter, 'veteran'); // unchanged
     });

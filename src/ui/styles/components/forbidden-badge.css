@@ -11,6 +11,10 @@
 /* Generic forbidden card state */
 .forbidden {
   cursor: not-allowed;
+}
+
+/* Opacity for non-card forbidden elements (buttons, etc.) */
+.btn.forbidden {
   opacity: 0.5;
 }
 
@@ -49,10 +53,15 @@
 
 /* ========================================
    FORBIDDEN TOOLTIP
+   Matches warning-tooltip pattern from squadron/list.css
    ======================================== */
 
 .forbidden-tooltip {
   position: absolute;
+  left: 50%;
+  bottom: 100%;
+  transform: translateX(-50%);
+  margin-bottom: var(--space-2);
   white-space: nowrap;
   z-index: 100;
   opacity: 0;
@@ -62,36 +71,45 @@
     visibility var(--duration-base) var(--ease-out);
   pointer-events: none;
 
+  /* Match warning tooltip styling */
   background: var(--bg-panel);
   border: 1px solid var(--color-danger);
   padding: var(--space-2) var(--space-3);
   box-shadow:
     0 4px 20px rgba(0, 0, 0, 0.5),
-    0 0 15px var(--color-danger-glow);
+    0 0 20px var(--color-danger-glow);
 
   font-family: var(--font-ui);
   font-size: var(--text-sm);
   color: var(--text-primary);
 }
 
-/* Tooltip positioned to the right (for icon badges) */
-.forbidden-tooltip-right {
-  left: 100%;
-  top: 50%;
-  transform: translateY(-50%);
-  margin-left: var(--space-3);
-}
-
-/* Tooltip positioned above (for inline badges) */
-.forbidden-tooltip-above {
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  margin-bottom: var(--space-2);
-}
-
-/* Show tooltip on hover */
+/* Show tooltip on icon hover */
 .forbidden:hover .forbidden-tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ========================================
+   SHIP PICKER FIXED TOOLTIP
+   Uses position:fixed to escape overflow containers.
+   Position is set via JS in ship-picker.ts.
+   When active, tooltip is moved to body with this class.
+   ======================================== */
+
+.ship-picker .forbidden-tooltip,
+.forbidden-tooltip-active {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: auto;
+  transform: none;
+  margin: 0;
+  z-index: 10000;
+}
+
+/* Make tooltip visible when active (moved to body) */
+.forbidden-tooltip-active {
   opacity: 1;
   visibility: visible;
 }

@@ -28,6 +28,10 @@
 
   /* Base filter to convert black to dim gray */
   --filter-dim: invert(50%) sepia(0%) saturate(0%) brightness(80%) contrast(90%);
+
+  /* Base filter to convert black to light gray (same luminosity as cyan) */
+  --filter-gray: invert(85%) sepia(0%) saturate(0%) brightness(104%)
+    contrast(101%);
 }
 
 /* Utility class: cyan icon */

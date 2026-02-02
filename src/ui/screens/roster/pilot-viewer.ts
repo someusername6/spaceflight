@@ -110,7 +110,7 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
               const skill = pilot.shipSkills[shipClass] as
                 | SkillLevel
                 | undefined;
-              const upgradeCost = getUpgradeCost(skill ?? null);
+              const upgradeCost = getUpgradeCost(skill ?? null, shipClass);
               const canAfford = pilot.xp >= upgradeCost;
               const isMaxed = skill === 'elite';
               const showButton = hostCanUpgrade && !isMaxed;
@@ -211,13 +211,16 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
                 const forbiddenClass = canFly ? '' : 'forbidden';
                 const forbiddenBadge = canFly
                   ? ''
-                  : `<span class="forbidden-badge-inline">⊘</span>
-                     <span class="forbidden-tooltip forbidden-tooltip-above">Needs ${formatShipClass(ship.shipClass)} skill</span>`;
+                  : `<span class="forbidden-badge-inline">⊘</span>`;
+                const forbiddenTooltip = canFly
+                  ? ''
+                  : `<div class="forbidden-tooltip">Needs ${formatShipClass(ship.shipClass)} skill</div>`;
                 return `
               <button class="btn btn-assign-pilot ${forbiddenClass}"
                       data-pilot="${pilot.id}"
                       data-ship="${ship.id}">
                 ${formatShipClass(ship.shipClass)}${forbiddenBadge}
+                ${forbiddenTooltip}
               </button>
             `;
               })
@@ -246,12 +249,10 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
                 const forbiddenClass = canFly ? '' : 'forbidden';
                 const forbiddenBadge = canFly
                   ? ''
-                  : `
-                  <span class="forbidden-badge" aria-label="Cannot fly">⊘</span>
-                  <div class="forbidden-tooltip forbidden-tooltip-right">
-                    Needs ${formatShipClass(group.shipClass)} skill
-                  </div>
-                `;
+                  : `<span class="forbidden-badge" aria-label="Cannot fly">⊘</span>`;
+                const forbiddenTooltip = canFly
+                  ? ''
+                  : `<div class="forbidden-tooltip">Needs ${formatShipClass(group.shipClass)} skill</div>`;
                 return `
               <button class="stored-ship-card-btn ${forbiddenClass}"
                       data-pilot="${pilot.id}"
@@ -261,6 +262,7 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
                   ${forbiddenBadge}
                 </div>
                 <div class="stored-ship-card-name">${group.shipClass}${countBadge}</div>
+                ${forbiddenTooltip}
               </button>
             `;
               })

@@ -16,6 +16,10 @@ import type { CampaignState } from '../../campaign/types';
 import type { Screen, ScreenHandle } from '../framework/screen';
 import { createScreen } from '../framework/screen';
 import { getShipIconPath, iconErrorHandler } from '../ship/viewer';
+import {
+  bindForbiddenTooltips,
+  cleanupForbiddenTooltips,
+} from '../utils/forbidden-tooltip';
 import { canPilotFlyShip, formatShipClass } from './roster/skill-rendering';
 
 /** Ship picker state */
@@ -37,6 +41,9 @@ let activeContainer: HTMLElement | null = null;
 
 /** Close any open ship picker */
 export function closeShipPicker(): void {
+  // Clean up any tooltips that were moved to body
+  cleanupForbiddenTooltips();
+
   if (activeHandle) {
     activeHandle.destroy();
     activeHandle = null;
@@ -60,12 +67,10 @@ function renderShipCard(
   const forbiddenClass = canFly ? '' : 'forbidden';
   const forbiddenBadge = canFly
     ? ''
-    : `
-      <span class="forbidden-badge" aria-label="Cannot fly">⊘</span>
-      <div class="forbidden-tooltip forbidden-tooltip-right">
-        Needs ${formatShipClass(shipClass)} skill
-      </div>
-    `;
+    : `<span class="forbidden-badge" aria-label="Cannot fly">⊘</span>`;
+  const forbiddenTooltip = canFly
+    ? ''
+    : `<div class="forbidden-tooltip">Needs ${formatShipClass(shipClass)} skill</div>`;
   return `
     <button class="ship-picker-card ${forbiddenClass}" ${dataAttrs}>
       <div class="ship-picker-icon">
@@ -74,6 +79,7 @@ function renderShipCard(
         ${forbiddenBadge}
       </div>
       <div class="ship-picker-name">${shipClass}${countBadge}</div>
+      ${forbiddenTooltip}
     </button>
   `;
 }
@@ -184,6 +190,9 @@ const ShipPickerScreen: Screen<ShipPickerState, ShipPickerProps> = {
 
   bind(api, props) {
     const { onStateUpdate, onClose } = props;
+
+    // Position forbidden tooltips on hover (moves to body to escape stacking context)
+    bindForbiddenTooltips(api);
 
     // Handle action buttons
     api.on('[data-action]', 'click', (e, el) => {
