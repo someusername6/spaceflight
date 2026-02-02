@@ -356,14 +356,6 @@ export interface StoredAmmo {
   count: number;
 }
 
-/** Mission outcome for results screen */
-export interface MissionOutcome {
-  victory: boolean;
-  creditsEarned: number;
-  shipsLost: string[]; // IDs of ships that were destroyed
-  ammoUsed: Map<string, Map<string, number>>; // shipId -> weaponType -> count
-}
-
 /** Hireable pilot available in the recruit pool */
 export interface HireablePilot {
   id: string;

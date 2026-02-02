@@ -42,20 +42,6 @@ export function randomRange(
   return random(state) * (max - min) + min;
 }
 
-/** Random boolean with given probability of true (default 0.5) */
-export function randomBool(state: PRNGState, probability = 0.5): boolean {
-  return random(state) < probability;
-}
-
-/** Pick random element from array */
-export function randomChoice<T>(state: PRNGState, array: readonly T[]): T {
-  if (array.length === 0) {
-    throw new Error('Cannot pick from empty array');
-  }
-  const index = randomInt(state, 0, array.length - 1);
-  return array[index] as T;
-}
-
 /** Shuffle array in place (Fisher-Yates) */
 export function shuffle<T>(state: PRNGState, array: T[]): T[] {
   for (let i = array.length - 1; i > 0; i--) {

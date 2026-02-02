@@ -233,22 +233,6 @@ export function getWingmanShips(state: CampaignState): OwnedShip[] {
   );
 }
 
-/** Get unassigned pilots (not currently in any ship) */
-export function getUnassignedPilots(state: CampaignState): Pilot[] {
-  const assignedPilotIds = new Set(
-    state.ships.filter((s) => s.pilot).map((s) => s.pilot?.id),
-  );
-  return state.pilots.filter((p) => !assignedPilotIds.has(p.id));
-}
-
-/** Get a pilot by ID */
-export function getPilotById(
-  state: CampaignState,
-  pilotId: string,
-): Pilot | undefined {
-  return state.pilots.find((p) => p.id === pilotId);
-}
-
 /** Check if commander is assigned to a ship */
 export function isCommanderAssigned(state: CampaignState): boolean {
   return state.ships.some((s) => s.pilot?.id === state.commanderId);

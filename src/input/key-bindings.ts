@@ -124,13 +124,6 @@ export function getKeyBindings(): KeyBindings {
 }
 
 /**
- * Get the key code for a specific action.
- */
-export function getKeyForAction(action: GameAction): string {
-  return currentBindings[action];
-}
-
-/**
  * Set a new key for an action.
  * @param action - The action to rebind
  * @param keyCode - The new key code (e.g., 'KeyW', 'Space')
@@ -155,14 +148,6 @@ export function saveKeyBindings(): void {
  */
 export function resetToDefaults(): void {
   currentBindings = { ...DEFAULT_BINDINGS };
-  saveKeyBindings();
-}
-
-/**
- * Reset a single action to its default binding and persist.
- */
-export function resetActionToDefault(action: GameAction): void {
-  currentBindings[action] = DEFAULT_BINDINGS[action];
   saveKeyBindings();
 }
 

@@ -208,33 +208,3 @@ export class InputPlayer {
     return tick >= 0 && tick < this.tickCount;
   }
 }
-
-/**
- * Serialize replay data to JSON string.
- */
-export function serializeReplay(replay: ReplayData): string {
-  return JSON.stringify(replay);
-}
-
-/**
- * Deserialize replay data from JSON string.
- */
-export function deserializeReplay(json: string): ReplayData {
-  const data = JSON.parse(json) as ReplayData;
-  if (data.version !== 1) {
-    throw new Error(`Unsupported replay version: ${data.version}`);
-  }
-  return data;
-}
-
-/**
- * Compare two input recordings for equality.
- * Useful for determinism testing.
- */
-export function inputRecordingsEqual(a: number[], b: number[]): boolean {
-  if (a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i++) {
-    if (a[i] !== b[i]) return false;
-  }
-  return true;
-}

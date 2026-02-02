@@ -33,18 +33,6 @@ export function createTransform(
   };
 }
 
-/** Creates a Transform at a specific position */
-export function createTransformAt(
-  position: Vector3,
-  rotation?: Quaternion,
-): Transform {
-  return {
-    type: 'transform',
-    position: position.clone(),
-    rotation: rotation?.clone() ?? new Quaternion(),
-  };
-}
-
 // =============================================================================
 // Serialization
 // =============================================================================

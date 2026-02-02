@@ -373,11 +373,6 @@ export function startBattleSimulation(sim: BattleSimulation): void {
   startGame(sim.game);
 }
 
-/** Stop the battle simulation */
-export function stopBattleSimulation(sim: BattleSimulation): void {
-  stopGame(sim.game);
-}
-
 /** Dispose of all simulation resources */
 export function disposeBattleSimulation(sim: BattleSimulation): void {
   stopGame(sim.game);

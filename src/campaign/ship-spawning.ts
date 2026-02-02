@@ -30,11 +30,7 @@ import { getOccupiedWeapons } from './slot-array';
 import type { OwnedShip } from './types';
 
 // Re-export ammo and replay functions
-export {
-  type ExtractedAmmo,
-  extractAmmoFromWorld,
-  shipToReplayLoadout,
-} from './ship-ammo';
+export { extractAmmoFromWorld, shipToReplayLoadout } from './ship-ammo';
 
 /**
  * Spawn player ship from campaign state.

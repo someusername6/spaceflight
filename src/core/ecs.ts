@@ -10,13 +10,7 @@
 
 import type { ComponentRegistry } from './component-registry';
 import { createPRNG } from './prng';
-import type {
-  ComponentBase,
-  ComponentMap,
-  ComponentType,
-  Entity,
-  World,
-} from './types';
+import type { ComponentBase, ComponentType, Entity, World } from './types';
 import { MissionResult } from './types';
 
 /** Creates a new empty world with given seed for PRNG */
@@ -191,23 +185,6 @@ export function removeComponent(
 }
 
 /**
- * Query for entities with specific components.
- * Returns an iterator of [entity, componentMap] pairs.
- */
-export function* query(
-  world: World,
-  requiredTypes: ComponentType[],
-): Generator<[Entity, ComponentMap]> {
-  for (const entity of world.entities) {
-    if (hasComponents(world, entity, requiredTypes)) {
-      // hasComponents guarantees entity exists in components map
-      const components = world.components.get(entity) as ComponentMap;
-      yield [entity, components];
-    }
-  }
-}
-
-/**
  * Query returning just entity IDs (for simpler iteration).
  */
 export function* queryEntities(
@@ -219,13 +196,6 @@ export function* queryEntities(
       yield entity;
     }
   }
-}
-
-/**
- * Get all entities (useful for cleanup/debug).
- */
-export function getAllEntities(world: World): Entity[] {
-  return Array.from(world.entities);
 }
 
 /**

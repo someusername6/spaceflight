@@ -103,40 +103,6 @@ export function findContractById(
 }
 
 // =============================================================================
-// Mission Start Validation
-// =============================================================================
-
-/**
- * Validate that mission can be started with given data.
- * Returns error message if invalid, undefined if valid.
- */
-export function validateMissionStart(
-  data: MissionStartData,
-  campaignState: CampaignState,
-  contracts: Contract[],
-): string | undefined {
-  // Check contract exists
-  const lookup = findContractById(data.contractId, contracts);
-  if (!lookup.found) {
-    return lookup.error;
-  }
-
-  // Validate seed matches expected (for host verification)
-  const expectedSeed = generateMissionSeed(campaignState);
-  if (data.seed !== expectedSeed) {
-    return `Seed mismatch: expected ${expectedSeed}, got ${data.seed}. Campaign state may be desynced.`;
-  }
-
-  // Verify campaign state hash matches
-  const localHash = hashCampaignState(campaignState);
-  if (data.campaignStateHash !== localHash) {
-    return `Campaign state hash mismatch: host=${data.campaignStateHash}, local=${localHash}. State is desynced.`;
-  }
-
-  return undefined;
-}
-
-// =============================================================================
 // Mission Start Data Creation
 // =============================================================================
 

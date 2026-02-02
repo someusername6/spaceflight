@@ -25,18 +25,6 @@ export const TICK_MS = 1000 / TICK_RATE;
 /** Maximum replays stored in IndexedDB (FIFO eviction) */
 export const MAX_STORED_REPLAYS = 20;
 
-/**
- * Ticks between keyframe captures during playback.
- * Currently unused - reserved for future fast-seeking optimization.
- *
- * MVP seeking restarts from tick 0 and fast-forwards. A future optimization
- * would capture world state snapshots every KEYFRAME_INTERVAL ticks, allowing
- * seeks to restore the nearest keyframe and only fast-forward the remainder.
- * At 300 ticks (5 seconds at 60Hz), seeking to any point requires at most
- * ~300 simulation ticks rather than potentially thousands.
- */
-export const KEYFRAME_INTERVAL = 300;
-
 /** Available playback speed options */
 export const PLAYBACK_SPEEDS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 4] as const;
 

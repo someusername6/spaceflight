@@ -111,15 +111,6 @@ export function createShipMesh(
   return new THREE.Mesh(geometry, material);
 }
 
-/** Creates a projectile mesh */
-export function createProjectileMesh(faction: Faction): THREE.Mesh {
-  const geometry = new THREE.SphereGeometry(0.3, 8, 6);
-  const color = FACTION_COLORS[faction] ?? 0xffff00;
-  const material = new THREE.MeshBasicMaterial({ color });
-
-  return new THREE.Mesh(geometry, material);
-}
-
 /** Creates a missile mesh with type-specific appearance */
 export function createMissileMesh(missileType: MissileType): THREE.Group {
   const visual = MISSILE_VISUALS[missileType];

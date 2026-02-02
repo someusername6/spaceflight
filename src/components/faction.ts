@@ -24,12 +24,6 @@ export function areEnemies(a: Faction, b: Faction): boolean {
   return a !== b;
 }
 
-/** Check if two factions are allies */
-export function areAllies(a: Faction, b: Faction): boolean {
-  if (a === Faction.Neutral || b === Faction.Neutral) return false;
-  return a === b;
-}
-
 export { Faction };
 
 // =============================================================================

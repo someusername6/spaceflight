@@ -288,8 +288,3 @@ export function hirePilot(
     ),
   };
 }
-
-/** Get price for a skill level */
-export function getSkillPrice(skill: SkillLevel): number {
-  return SKILL_PRICES[skill] ?? 200;
-}

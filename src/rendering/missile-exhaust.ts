@@ -184,21 +184,3 @@ export function resetExhaustRenderer(
   // Clear tracking state
   seenMissiles.clear();
 }
-
-/** Disposes of exhaust renderer resources */
-export function disposeExhaustRenderer(
-  renderer: ExhaustRenderer,
-  scene: THREE.Scene,
-): void {
-  for (const exhaust of renderer.exhausts.values()) {
-    scene.remove(exhaust.cone);
-    scene.remove(exhaust.glow);
-    exhaust.cone.geometry.dispose();
-    (exhaust.cone.material as THREE.Material).dispose();
-  }
-  renderer.exhausts.clear();
-  renderer.coneGeometry.dispose();
-
-  // Clear tracking state
-  seenMissiles.clear();
-}

@@ -114,18 +114,3 @@ export function getTierIndex(credits: number): number {
   const tier = getRetirementTier(credits);
   return RETIREMENT_TIERS.indexOf(tier);
 }
-
-/**
- * Get progress within the current tier as a percentage (0-100).
- * Returns 100 if at the highest tier.
- */
-export function getTierProgress(credits: number): number {
-  const currentTier = getRetirementTier(credits);
-  const nextTier = getNextTier(credits);
-
-  if (!nextTier) return 100; // At max tier
-
-  const tierRange = nextTier.minCredits - currentTier.minCredits;
-  const creditsIntoTier = credits - currentTier.minCredits;
-  return Math.floor((creditsIntoTier / tierRange) * 100);
-}

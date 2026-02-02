@@ -26,7 +26,7 @@ import {
   finalizeShip,
   type ShipSpawnConfig,
 } from '../factories/ship-builder';
-import type { ReplayShipLoadout, ReplayWingman } from './types';
+import type { ReplayShipLoadout } from './types';
 
 /**
  * Spawn player ship from replay loadout data.
@@ -148,29 +148,4 @@ export function spawnWingmanFromReplayLoadout(
   finalizeShip(config, entity);
 
   return entity;
-}
-
-/**
- * Spawn all wingmen from replay data at their recorded positions.
- */
-export function spawnWingmenFromReplay(
-  world: World,
-  wingmen: ReplayWingman[],
-  playerRotation: Quaternion,
-): void {
-  for (const wingman of wingmen) {
-    const pos = {
-      x: wingman.position.x,
-      y: wingman.position.y,
-      z: wingman.position.z,
-    } as unknown as Vector3;
-    spawnWingmanFromReplayLoadout(
-      world,
-      wingman.loadout,
-      pos,
-      playerRotation,
-      wingman.pilotName,
-      wingman.pilotSkill,
-    );
-  }
 }

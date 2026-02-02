@@ -64,11 +64,6 @@ let activeCallbacks: CountdownCallbacks | null = null;
 // State Access
 // =============================================================================
 
-/** Get current launch state */
-export function getLaunchState(): LaunchFlowState {
-  return { ...launchState };
-}
-
 /** Check if countdown is in progress */
 export function isCountdownInProgress(): boolean {
   return launchState.isCountingDown;

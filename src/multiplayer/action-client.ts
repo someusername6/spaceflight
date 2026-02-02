@@ -165,18 +165,6 @@ export async function sendAction(
   });
 }
 
-/**
- * Clear all pending requests (call on disconnect).
- */
-export function clearPendingRequests(): void {
-  for (const [, pending] of pendingRequests) {
-    clearTimeout(pending.timeout);
-    pending.resolve({ success: false, error: 'Disconnected' });
-  }
-  pendingRequests.clear();
-  isResponseHandlerSetUp = false;
-}
-
 // =============================================================================
 // Helper Functions for Common Actions
 // =============================================================================

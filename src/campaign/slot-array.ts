@@ -92,14 +92,6 @@ export function getSlot<T>(arr: SlotArray<T>, index: number): T | undefined {
 }
 
 /**
- * Check if a slot contains a weapon.
- * @throws RangeError if index is out of bounds
- */
-export function hasWeapon<T>(arr: SlotArray<T>, index: number): boolean {
-  return getSlot(arr, index) !== undefined;
-}
-
-/**
  * Count the number of occupied (non-empty) slots.
  */
 export function countOccupied<T>(arr: SlotArray<T>): number {
@@ -179,19 +171,6 @@ export function mapSlots<T, R>(
 export function getOccupiedWeapons<T>(arr: SlotArray<T>): T[] {
   const slots = getInternal(arr);
   return slots.filter((s): s is T => s !== null);
-}
-
-/**
- * Get occupied weapons with their slot indices.
- */
-export function getOccupiedWithIndices<T>(
-  arr: SlotArray<T>,
-): Array<{ index: number; weapon: T }> {
-  const result: Array<{ index: number; weapon: T }> = [];
-  forEachSlot(arr, (weapon, index) => {
-    result.push({ index, weapon });
-  });
-  return result;
 }
 
 /**

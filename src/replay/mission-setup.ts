@@ -26,10 +26,7 @@ import {
   processWaveTick,
   type WaveState,
 } from '../campaign/mission/mission-waves';
-import {
-  setupStationDefenseMission,
-  spawnReinforcementForReplay,
-} from '../campaign/mission/station-defense-launcher';
+import { setupStationDefenseMission } from '../campaign/mission/station-defense-launcher';
 import type { Contract, MissionType } from '../campaign/types';
 import { createWorld } from '../core/ecs';
 import type { World } from '../core/types';
@@ -42,10 +39,7 @@ import {
   type EscortMissionState,
   processEscortMissionTick,
 } from '../systems/escort-mission';
-import {
-  processStationDefenseMissionTick,
-  type StationDefenseMissionState,
-} from '../systems/station-defense';
+import type { StationDefenseMissionState } from '../systems/station-defense';
 import { initMatchStats } from '../systems/stats';
 import { getAllMissions } from '../ui/screens/contracts-data';
 import {
@@ -257,40 +251,6 @@ export function isReplayEscortComplete(
   escortState: EscortMissionState,
 ): boolean {
   return escortState.completed;
-}
-
-/**
- * Process station defense mission logic during replay tick.
- * Uses shared processStationDefenseMissionTick for determinism with live gameplay.
- */
-export function tickReplayStationDefense(
-  world: World,
-  stationState: StationDefenseMissionState,
-  mission: Contract,
-  dt: number,
-): void {
-  if (!mission.stationDefenseData) return;
-
-  const stationDefenseData = mission.stationDefenseData;
-
-  // Use shared station defense tick logic (identical to live gameplay)
-  processStationDefenseMissionTick(world, stationState, mission, dt, () =>
-    spawnReinforcementForReplay(
-      world,
-      stationState.stationPosition,
-      stationDefenseData.reinforcementPool,
-      stationState.reinforcementsSpawned,
-    ),
-  );
-}
-
-/**
- * Check if the station defense replay mission is complete.
- */
-export function isReplayStationDefenseComplete(
-  stationState: StationDefenseMissionState,
-): boolean {
-  return stationState.completed;
 }
 
 /**

@@ -59,14 +59,6 @@ export function validateChatMessage(
 }
 
 /**
- * Clear rate limit tracking for a player.
- * Call when player disconnects.
- */
-export function clearRateLimit(playerId: string): void {
-  lastMessageTime.delete(playerId);
-}
-
-/**
  * Clear all rate limit tracking.
  * Call when leaving a lobby.
  */

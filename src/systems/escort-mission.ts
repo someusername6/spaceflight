@@ -357,19 +357,3 @@ export function processEscortMissionTick(
 
   return stateChanged;
 }
-
-/** Get reward multiplier based on convoy escape success */
-export function getEscortRewardMultiplier(state: EscortMissionState): number {
-  if (state.totalConvoy === 0) return 0;
-  return state.escapedConvoy / state.totalConvoy;
-}
-
-/** Get escaped convoy count (those that completed hyperspace jump) */
-export function getEscapedConvoyCount(state: EscortMissionState): number {
-  return state.escapedConvoy;
-}
-
-/** Get surviving convoy count (those that reached escape zone - alias for compatibility) */
-export function getSurvivingConvoyCount(state: EscortMissionState): number {
-  return state.escapedConvoy;
-}

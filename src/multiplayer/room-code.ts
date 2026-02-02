@@ -50,6 +50,3 @@ export function formatRoomCode(code: string): string {
   }
   return normalized;
 }
-
-/** Room code length constant for external use */
-export const ROOM_CODE_LENGTH_VALUE = ROOM_CODE_LENGTH;

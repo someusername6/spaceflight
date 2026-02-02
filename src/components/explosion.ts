@@ -50,11 +50,6 @@ export function createExplosion(
   return explosion;
 }
 
-/** Get normalized progress (0-1) */
-export function getExplosionProgress(explosion: Explosion): number {
-  return Math.min(1, explosion.age / explosion.maxAge);
-}
-
 /** Check if explosion is finished */
 export function isExplosionFinished(explosion: Explosion): boolean {
   return explosion.age >= explosion.maxAge;

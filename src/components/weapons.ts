@@ -263,13 +263,6 @@ export function createSecondaryWeapons(
   };
 }
 
-/** Get current primary weapon, or undefined if none */
-export function getCurrentPrimary(
-  weapons: PrimaryWeapons,
-): PrimaryWeapon | undefined {
-  return weapons.weapons[weapons.currentIndex];
-}
-
 /** Get current secondary weapon, or undefined if none */
 export function getCurrentSecondary(
   weapons: SecondaryWeapons,
@@ -294,11 +287,6 @@ export {
 /** Get current link mode name ('plasma', 'greenLaser', 'all', etc.) */
 export function getCurrentLinkMode(weapons: PrimaryWeapons): string {
   return weapons.linkModes[weapons.linkMode] ?? 'all';
-}
-
-/** Check if current link mode is 'all' */
-export function isAllLinked(weapons: PrimaryWeapons): boolean {
-  return getCurrentLinkMode(weapons) === 'all';
 }
 
 /** Get indices of weapons that should fire in current link mode */
@@ -341,21 +329,6 @@ export function setLinkModeByType(
   if (index >= 0) {
     weapons.linkMode = index;
   }
-}
-
-/** Check if weapon can fire (fire rate cooldown) */
-export function canFire(
-  weapon: PrimaryWeapon | SecondaryWeapon,
-  lastFire: number,
-  now: number,
-): boolean {
-  const fireRate = 'fireRate' in weapon ? weapon.fireRate : 0.5;
-  return now - lastFire >= fireRate;
-}
-
-/** Check if primary weapons include any beam weapons (uses cached value) */
-export function hasBeamWeapons(weapons: PrimaryWeapons): boolean {
-  return weapons.hasBeams;
 }
 
 // =============================================================================

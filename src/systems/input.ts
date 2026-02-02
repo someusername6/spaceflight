@@ -59,23 +59,6 @@ export function initInput(): void {
   window.addEventListener('blur', eventHandlers.blur);
 }
 
-/** Clean up keyboard listeners (call on game shutdown) */
-export function cleanupInput(): void {
-  if (eventHandlers.keydown) {
-    window.removeEventListener('keydown', eventHandlers.keydown);
-    eventHandlers.keydown = null;
-  }
-  if (eventHandlers.keyup) {
-    window.removeEventListener('keyup', eventHandlers.keyup);
-    eventHandlers.keyup = null;
-  }
-  if (eventHandlers.blur) {
-    window.removeEventListener('blur', eventHandlers.blur);
-    eventHandlers.blur = null;
-  }
-  pressedKeys.clear();
-}
-
 // ============================================================================
 // Replay Recording API
 // ============================================================================

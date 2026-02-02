@@ -336,34 +336,6 @@ export function getShipDisplayName(ship: OwnedShip): string {
   return ship.shipClass.charAt(0).toUpperCase() + ship.shipClass.slice(1);
 }
 
-// =============================================================================
-// Host Ship Assignment
-// =============================================================================
-
-/**
- * Assign the host to their commander ship.
- * Called when the host creates/joins a multiplayer session.
- */
-export function assignHostToCommanderShip(
-  state: CampaignState,
-  _hostPlayerId: string,
-  _callsign: string,
-): CampaignState {
-  // Find the commander's ship
-  const commanderShip = state.ships.find(
-    (s) => s.pilot?.id === state.commanderId,
-  );
-  if (!commanderShip) {
-    // No commander ship found - this shouldn't happen in a valid campaign
-    return state;
-  }
-
-  // For the host, we don't create a separate player pilot.
-  // The host controls the commander pilot directly.
-  // The host's shipId in LobbyPlayer points to the commander's ship.
-  return state;
-}
-
 /**
  * Get the commander's ship ID.
  */

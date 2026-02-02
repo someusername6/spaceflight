@@ -24,6 +24,3 @@ export const COMBAT_SHIP_CLASSES = [
   'striker',
   'defender',
 ] as const;
-
-/** Type for combat ship class names */
-export type CombatShipClass = (typeof COMBAT_SHIP_CLASSES)[number];

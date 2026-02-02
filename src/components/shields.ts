@@ -57,11 +57,6 @@ export function damageShields(
   return passThrough;
 }
 
-/** Check if shields are up */
-export function hasShields(shields: Shields): boolean {
-  return shields.current > 0;
-}
-
 /** Check if shields are currently ionized */
 export function isIonized(shields: Shields, gameTime: number): boolean {
   return gameTime < shields.ionizedUntil;

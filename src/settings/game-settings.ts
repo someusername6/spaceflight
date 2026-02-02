@@ -72,14 +72,6 @@ export function initGameSettings(): void {
 }
 
 /**
- * Get the current game settings.
- * Returns a copy to prevent external mutation.
- */
-export function getGameSettings(): GameSettings {
-  return { ...currentSettings };
-}
-
-/**
  * Get the current frame rate cap.
  * Returns 0 for uncapped.
  */
@@ -119,14 +111,6 @@ export function saveGameSettings(): void {
   } catch (error) {
     logError('Failed to save game settings:', error);
   }
-}
-
-/**
- * Reset all settings to defaults.
- */
-export function resetSettingsToDefaults(): void {
-  currentSettings = { ...DEFAULT_SETTINGS };
-  saveGameSettings();
 }
 
 /**

@@ -206,13 +206,6 @@ export function getReplayBindings(): ReplayBindings {
 }
 
 /**
- * Get the key code for a specific replay action.
- */
-export function getKeyForReplayAction(action: ReplayAction): string {
-  return currentBindings[action];
-}
-
-/**
  * Check if a key code matches a replay action.
  */
 export function isReplayAction(keyCode: string, action: ReplayAction): boolean {

@@ -47,39 +47,3 @@ export const TITLE_SCREEN_BATTLE: BattleConfig = {
   },
   spawnRadius: 800,
 };
-
-/** Small skirmish - 2v2 */
-export const SMALL_SKIRMISH: BattleConfig = {
-  name: 'Small Skirmish',
-  teamA: {
-    archetype: 'firefly',
-    count: 2,
-    profile: 'regular',
-    callsignPrefix: 'Alpha',
-  },
-  teamB: {
-    archetype: 'firefly',
-    count: 2,
-    profile: 'regular',
-    callsignPrefix: 'Bandit',
-  },
-  spawnRadius: 600,
-};
-
-/** Large battle - 8v8 */
-export const LARGE_BATTLE: BattleConfig = {
-  name: 'Large Battle',
-  teamA: {
-    archetype: 'firefly',
-    count: 8,
-    profile: 'regular',
-    callsignPrefix: 'Alpha',
-  },
-  teamB: {
-    archetype: 'dragonfly',
-    count: 8,
-    profile: 'regular',
-    callsignPrefix: 'Bandit',
-  },
-  spawnRadius: 1200,
-};

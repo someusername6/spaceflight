@@ -43,11 +43,6 @@ export function getMissionResult(world: World): MissionResult {
   return world.systemState.mission.result;
 }
 
-/** Check if mission is still in progress */
-export function isMissionInProgress(world: World): boolean {
-  return world.systemState.mission.result === MissionResult.InProgress;
-}
-
 /** Reset mission state to in-progress (for multi-wave missions) */
 export function resetMissionState(world: World): void {
   world.systemState.mission.result = MissionResult.InProgress;

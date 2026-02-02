@@ -117,9 +117,3 @@ export function updateBattleCamera(
 
   return camera.followedEntity;
 }
-
-/** Force switch to a new target immediately */
-export function switchCameraTarget(camera: BattleCamera, world: World): void {
-  camera.timeSinceSwitch = camera.switchInterval;
-  updateBattleCamera(camera, world, 0);
-}

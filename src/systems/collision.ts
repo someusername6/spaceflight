@@ -15,17 +15,12 @@
  */
 
 import type { Vector3 } from 'three';
-import { type Collision, createCollision } from '../components/collision';
+import type { Collision } from '../components/collision';
 import type { HullCollider } from '../components/hull-collider';
 import type { Missile } from '../components/missile';
 import type { Projectile } from '../components/projectile';
 import type { Transform } from '../components/transform';
-import {
-  addComponent,
-  getComponent,
-  hasComponent,
-  queryEntities,
-} from '../core/ecs';
+import { getComponent, hasComponent, queryEntities } from '../core/ecs';
 import type { Entity, World } from '../core/types';
 import { type CollidableInfo, checkCollision } from './collision-check';
 
@@ -177,28 +172,5 @@ export function collisionSystem(world: World, dt: number): void {
         }
       }
     }
-  }
-}
-
-/** Check if entity collided with anything this frame */
-export function hasCollision(world: World, entity: Entity): boolean {
-  const collision = getComponent(world, entity, 'collision');
-  return collision !== undefined && collision.collidedWith.length > 0;
-}
-
-/** Get entities this entity collided with */
-export function getCollisions(world: World, entity: Entity): Entity[] {
-  const collision = getComponent(world, entity, 'collision');
-  return collision?.collidedWith ?? [];
-}
-
-/** Ensure entity has collision component */
-export function ensureCollision(
-  world: World,
-  entity: Entity,
-  radius?: number,
-): void {
-  if (!hasComponent(world, entity, 'collision')) {
-    addComponent(world, entity, createCollision(radius));
   }
 }
