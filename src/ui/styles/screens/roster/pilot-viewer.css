@@ -163,6 +163,7 @@
 }
 
 .stored-ship-card-icon {
+  position: relative;
   width: 80px;
   height: 80px;
   display: flex;
@@ -189,6 +190,21 @@
 .stored-ship-card-count {
   color: var(--text-secondary);
   margin-left: var(--space-1);
+}
+
+/* ========================================
+   FORBIDDEN STATE (pilot can't fly ship)
+   Base styles in components/forbidden-badge.css
+   ======================================== */
+
+/* Grayscale the ship icon when forbidden */
+.stored-ship-card-btn.forbidden .stored-ship-icon-svg {
+  filter: grayscale(0.8) brightness(0.6);
+}
+
+/* Assign pilot buttons need relative positioning for tooltip */
+.btn-assign-pilot.forbidden {
+  position: relative;
 }
 
 /* ========================================
@@ -222,10 +238,11 @@
 }
 
 /* ========================================
-   UNASSIGN PILOT SECTION
+   PILOT ACTIONS SECTION
    ======================================== */
 
-.pilot-unassign-section {
+.pilot-unassign-section,
+.pilot-actions-section {
   display: flex;
   justify-content: center;
   padding: var(--space-4) var(--space-3);
@@ -234,15 +251,8 @@
   background: rgba(0, 0, 0, 0.15);
 }
 
-/* Actions section: unassign + dismiss side by side */
 .pilot-actions-section {
-  display: flex;
-  justify-content: center;
   gap: var(--space-3);
-  padding: var(--space-4) var(--space-3);
-  margin-top: auto;
-  border-top: 1px solid var(--border-color);
-  background: rgba(0, 0, 0, 0.15);
 }
 
 /* Unassign button: subdued by default, red on hover */
@@ -385,5 +395,3 @@
     color-mix(in srgb, var(--color-warning) 25%, transparent);
   color: var(--text-secondary);
 }
-
-/* Ship skills styles in pilot-skills.css */

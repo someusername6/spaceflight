@@ -52,19 +52,26 @@ function renderShipCard(
   shipClass: string,
   dataAttrs: string,
   count = 1,
-  disabled = false,
+  canFly = true,
 ): string {
   const iconPath = getShipIconPath(shipClass);
   const countBadge =
     count > 1 ? `<span class="ship-picker-count">×${count}</span>` : '';
-  const disabledAttr = disabled
-    ? `disabled title="Pilot needs ${formatShipClass(shipClass)} skill"`
-    : '';
+  const forbiddenClass = canFly ? '' : 'forbidden';
+  const forbiddenBadge = canFly
+    ? ''
+    : `
+      <span class="forbidden-badge" aria-label="Cannot fly">⊘</span>
+      <div class="forbidden-tooltip forbidden-tooltip-right">
+        Needs ${formatShipClass(shipClass)} skill
+      </div>
+    `;
   return `
-    <button class="ship-picker-card" ${dataAttrs} ${disabledAttr}>
+    <button class="ship-picker-card ${forbiddenClass}" ${dataAttrs}>
       <div class="ship-picker-icon">
         <img src="${iconPath}" alt="${shipClass}" class="ship-picker-svg"
              ${iconErrorHandler()} />
+        ${forbiddenBadge}
       </div>
       <div class="ship-picker-name">${shipClass}${countBadge}</div>
     </button>
@@ -115,7 +122,7 @@ const ShipPickerScreen: Screen<ShipPickerState, ShipPickerProps> = {
             ship.shipClass,
             `data-action="swap-to-ship" data-ship-id="${ship.id}"`,
             1,
-            !canFly,
+            canFly,
           );
         })
         .join('');
@@ -140,7 +147,7 @@ const ShipPickerScreen: Screen<ShipPickerState, ShipPickerProps> = {
             group.shipClass,
             `data-action="swap-to-stored-ship" data-stored-ship-index="${group.firstIndex}"`,
             group.count,
-            !canFly,
+            canFly,
           );
         })
         .join('');
@@ -181,6 +188,10 @@ const ShipPickerScreen: Screen<ShipPickerState, ShipPickerProps> = {
     // Handle action buttons
     api.on('[data-action]', 'click', (e, el) => {
       e.stopPropagation();
+
+      // Ignore clicks on forbidden cards
+      if (el.classList.contains('forbidden')) return;
+
       const state = api.getState();
       const action = el.dataset.action;
       let newState = state.campaignState;

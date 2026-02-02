@@ -60,6 +60,10 @@ export function bindPilotEvents(
   // Assign pilot to ship
   api.on('.btn-assign-pilot', 'click', (e, el) => {
     e.stopPropagation();
+
+    // Ignore clicks on forbidden buttons (pilot can't fly this ship)
+    if (el.classList.contains('forbidden')) return;
+
     const pilotId = el.dataset.pilot;
     const shipId = el.dataset.ship;
     if (!pilotId || !shipId) return;
@@ -90,6 +94,10 @@ export function bindPilotEvents(
   // Deploy pilot with stored ship
   api.on('.stored-ship-card-btn', 'click', (e, el) => {
     e.stopPropagation();
+
+    // Ignore clicks on forbidden buttons (pilot can't fly this ship)
+    if (el.classList.contains('forbidden')) return;
+
     const pilotId = el.dataset.pilot;
     const storedShipIndex = Number.parseInt(
       el.dataset.storedShipIndex ?? '0',

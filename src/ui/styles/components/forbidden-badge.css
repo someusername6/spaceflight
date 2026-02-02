@@ -1,0 +1,97 @@
+/**
+ * Forbidden Badge - Shared styles for indicating pilot can't fly a ship.
+ *
+ * Used by ship-picker and pilot-viewer for ships requiring skills the pilot lacks.
+ */
+
+/* ========================================
+   FORBIDDEN STATE BASE
+   ======================================== */
+
+/* Generic forbidden card state */
+.forbidden {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.forbidden:hover {
+  border-color: var(--border-color);
+  background: var(--bg-panel);
+}
+
+/* ========================================
+   FORBIDDEN BADGE (red circle with slash)
+   ======================================== */
+
+.forbidden-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-danger);
+  color: #000;
+  font-size: 12px;
+  font-weight: bold;
+  border-radius: 50%;
+  box-shadow: 0 0 6px var(--color-danger);
+}
+
+/* Inline badge variant for text buttons */
+.forbidden-badge-inline {
+  color: var(--color-danger);
+  margin-left: var(--space-1);
+  text-shadow: 0 0 4px var(--color-danger-glow);
+}
+
+/* ========================================
+   FORBIDDEN TOOLTIP
+   ======================================== */
+
+.forbidden-tooltip {
+  position: absolute;
+  white-space: nowrap;
+  z-index: 100;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--duration-base) var(--ease-out),
+    visibility var(--duration-base) var(--ease-out);
+  pointer-events: none;
+
+  background: var(--bg-panel);
+  border: 1px solid var(--color-danger);
+  padding: var(--space-2) var(--space-3);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.5),
+    0 0 15px var(--color-danger-glow);
+
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+}
+
+/* Tooltip positioned to the right (for icon badges) */
+.forbidden-tooltip-right {
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: var(--space-3);
+}
+
+/* Tooltip positioned above (for inline badges) */
+.forbidden-tooltip-above {
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: var(--space-2);
+}
+
+/* Show tooltip on hover */
+.forbidden:hover .forbidden-tooltip {
+  opacity: 1;
+  visibility: visible;
+}

@@ -37,6 +37,9 @@
 /* Shared ship list item component */
 @import "./components/ship-item.css";
 
+/* Forbidden badge for ships pilot can't fly */
+@import "./components/forbidden-badge.css";
+
 /* Contracts screen */
 @import "./screens/contracts.css";
 

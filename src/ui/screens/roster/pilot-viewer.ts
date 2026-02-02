@@ -208,15 +208,16 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
             ${availableShips
               .map((ship) => {
                 const canFly = canPilotFlyShip(pilot, ship.shipClass, state);
-                const disabledAttr = canFly
+                const forbiddenClass = canFly ? '' : 'forbidden';
+                const forbiddenBadge = canFly
                   ? ''
-                  : `disabled title="Pilot needs ${formatShipClass(ship.shipClass)} skill"`;
+                  : `<span class="forbidden-badge-inline">⊘</span>
+                     <span class="forbidden-tooltip forbidden-tooltip-above">Needs ${formatShipClass(ship.shipClass)} skill</span>`;
                 return `
-              <button class="btn btn-assign-pilot"
+              <button class="btn btn-assign-pilot ${forbiddenClass}"
                       data-pilot="${pilot.id}"
-                      data-ship="${ship.id}"
-                      ${disabledAttr}>
-                ${formatShipClass(ship.shipClass)}
+                      data-ship="${ship.id}">
+                ${formatShipClass(ship.shipClass)}${forbiddenBadge}
               </button>
             `;
               })
@@ -242,16 +243,22 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
                     ? `<span class="stored-ship-card-count">×${group.count}</span>`
                     : '';
                 const canFly = canPilotFlyShip(pilot, group.shipClass, state);
-                const disabledAttr = canFly
+                const forbiddenClass = canFly ? '' : 'forbidden';
+                const forbiddenBadge = canFly
                   ? ''
-                  : `disabled title="Pilot needs ${formatShipClass(group.shipClass)} skill"`;
+                  : `
+                  <span class="forbidden-badge" aria-label="Cannot fly">⊘</span>
+                  <div class="forbidden-tooltip forbidden-tooltip-right">
+                    Needs ${formatShipClass(group.shipClass)} skill
+                  </div>
+                `;
                 return `
-              <button class="stored-ship-card-btn"
+              <button class="stored-ship-card-btn ${forbiddenClass}"
                       data-pilot="${pilot.id}"
-                      data-stored-ship-index="${group.firstIndex}"
-                      ${disabledAttr}>
+                      data-stored-ship-index="${group.firstIndex}">
                 <div class="stored-ship-card-icon">
                   <img src="${iconPath}" alt="${group.shipClass}" class="stored-ship-icon-svg" ${iconErrorHandler()} />
+                  ${forbiddenBadge}
                 </div>
                 <div class="stored-ship-card-name">${group.shipClass}${countBadge}</div>
               </button>

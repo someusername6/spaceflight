@@ -163,3 +163,18 @@
   font-family: var(--font-ui);
   font-size: var(--text-sm);
 }
+
+/* ========================================
+   FORBIDDEN STATE (pilot can't fly ship)
+   Base styles in components/forbidden-badge.css
+   ======================================== */
+
+/* Icon container needs relative positioning for badge */
+.ship-picker-icon {
+  position: relative;
+}
+
+/* Grayscale the ship icon when forbidden */
+.ship-picker-card.forbidden .ship-picker-svg {
+  filter: grayscale(0.8) brightness(0.6);
+}

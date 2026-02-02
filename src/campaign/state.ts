@@ -67,12 +67,14 @@ export function createShipFromArchetype(
  * Create a pilot with default stats.
  * @param shipClass - Ship class the pilot is trained on (null for commander who can fly all)
  * @param skill - Skill level for that ship class
+ * @param xp - Starting XP (default 0)
  */
 function createPilot(
   id: string,
   name: string,
   shipClass: string | null,
   skill: Pilot['shipSkills'][string],
+  xp = 0,
 ): Pilot {
   // Commander has empty shipSkills (handled specially via commanderId)
   // Regular pilots have one trained ship
@@ -91,7 +93,7 @@ function createPilot(
     damageReceived: 0,
     ejectionCount: 0,
     injuredMissionsLeft: 0,
-    xp: 0,
+    xp,
   };
 }
 
@@ -127,24 +129,27 @@ export function createNewCampaign(
     null,
     'ace',
   );
-  // Wingmen start with fighter skill at regular level
+  // Wingmen start with fighter skill at regular level and 50 XP
   const wingman1Pilot = createPilot(
     genId('pilot'),
     'Viper',
     'fighter',
     'regular',
+    50,
   );
   const wingman2Pilot = createPilot(
     genId('pilot'),
     'Ghost',
     'fighter',
     'regular',
+    50,
   );
   const wingman3Pilot = createPilot(
     genId('pilot'),
     'Shadow',
     'fighter',
     'regular',
+    50,
   );
   const allPilots = [commander, wingman1Pilot, wingman2Pilot, wingman3Pilot];
 
