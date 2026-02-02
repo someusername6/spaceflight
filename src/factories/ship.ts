@@ -1,47 +1,44 @@
 /**
- * Ship entity factory - creates ship entities with all required components.
+ * Ship entity factory - creates ship entities from archetypes.
+ *
+ * Archetypes define both ship stats and weapon loadouts.
+ * For campaign/replay ships that use custom loadouts, see:
+ * - campaign/ship-spawning.ts (campaign ships)
+ * - replay/replay-ship-spawning.ts (replay reconstruction)
  */
 
-import { Quaternion, type Vector3 } from 'three';
+import type { Quaternion, Vector3 } from 'three';
 import { createAIControlled } from '../components/ai';
 import { createAimError } from '../components/aim-error';
-import { createCollision } from '../components/collision';
-import { createCombatStats } from '../components/combat-stats';
-import { createFaction } from '../components/faction';
-import { createHealth } from '../components/health';
-import { createHeat } from '../components/heat';
-import { createHullCollider } from '../components/hull-collider';
 import { createSecondaryWeaponFromDef } from '../components/missile';
-import {
-  createPhysics,
-  INITIAL_SPAWN_SPEED,
-  setInitialVelocity,
-} from '../components/physics';
 import { createPlayerControlled } from '../components/player';
-import { createShieldHit } from '../components/shield-hit';
-import { createShields } from '../components/shields';
 import {
   createShipIdentity,
   generateCallsign,
 } from '../components/ship-identity';
 import { createTargeting } from '../components/targeting';
-import { createTransform } from '../components/transform';
 import {
   createPrimaryWeapons,
   createSecondaryWeapons,
 } from '../components/weapons';
-import { addComponent, createEntity, getComponent } from '../core/ecs';
+import { addComponent } from '../core/ecs';
 import type { Entity, World } from '../core/types';
 import { Faction } from '../core/types';
 import { getProfileForPlaystyle, type ProfileName } from '../data/ai-profiles';
 import { getWeaponStats } from '../data/weapons';
-import { SHIP_GEOMETRIES, type ShipClass } from '../rendering/ship-geometries';
-import { initWeaponAmmoCounts } from '../systems/stats';
 import { validateArchetypeLoadout } from './archetype-validation';
 import { ENEMY_ARCHETYPES } from './enemy-archetypes/index';
 import { SHIP_ARCHETYPES, type ShipStats } from './ship-archetypes';
+import {
+  createShipEntity,
+  finalizeShip,
+  type ShipSpawnConfig,
+} from './ship-builder';
 
 export type { SecondaryBankSpec, ShipStats } from './ship-archetypes';
+
+// Re-export for external use
+export { addHullColliderFromClass } from './ship-builder';
 
 /** Get archetype stats from either player or enemy archetypes */
 export function getArchetype(name: string): ShipStats | undefined {
@@ -86,44 +83,7 @@ function calculatePreferredCombatRange(stats: ShipStats): number {
 // Re-export for backwards compatibility
 export { SHIP_ARCHETYPES } from './ship-archetypes';
 
-/**
- * Add hull collider to a ship entity if geometry data exists.
- * Uses ship class name to look up hull planes and volume.
- *
- * @param world - ECS world
- * @param entity - Entity to add collider to
- * @param shipClassName - Ship class name (must match a key in SHIP_GEOMETRIES)
- * @param useHullForWeapons - If true, use hull for projectile/missile detection (large ships only)
- */
-export function addHullColliderFromClass(
-  world: World,
-  entity: Entity,
-  shipClassName: string,
-  useHullForWeapons = false,
-): void {
-  // Check if ship class has hull data
-  if (!(shipClassName in SHIP_GEOMETRIES)) {
-    return; // No geometry data, skip hull collider
-  }
-
-  const geometry = SHIP_GEOMETRIES[shipClassName as ShipClass];
-  if (!geometry.hull) {
-    return; // No hull data for this geometry
-  }
-
-  addComponent(
-    world,
-    entity,
-    createHullCollider(
-      geometry.hull,
-      geometry.hullBoundingRadius,
-      geometry.hullVolume,
-      useHullForWeapons,
-    ),
-  );
-}
-
-/** Creates a player-controlled ship */
+/** Creates a player-controlled ship from an archetype */
 export function createPlayerShip(
   world: World,
   archetype: string,
@@ -138,54 +98,25 @@ export function createPlayerShip(
   // Validate loadout on ship creation (catches runtime modifications)
   validateArchetypeLoadout(archetype);
 
-  const entity = createEntity(world);
-  const shipRotation = rotation ?? new Quaternion();
-
-  addComponent(
+  const config: ShipSpawnConfig = {
     world,
-    entity,
-    createTransform(
-      position?.x ?? 0,
-      position?.y ?? 0,
-      position?.z ?? 0,
-      shipRotation,
-    ),
-  );
+    stats,
+    position,
+    rotation,
+    faction: Faction.Player,
+    collisionRadiusMultiplier: 1.0,
+    shipClassName: stats.shipClassName,
+  };
 
-  addComponent(
-    world,
-    entity,
-    createPhysics({
-      maxSpeed: stats.maxSpeed,
-      acceleration: stats.acceleration,
-      turnRate: stats.turnRate,
-      rollRate: stats.rollRate,
-      afterburnerHeatRate: stats.afterburnerHeatRate,
-      initialSpeed: INITIAL_SPAWN_SPEED,
-    }),
-  );
+  const entity = createShipEntity(config);
 
-  // Set initial velocity in forward direction
-  const physics = getComponent(world, entity, 'physics');
-  if (physics) {
-    setInitialVelocity(physics, shipRotation, INITIAL_SPAWN_SPEED);
-  }
-
-  addComponent(world, entity, createHealth(stats.hull));
-  addComponent(
-    world,
-    entity,
-    createShields(stats.shields, stats.shieldRegen, stats.shieldDelay),
-  );
-  addComponent(world, entity, createShieldHit());
-  addComponent(world, entity, createFaction(Faction.Player));
+  // Player control
   addComponent(world, entity, createPlayerControlled());
   addComponent(world, entity, createShipIdentity(archetype, 'Alpha 1'));
   addComponent(world, entity, createTargeting());
-  addComponent(world, entity, createHeat(stats.maxHeat, stats.coolingRate));
-  addComponent(world, entity, createPrimaryWeapons(stats.primaryWeapons));
 
-  // Add secondary weapons if defined (count scaled by bank size)
+  // Weapons from archetype definition
+  addComponent(world, entity, createPrimaryWeapons(stats.primaryWeapons));
   if (stats.secondaryWeapons && stats.secondaryWeapons.length > 0) {
     const secondaryWeapons = stats.secondaryWeapons.map((w) =>
       createSecondaryWeaponFromDef(w.name, w.count, w.size),
@@ -193,17 +124,12 @@ export function createPlayerShip(
     addComponent(world, entity, createSecondaryWeapons(secondaryWeapons));
   }
 
-  addComponent(world, entity, createCollision(stats.collisionRadius));
-  addHullColliderFromClass(world, entity, stats.shipClassName, false);
-
-  // Add combat stats tracking
-  addComponent(world, entity, createCombatStats());
-  initWeaponAmmoCounts(world, entity);
+  finalizeShip(config, entity);
 
   return entity;
 }
 
-/** Creates an AI-controlled ship */
+/** Creates an AI-controlled ship from an archetype */
 export function createAIShip(
   world: World,
   archetype: string,
@@ -221,47 +147,17 @@ export function createAIShip(
   // Validate loadout on ship creation (catches runtime modifications)
   validateArchetypeLoadout(archetype);
 
-  const entity = createEntity(world);
-  const shipRotation = rotation ?? new Quaternion();
-
-  addComponent(
+  const config: ShipSpawnConfig = {
     world,
-    entity,
-    createTransform(
-      position?.x ?? 0,
-      position?.y ?? 0,
-      position?.z ?? 0,
-      shipRotation,
-    ),
-  );
+    stats,
+    position,
+    rotation,
+    faction,
+    collisionRadiusMultiplier: 1.5, // AI has larger hitbox
+    shipClassName: stats.shipClassName,
+  };
 
-  addComponent(
-    world,
-    entity,
-    createPhysics({
-      maxSpeed: stats.maxSpeed,
-      acceleration: stats.acceleration,
-      turnRate: stats.turnRate,
-      rollRate: stats.rollRate,
-      afterburnerHeatRate: stats.afterburnerHeatRate,
-      initialSpeed: INITIAL_SPAWN_SPEED,
-    }),
-  );
-
-  // Set initial velocity in forward direction
-  const physics = getComponent(world, entity, 'physics');
-  if (physics) {
-    setInitialVelocity(physics, shipRotation, INITIAL_SPAWN_SPEED);
-  }
-
-  addComponent(world, entity, createHealth(stats.hull));
-  addComponent(
-    world,
-    entity,
-    createShields(stats.shields, stats.shieldRegen, stats.shieldDelay),
-  );
-  addComponent(world, entity, createShieldHit());
-  addComponent(world, entity, createFaction(faction));
+  const entity = createShipEntity(config);
 
   // Generate callsign: use provided prefix, or default based on faction
   const prefix =
@@ -270,10 +166,6 @@ export function createAIShip(
   addComponent(world, entity, createShipIdentity(archetype, callsign));
 
   // Create AI with profile modified for archetype's playstyle
-  // Different playstyles express skill differently:
-  // - brawler: better aim, lower panic, more aggressive
-  // - escape: flee earlier (smarter), hit-and-run
-  // - kiting: maintain distance, selective firing
   const playstyle = stats.playstyle ?? 'brawler';
   const profile = getProfileForPlaystyle(profileName, playstyle);
 
@@ -282,7 +174,6 @@ export function createAIShip(
   const preferredRange = Math.floor(baseRange * profile.combatRangeMultiplier);
 
   // Scale flee distance by profile's fleeDistanceMultiplier
-  // Skilled kiters react to closing enemies at greater distances
   const fleeDistance = stats.fleeDistance
     ? Math.floor(stats.fleeDistance * profile.fleeDistanceMultiplier)
     : undefined;
@@ -291,10 +182,8 @@ export function createAIShip(
   addComponent(world, entity, ai);
   addComponent(world, entity, createAimError(world.prng, profile));
 
-  addComponent(world, entity, createHeat(stats.maxHeat, stats.coolingRate));
+  // Weapons from archetype definition
   addComponent(world, entity, createPrimaryWeapons(stats.primaryWeapons));
-
-  // Add secondary weapons if defined (AI can fire missiles too)
   if (stats.secondaryWeapons && stats.secondaryWeapons.length > 0) {
     const secondaryWeapons = stats.secondaryWeapons.map((w) =>
       createSecondaryWeaponFromDef(w.name, w.count, w.size),
@@ -302,12 +191,7 @@ export function createAIShip(
     addComponent(world, entity, createSecondaryWeapons(secondaryWeapons));
   }
 
-  addComponent(world, entity, createCollision(stats.collisionRadius * 1.5)); // AI has larger hitbox
-  addHullColliderFromClass(world, entity, stats.shipClassName, false);
-
-  // Add combat stats tracking
-  addComponent(world, entity, createCombatStats());
-  initWeaponAmmoCounts(world, entity);
+  finalizeShip(config, entity);
 
   return entity;
 }

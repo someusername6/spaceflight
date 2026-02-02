@@ -1,33 +1,27 @@
 /**
  * Campaign ship spawning - creates ships from campaign state with current loadouts.
+ *
+ * Unlike archetype-based spawning (factories/ship.ts), campaign ships use:
+ * - ShipClassStats from data/ships.ts for base stats
+ * - Custom weapon loadouts from the campaign state
  */
 
-import { Quaternion, type Vector3 } from 'three';
+import type { Quaternion, Vector3 } from 'three';
 import { createAIControlled } from '../components/ai';
 import { createAimError } from '../components/aim-error';
-import { createCollision } from '../components/collision';
-import { createCombatStats } from '../components/combat-stats';
-import { createFaction } from '../components/faction';
-import { createHealth } from '../components/health';
-import { createHeat } from '../components/heat';
-import {
-  createPhysics,
-  INITIAL_SPAWN_SPEED,
-  setInitialVelocity,
-} from '../components/physics';
 import { createPlayerControlled } from '../components/player';
-import { createShieldHit } from '../components/shield-hit';
-import { createShields } from '../components/shields';
 import { createShipIdentity } from '../components/ship-identity';
 import { createTargeting } from '../components/targeting';
-import { createTransform } from '../components/transform';
-import { addComponent, createEntity, getComponent } from '../core/ecs';
+import { addComponent } from '../core/ecs';
 import type { Entity, World } from '../core/types';
 import { Faction } from '../core/types';
 import { getProfileForPlaystyle, type ProfileName } from '../data/ai-profiles';
 import { SHIP_CLASSES } from '../data/ships';
-import { addHullColliderFromClass } from '../factories/ship';
-import { initWeaponAmmoCounts } from '../systems/stats';
+import {
+  createShipEntity,
+  finalizeShip,
+  type ShipSpawnConfig,
+} from '../factories/ship-builder';
 import {
   createPrimaryWeaponsFromCampaign,
   createSecondaryWeaponsFromCampaign,
@@ -59,48 +53,20 @@ export function spawnPlayerFromCampaign(
     throw new Error(`Unknown ship class: ${ship.shipClass}`);
   }
 
-  const entity = createEntity(world);
-  const shipRotation = rotation ?? new Quaternion();
-  const spawnSpeed = initialSpeed ?? INITIAL_SPAWN_SPEED;
-
-  addComponent(
+  const config: ShipSpawnConfig = {
     world,
-    entity,
-    createTransform(
-      position?.x ?? 0,
-      position?.y ?? 0,
-      position?.z ?? 0,
-      shipRotation,
-    ),
-  );
+    stats,
+    position,
+    rotation,
+    initialSpeed,
+    faction: Faction.Player,
+    collisionRadiusMultiplier: 1.0,
+    shipClassName: ship.shipClass,
+  };
 
-  addComponent(
-    world,
-    entity,
-    createPhysics({
-      maxSpeed: stats.maxSpeed,
-      acceleration: stats.acceleration,
-      turnRate: stats.turnRate,
-      rollRate: stats.rollRate,
-      afterburnerHeatRate: stats.afterburnerHeatRate,
-      initialSpeed: spawnSpeed,
-    }),
-  );
+  const entity = createShipEntity(config);
 
-  // Set initial velocity in forward direction
-  const physics = getComponent(world, entity, 'physics');
-  if (physics) {
-    setInitialVelocity(physics, shipRotation, spawnSpeed);
-  }
-
-  addComponent(world, entity, createHealth(stats.hull, stats.hull));
-  addComponent(
-    world,
-    entity,
-    createShields(stats.shields, stats.shieldRegen, stats.shieldDelay),
-  );
-  addComponent(world, entity, createShieldHit());
-  addComponent(world, entity, createFaction(Faction.Player));
+  // Player control
   addComponent(world, entity, createPlayerControlled(isLocalPlayer));
   addComponent(
     world,
@@ -108,14 +74,12 @@ export function spawnPlayerFromCampaign(
     createShipIdentity(ship.shipClass, 'Commander', ship.id),
   );
   addComponent(world, entity, createTargeting());
-  addComponent(world, entity, createHeat(stats.maxHeat, stats.coolingRate));
 
-  // Use campaign loadout instead of archetype defaults (filter out empty slots)
+  // Weapons from campaign loadout (filter out empty slots)
   const primaries = getOccupiedWeapons(ship.primaryWeapons);
   const secondaries = getOccupiedWeapons(ship.secondaryWeapons);
 
   addComponent(world, entity, createPrimaryWeaponsFromCampaign(primaries));
-
   if (secondaries.length > 0) {
     addComponent(
       world,
@@ -124,10 +88,7 @@ export function spawnPlayerFromCampaign(
     );
   }
 
-  addComponent(world, entity, createCollision(stats.collisionRadius));
-  addHullColliderFromClass(world, entity, ship.shipClass, false);
-  addComponent(world, entity, createCombatStats());
-  initWeaponAmmoCounts(world, entity);
+  finalizeShip(config, entity);
 
   return entity;
 }
@@ -153,48 +114,18 @@ export function spawnGuestFromCampaign(
     throw new Error(`Unknown ship class: ${ship.shipClass}`);
   }
 
-  const entity = createEntity(world);
-  const shipRotation = rotation ?? new Quaternion();
-  const spawnSpeed = initialSpeed ?? INITIAL_SPAWN_SPEED;
-
-  addComponent(
+  const config: ShipSpawnConfig = {
     world,
-    entity,
-    createTransform(
-      position?.x ?? 0,
-      position?.y ?? 0,
-      position?.z ?? 0,
-      shipRotation,
-    ),
-  );
+    stats,
+    position,
+    rotation,
+    initialSpeed,
+    faction: Faction.Player,
+    collisionRadiusMultiplier: 1.5,
+    shipClassName: ship.shipClass,
+  };
 
-  addComponent(
-    world,
-    entity,
-    createPhysics({
-      maxSpeed: stats.maxSpeed,
-      acceleration: stats.acceleration,
-      turnRate: stats.turnRate,
-      rollRate: stats.rollRate,
-      afterburnerHeatRate: stats.afterburnerHeatRate,
-      initialSpeed: spawnSpeed,
-    }),
-  );
-
-  // Set initial velocity in forward direction
-  const physics = getComponent(world, entity, 'physics');
-  if (physics) {
-    setInitialVelocity(physics, shipRotation, spawnSpeed);
-  }
-
-  addComponent(world, entity, createHealth(stats.hull, stats.hull));
-  addComponent(
-    world,
-    entity,
-    createShields(stats.shields, stats.shieldRegen, stats.shieldDelay),
-  );
-  addComponent(world, entity, createShieldHit());
-  addComponent(world, entity, createFaction(Faction.Player));
+  const entity = createShipEntity(config);
 
   // Player-controlled (no AI, no aim error)
   addComponent(world, entity, createPlayerControlled(isLocalPlayer));
@@ -208,14 +139,12 @@ export function spawnGuestFromCampaign(
   );
 
   addComponent(world, entity, createTargeting());
-  addComponent(world, entity, createHeat(stats.maxHeat, stats.coolingRate));
 
-  // Use campaign loadout (filter out empty slots)
+  // Weapons from campaign loadout (filter out empty slots)
   const primaries = getOccupiedWeapons(ship.primaryWeapons);
   const secondaries = getOccupiedWeapons(ship.secondaryWeapons);
 
   addComponent(world, entity, createPrimaryWeaponsFromCampaign(primaries));
-
   if (secondaries.length > 0) {
     addComponent(
       world,
@@ -224,10 +153,7 @@ export function spawnGuestFromCampaign(
     );
   }
 
-  addComponent(world, entity, createCollision(stats.collisionRadius * 1.5));
-  addHullColliderFromClass(world, entity, ship.shipClass, false);
-  addComponent(world, entity, createCombatStats());
-  initWeaponAmmoCounts(world, entity);
+  finalizeShip(config, entity);
 
   return entity;
 }
@@ -245,48 +171,18 @@ export function spawnWingmanFromCampaign(
     throw new Error(`Unknown ship class: ${ship.shipClass}`);
   }
 
-  const entity = createEntity(world);
-  const shipRotation = rotation ?? new Quaternion();
-  const spawnSpeed = initialSpeed ?? INITIAL_SPAWN_SPEED;
-
-  addComponent(
+  const config: ShipSpawnConfig = {
     world,
-    entity,
-    createTransform(
-      position?.x ?? 0,
-      position?.y ?? 0,
-      position?.z ?? 0,
-      shipRotation,
-    ),
-  );
+    stats,
+    position,
+    rotation,
+    initialSpeed,
+    faction: Faction.Player,
+    collisionRadiusMultiplier: 1.5,
+    shipClassName: ship.shipClass,
+  };
 
-  addComponent(
-    world,
-    entity,
-    createPhysics({
-      maxSpeed: stats.maxSpeed,
-      acceleration: stats.acceleration,
-      turnRate: stats.turnRate,
-      rollRate: stats.rollRate,
-      afterburnerHeatRate: stats.afterburnerHeatRate,
-      initialSpeed: spawnSpeed,
-    }),
-  );
-
-  // Set initial velocity in forward direction
-  const physics = getComponent(world, entity, 'physics');
-  if (physics) {
-    setInitialVelocity(physics, shipRotation, spawnSpeed);
-  }
-
-  addComponent(world, entity, createHealth(stats.hull, stats.hull));
-  addComponent(
-    world,
-    entity,
-    createShields(stats.shields, stats.shieldRegen, stats.shieldDelay),
-  );
-  addComponent(world, entity, createShieldHit());
-  addComponent(world, entity, createFaction(Faction.Player));
+  const entity = createShipEntity(config);
 
   // Callsign from pilot name
   const callsign = ship.pilot?.name ?? 'Wingman';
@@ -313,14 +209,11 @@ export function spawnWingmanFromCampaign(
   );
   addComponent(world, entity, createAimError(world.prng, profile));
 
-  addComponent(world, entity, createHeat(stats.maxHeat, stats.coolingRate));
-
-  // Use campaign loadout (filter out empty slots)
+  // Weapons from campaign loadout (filter out empty slots)
   const primaries = getOccupiedWeapons(ship.primaryWeapons);
   const secondaries = getOccupiedWeapons(ship.secondaryWeapons);
 
   addComponent(world, entity, createPrimaryWeaponsFromCampaign(primaries));
-
   if (secondaries.length > 0) {
     addComponent(
       world,
@@ -329,10 +222,7 @@ export function spawnWingmanFromCampaign(
     );
   }
 
-  addComponent(world, entity, createCollision(stats.collisionRadius * 1.5));
-  addHullColliderFromClass(world, entity, ship.shipClass, false);
-  addComponent(world, entity, createCombatStats());
-  initWeaponAmmoCounts(world, entity);
+  finalizeShip(config, entity);
 
   return entity;
 }
