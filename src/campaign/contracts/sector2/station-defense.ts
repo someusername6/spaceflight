@@ -11,7 +11,7 @@
  * Sector 2 enemies: firefly, dragonfly, stinger, locust, bruiser, sparkler (rookie/regular/veteran)
  */
 
-import type { Contract } from '../../../../campaign/types';
+import type { Contract } from '../types';
 
 export const SECTOR_2_STATION_DEFENSE: Contract[] = [
   {

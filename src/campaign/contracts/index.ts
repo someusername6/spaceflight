@@ -2,7 +2,7 @@
  * Mission Index - Aggregates all sector missions.
  */
 
-import type { Contract } from '../../../campaign/types';
+import type { Contract } from '../types';
 import { SECTOR_1_MISSIONS } from './sector1';
 import { SECTOR_2_MISSIONS } from './sector2';
 import { SECTOR_3_MISSIONS } from './sector3';

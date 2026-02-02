@@ -14,7 +14,7 @@
  * Sector 1 allies: fighter, assaultFighter only
  */
 
-import type { Contract } from '../../../../campaign/types';
+import type { Contract } from '../types';
 
 export const SECTOR_1_ATTACK_STATION: Contract[] = [
   {

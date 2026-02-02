@@ -11,7 +11,7 @@
  * Sector 4 enemies: phantom, firefly, dragonfly (regular/veteran/ace)
  */
 
-import type { Contract } from '../../../../campaign/types';
+import type { Contract } from '../types';
 
 export const SECTOR_4_STATION_DEFENSE: Contract[] = [
   {

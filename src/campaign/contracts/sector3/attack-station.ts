@@ -18,7 +18,7 @@
  * Sector 3 allies: interceptor, defender, striker (regular/veteran skill)
  */
 
-import type { Contract } from '../../../../campaign/types';
+import type { Contract } from '../types';
 
 export const SECTOR_3_ATTACK_STATION: Contract[] = [
   {

@@ -16,7 +16,7 @@
  * Sector 2 allies: interceptor, assaultInterceptor, defender (rookie/regular/veteran skill)
  */
 
-import type { Contract } from '../../../../campaign/types';
+import type { Contract } from '../types';
 
 export const SECTOR_2_ATTACK_STATION: Contract[] = [
   {

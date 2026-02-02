@@ -35,6 +35,9 @@ export default defineConfig({
       output: {
         manualChunks: {
           three: ['three'],
+          'rollback-netcode': ['rollback-netcode'],
+          multiplayer: ['./src/multiplayer/index.ts'],
+          contracts: ['./src/campaign/contracts/index.ts'],
           'geometry-ships': ['./src/rendering/ship-geometry-ships.ts'],
           'geometry-structures': [
             './src/rendering/ship-geometry-structures.ts',

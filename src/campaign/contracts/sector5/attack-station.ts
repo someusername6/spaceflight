@@ -18,7 +18,7 @@
  * Sector 5 allies: striker, defender, sentinel (ace skill)
  */
 
-import type { Contract } from '../../../../campaign/types';
+import type { Contract } from '../types';
 
 export const SECTOR_5_ATTACK_STATION: Contract[] = [
   {

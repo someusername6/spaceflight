@@ -11,9 +11,9 @@
  * Each sector has all three difficulties. See ECONOMY.md for sector test loadouts.
  */
 
+import { ALL_MISSIONS } from '../../campaign/contracts';
 import type { Contract } from '../../campaign/types';
 import { createDerivedPRNG, shuffle } from '../../core/prng';
-import { ALL_MISSIONS } from './missions';
 
 /** Number of contracts shown on the contracts screen */
 export const CONTRACTS_PER_SCREEN = 5;

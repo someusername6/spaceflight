@@ -11,7 +11,7 @@
  * Sector 3 enemies: rocketeer, moth, dragonfly, beetle, fireant (regular/veteran)
  */
 
-import type { Contract } from '../../../../campaign/types';
+import type { Contract } from '../types';
 
 export const SECTOR_3_STATION_DEFENSE: Contract[] = [
   {

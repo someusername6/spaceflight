@@ -11,7 +11,7 @@
  * Sector 1 enemies: gnat, ember, shocker, mantis (rookie/regular skill)
  */
 
-import type { Contract } from '../../../../campaign/types';
+import type { Contract } from '../types';
 
 export const SECTOR_1_STATION_DEFENSE: Contract[] = [
   {

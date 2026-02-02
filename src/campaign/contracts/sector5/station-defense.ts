@@ -11,7 +11,7 @@
  * Sector 5 enemies: phantom, scorpion, wraith, dragonfly (veteran/ace)
  */
 
-import type { Contract } from '../../../../campaign/types';
+import type { Contract } from '../types';
 
 export const SECTOR_5_STATION_DEFENSE: Contract[] = [
   {
