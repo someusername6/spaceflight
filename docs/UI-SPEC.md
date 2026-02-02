@@ -2,6 +2,8 @@
 
 This document describes the campaign UI screens for the spaceflight game. Use this as a reference when implementing new UI.
 
+**Last verified:** February 2026 - Screen layouts match current implementation.
+
 ## Overview
 
 The game has 8 screens managed by a state machine:

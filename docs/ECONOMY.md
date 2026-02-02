@@ -2,6 +2,8 @@
 
 This document summarizes the game's economy for planning sector-balanced missions.
 
+**Last verified:** February 2026 - Prices match `src/data/prices.ts`.
+
 ## Starting State
 
 **Credits:** 1,000
@@ -73,10 +75,11 @@ All missions should average 90-180s victory time.
 ### Secondary Weapons (per missile)
 | Missile | Buy | Sell | Type |
 |---------|-----|------|------|
-| Swarm | 3 | 1 | Homing |
 | Rocket | 5 | 2 | Dumbfire |
+| Swarm | 7 | 3 | Homing |
 | Cluster | 8 | 4 | Dumbfire |
 | Dart | 10 | 5 | Homing |
+| Starburst | 10 | 5 | Dumbfire |
 | Seeker | 15 | 7 | Homing |
 | Decoy | 20 | 10 | Countermeasure |
 | Torpedo | 40 | 20 | Heavy |
@@ -88,7 +91,7 @@ All missions should average 90-180s victory time.
 | Autocannon | 0.1 |
 | Slug Cannon | 1 |
 | Flak | 2 |
-| Gyrojet | 3 |
+| Gyrojet | 2 |
 | Railgun | 5 |
 | Nuclear Lance | 50 |
 

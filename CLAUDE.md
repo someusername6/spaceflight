@@ -81,7 +81,7 @@ When working in these areas, read the source for patterns:
 
 ## Mission Types
 
-Four mission types exist, each with distinct victory/defeat conditions and reward structures:
+Five mission types exist, each with distinct victory/defeat conditions and reward structures:
 
 | Type | Victory | Defeat | Reward |
 |------|---------|--------|--------|
@@ -89,6 +89,7 @@ Four mission types exist, each with distinct victory/defeat conditions and rewar
 | `escort` | ≥1 convoy escapes | All convoy destroyed OR commander dies | % convoy survived |
 | `station-defense` | Station survives | Station destroyed OR commander dies | % station hull |
 | `ambush` | All convoy neutralized | Any convoy escapes OR commander dies | 100% stopped, 50% destroyed |
+| `attack-station` | Station destroyed | Commander dies OR overwhelming wave arrives | Fixed 100% |
 
 ### Adding a New Mission of Existing Type
 

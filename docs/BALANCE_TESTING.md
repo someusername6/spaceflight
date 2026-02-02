@@ -2,6 +2,22 @@
 
 Documents validated combat balance for the spaceflight roguelike.
 
+**Last verified:** February 2026
+
+---
+
+## Current Test Status (Advisory Mode)
+
+Balance tests run in advisory mode - they report results but don't block builds.
+
+**Latest run (Feb 2026):**
+- Skill scaling: Some archetypes not meeting targets
+- Engagement patterns: 9/11 archetypes healthy
+- Mission pacing: Some missions too long (>180s target)
+- Sector balance: 13/20 sector 1 missions need tuning
+
+Run `npx tsx scripts/tests/run-tests.mjs --balance` for current metrics.
+
 ---
 
 ## Validated ✓

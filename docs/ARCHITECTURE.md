@@ -1,5 +1,7 @@
 # Architecture
 
+**Last verified:** February 2026 - System order matches `src/game.ts`.
+
 ## Entity-Component-System (ECS)
 
 This game uses a custom lightweight ECS architecture designed for:
@@ -79,23 +81,26 @@ Systems run in a fixed, explicit order defined in `src/game.ts`:
 
 ```typescript
 const SYSTEM_ORDER = [
-  inputSystem,       // 1. Read player input
-  targetingSystem,   // 2. Process target selection
-  aiSystem,          // 3. AI decision making
-  aimErrorSystem,    // 4. Update aim drift
-  weaponSystem,      // 5. Handle firing (spawn projectiles/missiles)
-  physicsSystem,     // 6. Apply movement (rotation before beams)
-  beamSystem,        // 7. Handle beam damage (uses current transform)
-  projectileSystem,  // 8. Move projectiles
-  missileSystem,     // 9. Move missiles with tracking
-  decoySystem,       // 10. Move decoys, destroy missiles on contact
-  collisionSystem,   // 11. Detect collisions
-  damageSystem,      // 12. Apply damage
-  shieldSystem,      // 13. Regenerate shields
-  heatSystem,        // 14. Cool heat
-  cleanupSystem,     // 15. Remove dead entities, spawn explosions
-  explosionSystem,   // 16. Update explosion effects
-  missionSystem,     // 17. Check win/lose
+  inputSystem,            // 1. Read player input
+  targetingSystem,        // 2. Process target selection
+  convoyAutopilotSystem,  // 3. Convoy ship movement (before AI)
+  aiSystem,               // 4. AI decision making
+  aimErrorSystem,         // 5. Update aim drift
+  weaponSystem,           // 6. Handle firing (spawn projectiles/missiles)
+  physicsSystem,          // 7. Apply movement (rotation before beams)
+  beamSystem,             // 8. Handle beam damage (uses current transform)
+  projectileSystem,       // 9. Move projectiles
+  missileSystem,          // 10. Move missiles with tracking
+  decoySystem,            // 11. Move decoys, destroy missiles on contact
+  collisionSystem,        // 12. Detect collisions
+  collisionResponseSystem,// 13. Push colliding ships apart
+  damageSystem,           // 14. Apply damage
+  shieldSystem,           // 15. Regenerate shields
+  heatSystem,             // 16. Cool heat
+  cleanupSystem,          // 17. Remove dead entities, spawn explosions
+  explosionSystem,        // 18. Update explosion effects
+  hyperspaceJumpSystem,   // 19. Update hyperspace jump animations
+  missionSystem,          // 20. Check win/lose
 ];
 ```
 

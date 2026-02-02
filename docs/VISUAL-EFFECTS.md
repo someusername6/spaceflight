@@ -2,6 +2,8 @@
 
 This document describes all weapon-related visual effects (VFX) in the game, including projectiles, beams, missiles, muzzle flashes, and impact effects.
 
+**Last verified:** February 2026 - File paths confirmed accurate.
+
 ## Overview
 
 | Effect Type | File | Description |
