@@ -238,7 +238,7 @@ import {
   type SerializedVector3,
   serializeVector2,
   serializeVector3,
-} from '../core/serialization';
+} from '../serialization';
 
 export interface SerializedAimError {
   t: 9; // Component type ID

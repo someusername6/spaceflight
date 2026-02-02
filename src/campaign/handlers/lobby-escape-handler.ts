@@ -6,7 +6,7 @@
 
 import { startCampaignGameplay } from '../controller';
 import type { CampaignController } from '../controller-types';
-import { setupSettingsScreen } from './menu-handlers';
+import { setupSettingsScreen, setupTitleScreen } from './menu-handlers';
 import { setupEscapeHandler } from './pause-handler';
 
 // =============================================================================
@@ -31,7 +31,6 @@ export function setupMultiplayerEscapeHandler(
 
   // Title callback - for returning to title on quit
   const setupTitle = async (ctrl: CampaignController): Promise<void> => {
-    const { setupTitleScreen } = await import('./menu-handlers');
     await setupTitleScreen(ctrl, onStartGameplay);
   };
 

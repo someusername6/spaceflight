@@ -11,9 +11,9 @@
  * Transient fields (renderPrng, visual queues) are NOT serialized.
  */
 
-import type { ComponentType } from '../component-registry';
-import type { PRNGState } from '../prng';
-import type { ComponentBase, Entity, World } from '../types';
+import type { ComponentType } from '../core/component-registry';
+import type { PRNGState } from '../core/prng';
+import type { ComponentBase, Entity, World } from '../core/types';
 import {
   deserializeComponent,
   type SerializedComponent,

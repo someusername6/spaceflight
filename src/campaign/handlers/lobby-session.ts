@@ -13,6 +13,7 @@ import { cleanupLobbyScreen } from '../../ui/screens/lobby';
 import { startCampaignGameplay } from '../controller';
 import type { CampaignController } from '../controller-types';
 import { getLobbyContext, setLobbyContext } from './lobby-context';
+import { setupTitleScreen } from './menu-handlers';
 
 /**
  * Handle session ended for guest (host quit or campaign ended).
@@ -47,7 +48,6 @@ export async function handleSessionEndedForGuest(
 
   // Navigate to title and re-setup title screen handlers
   goBackFromLobby(controller.screenManager);
-  const { setupTitleScreen } = await import('./menu-handlers');
   const onStartGameplay = () => startCampaignGameplay(controller);
   void setupTitleScreen(controller, onStartGameplay);
 

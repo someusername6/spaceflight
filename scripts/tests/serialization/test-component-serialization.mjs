@@ -25,11 +25,11 @@ import {
   createSecondaryWeapons,
 } from '../../../src/components/weapons.ts';
 import { createPRNG } from '../../../src/core/prng.ts';
+import { AI_PROFILES } from '../../../src/data/ai-profiles.ts';
 import {
   deserializeComponent,
   serializeComponent,
-} from '../../../src/core/serialization/index.ts';
-import { AI_PROFILES } from '../../../src/data/ai-profiles.ts';
+} from '../../../src/serialization/index.ts';
 
 describe('Component Serialization', () => {
   it('Transform round-trip', () => {

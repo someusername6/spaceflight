@@ -159,7 +159,7 @@ import {
   deserializeVector3,
   type SerializedVector3,
   serializeVector3,
-} from '../core/serialization';
+} from '../serialization';
 
 /** Category as numeric */
 const CategoryToNum: Record<ProjectileCategory, number> = {

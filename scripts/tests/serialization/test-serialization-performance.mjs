@@ -33,15 +33,15 @@ import {
   createEntity,
   createWorld,
 } from '../../../src/core/ecs.ts';
+import { Faction } from '../../../src/core/types.ts';
+import { AI_PROFILES } from '../../../src/data/ai-profiles.ts';
 import {
   computeWorldHash,
   deserializeWorld,
   estimateWorldSize,
   serializeWorld,
   serializeWorldToBytes,
-} from '../../../src/core/serialization/index.ts';
-import { Faction } from '../../../src/core/types.ts';
-import { AI_PROFILES } from '../../../src/data/ai-profiles.ts';
+} from '../../../src/serialization/index.ts';
 
 /**
  * Create a realistic battle scenario for performance testing.

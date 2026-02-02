@@ -50,7 +50,7 @@
 | Feature | Location | Notes |
 |---------|----------|-------|
 | Input source abstraction | `src/input/input-source.ts` | Interface for keyboard, replay, or network input |
-| Serialization utilities | `src/core/serialization.ts` | Vector3/Quaternion JSON serialization |
+| Serialization utilities | `src/serialization/` | Vector3/Quaternion JSON serialization |
 | Player lookup utilities | `src/core/player-utils.ts` | `findLocalPlayer()`, `findAllPlayers()` |
 | Per-world system state | `src/core/types.ts` | `world.systemState` isolates simulation state |
 | Per-instance rendering | `src/rendering/renderer.ts` | Interpolation caches in Renderer instance |

@@ -25,6 +25,8 @@ import {
   removeEntity,
 } from '../../../src/core/ecs.ts';
 import { random } from '../../../src/core/prng.ts';
+import { Faction, MissionResult } from '../../../src/core/types.ts';
+import { AI_PROFILES } from '../../../src/data/ai-profiles.ts';
 import {
   computeWorldHash,
   deserializeComponent,
@@ -34,9 +36,7 @@ import {
   serializeComponent,
   serializeWorld,
   serializeWorldToBytes,
-} from '../../../src/core/serialization/index.ts';
-import { Faction, MissionResult } from '../../../src/core/types.ts';
-import { AI_PROFILES } from '../../../src/data/ai-profiles.ts';
+} from '../../../src/serialization/index.ts';
 
 describe('World Serialization', () => {
   it('Empty world round-trip', () => {

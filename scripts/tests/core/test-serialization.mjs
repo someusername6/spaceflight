@@ -15,7 +15,7 @@ import {
   serializeQuaternion,
   serializeTransformPrimitive,
   serializeVector3,
-} from '../../../src/core/serialization/index.ts';
+} from '../../../src/serialization/index.ts';
 
 describe('Vector3 serialization', () => {
   it('serializes Vector3 to plain object', () => {

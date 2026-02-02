@@ -68,7 +68,7 @@ import {
   deserializeColor,
   type SerializedColor,
   serializeColor,
-} from '../core/serialization';
+} from '../serialization';
 
 /** Variant as numeric */
 const VariantToNum: Record<ExplosionVariant, number> = { standard: 0, nuke: 1 };

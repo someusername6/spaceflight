@@ -105,7 +105,7 @@ import {
   deserializeVector3,
   type SerializedVector3,
   serializeVector3,
-} from '../core/serialization';
+} from '../serialization';
 
 export interface SerializedConvoyShip {
   t: 21; // Component type ID

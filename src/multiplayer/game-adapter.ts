@@ -13,15 +13,15 @@
 import type { Game, PlayerId } from 'rollback-netcode';
 
 import { getComponent, queryEntities } from '../core/ecs';
-import {
-  computeWorldHash,
-  deserializeWorldFromBytes,
-  serializeWorldToBytes,
-} from '../core/serialization';
 import type { Entity, World } from '../core/types';
 import { SIMULATION_SYSTEMS, TICK_SEC } from '../game';
 import { applyDecodedInput } from '../input/input-encoding';
 import type { MultiplayerInputRecorder } from '../replay/multiplayer-replay';
+import {
+  computeWorldHash,
+  deserializeWorldFromBytes,
+  serializeWorldToBytes,
+} from '../serialization';
 
 /**
  * Adapter that implements the rollback-netcode Game interface for spaceflight.

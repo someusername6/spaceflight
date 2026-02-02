@@ -9,7 +9,7 @@ import '../../networking/webrtc-mocks.mjs';
 
 import assert from 'node:assert';
 import { describe, it } from 'node:test';
-import { worldsEqual } from '../../../../src/core/serialization/index.ts';
+import { worldsEqual } from '../../../../src/serialization/index.ts';
 import { simulateSession } from './helpers.mjs';
 
 // =============================================================================

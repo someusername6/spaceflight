@@ -15,6 +15,7 @@ import { endMission } from '../../ui/common/screens';
 import type { collectDebriefData } from '../../ui/screens/results/debrief';
 import type { CampaignController } from '../controller-types';
 import { getLobbyContext } from '../handlers/lobby-context';
+import { wireMessageHandlers } from '../handlers/lobby-protocol-routing';
 import {
   handleNonIronmanDefeat,
   showGameOver,
@@ -45,12 +46,8 @@ export function rewireRouterAfterMission(): void {
     if (transport) {
       ctx.router.wireToTransport(undefined);
     }
-    import('../handlers/lobby-protocol-routing').then(
-      ({ wireMessageHandlers }) => {
-        const hostPeerId = ctx.router.getHostPeerId();
-        wireMessageHandlers(ctx, hostPeerId);
-      },
-    );
+    const hostPeerId = ctx.router.getHostPeerId();
+    wireMessageHandlers(ctx, hostPeerId);
   }
 }
 

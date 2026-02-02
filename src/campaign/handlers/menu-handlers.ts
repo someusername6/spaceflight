@@ -59,13 +59,21 @@ import {
 } from '../storage';
 import type { CampaignSettings, CampaignState } from '../types';
 
-// Re-export campaign menu handlers for backward compatibility
-export {
+// Import campaign menu handlers (used in setupTitleScreen and re-exported for backward compatibility)
+import {
   setupJoinGameScreen,
   setupLoadCampaignScreen,
   setupLoadCampaignScreenForHosting,
   setupRoomCreatedScreen,
 } from './campaign-menu-handlers';
+
+// Re-export for backward compatibility
+export {
+  setupJoinGameScreen,
+  setupLoadCampaignScreen,
+  setupLoadCampaignScreenForHosting,
+  setupRoomCreatedScreen,
+};
 
 /**
  * Sync global autoaim setting with campaign autoaim.
@@ -110,13 +118,6 @@ export async function setupTitleScreen(
   controller: CampaignController,
   onStartGameplay: () => void,
 ): Promise<void> {
-  // Import here to avoid circular dependency
-  const {
-    setupJoinGameScreen,
-    setupLoadCampaignScreen,
-    setupLoadCampaignScreenForHosting,
-  } = await import('./campaign-menu-handlers');
-
   const { screenManager } = controller;
   const titleElement = getScreenElement(screenManager, Screen.TITLE);
 

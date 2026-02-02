@@ -135,7 +135,7 @@ import {
   deserializeVector3,
   type SerializedVector3,
   serializeVector3,
-} from '../core/serialization';
+} from '../serialization';
 
 /** Missile type as numeric */
 const MissileTypeToNum: Record<MissileType, number> = {

@@ -12,7 +12,7 @@
  * - Skips transient/visual-only state
  */
 
-import type { World } from '../types';
+import type { World } from '../core/types';
 import { hashComponent } from './component-hashers';
 
 // =============================================================================
@@ -78,7 +78,7 @@ export class HashState {
 
 function hashSystemState(
   hash: HashState,
-  state: import('../types').SystemState,
+  state: import('../core/types').SystemState,
 ): void {
   hash.addFloat64(state.gameTime);
 

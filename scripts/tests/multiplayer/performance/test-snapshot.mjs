@@ -9,10 +9,10 @@ import '../../networking/webrtc-mocks.mjs';
 
 import assert from 'node:assert';
 import { describe, it } from 'node:test';
-import { serializeWorldToBytes } from '../../../../src/core/serialization/index.ts';
 import { SpaceflightGameAdapter } from '../../../../src/multiplayer/game-adapter.ts';
 import { asPlayerId } from '../../../../src/multiplayer/index.ts';
 import { serializeInput } from '../../../../src/multiplayer/input-format.ts';
+import { serializeWorldToBytes } from '../../../../src/serialization/index.ts';
 import {
   create4PlayerBattleWorld,
   generateInputsForTick,

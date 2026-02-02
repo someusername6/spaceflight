@@ -2,7 +2,7 @@
  * SystemState Serialization - Beam and system state handling for world snapshots.
  */
 
-import type { ActiveBeam, Entity, SystemState } from '../types';
+import type { ActiveBeam, Entity, SystemState } from '../core/types';
 import {
   deserializeColor,
   deserializeVector3,
@@ -67,7 +67,7 @@ export interface SerializedSystemState {
     prevFireState: Array<[Entity, boolean]>;
   };
   mission: {
-    result: import('../types').MissionResult;
+    result: import('../core/types').MissionResult;
     missionType:
       | 'elimination'
       | 'escort'

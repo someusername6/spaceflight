@@ -3,7 +3,7 @@
  * Uses FNV-1a hash via HashState from hashing.ts.
  */
 
-import type { ComponentBase } from '../types';
+import type { ComponentBase } from '../core/types';
 import type { HashState } from './hashing';
 
 /** Hash a single component. Only includes simulation-critical fields. */
@@ -12,7 +12,7 @@ export function hashComponent(hash: HashState, component: ComponentBase): void {
 
   switch (component.type) {
     case 'transform': {
-      const c = component as import('../../components/transform').Transform;
+      const c = component as import('../components/transform').Transform;
       hash.addFloat64(c.position.x);
       hash.addFloat64(c.position.y);
       hash.addFloat64(c.position.z);
@@ -23,7 +23,7 @@ export function hashComponent(hash: HashState, component: ComponentBase): void {
       break;
     }
     case 'physics': {
-      const c = component as import('../../components/physics').Physics;
+      const c = component as import('../components/physics').Physics;
       hash.addFloat64(c.velocity.x);
       hash.addFloat64(c.velocity.y);
       hash.addFloat64(c.velocity.z);
@@ -44,7 +44,7 @@ export function hashComponent(hash: HashState, component: ComponentBase): void {
       break;
     }
     case 'health': {
-      const c = component as import('../../components/health').Health;
+      const c = component as import('../components/health').Health;
       hash.addFloat64(c.hull);
       hash.addFloat64(c.maxHull);
       hash.addBool(c.deathDelay !== undefined);
@@ -52,7 +52,7 @@ export function hashComponent(hash: HashState, component: ComponentBase): void {
       break;
     }
     case 'collision': {
-      const c = component as import('../../components/collision').Collision;
+      const c = component as import('../components/collision').Collision;
       hash.addFloat64(c.radius);
       hash.addInt32(c.collidedWith.length);
       const sorted = [...c.collidedWith].sort((a, b) => a - b);
@@ -60,13 +60,12 @@ export function hashComponent(hash: HashState, component: ComponentBase): void {
       break;
     }
     case 'faction': {
-      const c =
-        component as import('../../components/faction').FactionComponent;
+      const c = component as import('../components/faction').FactionComponent;
       hash.addInt32(c.faction);
       break;
     }
     case 'shields': {
-      const c = component as import('../../components/shields').Shields;
+      const c = component as import('../components/shields').Shields;
       hash.addFloat64(c.current);
       hash.addFloat64(c.max);
       hash.addFloat64(c.regenRate);
@@ -76,7 +75,7 @@ export function hashComponent(hash: HashState, component: ComponentBase): void {
       break;
     }
     case 'primaryWeapons': {
-      const c = component as import('../../components/weapons').PrimaryWeapons;
+      const c = component as import('../components/weapons').PrimaryWeapons;
       hash.addInt32(c.currentIndex);
       hash.addFloat64(c.lastFireTime);
       hash.addInt32(c.linkMode);
@@ -93,8 +92,7 @@ export function hashComponent(hash: HashState, component: ComponentBase): void {
       break;
     }
     case 'secondaryWeapons': {
-      const c =
-        component as import('../../components/weapons').SecondaryWeapons;
+      const c = component as import('../components/weapons').SecondaryWeapons;
       hash.addInt32(c.currentIndex);
       hash.addFloat64(c.lastFireTime);
       hash.addBool(c.lockTarget !== undefined);
@@ -111,7 +109,7 @@ export function hashComponent(hash: HashState, component: ComponentBase): void {
       break;
     }
     case 'projectile': {
-      const c = component as import('../../components/projectile').Projectile;
+      const c = component as import('../components/projectile').Projectile;
       hash.addInt32(c.owner);
       hash.addFloat64(c.damage);
       hash.addFloat64(c.speed);
@@ -127,7 +125,7 @@ export function hashComponent(hash: HashState, component: ComponentBase): void {
       break;
     }
     case 'missile': {
-      const c = component as import('../../components/missile').Missile;
+      const c = component as import('../components/missile').Missile;
       hash.addInt32(c.owner);
       hash.addBool(c.target !== undefined);
       if (c.target !== undefined) hash.addInt32(c.target);
@@ -148,7 +146,7 @@ export function hashComponent(hash: HashState, component: ComponentBase): void {
       break;
     }
     case 'decoy': {
-      const c = component as import('../../components/decoy').Decoy;
+      const c = component as import('../components/decoy').Decoy;
       hash.addInt32(c.owner);
       hash.addFloat64(c.direction.x);
       hash.addFloat64(c.direction.y);
@@ -157,7 +155,7 @@ export function hashComponent(hash: HashState, component: ComponentBase): void {
       break;
     }
     case 'explosion': {
-      const c = component as import('../../components/explosion').Explosion;
+      const c = component as import('../components/explosion').Explosion;
       hash.addFloat64(c.age);
       hash.addFloat64(c.maxAge);
       hash.addFloat64(c.size);
@@ -167,7 +165,7 @@ export function hashComponent(hash: HashState, component: ComponentBase): void {
       break;
     }
     case 'playerControlled': {
-      const c = component as import('../../components/player').PlayerControlled;
+      const c = component as import('../components/player').PlayerControlled;
       hash.addBool(c.input.pitchUp);
       hash.addBool(c.input.pitchDown);
       hash.addBool(c.input.yawLeft);
@@ -194,7 +192,7 @@ export function hashComponent(hash: HashState, component: ComponentBase): void {
       break;
     }
     case 'aiControlled': {
-      const c = component as import('../../components/ai').AIControlled;
+      const c = component as import('../components/ai').AIControlled;
       hash.addString(c.state);
       hash.addBool(c.target !== null);
       if (c.target !== null) hash.addInt32(c.target);
@@ -219,7 +217,7 @@ export function hashComponent(hash: HashState, component: ComponentBase): void {
       break;
     }
     case 'targeting': {
-      const c = component as import('../../components/targeting').Targeting;
+      const c = component as import('../components/targeting').Targeting;
       hash.addBool(c.currentTarget !== undefined);
       if (c.currentTarget !== undefined) hash.addInt32(c.currentTarget);
       hash.addInt32(c.targetIndex);
@@ -229,7 +227,7 @@ export function hashComponent(hash: HashState, component: ComponentBase): void {
       break;
     }
     case 'aimError': {
-      const c = component as import('../../components/aim-error').AimError;
+      const c = component as import('../components/aim-error').AimError;
       hash.addFloat64(c.offset.x);
       hash.addFloat64(c.offset.y);
       hash.addFloat64(c.maxError);
@@ -247,7 +245,7 @@ export function hashComponent(hash: HashState, component: ComponentBase): void {
       break;
     }
     case 'heat': {
-      const c = component as import('../../components/heat').Heat;
+      const c = component as import('../components/heat').Heat;
       hash.addFloat64(c.current);
       hash.addFloat64(c.max);
       hash.addFloat64(c.coolingRate);
@@ -255,8 +253,7 @@ export function hashComponent(hash: HashState, component: ComponentBase): void {
       break;
     }
     case 'shipIdentity': {
-      const c =
-        component as import('../../components/ship-identity').ShipIdentity;
+      const c = component as import('../components/ship-identity').ShipIdentity;
       hash.addString(c.archetype);
       hash.addString(c.callsign);
       hash.addBool(c.campaignShipId !== undefined);
@@ -264,8 +261,7 @@ export function hashComponent(hash: HashState, component: ComponentBase): void {
       break;
     }
     case 'combatStats': {
-      const c =
-        component as import('../../components/combat-stats').CombatStats;
+      const c = component as import('../components/combat-stats').CombatStats;
       hash.addInt32(c.kills);
       hash.addInt32(c.assists);
       hash.addFloat64(c.damageDealt);
@@ -283,7 +279,7 @@ export function hashComponent(hash: HashState, component: ComponentBase): void {
       break;
     }
     case 'convoyShip': {
-      const c = component as import('../../components/convoy').ConvoyShip;
+      const c = component as import('../components/convoy').ConvoyShip;
       hash.addInt32(c.index);
       hash.addBool(c.inEscapeZone);
       hash.addFloat64(c.jumpChargeProgress);
@@ -295,7 +291,7 @@ export function hashComponent(hash: HashState, component: ComponentBase): void {
       break;
     }
     case 'convoyAutopilot': {
-      const c = component as import('../../components/convoy').ConvoyAutopilot;
+      const c = component as import('../components/convoy').ConvoyAutopilot;
       hash.addFloat64(c.destination.x);
       hash.addFloat64(c.destination.y);
       hash.addFloat64(c.destination.z);
@@ -309,22 +305,21 @@ export function hashComponent(hash: HashState, component: ComponentBase): void {
     }
     case 'damageTracking': {
       const c =
-        component as import('../../components/damage-tracking').DamageTracking;
+        component as import('../components/damage-tracking').DamageTracking;
       hash.addBool(c.lastAttacker !== null);
       if (c.lastAttacker !== null) hash.addInt32(c.lastAttacker);
       hash.addFloat64(c.lastDamageTime);
       break;
     }
     case 'structure': {
-      const c = component as import('../../components/structure').Structure;
+      const c = component as import('../components/structure').Structure;
       hash.addString(c.structureType);
       hash.addBool(c.stationType !== undefined);
       if (c.stationType !== undefined) hash.addString(c.stationType);
       break;
     }
     case 'hullCollider': {
-      const c =
-        component as import('../../components/hull-collider').HullCollider;
+      const c = component as import('../components/hull-collider').HullCollider;
       hash.addFloat64(c.boundingRadius);
       hash.addFloat64(c.mass);
       hash.addBool(c.useHullForWeapons);
@@ -355,7 +350,7 @@ export function hashComponent(hash: HashState, component: ComponentBase): void {
       break; // Visual only
     case 'hyperspaceJump': {
       const c =
-        component as import('../../components/hyperspace-jump').HyperspaceJump;
+        component as import('../components/hyperspace-jump').HyperspaceJump;
       hash.addFloat64(c.progress);
       hash.addFloat64(c.duration);
       hash.addFloat64(c.direction.x);

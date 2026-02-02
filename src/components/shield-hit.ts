@@ -81,7 +81,7 @@ import {
   deserializeVector3,
   type SerializedVector3,
   serializeVector3,
-} from '../core/serialization';
+} from '../serialization';
 
 export interface SerializedShieldHitEvent {
   p: SerializedVector3; // position

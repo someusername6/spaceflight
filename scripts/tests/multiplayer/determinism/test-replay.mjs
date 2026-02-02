@@ -9,12 +9,12 @@ import '../../networking/webrtc-mocks.mjs';
 
 import assert from 'node:assert';
 import { describe, it } from 'node:test';
-import { worldsEqual } from '../../../../src/core/serialization/index.ts';
 import { SpaceflightGameAdapter } from '../../../../src/multiplayer/game-adapter.ts';
 import { asPlayerId } from '../../../../src/multiplayer/index.ts';
 import { serializeInput } from '../../../../src/multiplayer/input-format.ts';
 import { decodeRLE } from '../../../../src/replay/compression.ts';
 import { MultiplayerInputRecorder } from '../../../../src/replay/multiplayer-replay.ts';
+import { worldsEqual } from '../../../../src/serialization/index.ts';
 import {
   createMultiplayerWorld,
   generateInputsForTick,

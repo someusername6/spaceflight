@@ -3,6 +3,7 @@
  */
 
 import { Quaternion, Vector3 } from 'three';
+import type { ComponentBase } from '../core/types';
 import {
   deserializeQuaternion,
   deserializeVector3,
@@ -10,8 +11,7 @@ import {
   type SerializedVector3,
   serializeQuaternion,
   serializeVector3,
-} from '../core/serialization';
-import type { ComponentBase } from '../core/types';
+} from '../serialization';
 
 export interface Physics extends ComponentBase {
   readonly type: 'physics';

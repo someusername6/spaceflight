@@ -64,6 +64,7 @@ import {
   wireMessageHandlers,
 } from './lobby-protocol-routing';
 import { cleanupLobby, handleSessionEndedForGuest } from './lobby-session';
+import { setupTitleScreen } from './menu-handlers';
 
 // =============================================================================
 // Re-exports for external use
@@ -356,12 +357,11 @@ export function setupLobbyScreenForGuest(
 // =============================================================================
 
 /** Handle leave/back button */
-async function handleLeave(controller: CampaignController): Promise<void> {
+function handleLeave(controller: CampaignController): void {
   cleanupLobby();
   goBackFromLobby(controller.screenManager);
 
   // Re-setup title screen event handlers (they were destroyed when entering lobby)
-  const { setupTitleScreen } = await import('./menu-handlers');
   const onStartGameplay = () => startCampaignGameplay(controller);
   void setupTitleScreen(controller, onStartGameplay);
 }
