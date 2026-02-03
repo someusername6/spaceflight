@@ -6,21 +6,26 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock AWS SDK before importing the handler
 const mockSend = vi.fn();
+const commandCalls: unknown[] = [];
 vi.mock('@aws-sdk/client-lambda', () => ({
-  LambdaClient: vi.fn(() => ({
-    send: mockSend,
-  })),
-  PutFunctionConcurrencyCommand: vi.fn((params) => ({
-    input: params,
-  })),
+  LambdaClient: class {
+    send = mockSend;
+  },
+  PutFunctionConcurrencyCommand: class {
+    input: unknown;
+    constructor(params: unknown) {
+      this.input = params;
+      commandCalls.push(params);
+    }
+  },
 }));
 
-import { PutFunctionConcurrencyCommand } from '@aws-sdk/client-lambda';
 import { type AlarmEvent, handler } from '../src/disable';
 
 describe('Disable Lambda', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    commandCalls.length = 0;
     mockSend.mockResolvedValue({});
   });
 
@@ -41,7 +46,7 @@ describe('Disable Lambda', () => {
       await handler(event);
 
       expect(mockSend).toHaveBeenCalledTimes(1);
-      expect(PutFunctionConcurrencyCommand).toHaveBeenCalledWith({
+      expect(commandCalls[0]).toEqual({
         FunctionName: 'spaceflight-signaling',
         ReservedConcurrentExecutions: 0,
       });
@@ -53,7 +58,7 @@ describe('Disable Lambda', () => {
       await handler(event);
 
       expect(mockSend).toHaveBeenCalledTimes(1);
-      expect(PutFunctionConcurrencyCommand).toHaveBeenCalledWith({
+      expect(commandCalls[0]).toEqual({
         FunctionName: 'spaceflight-signaling',
         ReservedConcurrentExecutions: 0,
       });
@@ -124,7 +129,7 @@ describe('Disable Lambda', () => {
       // Default is already tested above ('spaceflight-signaling')
       await handler({});
 
-      expect(PutFunctionConcurrencyCommand).toHaveBeenCalledWith(
+      expect(commandCalls[0]).toEqual(
         expect.objectContaining({
           FunctionName: 'spaceflight-signaling',
         }),
