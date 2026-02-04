@@ -35,6 +35,7 @@ export { extractAmmoFromWorld, shipToReplayLoadout } from './ship-ammo';
 /**
  * Spawn player ship from campaign state.
  * @param isLocalPlayer - Whether this is the local player's ship (for multiplayer)
+ * @param autoaimBonus - Per-player autoaim bonus in degrees
  */
 export function spawnPlayerFromCampaign(
   world: World,
@@ -43,6 +44,7 @@ export function spawnPlayerFromCampaign(
   rotation?: Quaternion,
   initialSpeed?: number,
   isLocalPlayer = true,
+  autoaimBonus = 0,
 ): Entity {
   const stats = SHIP_CLASSES[ship.shipClass];
   if (!stats) {
@@ -63,7 +65,11 @@ export function spawnPlayerFromCampaign(
   const entity = createShipEntity(config);
 
   // Player control
-  addComponent(world, entity, createPlayerControlled(isLocalPlayer));
+  addComponent(
+    world,
+    entity,
+    createPlayerControlled(isLocalPlayer, autoaimBonus),
+  );
   addComponent(
     world,
     entity,
@@ -95,6 +101,7 @@ export function spawnPlayerFromCampaign(
  *
  * @param callsign - Optional callsign override (player's lobby callsign). If not provided, uses pilot name.
  * @param isLocalPlayer - Whether this is the local player's ship (for multiplayer)
+ * @param autoaimBonus - Per-player autoaim bonus in degrees
  */
 export function spawnGuestFromCampaign(
   world: World,
@@ -104,6 +111,7 @@ export function spawnGuestFromCampaign(
   initialSpeed?: number,
   callsign?: string,
   isLocalPlayer = false,
+  autoaimBonus = 0,
 ): Entity {
   const stats = SHIP_CLASSES[ship.shipClass];
   if (!stats) {
@@ -124,7 +132,11 @@ export function spawnGuestFromCampaign(
   const entity = createShipEntity(config);
 
   // Player-controlled (no AI, no aim error)
-  addComponent(world, entity, createPlayerControlled(isLocalPlayer));
+  addComponent(
+    world,
+    entity,
+    createPlayerControlled(isLocalPlayer, autoaimBonus),
+  );
 
   // Use provided callsign (player's lobby callsign) or fall back to pilot name
   const displayCallsign = callsign ?? ship.pilot?.name ?? 'Wingman';

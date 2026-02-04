@@ -25,6 +25,8 @@ export interface LobbyPlayer {
   ping: number;
   /** Player permissions (host always has full permissions) */
   permissions: Permission;
+  /** Player's autoaim setting in degrees (default 2.5) */
+  autoaimDegrees: number;
 }
 
 /** Chat entry type */
@@ -170,6 +172,20 @@ export function setPlayerCallsign(
     ...state,
     players: state.players.map((p) =>
       p.playerId === playerId ? { ...p, callsign } : p,
+    ),
+  };
+}
+
+/** Update a player's autoaim degrees */
+export function setPlayerAutoaimDegrees(
+  state: LobbyState,
+  playerId: string,
+  autoaimDegrees: number,
+): LobbyState {
+  return {
+    ...state,
+    players: state.players.map((p) =>
+      p.playerId === playerId ? { ...p, autoaimDegrees } : p,
     ),
   };
 }

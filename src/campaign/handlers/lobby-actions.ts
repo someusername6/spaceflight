@@ -11,6 +11,7 @@ import {
   validateCallsign,
 } from '../../multiplayer/callsign-storage';
 import { validateChatMessage } from '../../multiplayer/chat-validation';
+import { createAutoaimUpdateMessage } from '../../multiplayer/lobby-message-utils';
 import {
   createCallsignUpdateMessage,
   createChatMessage,
@@ -23,6 +24,7 @@ import {
 import {
   type LobbyState,
   setErrorMessage,
+  setPlayerAutoaimDegrees,
 } from '../../multiplayer/lobby-state';
 import {
   getMultiplayerContext,
@@ -30,6 +32,7 @@ import {
 } from '../../multiplayer/multiplayer-context';
 import { encodeMessage } from '../../multiplayer/protocol/encode';
 import type { Permission } from '../../multiplayer/protocol/types';
+import type { PlayerAutoaim } from '../../settings/game-settings';
 import {
   isContractsUIActive,
   refreshContractsUI,
@@ -322,6 +325,26 @@ export function changeCallsign(
   );
 
   return { success: true };
+}
+
+/**
+ * Handle autoaim setting change in multiplayer lobby.
+ * Broadcasts AutoaimUpdate and applies locally.
+ */
+export function handleAutoaimUpdate(
+  ctx: LobbyContext,
+  degrees: PlayerAutoaim,
+): void {
+  // Broadcast to all peers
+  broadcastMessage(ctx, createAutoaimUpdateMessage(ctx.localPlayerId, degrees));
+
+  // Apply locally
+  const newState = setPlayerAutoaimDegrees(
+    ctx.lobbyState,
+    ctx.localPlayerId,
+    degrees,
+  );
+  setLobbyState(ctx, newState);
 }
 
 // =============================================================================

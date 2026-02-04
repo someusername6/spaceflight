@@ -8,7 +8,7 @@ import type { MissionType } from '../campaign/types';
 import type { PlayerAutoaim } from '../settings/game-settings';
 
 /** Current replay format version - bump when changing FullReplayData structure */
-export const REPLAY_VERSION = 5;
+export const REPLAY_VERSION = 6;
 
 /** Minimum supported replay version for loading */
 export const MIN_REPLAY_VERSION = 1;
@@ -232,6 +232,8 @@ export interface MultiplayerReplayPlayer {
   leaveTick: number | null;
   /** Whether this player was the host */
   isHost: boolean;
+  /** Per-player autoaim setting in degrees (v6+) */
+  autoaimDegrees?: number;
 }
 
 /**

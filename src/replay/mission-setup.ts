@@ -85,7 +85,6 @@ export function setupReplayWorld(
   missionId: string,
   playerLoadout: ReplayShipLoadout,
   wingmen: ReplayWingman[],
-  playerAutoaim: number,
   missionType?: MissionType,
 ): ReplayWorldSetup {
   // Find mission definition
@@ -96,9 +95,6 @@ export function setupReplayWorld(
 
   // Create world with replay seed
   const world = createWorld(seed);
-
-  // Set replay autoaim override (affects weapon-firing.ts)
-  world.replayAutoaim = playerAutoaim;
 
   // Initialize match stats (for damage tracking)
   initMatchStats(world);

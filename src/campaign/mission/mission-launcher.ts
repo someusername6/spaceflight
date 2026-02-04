@@ -12,7 +12,10 @@ import {
   setActiveMissionEndState,
   setActiveMultiplayerState,
 } from '../../multiplayer/active-game';
-import { buildPlayerEntityMap } from '../../multiplayer/mission-setup';
+import {
+  buildPlayerEntityMap,
+  type GuestShipInfo,
+} from '../../multiplayer/mission-setup';
 import {
   createMultiplayerGameState,
   startMultiplayerGameLoop,
@@ -58,7 +61,7 @@ export function launchMission(
   contract: Contract,
   deployedShipIds: string[],
   setupContractsScreen: SetupContractsCallback,
-  guestShipMap?: Map<string, string>,
+  guestShipMap?: Map<string, GuestShipInfo>,
   localShipId?: string,
 ): void {
   const { container, screenManager } = controller;
@@ -114,6 +117,7 @@ export function launchMission(
   controller.missionRenderers = renderers;
 
   // Spawn player and wingmen from campaign state
+  const hostAutoaim = getPlayerAutoaim();
   const { replayWingmen, playerShip } = spawnMissionSquadron(
     game.world,
     campaignState,
@@ -121,6 +125,7 @@ export function launchMission(
     deployedShipIds,
     guestShipMap,
     localShipId,
+    hostAutoaim,
   );
 
   // Store deployment data in recorder for replay reconstruction
@@ -262,7 +267,7 @@ export function launchMission(
     session.enableRecording(seed, contract.id, playerIds);
 
     // Store AI wingmen for replay reconstruction (replayWingmen now only contains AI, not guests)
-    session.setReplayWingmen(replayWingmen, getPlayerAutoaim());
+    session.setReplayWingmen(replayWingmen, hostAutoaim);
 
     const mpState = createMultiplayerGameState(session);
     controller.multiplayerGameState = mpState;

@@ -32,6 +32,7 @@ import {
 import {
   type ActionRequestMessage,
   type ActionResponseMessage,
+  type AutoaimUpdateMessage,
   type CallsignAnnounceMessage,
   type CallsignUpdateMessage,
   type CampaignSyncMessage,
@@ -129,6 +130,9 @@ export function encodeMessage(msg: GameMessage): Uint8Array {
       break;
     case GameMessageType.ReturnToLobby:
       buffer = encodeReturnToLobby();
+      break;
+    case GameMessageType.AutoaimUpdate:
+      buffer = encodeAutoaimUpdate(msg);
       break;
     default: {
       const exhaustive: never = msg;
@@ -277,10 +281,11 @@ function encodeActionResponse(msg: ActionResponseMessage): Uint8Array {
 }
 
 function encodeCallsignAnnounce(msg: CallsignAnnounceMessage): Uint8Array {
-  const size = 1 + stringSize(msg.callsign);
+  const size = 1 + stringSize(msg.callsign) + 8; // +8 for float64 autoaimDegrees
   const wb = createWriteBuffer(size);
   writeByte(wb, msg.type);
   writeString(wb, msg.callsign);
+  writeFloat64(wb, msg.autoaimDegrees);
   return wb.buffer;
 }
 
@@ -333,5 +338,14 @@ function encodePauseRequest(msg: PauseRequestMessage): Uint8Array {
   writeString(wb, msg.playerId);
   writeString(wb, msg.callsign);
   writeByte(wb, reasonByte);
+  return wb.buffer;
+}
+
+function encodeAutoaimUpdate(msg: AutoaimUpdateMessage): Uint8Array {
+  const size = 1 + stringSize(msg.playerId) + 8; // type + playerId + float64
+  const wb = createWriteBuffer(size);
+  writeByte(wb, msg.type);
+  writeString(wb, msg.playerId);
+  writeFloat64(wb, msg.autoaimDegrees);
   return wb.buffer;
 }

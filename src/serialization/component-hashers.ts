@@ -189,6 +189,7 @@ export function hashComponent(hash: HashState, component: ComponentBase): void {
       hash.addBool(c.prevMatchSpeedTarget !== undefined);
       if (c.prevMatchSpeedTarget !== undefined)
         hash.addInt32(c.prevMatchSpeedTarget);
+      hash.addFloat64(c.autoaimBonus);
       break;
     }
     case 'aiControlled': {

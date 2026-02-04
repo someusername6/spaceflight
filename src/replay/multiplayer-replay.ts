@@ -196,6 +196,8 @@ export interface MultiplayerPlayerInfo {
   campaignShipId: string;
   isHost: boolean;
   loadout: ReplayShipLoadout;
+  /** Per-player autoaim setting in degrees */
+  autoaimDegrees?: number;
 }
 
 /**
@@ -217,7 +219,7 @@ export function buildMultiplayerReplayData(
   // Build player list
   const players: MultiplayerReplayPlayer[] = playerInfos.map((info) => {
     const tracker = trackers.get(info.playerId);
-    return {
+    const player: MultiplayerReplayPlayer = {
       playerId: info.playerId,
       callsign: info.callsign,
       shipEntityId: info.shipEntityId,
@@ -226,6 +228,10 @@ export function buildMultiplayerReplayData(
       leaveTick: tracker?.endTick ?? null,
       isHost: info.isHost,
     };
+    if (info.autoaimDegrees !== undefined) {
+      player.autoaimDegrees = info.autoaimDegrees;
+    }
+    return player;
   });
 
   const result: MultiplayerReplayData = {

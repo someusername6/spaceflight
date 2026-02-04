@@ -18,10 +18,12 @@ import {
   readUint16,
   readUint32,
 } from './buffer-utils';
+import { GAME_MSG_MAX, GAME_MSG_MIN } from './message-detection';
 import {
   type ActionRequestData,
   type ActionRequestMessage,
   type ActionResponseMessage,
+  type AutoaimUpdateMessage,
   type CallsignAnnounceMessage,
   type CallsignUpdateMessage,
   type CampaignSyncMessage,
@@ -50,17 +52,6 @@ import {
   type ShipAssignmentMessage,
   type WelcomeMessage,
 } from './messages';
-
-// =============================================================================
-// Constants
-// =============================================================================
-
-/** Derived range of GameMessageType values (auto-updated when enum changes) */
-const _gameMessageTypeValues = Object.values(GameMessageType).filter(
-  (v): v is number => typeof v === 'number',
-);
-const GAME_MSG_MIN = Math.min(..._gameMessageTypeValues);
-const GAME_MSG_MAX = Math.max(..._gameMessageTypeValues);
 
 // =============================================================================
 // Decoding
@@ -137,6 +128,8 @@ export function decodeMessage(data: Uint8Array): GameMessage {
       return decodePauseRequest(rb);
     case GameMessageType.ReturnToLobby:
       return decodeReturnToLobby();
+    case GameMessageType.AutoaimUpdate:
+      return decodeAutoaimUpdate(rb);
     default: {
       // Cast to number for error message (type is 'never' due to exhaustive switch)
       const unknownType = type as number;
@@ -314,6 +307,7 @@ function decodeCallsignAnnounce(rb: ReadBuffer): CallsignAnnounceMessage {
   return {
     type: GameMessageType.CallsignAnnounce,
     callsign: readString(rb),
+    autoaimDegrees: readFloat64(rb),
   };
 }
 
@@ -372,24 +366,13 @@ function decodeReturnToLobby(): ReturnToLobbyMessage {
   };
 }
 
-// =============================================================================
-// Utility
-// =============================================================================
-
-/**
- * Check if a byte array starts with a game message type byte.
- * Used to distinguish game messages from rollback-netcode messages.
- */
-export function isGameMessage(data: Uint8Array): boolean {
-  const typeByte = data[0];
-  if (typeByte === undefined) return false;
-  return typeByte >= GAME_MSG_MIN && typeByte <= GAME_MSG_MAX;
+function decodeAutoaimUpdate(rb: ReadBuffer): AutoaimUpdateMessage {
+  return {
+    type: GameMessageType.AutoaimUpdate,
+    playerId: readString(rb),
+    autoaimDegrees: readFloat64(rb),
+  };
 }
 
-/**
- * Get the message type from a byte array without decoding the full message.
- */
-export function getMessageType(data: Uint8Array): GameMessageType | null {
-  if (!isGameMessage(data)) return null;
-  return data[0] as GameMessageType;
-}
+// Re-export detection utilities
+export { getMessageType, isGameMessage } from './message-detection';

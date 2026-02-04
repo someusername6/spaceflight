@@ -229,8 +229,6 @@ export interface World {
   prng: import('../core/prng').PRNGState;
   /** Separate PRNG for rendering effects (does not affect simulation determinism) */
   renderPrng: import('../core/prng').PRNGState;
-  /** Override autoaim setting during replay (undefined = use game settings) */
-  replayAutoaim?: number;
 }
 
 /** Team/faction identifiers */

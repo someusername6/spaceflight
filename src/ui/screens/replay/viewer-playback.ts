@@ -21,6 +21,10 @@ import {
 } from '../../../replay/multiplayer-replay';
 import { ReplayPlayback } from '../../../replay/playback';
 import {
+  setReplayAutoaimByShipId,
+  setReplayAutoaimOnPlayers,
+} from '../../../replay/replay-autoaim';
+import {
   type FullReplayData,
   isMultiplayerReplay,
   type MultiplayerReplayData,
@@ -307,9 +311,21 @@ export function initializeViewer(
           replay.metadata.missionId,
           replay.playerLoadout,
           replay.wingmen,
-          replay.playerAutoaim,
           replay.metadata.missionType,
         );
+        // Set autoaim on all player entities from global value as baseline
+        // (per-player lookup by campaignShipId may fail if replay entities lack it)
+        setReplayAutoaimOnPlayers(setup.world, replay.playerAutoaim);
+        // Override with per-player values where possible
+        for (const player of replay.players) {
+          if (player.autoaimDegrees !== undefined && player.campaignShipId) {
+            setReplayAutoaimByShipId(
+              setup.world,
+              player.campaignShipId,
+              player.autoaimDegrees,
+            );
+          }
+        }
         return setup.world;
       },
       (_world, playerId) => playerMap.get(playerId) ?? null,

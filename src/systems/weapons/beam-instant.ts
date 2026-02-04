@@ -23,7 +23,6 @@ import {
 } from './beam-helpers';
 import { findAllBeamHits } from './beam-raycasting';
 import { getWeaponSpawnPosition } from './weapon-spawning';
-import { getPlayerAutoaimBonus } from './weapons';
 
 // Reusable objects
 const rayOrigin = new THREE.Vector3();
@@ -45,7 +44,7 @@ export function handleInstantBeams(
   instantBeamCollector: BeamWeaponInfo[],
   wasFiring: boolean,
   targetEntity: Entity | undefined,
-  isPlayer = false,
+  autoaimBonus = 0,
 ): boolean {
   if (instantBeamCollector.length === 0 || wasFiring) {
     return false;
@@ -105,7 +104,7 @@ export function handleInstantBeams(
       direction,
       gameTime,
       targetEntity,
-      isPlayer,
+      autoaimBonus,
     );
 
     // Consume ammo
@@ -137,7 +136,7 @@ function fireInstantBeam(
   direction: THREE.Vector3,
   gameTime: number,
   targetEntity: Entity | undefined,
-  isPlayer = false,
+  autoaimBonus = 0,
 ): void {
   // Calculate beam origin using hardpoint positions (or fallback to bank offset)
   getWeaponSpawnPosition(
@@ -151,11 +150,9 @@ function fireInstantBeam(
   );
   rayDirection.copy(direction);
 
-  // Apply autoaim if weapon has autoaimFov or isPlayer, and target exists
+  // Apply autoaim if weapon has autoaimFov or player has bonus, and target exists
   const baseAutoaim = weapon.autoaimFov ?? 0;
-  const effectiveAutoaim = isPlayer
-    ? baseAutoaim + getPlayerAutoaimBonus(world)
-    : baseAutoaim;
+  const effectiveAutoaim = baseAutoaim + autoaimBonus;
   if (effectiveAutoaim > 0 && targetEntity !== undefined) {
     const targetTransform = getComponent(world, targetEntity, 'transform');
     if (targetTransform) {

@@ -20,7 +20,6 @@ import {
   getBeamColor,
 } from './beam-helpers';
 import { getWeaponSpawnPosition } from './weapon-spawning';
-import { getPlayerAutoaimBonus } from './weapons';
 
 // Reusable objects
 const rayOrigin = new THREE.Vector3();
@@ -39,7 +38,7 @@ export function fireContinuousBeam(
   activeBeams: Map<Entity, ActiveBeam[]>,
   direction: THREE.Vector3,
   targetEntity: Entity | undefined,
-  isPlayer = false,
+  autoaimBonus = 0,
 ): void {
   const gameTime = world.systemState.gameTime;
   // Calculate beam origin using hardpoint positions (or fallback to bank offset)
@@ -54,11 +53,9 @@ export function fireContinuousBeam(
   );
   rayDirection.copy(direction);
 
-  // Apply autoaim if weapon has autoaimFov or isPlayer, and target exists
+  // Apply autoaim if weapon has autoaimFov or player has bonus, and target exists
   const baseAutoaim = weapon.autoaimFov ?? 0;
-  const effectiveAutoaim = isPlayer
-    ? baseAutoaim + getPlayerAutoaimBonus(world)
-    : baseAutoaim;
+  const effectiveAutoaim = baseAutoaim + autoaimBonus;
   if (effectiveAutoaim > 0 && targetEntity !== undefined) {
     const targetTransform = getComponent(world, targetEntity, 'transform');
     if (targetTransform) {

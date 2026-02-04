@@ -122,6 +122,7 @@ export function handleCallsignAnnounce(
   ctx: LobbyContext,
   peerId: string,
   callsign: string,
+  autoaimDegrees = 2.5,
 ): void {
   if (!ctx.screenManager.campaignState) return;
 
@@ -134,7 +135,7 @@ export function handleCallsignAnnounce(
   }
 
   // Create new player and add to local state
-  const newPlayer = createGuestLobbyPlayer(peerId, callsign);
+  const newPlayer = createGuestLobbyPlayer(peerId, callsign, autoaimDegrees);
   let newState = addPlayer(ctx.lobbyState, newPlayer);
   newState = addSystemMessage(newState, `${newPlayer.callsign} joined`);
   setLobbyState(ctx, newState);

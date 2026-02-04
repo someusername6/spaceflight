@@ -268,6 +268,20 @@ function migrateReplay(replay: AnyReplayData): void {
   if (replay.version === 4) {
     replay.version = 5;
   }
+
+  // v5 -> v6: Per-player autoaim in multiplayer replays
+  // For old multiplayer replays, copy the single playerAutoaim to each player's autoaimDegrees
+  if (replay.version === 5) {
+    if ('isMultiplayer' in replay && replay.isMultiplayer === true) {
+      const mpReplay = replay as import('./types').MultiplayerReplayData;
+      for (const player of mpReplay.players) {
+        if (player.autoaimDegrees === undefined) {
+          player.autoaimDegrees = mpReplay.playerAutoaim;
+        }
+      }
+    }
+    replay.version = 6;
+  }
 }
 
 /**

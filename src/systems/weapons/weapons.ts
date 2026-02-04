@@ -17,8 +17,8 @@ import {
   handlePlayerSecondaryWeapons,
 } from './weapons-player';
 
-// Re-export from weapon-firing for backwards compatibility
-export { fireWeaponsByLinkMode, getPlayerAutoaimBonus } from './weapon-firing';
+// Re-export from weapon-firing
+export { fireWeaponsByLinkMode } from './weapon-firing';
 
 // Reusable vectors for lock cone calculation (avoid per-frame allocations)
 const tempForward = new THREE.Vector3();

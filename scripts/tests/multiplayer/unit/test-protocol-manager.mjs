@@ -12,7 +12,7 @@ import {
   encodeMessage,
   GameMessageType,
 } from '../../../../src/multiplayer/protocol/index.ts';
-import { createMessageRouter } from '../../../../src/multiplayer/protocol/router.ts';
+import { createMessageRouter } from '../../../../src/multiplayer/protocol/router-factory.ts';
 import {
   createMockTransport,
   createTestCampaignState,

@@ -73,10 +73,26 @@ describe('Protocol Encoding - Session Messages', () => {
       const msg = {
         type: GameMessageType.CallsignAnnounce,
         callsign: 'Maverick',
+        autoaimDegrees: 3.5,
       };
 
       const decoded = decodeMessage(encodeMessage(msg));
       assert.strictEqual(decoded.callsign, 'Maverick');
+      assert.strictEqual(decoded.autoaimDegrees, 3.5);
+    });
+  });
+
+  describe('AutoaimUpdate message', () => {
+    it('should round-trip encode/decode AutoaimUpdate', () => {
+      const msg = {
+        type: GameMessageType.AutoaimUpdate,
+        playerId: 'peer-42',
+        autoaimDegrees: 4.0,
+      };
+
+      const decoded = decodeMessage(encodeMessage(msg));
+      assert.strictEqual(decoded.playerId, 'peer-42');
+      assert.strictEqual(decoded.autoaimDegrees, 4.0);
     });
   });
 });

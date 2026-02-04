@@ -272,6 +272,8 @@ export interface ActionResponseMessage {
 export interface CallsignAnnounceMessage {
   type: GameMessageType.CallsignAnnounce;
   callsign: string;
+  /** Guest's autoaim setting in degrees */
+  autoaimDegrees: number;
 }
 
 /**
@@ -290,6 +292,23 @@ export interface CallsignUpdateMessage {
   type: GameMessageType.CallsignUpdate;
   playerId: string;
   callsign: string;
+}
+
+/**
+ * AutoaimUpdate - Any → All
+ * Player updates their autoaim setting during lobby.
+ *
+ * @mp-operation autoaimUpdate
+ * @mp-actor host | guest
+ * @mp-permission none (can only change own autoaim)
+ * @mp-flow Player changes autoaim in settings → broadcasts to all → host validates and rebroadcasts
+ * @mp-ui Lobby: Autoaim setting synced per-player for mission use
+ * @mp-status implemented
+ */
+export interface AutoaimUpdateMessage {
+  type: GameMessageType.AutoaimUpdate;
+  playerId: string;
+  autoaimDegrees: number;
 }
 
 // =============================================================================
@@ -321,7 +340,8 @@ export type GameMessage =
   | PlayerDroppedMessage
   | GuestQuitRequestMessage
   | PauseRequestMessage
-  | ReturnToLobbyMessage;
+  | ReturnToLobbyMessage
+  | AutoaimUpdateMessage;
 
 // =============================================================================
 // Host-only Message Check

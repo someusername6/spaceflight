@@ -18,6 +18,7 @@ import {
   DEFAULT_GUEST_PERMISSIONS,
   HOST_PERMISSIONS,
 } from '../../multiplayer/permissions';
+import { getPlayerAutoaim } from '../../settings/game-settings';
 import {
   getScreenElement,
   goBackFromLobby,
@@ -132,6 +133,7 @@ export function setupLobbyScreenForHost(
     isHost: true,
     ping: 0,
     permissions: HOST_PERMISSIONS,
+    autoaimDegrees: getPlayerAutoaim(),
   };
 
   // Create initial lobby state
@@ -264,6 +266,7 @@ export function setupLobbyScreenForGuest(
     isHost: false,
     ping: 0,
     permissions: DEFAULT_GUEST_PERMISSIONS,
+    autoaimDegrees: getPlayerAutoaim(),
   };
 
   // Create initial lobby state

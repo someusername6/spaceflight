@@ -57,6 +57,7 @@ export function createTestPlayerInfo(playerId, callsign, shipId = null) {
     shipId,
     ready: false,
     permissions: { ...DEFAULT_PERMISSION },
+    autoaimDegrees: 2.5,
   };
 }
 

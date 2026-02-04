@@ -12,6 +12,7 @@ import { decodeMessage, isGameMessage } from './decode';
 import {
   type ActionRequestMessage,
   type ActionResponseMessage,
+  type AutoaimUpdateMessage,
   type CallsignAnnounceMessage,
   type CallsignUpdateMessage,
   type CampaignSyncMessage,
@@ -235,6 +236,11 @@ export class MessageRouter {
     return this;
   }
 
+  onAutoaimUpdate(handler: MessageHandler<AutoaimUpdateMessage>): this {
+    this.handlers[GameMessageType.AutoaimUpdate] = handler;
+    return this;
+  }
+
   // ===========================================================================
   // Message Dispatch
   // ===========================================================================
@@ -386,15 +392,4 @@ export class MessageRouter {
   }
 }
 
-// =============================================================================
-// Factory Function
-// =============================================================================
-
-/**
- * Create a new message router.
- */
-export function createMessageRouter(
-  config: MessageRouterConfig,
-): MessageRouter {
-  return new MessageRouter(config);
-}
+// Factory function: see router-factory.ts

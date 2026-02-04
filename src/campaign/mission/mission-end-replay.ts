@@ -104,6 +104,7 @@ export function buildMultiplayerReplayIfRecording(
         campaignShipId: p.shipId ?? '',
         isHost: p.isHost,
         loadout,
+        autoaimDegrees: p.autoaimDegrees,
       };
     },
   );

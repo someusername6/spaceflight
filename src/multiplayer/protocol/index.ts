@@ -80,8 +80,5 @@ export {
 // Router
 // =============================================================================
 
-export {
-  createMessageRouter,
-  MessageRouter,
-  type MessageRouterConfig,
-} from './router';
+export { MessageRouter, type MessageRouterConfig } from './router';
+export { createMessageRouter } from './router-factory';

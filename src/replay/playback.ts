@@ -29,6 +29,7 @@ import {
   tickReplayEscort,
   tickReplayWaves,
 } from './mission-setup';
+import { setReplayAutoaimOnPlayers } from './replay-autoaim';
 import type { FullReplayData, PlaybackState, ReplayMetadata } from './types';
 import {
   DEFAULT_SEEK_TICKS_PER_FRAME,
@@ -78,7 +79,6 @@ export class ReplayPlayback {
       replay.metadata.missionId,
       replay.playerLoadout,
       replay.wingmen,
-      replay.playerAutoaim,
       replay.metadata.missionType,
     );
     this.world = setup.world;
@@ -88,6 +88,9 @@ export class ReplayPlayback {
     this.escortState = setup.escortState ?? null;
     this.ambushState = setup.ambushState ?? null;
     this.attackStationState = setup.attackStationState ?? null;
+
+    // Set per-entity autoaim from replay (single-player: all players get same value)
+    setReplayAutoaimOnPlayers(this.world, replay.playerAutoaim);
   }
 
   /**
@@ -99,7 +102,6 @@ export class ReplayPlayback {
       this.replay.metadata.missionId,
       this.replay.playerLoadout,
       this.replay.wingmen,
-      this.replay.playerAutoaim,
       this.replay.metadata.missionType,
     );
     this.world = setup.world;
@@ -110,6 +112,9 @@ export class ReplayPlayback {
     this.ambushState = setup.ambushState ?? null;
     this.attackStationState = setup.attackStationState ?? null;
     this.currentTick = 0;
+
+    // Re-set per-entity autoaim after world reinit
+    setReplayAutoaimOnPlayers(this.world, this.replay.playerAutoaim);
   }
 
   /**

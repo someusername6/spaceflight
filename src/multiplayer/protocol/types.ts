@@ -34,6 +34,7 @@ export enum GameMessageType {
   GuestQuitRequest = 0x95,
   PauseRequest = 0x96,
   ReturnToLobby = 0x97,
+  AutoaimUpdate = 0x98,
 }
 
 // =============================================================================
@@ -75,6 +76,8 @@ export interface GamePlayerInfo {
   ready: boolean;
   /** Permission flags */
   permissions: Permission;
+  /** Player's autoaim setting in degrees */
+  autoaimDegrees: number;
 }
 
 /** Reason for player leaving */

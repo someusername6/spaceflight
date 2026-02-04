@@ -218,6 +218,7 @@ export function playerInfoSize(player: GamePlayerInfo): number {
   }
   size += 1; // ready
   size += permissionSize();
+  size += 8; // autoaimDegrees (float64)
   return size;
 }
 
@@ -259,6 +260,7 @@ export function writePlayerInfo(wb: WriteBuffer, player: GamePlayerInfo): void {
   }
   writeBool(wb, player.ready);
   writePermission(wb, player.permissions);
+  writeFloat64(wb, player.autoaimDegrees);
 }
 
 export function readPlayerInfo(rb: ReadBuffer): GamePlayerInfo {
@@ -268,5 +270,6 @@ export function readPlayerInfo(rb: ReadBuffer): GamePlayerInfo {
   const shipId = hasShipId ? readString(rb) : null;
   const ready = readBool(rb);
   const permissions = readPermission(rb);
-  return { playerId, callsign, shipId, ready, permissions };
+  const autoaimDegrees = readFloat64(rb);
+  return { playerId, callsign, shipId, ready, permissions, autoaimDegrees };
 }

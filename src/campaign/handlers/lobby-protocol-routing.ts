@@ -14,6 +14,7 @@ import {
 } from '../../multiplayer/callsign-storage';
 import { createCampaignSyncManager } from '../../multiplayer/campaign-sync';
 import { processLobbyMessage } from '../../multiplayer/lobby-messages';
+import { setPlayerAutoaimDegrees } from '../../multiplayer/lobby-state';
 import type { ConnectionFlow } from '../../multiplayer/networking/connection-flow';
 import { encodeMessage } from '../../multiplayer/protocol/encode';
 import type {
@@ -21,8 +22,12 @@ import type {
   GameMessage,
   PermissionUpdateMessage,
 } from '../../multiplayer/protocol/messages';
-import { createMessageRouter } from '../../multiplayer/protocol/router';
+import { createMessageRouter } from '../../multiplayer/protocol/router-factory';
 import { GameMessageType } from '../../multiplayer/protocol/types';
+import {
+  getPlayerAutoaim,
+  isValidPlayerAutoaim,
+} from '../../settings/game-settings';
 import { reconstituteCampaignState } from '../storage/campaign-utils';
 import type { CampaignState } from '../types';
 import {
@@ -216,7 +221,7 @@ export function wireMessageHandlers(
   // Host-specific: handle CallsignAnnounce
   if (ctx.isHost) {
     ctx.router.onCallsignAnnounce((msg, peerId) => {
-      handleCallsignAnnounce(ctx, peerId, msg.callsign);
+      handleCallsignAnnounce(ctx, peerId, msg.callsign, msg.autoaimDegrees);
     });
   }
 
@@ -265,6 +270,40 @@ export function wireMessageHandlers(
     }
   });
 
+  // AutoaimUpdate handler: host validates and broadcasts, guests apply directly
+  ctx.router.onAutoaimUpdate((msg, fromPeerId) => {
+    // Host validation
+    if (ctx.isHost) {
+      // Verify sender matches playerId (can't change others' autoaim)
+      if (msg.playerId !== fromPeerId) {
+        console.warn('[lobby-routing] AutoaimUpdate rejected: sender mismatch');
+        return;
+      }
+
+      // Validate autoaim range
+      if (!isValidPlayerAutoaim(msg.autoaimDegrees)) {
+        console.warn(
+          '[lobby-routing] AutoaimUpdate rejected: invalid autoaim value',
+        );
+        return;
+      }
+
+      // Rebroadcast valid update to all peers (including back to sender)
+      const transport = ctx.connectionFlow.getTransport();
+      if (transport) {
+        transport.broadcast(encodeMessage(msg), true);
+      }
+    }
+
+    // Apply valid update to local state (both host and guest)
+    const newState = setPlayerAutoaimDegrees(
+      ctx.lobbyState,
+      msg.playerId,
+      msg.autoaimDegrees,
+    );
+    setLobbyState(ctx, newState);
+  });
+
   // Guest-only handlers (host manages these differently)
   if (!ctx.isHost) {
     wireGuestHandlers(ctx);
@@ -289,6 +328,7 @@ export function sendCallsignAnnounce(connectionFlow: ConnectionFlow): void {
   const message: CallsignAnnounceMessage = {
     type: GameMessageType.CallsignAnnounce,
     callsign,
+    autoaimDegrees: getPlayerAutoaim(),
   };
 
   transport.broadcast(encodeMessage(message), true);

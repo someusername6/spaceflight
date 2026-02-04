@@ -20,10 +20,15 @@ export interface PlayerControlled extends ComponentBase {
    * In multiplayer, this flag distinguishes which ship the local player controls.
    */
   isLocalPlayer: boolean;
+  /** Per-entity autoaim bonus in degrees (player setting, stored per entity for multiplayer) */
+  autoaimBonus: number;
 }
 
 /** Creates a PlayerControlled marker component */
-export function createPlayerControlled(isLocalPlayer = true): PlayerControlled {
+export function createPlayerControlled(
+  isLocalPlayer = true,
+  autoaimBonus = 0,
+): PlayerControlled {
   return {
     type: 'playerControlled',
     input: createInputState(),
@@ -31,6 +36,7 @@ export function createPlayerControlled(isLocalPlayer = true): PlayerControlled {
     prevTargetDistance: 0,
     prevMatchSpeedTarget: undefined,
     isLocalPlayer,
+    autoaimBonus,
   };
 }
 
@@ -51,6 +57,7 @@ export interface SerializedPlayerControlled {
   pd: number; // prevTargetDistance
   pt: Entity | null; // prevMatchSpeedTarget
   lp?: boolean; // isLocalPlayer (optional for backwards compat, defaults true)
+  aa?: number; // autoaimBonus (optional, defaults 0)
 }
 
 // Input state field order for bitmask serialization
@@ -108,6 +115,10 @@ export function serializePlayerControlled(
   if (!c.isLocalPlayer) {
     result.lp = false;
   }
+  // Only serialize if non-zero (defaults to 0 for backwards compat)
+  if (c.autoaimBonus !== 0) {
+    result.aa = c.autoaimBonus;
+  }
   return result;
 }
 
@@ -121,5 +132,6 @@ export function deserializePlayerControlled(
     prevTargetDistance: s.pd,
     prevMatchSpeedTarget: s.pt ?? undefined,
     isLocalPlayer: s.lp !== false, // Defaults to true for backwards compat
+    autoaimBonus: s.aa ?? 0, // Defaults to 0 for backwards compat
   };
 }

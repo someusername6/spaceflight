@@ -16,21 +16,12 @@ import {
 import { entityExists, getComponent } from '../../core/ecs';
 import { calculateInterceptPoint } from '../../core/lead-calculation';
 import type { Entity, World } from '../../core/types';
-import { getPlayerAutoaim } from '../../settings/game-settings';
 import {
   type AutoaimParams,
   spawnProjectileWithAimError,
 } from './weapon-spawning';
 
 const tempZeroVec = new THREE.Vector3(0, 0, 0);
-
-/**
- * Get the player autoaim bonus.
- * During replay, uses the recorded setting. During live play, uses current setting.
- */
-export function getPlayerAutoaimBonus(world: World): number {
-  return world.replayAutoaim ?? getPlayerAutoaim();
-}
 
 /** Weapon info for firing (avoids per-frame allocations) */
 interface FireableWeapon {
@@ -56,7 +47,7 @@ export function fireWeaponsByLinkMode(
   gameTime: number,
   aimError?: AimError,
   target?: Entity,
-  isPlayer = false,
+  autoaimBonus = 0,
 ): void {
   const indices = getWeaponIndicesForCurrentMode(weapons);
   if (indices.length === 0) return;
@@ -107,12 +98,10 @@ export function fireWeaponsByLinkMode(
   for (const { weapon, index } of fireableWeaponsCollector) {
     if (weapon.ammo !== undefined) weapon.ammo--;
 
-    // Calculate autoaim if weapon has autoaimFov or isPlayer, and we have a target
+    // Calculate autoaim if weapon has autoaimFov or player has bonus, and we have a target
     let autoaim: AutoaimParams | undefined;
     const baseAutoaim = weapon.autoaimFov ?? 0;
-    const effectiveAutoaim = isPlayer
-      ? baseAutoaim + getPlayerAutoaimBonus(world)
-      : baseAutoaim;
+    const effectiveAutoaim = baseAutoaim + autoaimBonus;
     if (effectiveAutoaim > 0 && targetTransform) {
       const interceptPoint = calculateInterceptPoint(
         transform.position,

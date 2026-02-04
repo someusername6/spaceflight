@@ -58,7 +58,6 @@ import {
   setCampaignCreatedAt,
 } from '../storage';
 import type { CampaignSettings, CampaignState } from '../types';
-
 // Import campaign menu handlers (used in setupTitleScreen and re-exported for backward compatibility)
 import {
   setupJoinGameScreen,
@@ -66,6 +65,8 @@ import {
   setupLoadCampaignScreenForHosting,
   setupRoomCreatedScreen,
 } from './campaign-menu-handlers';
+import { handleAutoaimUpdate } from './lobby-actions';
+import { getLobbyContext } from './lobby-context';
 
 // Re-export for backward compatibility
 export {
@@ -273,6 +274,12 @@ export async function setupSettingsScreen(
           },
         };
         updateCampaignState(screenManager, newState);
+      }
+
+      // Broadcast autoaim change to multiplayer lobby if in one
+      const lobbyCtx = getLobbyContext();
+      if (lobbyCtx) {
+        handleAutoaimUpdate(lobbyCtx, degrees);
       }
     },
   });

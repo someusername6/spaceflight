@@ -8,6 +8,7 @@ import type { TransportAdapter } from 'rollback-netcode';
 import type {
   ActionRequestMessage,
   ActionResponseMessage,
+  AutoaimUpdateMessage,
   CallsignAnnounceMessage,
   CallsignUpdateMessage,
   CampaignSyncMessage,
@@ -70,6 +71,7 @@ export interface MessageHandlers {
   [GameMessageType.GuestQuitRequest]?: MessageHandler<GuestQuitRequestMessage>;
   [GameMessageType.PauseRequest]?: MessageHandler<PauseRequestMessage>;
   [GameMessageType.ReturnToLobby]?: MessageHandler<ReturnToLobbyMessage>;
+  [GameMessageType.AutoaimUpdate]?: MessageHandler<AutoaimUpdateMessage>;
 }
 
 /** Configuration for MessageRouter */

@@ -98,6 +98,7 @@ export function gamePlayerToLobbyPlayer(
     permissions: isHost
       ? HOST_PERMISSIONS
       : (player.permissions ?? DEFAULT_GUEST_PERMISSIONS),
+    autoaimDegrees: player.autoaimDegrees,
   };
 }
 
@@ -110,6 +111,7 @@ export function lobbyPlayerToGamePlayer(player: LobbyPlayer): GamePlayerInfo {
     ready: player.isReady,
     // Host always has full permissions, guests use their stored permissions
     permissions: player.isHost ? HOST_PERMISSIONS : player.permissions,
+    autoaimDegrees: player.autoaimDegrees,
   };
 }
 
@@ -120,6 +122,7 @@ export function lobbyPlayerToGamePlayer(player: LobbyPlayer): GamePlayerInfo {
 export function createGuestLobbyPlayer(
   playerId: string,
   callsign: string,
+  autoaimDegrees = 2.5,
 ): LobbyPlayer {
   return {
     playerId,
@@ -129,5 +132,18 @@ export function createGuestLobbyPlayer(
     isHost: false,
     ping: 0,
     permissions: DEFAULT_GUEST_PERMISSIONS,
+    autoaimDegrees,
+  };
+}
+
+/** Create an AutoaimUpdate message */
+export function createAutoaimUpdateMessage(
+  playerId: string,
+  autoaimDegrees: number,
+): import('./protocol/messages').AutoaimUpdateMessage {
+  return {
+    type: GameMessageType.AutoaimUpdate,
+    playerId,
+    autoaimDegrees,
   };
 }

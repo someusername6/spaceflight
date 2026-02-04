@@ -80,20 +80,26 @@ export function buildPlayerEntityMap(
   return { playerEntityMap, spectatorIds, localPlayerEntity };
 }
 
+/** Guest info for spawning */
+export interface GuestShipInfo {
+  callsign: string;
+  autoaimDegrees: number;
+}
+
 /**
- * Get the map of ship IDs to callsigns for multiplayer guests.
+ * Get the map of ship IDs to guest info for multiplayer guests.
  * Used when spawning to determine which ships get PlayerControlled vs AIControlled,
- * and what callsign to display for each guest.
+ * and what callsign/autoaim to use for each guest.
  *
  * @param players - Lobby players with ship assignments
  * @param hostPlayerId - The host's player ID (host controls commander, not counted as guest)
- * @returns Map of ship ID → callsign for guests
+ * @returns Map of ship ID → guest info for guests
  */
 export function getGuestShipIds(
   players: LobbyPlayer[],
   hostPlayerId: string,
-): Map<string, string> {
-  const guestShipMap = new Map<string, string>();
+): Map<string, GuestShipInfo> {
+  const guestShipMap = new Map<string, GuestShipInfo>();
 
   for (const player of players) {
     // Skip host - host controls commander via spawnPlayerFromCampaign
@@ -102,7 +108,10 @@ export function getGuestShipIds(
     // Skip spectators (no ship assigned)
     if (!player.shipId) continue;
 
-    guestShipMap.set(player.shipId, player.callsign);
+    guestShipMap.set(player.shipId, {
+      callsign: player.callsign,
+      autoaimDegrees: player.autoaimDegrees,
+    });
   }
 
   return guestShipMap;

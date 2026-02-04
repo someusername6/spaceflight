@@ -111,6 +111,7 @@ const QUICK_TESTS = [
   'multiplayer/unit/test-session-sync.mjs',
   'multiplayer/unit/test-replay-loadouts.mjs',
   'multiplayer/unit/test-replay-wingmen.mjs',
+  'multiplayer/unit/test-replay-autoaim.mjs',
   'multiplayer/unit/test-replay-stats.mjs',
   'multiplayer/unit/test-replay-playback.mjs',
   'multiplayer/unit/test-player-pilots.mjs',
