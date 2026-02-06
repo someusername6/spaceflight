@@ -15,13 +15,13 @@ import {
   runTest,
   runTestSuite,
   SIGNALING_URL,
-  sleep,
 } from '../core/index.mjs';
 import {
   acceptFirstContract,
   getChatMessages,
   readyBothPlayers,
   setupHostAndGuest,
+  waitForMissionStart,
   waitForSystemMessage,
 } from '../helpers/index.mjs';
 
@@ -119,7 +119,6 @@ function testUnreadyAbortsCountdown() {
       state: 'visible',
       timeout: 5000,
     });
-    await sleep(300);
 
     await waitForSystemMessage(hostPage, 'Launch aborted', 3000);
     console.log('  Host sees abort message');
@@ -167,7 +166,15 @@ function testEscapeDuringCountdownMakesUnready() {
     await guestPage.keyboard.press('Escape');
     console.log('  Guest pressed Escape');
 
-    await sleep(500);
+    // Wait for ready state to update (Escape triggers unready)
+    await guestPage.waitForFunction(
+      () =>
+        !document
+          .querySelector('#btn-ready')
+          ?.classList.contains('ready-active'),
+      null,
+      { timeout: 3000, polling: 50 },
+    );
 
     const guestReadyAfter = await guestPage
       .locator('#btn-ready')
@@ -208,7 +215,12 @@ function testLaunchBlockedIfNotReady() {
     console.log('  Both players connected');
 
     await hostPage.click('#btn-ready');
-    await sleep(500);
+    // Wait for host's ready indicator to appear
+    await hostPage.waitForFunction(
+      () => document.querySelectorAll('.ready-indicator.ready').length >= 1,
+      null,
+      { timeout: 5000, polling: 50 },
+    );
     console.log('  Only host is ready (guest not ready)');
 
     await acceptFirstContract(hostPage);
@@ -219,7 +231,20 @@ function testLaunchBlockedIfNotReady() {
       state: 'visible',
       timeout: 5000,
     });
-    await sleep(500);
+
+    // Wait for the "waiting"/"cannot launch" system message
+    await hostPage.waitForFunction(
+      () => {
+        const msgs = document.querySelectorAll('.chat-message');
+        return Array.from(msgs).some(
+          (m) =>
+            m.textContent?.toLowerCase().includes('waiting') ||
+            m.textContent?.toLowerCase().includes('cannot launch'),
+        );
+      },
+      null,
+      { timeout: 5000, polling: 50 },
+    );
 
     const hostMessages = await getChatMessages(hostPage);
     const waitingMessages = hostMessages.filter(
@@ -270,13 +295,12 @@ function testRoomStatePreventsJoin() {
     await acceptFirstContract(hostPage);
     console.log('  Host accepted contract');
 
+    // Wait for countdown to appear on guest first (confirms messages flowing)
     await waitForSystemMessage(guestPage, 'Launching in', 5000);
-    console.log('  Countdown started');
+    console.log('  Countdown received on guest');
 
-    await waitForSystemMessage(guestPage, 'Mission starting', 15000);
-    console.log('  Mission starting message received');
-
-    await sleep(500);
+    await waitForMissionStart(guestPage, 15000);
+    console.log('  Mission started on guest');
 
     const postJoinResult = await tryJoinRoom(roomCode);
     const roomBlocked = postJoinResult?.error === 'game_in_progress';
@@ -306,12 +330,25 @@ function testCampaignStateHashVerification() {
     await readyBothPlayers(hostPage, guestPage);
     console.log('  Both players ready');
 
+    // Capture console errors on guest for diagnostics
+    const guestErrors = [];
+    guestPage.on('console', (msg) => {
+      if (msg.type() === 'error' || msg.type() === 'warning') {
+        guestErrors.push(`[${msg.type()}] ${msg.text()}`);
+      }
+    });
+
     await acceptFirstContract(hostPage);
     console.log('  Host accepted contract');
 
-    await waitForSystemMessage(guestPage, 'Mission starting', 15000);
-    console.log('  Guest received MissionStarted');
+    // Wait for countdown on GUEST (host lobby DOM is cleared after navigating to contracts)
+    await waitForSystemMessage(guestPage, 'Launching in', 5000);
+    console.log('  Countdown received on guest');
 
+    await waitForMissionStart(guestPage, 15000);
+    console.log('  Mission started on guest');
+
+    // Chat messages remain in DOM (lobby is hidden, not destroyed)
     const guestMessages = await getChatMessages(guestPage);
     const hashWarnings = guestMessages.filter((m) =>
       m.toLowerCase().includes('out of sync'),
@@ -319,14 +356,9 @@ function testCampaignStateHashVerification() {
 
     console.log(`  Hash mismatch warnings: ${hashWarnings.length}`);
 
-    const missionMessages = guestMessages.filter((m) =>
-      m.includes('Mission starting'),
-    );
-    console.log(`  Mission starting messages: ${missionMessages.length}`);
-
-    if (!(hashWarnings.length === 0 && missionMessages.length > 0)) {
+    if (hashWarnings.length > 0) {
       throw new Error(
-        `Hash verification failed: warnings=${hashWarnings.length}, missionStarted=${missionMessages.length}`,
+        `Hash verification failed: ${hashWarnings.length} out-of-sync warnings found`,
       );
     }
 

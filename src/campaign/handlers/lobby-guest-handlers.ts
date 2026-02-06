@@ -26,7 +26,7 @@ import type { LobbyContext } from './lobby-context';
  * Wire guest-only message handlers.
  * Called by wireMessageHandlers when ctx.isHost is false.
  */
-export function wireGuestHandlers(ctx: LobbyContext): void {
+export function wireGuestHandlers(ctx: LobbyContext, hostPeerId: string): void {
   // Launch countdown handlers
   ctx.router.onLaunchCountdown((msg) => {
     handleCountdownTick(msg.secondsRemaining, null);
@@ -145,6 +145,18 @@ export function wireGuestHandlers(ctx: LobbyContext): void {
       ctx.onSessionEnded(msg.reason ?? 'You have been kicked');
     }
   });
+
+  // Host disconnect handler: treat as session end if SessionEnded never arrived.
+  // The host broadcasts SessionEnded before disconnecting, but the message may
+  // not arrive if the WebRTC data channel is torn down before it flushes.
+  ctx.router.onPeerDisconnect = (peerId) => {
+    if (peerId === hostPeerId) {
+      logDebug('[lobby-routing] Host disconnected, treating as session end');
+      if (ctx.onSessionEnded) {
+        ctx.onSessionEnded('Host left the session');
+      }
+    }
+  };
 
   // ReturnToLobby handler: navigate back to lobby when host continues
   ctx.router.onReturnToLobby(() => {

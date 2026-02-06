@@ -43,40 +43,19 @@ function testGuestQuitReturnsToTitle() {
     await guestPage.click('#btn-quit');
     console.log('  Guest clicked quit');
 
-    // Wait for confirmation modal and confirm
-    await guestPage
-      .waitForSelector('#btn-confirm-quit', { timeout: TIMEOUTS.ui })
-      .catch(() => {
-        // Might not have confirmation modal in all flows
-        console.log('  No confirmation modal (direct quit)');
-      });
+    // Confirm quit in the confirmation modal
+    await guestPage.waitForSelector('#btn-confirm-ok', {
+      state: 'visible',
+      timeout: TIMEOUTS.ui,
+    });
+    await guestPage.click('#btn-confirm-ok');
+    console.log('  Guest confirmed quit');
 
-    const confirmBtn = guestPage.locator('#btn-confirm-quit');
-    if (await confirmBtn.isVisible()) {
-      await confirmBtn.click();
-      console.log('  Guest confirmed quit');
-    }
-
-    // Dismiss "Session Ended" alert overlay (appears on top of title screen)
-    await guestPage.waitForSelector('.alert-overlay', {
+    // Guest quit navigates directly to title (no "Session Ended" alert)
+    await guestPage.waitForSelector('#screen-title', {
       state: 'visible',
       timeout: TIMEOUTS.navigation,
     });
-    await guestPage.click('#btn-alert-ok');
-    await guestPage.waitForSelector('.alert-overlay', {
-      state: 'hidden',
-      timeout: TIMEOUTS.ui,
-    });
-    console.log('  Guest dismissed session ended alert');
-
-    // Guest should now be on title screen
-    await guestPage.waitForSelector(
-      '.title-screen, #title-screen, [data-screen="title"]',
-      {
-        state: 'visible',
-        timeout: TIMEOUTS.navigation,
-      },
-    );
     console.log('  Guest returned to title');
 
     // Host should still be paused or see player left message
@@ -115,18 +94,13 @@ function testShipBecomesAIAfterQuit() {
     await guestPage.click('#btn-quit');
     console.log('  Guest clicked quit');
 
-    // Wait for confirmation modal and confirm
-    await guestPage
-      .waitForSelector('#btn-confirm-quit', { timeout: TIMEOUTS.ui })
-      .catch(() => {
-        console.log('  No confirmation modal (direct quit)');
-      });
-
-    const confirmBtn = guestPage.locator('#btn-confirm-quit');
-    if (await confirmBtn.isVisible()) {
-      await confirmBtn.click();
-      console.log('  Guest confirmed quit');
-    }
+    // Confirm quit in the confirmation modal
+    await guestPage.waitForSelector('#btn-confirm-ok', {
+      state: 'visible',
+      timeout: TIMEOUTS.ui,
+    });
+    await guestPage.click('#btn-confirm-ok');
+    console.log('  Guest confirmed quit');
 
     // Wait for quit to process
     await new Promise((r) => setTimeout(r, 500));

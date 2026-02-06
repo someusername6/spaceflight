@@ -318,7 +318,7 @@ export function wireMessageHandlers(
 
   // Guest-only handlers (host manages these differently)
   if (!ctx.isHost) {
-    wireGuestHandlers(ctx);
+    wireGuestHandlers(ctx, hostPeerId);
   }
 
   // Wire router to transport (cleanup handled by setupMessageHandling)

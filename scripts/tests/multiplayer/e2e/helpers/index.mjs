@@ -68,6 +68,7 @@ export {
   readyBothPlayers,
   selectContract,
   waitForCreditsToEqual,
+  waitForMissionStart,
   waitForSync,
   waitForSystemMessage,
 } from './navigation.mjs';

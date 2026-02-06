@@ -29,15 +29,14 @@ export async function handleSessionEndedForGuest(
   controller: CampaignController,
   reason: string,
 ): Promise<void> {
-  // Clean up lobby (don't broadcast - we're the guest receiving the end message)
+  // Guard against duplicate calls (SessionEnded message + host disconnect can both fire)
   const ctx = getLobbyContext();
-  if (ctx) {
-    ctx.cleanup();
-    ctx.connectionFlow.disconnect().catch(() => {
-      // Ignore disconnect errors
-    });
-    ctx.connectionFlow.dispose();
-  }
+  if (!ctx) return;
+  ctx.cleanup();
+  ctx.connectionFlow.disconnect().catch(() => {
+    // Ignore disconnect errors
+  });
+  ctx.connectionFlow.dispose();
   cleanupLobbyScreen();
   clearMultiplayerContext();
   resetLaunchState();
@@ -76,11 +75,19 @@ export function cleanupLobby(): void {
     // Run cleanup (router, sync manager, transport handlers)
     ctx.cleanup();
 
-    // Disconnect and dispose connection flow
-    ctx.connectionFlow.disconnect().catch(() => {
-      // Ignore disconnect errors
-    });
-    ctx.connectionFlow.dispose();
+    // Defer connection teardown so the SessionEnded message has time to flush
+    // through the WebRTC data channel before the connection is closed.
+    // The disconnect (which notifies the signaling server) must complete
+    // before dispose tears down resources.
+    const connectionFlow = ctx.connectionFlow;
+    setTimeout(async () => {
+      try {
+        await connectionFlow.disconnect();
+      } catch {
+        // Ignore disconnect errors
+      }
+      connectionFlow.dispose();
+    }, 50);
   }
 
   // Cleanup screen

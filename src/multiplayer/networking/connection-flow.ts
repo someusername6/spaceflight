@@ -117,7 +117,9 @@ export class ConnectionFlow {
 
       // Create transport with compression and segmentation wrapper
       this.rawTransport = createWebRTCTransport(this.mesh);
-      this.transport = new TransformingTransport(this.rawTransport);
+      const wrappedTransport = new TransformingTransport(this.rawTransport);
+      await wrappedTransport.ready;
+      this.transport = wrappedTransport;
 
       // Start polling for signals and events
       this.poller.start();
@@ -192,7 +194,9 @@ export class ConnectionFlow {
 
       // Create transport with compression and segmentation wrapper
       this.rawTransport = createWebRTCTransport(meshResult.mesh);
-      this.transport = new TransformingTransport(this.rawTransport);
+      const wrappedTransport = new TransformingTransport(this.rawTransport);
+      await wrappedTransport.ready;
+      this.transport = wrappedTransport;
 
       this.setState({ status: 'connected', roomCode });
 

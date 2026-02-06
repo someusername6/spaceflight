@@ -193,6 +193,27 @@ export async function waitForSystemMessage(page, text, timeout = 15000) {
 }
 
 /**
+ * Wait for a mission to start on a page.
+ * Checks for the mission container appearing in the DOM.
+ * @param {import('playwright').Page} page
+ * @param {number} timeout
+ */
+export async function waitForMissionStart(page, timeout = 15000) {
+  await page.waitForFunction(
+    () => {
+      // Primary: mission container exists in DOM
+      if (document.getElementById('mission-container')) return true;
+      // Fallback: lobby screen wrapper hidden via inline style
+      const lobbyWrapper = document.getElementById('screen-lobby');
+      if (lobbyWrapper && lobbyWrapper.style.display === 'none') return true;
+      return false;
+    },
+    null,
+    { timeout, polling: 50 },
+  );
+}
+
+/**
  * Make both players ready and wait for both indicators.
  * @param {import('playwright').Page} hostPage
  * @param {import('playwright').Page} guestPage

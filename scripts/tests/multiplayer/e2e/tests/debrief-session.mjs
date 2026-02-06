@@ -180,24 +180,30 @@ function testHostQuitFromLobbyEndsSession() {
       await hostPage.click('.lobby-actions #btn-back');
       console.log('  Host clicked Leave button');
 
-      // Dismiss "Session Ended" alert overlay (appears on top of title screen)
-      await guestPage.waitForSelector('.alert-overlay', {
-        state: 'visible',
-        timeout: TIMEOUTS.navigation,
-      });
-      await guestPage.click('#btn-alert-ok');
-      await guestPage.waitForSelector('.alert-overlay', {
-        state: 'hidden',
-        timeout: TIMEOUTS.ui,
-      });
-      console.log('  Guest dismissed session ended alert');
-
-      // Verify guest is on title screen
-      await guestPage.waitForSelector('.title-screen', {
+      // Guest should navigate to title screen (goBackFromLobby runs before showAlert)
+      await guestPage.waitForSelector('#screen-title', {
         state: 'visible',
         timeout: TIMEOUTS.navigation,
       });
       console.log('  Guest returned to title screen');
+
+      // Dismiss "Session Ended" alert if present (the alert-overlay may be
+      // reported as hidden by Playwright due to .modal-container's fadeSlideIn
+      // animation creating a containing block, so use evaluate to click)
+      await guestPage.waitForFunction(
+        () => document.querySelector('#btn-alert-ok') !== null,
+        null,
+        { timeout: TIMEOUTS.navigation },
+      );
+      await guestPage.evaluate(() =>
+        document.querySelector('#btn-alert-ok')?.click(),
+      );
+      await guestPage.waitForFunction(
+        () => document.querySelector('.alert-overlay') === null,
+        null,
+        { timeout: TIMEOUTS.ui },
+      );
+      console.log('  Guest dismissed session ended alert');
 
       await hostContext.close();
       await guestContext.close();
