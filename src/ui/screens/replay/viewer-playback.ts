@@ -235,11 +235,13 @@ function updateRendering(
   );
 
   // Update scene and effects
+  const dtSec = frameDt / 1000;
   updateMissionRenderers(
     ctx.renderers,
     world,
     containerWidth,
     containerHeight,
+    dtSec,
     alpha,
     dustCenter
       ? { skipCameraAndRender: true, dustCenterPosition: dustCenter }
@@ -247,13 +249,12 @@ function updateRendering(
   );
 
   // Update camera
-  const dt = frameDt / 1000;
   updateCamera(
     ctx.cameraState,
     ctx.renderers.renderer.camera,
     world,
     ctx.cameraInput,
-    dt,
+    dtSec,
     ctx.renderers.renderer,
   );
 
@@ -269,6 +270,7 @@ function updateRendering(
     world,
     containerWidth,
     containerHeight,
+    dtSec,
     renderOptions,
   );
 

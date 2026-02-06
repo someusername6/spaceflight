@@ -113,6 +113,7 @@ export function updateReticles(
   screenWidth: number,
   screenHeight: number,
   renderer: Renderer,
+  dt: number,
 ): void {
   const { ctx, dpr } = rc;
 
@@ -228,6 +229,7 @@ export function updateReticles(
       playerVelocity,
       playerWeapons,
       secondaryWeapons,
+      dt,
     );
   }
 }
@@ -243,6 +245,7 @@ function renderTarget(
   playerVelocity: THREE.Vector3 | undefined,
   playerWeapons: PrimaryWeapons | undefined,
   secondaryWeapons: SecondaryWeapons | undefined,
+  dt: number,
 ): void {
   // Colors matching radar: dim for non-selected, bright for selected
   // Threat missiles are red, other missiles grey, convoys yellow, ships use faction
@@ -335,6 +338,7 @@ function renderTarget(
         playerWeapons,
         color,
         cameraForward,
+        dt,
       );
     }
 
@@ -357,6 +361,7 @@ function renderTarget(
         secondaryWeapons,
         color,
         cameraForward,
+        dt,
       );
     }
   } else {

@@ -60,7 +60,7 @@ function createHitFlash(
     side: THREE.DoubleSide,
   });
 
-  const mesh = new THREE.Mesh(renderer.geometry.clone(), material);
+  const mesh = new THREE.Mesh(renderer.geometry, material);
   mesh.position.copy(position);
   scene.add(mesh);
 
@@ -123,7 +123,6 @@ export function updateShieldEffectRenderer(
   for (const [key, visual] of renderer.effects) {
     if (!activeEffects.has(key)) {
       scene.remove(visual.mesh);
-      visual.mesh.geometry.dispose();
       (visual.mesh.material as THREE.Material).dispose();
       renderer.effects.delete(key);
     }
@@ -140,7 +139,6 @@ export function resetShieldEffectRenderer(
 ): void {
   for (const visual of renderer.effects.values()) {
     scene.remove(visual.mesh);
-    visual.mesh.geometry.dispose();
     (visual.mesh.material as THREE.Material).dispose();
   }
   renderer.effects.clear();
@@ -154,7 +152,6 @@ export function disposeShieldEffectRenderer(
 ): void {
   for (const visual of renderer.effects.values()) {
     scene.remove(visual.mesh);
-    visual.mesh.geometry.dispose();
     (visual.mesh.material as THREE.Material).dispose();
   }
   renderer.effects.clear();

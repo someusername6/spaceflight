@@ -188,6 +188,7 @@ export function launchMission(
         world,
         containerWidth,
         containerHeight,
+        dt,
         alpha,
         {
           skipCameraAndRender: true,
@@ -204,6 +205,7 @@ export function launchMission(
         world,
         containerWidth,
         containerHeight,
+        dt,
         alpha,
       );
     }

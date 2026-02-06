@@ -40,28 +40,6 @@ const smoothedPrimaryPositions = new Map<number, SmoothedPos>();
 // Smoothed position for missile lead indicator
 const smoothedMissilePos: SmoothedPos = { x: 0, y: 0, initialized: false };
 
-// Track time for frame-rate independent smoothing
-let lastFrameTime = 0;
-let cachedDt = 0.016;
-// Threshold for "same frame" detection (1ms in seconds)
-const SAME_FRAME_THRESHOLD = 0.001;
-
-/** Get delta time, cached per frame to handle multiple calls */
-function getDeltaTime(): number {
-  const now = performance.now() / 1000; // Convert to seconds
-  const timeSinceLastCall = now - lastFrameTime;
-
-  // If called again within 1ms, we're in the same frame - return cached dt
-  if (timeSinceLastCall < SAME_FRAME_THRESHOLD) {
-    return cachedDt;
-  }
-
-  // New frame - compute fresh dt
-  cachedDt = lastFrameTime > 0 ? Math.min(timeSinceLastCall, 0.1) : 0.016;
-  lastFrameTime = now;
-  return cachedDt;
-}
-
 /** Apply exponential smoothing to a position */
 function smoothPosition(
   smoothed: SmoothedPos,
@@ -96,8 +74,6 @@ export function resetLeadIndicatorState(): void {
   smoothedMissilePos.x = 0;
   smoothedMissilePos.y = 0;
   smoothedMissilePos.initialized = false;
-  lastFrameTime = 0;
-  cachedDt = 0.016;
 }
 
 // Pool of reusable value objects for uniqueSpeeds Map (avoid per-frame allocations)
@@ -135,6 +111,7 @@ export function drawLeadIndicators(
   weapons: PrimaryWeapons,
   color: string,
   cameraForward: THREE.Vector3,
+  dt: number,
 ): void {
   // Show lead indicators for all weapons in current link mode
   drawLinkModeLeadIndicators(
@@ -149,6 +126,7 @@ export function drawLeadIndicators(
     weapons,
     color,
     cameraForward,
+    dt,
   );
 }
 
@@ -165,12 +143,10 @@ function drawLinkModeLeadIndicators(
   weapons: PrimaryWeapons,
   color: string,
   cameraForward: THREE.Vector3,
+  dt: number,
 ): void {
   const indices = getWeaponIndicesForCurrentMode(weapons);
   if (indices.length === 0) return;
-
-  // Get delta time for frame-rate independent smoothing
-  const dt = getDeltaTime();
 
   // Collect unique projectile speeds from weapons in current mode
   speedInfoPoolIndex = 0;
@@ -256,6 +232,7 @@ export function drawDumbfireMissileLeadIndicator(
   weapons: SecondaryWeapons,
   color: string,
   cameraForward: THREE.Vector3,
+  dt: number,
 ): void {
   const weapon = getCurrentSecondary(weapons);
   if (!weapon) return;
@@ -279,6 +256,7 @@ export function drawDumbfireMissileLeadIndicator(
     weapon,
     color,
     cameraForward,
+    dt,
   );
 }
 
@@ -295,10 +273,8 @@ function drawMissileLeadIndicator(
   weapon: SecondaryWeapon,
   color: string,
   cameraForward: THREE.Vector3,
+  dt: number,
 ): void {
-  // Get delta time for smoothing (use same dt as primary indicators)
-  const dt = getDeltaTime();
-
   const interceptPoint = calculateInterceptPoint(
     playerTransform.position,
     playerVelocity,

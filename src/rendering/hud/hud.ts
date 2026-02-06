@@ -238,6 +238,7 @@ export function updateHUD(
   renderer: Renderer,
   screenWidth: number,
   screenHeight: number,
+  dt: number,
   playerEntity?: Entity,
 ): void {
   const player = playerEntity ?? findLocalPlayer(world);
@@ -263,6 +264,7 @@ export function updateHUD(
     screenWidth,
     screenHeight,
     renderer,
+    dt,
   );
 }
 

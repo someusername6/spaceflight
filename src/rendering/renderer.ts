@@ -374,5 +374,16 @@ export function disposeRenderer(renderer: Renderer): void {
   }
 
   renderer.webglRenderer.dispose();
+  for (const obj of renderer.entityMeshes.values()) {
+    obj.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        if (Array.isArray(child.material)) {
+          for (const mat of child.material) mat.dispose();
+        } else {
+          child.material.dispose();
+        }
+      }
+    });
+  }
   renderer.entityMeshes.clear();
 }

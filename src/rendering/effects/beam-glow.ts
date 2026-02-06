@@ -45,7 +45,7 @@ export function createBeamGlow(
     depthWrite: false,
   });
 
-  const mesh = new THREE.Mesh(glowGeometry.clone(), material);
+  const mesh = new THREE.Mesh(glowGeometry, material);
   scene.add(mesh);
 
   const light = new THREE.PointLight(color, 0.3, 8);
@@ -157,7 +157,6 @@ export function disposeBeamGlows(
   for (const glow of beamGlows.values()) {
     scene.remove(glow.mesh);
     scene.remove(glow.light);
-    glow.mesh.geometry.dispose();
     (glow.mesh.material as THREE.Material).dispose();
   }
   beamGlows.clear();

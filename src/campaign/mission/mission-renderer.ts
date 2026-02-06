@@ -150,6 +150,7 @@ export function updateMissionRenderers(
   world: World,
   containerWidth: number,
   containerHeight: number,
+  dt: number,
   alpha = 1,
   options?: UpdateMissionRenderersOptions,
 ): void {
@@ -255,6 +256,7 @@ export function updateMissionRenderers(
     renderer,
     containerWidth,
     containerHeight,
+    dt,
   );
 }
 
@@ -274,6 +276,7 @@ export function renderMissionFrame(
   world: World,
   containerWidth: number,
   containerHeight: number,
+  dt: number,
   options?: RenderMissionFrameOptions,
 ): void {
   const { renderer } = renderers;
@@ -306,6 +309,7 @@ export function renderMissionFrame(
       renderer,
       containerWidth,
       containerHeight,
+      dt,
     );
   }
 }

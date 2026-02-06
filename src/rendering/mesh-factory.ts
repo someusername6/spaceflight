@@ -10,6 +10,9 @@ import type { StationType } from '../data/stations';
 import { SHIP_MODEL_SCALE } from './constants';
 import { SHIP_GEOMETRIES, type ShipClass } from './ship-geometries';
 
+/** Reusable scratch color to avoid per-call allocation */
+const _scratchColor = new THREE.Color();
+
 /** Cached BufferGeometry instances built on demand from embedded data */
 const shipGeometries = new Map<ShipClass, THREE.BufferGeometry>();
 
@@ -125,7 +128,7 @@ export function createMissileMesh(missileType: MissileType): THREE.Group {
     opacity: 0.9,
   });
   if (visual.emissive) {
-    bodyMat.color.lerp(new THREE.Color(visual.emissive), 0.3);
+    bodyMat.color.lerp(_scratchColor.set(visual.emissive), 0.3);
   }
   const body = new THREE.Mesh(bodyGeom, bodyMat);
   group.add(body);
