@@ -24,7 +24,7 @@ import type { SalaryInfo } from '../../ui/screens/results/results-rewards';
 import type { CampaignController } from '../controller-types';
 import type { SalvageResult } from '../salvage';
 import type { Contract } from '../types';
-import { setupContractsScreen, setupSquadronScreen } from './campaign-handlers';
+import { setupSquadronScreen } from './campaign-handlers';
 import { sendChat } from './lobby-actions';
 import { getLobbyContext } from './lobby-context';
 import { rebindLobbyScreen } from './lobby-handlers';
@@ -75,15 +75,16 @@ export function showResults(options: ShowResultsOptions): void {
       const squadronElement = getScreenElement(screenManager, Screen.SQUADRON);
       setupSquadronScreen(controller, squadronElement, setupContractsScreen);
     },
-    world,
-    salvage,
-    earnedReward,
-    escortResults,
-    ambushResults,
-    stationDefenseResults,
-    attackStationResults,
-    undefined, // multiplayerOptions
-    salaryInfo,
+    {
+      world,
+      salvage,
+      earnedReward,
+      escortResults,
+      ambushResults,
+      stationDefenseResults,
+      attackStationResults,
+      salaryInfo,
+    },
   );
 }
 
@@ -99,7 +100,7 @@ export function showMultiplayerResults(options: ShowResultsOptions): void {
     controller,
     victory,
     contract,
-    setupContractsScreen: _setupContractsScreen,
+    setupContractsScreen,
     world,
     salvage,
     earnedReward,
@@ -157,19 +158,21 @@ export function showMultiplayerResults(options: ShowResultsOptions): void {
     contract,
     screenManager.campaignState,
     onContinue,
-    world,
-    salvage,
-    earnedReward,
-    escortResults,
-    ambushResults,
-    stationDefenseResults,
-    attackStationResults,
     {
-      isMultiplayer: true,
-      isHost: lobbyCtx.isHost,
-      chatMessages: lobbyCtx.lobbyState.chatMessages,
-      onSendChat,
+      world,
+      salvage,
+      earnedReward,
+      escortResults,
+      ambushResults,
+      stationDefenseResults,
+      attackStationResults,
+      multiplayerOptions: {
+        isMultiplayer: true,
+        isHost: lobbyCtx.isHost,
+        chatMessages: lobbyCtx.lobbyState.chatMessages,
+        onSendChat,
+      },
+      salaryInfo,
     },
-    salaryInfo,
   );
 }

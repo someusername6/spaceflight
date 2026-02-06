@@ -287,6 +287,19 @@ export interface ResultsMultiplayerOptions {
   onSendChat: (text: string) => void;
 }
 
+/** Options for createResultsUI optional parameters */
+export interface CreateResultsOptions {
+  world?: World | undefined;
+  salvage?: SalvageResult | null | undefined;
+  earnedReward?: number | undefined;
+  escortResults?: EscortResultsDisplay | undefined;
+  ambushResults?: AmbushResultsDisplay | undefined;
+  stationDefenseResults?: StationDefenseResultsDisplay | undefined;
+  attackStationResults?: AttackStationResultsDisplay | undefined;
+  multiplayerOptions?: ResultsMultiplayerOptions | undefined;
+  salaryInfo?: SalaryInfo | undefined;
+}
+
 /** Create results UI */
 export function createResultsUI(
   element: HTMLElement,
@@ -294,19 +307,22 @@ export function createResultsUI(
   contract: Contract | null,
   state: CampaignState,
   onContinue: () => void,
-  world?: World,
-  salvage?: SalvageResult | null,
-  earnedReward?: number,
-  escortResults?: EscortResultsDisplay,
-  ambushResults?: AmbushResultsDisplay,
-  stationDefenseResults?: StationDefenseResultsDisplay,
-  attackStationResults?: AttackStationResultsDisplay,
-  multiplayerOptions?: ResultsMultiplayerOptions,
-  salaryInfo?: SalaryInfo,
+  options?: CreateResultsOptions,
 ): ResultsUI {
   // Clean up previous handle
   resultsScreenHandle?.destroy();
 
+  const {
+    world,
+    salvage,
+    earnedReward,
+    escortResults,
+    ambushResults,
+    stationDefenseResults,
+    attackStationResults,
+    multiplayerOptions,
+    salaryInfo,
+  } = options ?? {};
   const debriefData = world ? collectDebriefData(world) : null;
   const initialState: ResultsState = { selectedTab: 'debrief' };
   const props: ResultsProps = {

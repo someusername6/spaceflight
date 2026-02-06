@@ -115,18 +115,15 @@ export function handleNonIronmanDefeat(
       contract,
       screenManager.campaignState,
       onContinue,
-      world,
-      null, // no salvage on defeat
-      undefined, // earnedReward
-      undefined, // escortResults
-      undefined, // ambushResults
-      undefined, // stationDefenseResults
-      undefined, // attackStationResults
       {
-        isMultiplayer: true,
-        isHost: lobbyCtx.isHost,
-        chatMessages: lobbyCtx.lobbyState.chatMessages,
-        onSendChat,
+        world,
+        salvage: null,
+        multiplayerOptions: {
+          isMultiplayer: true,
+          isHost: lobbyCtx.isHost,
+          chatMessages: lobbyCtx.lobbyState.chatMessages,
+          onSendChat,
+        },
       },
     );
   } else {
@@ -156,8 +153,10 @@ export function handleNonIronmanDefeat(
           await showGameOver(controller);
         }
       },
-      world,
-      null, // no salvage on defeat
+      {
+        world,
+        salvage: null,
+      },
     );
   }
 }
