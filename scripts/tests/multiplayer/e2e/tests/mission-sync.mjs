@@ -297,11 +297,7 @@ function testFireInputSyncsAcrossPlayers() {
 // Exports
 // =============================================================================
 
-// Import extended gameplay test from separate module
-import { ALL_TESTS as EXTENDED_TESTS } from './mission-sync-extended.mjs';
-
-// Core sync tests
-const CORE_TESTS = [
+export const ALL_TESTS = [
   {
     name: 'Host input does not affect guest ship',
     fn: testHostInputDoesNotAffectGuest,
@@ -319,9 +315,6 @@ const CORE_TESTS = [
     fn: testFireInputSyncsAcrossPlayers,
   },
 ];
-
-// All tests combined
-export const ALL_TESTS = [...CORE_TESTS, ...EXTENDED_TESTS];
 
 if (isMainModule(import.meta.url)) {
   runTestSuite('Mission Sync Tests', ALL_TESTS).catch((error) => {
