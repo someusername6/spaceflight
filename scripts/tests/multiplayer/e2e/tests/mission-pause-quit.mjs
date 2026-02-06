@@ -57,7 +57,19 @@ function testGuestQuitReturnsToTitle() {
       console.log('  Guest confirmed quit');
     }
 
-    // Guest should return to title screen
+    // Dismiss "Session Ended" alert overlay (appears on top of title screen)
+    await guestPage.waitForSelector('.alert-overlay', {
+      state: 'visible',
+      timeout: TIMEOUTS.navigation,
+    });
+    await guestPage.click('#btn-alert-ok');
+    await guestPage.waitForSelector('.alert-overlay', {
+      state: 'hidden',
+      timeout: TIMEOUTS.ui,
+    });
+    console.log('  Guest dismissed session ended alert');
+
+    // Guest should now be on title screen
     await guestPage.waitForSelector(
       '.title-screen, #title-screen, [data-screen="title"]',
       {

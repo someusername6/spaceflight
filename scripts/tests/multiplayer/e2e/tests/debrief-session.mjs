@@ -180,24 +180,24 @@ function testHostQuitFromLobbyEndsSession() {
       await hostPage.click('.lobby-actions #btn-back');
       console.log('  Host clicked Leave button');
 
-      // Wait for guest to return to title screen
+      // Dismiss "Session Ended" alert overlay (appears on top of title screen)
+      await guestPage.waitForSelector('.alert-overlay', {
+        state: 'visible',
+        timeout: TIMEOUTS.navigation,
+      });
+      await guestPage.click('#btn-alert-ok');
+      await guestPage.waitForSelector('.alert-overlay', {
+        state: 'hidden',
+        timeout: TIMEOUTS.ui,
+      });
+      console.log('  Guest dismissed session ended alert');
+
+      // Verify guest is on title screen
       await guestPage.waitForSelector('.title-screen', {
         state: 'visible',
         timeout: TIMEOUTS.navigation,
       });
       console.log('  Guest returned to title screen');
-
-      // Verify guest is on title screen
-      const guestOnTitle = await guestPage
-        .locator('.title-screen')
-        .isVisible()
-        .catch(() => false);
-
-      console.log(`  Guest on title: ${guestOnTitle}`);
-
-      if (!guestOnTitle) {
-        throw new Error('Guest did not return to title after host quit');
-      }
 
       await hostContext.close();
       await guestContext.close();
