@@ -11,7 +11,11 @@ import type {
 import { getCurrentSecondary } from '../../components/weapons';
 import { entityExists, getComponent, queryEntities } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
-import { handleAIPrimaryWeapons, handleAISecondaryWeapons } from './weapons-ai';
+import {
+  buildMissileTargetSet,
+  handleAIPrimaryWeapons,
+  handleAISecondaryWeapons,
+} from './weapons-ai';
 import {
   handlePlayerPrimaryWeapons,
   handlePlayerSecondaryWeapons,
@@ -27,6 +31,9 @@ const DEG_TO_RAD = Math.PI / 180;
 
 /** Weapon system - handles firing and heat */
 export function weaponSystem(world: World, dt: number): void {
+  // Build missile target set once per frame for O(1) incoming-missile checks
+  buildMissileTargetSet(world);
+
   const state = world.systemState.weapons;
   const gameTime = world.systemState.gameTime;
 

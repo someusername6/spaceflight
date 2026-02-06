@@ -201,11 +201,3 @@ export function getMissileKeyFromName(displayName: string): string {
   // Fallback: return as-is (might already be a key)
   return displayName;
 }
-
-/** Decoy-specific constants */
-export const DECOY_CONSTANTS = {
-  speed: 50, // m/s (slow movement)
-  lifetime: 10, // seconds before despawning
-  seduceChance: 0.5, // 50% chance to distract missile
-  seduceRange: 200, // Range at which decoys attract missiles
-};

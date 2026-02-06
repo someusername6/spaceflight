@@ -2,7 +2,7 @@
  * Protocol Module - Game-specific messaging layer for multiplayer.
  *
  * This module provides:
- * - Message type definitions (0x80-0x93 byte range)
+ * - Message type definitions (0x80-0x98 byte range)
  * - Binary encoding/decoding
  * - Message routing with host-only validation
  *

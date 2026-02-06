@@ -1,8 +1,10 @@
 /**
  * Action Processing for Multiplayer Campaign.
  *
- * Contains permission validation and action execution logic.
+ * Executes validated action requests against campaign state.
  * Used by CampaignSyncManager to process guest requests.
+ *
+ * Permission and data validation are in action-validation.ts.
  */
 
 import {
@@ -33,11 +35,15 @@ import type {
   ActionRequestData,
   BuyAction,
   EquipAction,
-  GamePlayerInfo,
-  Permission,
   SellAction,
   UnequipAction,
 } from './protocol/messages';
+
+// Re-export validation from action-validation.ts
+export {
+  validateActionData,
+  validateActionPermission,
+} from './action-validation';
 
 // =============================================================================
 // Types
@@ -49,120 +55,6 @@ export interface ActionResult {
   error?: string;
   /** Updated state if success (undefined if failed) */
   newState?: CampaignState;
-}
-
-// =============================================================================
-// Permission Validation
-// =============================================================================
-
-/**
- * Validate ship edit permission for a specific ship.
- * Used by equip, unequip, and resupply actions.
- */
-function validateShipEditPermission(
-  playerId: string,
-  shipId: string,
-  permissions: Permission,
-  players: Map<string, GamePlayerInfo>,
-): { allowed: boolean; reason?: string } {
-  if (permissions.shipEdit === 'none') {
-    return {
-      allowed: false,
-      reason: 'You do not have permission to edit ship loadouts',
-    };
-  }
-  if (permissions.shipEdit === 'own') {
-    const playerInfo = players.get(playerId);
-    if (!playerInfo || playerInfo.shipId !== shipId) {
-      return { allowed: false, reason: 'You can only edit your own ship' };
-    }
-  }
-  return { allowed: true };
-}
-
-/**
- * Check if a player has permission to perform an action.
- * Returns null if allowed, or an error message if denied.
- */
-export function validateActionPermission(
-  action: ActionRequestData,
-  playerId: string,
-  permissions: Permission,
-  players: Map<string, GamePlayerInfo>,
-): string | null {
-  switch (action.type) {
-    case 'buy':
-      if (!permissions.canBuy) {
-        return 'You do not have permission to buy items';
-      }
-      break;
-
-    case 'sell':
-      if (!permissions.canSell) {
-        return 'You do not have permission to sell items';
-      }
-      break;
-
-    case 'equip':
-    case 'unequip': {
-      const result = validateShipEditPermission(
-        playerId,
-        action.shipId,
-        permissions,
-        players,
-      );
-      if (!result.allowed) {
-        return result.reason ?? 'Ship edit permission denied';
-      }
-      break;
-    }
-
-    case 'convertScrap':
-      if (!permissions.canConvertScrap) {
-        return 'You do not have permission to convert scrap';
-      }
-      break;
-
-    case 'resupply': {
-      const result = validateShipEditPermission(
-        playerId,
-        action.shipId,
-        permissions,
-        players,
-      );
-      if (!result.allowed) {
-        return result.reason ?? 'Ship edit permission denied';
-      }
-      break;
-    }
-
-    case 'assignPilot':
-    case 'deployStoredShip':
-      if (permissions.shipEdit === 'none') {
-        return 'You do not have permission to assign pilots';
-      }
-      break;
-
-    case 'resupplyAll':
-      if (permissions.shipEdit === 'none') {
-        return 'You do not have permission to resupply ships';
-      }
-      break;
-
-    case 'dismissPilot':
-      // Host-only action - guests cannot dismiss pilots
-      // Note: This is checked client-side, but we validate here too
-      // Guests will have this blocked by the UI (no button shown)
-      // If a guest somehow sends this, it should fail
-      return null; // Allow - host-only check is done by isHost() in UI
-
-    case 'spendXP':
-      // Host-only action - guests cannot spend XP
-      // UI hides upgrade buttons for guests
-      return null; // Allow - host-only check is done by isHost() in UI
-  }
-
-  return null; // No permission error
 }
 
 // =============================================================================

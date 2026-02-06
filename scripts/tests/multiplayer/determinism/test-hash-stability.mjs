@@ -14,7 +14,7 @@ import { asPlayerId } from '../../../../src/multiplayer/index.ts';
 import { serializeInput } from '../../../../src/multiplayer/input-format.ts';
 import {
   computeWorldHash,
-  worldsEqual,
+  worldHashesMatch,
 } from '../../../../src/serialization/index.ts';
 import {
   createMultiplayerWorld,
@@ -168,7 +168,7 @@ describe('Host/Guest State Identity', () => {
 
     // Final verification
     assert(
-      worldsEqual(hostWorld, guestWorld),
+      worldHashesMatch(hostWorld, guestWorld),
       'Host and guest worlds should be identical',
     );
   });

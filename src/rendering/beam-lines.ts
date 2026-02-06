@@ -59,24 +59,22 @@ export function createBeamLine(
   return { line, material, geometry, entityId };
 }
 
-/** Update beam line positions and appearance */
+/** Update beam line positions and appearance, optionally using interpolated origin/hitPoint */
 export function updateBeamLine(
   entry: BeamLineEntry,
   beam: ActiveBeam,
   gameTime: number,
+  origin?: THREE.Vector3,
+  hitPoint?: THREE.Vector3,
 ): void {
+  const start = origin ?? beam.origin;
+  const end = hitPoint ?? beam.hitPoint;
+
   // Caller guarantees hitPoint exists, but guard anyway
-  if (!beam.hitPoint) return;
+  if (!end) return;
 
   // Update geometry positions
-  entry.geometry.setPositions([
-    beam.origin.x,
-    beam.origin.y,
-    beam.origin.z,
-    beam.hitPoint.x,
-    beam.hitPoint.y,
-    beam.hitPoint.z,
-  ]);
+  entry.geometry.setPositions([start.x, start.y, start.z, end.x, end.y, end.z]);
 
   // Calculate fade opacity
   let opacity = 1.0;
@@ -87,41 +85,7 @@ export function updateBeamLine(
   }
 
   // Update material
-  entry.material.color.setHex(beam.color.getHex());
-  entry.material.opacity = opacity;
-  entry.material.linewidth = BASE_LINE_WIDTH * (beam.beamWidth ?? 1);
-  entry.material.resolution = resolution;
-  entry.line.visible = true;
-}
-
-/** Update beam line with interpolated positions */
-function updateBeamLineInterpolated(
-  entry: BeamLineEntry,
-  origin: THREE.Vector3,
-  hitPoint: THREE.Vector3,
-  beam: ActiveBeam,
-  gameTime: number,
-): void {
-  // Update geometry positions with interpolated values
-  entry.geometry.setPositions([
-    origin.x,
-    origin.y,
-    origin.z,
-    hitPoint.x,
-    hitPoint.y,
-    hitPoint.z,
-  ]);
-
-  // Calculate fade opacity
-  let opacity = 1.0;
-  if (beam.fadeStartTime !== null) {
-    const fadeAge = gameTime - beam.fadeStartTime;
-    const fadeProgress = fadeAge / BEAM_FADE_DURATION;
-    opacity = 1 - fadeProgress;
-  }
-
-  // Update material
-  entry.material.color.setHex(beam.color.getHex());
+  entry.material.color.copy(beam.color);
   entry.material.opacity = opacity;
   entry.material.linewidth = BASE_LINE_WIDTH * (beam.beamWidth ?? 1);
   entry.material.resolution = resolution;
@@ -191,13 +155,7 @@ export function updateAllBeamLines(
         interpOrigin.copy(beam.origin).add(interpEntityPos).sub(entityPos);
         // Keep hitPoint direction consistent - move it by the same offset
         interpHitPoint.copy(beam.hitPoint).add(interpEntityPos).sub(entityPos);
-        updateBeamLineInterpolated(
-          entry,
-          interpOrigin,
-          interpHitPoint,
-          beam,
-          gameTime,
-        );
+        updateBeamLine(entry, beam, gameTime, interpOrigin, interpHitPoint);
       } else {
         updateBeamLine(entry, beam, gameTime);
       }

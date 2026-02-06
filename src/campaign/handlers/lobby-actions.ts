@@ -30,7 +30,6 @@ import {
   getMultiplayerContext,
   setMultiplayerContext,
 } from '../../multiplayer/multiplayer-context';
-import { encodeMessage } from '../../multiplayer/protocol/encode';
 import type { Permission } from '../../multiplayer/protocol/types';
 import type { PlayerAutoaim } from '../../settings/game-settings';
 import {
@@ -48,6 +47,7 @@ import {
 } from '../../ui/screens/squadron';
 import { isStoreUIActive, refreshStoreUI } from '../../ui/screens/store/store';
 import type { CampaignState } from '../types';
+import { broadcastMessage } from './lobby-broadcast';
 import { getLobbyContext, type LobbyContext } from './lobby-context';
 import {
   detectMissingShipAssignments,
@@ -215,7 +215,7 @@ export function updateAndSyncCampaignState(
  */
 function broadcastAndApply(
   ctx: LobbyContext,
-  message: Parameters<typeof encodeMessage>[0],
+  message: Parameters<typeof broadcastMessage>[1],
 ): void {
   broadcastMessage(ctx, message);
   const result = processLobbyMessage(
@@ -345,24 +345,6 @@ export function handleAutoaimUpdate(
     degrees,
   );
   setLobbyState(ctx, newState);
-}
-
-// =============================================================================
-// Network Utilities
-// =============================================================================
-
-/**
- * Broadcast a game message to all connected peers.
- */
-function broadcastMessage(
-  ctx: LobbyContext,
-  message: Parameters<typeof encodeMessage>[0],
-): void {
-  const transport = ctx.connectionFlow.getTransport();
-  if (!transport) return;
-
-  const data = encodeMessage(message);
-  transport.broadcast(data, true);
 }
 
 // =============================================================================

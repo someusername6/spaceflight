@@ -169,6 +169,7 @@ function decodePlayerJoined(rb: ReadBuffer): PlayerJoinedExtMessage {
 function decodePlayerLeft(rb: ReadBuffer): PlayerLeftExtMessage {
   const playerId = readString(rb);
   const reasonByte = readByte(rb);
+  if (reasonByte > 2) throw new ProtocolError('Invalid leave reason');
   const reason: LeaveReason =
     reasonByte === 0 ? 'disconnected' : reasonByte === 1 ? 'kicked' : 'left';
   return {

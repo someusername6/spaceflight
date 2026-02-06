@@ -261,6 +261,9 @@ interface MissileBlip {
 // Reusable array for missile blips (avoid per-frame allocation)
 const missileBlips: MissileBlip[] = [];
 
+// Reusable set for tracking threat missiles (cleared each frame)
+const threatMissiles = new Set<Entity>();
+
 /** Draw missiles on radar (grey for normal, red for player-targeted) */
 function drawMissiles(
   ctx: CanvasRenderingContext2D,
@@ -273,7 +276,9 @@ function drawMissiles(
   maxRadius: number,
 ): void {
   // Get missiles targeting player for threat highlighting
-  const threatMissiles = new Set(getMissilesTargetingPlayer(world, player));
+  threatMissiles.clear();
+  for (const e of getMissilesTargetingPlayer(world, player))
+    threatMissiles.add(e);
 
   // Collect missile positions and threat status
   missileBlips.length = 0;

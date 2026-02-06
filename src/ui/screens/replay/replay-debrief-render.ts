@@ -12,11 +12,7 @@ import type {
 } from '../../../replay/types';
 import { escapeHtml } from '../../utils';
 import { getShipSvgInline } from '../../utils/inline-svg';
-
-/** Capitalize first letter */
-function capitalize(str: string): string {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
+import { capitalize } from '../../utils/text';
 
 /** Format time as M:SS */
 function formatTime(seconds: number): string {

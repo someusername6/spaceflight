@@ -12,7 +12,7 @@ import { describe, it } from 'node:test';
 import { SpaceflightGameAdapter } from '../../../../src/multiplayer/game-adapter.ts';
 import { asPlayerId } from '../../../../src/multiplayer/index.ts';
 import { serializeInput } from '../../../../src/multiplayer/input-format.ts';
-import { worldsEqual } from '../../../../src/serialization/index.ts';
+import { worldHashesMatch } from '../../../../src/serialization/index.ts';
 import { createMultiplayerWorld } from '../unit/test-utils.mjs';
 import {
   createJitterSimulator,
@@ -192,7 +192,7 @@ describe('Jitter Testing', () => {
 
     // Verify simulation completed successfully
     assert(
-      worldsEqual(hostWorld, guestWorld),
+      worldHashesMatch(hostWorld, guestWorld),
       'Worlds should stay in sync with identical inputs',
     );
 

@@ -79,22 +79,31 @@ export function getMissileThreatState(
   };
 }
 
+/** Per-frame cache for getMissilesTargetingPlayer (keyed on world + gameTime) */
+let _cachedWorld: World | null = null;
+let _cachedTick = -1;
+const _cachedMissiles: Entity[] = [];
+
 /**
  * Get list of missile entities targeting the player.
  * Used by radar and reticle systems for visual indicators.
+ * Result is cached per tick to avoid redundant ECS queries.
  */
 export function getMissilesTargetingPlayer(
   world: World,
   player: Entity,
-): Entity[] {
-  const missiles: Entity[] = [];
-
-  for (const missileEntity of queryEntities(world, ['missile'])) {
-    const missile = getComponent(world, missileEntity, 'missile');
-    if (missile?.target === player) {
-      missiles.push(missileEntity);
+): readonly Entity[] {
+  if (world !== _cachedWorld || world.systemState.gameTime !== _cachedTick) {
+    _cachedWorld = world;
+    _cachedTick = world.systemState.gameTime;
+    _cachedMissiles.length = 0;
+    for (const missileEntity of queryEntities(world, ['missile'])) {
+      const missile = getComponent(world, missileEntity, 'missile');
+      if (missile?.target === player) {
+        _cachedMissiles.push(missileEntity);
+      }
     }
   }
 
-  return missiles;
+  return _cachedMissiles;
 }

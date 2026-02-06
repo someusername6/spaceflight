@@ -1,7 +1,7 @@
 /**
  * Game Protocol Messages - Message interfaces for multiplayer communication.
  *
- * These messages use byte range 0x80-0x93 to avoid conflicts with
+ * These messages use byte range 0x80-0x98 to avoid conflicts with
  * rollback-netcode's internal messages (0x00-0x7F).
  *
  * Message direction:

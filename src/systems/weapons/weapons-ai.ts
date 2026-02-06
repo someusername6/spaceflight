@@ -38,6 +38,20 @@ import { fireWeaponsByLinkMode } from './weapons';
 const tempAimDir = new THREE.Vector3();
 const tempZeroVec = new THREE.Vector3(0, 0, 0);
 
+/** Pre-built set of entities targeted by active missiles (rebuilt once per frame) */
+const _missileTargetSet = new Set<Entity>();
+
+/** Build the missile target set for O(1) incoming-missile checks. Call once per frame. */
+export function buildMissileTargetSet(world: World): void {
+  _missileTargetSet.clear();
+  for (const entity of queryEntities(world, ['missile'])) {
+    const missile = getComponent(world, entity, 'missile');
+    if (missile?.target) {
+      _missileTargetSet.add(missile.target);
+    }
+  }
+}
+
 /** Handle AI primary weapon firing with smart weapon selection */
 export function handleAIPrimaryWeapons(
   world: World,
@@ -140,17 +154,11 @@ export function handleAISecondaryWeapons(
   if (!targetTransform) return;
 
   const targetPhysics = getComponent(world, ai.target, 'physics');
-  const targetSpeed = targetPhysics?.velocity.length() ?? 0;
   const distance = transform.position.distanceTo(targetTransform.position);
   const isLocked = weapons.lockProgress >= 1;
 
   // Select optimal missile
-  const selection = selectOptimalMissile(
-    weapons,
-    distance,
-    targetSpeed,
-    isLocked,
-  );
+  const selection = selectOptimalMissile(weapons, distance, isLocked);
 
   if (!selection.shouldFire) return;
 
@@ -239,13 +247,9 @@ function getFastestMissileFireRate(weapons: SecondaryWeapons): number {
   return fastest === Infinity ? 0.5 : fastest;
 }
 
-/** Check if any missiles are targeting this entity */
-function hasIncomingMissiles(world: World, entity: Entity): boolean {
-  for (const missileEntity of queryEntities(world, ['missile'])) {
-    const missile = getComponent(world, missileEntity, 'missile');
-    if (missile?.target === entity) return true;
-  }
-  return false;
+/** Check if any missiles are targeting this entity (O(1) via pre-built set) */
+function hasIncomingMissiles(_world: World, entity: Entity): boolean {
+  return _missileTargetSet.has(entity);
 }
 
 /** Handle AI decoy launching when under missile threat */

@@ -14,7 +14,7 @@ import { asPlayerId } from '../../../../src/multiplayer/index.ts';
 import { serializeInput } from '../../../../src/multiplayer/input-format.ts';
 import { decodeRLE } from '../../../../src/replay/compression.ts';
 import { MultiplayerInputRecorder } from '../../../../src/replay/multiplayer-replay.ts';
-import { worldsEqual } from '../../../../src/serialization/index.ts';
+import { worldHashesMatch } from '../../../../src/serialization/index.ts';
 import {
   createMultiplayerWorld,
   generateInputsForTick,
@@ -141,6 +141,9 @@ describe('Multiplayer Replay Determinism', () => {
     }
 
     // Final worlds should be equal
-    assert(worldsEqual(run1.world, run2.world), 'Final worlds should be equal');
+    assert(
+      worldHashesMatch(run1.world, run2.world),
+      'Final worlds should be equal',
+    );
   });
 });

@@ -7,6 +7,7 @@ import {
   getMultiplayerContext,
   isMultiplayerMode,
 } from '../../multiplayer/multiplayer-context';
+import { escapeHtml } from '../utils';
 
 /** Count total enemies across all waves */
 export function countTotalEnemies(contract: Contract): number {
@@ -34,10 +35,10 @@ export function renderContractListItem(
       role="option"
       aria-selected="${isSelected}"
       tabindex="0"
-      aria-label="${contract.name}, ${contract.difficulty} difficulty, ${contract.reward} credits${isReplayMode ? ', replay mission' : ''}"
+      aria-label="${escapeHtml(contract.name)}, ${contract.difficulty} difficulty, ${contract.reward} credits${isReplayMode ? ', replay mission' : ''}"
     >
       <div class="contract-list-info">
-        <div class="contract-list-name">${contract.name}${replayBadge}</div>
+        <div class="contract-list-name">${escapeHtml(contract.name)}${replayBadge}</div>
         <span class="contract-difficulty ${contract.difficulty}" aria-label="Difficulty: ${contract.difficulty}">
           ${contract.difficulty.toUpperCase()}
         </span>
@@ -288,12 +289,12 @@ export function renderContractDetail(
   return `
     <div class="contract-detail">
       <div class="contract-detail-header">
-        <span class="contract-detail-name">${contract.name}</span>
+        <span class="contract-detail-name">${escapeHtml(contract.name)}</span>
         <span class="contract-difficulty ${contract.difficulty}">
           ${contract.difficulty.toUpperCase()}
         </span>
       </div>
-      <div class="contract-detail-desc">${contract.description}</div>
+      <div class="contract-detail-desc">${escapeHtml(contract.description)}</div>
       ${missionInfo}
       <div class="contract-actions">
         <div class="contract-reward-price">${contract.reward.toLocaleString()}<span class="currency">cr</span></div>

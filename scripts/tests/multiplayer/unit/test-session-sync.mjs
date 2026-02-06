@@ -18,7 +18,7 @@ import {
 import { serializeInput } from '../../../../src/multiplayer/input-format.ts';
 import {
   computeWorldHash,
-  worldsEqual,
+  worldHashesMatch,
 } from '../../../../src/serialization/index.ts';
 import { createTestInput, createTestWorld } from './test-utils.mjs';
 
@@ -69,7 +69,10 @@ describe('Two Session Synchronization', () => {
     }
 
     // Verify worlds are truly equal
-    assert(worldsEqual(world1, world2), 'Worlds should be equal after sync');
+    assert(
+      worldHashesMatch(world1, world2),
+      'Worlds should be equal after sync',
+    );
 
     // Cleanup
     hostTransport.disconnectAll();
@@ -258,7 +261,7 @@ describe('Extended Session', () => {
     );
 
     assert(
-      worldsEqual(world1, world2),
+      worldHashesMatch(world1, world2),
       'Worlds should be equal after 1000 ticks',
     );
   });

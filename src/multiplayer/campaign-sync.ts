@@ -14,7 +14,11 @@
 
 import { reconstituteCampaignState } from '../campaign/storage/campaign-utils';
 import type { CampaignState } from '../campaign/types';
-import { processAction, validateActionPermission } from './action-processing';
+import {
+  processAction,
+  validateActionData,
+  validateActionPermission,
+} from './action-processing';
 import type { MessageRouter } from './protocol';
 import {
   type ActionRequestData,
@@ -26,7 +30,11 @@ import {
 
 // Re-export types from action-processing for convenience
 export type { ActionResult } from './action-processing';
-export { processAction, validateActionPermission } from './action-processing';
+export {
+  processAction,
+  validateActionData,
+  validateActionPermission,
+} from './action-processing';
 
 // =============================================================================
 // Types
@@ -155,6 +163,7 @@ export class CampaignSyncManager {
       fromPeerId,
       playerInfo.permissions,
       this.players,
+      this.router.getHostPeerId(),
     );
     if (permissionError) {
       this.sendActionResponse(
@@ -163,6 +172,13 @@ export class CampaignSyncManager {
         false,
         permissionError,
       );
+      return;
+    }
+
+    // Validate action data shape
+    const dataError = validateActionData(msg.action);
+    if (dataError) {
+      this.sendActionResponse(fromPeerId, msg.requestId, false, dataError);
       return;
     }
 

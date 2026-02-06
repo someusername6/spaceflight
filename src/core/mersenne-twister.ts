@@ -19,6 +19,8 @@ export class MersenneTwister {
       this._state[i] = prev ^ (prev >>> 30);
       this._state[i] = 0x6c078965 * (this._state[i] as number) + i;
       const curr = this._state[i] as number;
+      // In JS, (curr << 32) === curr (shift mod 32), so this computes curr & (curr - 1).
+      // Matches rng@0.2.2 npm package. Do not "fix" or sequences will diverge.
       this._state[i] = curr & ((curr << 32) - 1);
     }
   }

@@ -17,6 +17,10 @@ import {
   tempColor,
 } from './nuclear-lance-types';
 
+// Reusable vectors to avoid per-frame allocations
+const _tempMidpoint = new THREE.Vector3();
+const UP = new THREE.Vector3(0, 1, 0);
+
 /** Create beam cylinder meshes (inner core + outer glow) */
 export function createBeamCylinders(
   renderer: NuclearLanceRenderer,
@@ -30,10 +34,8 @@ export function createBeamCylinders(
   direction.normalize();
 
   // Calculate midpoint and orientation
-  const midpoint = new THREE.Vector3()
-    .copy(shot.origin)
-    .addScaledVector(direction, length / 2);
-  quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction);
+  _tempMidpoint.copy(shot.origin).addScaledVector(direction, length / 2);
+  quaternion.setFromUnitVectors(UP, direction);
 
   // Inner core cylinder
   const coreGeometry = new THREE.CylinderGeometry(
@@ -53,7 +55,7 @@ export function createBeamCylinders(
     side: THREE.DoubleSide,
   });
   const core = new THREE.Mesh(coreGeometry, coreMaterial);
-  core.position.copy(midpoint);
+  core.position.copy(_tempMidpoint);
   core.quaternion.copy(quaternion);
   scene.add(core);
   renderer.beamCores.set(key, core);
@@ -76,7 +78,7 @@ export function createBeamCylinders(
     side: THREE.DoubleSide,
   });
   const glow = new THREE.Mesh(glowGeometry, glowMaterial);
-  glow.position.copy(midpoint);
+  glow.position.copy(_tempMidpoint);
   glow.quaternion.copy(quaternion);
   scene.add(glow);
   renderer.beamGlows.set(key, glow);

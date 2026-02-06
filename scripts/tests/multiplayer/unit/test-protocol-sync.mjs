@@ -39,6 +39,7 @@ describe('Permission Validation - Additional Cases', () => {
         'peer-1',
         permissions,
         players,
+        'host-peer',
       );
       assert.ok(error !== null);
       assert.ok(error.includes('sell'));
@@ -61,6 +62,7 @@ describe('Permission Validation - Additional Cases', () => {
         'peer-1',
         permissions,
         players,
+        'host-peer',
       );
       assert.strictEqual(error, null);
     });
@@ -82,6 +84,7 @@ describe('Permission Validation - Additional Cases', () => {
         'peer-1',
         permissions,
         players,
+        'host-peer',
       );
       assert.ok(error !== null);
     });
@@ -103,6 +106,7 @@ describe('Permission Validation - Additional Cases', () => {
         'peer-1',
         permissions,
         players,
+        'host-peer',
       );
       assert.ok(error !== null);
       assert.ok(error.includes('own'));
@@ -123,6 +127,7 @@ describe('Permission Validation - Additional Cases', () => {
         'peer-1',
         permissions,
         players,
+        'host-peer',
       );
       assert.ok(error !== null);
     });
@@ -142,6 +147,7 @@ describe('Permission Validation - Additional Cases', () => {
         'peer-1',
         permissions,
         players,
+        'host-peer',
       );
       assert.ok(error !== null);
       assert.ok(error.includes('own'));
@@ -162,6 +168,7 @@ describe('Permission Validation - Additional Cases', () => {
         'peer-1',
         permissions,
         players,
+        'host-peer',
       );
       assert.strictEqual(error, null);
     });
@@ -184,6 +191,7 @@ describe('Permission Validation - Additional Cases', () => {
         'peer-1',
         permissions,
         players,
+        'host-peer',
       );
       assert.strictEqual(error, null);
     });

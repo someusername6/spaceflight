@@ -28,7 +28,7 @@ import {
   spawnMissileExplosion,
   trackTarget,
 } from './missile-helpers';
-import { spawnShrapnel } from './shrapnel';
+import { handleShrapnelDetonation } from './missile-shrapnel';
 
 // Safe distance before missile can collide with owner (avoids spawn-inside-hitbox issues)
 // Set high enough that missiles never hit their owner in normal combat scenarios
@@ -39,9 +39,12 @@ const MISSILE_OWNER_SAFE_DISTANCE = 100;
 const tempForward = new THREE.Vector3();
 const tempQuat = new THREE.Quaternion();
 
+// Reusable removal list (hoisted to avoid per-frame allocation)
+const toRemove: Entity[] = [];
+
 /** Missile system - tracking and collision handling */
 export function missileSystem(world: World, dt: number): void {
-  const toRemove: Entity[] = [];
+  toRemove.length = 0;
 
   for (const entity of queryEntities(world, ['missile', 'transform'])) {
     const missile = getComponent(world, entity, 'missile');
@@ -185,34 +188,12 @@ export function missileSystem(world: World, dt: number): void {
           missile.flakRadius,
         )
       ) {
-        const missileName = capitalizeMissileType(missile.missileType);
-        spawnShrapnel(
+        handleShrapnelDetonation(
           world,
           transform.position,
-          missile.shrapnelCount,
-          missile.owner,
+          missile,
           missileFaction,
-          missileName,
-          {
-            damage: missile.shrapnelDamage,
-            speed: missile.shrapnelSpeed,
-            range: missile.shrapnelRange,
-          },
         );
-
-        // Record proximity detonation as a hit (missile achieved its purpose)
-        recordMissileHit(world, missile.owner, missileName);
-
-        // Track aggregate stats (for balance analysis)
-        if (world.systemState.combatStats) {
-          const stats = world.systemState.combatStats;
-          stats.missilesHit[missileName] =
-            (stats.missilesHit[missileName] || 0) + 1;
-          stats.shrapnelSpawned =
-            (stats.shrapnelSpawned || 0) + missile.shrapnelCount;
-        }
-
-        spawnMissileExplosion(world, transform.position, false);
         toRemove.push(entity);
         continue;
       }
@@ -315,31 +296,12 @@ export function missileSystem(world: World, dt: number): void {
         } else if (missile.flakRadius && missile.shrapnelCount) {
           // Shrapnel missiles: spawn shrapnel on collision (same as proximity detonation)
           const missileFaction = getComponent(world, entity, 'faction');
-          spawnShrapnel(
+          handleShrapnelDetonation(
             world,
             transform.position,
-            missile.shrapnelCount,
-            missile.owner,
+            missile,
             missileFaction,
-            missileName,
-            {
-              damage: missile.shrapnelDamage,
-              speed: missile.shrapnelSpeed,
-              range: missile.shrapnelRange,
-            },
           );
-
-          // Record collision as a hit (missile achieved its purpose)
-          recordMissileHit(world, missile.owner, missileName);
-
-          // Track aggregate stats (for balance analysis)
-          if (world.systemState.combatStats) {
-            const stats = world.systemState.combatStats;
-            stats.missilesHit[missileName] =
-              (stats.missilesHit[missileName] || 0) + 1;
-            stats.shrapnelSpawned =
-              (stats.shrapnelSpawned || 0) + missile.shrapnelCount;
-          }
         } else {
           // Non-AoE missiles: deal direct damage
           const damageResult = dealDamage(

@@ -10,6 +10,7 @@ import type {
 } from '../../../campaign/types';
 import { MISSILES } from '../../../data/missiles';
 import { PRIMARY_WEAPONS } from '../../../data/weapons';
+import { capitalize } from '../../utils/text';
 import type { StoreCategory } from './render';
 
 /** Storage item with category info for selection sync */
@@ -18,11 +19,6 @@ export interface StorageItem {
   itemId: string;
   displayName: string;
   count: number;
-}
-
-/** Capitalize first letter of a string */
-function capitalize(str: string): string {
-  return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 /** Render a generic storage item (clickable) */

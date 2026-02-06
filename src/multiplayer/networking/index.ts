@@ -101,17 +101,3 @@ export {
   type ConnectionFlowEvents,
   createConnectionFlow,
 } from './connection-flow';
-
-// =============================================================================
-// Session State
-// =============================================================================
-
-export {
-  addConnectedPeer,
-  createSessionState,
-  type MultiplayerSessionState,
-  type MutableSessionState,
-  removeConnectedPeer,
-  resetSessionState,
-  setConnectedState,
-} from './session-state';

@@ -43,6 +43,13 @@ const pendingRequests = new Map<number, PendingRequest>();
 /** Request timeout in milliseconds */
 const REQUEST_TIMEOUT_MS = 5000;
 
+/** Reset action client state. Call when leaving lobby. */
+export function resetActionClient(): void {
+  isResponseHandlerSetUp = false;
+  pendingRequests.clear();
+  nextRequestId = 1;
+}
+
 // =============================================================================
 // Response Handler Setup
 // =============================================================================
@@ -123,6 +130,7 @@ export async function sendAction(
       context.playerId,
       context.permissions,
       players,
+      context.playerId,
     );
     if (permissionError) {
       return { success: false, error: permissionError };

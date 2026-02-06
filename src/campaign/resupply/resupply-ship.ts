@@ -48,6 +48,23 @@ function consumeFromStorage<T extends { count: number }>(
   return { newStorage, consumed };
 }
 
+/** Determine overall shortage reason from stock and credit flags */
+export function determineShortageReason(
+  hasStockIssue: boolean,
+  hasCreditIssue: boolean,
+): 'none' | 'credits' | 'stock' | 'both' {
+  if (hasStockIssue && hasCreditIssue) {
+    return 'both';
+  }
+  if (hasCreditIssue) {
+    return 'credits';
+  }
+  if (hasStockIssue) {
+    return 'stock';
+  }
+  return 'none';
+}
+
 /** Get shortage reason based on stock and affordability */
 export function getShortageReason(
   stock: number,
@@ -265,16 +282,7 @@ export function resupplyShipConstrained(
         (wt) => (newStoreStock.secondaries[wt] ?? 0) === 0,
       );
     const hasCreditIssue = newCredits < 1;
-
-    if (hasStockIssue && hasCreditIssue) {
-      shortageReason = 'both';
-    } else if (hasCreditIssue) {
-      shortageReason = 'credits';
-    } else if (hasStockIssue) {
-      shortageReason = 'stock';
-    } else {
-      shortageReason = 'both';
-    }
+    shortageReason = determineShortageReason(hasStockIssue, hasCreditIssue);
   }
 
   // Build detailed loaded messages (one per item type)

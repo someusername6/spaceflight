@@ -74,11 +74,12 @@ function hasRecovered(
 /** Evade state - break away from combat using afterburner */
 export function updateEvade(
   world: World,
-  _entity: Entity,
+  entity: Entity,
   ai: AIControlled,
   transform: Transform,
   physics: Physics,
   shields: Shields | undefined,
+  // _heat: Evade uses shield-based exit, not heat. Heat triggers Regroup from Pursue/Engage instead.
   _heat: Heat | undefined,
   _dt: number,
 ): void {
@@ -142,7 +143,7 @@ export function updateEvade(
 
   // Add erratic movement (barrel roll effect) via roll input - skip for kiting ships
   if (!isKitingShip(ai)) {
-    const wobble = Math.sin(ai.stateTimer * 8);
+    const wobble = Math.sin((ai.stateTimer + entity * 1.7) * 8);
     ai.input.roll = wobble;
   }
 

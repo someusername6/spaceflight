@@ -7,11 +7,7 @@ import { getMaxAmmoCapacity } from '../../campaign/store/store-ammo';
 import type { OwnedShip } from '../../campaign/types';
 import { SHIP_CLASSES } from '../../data/ships';
 import { getShipIconPath, iconErrorHandler } from '../ship/viewer';
-
-/** Capitalize first letter of a string */
-export function capitalize(str: string): string {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
+import { capitalize } from '../utils/text';
 
 /** Render bank size indicator (circles for primary, diamonds for secondary) */
 function renderBankIndicator(size: number, cssClass: string): string {

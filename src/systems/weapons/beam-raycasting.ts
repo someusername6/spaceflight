@@ -104,11 +104,7 @@ export function findBeamHit(
     }
   }
 
-  return {
-    hit: closestHitResult.hit,
-    entity: closestHitResult.entity,
-    distance: closestHitResult.distance,
-  };
+  return closestHitResult;
 }
 
 /** Result of a beam hit check for multiple targets */

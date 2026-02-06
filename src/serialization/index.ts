@@ -115,5 +115,5 @@ export {
   computeWorldHash,
   // Class
   HashState,
-  worldsEqual,
+  worldHashesMatch,
 } from './hashing';

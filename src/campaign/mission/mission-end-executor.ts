@@ -58,7 +58,6 @@ export function createMissionEndExecutor(
   const { screenManager } = controller;
 
   return async () => {
-    console.log('[EXECUTOR] Starting mission end');
     controller.missionEnded = true;
 
     // Stop input recording and save replay
@@ -229,20 +228,20 @@ export function createMissionEndExecutor(
     } else {
       // Singleplayer path: show normal results
       endMission(screenManager, missionEndState.victory);
-      showResults(
+      showResults({
         controller,
-        missionEndState.victory,
+        victory: missionEndState.victory,
         contract,
         setupContractsScreen,
-        game.world,
-        salvageResult,
-        baseReward,
-        missionEndState.escortResults,
-        missionEndState.ambushResults,
-        missionEndState.stationDefenseResults,
-        missionEndState.attackStationResults,
+        world: game.world,
+        salvage: salvageResult,
+        earnedReward: baseReward,
+        escortResults: missionEndState.escortResults,
+        ambushResults: missionEndState.ambushResults,
+        stationDefenseResults: missionEndState.stationDefenseResults,
+        attackStationResults: missionEndState.attackStationResults,
         salaryInfo,
-      );
+      });
     }
   };
 }

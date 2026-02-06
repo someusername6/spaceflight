@@ -102,7 +102,9 @@ function openDB(): Promise<IDBDatabase> {
  */
 function generateId(): string {
   const timestamp = Date.now().toString(36);
-  const random = Math.random().toString(36).slice(2, 9);
+  const buf = new ArrayBuffer(4);
+  crypto.getRandomValues(new Uint8Array(buf));
+  const random = new DataView(buf).getUint32(0).toString(36);
   return `${timestamp}-${random}`;
 }
 

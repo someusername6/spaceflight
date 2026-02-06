@@ -14,7 +14,6 @@ import {
 } from '../../multiplayer/launch-flow';
 import { addSystemMessage } from '../../multiplayer/lobby-state';
 import { createMissionStartData } from '../../multiplayer/mission-sync';
-import { encodeMessage } from '../../multiplayer/protocol/encode';
 import type {
   LaunchAbortedMessage,
   LaunchCountdownMessage,
@@ -22,6 +21,7 @@ import type {
 } from '../../multiplayer/protocol/messages';
 import { GameMessageType } from '../../multiplayer/protocol/types';
 import { setLobbyState } from './lobby-actions';
+import { broadcastMessage } from './lobby-broadcast';
 import type { LobbyContext } from './lobby-context';
 
 // =============================================================================
@@ -180,18 +180,4 @@ function setRoomStatePlaying(ctx: LobbyContext): void {
       console.warn('[lobby-actions] Failed to set room state to playing:', err);
     });
   }
-}
-
-/**
- * Broadcast a game message to all connected peers.
- */
-function broadcastMessage(
-  ctx: LobbyContext,
-  message: Parameters<typeof encodeMessage>[0],
-): void {
-  const transport = ctx.connectionFlow.getTransport();
-  if (!transport) return;
-
-  const data = encodeMessage(message);
-  transport.broadcast(data, true);
 }

@@ -17,7 +17,7 @@ import {
   TOPOLOGY,
 } from '../../../../src/multiplayer/index.ts';
 import { serializeInput } from '../../../../src/multiplayer/input-format.ts';
-import { worldsEqual } from '../../../../src/serialization/index.ts';
+import { worldHashesMatch } from '../../../../src/serialization/index.ts';
 import {
   createMultiplayerWorld,
   createTestInput,
@@ -145,7 +145,7 @@ describe('Full Session Integration', () => {
       'World hashes should match after 1000 ticks',
     );
     assert(
-      worldsEqual(world1, world2),
+      worldHashesMatch(world1, world2),
       'Worlds should be equal after 1000 ticks',
     );
 

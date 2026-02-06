@@ -45,36 +45,38 @@ import { getLobbyContext } from './lobby-context';
 import { cleanupLobby } from './lobby-handlers';
 import { setupTitleScreen } from './menu-handlers';
 
-/**
- * Show results screen after mission (singleplayer).
- *
- * @param controller - Campaign controller instance
- * @param victory - Whether the mission was won
- * @param contract - The contract that was completed
- * @param setupContractsScreen - Callback to setup contracts screen
- * @param world - Optional world reference for stats extraction
- * @param salvage - Optional salvage results from the mission
- * @param earnedReward - Actual reward earned (with multipliers applied)
- * @param escortResults - Convoy survival results for escort missions
- * @param ambushResults - Convoy results for ambush missions
- * @param stationDefenseResults - Station defense results
- * @param attackStationResults - Attack station results
- * @param salaryInfo - Pilot salary breakdown
- */
-export function showResults(
-  controller: CampaignController,
-  victory: boolean,
-  contract: Contract,
-  setupContractsScreen: (controller: CampaignController) => void,
-  world?: World,
-  salvage?: SalvageResult | null,
-  earnedReward?: number,
-  escortResults?: EscortResultsDisplay,
-  ambushResults?: AmbushResultsDisplay,
-  stationDefenseResults?: StationDefenseResultsDisplay,
-  attackStationResults?: AttackStationResultsDisplay,
-  salaryInfo?: SalaryInfo,
-): void {
+/** Options for showing the singleplayer results screen */
+export interface ShowResultsOptions {
+  controller: CampaignController;
+  victory: boolean;
+  contract: Contract;
+  setupContractsScreen: (controller: CampaignController) => void;
+  world?: World | undefined;
+  salvage?: SalvageResult | null | undefined;
+  earnedReward?: number | undefined;
+  escortResults?: EscortResultsDisplay | undefined;
+  ambushResults?: AmbushResultsDisplay | undefined;
+  stationDefenseResults?: StationDefenseResultsDisplay | undefined;
+  attackStationResults?: AttackStationResultsDisplay | undefined;
+  salaryInfo?: SalaryInfo | undefined;
+}
+
+/** Show results screen after mission (singleplayer). */
+export function showResults(options: ShowResultsOptions): void {
+  const {
+    controller,
+    victory,
+    contract,
+    setupContractsScreen,
+    world,
+    salvage,
+    earnedReward,
+    escortResults,
+    ambushResults,
+    stationDefenseResults,
+    attackStationResults,
+    salaryInfo,
+  } = options;
   const { screenManager } = controller;
   const resultsElement = getScreenElement(screenManager, Screen.RESULTS);
 
@@ -128,7 +130,7 @@ export function showMultiplayerResults(
   const lobbyCtx = getLobbyContext();
   if (!lobbyCtx) {
     // Fallback to singleplayer results if no lobby context
-    showResults(
+    showResults({
       controller,
       victory,
       contract,
@@ -141,7 +143,7 @@ export function showMultiplayerResults(
       stationDefenseResults,
       attackStationResults,
       salaryInfo,
-    );
+    });
     return;
   }
 
@@ -216,10 +218,6 @@ export function showMultiplayerResults(
     sendChat(lobbyCtx, text);
   };
 
-  console.log(
-    '[showMultiplayerResults] Creating results UI, element display:',
-    resultsElement.style.display,
-  );
   createResultsUI(
     resultsElement,
     victory,
@@ -241,20 +239,4 @@ export function showMultiplayerResults(
     },
     salaryInfo,
   );
-  const resultsInner = resultsElement.querySelector('.results-screen');
-  console.log('[showMultiplayerResults] Results UI created');
-  console.log(
-    '[showMultiplayerResults] Container display:',
-    resultsElement.style.display,
-  );
-  console.log('[showMultiplayerResults] Inner element found:', !!resultsInner);
-  if (resultsInner) {
-    const rect = resultsInner.getBoundingClientRect();
-    console.log(
-      '[showMultiplayerResults] Inner rect:',
-      rect.width,
-      'x',
-      rect.height,
-    );
-  }
 }

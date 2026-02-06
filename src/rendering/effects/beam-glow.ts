@@ -22,6 +22,9 @@ const DEFAULT_BEAM_GLOW = new THREE.Color(1.0, 1.0, 1.0);
 // Reusable vector for interpolated glow position
 const interpGlowPos = new THREE.Vector3();
 
+// Reusable set for tracking seen glows (cleared each frame)
+const seenGlows = new Set<string>();
+
 /** Beam glow visual state */
 export interface BeamGlowVisual {
   mesh: THREE.Mesh;
@@ -61,7 +64,7 @@ export function updateBeamGlows(
   renderer?: Renderer,
 ): void {
   const activeBeams = world.systemState.beams.activeBeams;
-  const seenGlows = new Set<string>();
+  seenGlows.clear();
 
   for (const [entity, beams] of activeBeams) {
     // Get entity's current and interpolated positions for offset calculation

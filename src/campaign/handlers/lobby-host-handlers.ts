@@ -4,6 +4,7 @@
  * Handles player join flow, ship assignment, and callsign announce.
  */
 
+import { validateCallsign } from '../../multiplayer/callsign-storage';
 import {
   createGuestLobbyPlayer,
   createShipAssignmentMessage,
@@ -134,8 +135,16 @@ export function handleCallsignAnnounce(
     return;
   }
 
+  // Validate callsign - fall back to 'Guest' if invalid
+  const validation = validateCallsign(callsign);
+  const safeCallsign = validation.valid ? callsign : 'Guest';
+
   // Create new player and add to local state
-  const newPlayer = createGuestLobbyPlayer(peerId, callsign, autoaimDegrees);
+  const newPlayer = createGuestLobbyPlayer(
+    peerId,
+    safeCallsign,
+    autoaimDegrees,
+  );
   let newState = addPlayer(ctx.lobbyState, newPlayer);
   newState = addSystemMessage(newState, `${newPlayer.callsign} joined`);
   setLobbyState(ctx, newState);

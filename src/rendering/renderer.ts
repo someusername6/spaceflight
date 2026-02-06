@@ -277,6 +277,9 @@ export function syncScene(renderer: Renderer, world: World, alpha = 1): void {
   // Remove meshes for entities that no longer exist
   for (const [entity, mesh] of entityMeshes) {
     if (!seenEntities.has(entity)) {
+      if (mesh instanceof THREE.Mesh) {
+        if (mesh.material instanceof THREE.Material) mesh.material.dispose();
+      }
       scene.remove(mesh);
       entityMeshes.delete(entity);
       interpolatedPositions.delete(entity);

@@ -348,7 +348,9 @@ export function hashComponent(hash: HashState, component: ComponentBase): void {
       break;
     }
     case 'shieldHit':
-      break; // Visual only
+      // shieldHit is visual-only (hit flash effect). Unlike 'explosion' which affects
+      // kill timing, shieldHit has zero simulation impact.
+      break;
     case 'hyperspaceJump': {
       const c =
         component as import('../components/hyperspace-jump').HyperspaceJump;

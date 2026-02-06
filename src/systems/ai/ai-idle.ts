@@ -12,7 +12,7 @@
  * - station-assault-low-dps: Low DPS ships attack enemy defenders
  */
 
-import type { Vector3 } from 'three';
+import { Vector3 } from 'three';
 import { type AIControlled, AIState } from '../../components/ai';
 import { Faction } from '../../components/faction';
 import type { Transform } from '../../components/transform';
@@ -31,6 +31,9 @@ import {
   findStation,
   findStationAttacker,
 } from './ai-utils';
+
+// Reusable vector to avoid allocations in hot path
+const _tempDirection = new Vector3();
 
 /** Time window for damage tracking to trigger aggro (seconds) */
 const DAMAGE_AGGRO_WINDOW = 10;
@@ -173,6 +176,7 @@ export function updateIdle(
             entityExists(world, attacker)
           ) {
             target = attacker;
+            // Break exits the for-loop (not the switch); outer break at line 184 exits switch case
             break;
           }
         }
@@ -237,8 +241,8 @@ export function updateIdle(
     const distanceToConvoy = transform.position.distanceTo(convoyCentroid);
     // Follow convoy if too far away
     if (distanceToConvoy > DEFENSIVE_FOLLOW_DISTANCE) {
-      const direction = convoyCentroid
-        .clone()
+      const direction = _tempDirection
+        .copy(convoyCentroid)
         .sub(transform.position)
         .normalize();
       setRotationInputs(ai, transform, direction);
@@ -252,8 +256,8 @@ export function updateIdle(
 
     // Avoid station if too close
     if (distanceToStation < STATION_AVOID_DISTANCE) {
-      const awayFromStation = transform.position
-        .clone()
+      const awayFromStation = _tempDirection
+        .copy(transform.position)
         .sub(stationPosition)
         .normalize();
       setRotationInputs(ai, transform, awayFromStation);
@@ -263,8 +267,8 @@ export function updateIdle(
 
     // Move toward station if too far away
     if (distanceToStation > STATION_DEFENSE_FOLLOW_DISTANCE) {
-      const direction = stationPosition
-        .clone()
+      const direction = _tempDirection
+        .copy(stationPosition)
         .sub(transform.position)
         .normalize();
       setRotationInputs(ai, transform, direction);
@@ -277,8 +281,8 @@ export function updateIdle(
     const distanceToConvoy = transform.position.distanceTo(enemyConvoyCentroid);
     // Approach convoy if too far away (to trigger stop behavior)
     if (distanceToConvoy > CONVOY_INTERCEPT_APPROACH_DISTANCE) {
-      const direction = enemyConvoyCentroid
-        .clone()
+      const direction = _tempDirection
+        .copy(enemyConvoyCentroid)
         .sub(transform.position)
         .normalize();
       setRotationInputs(ai, transform, direction);

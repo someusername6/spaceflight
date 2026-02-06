@@ -90,7 +90,12 @@ function getOrCreateGeometry(shipClass: ShipClass): THREE.BufferGeometry {
     );
   }
   if (geometryData.indices) {
-    geometry.setIndex(new THREE.Uint16BufferAttribute(geometryData.indices, 1));
+    const vertexCount = geometryData.positions.length / 3;
+    const IndexBuffer =
+      vertexCount > 65535
+        ? THREE.Uint32BufferAttribute
+        : THREE.Uint16BufferAttribute;
+    geometry.setIndex(new IndexBuffer(geometryData.indices, 1));
   }
 
   geometryCache.set(shipClass, geometry);

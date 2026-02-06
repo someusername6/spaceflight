@@ -9,13 +9,58 @@ import {
   type SecondaryWeapon,
   type SecondaryWeapons,
 } from '../components/weapons';
-import { MISSILES } from '../data/missiles';
-import { PRIMARY_WEAPONS } from '../data/weapons';
+import { MISSILES, type MissileStats } from '../data/missiles';
+import { PRIMARY_WEAPONS, type WeaponStats } from '../data/weapons';
 import type {
   ReplayPrimaryWeapon,
   ReplaySecondaryWeapon,
 } from '../replay/types';
 import type { EquippedPrimary, EquippedSecondary } from './types';
+
+/** Apply optional primary weapon stats from WeaponStats to a PrimaryWeapon */
+function applyOptionalPrimaryStats(
+  weapon: PrimaryWeapon,
+  stats: WeaponStats,
+): void {
+  if (stats.flakRadius) weapon.flakRadius = stats.flakRadius;
+  if (stats.shrapnelCount) weapon.shrapnelCount = stats.shrapnelCount;
+  if (stats.shrapnelRange) weapon.shrapnelRange = stats.shrapnelRange;
+  if (stats.shrapnelDamage) weapon.shrapnelDamage = stats.shrapnelDamage;
+  if (stats.shrapnelSpeed) weapon.shrapnelSpeed = stats.shrapnelSpeed;
+  if (stats.isPulseBeam) weapon.isPulseBeam = stats.isPulseBeam;
+  if (stats.pulseInterval) weapon.pulseInterval = stats.pulseInterval;
+  if (stats.noFalloff) weapon.noFalloff = stats.noFalloff;
+  if (stats.autoaimFov) weapon.autoaimFov = stats.autoaimFov;
+  if (stats.beamWidth) weapon.beamWidth = stats.beamWidth;
+  if (stats.shieldDamageMultiplier)
+    weapon.shieldDamageMultiplier = stats.shieldDamageMultiplier;
+  if (stats.hullDamageMultiplier)
+    weapon.hullDamageMultiplier = stats.hullDamageMultiplier;
+  if (stats.ionize) weapon.ionize = stats.ionize;
+  if (stats.heatInjection) weapon.heatInjection = stats.heatInjection;
+  if (stats.isInstantBeam) weapon.isInstantBeam = stats.isInstantBeam;
+}
+
+/** Apply optional secondary weapon stats from MissileStats to a SecondaryWeapon */
+function applyOptionalSecondaryStats(
+  weapon: SecondaryWeapon,
+  stats: MissileStats,
+): void {
+  if (stats.aoeRadius !== undefined) weapon.aoeRadius = stats.aoeRadius;
+  if (stats.isNuke) weapon.isNuke = stats.isNuke;
+  if (stats.isDecoy) weapon.isDecoy = stats.isDecoy;
+  if (stats.flakRadius !== undefined) weapon.flakRadius = stats.flakRadius;
+  if (stats.shrapnelCount !== undefined)
+    weapon.shrapnelCount = stats.shrapnelCount;
+  if (stats.shrapnelDamage !== undefined)
+    weapon.shrapnelDamage = stats.shrapnelDamage;
+  if (stats.shrapnelSpeed !== undefined)
+    weapon.shrapnelSpeed = stats.shrapnelSpeed;
+  if (stats.shrapnelRange !== undefined)
+    weapon.shrapnelRange = stats.shrapnelRange;
+  if (stats.projectilesPerShot !== undefined)
+    weapon.projectilesPerShot = stats.projectilesPerShot;
+}
 
 /** Convert campaign EquippedPrimary to game PrimaryWeapon */
 function createPrimaryFromEquipped(equipped: EquippedPrimary): PrimaryWeapon {
@@ -42,23 +87,7 @@ function createPrimaryFromEquipped(equipped: EquippedPrimary): PrimaryWeapon {
   }
 
   // Copy optional properties
-  if (stats.flakRadius) weapon.flakRadius = stats.flakRadius;
-  if (stats.shrapnelCount) weapon.shrapnelCount = stats.shrapnelCount;
-  if (stats.shrapnelRange) weapon.shrapnelRange = stats.shrapnelRange;
-  if (stats.shrapnelDamage) weapon.shrapnelDamage = stats.shrapnelDamage;
-  if (stats.shrapnelSpeed) weapon.shrapnelSpeed = stats.shrapnelSpeed;
-  if (stats.isPulseBeam) weapon.isPulseBeam = stats.isPulseBeam;
-  if (stats.pulseInterval) weapon.pulseInterval = stats.pulseInterval;
-  if (stats.noFalloff) weapon.noFalloff = stats.noFalloff;
-  if (stats.autoaimFov) weapon.autoaimFov = stats.autoaimFov;
-  if (stats.beamWidth) weapon.beamWidth = stats.beamWidth;
-  if (stats.shieldDamageMultiplier)
-    weapon.shieldDamageMultiplier = stats.shieldDamageMultiplier;
-  if (stats.hullDamageMultiplier)
-    weapon.hullDamageMultiplier = stats.hullDamageMultiplier;
-  if (stats.ionize) weapon.ionize = stats.ionize;
-  if (stats.heatInjection) weapon.heatInjection = stats.heatInjection;
-  if (stats.isInstantBeam) weapon.isInstantBeam = stats.isInstantBeam;
+  applyOptionalPrimaryStats(weapon, stats);
 
   return weapon;
 }
@@ -87,25 +116,8 @@ function createSecondaryFromEquipped(
     bankSize: equipped.bankSize,
   };
 
-  // Only add optional properties if they have values
-  if (stats.aoeRadius !== undefined) weapon.aoeRadius = stats.aoeRadius;
-  if (stats.isNuke) weapon.isNuke = stats.isNuke;
-  if (stats.isDecoy) weapon.isDecoy = stats.isDecoy;
-
-  // Shrapnel/flak properties for proximity detonation
-  if (stats.flakRadius !== undefined) weapon.flakRadius = stats.flakRadius;
-  if (stats.shrapnelCount !== undefined)
-    weapon.shrapnelCount = stats.shrapnelCount;
-  if (stats.shrapnelDamage !== undefined)
-    weapon.shrapnelDamage = stats.shrapnelDamage;
-  if (stats.shrapnelSpeed !== undefined)
-    weapon.shrapnelSpeed = stats.shrapnelSpeed;
-  if (stats.shrapnelRange !== undefined)
-    weapon.shrapnelRange = stats.shrapnelRange;
-
-  // Multi-projectile missiles (cluster, swarm)
-  if (stats.projectilesPerShot !== undefined)
-    weapon.projectilesPerShot = stats.projectilesPerShot;
+  // Copy optional properties
+  applyOptionalSecondaryStats(weapon, stats);
 
   return weapon;
 }
@@ -185,23 +197,7 @@ function createPrimaryFromReplay(replay: ReplayPrimaryWeapon): PrimaryWeapon {
   }
 
   // Copy optional properties
-  if (stats.flakRadius) weapon.flakRadius = stats.flakRadius;
-  if (stats.shrapnelCount) weapon.shrapnelCount = stats.shrapnelCount;
-  if (stats.shrapnelRange) weapon.shrapnelRange = stats.shrapnelRange;
-  if (stats.shrapnelDamage) weapon.shrapnelDamage = stats.shrapnelDamage;
-  if (stats.shrapnelSpeed) weapon.shrapnelSpeed = stats.shrapnelSpeed;
-  if (stats.isPulseBeam) weapon.isPulseBeam = stats.isPulseBeam;
-  if (stats.pulseInterval) weapon.pulseInterval = stats.pulseInterval;
-  if (stats.noFalloff) weapon.noFalloff = stats.noFalloff;
-  if (stats.autoaimFov) weapon.autoaimFov = stats.autoaimFov;
-  if (stats.beamWidth) weapon.beamWidth = stats.beamWidth;
-  if (stats.shieldDamageMultiplier)
-    weapon.shieldDamageMultiplier = stats.shieldDamageMultiplier;
-  if (stats.hullDamageMultiplier)
-    weapon.hullDamageMultiplier = stats.hullDamageMultiplier;
-  if (stats.ionize) weapon.ionize = stats.ionize;
-  if (stats.heatInjection) weapon.heatInjection = stats.heatInjection;
-  if (stats.isInstantBeam) weapon.isInstantBeam = stats.isInstantBeam;
+  applyOptionalPrimaryStats(weapon, stats);
 
   return weapon;
 }
@@ -231,20 +227,7 @@ function createSecondaryFromReplay(
   };
 
   // Copy optional properties
-  if (stats.aoeRadius !== undefined) weapon.aoeRadius = stats.aoeRadius;
-  if (stats.isNuke) weapon.isNuke = stats.isNuke;
-  if (stats.isDecoy) weapon.isDecoy = stats.isDecoy;
-  if (stats.flakRadius !== undefined) weapon.flakRadius = stats.flakRadius;
-  if (stats.shrapnelCount !== undefined)
-    weapon.shrapnelCount = stats.shrapnelCount;
-  if (stats.shrapnelDamage !== undefined)
-    weapon.shrapnelDamage = stats.shrapnelDamage;
-  if (stats.shrapnelSpeed !== undefined)
-    weapon.shrapnelSpeed = stats.shrapnelSpeed;
-  if (stats.shrapnelRange !== undefined)
-    weapon.shrapnelRange = stats.shrapnelRange;
-  if (stats.projectilesPerShot !== undefined)
-    weapon.projectilesPerShot = stats.projectilesPerShot;
+  applyOptionalSecondaryStats(weapon, stats);
 
   return weapon;
 }

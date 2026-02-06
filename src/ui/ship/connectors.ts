@@ -387,4 +387,6 @@ export function destroyShipConnectors(viewer: Element): void {
   if (svg) {
     svg.remove();
   }
+
+  maskIdCounter = 0;
 }

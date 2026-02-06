@@ -4,6 +4,7 @@
  * Handles session cleanup and navigation when sessions end.
  */
 
+import { resetActionClient } from '../../multiplayer/action-client';
 import { resetLaunchState } from '../../multiplayer/launch-flow';
 import { clearMultiplayerContext } from '../../multiplayer/multiplayer-context';
 import { broadcastSessionEnded } from '../../multiplayer/session-lifecycle';
@@ -38,6 +39,7 @@ export async function handleSessionEndedForGuest(
   cleanupLobbyScreen();
   clearMultiplayerContext();
   resetLaunchState();
+  resetActionClient();
   setLobbyContext(null);
 
   // If already on game over screen (ironman death), don't navigate away
@@ -85,6 +87,9 @@ export function cleanupLobby(): void {
 
   // Reset launch flow state
   resetLaunchState();
+
+  // Reset action client state (pending requests, handler flag)
+  resetActionClient();
 
   // Clear lobby context
   setLobbyContext(null);

@@ -11,28 +11,15 @@ import {
   type LeaveReason,
 } from '../../multiplayer/protocol/types';
 import { setLobbyState } from './lobby-actions';
+import { broadcastMessage } from './lobby-broadcast';
 import type { LobbyContext } from './lobby-context';
-
-/**
- * Broadcast a game message to all connected peers.
- */
-function broadcastMessage(
-  ctx: LobbyContext,
-  message: Parameters<typeof encodeMessage>[0],
-): void {
-  const transport = ctx.connectionFlow.getTransport();
-  if (!transport) return;
-
-  const data = encodeMessage(message);
-  transport.broadcast(data, true);
-}
 
 /**
  * Broadcast a lobby message and optimistically apply it locally.
  */
 function broadcastAndApply(
   ctx: LobbyContext,
-  message: Parameters<typeof encodeMessage>[0],
+  message: Parameters<typeof broadcastMessage>[1],
   hostPeerId: string,
 ): void {
   broadcastMessage(ctx, message);

@@ -213,6 +213,8 @@ export interface BeamDamageParams {
   hitPoint: THREE.Vector3;
   beam: ActiveBeam;
   gameTime: number;
+  /** Delta time for this damage tick (continuous: frame dt, pulse: pulse interval, instant: 1.0) */
+  dt: number;
 }
 
 /**
@@ -220,7 +222,7 @@ export interface BeamDamageParams {
  * Handles damage dealing, ionization, heat injection, hit effects, and stats.
  */
 export function applyBeamDamageAndEffects(params: BeamDamageParams): void {
-  const { world, owner, target, weapon, damage, hitPoint, beam, gameTime } =
+  const { world, owner, target, weapon, damage, hitPoint, beam, gameTime, dt } =
     params;
 
   // Deal damage
@@ -246,9 +248,7 @@ export function applyBeamDamageAndEffects(params: BeamDamageParams): void {
   if (weapon.heatInjection) {
     const targetHeat = getComponent(world, target, 'heat');
     if (targetHeat) {
-      // heatInjection is per-second rate, damage is already scaled by dt
-      // Scale heat injection proportionally
-      const dt = damage / weapon.damage; // Recover dt from damage ratio
+      // heatInjection is per-second rate, scale by dt
       injectExternalHeat(targetHeat, weapon.heatInjection * dt);
     }
   }
@@ -282,7 +282,7 @@ export function applyBeamDamageAndEffects(params: BeamDamageParams): void {
   if (weapon.isPulseBeam) {
     recordShotHit(world, owner, weapon.name, 'beam', true);
   } else {
-    recordBeamHit(world, owner, weapon.name, damage / weapon.damage); // Recover dt
+    recordBeamHit(world, owner, weapon.name, dt);
   }
 
   // Track aggregate beam damage stats (for balance analysis)

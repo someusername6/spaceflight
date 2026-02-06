@@ -49,6 +49,9 @@ const tempVec3 = new THREE.Vector3();
 const toTarget = new THREE.Vector3();
 const cameraForward = new THREE.Vector3();
 
+// Reusable set for tracking threat missiles (cleared each frame)
+const threatMissiles = new Set<Entity>();
+
 // Track previous target to detect target changes (for lead indicator smoothing reset)
 let previousTarget: Entity | undefined;
 
@@ -143,7 +146,9 @@ export function updateReticles(
   targets.length = 0;
 
   // Get missiles targeting player for threat highlighting
-  const threatMissiles = new Set(getMissilesTargetingPlayer(world, player));
+  threatMissiles.clear();
+  for (const e of getMissilesTargetingPlayer(world, player))
+    threatMissiles.add(e);
 
   // Collect all targetable entities
   for (const entity of queryEntities(world, [

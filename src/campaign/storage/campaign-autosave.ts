@@ -155,8 +155,8 @@ export function recoverEmergencySave(): CampaignState | null {
 
     const save = parsed as Record<string, unknown>;
 
-    if (save.version !== CAMPAIGN_STORAGE_VERSION) {
-      logWarn(`Emergency save version mismatch: ${save.version}`);
+    if ((save.version as number) > CAMPAIGN_STORAGE_VERSION) {
+      logWarn(`Emergency save version too new: ${save.version}`);
       localStorage.removeItem(EMERGENCY_SAVE_KEY);
       return null;
     }

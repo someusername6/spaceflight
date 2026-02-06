@@ -23,6 +23,9 @@ import {
   tempColor,
 } from './nuclear-lance-types';
 
+// Reusable vector to avoid per-frame allocation
+const FORWARD_Z = new THREE.Vector3(0, 0, 1);
+
 /** Create all impact effects at hit point */
 export function createImpactEffects(
   renderer: NuclearLanceRenderer,
@@ -57,7 +60,7 @@ export function createImpactEffects(
   ring.position.copy(shot.hitPoint);
   // Orient ring perpendicular to beam direction
   direction.copy(shot.hitPoint).sub(shot.origin).normalize();
-  quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), direction);
+  quaternion.setFromUnitVectors(FORWARD_Z, direction);
   ring.quaternion.copy(quaternion);
   ring.scale.setScalar(1);
   scene.add(ring);

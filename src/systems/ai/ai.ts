@@ -263,6 +263,13 @@ function updateEngage(
     return;
   }
 
+  // Kiting ships return to idle if target is way too far (3x engage range)
+  if (isKitingShip(ai) && distance > ai.profile.engageRange * 3) {
+    ai.state = AIState.Idle;
+    ai.stateTimer = 0;
+    return;
+  }
+
   // Kiting ships flee when enemy gets too close
   if (shouldFleeDistance(ai, distance)) {
     ai.state = AIState.Evade;

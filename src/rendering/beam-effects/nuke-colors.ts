@@ -5,6 +5,8 @@
 import * as THREE from 'three';
 
 // Nuke color progression: white → yellow → orange → red
+const _scratchColor = new THREE.Color();
+
 const NUKE_COLORS = [
   new THREE.Color(1, 1, 1), // White (0%)
   new THREE.Color(1, 1, 0.5), // Yellow-white (25%)
@@ -13,7 +15,10 @@ const NUKE_COLORS = [
   new THREE.Color(0.5, 0.1, 0.05), // Dark red (100%)
 ];
 
-/** Interpolate nuke color based on progress */
+/**
+ * Interpolate nuke color based on progress.
+ * @returns Shared scratch Color - use immediately, do not store
+ */
 export function getNukeColor(progress: number): THREE.Color {
   const t = Math.min(1, Math.max(0, progress));
   const segment = t * (NUKE_COLORS.length - 1);
@@ -26,5 +31,5 @@ export function getNukeColor(progress: number): THREE.Color {
 
   const c1 = NUKE_COLORS[index] as THREE.Color;
   const c2 = NUKE_COLORS[index + 1] as THREE.Color;
-  return new THREE.Color().lerpColors(c1, c2, frac);
+  return _scratchColor.lerpColors(c1, c2, frac);
 }

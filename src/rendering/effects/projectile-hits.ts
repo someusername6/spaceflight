@@ -10,42 +10,24 @@ import type { ProjectileCategory } from '../../components/projectile';
 import { createPRNG, random } from '../../core/prng';
 import type { World } from '../../core/types';
 import { TICK_SEC } from '../../game';
+import {
+  BEAM_HIT_INTERVAL,
+  EFFECT_COLORS,
+  HIT_BALLISTIC_FLASH_EXPANSION,
+  HIT_BALLISTIC_FLASH_SCALE,
+  HIT_BALLISTIC_PARTICLE_SIZE,
+  HIT_BALLISTIC_PARTICLE_SPEED,
+  HIT_DURATION,
+  HIT_ENERGY_FLASH_EXPANSION,
+  HIT_ENERGY_FLASH_SCALE,
+  HIT_ENERGY_PARTICLE_SIZE,
+  HIT_ENERGY_PARTICLE_SPEED,
+  HIT_FLASH_OPACITY,
+  HIT_PARTICLE_OPACITY,
+  PARTICLES_PER_HIT,
+} from './projectile-hit-config';
 
-/** Effect duration in seconds */
-const HIT_DURATION = 0.25;
-
-/**
- * Interval for beam hit effects - ensures ~2.5 concurrent effects for
- * continuous visual feedback during sustained beam fire.
- */
-export const BEAM_HIT_INTERVAL = HIT_DURATION * 0.4;
-
-/** Particles per hit effect */
-const PARTICLES_PER_HIT = 12;
-
-/** Hit effect visual properties by category */
-const HIT_FLASH_OPACITY = 0.9;
-const HIT_PARTICLE_OPACITY = 1.0;
-const HIT_ENERGY_FLASH_SCALE = 1.5;
-const HIT_BALLISTIC_FLASH_SCALE = 1.0;
-const HIT_ENERGY_PARTICLE_SIZE = 1.5;
-const HIT_BALLISTIC_PARTICLE_SIZE = 2.0;
-const HIT_ENERGY_FLASH_EXPANSION = 3;
-const HIT_BALLISTIC_FLASH_EXPANSION = 2;
-const HIT_ENERGY_PARTICLE_SPEED = 15;
-const HIT_BALLISTIC_PARTICLE_SPEED = 10;
-
-/** Effect colors by category */
-const EFFECT_COLORS = {
-  energy: {
-    flash: new THREE.Color(0.4, 0.8, 1.0), // Cyan
-    particles: new THREE.Color(0.2, 0.6, 1.0), // Blue
-  },
-  ballistic: {
-    flash: new THREE.Color(1.0, 0.6, 0.2), // Orange
-    particles: new THREE.Color(1.0, 0.8, 0.3), // Yellow-orange
-  },
-};
+export { BEAM_HIT_INTERVAL };
 
 /** Single hit effect state */
 interface HitEffect {

@@ -11,6 +11,7 @@ import { getAmmoDisplayName } from '../../data/weapons';
 import type { CampaignState } from '../types';
 import { needsResupply } from './resupply-needs';
 import {
+  determineShortageReason,
   getShortageReason,
   type ResupplyResult,
   resupplyShipConstrained,
@@ -145,16 +146,7 @@ export function resupplyAllShipsConstrained(
         (wt) => (currentState.storeStock.secondaries[wt] ?? 0) === 0,
       );
     const hasCreditIssue = currentState.credits < 1;
-
-    if (hasStockIssue && hasCreditIssue) {
-      shortageReason = 'both';
-    } else if (hasCreditIssue) {
-      shortageReason = 'credits';
-    } else if (hasStockIssue) {
-      shortageReason = 'stock';
-    } else {
-      shortageReason = 'both';
-    }
+    shortageReason = determineShortageReason(hasStockIssue, hasCreditIssue);
   }
 
   // Generate per-item shortage messages with explicit reasons

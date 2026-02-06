@@ -15,7 +15,6 @@ import type { CampaignState } from '../../../campaign/types';
 import { MISSILES } from '../../../data/missiles';
 import { SHIP_CLASSES } from '../../../data/ships';
 import { PRIMARY_WEAPONS } from '../../../data/weapons';
-import { hideTooltip } from '../../common/tooltip';
 import { renderMissileIcon, renderWeaponIcon } from '../../utils/weapon-icon';
 import {
   bindPrimaryPickerEvents,
@@ -164,7 +163,6 @@ export function showWeaponPicker(
   if (existingPicker && slotElement.contains(existingPicker)) return;
 
   closePopover();
-  hideTooltip();
 
   const grouped = getGroupedWeapons(state, slotType);
   const bankSize = getBankSize(state, shipId, slotType, slotIndex);

@@ -320,6 +320,8 @@ export function wireMessageHandlers(
 /**
  * Send CallsignAnnounce to host (guest only).
  */
+// Broadcast is used because transport.send(peerId) requires knowing the host's
+// peerId, which isn't available here. In 2-player this is equivalent to unicast.
 export function sendCallsignAnnounce(connectionFlow: ConnectionFlow): void {
   const transport = connectionFlow.getTransport();
   if (!transport) return;

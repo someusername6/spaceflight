@@ -127,5 +127,6 @@ export {
   type CampaignUpdateCallback,
   createCampaignSyncManager,
   processAction,
+  validateActionData,
   validateActionPermission,
 } from './campaign-sync';

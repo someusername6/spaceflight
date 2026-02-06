@@ -20,27 +20,16 @@ const TORCH_FLICKER_SPEED = 15; // Flicker frequency
 const TORCH_FLICKER_AMOUNT = 0.15; // Flicker intensity (0-1)
 
 /** Torch colors */
-const TORCH_CORE_COLOR = new THREE.Color(1.0, 0.95, 0.85); // White-hot core
 const TORCH_OUTER_COLOR = new THREE.Color(1.0, 0.5, 0.1); // Orange outer
 
 /** Torch renderer state */
 export interface TorchRenderer {
   cones: Map<string, THREE.Mesh>;
-  coreMaterial: THREE.MeshBasicMaterial;
   outerMaterial: THREE.MeshBasicMaterial;
 }
 
 /** Create torch renderer */
 export function createTorchRenderer(): TorchRenderer {
-  const coreMaterial = new THREE.MeshBasicMaterial({
-    color: TORCH_CORE_COLOR,
-    transparent: true,
-    opacity: 0.9,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-    side: THREE.DoubleSide,
-  });
-
   const outerMaterial = new THREE.MeshBasicMaterial({
     color: TORCH_OUTER_COLOR,
     transparent: true,
@@ -52,7 +41,6 @@ export function createTorchRenderer(): TorchRenderer {
 
   return {
     cones: new Map(),
-    coreMaterial,
     outerMaterial,
   };
 }
@@ -62,6 +50,10 @@ const direction = new THREE.Vector3();
 const quaternion = new THREE.Quaternion();
 const interpOrigin = new THREE.Vector3();
 const interpHitPoint = new THREE.Vector3();
+const FORWARD = new THREE.Vector3(0, 0, 1);
+
+// Reusable set for tracking seen torches (cleared each frame)
+const seenTorches = new Set<string>();
 
 /** Update torch rendering with interpolation */
 export function updateTorchRenderer(
@@ -74,7 +66,7 @@ export function updateTorchRenderer(
   // Calculate interpolated gameTime for smooth flicker animation
   const gameTime = world.systemState.gameTime - TICK_SEC * (1 - alpha);
   const activeBeams = world.systemState.beams.activeBeams;
-  const seenTorches = new Set<string>();
+  seenTorches.clear();
 
   // Process all torch beams
   for (const [entity, beams] of activeBeams) {
@@ -169,7 +161,7 @@ function updateTorchCone(
     .addScaledVector(direction, length / 2);
 
   // Orient toward target
-  quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), direction);
+  quaternion.setFromUnitVectors(FORWARD, direction);
   cone.quaternion.copy(quaternion);
 
   // Scale to beam length
@@ -195,7 +187,7 @@ function updateTorchConeInterpolated(
   cone.position.copy(origin).addScaledVector(direction, length / 2);
 
   // Orient toward target
-  quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), direction);
+  quaternion.setFromUnitVectors(FORWARD, direction);
   cone.quaternion.copy(quaternion);
 
   // Scale to beam length
@@ -242,6 +234,5 @@ export function disposeTorchRenderer(
   scene: THREE.Scene,
 ): void {
   resetTorchRenderer(renderer, scene);
-  renderer.coreMaterial.dispose();
   renderer.outerMaterial.dispose();
 }

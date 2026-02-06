@@ -96,7 +96,7 @@ export function createShipMesh(
   // Map 'freighter' to 'transport' (freighter is a convoy type, not a separate mesh)
   const mappedClass = shipClass === 'freighter' ? 'transport' : shipClass;
   if (mappedClass && isShipClass(mappedClass)) {
-    const geometry = getShipGeometry(mappedClass).clone();
+    const geometry = getShipGeometry(mappedClass);
     const mesh = new THREE.Mesh(geometry, material);
     mesh.scale.setScalar(SHIP_MODEL_SCALE);
     // Models created in top-down view (nose pointing +Y in Blender)
@@ -216,7 +216,7 @@ export function createStructureMesh(
 
   // Try to use embedded geometry
   if (meshClass && isShipClass(meshClass)) {
-    const geometry = getShipGeometry(meshClass).clone();
+    const geometry = getShipGeometry(meshClass);
     const mesh = new THREE.Mesh(geometry, material);
     mesh.scale.setScalar(SHIP_MODEL_SCALE);
     // Models created in top-down view (nose pointing +Y in Blender)

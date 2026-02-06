@@ -78,7 +78,6 @@ function canMissileFire(
 export function selectOptimalMissile(
   weapons: SecondaryWeapons,
   distance: number,
-  _targetSpeed: number, // Reserved for future use
   isLocked: boolean,
 ): MissileSelection {
   // When locked, prefer homing missiles (they track and are more effective)

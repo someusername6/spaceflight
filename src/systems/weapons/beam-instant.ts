@@ -12,6 +12,7 @@ import { cycleNextLinkMode, getEffectiveHeat } from '../../components/weapons';
 import { getComponent } from '../../core/ecs';
 import type { ActiveBeam, Entity, World } from '../../core/types';
 import { recordShotFired } from '../stats';
+import { applyAutoaimCorrection } from './autoaim';
 import {
   applyBeamDamageAndEffects,
   BEAM_SPAWN_OFFSET,
@@ -27,7 +28,6 @@ import { getWeaponSpawnPosition } from './weapon-spawning';
 // Reusable objects
 const rayOrigin = new THREE.Vector3();
 const rayDirection = new THREE.Vector3();
-const targetDirection = new THREE.Vector3();
 
 /**
  * Handle instant beams (edge-triggered, fire only ONE, no linking).
@@ -156,17 +156,12 @@ function fireInstantBeam(
   if (effectiveAutoaim > 0 && targetEntity !== undefined) {
     const targetTransform = getComponent(world, targetEntity, 'transform');
     if (targetTransform) {
-      // Calculate direction to target
-      targetDirection.copy(targetTransform.position).sub(rayOrigin).normalize();
-
-      // Check if target is within autoaim FOV
-      const angleToTarget = rayDirection.angleTo(targetDirection);
-      const fovRadians = (effectiveAutoaim * Math.PI) / 180;
-
-      if (angleToTarget <= fovRadians) {
-        // Target is within FOV - correct aim to target
-        rayDirection.copy(targetDirection);
-      }
+      applyAutoaimCorrection(
+        rayDirection,
+        targetTransform.position,
+        rayOrigin,
+        effectiveAutoaim,
+      );
     }
   }
 
@@ -229,6 +224,7 @@ function fireInstantBeam(
         hitPoint,
         beam,
         gameTime,
+        dt: 1.0,
       });
     }
   } else {

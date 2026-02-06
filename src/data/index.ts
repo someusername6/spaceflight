@@ -28,7 +28,6 @@ export {
 } from './combat';
 // Missile definitions
 export {
-  DECOY_CONSTANTS,
   getMissileStats,
   MISSILES,
   type MissileName,

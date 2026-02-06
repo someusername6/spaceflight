@@ -39,10 +39,13 @@ function queueHitEffect(
 const toTarget = new THREE.Vector3();
 const desiredDirection = new THREE.Vector3();
 
+// Reusable removal list (hoisted to avoid per-frame allocation)
+const toRemove: Entity[] = [];
+
 /** Projectile system - movement and collision handling */
 export function projectileSystem(world: World, dt: number): void {
-  // Collect projectiles to remove (can't modify during iteration)
-  const toRemove: Entity[] = [];
+  // Reset reusable removal list
+  toRemove.length = 0;
 
   for (const entity of queryEntities(world, ['projectile', 'transform'])) {
     const projectile = getComponent(world, entity, 'projectile');

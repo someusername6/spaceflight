@@ -11,7 +11,6 @@ import { applyAimError } from '../../components/aim-error';
 import type { FactionComponent } from '../../components/faction';
 import { createFaction } from '../../components/faction';
 import type {
-  CreateProjectileOptions,
   ProjectileCategory,
   WeaponName,
 } from '../../components/projectile';
@@ -24,10 +23,15 @@ import { getArchetype } from '../../factories/ship';
 import { createCollision } from '../collision';
 import { getForward } from '../physics';
 import { recordShotFired } from '../stats';
+import { applyAutoaimCorrection } from './autoaim';
 import {
   getHardpointLocalOffset,
   getHardpointWorldPosition,
 } from './hardpoint-positions';
+import {
+  buildProjectileOptions,
+  type ProjectileWeaponInfo,
+} from './weapon-spawn-types';
 
 /** Spawn offset from ship center */
 const PROJECTILE_SPAWN_OFFSET = 3;
@@ -143,68 +147,8 @@ export function calculateBankOffset(
   return spawnPos;
 }
 
-/** Weapon info for projectile spawning */
-export interface ProjectileWeaponInfo {
-  name: string;
-  damage: number;
-  projectileSpeed: number;
-  range: number;
-  category?: string; // WeaponCategory includes 'beam' but we filter that out
-  flakRadius?: number;
-  shrapnelCount?: number;
-  shrapnelDamage?: number;
-  shrapnelSpeed?: number;
-  shrapnelRange?: number;
-  shieldDamageMultiplier?: number;
-  ionize?: boolean;
-  // Gyrojet-style fields
-  initialSpeed?: number;
-  acceleration?: number;
-  trackingRate?: number;
-  trackingCone?: number;
-  speedDamageScale?: boolean;
-  autoaimFov?: number;
-}
-
-/** Build projectile options from weapon stats */
-function buildProjectileOptions(
-  weapon: ProjectileWeaponInfo,
-  target?: Entity,
-): CreateProjectileOptions | undefined {
-  const options: CreateProjectileOptions = {};
-
-  // Copy optional fields (only add if defined)
-  if (weapon.flakRadius !== undefined) options.flakRadius = weapon.flakRadius;
-  if (weapon.shrapnelCount !== undefined)
-    options.shrapnelCount = weapon.shrapnelCount;
-  if (weapon.shrapnelDamage !== undefined)
-    options.shrapnelDamage = weapon.shrapnelDamage;
-  if (weapon.shrapnelSpeed !== undefined)
-    options.shrapnelSpeed = weapon.shrapnelSpeed;
-  if (weapon.shrapnelRange !== undefined)
-    options.shrapnelRange = weapon.shrapnelRange;
-  if (weapon.shieldDamageMultiplier !== undefined)
-    options.shieldDamageMultiplier = weapon.shieldDamageMultiplier;
-  if (weapon.ionize !== undefined) options.ionize = weapon.ionize;
-  if (weapon.speedDamageScale)
-    options.speedDamageScale = weapon.speedDamageScale;
-
-  // Gyrojet-style acceleration
-  if (weapon.acceleration !== undefined) {
-    options.acceleration = weapon.acceleration;
-    options.maxSpeed = weapon.projectileSpeed;
-  }
-
-  // Tracking (gyrojet)
-  if (weapon.trackingRate !== undefined) {
-    options.trackingRate = weapon.trackingRate;
-    if (weapon.trackingCone !== undefined)
-      options.trackingCone = weapon.trackingCone;
-    if (target !== undefined) options.trackingTarget = target;
-  }
-
-  return Object.keys(options).length > 0 ? options : undefined;
-}
+// Re-export ProjectileWeaponInfo for consumers that import from this module
+export type { ProjectileWeaponInfo } from './weapon-spawn-types';
 
 /**
  * Compute fallback local offset for muzzle flash when hardpoint data unavailable.
@@ -363,11 +307,15 @@ export function spawnProjectileWithAimError(
 
   // Apply autoaim correction if within cone
   if (autoaim && autoaim.fovDegrees > 0) {
-    toIntercept.copy(autoaim.interceptPoint).sub(spawnPos).normalize();
-    const dot = direction.dot(toIntercept);
-    const angleRad = Math.acos(Math.max(-1, Math.min(1, dot)));
-    const angleDeg = angleRad * (180 / Math.PI);
-    if (angleDeg <= autoaim.fovDegrees) {
+    toIntercept.copy(direction);
+    if (
+      applyAutoaimCorrection(
+        toIntercept,
+        autoaim.interceptPoint,
+        spawnPos,
+        autoaim.fovDegrees,
+      )
+    ) {
       direction = toIntercept;
     }
   }

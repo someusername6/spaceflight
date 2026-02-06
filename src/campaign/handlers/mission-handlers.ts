@@ -57,7 +57,11 @@ import { cleanupLobby } from './lobby-handlers';
 import { setupTitleScreen } from './menu-handlers';
 
 // Re-export results functions for backwards compatibility
-export { showMultiplayerResults, showResults } from './mission-results';
+export {
+  type ShowResultsOptions,
+  showMultiplayerResults,
+  showResults,
+} from './mission-results';
 
 /**
  * Handle non-ironman defeat by showing debrief then restoring from checkpoint.

@@ -49,7 +49,6 @@ describe('AI Missile Selection', () => {
     const selection = selectOptimalMissile(
       weapons,
       800, // In range for both
-      100, // Target speed
       false, // NOT locked
     );
 
@@ -102,7 +101,6 @@ describe('AI Missile Selection', () => {
     const selection = selectOptimalMissile(
       weapons,
       800,
-      100,
       true, // Locked
     );
 
@@ -143,7 +141,6 @@ describe('AI Missile Selection', () => {
     const selection = selectOptimalMissile(
       weapons,
       800,
-      100,
       false, // NOT locked
     );
 
@@ -182,7 +179,6 @@ describe('AI Missile Selection', () => {
     const selection = selectOptimalMissile(
       weapons,
       1500, // Out of range
-      100,
       false,
     );
 
@@ -218,7 +214,7 @@ describe('AI Missile Selection', () => {
       lockWeaponIndex: -1,
     };
 
-    const selection = selectOptimalMissile(weapons, 500, 100, false);
+    const selection = selectOptimalMissile(weapons, 500, false);
 
     assert.strictEqual(
       selection.shouldFire,
@@ -255,7 +251,6 @@ describe('AI Missile Selection', () => {
     const selection = selectOptimalMissile(
       weapons,
       500,
-      100,
       false, // Not locked
     );
 

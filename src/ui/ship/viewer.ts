@@ -18,7 +18,6 @@ import {
   renderShipIcon as renderShipIconInline,
   renderWeaponIcon,
 } from '../utils/weapon-icon';
-import { renderShipActions } from './actions';
 import { getWeaponAmmoInfo, shouldUseSegmentedBar } from './slot-utils';
 import { getMissileColor, getWeaponColor } from './viewer-icons';
 
@@ -161,8 +160,6 @@ export function renderShipViewer(
       </div>
 
       ${renderSchematicDiagram(ship)}
-
-      ${renderShipActions(ship, state)}
     </div>
   `;
 }

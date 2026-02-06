@@ -20,9 +20,12 @@ import { dealDamage } from './damage';
 const tempForward = new THREE.Vector3();
 const tempQuat = new THREE.Quaternion();
 
+// Reusable removal list (hoisted to avoid per-frame allocation)
+const toRemove: Entity[] = [];
+
 /** Decoy system - movement, lifetime, and collision */
 export function decoySystem(world: World, dt: number): void {
-  const toRemove: Entity[] = [];
+  toRemove.length = 0;
 
   for (const entity of queryEntities(world, ['decoy', 'transform'])) {
     const decoy = getComponent(world, entity, 'decoy');

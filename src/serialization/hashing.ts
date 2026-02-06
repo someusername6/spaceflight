@@ -27,6 +27,9 @@ const FNV_PRIME = 16777619;
  * Maintains running hash value across multiple updates.
  */
 export class HashState {
+  private static readonly _f64Buf = new ArrayBuffer(8);
+  private static readonly _f64View = new DataView(HashState._f64Buf);
+
   private hash: number = FNV_OFFSET_BASIS;
 
   /** Add a byte to the hash */
@@ -44,13 +47,17 @@ export class HashState {
   }
 
   /** Add a 64-bit float to the hash (as IEEE 754 bytes) */
-  addFloat64(n: number): void {
-    const buffer = new ArrayBuffer(8);
-    new DataView(buffer).setFloat64(0, n, true); // little-endian
-    const bytes = new Uint8Array(buffer);
-    for (let i = 0; i < 8; i++) {
-      this.addByte(bytes[i] as number);
-    }
+  addFloat64(value: number): void {
+    const view = HashState._f64View;
+    view.setFloat64(0, value, true);
+    this.addByte(view.getUint8(0));
+    this.addByte(view.getUint8(1));
+    this.addByte(view.getUint8(2));
+    this.addByte(view.getUint8(3));
+    this.addByte(view.getUint8(4));
+    this.addByte(view.getUint8(5));
+    this.addByte(view.getUint8(6));
+    this.addByte(view.getUint8(7));
   }
 
   /** Add a boolean to the hash */
@@ -206,9 +213,9 @@ export function computeWorldHash(world: World): number {
 }
 
 /**
- * Check if two worlds have identical simulation state.
+ * Check if two worlds have matching simulation state hashes.
  * Convenience wrapper around hash comparison.
  */
-export function worldsEqual(world1: World, world2: World): boolean {
+export function worldHashesMatch(world1: World, world2: World): boolean {
   return computeWorldHash(world1) === computeWorldHash(world2);
 }

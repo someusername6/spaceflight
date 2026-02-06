@@ -38,6 +38,9 @@ const cameraPos = new THREE.Vector3();
 const targetPos = new THREE.Vector3();
 const offset = new THREE.Vector3();
 
+// Cached ImageData to avoid per-frame allocation (dimensions are constant)
+let cachedImageData: ImageData | null = null;
+
 /** Create target camera system */
 export function createTargetCamera(): TargetCamera {
   // Create a camera with narrow FOV for target view
@@ -174,11 +177,14 @@ export function updateTargetCamera(
     targetCamera.pixelBuffer,
   );
 
-  // Create ImageData and draw (flip vertically since WebGL is bottom-up)
-  const imageData = targetCamera.ctx.createImageData(
-    CAMERA_WIDTH,
-    CAMERA_HEIGHT,
-  );
+  // Reuse cached ImageData (dimensions are constant) and draw (flip vertically since WebGL is bottom-up)
+  if (!cachedImageData) {
+    cachedImageData = targetCamera.ctx.createImageData(
+      CAMERA_WIDTH,
+      CAMERA_HEIGHT,
+    );
+  }
+  const imageData = cachedImageData;
   const src = targetCamera.pixelBuffer;
   const dst = imageData.data;
   for (let y = 0; y < CAMERA_HEIGHT; y++) {

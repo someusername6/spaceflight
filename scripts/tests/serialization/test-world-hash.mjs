@@ -34,7 +34,7 @@ import { AI_PROFILES } from '../../../src/data/ai-profiles.ts';
 import {
   computeWorldHash,
   HashState,
-  worldsEqual,
+  worldHashesMatch,
 } from '../../../src/serialization/index.ts';
 
 describe('HashState', () => {
@@ -178,17 +178,17 @@ describe('World Hash', () => {
     assert.notStrictEqual(computeWorldHash(world1), computeWorldHash(world2));
   });
 
-  it('worldsEqual helper works', () => {
+  it('worldHashesMatch helper works', () => {
     const world1 = createWorld();
     const world2 = createWorld();
 
-    assert.ok(worldsEqual(world1, world2), 'Empty worlds should be equal');
+    assert.ok(worldHashesMatch(world1, world2), 'Empty worlds should be equal');
 
     const e1 = createEntity(world1);
     addComponent(world1, e1, createTransform(0, 0, 0));
 
     assert.ok(
-      !worldsEqual(world1, world2),
+      !worldHashesMatch(world1, world2),
       'Different worlds should not be equal',
     );
   });

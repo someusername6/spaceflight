@@ -10,7 +10,7 @@ import '../../networking/webrtc-mocks.mjs';
 import assert from 'node:assert';
 import { describe, it } from 'node:test';
 import { serializeInput } from '../../../../src/multiplayer/input-format.ts';
-import { worldsEqual } from '../../../../src/serialization/index.ts';
+import { worldHashesMatch } from '../../../../src/serialization/index.ts';
 import {
   createHostGuestAdapters,
   generateInputsForTick,
@@ -68,7 +68,7 @@ describe('Desync Recovery', () => {
       'Guest should match host after recovery',
     );
     assert(
-      worldsEqual(hostWorld, guestWorld),
+      worldHashesMatch(hostWorld, guestWorld),
       'Worlds should be equal after recovery',
     );
   });

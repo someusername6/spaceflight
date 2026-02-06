@@ -19,18 +19,10 @@ import type {
 } from '../../../replay/types';
 import { escapeHtml } from '../../utils';
 import { getShipSvgInline } from '../../utils/inline-svg';
+import { capitalize } from '../../utils/text';
 
 // Debrief tab rendering extracted to separate module
 export { renderDebriefTab } from './replay-debrief-render';
-
-// ============================================================================
-// Shared Utilities
-// ============================================================================
-
-/** Capitalize first letter */
-function capitalize(str: string): string {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
 
 /** Render bank size indicator */
 function renderBankIndicator(size: number, cssClass: string): string {

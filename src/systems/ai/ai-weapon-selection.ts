@@ -109,7 +109,7 @@ function scoreWeapon(
   if (weapon.ammo === undefined) score += 15;
 
   // Shield targeting: Ion gets bonus against shields
-  if (targetHasShields && weapon.name === 'Ion') score += 40;
+  if (targetHasShields && weapon.ionize === true) score += 40;
 
   // Beam weapons get hitscan bonus at close-medium range
   if (weapon.category === 'beam' && distanceCategory === RangeCategory.Short) {

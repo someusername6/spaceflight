@@ -16,7 +16,6 @@ import { getMaxMissileCapacity } from '../../../campaign/store/store-ammo';
 import type { CampaignState, EquippedSecondary } from '../../../campaign/types';
 import { MISSILES } from '../../../data/missiles';
 import { PRIMARY_WEAPONS } from '../../../data/weapons';
-import { hideTooltip } from '../../common/tooltip';
 import { renderMissileIcon, renderWeaponIcon } from '../../utils/weapon-icon';
 import { type GroupedWeapon, getBankSize, getGroupedWeapons } from './equip';
 import {
@@ -115,7 +114,6 @@ export function showWeaponSwapPicker(
   onRerender: () => void,
 ): void {
   closeSubmenu();
-  hideTooltip();
 
   // Get the currently equipped weapon info
   const ship = state.ships.find((s) => s.id === shipId);

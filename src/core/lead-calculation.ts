@@ -20,7 +20,7 @@ const interceptResult = new Vector3();
  * @param targetPos - Target's current position
  * @param targetVel - Target's current velocity
  * @param projectileSpeed - Speed of the projectile
- * @returns Intercept point, or undefined if no solution
+ * @returns Shared static vector - use immediately or copy. Do not store across frames.
  */
 export function calculateInterceptPoint(
   shooterPos: Vector3,

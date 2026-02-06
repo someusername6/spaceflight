@@ -14,11 +14,7 @@ import {
 import type { ScreenAPI } from '../../framework/screen';
 import type { SettingsState } from './settings-render';
 
-/**
- * Active key listener for rebinding controls.
- * Note: Cannot use api.onGlobal() because it doesn't support capture phase,
- * which is required to intercept key events before other handlers process them.
- */
+// Uses raw addEventListener because the listener must be managed independently from the screen lifecycle for external cleanup via cleanupKeyListener()
 let activeKeyListener: ((e: KeyboardEvent) => void) | null = null;
 
 /** Active ESC handler for closing settings */

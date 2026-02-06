@@ -9,7 +9,7 @@ import '../../networking/webrtc-mocks.mjs';
 
 import assert from 'node:assert';
 import { describe, it } from 'node:test';
-import { worldsEqual } from '../../../../src/serialization/index.ts';
+import { worldHashesMatch } from '../../../../src/serialization/index.ts';
 import { simulateSession } from './helpers.mjs';
 
 // =============================================================================
@@ -40,7 +40,10 @@ describe('Full 4-Player Session Flow', () => {
     }
 
     // Final states should be equal
-    assert(worldsEqual(run1.world, run2.world), 'Final worlds should be equal');
+    assert(
+      worldHashesMatch(run1.world, run2.world),
+      'Final worlds should be equal',
+    );
   });
 
   it('records inputs for all 4 players', () => {

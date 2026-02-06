@@ -65,7 +65,7 @@ export function hasAmmo(weapon: PrimaryWeapon): boolean {
 
 /** Check if weapons include an Ion weapon. */
 export function hasIonWeapon(weapons: PrimaryWeapons): boolean {
-  return weapons.weapons.some((w) => w?.name === 'Ion');
+  return weapons.weapons.some((w) => w?.ionize === true);
 }
 
 /** Find the coolest (lowest heat) weapon that can reach the target. */

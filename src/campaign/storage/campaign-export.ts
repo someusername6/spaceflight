@@ -126,7 +126,7 @@ function validateExportedCampaign(data: unknown): data is ExportedCampaign {
   const obj = data as Record<string, unknown>;
 
   if (typeof obj.version !== 'number') return false;
-  if (obj.version !== CAMPAIGN_STORAGE_VERSION) return false;
+  if (obj.version > CAMPAIGN_STORAGE_VERSION) return false;
   if (typeof obj.exportedAt !== 'number') return false;
   if (!obj.state || typeof obj.state !== 'object') return false;
 

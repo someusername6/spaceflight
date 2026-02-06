@@ -156,6 +156,7 @@ describe('Permission Validation', () => {
         'peer-1',
         permissions,
         players,
+        'host-peer',
       );
       assert.strictEqual(error, null);
     });
@@ -177,6 +178,7 @@ describe('Permission Validation', () => {
         'peer-1',
         permissions,
         players,
+        'host-peer',
       );
       assert.ok(error !== null, 'Should return error');
       assert.ok(error.includes('buy'), 'Error should mention buy');
@@ -201,6 +203,7 @@ describe('Permission Validation', () => {
         'peer-1',
         permissions,
         players,
+        'host-peer',
       );
       assert.ok(error !== null);
       assert.ok(error.includes('permission') || error.includes('edit'));
@@ -225,6 +228,7 @@ describe('Permission Validation', () => {
         'peer-1',
         permissions,
         players,
+        'host-peer',
       );
       assert.strictEqual(error, null);
     });
@@ -248,6 +252,7 @@ describe('Permission Validation', () => {
         'peer-1',
         permissions,
         players,
+        'host-peer',
       );
       assert.ok(error !== null);
       assert.ok(error.includes('own'));
@@ -272,6 +277,7 @@ describe('Permission Validation', () => {
         'peer-1',
         permissions,
         players,
+        'host-peer',
       );
       assert.strictEqual(error, null);
     });
@@ -292,6 +298,7 @@ describe('Permission Validation', () => {
         'peer-1',
         permissions,
         players,
+        'host-peer',
       );
       assert.ok(error !== null);
       assert.ok(error.includes('scrap') || error.includes('convert'));
