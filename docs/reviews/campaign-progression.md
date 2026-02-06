@@ -1,214 +1,311 @@
-# Campaign & Progression Review
+# Campaign & Progression Layer - Code Review
 
-**Last updated:** February 2026
+**Reviewer:** Claude Opus 4.6
+**Date:** 2026-02-05
+**Scope:** `src/campaign/`, `src/campaign/mission/`, `src/campaign/contracts/`, `src/campaign/resupply/`, `src/campaign/store/`, `src/campaign/storage/`, `src/campaign/handlers/` (excluding lobby handlers), `src/replay/`
+**Files reviewed:** ~55 files across 8 directory areas
+
+---
 
 ## Overview
 
-The campaign system provides a roguelike progression through 5 sectors of increasing difficulty. Players manage a squadron, take contracts, and balance risk/reward with permadeath mechanics.
+The Campaign & Progression layer is the backbone of the roguelike loop: squadron management, contract selection, mission launch, rewards, and persistence. The codebase is well-structured with clean separation between campaign state mutation, UI handlers, mission execution, and persistence. The immutable state pattern is applied consistently, and the replay system demonstrates thoughtful engineering with versioned formats, compression, and deterministic reconstruction.
 
-## Campaign Structure
+The overall quality is high. Most issues found are maintenance concerns (near-limit file sizes, duplicated patterns) rather than correctness bugs. There are a few genuine bugs and one design concern worth addressing.
 
-### Sectors
+---
 
-| Sector | Name | Enemy Skill | Deployment Limit | Advance Cost |
-|--------|------|-------------|------------------|--------------|
-| 1 | Frontier | Green-Rookie | 4 ships | - |
-| 2 | Contested | Rookie-Regular | 4 ships | 1,000 cr |
-| 3 | Warzone | Regular-Veteran | 5 ships | 2,000 cr |
-| 4 | Core | Veteran-Ace | 5 ships | 3,000 cr |
-| 5 | Endless | Veteran-Ace | 6 ships | 4,000 cr |
+## Issues Found
 
-Sector 5 is repeatable endless mode with maximum difficulty.
+### 1. Debug console.log statements left in production code
 
-### Mission Types
+**File:** `src/campaign/handlers/mission-results.ts:219-259`
+**Category:** Bug
+**Severity:** Low
 
-| Type | Victory | Defeat | Reward Scaling |
-|------|---------|--------|----------------|
-| **Elimination** | All enemies destroyed | Commander dies | Fixed 100% |
-| **Escort** | ≥1 convoy escapes | All convoy destroyed | % convoy survived |
-| **Station Defense** | Station survives | Station destroyed | % station hull |
-| **Ambush** | All convoy neutralized | Any convoy escapes | 100% stopped, 50% destroyed |
-| **Attack Station** | Station destroyed | Commander dies | Fixed 100% |
+Six `console.log` statements are left in `showMultiplayerResults()`, logging UI element dimensions and display states. These are clearly debugging artifacts:
 
-### Contract System
+```typescript
+console.log(
+  '[showMultiplayerResults] Creating results UI, element display:',
+  resultsElement.style.display,
+);
+// ...
+console.log('[showMultiplayerResults] Results UI created');
+console.log('[showMultiplayerResults] Container display:', ...);
+console.log('[showMultiplayerResults] Inner element found:', !!resultsInner);
+console.log('[showMultiplayerResults] Inner rect:', rect.width, 'x', rect.height);
+```
 
-- **Pool Size:** 6 contracts per sector
-- **Difficulty Mix:** 3 easy, 2 medium, 1 hard typical
-- **Refresh:** Complete contracts removed, new ones added
-- **Replay Mode:** Previously completed contracts available at 50% reward
+The project has `logDebug()` from `src/core/logger.ts` for structured logging. These should either be removed or converted to `logDebug()`.
 
-## Economy
+---
 
-### Starting State
+### 2. Shortage reason fallback defaults to 'both' when neither stock nor credits are the issue
 
-| Resource | Amount |
-|----------|--------|
-| Credits | 1,000 |
-| Ships | 4 fighters |
-| Pilots | 1 commander (player-controlled) + 3 regular wingmen |
+**File:** `src/campaign/resupply/resupply-ship.ts:274-277` and `src/campaign/resupply/resupply-constrained.ts:154-157`
+**Category:** Bug
+**Severity:** Medium
 
-### Income Sources
+When a shortage exists but neither stock is zero nor credits are below 1, the code defaults to `'both'`:
 
-| Source | Expected Value |
-|--------|----------------|
-| Easy mission | 1,000-2,000 cr |
-| Medium mission | 2,250-3,500 cr |
-| Hard mission | 4,000-6,500 cr |
-| Salvage | ~5% of enemy value |
-| Scrap conversion | Variable |
+```typescript
+if (hasStockIssue && hasCreditIssue) {
+  shortageReason = 'both';
+} else if (hasCreditIssue) {
+  shortageReason = 'credits';
+} else if (hasStockIssue) {
+  shortageReason = 'stock';
+} else {
+  shortageReason = 'both'; // Fallback - should not happen
+}
+```
 
-### Expense Categories
+This scenario can occur when credits are low (but not < 1) and stock is non-zero but insufficient to fully resupply. The correct fallback should be `'both'` or a more precise diagnosis. While the current behavior is arguably reasonable (if there is a shortage and neither single cause explains it, both factors contributed), the code comment suggests the author did not expect this path to be reachable. This identical logic is duplicated across two files.
 
-| Category | Examples |
-|----------|----------|
-| Ships | 200-900 cr per chassis |
-| Weapons | 80-500 cr per primary |
-| Missiles | 5-100 cr per missile |
-| Ammo | 0.1-50 cr per round |
-| Pilots | 75-1,200 cr per hire |
-| Sector advance | 1,000-4,000 cr |
+---
 
-### Salvage System
+### 3. Denormalized pilot data requires fragile dual updates
 
-Per destroyed enemy:
-- **Multiplier:** Random 0-10% per ship
-- **Scrap:** 0-10 pieces (floor of 100 × multiplier)
-- **Weapons:** Each primary has (multiplier) chance to drop
-- **Ammo/Missiles:** (multiplier) % of remaining recovered
+**File:** `src/campaign/state-mission.ts:218-225` and `src/campaign/state-mission.ts:384-390`
+**Category:** Maintenance
+**Severity:** Medium
 
-### Store System
+Pilot data is stored in two locations: `state.pilots[]` (the roster) and `state.ships[].pilot` (the assigned pilot). Every mutation must update both locations in sync. The code handles this correctly but the pattern is repeated for each mutation function:
 
-- **Inventory:** Finite per sector, restocks after missions
-- **Unlocks:** New items unlock as sectors progress
-- **Storage:** Purchased items go to storage, then equip to ships
-- **Selling:** All items can be sold at 50% value
+```typescript
+// Update pilots array
+const updatedPilots = state.pilots.map(updatePilotAfterMission)...;
 
-## Pilot System
+// Also update pilots embedded in surviving ships (data is denormalized)
+const updatedShips = survivingShips.map((ship) => {
+  if (!ship.pilot) return ship;
+  const updatedPilot = updatePilotAfterMission(ship.pilot);
+  ...
+});
+```
 
-### Skill Levels
+The same dual-update pattern appears in `applyPilotStats()` (line 384) and `applyMissionResults()` (line 218). If a new pilot mutation function is added and the author forgets to update both locations, the campaign state will silently desynchronize. Consider either normalizing the data (ships reference pilot IDs, single source of truth) or extracting a helper that guarantees both are updated.
 
-| Level | Hire Cost | Spawn Weight | Characteristics |
-|-------|-----------|--------------|-----------------|
-| Rookie | 75 cr | 35% | Conservative, high aim error |
-| Regular | 200 cr | 35% | Balanced baseline |
-| Veteran | 400 cr | 20% | Aggressive, accurate |
-| Ace | 700 cr | 10% | Near-perfect accuracy |
-| Elite | 1,200 cr | Rare | Boss-tier skill |
+---
 
-### Pilot Stats (Tracked)
+### 4. Code duplication between campaign and replay weapon conversion
 
-- Kills and assists
-- Missions flown/won
-- Damage dealt/received
-- Combat rating
+**File:** `src/campaign/campaign-weapons.ts:21-64` vs `src/campaign/campaign-weapons.ts:160-207`
+**Category:** Maintenance
+**Severity:** Medium
 
-### Recruitment
+`createPrimaryFromEquipped()` and `createPrimaryFromReplay()` copy 15 identical optional property assignments from `stats`:
 
-- Initial pool: 4 recruits
-- Per mission: 3-5 new recruits
-- Skill distribution scales with sector
-- Commander cannot be replaced (permadeath trigger)
+```typescript
+// Both functions have this identical block:
+if (stats.flakRadius) weapon.flakRadius = stats.flakRadius;
+if (stats.shrapnelCount) weapon.shrapnelCount = stats.shrapnelCount;
+if (stats.shrapnelRange) weapon.shrapnelRange = stats.shrapnelRange;
+if (stats.shrapnelDamage) weapon.shrapnelDamage = stats.shrapnelDamage;
+if (stats.shrapnelSpeed) weapon.shrapnelSpeed = stats.shrapnelSpeed;
+if (stats.isPulseBeam) weapon.isPulseBeam = stats.isPulseBeam;
+// ... 9 more lines
+```
 
-## Permadeath
+The same duplication exists between `createSecondaryFromEquipped()` (lines 67-111) and `createSecondaryFromReplay()` (lines 210-250). When a new weapon property is added, it must be copied into four places. A shared helper like `applyOptionalWeaponStats(weapon, stats)` would eliminate this.
 
-### Ironman Mode
+---
 
-- Optional setting locked at campaign creation
-- No save scumming possible
-- Creates meaningful tension
+### 5. `showResults` function takes 12 positional parameters
 
-### Death Conditions
+**File:** `src/campaign/handlers/mission-results.ts:64-77` and `src/campaign/mission/mission-end-executor.ts:232-245`
+**Category:** Maintenance
+**Severity:** Medium
 
-- **Commander Death:** Campaign ends immediately
-- **Wingman Death:** Pilot removed, ship lost, salvage possible
-- **Mission Failure:** Return to hangar, wingmen may be lost
+```typescript
+showResults(
+  controller,
+  missionEndState.victory,
+  contract,
+  setupContractsScreen,
+  game.world,
+  salvageResult,
+  baseReward,
+  missionEndState.escortResults,
+  missionEndState.ambushResults,
+  missionEndState.stationDefenseResults,
+  missionEndState.attackStationResults,
+  salaryInfo,
+);
+```
 
-### Recovery Options
+Twelve positional parameters (8 optional) make call sites fragile and hard to read. A single options object `ResultsOptions` would be clearer and allow adding new mission result types without growing the parameter list.
 
-- **Non-Ironman:** Can restart mission
-- **Emergency Save:** Recovers from browser crashes
-- **Export/Import:** Manual backup possible
+---
 
-## Squadron Management
+### 6. Emergency save may exceed localStorage quota
 
-### Ship Assignment
+**File:** `src/campaign/storage/campaign-autosave.ts:118-131`
+**Category:** Performance
+**Severity:** Low
 
-- Pilots assigned to ships (1:1)
-- Ships have weapon slots (size-restricted)
-- Loadout persists between missions
+The emergency save serializes the entire `CampaignState` as JSON into localStorage:
 
-### Deployment Selection
+```typescript
+localStorage.setItem(EMERGENCY_SAVE_KEY, JSON.stringify(save));
+```
 
-- Choose which ships to deploy (up to limit)
-- Remaining ships stay in hangar
-- Commander must always deploy
+localStorage has a ~5MB limit across all keys. A late-game campaign with many ships, pilots, stored weapons, and store inventory could approach this limit. The code does catch the error gracefully (`logWarn`), but the user would lose their emergency save silently. Consider compressing the state or storing only a delta since last IndexedDB save.
 
-## Multiplayer
+---
 
-The campaign supports cooperative multiplayer where guests join the host's campaign:
+### 7. Campaign export validation rejects older save versions
 
-### Architecture
+**File:** `src/campaign/storage/campaign-export.ts:129`
+**Category:** Bug
+**Severity:** Medium
 
-- **Rollback Netcode:** Deterministic simulation with rollback/resimulation for lag compensation
-- **WebRTC Mesh:** Peer-to-peer connections via signaling server
-- **Room Codes:** 8-character codes for easy game joining
+The import validation function performs a strict version equality check:
 
-### Features
+```typescript
+if (obj.version !== CAMPAIGN_STORAGE_VERSION) return false;
+```
 
-| Feature | Implementation |
-|---------|----------------|
-| Lobby | Host creates room, guests join via code |
-| Ship Assignment | Host assigns guest pilots to squadron ships |
-| Chat | In-lobby and post-mission chat |
-| Spectator Mode | Watch missions without controlling a ship |
-| Pause Coordination | Synchronized pause across all players |
-| Reconnection | Automatic reconnect on disconnect |
+This means a campaign exported at version N cannot be imported at version N+1, even though the codebase has migration logic in `campaign-utils.ts:reconstituteCampaignState()` that handles older versions. The `loadCampaign()` path uses migration correctly, but the import path silently rejects valid older exports. The validation should accept versions that can be migrated (i.e., `version >= MIN_SUPPORTED_VERSION`).
 
-### Key Files
+---
 
-| File | Purpose |
-|------|---------|
-| `src/multiplayer/` | Full multiplayer module (60+ files) |
-| `src/multiplayer/networking/` | WebRTC mesh, signaling |
-| `src/multiplayer/protocol/` | Message encoding/decoding |
-| `src/campaign/handlers/lobby-*.ts` | Lobby screen handlers |
+### 8. `Math.random()` used in replay storage ID generation
 
-## Key Files
+**File:** `src/replay/storage.ts:105`
+**Category:** Maintenance
+**Severity:** Low
 
-| File | Purpose |
-|------|---------|
-| `src/campaign/campaign-state.ts` | Main state interface |
-| `src/campaign/controller.ts` | Campaign flow orchestration |
-| `src/campaign/sector.ts` | Sector constants |
-| `src/campaign/pilot.ts` | Pilot types and skills |
-| `src/campaign/handlers/` | Screen transition handlers |
-| `src/campaign/mission/` | Mission launchers |
-| `src/data/prices.ts` | All economy values |
+```typescript
+function generateId(): string {
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).slice(2, 9);
+  return `${timestamp}-${random}`;
+}
+```
+
+The project rule states "No `Math.random()` - Use seeded PRNG from `src/core/prng.ts`". However, this is a storage ID generator, not game simulation logic, so it does not affect determinism. The rule violation is purely a style concern. Using `crypto.getRandomValues()` would be more robust if true uniqueness is needed, or this could be documented as an intentional exception.
+
+---
+
+### 9. Files approaching the 400-line limit
+
+**Category:** Maintenance
+**Severity:** Low
+
+Several files are at or near the 400-line project limit:
+
+| File | Lines | Risk |
+|------|-------|------|
+| `src/campaign/state-mission.ts` | 398 | At limit - any addition forces a split |
+| `src/replay/types.ts` | 388 | Near limit - multiplayer types could be extracted |
+| `src/campaign/storage/campaign-export.ts` | 376 | Approaching - import/export could be separate files |
+| `src/campaign/storage/campaign-db.ts` | 374 | Approaching |
+| `src/campaign/mission/mission-renderer.ts` | 355 | Safe for now |
+| `src/campaign/mission/mission-waves.ts` | 349 | Safe for now |
+| `src/replay/playback.ts` | 347 | Safe for now |
+
+`state-mission.ts` at 398 lines is the most urgent. The three public functions (`applyMissionResults`, `applyAmmoUsage`, `applyPilotStats`) could be split into separate modules.
+
+---
+
+### 10. Duplicated shortage-determination and message-building code
+
+**File:** `src/campaign/resupply/resupply-ship.ts:253-316` and `src/campaign/resupply/resupply-constrained.ts:126-193`
+**Category:** Maintenance
+**Severity:** Low
+
+While `getShortageReason()` is properly shared, the surrounding pattern - computing `totalShortage`, determining `shortageReason` from `hasStockIssue`/`hasCreditIssue`, and iterating over shortages to build messages - is duplicated nearly verbatim between `resupplyShipConstrained()` and `resupplyAllShips()`. Extracting a `buildResupplyMessages(shortages, storeStock, credits)` helper would eliminate this.
+
+---
+
+### 11. Salvage weapon drop probability may be too low for player satisfaction
+
+**File:** `src/campaign/salvage.ts:58-59`
+**Category:** Design
+**Severity:** Low
+
+```typescript
+// Roll salvage multiplier: 0.0 to 0.1 (0-10% of ship value)
+const multiplier = rng() * 0.1;
+```
+
+Each destroyed enemy ship rolls a 0-10% multiplier, and each weapon on that ship then has a `(multiplier)` chance (0-10%) to drop. For a ship with 2 primary weapons and 1 secondary, the expected number of weapon drops per ship is approximately `0.05 * 3 = 0.15`. In a typical mission killing 10 enemies, the expected weapon drops are ~1.5. This is intentionally scarce for roguelike tension, but worth verifying through playtesting that the rate feels rewarding enough to sustain engagement across 5 sectors.
+
+---
+
+### 12. Emergency save version check discards potentially recoverable data
+
+**File:** `src/campaign/storage/campaign-autosave.ts:158-161`
+**Category:** Bug
+**Severity:** Low
+
+```typescript
+if (save.version !== CAMPAIGN_STORAGE_VERSION) {
+  logWarn(`Emergency save version mismatch: ${save.version}`);
+  localStorage.removeItem(EMERGENCY_SAVE_KEY);
+  return null;
+}
+```
+
+Similar to issue #7, the emergency save recovery uses strict version equality. If the game is updated between the emergency save and recovery, the save is silently discarded. Emergency saves should be treated as last-resort data and attempt migration rather than immediate rejection.
+
+---
 
 ## Strengths
 
-1. **Clear Progression:** Sectors provide milestone goals
-2. **Mission Variety:** 5 types with distinct mechanics
-3. **Meaningful Choices:** Squad composition matters
-4. **Risk/Reward:** Difficulty selection creates tension
-5. **Economic Depth:** Multiple resource management decisions
-6. **Permadeath Stakes:** Commander death has weight
+### Consistent immutable state pattern
+Every state mutation across `state-mission.ts`, `loadout.ts`, `salvage.ts`, and `store/*.ts` uses immutable updates via spread operators. The `autoSave` system leverages this by doing reference equality checks (`state === lastSavedState`) to skip no-op saves. This is a clean, principled approach.
 
-## Areas for Improvement
+### Comprehensive save/load system with layered resilience
+The storage layer (`campaign-db.ts`, `campaign-autosave.ts`, `checkpoint.ts`) provides three layers of protection: normal IndexedDB saves, emergency localStorage backups on browser close, and pre-mission checkpoints for defeat recovery. The checkpoint system is particularly well-designed - it stores the state before a mission so that defeat rolls back to the pre-mission state rather than losing progress.
 
-1. **Mid-Game Pacing:** Sectors 2-3 can feel similar
-2. **Pilot Identity:** No personality or backstory for pilots
-3. **Single Currency:** Credits are the only resource type
-4. **Linear Missions:** No side objectives or branching
-5. **Replay Penalty:** 50% reward makes grinding tedious
-6. **Wingman AI:** Limited control over wingman behavior
+### Well-engineered replay system
+The replay system demonstrates excellent engineering:
+- Versioned format with forward-compatible migration (`storage.ts:migrateReplay`)
+- RLE compression for input sequences (`compression.ts`)
+- Gzip compression for storage (`gzip.ts`)
+- Separate metadata for efficient listing without decompression
+- Per-player input streams for multiplayer support
+- Deterministic world reconstruction from seed + inputs
 
-## Balance Observations
+### Clean mission type extensibility
+The mission type system follows a consistent pattern: each type has a launcher, a tick function, a completion check, and a results display. The `Contract` type uses optional typed data fields (`escortData`, `ambushData`, etc.) that cleanly separate mission-specific configuration. Adding a new mission type is well-documented in `CLAUDE.md`.
 
-| Observation | Impact |
-|-------------|--------|
-| **Easy missions dominant** | Optimal play is always easy mode |
-| **Hard missions punishing** | Negative expected value for average players |
-| **Ship loss costly** | Single loss can wipe mission profit |
-| **Ace pilots expensive** | 700 cr rarely worth over 2× regular |
-| **Sector advance timing** | Players often advance too early |
+### Thoughtful store trickle system
+`store-trickle.ts` provides a natural resupply mechanic where store stock probabilistically increases after each mission. The probability curves (70% for ammo/missiles, 50% for weapons) create meaningful scarcity without hard gates. The capacity-based stock limits in `store-catalog.ts` scale with ship class appropriately.
+
+### Good auto-save debouncing
+The auto-save coordinator in `campaign-autosave.ts` handles concurrent saves correctly: it queues saves during in-progress operations and uses the latest state for the queued save. The `visibilitychange` handler provides an intermediate layer between normal saves and emergency saves.
+
+### Robust ejection system
+The ejection system (`ejection.ts`) creates meaningful risk escalation through an elegant probability curve that increases KIA risk with each ejection. The system uses seeded PRNG for deterministic outcomes while maintaining the feel of randomness.
+
+### Well-structured pilot XP and skill system
+`pilot-xp.ts` and `pilot-skills.ts` provide a clean XP-to-skill progression with manual spending. Ship-specific skills (`pilot.shipSkills[shipClass]`) add strategic depth to pilot-ship assignment decisions.
+
+---
+
+## Recommendations
+
+### Priority 1: Fix campaign export version check (Issue #7)
+This is the most impactful bug. Players who export a campaign and then update the game will be unable to import their save, even though the underlying migration system can handle it. Change `validateExportedCampaign` to accept versions within the migratable range and apply migration during import.
+
+### Priority 2: Split `state-mission.ts` before it exceeds 400 lines (Issue #9)
+At 398 lines, this file will exceed the limit with any addition. Split into `state-mission-results.ts` (applyMissionResults), `state-mission-ammo.ts` (applyAmmoUsage), and `state-mission-stats.ts` (applyPilotStats + salary calculation).
+
+### Priority 3: Extract shared weapon property copying (Issue #4)
+Create a `copyOptionalPrimaryStats(weapon, stats)` and `copyOptionalSecondaryStats(weapon, stats)` helper to eliminate the duplicated 15-line blocks. This will prevent missed properties when new weapon features are added.
+
+### Priority 4: Remove debug console.log statements (Issue #1)
+Straightforward cleanup - remove or convert to `logDebug()`.
+
+### Priority 5: Refactor `showResults` to use an options object (Issue #5)
+Convert the 12-parameter function to accept a `ShowResultsOptions` interface. This improves readability and makes it safe to add new mission result types.
+
+### Lower priority
+- Consider normalizing pilot data to eliminate dual-update requirement (Issue #3)
+- Extract resupply message building into shared helper (Issue #10)
+- Monitor emergency save sizes in production (Issue #6)
+- Document `Math.random()` exception in storage code (Issue #8)
