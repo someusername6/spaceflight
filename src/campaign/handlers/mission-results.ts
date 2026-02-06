@@ -10,12 +10,9 @@ import type { World } from '../../core/types';
 import { triggerReturnToLobby } from '../../multiplayer/session-lifecycle';
 import {
   getScreenElement,
-  goToLobby,
   goToSquadron,
-  goToTitle,
   Screen,
 } from '../../ui/common/screens';
-import { bindLobbyScreen, renderLobbyScreen } from '../../ui/screens/lobby';
 import {
   type AmbushResultsDisplay,
   type AttackStationResultsDisplay,
@@ -24,26 +21,13 @@ import {
   type StationDefenseResultsDisplay,
 } from '../../ui/screens/results/results';
 import type { SalaryInfo } from '../../ui/screens/results/results-rewards';
-import { resetTitleScreen } from '../../ui/screens/title';
-import { startCampaignGameplay } from '../controller';
 import type { CampaignController } from '../controller-types';
 import type { SalvageResult } from '../salvage';
 import type { Contract } from '../types';
-import {
-  createNavigationHandler,
-  setupContractsScreen,
-  setupSquadronScreen,
-} from './campaign-handlers';
-import {
-  changeCallsign,
-  changePermissions,
-  isLaunchCountdownActive,
-  sendChat,
-  toggleReady,
-} from './lobby-actions';
+import { setupContractsScreen, setupSquadronScreen } from './campaign-handlers';
+import { sendChat } from './lobby-actions';
 import { getLobbyContext } from './lobby-context';
-import { cleanupLobby } from './lobby-handlers';
-import { setupTitleScreen } from './menu-handlers';
+import { rebindLobbyScreen } from './lobby-handlers';
 
 /** Options for showing the singleplayer results screen */
 export interface ShowResultsOptions {
@@ -110,20 +94,21 @@ export function showResults(options: ShowResultsOptions): void {
  * - Host: Shows Continue button that returns all players to lobby
  * - Guest: Shows "Waiting for host..." message
  */
-export function showMultiplayerResults(
-  controller: CampaignController,
-  victory: boolean,
-  contract: Contract,
-  _setupContractsScreen: (controller: CampaignController) => void,
-  world?: World,
-  salvage?: SalvageResult | null,
-  earnedReward?: number,
-  escortResults?: EscortResultsDisplay,
-  ambushResults?: AmbushResultsDisplay,
-  stationDefenseResults?: StationDefenseResultsDisplay,
-  attackStationResults?: AttackStationResultsDisplay,
-  salaryInfo?: SalaryInfo,
-): void {
+export function showMultiplayerResults(options: ShowResultsOptions): void {
+  const {
+    controller,
+    victory,
+    contract,
+    setupContractsScreen: _setupContractsScreen,
+    world,
+    salvage,
+    earnedReward,
+    escortResults,
+    ambushResults,
+    stationDefenseResults,
+    attackStationResults,
+    salaryInfo,
+  } = options;
   const { screenManager } = controller;
   const resultsElement = getScreenElement(screenManager, Screen.RESULTS);
 
@@ -149,59 +134,7 @@ export function showMultiplayerResults(
 
   // Setup the return-to-lobby callback
   lobbyCtx.onReturnToLobby = () => {
-    // Navigate to lobby and re-setup screen
-    const lobbyElement = getScreenElement(screenManager, Screen.LOBBY);
-    const campaignState = screenManager.campaignState;
-
-    renderLobbyScreen(lobbyElement);
-    goToLobby(screenManager);
-
-    // Re-bind lobby screen with callbacks
-    const campaignInfo = campaignState
-      ? {
-          credits: campaignState.credits,
-          currentSector: campaignState.currentSector,
-        }
-      : undefined;
-
-    bindLobbyScreen(
-      lobbyElement,
-      lobbyCtx.lobbyState,
-      {
-        onReady: (ready) => {
-          const ctx = getLobbyContext();
-          if (ctx) toggleReady(ctx, ready);
-        },
-        onSendChat: (text) => {
-          const ctx = getLobbyContext();
-          if (ctx) sendChat(ctx, text);
-        },
-        onBack: () => {
-          // Clean up lobby and return to title
-          cleanupLobby();
-          void resetTitleScreen();
-          goToTitle(screenManager);
-          const onStartGameplay = () => startCampaignGameplay(controller);
-          void setupTitleScreen(controller, onStartGameplay);
-        },
-        onPermissionChange: (playerId, permissions) => {
-          const ctx = getLobbyContext();
-          if (ctx) changePermissions(ctx, playerId, permissions);
-        },
-        onCallsignChange: (newCallsign) => {
-          const ctx = getLobbyContext();
-          if (ctx) return changeCallsign(ctx, newCallsign);
-          return { success: false, error: 'Not connected' };
-        },
-        onNavigate: createNavigationHandler(
-          controller,
-          'lobby',
-          setupContractsScreen,
-        ),
-        isCountdownActive: isLaunchCountdownActive,
-      },
-      campaignInfo,
-    );
+    rebindLobbyScreen(controller, lobbyCtx);
   };
 
   // Create continue handler

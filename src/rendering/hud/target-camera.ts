@@ -31,6 +31,8 @@ export interface TargetCamera {
   dirLight: THREE.DirectionalLight | null;
   /** Scene reference for cleanup */
   scene: THREE.Scene | null;
+  /** Cached scene lights (excludes dirLight) to avoid per-frame traversal */
+  cachedSceneLights: THREE.Light[] | null;
 }
 
 // Reusable vectors for camera positioning
@@ -84,6 +86,7 @@ export function createTargetCamera(): TargetCamera {
     pixelBuffer,
     dirLight: null,
     scene: null,
+    cachedSceneLights: null,
   };
 }
 
@@ -144,14 +147,24 @@ export function updateTargetCamera(
   targetCamera.dirLight.target.position.copy(targetPos);
   targetCamera.dirLight.target.updateMatrixWorld();
 
-  // Find and disable scene lights, enable our directional light
-  const sceneLights: { light: THREE.Light; intensity: number }[] = [];
-  scene.traverse((obj) => {
-    if (obj !== targetCamera.dirLight && obj instanceof THREE.Light) {
-      sceneLights.push({ light: obj, intensity: obj.intensity });
-      obj.intensity = 0;
-    }
-  });
+  // Cache scene lights on first use to avoid per-frame traversal
+  if (!targetCamera.cachedSceneLights) {
+    const lights: THREE.Light[] = [];
+    scene.traverse((obj) => {
+      if (obj !== targetCamera.dirLight && obj instanceof THREE.Light) {
+        lights.push(obj);
+      }
+    });
+    targetCamera.cachedSceneLights = lights;
+  }
+
+  // Disable scene lights, enable our directional light
+  const cachedLights = targetCamera.cachedSceneLights;
+  const savedIntensities: number[] = [];
+  for (const light of cachedLights) {
+    savedIntensities.push(light.intensity);
+    light.intensity = 0;
+  }
   targetCamera.dirLight.intensity = 3;
 
   // Render to target (must explicitly clear for skybox to render)
@@ -162,8 +175,9 @@ export function updateTargetCamera(
   webglRenderer.setRenderTarget(currentRenderTarget);
 
   // Restore scene lights, disable our directional light
-  for (const { light, intensity } of sceneLights) {
-    light.intensity = intensity;
+  for (let i = 0; i < cachedLights.length; i++) {
+    const light = cachedLights[i];
+    if (light) light.intensity = savedIntensities[i] ?? 0;
   }
   targetCamera.dirLight.intensity = 0;
 
@@ -234,4 +248,5 @@ export function disposeTargetCamera(targetCamera: TargetCamera): void {
     targetCamera.scene.remove(targetCamera.dirLight);
     targetCamera.dirLight.dispose();
   }
+  targetCamera.cachedSceneLights = null;
 }

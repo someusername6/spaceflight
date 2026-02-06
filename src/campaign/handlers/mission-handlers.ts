@@ -18,13 +18,11 @@ import {
 import {
   getScreenElement,
   goToGameOver,
-  goToLobby,
   goToSquadron,
   goToTitle,
   Screen,
   updateCampaignState,
 } from '../../ui/common/screens';
-import { bindLobbyScreen, renderLobbyScreen } from '../../ui/screens/lobby';
 import { collectDebriefData } from '../../ui/screens/results/debrief';
 import {
   createGameOverUI,
@@ -41,19 +39,10 @@ import {
   loadCheckpoint,
 } from '../storage';
 import type { Contract } from '../types';
-import {
-  createNavigationHandler,
-  setupSquadronScreen,
-} from './campaign-handlers';
-import {
-  changeCallsign,
-  changePermissions,
-  isLaunchCountdownActive,
-  sendChat,
-  toggleReady,
-} from './lobby-actions';
+import { setupSquadronScreen } from './campaign-handlers';
+import { sendChat } from './lobby-actions';
 import { getLobbyContext, setLobbyContext } from './lobby-context';
-import { cleanupLobby } from './lobby-handlers';
+import { rebindLobbyScreen } from './lobby-handlers';
 import { setupTitleScreen } from './menu-handlers';
 
 // Re-export results functions for backwards compatibility
@@ -107,58 +96,7 @@ export function handleNonIronmanDefeat(
         logError('No checkpoint found for non-ironman defeat in multiplayer');
       }
 
-      // Navigate to lobby and re-setup screen
-      const lobbyElement = getScreenElement(screenManager, Screen.LOBBY);
-      const campaignState = screenManager.campaignState;
-
-      renderLobbyScreen(lobbyElement);
-      goToLobby(screenManager);
-
-      // Re-bind lobby screen with callbacks
-      const campaignInfo = campaignState
-        ? {
-            credits: campaignState.credits,
-            currentSector: campaignState.currentSector,
-          }
-        : undefined;
-
-      bindLobbyScreen(
-        lobbyElement,
-        lobbyCtx.lobbyState,
-        {
-          onReady: (ready) => {
-            const ctx = getLobbyContext();
-            if (ctx) toggleReady(ctx, ready);
-          },
-          onSendChat: (text) => {
-            const ctx = getLobbyContext();
-            if (ctx) sendChat(ctx, text);
-          },
-          onBack: () => {
-            cleanupLobby();
-            void resetTitleScreen();
-            goToTitle(screenManager);
-            const onStartGameplay = () => startCampaignGameplay(controller);
-            void setupTitleScreen(controller, onStartGameplay);
-          },
-          onPermissionChange: (playerId, permissions) => {
-            const ctx = getLobbyContext();
-            if (ctx) changePermissions(ctx, playerId, permissions);
-          },
-          onCallsignChange: (newCallsign) => {
-            const ctx = getLobbyContext();
-            if (ctx) return changeCallsign(ctx, newCallsign);
-            return { success: false, error: 'Not connected' };
-          },
-          onNavigate: createNavigationHandler(
-            controller,
-            'lobby',
-            setupContractsScreen,
-          ),
-          isCountdownActive: isLaunchCountdownActive,
-        },
-        campaignInfo,
-      );
+      rebindLobbyScreen(controller, lobbyCtx);
     };
 
     const onContinue = () => {

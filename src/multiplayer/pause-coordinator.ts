@@ -64,7 +64,8 @@ export function initPauseCoordination(
   config: PauseCoordinatorConfig,
 ): PauseCoordinatorHandle {
   const { router, game, lobbyContext } = config;
-  const { isHost, localPlayerId, lobbyState } = lobbyContext;
+  const { isHost, localPlayerId } = lobbyContext;
+  const getLobbyState = () => lobbyContext.lobbyState;
 
   let pauseState: PauseState | null = null;
   let countdownInterval: ReturnType<typeof setInterval> | null = null;
@@ -75,7 +76,9 @@ export function initPauseCoordination(
   // =========================================================================
 
   function getLocalCallsign(): string {
-    const player = lobbyState.players.find((p) => p.playerId === localPlayerId);
+    const player = getLobbyState().players.find(
+      (p) => p.playerId === localPlayerId,
+    );
     return player?.callsign ?? 'Unknown';
   }
 
@@ -185,7 +188,7 @@ export function initPauseCoordination(
       reason,
       initiatedBy,
       initiatedByCallsign,
-      players: lobbyPlayersToPausePlayers(lobbyState.players),
+      players: lobbyPlayersToPausePlayers(getLobbyState().players),
       localPlayerId,
       isHost,
     });
@@ -216,7 +219,7 @@ export function initPauseCoordination(
     router,
     isHost,
     localPlayerId,
-    lobbyState,
+    getLobbyState,
     getPauseState: () => pauseState,
     setPauseState: updateState,
     getNextChatId: () => nextChatId++,

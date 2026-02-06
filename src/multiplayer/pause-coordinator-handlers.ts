@@ -29,7 +29,7 @@ export interface HandlerContext {
   router: MessageRouter;
   isHost: boolean;
   localPlayerId: string;
-  lobbyState: { players: LobbyPlayer[] };
+  getLobbyState: () => { players: LobbyPlayer[] };
   getPauseState: () => PauseState | null;
   setPauseState: (state: PauseState) => void;
   getNextChatId: () => number;
@@ -55,7 +55,7 @@ export interface HandlerContext {
  * Set up all message handlers for pause coordination.
  */
 export function setupPauseHandlers(ctx: HandlerContext): void {
-  const { router, isHost, lobbyState } = ctx;
+  const { router, isHost } = ctx;
 
   // Handle pause request from other players
   router.onPauseRequest((msg) => {
@@ -169,7 +169,9 @@ export function setupPauseHandlers(ctx: HandlerContext): void {
 
   // Handle peer disconnect
   router.onPeerDisconnect = (peerId: string) => {
-    const player = lobbyState.players.find((p) => p.playerId === peerId);
+    const player = ctx
+      .getLobbyState()
+      .players.find((p) => p.playerId === peerId);
     if (!player) return;
 
     const callsign = player.callsign;

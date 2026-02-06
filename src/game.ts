@@ -167,8 +167,9 @@ export function gameFrame(game: Game, currentTime: number): void {
 
   // When paused, skip physics but still render frozen frame
   if (!game.paused) {
-    // Accumulate time
+    // Accumulate time (cap to prevent spiral of death)
     game.accumulator += delta;
+    game.accumulator = Math.min(game.accumulator, TICK_MS * 5);
 
     // Fixed timestep updates (deterministic)
     while (game.accumulator >= TICK_MS) {

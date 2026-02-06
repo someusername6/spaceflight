@@ -6,9 +6,26 @@
 
 import { logDebug } from '../core/logger';
 import { isPlayerPilot } from '../multiplayer/ship-assignment';
+import type { Pilot } from './pilot';
 import { PILOT_SALARIES } from './pilot-skills';
 import { applyXP, calculateMissionXP, XP_EJECTION_SURVIVAL } from './pilot-xp';
 import type { CampaignState, SkillLevel } from './types';
+
+/**
+ * Apply an updater function to pilots embedded in ships (denormalized data).
+ * Returns null from updater to skip, or the same reference if unchanged.
+ */
+export function syncPilotsToShips(
+  ships: CampaignState['ships'],
+  updater: (pilot: Pilot) => Pilot | null,
+): CampaignState['ships'] {
+  return ships.map((ship) => {
+    if (!ship.pilot) return ship;
+    const updated = updater(ship.pilot);
+    if (!updated || updated === ship.pilot) return ship;
+    return { ...ship, pilot: updated };
+  });
+}
 
 /** Salary breakdown entry for a single pilot */
 export interface SalaryEntry {
@@ -140,12 +157,7 @@ export function applyPilotStats(
   }
 
   // Also update pilots embedded in ships (data is denormalized)
-  const updatedShips = state.ships.map((ship) => {
-    if (!ship.pilot) return ship;
-    const updatedPilot = applyStats(ship.pilot);
-    if (updatedPilot === ship.pilot) return ship; // No change
-    return { ...ship, pilot: updatedPilot };
-  });
+  const updatedShips = syncPilotsToShips(state.ships, applyStats);
 
   return {
     ...state,

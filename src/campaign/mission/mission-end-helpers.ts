@@ -201,20 +201,20 @@ export function handleMultiplayerResults(
   clearLobbyChat(lobbyCtx);
   setDebriefState(lobbyCtx, outcomeData);
 
-  showMultiplayerResults(
+  showMultiplayerResults({
     controller,
-    missionEndState.victory,
+    victory: missionEndState.victory,
     contract,
     setupContractsScreen,
     world,
-    salvageResult,
-    baseReward,
-    missionEndState.escortResults,
-    missionEndState.ambushResults,
-    missionEndState.stationDefenseResults,
-    missionEndState.attackStationResults,
+    salvage: salvageResult,
+    earnedReward: baseReward,
+    escortResults: missionEndState.escortResults,
+    ambushResults: missionEndState.ambushResults,
+    stationDefenseResults: missionEndState.stationDefenseResults,
+    attackStationResults: missionEndState.attackStationResults,
     salaryInfo,
-  );
+  });
 }
 
 // =============================================================================

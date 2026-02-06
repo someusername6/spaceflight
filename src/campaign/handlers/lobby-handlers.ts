@@ -75,7 +75,8 @@ export { getCampaignSyncManager, getLobbyState, getMessageRouter, isInLobby };
 
 // Re-export from lobby-actions (moved there to break circular dependencies)
 export { updateAndSyncCampaignState } from './lobby-actions';
-
+// Re-export from lobby-rebind
+export { rebindLobbyScreen } from './lobby-rebind';
 // Re-export from lobby-session
 export { cleanupLobby } from './lobby-session';
 

@@ -7,6 +7,7 @@
 import { logDebug } from '../core/logger';
 import { isPlayerPilot } from '../multiplayer/ship-assignment';
 import { rollEjectionOutcome } from './ejection';
+import { syncPilotsToShips } from './state-mission-stats';
 import { applyStoreTrickle } from './store/store-trickle';
 import type { CampaignState } from './types';
 
@@ -162,13 +163,10 @@ export function applyMissionResults(
   });
 
   // Also update pilots embedded in surviving ships (data is denormalized)
-  const updatedShips = survivingShips.map((ship) => {
-    if (!ship.pilot) return ship;
-    const updatedPilot = updatePilotAfterMission(ship.pilot);
-    // Pilot removed (shouldn't happen for surviving ships) or unchanged
-    if (!updatedPilot || updatedPilot === ship.pilot) return ship;
-    return { ...ship, pilot: updatedPilot };
-  });
+  const updatedShips = syncPilotsToShips(
+    survivingShips,
+    updatePilotAfterMission,
+  );
 
   // Track completed contracts (don't add duplicates)
   const completedContracts =

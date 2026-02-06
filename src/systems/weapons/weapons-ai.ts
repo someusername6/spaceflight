@@ -97,11 +97,8 @@ export function handleAIPrimaryWeapons(
     // All weapons - set to 'all' mode
     setLinkModeByType(weapons, 'all');
   } else if (selection.mode === 'single' && selection.index !== undefined) {
-    // Single weapon type - set mode to that weapon's type (fires ALL of that type)
-    const selectedWeapon = weapons.weapons[selection.index];
-    if (selectedWeapon) {
-      setLinkModeByType(weapons, selectedWeapon.name);
-    }
+    // Single weapon bank - set mode to bank index string (matches linkModes entries)
+    setLinkModeByType(weapons, String(selection.index));
   }
 
   // Execute weapon selection (fire all weapons matching current link mode)

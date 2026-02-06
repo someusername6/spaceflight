@@ -123,6 +123,9 @@ function hashSystemState(
       hash.addFloat64(beam.direction.x);
       hash.addFloat64(beam.direction.y);
       hash.addFloat64(beam.direction.z);
+      hash.addFloat64(beam.lastInstantFireTime ?? 0);
+      hash.addBool(beam.pulseActive ?? false);
+      hash.addFloat64(beam.lastPulseTime ?? 0);
     }
   }
 
