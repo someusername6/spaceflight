@@ -5,7 +5,9 @@
  */
 
 import { resetActionClient } from '../../multiplayer/action-client';
+import { clearAllRateLimits } from '../../multiplayer/chat-validation';
 import { resetLaunchState } from '../../multiplayer/launch-flow';
+import { resetChatMessageIds } from '../../multiplayer/lobby-state';
 import { clearMultiplayerContext } from '../../multiplayer/multiplayer-context';
 import { broadcastSessionEnded } from '../../multiplayer/session-lifecycle';
 import { goBackFromLobby, Screen } from '../../ui/common/screens';
@@ -40,6 +42,8 @@ export async function handleSessionEndedForGuest(
   clearMultiplayerContext();
   resetLaunchState();
   resetActionClient();
+  clearAllRateLimits();
+  resetChatMessageIds();
   setLobbyContext(null);
 
   // If already on game over screen (ironman death), don't navigate away
@@ -90,6 +94,10 @@ export function cleanupLobby(): void {
 
   // Reset action client state (pending requests, handler flag)
   resetActionClient();
+
+  // Clear chat rate limits and message ID counter
+  clearAllRateLimits();
+  resetChatMessageIds();
 
   // Clear lobby context
   setLobbyContext(null);

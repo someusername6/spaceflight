@@ -69,8 +69,6 @@ export interface LobbyStateInit {
 
 /** Create initial lobby state */
 export function createLobbyState(init: LobbyStateInit): LobbyState {
-  // Note: nextMessageId intentionally NOT reset here to avoid ID collisions
-  // across sessions. IDs only need to be unique within a lobby's chat history.
   return {
     roomCode: init.roomCode,
     localPlayerId: init.localPlayerId,
@@ -209,6 +207,11 @@ export function getLocalPlayer(state: LobbyState): LobbyPlayer | undefined {
 
 /** Auto-incrementing message ID */
 let nextMessageId = 1;
+
+/** Reset the chat message ID counter. Call when leaving a lobby. */
+export function resetChatMessageIds(): void {
+  nextMessageId = 1;
+}
 
 /** Add a chat message */
 export function addChatMessage(

@@ -268,11 +268,7 @@ export class MultiplayerSession {
    * This is a low-level method for the underlying session.
    */
   pause(): void {
-    // The rollback-netcode session may have a pause method
-    // If not available, pausing is handled at the game level
-    if ('pause' in this.session && typeof this.session.pause === 'function') {
-      (this.session as { pause: () => void }).pause();
-    }
+    this.session.pause();
   }
 
   /**
@@ -281,16 +277,14 @@ export class MultiplayerSession {
    */
   resume(): void {
     if (!this._isHost) return;
-    if ('resume' in this.session && typeof this.session.resume === 'function') {
-      (this.session as { resume: () => void }).resume();
-    }
+    this.session.resume();
   }
 
   /**
    * Check if session supports pause/resume.
    */
   get supportsPause(): boolean {
-    return 'pause' in this.session && typeof this.session.pause === 'function';
+    return true;
   }
 }
 

@@ -202,7 +202,17 @@ export function decodeJson<T>(str: string): T {
 // =============================================================================
 
 export function stringSize(str: string): number {
-  return 4 + textEncoder.encode(str).length;
+  let byteLen = 0;
+  for (let i = 0; i < str.length; i++) {
+    const code = str.charCodeAt(i);
+    if (code < 0x80) byteLen += 1;
+    else if (code < 0x800) byteLen += 2;
+    else if (code >= 0xd800 && code <= 0xdbff) {
+      byteLen += 4;
+      i++; // skip low surrogate
+    } else byteLen += 3;
+  }
+  return 4 + byteLen;
 }
 
 export function permissionSize(): number {
@@ -237,6 +247,7 @@ export function writePermission(wb: WriteBuffer, perm: Permission): void {
 
 export function readPermission(rb: ReadBuffer): Permission {
   const shipEditValue = readByte(rb);
+  if (shipEditValue > 2) throw new ProtocolError('Invalid shipEdit value');
   const shipEdit =
     shipEditValue === 0 ? 'none' : shipEditValue === 1 ? 'own' : 'any';
   return {

@@ -89,6 +89,7 @@ function multiplayerFrame(
   // When paused, skip simulation but still render frozen frame
   if (!state.paused) {
     state.accumulator += delta;
+    state.accumulator = Math.min(state.accumulator, TICK_MS * 5);
 
     // Fixed timestep updates
     while (state.accumulator >= TICK_MS) {

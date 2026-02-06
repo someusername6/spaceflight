@@ -347,6 +347,7 @@ function decodePauseRequest(rb: ReadBuffer): PauseRequestMessage {
   const playerId = readString(rb);
   const callsign = readString(rb);
   const reasonByte = readByte(rb);
+  if (reasonByte > 2) throw new ProtocolError('Invalid pause reason');
   const reason =
     reasonByte === 0
       ? 'player-request'

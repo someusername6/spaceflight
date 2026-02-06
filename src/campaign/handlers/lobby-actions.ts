@@ -19,7 +19,6 @@ import {
   createReadyStateMessage,
   createShipAssignmentMessage,
   lobbyPlayerToGamePlayer,
-  processLobbyMessage,
 } from '../../multiplayer/lobby-messages';
 import {
   type LobbyState,
@@ -47,7 +46,7 @@ import {
 } from '../../ui/screens/squadron';
 import { isStoreUIActive, refreshStoreUI } from '../../ui/screens/store/store';
 import type { CampaignState } from '../types';
-import { broadcastMessage } from './lobby-broadcast';
+import { broadcastAndProcess, broadcastMessage } from './lobby-broadcast';
 import { getLobbyContext, type LobbyContext } from './lobby-context';
 import {
   detectMissingShipAssignments,
@@ -209,17 +208,13 @@ export function updateAndSyncCampaignState(
 // User Actions
 // =============================================================================
 
-/**
- * Broadcast a lobby message and optimistically apply it locally.
- * Common pattern for toggleReady, sendChat, and changePermissions.
- */
+/** Broadcast a lobby message and optimistically apply it locally. */
 function broadcastAndApply(
   ctx: LobbyContext,
   message: Parameters<typeof broadcastMessage>[1],
 ): void {
-  broadcastMessage(ctx, message);
-  const result = processLobbyMessage(
-    ctx.lobbyState,
+  const result = broadcastAndProcess(
+    ctx,
     message,
     ctx.isHost ? ctx.localPlayerId : '',
   );

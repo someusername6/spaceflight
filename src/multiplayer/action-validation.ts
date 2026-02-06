@@ -141,6 +141,29 @@ const KNOWN_ACTION_TYPES = new Set([
   'spendXP',
 ]);
 
+/** Valid weapon categories */
+const VALID_CATEGORIES = new Set(['primary', 'secondary']);
+
+/** Valid item types for buy actions */
+const BUY_ITEM_TYPES = new Set(['ship', 'primary', 'secondary', 'ammo']);
+
+/** Valid item types for sell actions */
+const SELL_ITEM_TYPES = new Set([
+  'ship',
+  'primary',
+  'secondary',
+  'ammo',
+  'scrap',
+]);
+
+/** Validate a string ID field: non-empty string, max 100 chars */
+function validateStringId(value: unknown, fieldName: string): string | null {
+  if (typeof value !== 'string' || value.length === 0 || value.length > 100) {
+    return `Invalid ${fieldName}`;
+  }
+  return null;
+}
+
 /**
  * Validate that action data has the expected shape.
  * Returns null if valid, or an error message if malformed.
@@ -190,6 +213,39 @@ export function validateActionData(action: ActionRequestData): string | null {
       !Number.isInteger(action.storedShipIndex))
   ) {
     return 'Invalid storedShipIndex';
+  }
+
+  // Validate category field (equip/unequip)
+  if ('category' in action && !VALID_CATEGORIES.has(action.category)) {
+    return 'Invalid category';
+  }
+
+  // Validate itemType field (buy/sell)
+  if ('itemType' in action) {
+    const validSet = action.type === 'buy' ? BUY_ITEM_TYPES : SELL_ITEM_TYPES;
+    if (!validSet.has(action.itemType)) return 'Invalid itemType';
+  }
+
+  // Validate string ID fields present on specific action types
+  if ('itemId' in action) {
+    const err = validateStringId(action.itemId, 'itemId');
+    if (err) return err;
+  }
+  if ('shipId' in action) {
+    const err = validateStringId(action.shipId, 'shipId');
+    if (err) return err;
+  }
+  if ('pilotId' in action) {
+    const err = validateStringId(action.pilotId, 'pilotId');
+    if (err) return err;
+  }
+  if ('shipClass' in action) {
+    const err = validateStringId(action.shipClass, 'shipClass');
+    if (err) return err;
+  }
+  if ('commanderId' in action) {
+    const err = validateStringId(action.commanderId, 'commanderId');
+    if (err) return err;
   }
 
   return null;

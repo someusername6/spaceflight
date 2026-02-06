@@ -162,8 +162,20 @@ export function wireMessageHandlers(
     }
   };
 
-  // Register handlers
-  ctx.router.onChatMessage(handler);
+  // Register handlers — validate chat text on host to reject malformed messages
+  ctx.router.onChatMessage((msg) => {
+    if (ctx.isHost) {
+      if (
+        typeof msg.text !== 'string' ||
+        msg.text.trim().length === 0 ||
+        msg.text.length > 200
+      ) {
+        console.warn('[lobby-routing] ChatMessage rejected: invalid text');
+        return;
+      }
+    }
+    handler(msg);
+  });
   ctx.router.onPermissionUpdate(handler);
   ctx.router.onPlayerJoined(handler);
   ctx.router.onPlayerLeft(handler);

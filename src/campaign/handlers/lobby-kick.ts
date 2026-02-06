@@ -4,30 +4,14 @@
  * Extracted from lobby-actions.ts to keep file under 400 lines.
  */
 
-import { processLobbyMessage } from '../../multiplayer/lobby-messages';
 import { encodeMessage } from '../../multiplayer/protocol/encode';
 import {
   GameMessageType,
   type LeaveReason,
 } from '../../multiplayer/protocol/types';
 import { setLobbyState } from './lobby-actions';
-import { broadcastMessage } from './lobby-broadcast';
+import { broadcastAndProcess } from './lobby-broadcast';
 import type { LobbyContext } from './lobby-context';
-
-/**
- * Broadcast a lobby message and optimistically apply it locally.
- */
-function broadcastAndApply(
-  ctx: LobbyContext,
-  message: Parameters<typeof broadcastMessage>[1],
-  hostPeerId: string,
-): void {
-  broadcastMessage(ctx, message);
-  const result = processLobbyMessage(ctx.lobbyState, message, hostPeerId);
-  if (result) {
-    setLobbyState(ctx, result.state);
-  }
-}
 
 /**
  * Kick a player from the lobby (host only).
@@ -73,5 +57,8 @@ export async function kickPlayer(
     playerId,
     reason: 'kicked' as LeaveReason,
   };
-  broadcastAndApply(ctx, playerLeftMsg, ctx.localPlayerId);
+  const result = broadcastAndProcess(ctx, playerLeftMsg, ctx.localPlayerId);
+  if (result) {
+    setLobbyState(ctx, result.state);
+  }
 }
