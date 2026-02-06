@@ -98,10 +98,14 @@ export function updateBeamGlows(
         } else if (beam.weaponName === 'Torch') {
           glowColor = BEAM_GLOW_COLORS.Torch as THREE.Color;
         } else {
-          for (const [colorName, color] of Object.entries(BEAM_GLOW_COLORS)) {
-            if (beam.color.r > 0.5 && colorName === 'Red') glowColor = color;
-            if (beam.color.g > 0.5 && colorName === 'Green') glowColor = color;
-            if (beam.color.b > 0.5 && colorName === 'Blue') glowColor = color;
+          // Pick glow by dominant RGB channel (stable for mixed colors like orange)
+          const { r, g, b } = beam.color;
+          if (r >= g && r >= b) {
+            glowColor = BEAM_GLOW_COLORS.Red as THREE.Color;
+          } else if (g >= r && g >= b) {
+            glowColor = BEAM_GLOW_COLORS.Green as THREE.Color;
+          } else {
+            glowColor = BEAM_GLOW_COLORS.Blue as THREE.Color;
           }
         }
 

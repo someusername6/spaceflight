@@ -33,6 +33,8 @@ export interface TargetCamera {
   scene: THREE.Scene | null;
   /** Cached scene lights (excludes dirLight) to avoid per-frame traversal */
   cachedSceneLights: THREE.Light[] | null;
+  /** Reusable array for saving/restoring light intensities (avoids per-frame allocation) */
+  cachedIntensities: number[];
 }
 
 // Reusable vectors for camera positioning
@@ -87,6 +89,7 @@ export function createTargetCamera(): TargetCamera {
     dirLight: null,
     scene: null,
     cachedSceneLights: null,
+    cachedIntensities: [],
   };
 }
 
@@ -160,10 +163,13 @@ export function updateTargetCamera(
 
   // Disable scene lights, enable our directional light
   const cachedLights = targetCamera.cachedSceneLights;
-  const savedIntensities: number[] = [];
-  for (const light of cachedLights) {
-    savedIntensities.push(light.intensity);
-    light.intensity = 0;
+  const savedIntensities = targetCamera.cachedIntensities;
+  for (let i = 0; i < cachedLights.length; i++) {
+    const light = cachedLights[i];
+    if (light) {
+      savedIntensities[i] = light.intensity;
+      light.intensity = 0;
+    }
   }
   targetCamera.dirLight.intensity = 3;
 

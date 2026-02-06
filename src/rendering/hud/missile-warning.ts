@@ -27,6 +27,13 @@ const NO_THREAT: MissileThreatState = {
   maxEnemyLockProgress: 0,
 };
 
+/** Reusable active threat result — read values immediately, do not store reference */
+const _activeThreat: MissileThreatState = {
+  incomingCount: 0,
+  hasEnemyLock: false,
+  maxEnemyLockProgress: 0,
+};
+
 /**
  * Get current missile threat state for the player.
  * Returns information about incoming missiles and enemies locking onto player.
@@ -72,11 +79,10 @@ export function getMissileThreatState(
     return NO_THREAT;
   }
 
-  return {
-    incomingCount,
-    hasEnemyLock,
-    maxEnemyLockProgress,
-  };
+  _activeThreat.incomingCount = incomingCount;
+  _activeThreat.hasEnemyLock = hasEnemyLock;
+  _activeThreat.maxEnemyLockProgress = maxEnemyLockProgress;
+  return _activeThreat;
 }
 
 /** Per-frame cache for getMissilesTargetingPlayer (keyed on world + gameTime) */
