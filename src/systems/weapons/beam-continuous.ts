@@ -78,8 +78,8 @@ export function fireContinuousBeam(
   // Find or create beam state for this weapon slot
   let beam = findBeamState(beams, weaponIndex);
   const isPulse = weapon.isPulseBeam === true;
-  const isLance = weapon.name === 'Nuclear Lance';
-  const isTorch = weapon.name === 'Torch';
+  const isLance = weapon.isInstantBeam === true;
+  const isTorch = weapon.heatInjection !== undefined;
   if (!beam) {
     beam = createActiveBeam(
       weapon.name,

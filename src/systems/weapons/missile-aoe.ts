@@ -212,11 +212,8 @@ export function checkForEnemiesInRange(
 
     // Check faction - only count enemies
     const entityFaction = getComponent(world, entity, 'faction');
-    if (missileFaction && entityFaction) {
-      if (!areEnemies(missileFaction.faction, entityFaction.faction)) {
-        continue;
-      }
-    }
+    if (!missileFaction || !entityFaction) continue;
+    if (!areEnemies(missileFaction.faction, entityFaction.faction)) continue;
 
     const transform = getComponent(world, entity, 'transform');
     const health = getComponent(world, entity, 'health');

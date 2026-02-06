@@ -289,21 +289,24 @@ export function getCurrentLinkMode(weapons: PrimaryWeapons): string {
   return weapons.linkModes[weapons.linkMode] ?? 'all';
 }
 
+/** Pooled array for getWeaponIndicesForCurrentMode (callers iterate immediately) */
+const weaponIndicesPool: number[] = [];
+
 /** Get indices of weapons that should fire in current link mode */
 export function getWeaponIndicesForCurrentMode(
   weapons: PrimaryWeapons,
 ): number[] {
+  weaponIndicesPool.length = 0;
   const mode = getCurrentLinkMode(weapons);
 
   // 'all' mode: fire all non-instant-beam weapons
   if (mode === 'all') {
-    const indices: number[] = [];
     for (let i = 0; i < weapons.weapons.length; i++) {
       if (!weapons.weapons[i]?.isInstantBeam) {
-        indices.push(i);
+        weaponIndicesPool.push(i);
       }
     }
-    return indices;
+    return weaponIndicesPool;
   }
 
   // Individual bank mode: mode is bank index as string ('0', '1', etc.)
@@ -313,11 +316,10 @@ export function getWeaponIndicesForCurrentMode(
     bankIndex >= 0 &&
     bankIndex < weapons.weapons.length
   ) {
-    return [bankIndex];
+    weaponIndicesPool.push(bankIndex);
   }
 
-  // Fallback: empty array (shouldn't happen with valid linkModes)
-  return [];
+  return weaponIndicesPool;
 }
 
 /** Set link mode by weapon type name (for AI) */
