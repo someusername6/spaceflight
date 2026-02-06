@@ -36,6 +36,7 @@ export default defineConfig({
         manualChunks: {
           three: ['three'],
           'rollback-netcode': ['rollback-netcode'],
+          pako: ['pako'],
           multiplayer: ['./src/multiplayer/index.ts'],
           contracts: ['./src/campaign/contracts/index.ts'],
           ui: ['./src/ui/index.ts'],

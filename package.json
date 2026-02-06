@@ -1,6 +1,6 @@
 {
   "name": "spaceflight",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Space dogfight roguelike game",
   "type": "module",
   "scripts": {
@@ -23,13 +23,15 @@
   },
   "dependencies": {
     "canvas": "^3.2.0",
+    "pako": "^2.1.0",
     "rng": "^0.2.2",
-    "rollback-netcode": "^0.0.5",
+    "rollback-netcode": "^0.0.6",
     "three": "^0.170.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.11",
     "@gltf-transform/core": "^4.3.0",
+    "@types/pako": "^2.0.4",
     "@types/three": "^0.170.0",
     "fake-indexeddb": "^6.2.5",
     "incremental-convex-hull": "^1.0.1",
