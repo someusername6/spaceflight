@@ -31,56 +31,30 @@ const hitPoint = new THREE.Vector3()
 
 Nuclear Lance fires infrequently (edge-triggered, 1 ammo), so real-world impact is negligible. However, this breaks the otherwise consistent allocation discipline. If similar instant-fire weapons are added in the future, pooling should be considered.
 
-### Performance: `getWeaponIndicesForCurrentMode` allocates an array per call
-
-**File**: `src/components/weapons.ts:293-321`
-**Severity**: Low
-
-This function creates a new `number[]` every call. It is invoked at least 3 times per frame per entity with beam weapons (from `beams.ts:92`, `beams.ts:157`, and `weapon-firing.ts:52`), plus once per frame from rendering code. For 10 entities, that is 30-40 small array allocations per frame. A module-level collector with `.length = 0` reuse would be more consistent with the allocation discipline elsewhere.
-
 ### Performance: `destroyProjectilesInRadius` allocates a local array
 
-**File**: `src/systems/weapons/missile-aoe.ts:246`
+**File**: `src/systems/weapons/missile-aoe.ts:243`
 **Severity**: Low
 
 The `toDestroy` array inside `destroyProjectilesInRadius` is allocated per call. This only fires on nuke detonation (rare), so impact is negligible. Noted for consistency.
 
-### Design: `checkForEnemiesInRange` has asymmetric faction checking
-
-**File**: `src/systems/weapons/missile-aoe.ts:213-219`
-**Severity**: Low
-
-The function checks `if (missileFaction && entityFaction)` before calling `areEnemies`, but if either faction is undefined, the code falls through to the distance check without skipping the entity. In contrast, `findClosestEnemyDistance` at lines 156-158 uses `if (!ownerFaction || !entityFaction) continue;` to skip factionless entities. This means `checkForEnemiesInRange` could trigger a nuke detonation based on factionless entities. In practice all combat entities currently have factions, but the asymmetry is inconsistent.
-
 ### Design: Nuclear Lance auto-cycles link mode on empty
 
-**File**: `src/systems/weapons/beam-instant.ts:113-118`
+**File**: `src/systems/weapons/beam-instant.ts:114-117`
 **Severity**: Low (game design observation)
 
 When the Nuclear Lance depletes its 1 ammo, it calls `cycleNextLinkMode(weapons)` to switch the player's primary weapon group. This quality-of-life feature is not documented in the weapon data and could surprise players if the auto-cycle switches to an unexpected weapon group mid-combat. This behavior is specific to instant beams and not shared with other finite-ammo weapons (e.g., autocannon does not auto-cycle when empty).
 
-### Maintenance: `beam-continuous.ts` hardcodes weapon names for type checks
-
-**File**: `src/systems/weapons/beam-continuous.ts:81-82`
-**Severity**: Low
-
-```typescript
-const isLance = weapon.name === 'Nuclear Lance';
-const isTorch = weapon.name === 'Torch';
-```
-
-These checks use string literals to determine beam subtypes. The weapon data already has boolean flags (`isInstantBeam`) and properties (`heatInjection`) that could serve the same purpose. If a weapon is renamed, these checks would silently break. Using `weapon.heatInjection !== undefined` for torch detection and `weapon.isInstantBeam` for lance would be more robust.
-
 ### Maintenance: Continuous beams add heat redundantly
 
-**File**: `src/systems/weapons/beams.ts:190-196` and `src/systems/weapons/beam-continuous.ts:112-119`
+**File**: `src/systems/weapons/beams.ts:189-196` and `src/systems/weapons/beam-continuous.ts:113-119`
 **Severity**: Low
 
 For continuous (non-pulse) beams, heat is added in `beams.ts:196` via `addHeat(heat, heatToAdd)` with the combined heat of all beams scaled by dt. This is correct. However, pulse beams add their own per-pulse heat in `beam-continuous.ts:115-116`. The split between "continuous beams add heat in the parent" and "pulse beams add heat in the child" makes the heat accounting difficult to follow. The correctness depends on pulse beams never appearing alongside continuous beams in `beamWeaponsCollector`, which is true but implicit.
 
 ### Design: Gyrojet damage at point-blank is very low
 
-**File**: `src/data/weapons.ts:186-197`
+**File**: `src/data/weapons.ts:181-197`
 **Severity**: Low (game balance)
 
 The Gyrojet's `speedDamageScale` means point-blank damage is only 33 (200 * 200/1200) -- less than a single Plasma shot. With `fireRate: 0.25`, point-blank DPS is ~133 vs Plasma's ~128. For a finite-ammo weapon, this creates a narrow viability window. This may be intentional for niche kiting builds.
@@ -103,7 +77,7 @@ The `PRIMARY_WEAPONS` and `MISSILES` dictionaries at `src/data/weapons.ts` and `
 Every system follows the `(world: World, dt: number) => void` signature. Components are pure data interfaces. The weapon system correctly separates concerns: `weapons.ts` orchestrates, `weapon-firing.ts` handles link modes, `weapon-spawning.ts` creates entities, and `beam-continuous.ts`/`beam-instant.ts` handle the two beam paradigms.
 
 ### Strong allocation discipline
-Module-level reusable vectors are used consistently throughout all weapon systems (over 30 instances). The `toRemove` arrays, missile target set, and beam weapon pooling all demonstrate careful attention to GC pressure. The `fireableWeaponsCollector` array in `weapon-firing.ts:31` is reused across frames. The `closestHitResult` in `beam-raycasting.ts:45` correctly avoids allocation.
+Module-level reusable vectors are used consistently throughout all weapon systems (over 30 instances). The `toRemove` arrays, missile target set, and beam weapon pooling all demonstrate careful attention to GC pressure. The `fireableWeaponsCollector` array in `weapon-firing.ts:31` is reused across frames. The `closestHitResult` in `beam-raycasting.ts:45` correctly avoids allocation. The `getWeaponIndicesForCurrentMode` function uses a module-level pool with `.length = 0` reuse.
 
 ### Clean shared autoaim module
 The `autoaim.ts` module (35 lines) provides a single `applyAutoaimCorrection` function used by all three weapon firing paths. The implementation is minimal and correct, using a module-level reusable vector for the target direction calculation.
@@ -120,15 +94,15 @@ The `BeamDamageParams` interface includes `dt` as an explicit field, making the 
 ### Comprehensive stats tracking
 The combat stats system tracks per-weapon, per-ship statistics including shots fired/hit, beam time on target, shrapnel hits, missile seduction, and damage attribution -- all without polluting the core combat logic.
 
+### Robust faction guards in missile AOE
+The `checkForEnemiesInRange` function uses proper faction guards (`if (!missileFaction || !entityFaction) continue;`), matching the pattern in `findClosestEnemyDistance` for consistent entity filtering.
+
+### Data-driven beam type detection
+Beam type checks use data-driven properties (`weapon.isInstantBeam`, `weapon.heatInjection !== undefined`, `weapon.isPulseBeam`) instead of hardcoded weapon name strings, making them robust against weapon renames.
+
 ---
 
 ## Recommendations
 
-### Priority 1: Fix `checkForEnemiesInRange` faction guard
-Add `if (!missileFaction || !entityFaction) continue;` to match the pattern in `findClosestEnemyDistance`. This is a one-line fix that prevents factionless entities from triggering nuke detonation.
-
-### Priority 2: Replace hardcoded weapon name strings in beam-continuous.ts
-Use `weapon.heatInjection !== undefined` instead of `weapon.name === 'Torch'` and `weapon.isInstantBeam` instead of `weapon.name === 'Nuclear Lance'` for robustness against weapon renames.
-
-### Priority 3: Pool `getWeaponIndicesForCurrentMode` return array
-Use a module-level array with `.length = 0` reuse to eliminate 30-40 small array allocations per frame. This is consistent with the allocation discipline established elsewhere.
+### Priority 1: Pool `findAllBeamHits` return array
+Use a module-level array with `.length = 0` reuse to eliminate per-call allocations. Low urgency since Nuclear Lance fires infrequently.

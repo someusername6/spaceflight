@@ -6,9 +6,14 @@ set -e
 
 echo "Running pre-commit checks..."
 
-# Run Biome lint/format check
-echo "Checking formatting and lint..."
-npx biome check --staged src/ scripts/
+# Run Biome lint/format check (skip if no lintable files staged)
+STAGED_LINTABLE=$(git diff --cached --name-only -- 'src/*.ts' 'src/*.tsx' 'src/*.js' 'src/*.mjs' 'scripts/*.ts' 'scripts/*.mjs' 'scripts/*.js' | head -1)
+if [ -n "$STAGED_LINTABLE" ]; then
+  echo "Checking formatting and lint..."
+  npx biome check --staged src/ scripts/
+else
+  echo "No lintable files staged, skipping lint check."
+fi
 
 # Run TypeScript type check
 echo "Checking TypeScript types..."

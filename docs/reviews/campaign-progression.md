@@ -10,7 +10,7 @@
 
 The Campaign & Progression layer manages the roguelike core loop: squadron management, contract selection, mission launch, rewards, and persistence. The codebase is well-structured with clean separation between campaign state mutation, UI handlers, mission execution, and persistence. The immutable state pattern is applied consistently, and the replay system demonstrates thoughtful engineering with versioned formats, compression, and deterministic reconstruction.
 
-The remaining issues are maintenance concerns around code duplication, parameter style, and minor design notes.
+The remaining issues are minor design notes around edge-case resilience and game balance tuning.
 
 ---
 
@@ -33,73 +33,6 @@ The emergency save serializes the entire `CampaignState` as uncompressed JSON in
 **Severity:** Low (informational)
 
 Each destroyed enemy ship rolls a 0-10% multiplier, and each weapon has a `(multiplier)` chance (0-10%) to drop. The expected number of weapon drops per 10-enemy mission is approximately 1.5. This is intentionally scarce for roguelike tension but worth monitoring through playtesting.
-
----
-
-### 3. Unused `_setupContractsScreen` parameter in `showMultiplayerResults`
-
-**File:** `src/campaign/handlers/mission-results.ts:118`
-**Category:** Bug (minor)
-**Severity:** Low
-
-The `_setupContractsScreen` parameter (prefixed with underscore indicating it is intentionally unused) in `showMultiplayerResults` is never used within that function. However, when the fallback to singleplayer occurs (line 137), it passes the module-level `setupContractsScreen` import instead of the parameter:
-
-```typescript
-if (!lobbyCtx) {
-  showResults({
-    controller,
-    ...
-    setupContractsScreen, // Uses the imported module function, not the parameter
-    ...
-  });
-  return;
-}
-```
-
-This works because the imported `setupContractsScreen` and the parameter would be the same function, but the parameter should either be used in the fallback or removed entirely to avoid confusion.
-
----
-
-### 4. Resupply message-building code still partially duplicated
-
-**File:** `src/campaign/resupply/resupply-ship.ts:288-324` and `src/campaign/resupply/resupply-constrained.ts:117-168`
-**Category:** Maintenance
-**Severity:** Low
-
-While the shortage reason determination is now properly shared, the message-building loops remain duplicated between `resupplyShipConstrained()` and `resupplyAllShipsConstrained()`. Both files iterate over `fromStorage`, `bought`, and `shortages` maps to build identical message formats.
-
-A shared `buildResupplyMessages(fromStorage, bought, shortages, storeStock, credits)` helper would eliminate approximately 50 lines of duplication.
-
----
-
-### 5. `createResultsUI` still takes many positional parameters
-
-**File:** `src/campaign/handlers/mission-results.ts:83-103` and `mission-handlers.ts:174-193`
-**Category:** Maintenance
-**Severity:** Low
-
-The underlying `createResultsUI` call still passes 13 positional arguments including `undefined` placeholders:
-
-```typescript
-createResultsUI(
-  resultsElement,
-  victory,
-  contract,
-  screenManager.campaignState,
-  () => { ... },       // onContinue
-  world,
-  salvage,
-  earnedReward,
-  escortResults,
-  ambushResults,
-  stationDefenseResults,
-  attackStationResults,
-  undefined,           // multiplayerOptions
-  salaryInfo,
-);
-```
-
-The `undefined` placeholder at position 12 (multiplayerOptions) is particularly error-prone. This UI function should also adopt an options interface.
 
 ---
 
@@ -128,6 +61,12 @@ The replay system demonstrates excellent engineering:
 ### Clean mission type extensibility
 The mission type system follows a consistent pattern: each type has a launcher, a tick function, a completion check, and a results display. The `Contract` type uses optional typed data fields (`escortData`, `ambushData`, etc.) that cleanly separate mission-specific configuration.
 
+### Clean results UI with options interface
+The `createResultsUI` function uses a `CreateResultsOptions` interface for optional parameters, avoiding positional parameter confusion. The `ShowResultsOptions` interface provides a clean contract for both singleplayer and multiplayer results display.
+
+### Shared resupply message building
+The `buildResupplyMessages` helper centralizes human-readable message generation for resupply operations, used consistently by both single-ship and fleet-wide resupply paths.
+
 ### Thoughtful pilot systems
 The ejection system (`ejection.ts`) creates meaningful risk escalation through probability curves that increase KIA risk with each ejection, using seeded PRNG for determinism. The XP system (`pilot-xp.ts`, `pilot-skills.ts`) provides clean manual-spending progression with ship-specific skills. The salary system scales appropriately with pilot skill level.
 
@@ -141,6 +80,4 @@ The auto-save coordinator correctly handles concurrent saves: it queues saves du
 
 ## Recommendations
 
-- Refactor `createResultsUI` to use options interface (Issue 5)
-- Extract resupply message building into shared helper (Issue 4)
 - Monitor emergency save sizes in production (Issue 1)

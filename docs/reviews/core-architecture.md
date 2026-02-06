@@ -10,28 +10,8 @@ Overall health is **good**. The ECS design is clean and principled, determinism 
 
 ## Issues
 
-### 1. `isShip` relies on negative component checks
-**File**: `src/core/ecs.ts:236-242`
-**Severity**: Low
-
-```typescript
-export function isShip(world: World, entity: Entity): boolean {
-  return (
-    hasComponent(world, entity, 'collision') &&
-    !hasComponent(world, entity, 'projectile') &&
-    !hasComponent(world, entity, 'missile')
-  );
-}
-```
-
-A ship is defined as "has collision but is not a projectile or missile". This negative definition is fragile -- if a new entity type is added that has `collision` but is not a ship, it would incorrectly be classified as a ship. Currently safe because structures use `hullCollider` without `collision`, but this is implicit rather than enforced. Used in 12+ files.
-
-**Recommendation**: Consider adding a `ship` tag component as a positive identifier, or document which entity types currently have `collision` and why this negative check remains safe.
-
----
-
-### 2. `SystemState` is a growing god-object
-**File**: `src/core/types.ts:79-218`
+### 1. `SystemState` is a growing god-object
+**File**: `src/core/types.ts:80-219`
 **Severity**: Low
 
 `SystemState` aggregates state for many unrelated systems: weapons, targeting, flight assist, beams, mission, ship identity, projectile hits, muzzle flashes, pools, input recorder, combat stats, and match stats. At 140 lines for the interface definition alone, every new system that needs cross-frame state adds fields here, requiring parallel updates in `createWorld`, serialization, and hashing.
@@ -40,8 +20,8 @@ A ship is defined as "has collision but is not a projectile or missile". This ne
 
 ---
 
-### 3. `World` uses `import()` types inline
-**File**: `src/core/types.ts:171, 210, 229-231`
+### 2. `World` uses `import()` types inline
+**File**: `src/core/types.ts:172, 211-213`
 **Severity**: Low
 
 The `World` and `SystemState` interfaces use inline `import()` type syntax for `InputRecorder`, `DestroyedShipRecord`, `SalvageableShip`, and `PRNGState`. This avoids circular dependency issues but reduces readability.
@@ -50,32 +30,8 @@ The `World` and `SystemState` interfaces use inline `import()` type syntax for `
 
 ---
 
-### 4. Serialization dispatch uses `as never` casts
-**File**: `src/serialization/components.ts:226-278`
-**Severity**: Low
-
-The `serializeComponent` function uses `component as never` for every case in the switch statement. This suppresses all type checking. If a component interface changes shape and the serializer signature no longer matches, the error will only surface at runtime.
-
-**Recommendation**: Cast to the specific type (e.g., `component as Transform`) instead of `as never` to preserve structural type checking.
-
----
-
-### 5. Dead exported functions
-**Files**: `src/serialization/world.ts:171`, `src/serialization/primitives.ts:148,162`, `src/core/mersenne-twister.ts:57`
-**Severity**: Low
-
-Several exported functions have no consumers outside their own module:
-- `estimateWorldSize` (`world.ts:171`) -- exported but never imported anywhere.
-- `isSerializedVector3` (`primitives.ts:148`) -- exported but never imported by any consumer.
-- `isSerializedQuaternion` (`primitives.ts:162`) -- same.
-- `hashcode` (`mersenne-twister.ts:57`) -- exported but only used internally.
-
-**Recommendation**: Either remove the exports or document their intended use case (e.g., debugging/development tooling).
-
----
-
-### 6. `deserializeWorldFromBytes` uses unvalidated `JSON.parse`
-**File**: `src/serialization/world.ts:162-164`
+### 3. `deserializeWorldFromBytes` uses unvalidated `JSON.parse`
+**File**: `src/serialization/world.ts:158-165`
 **Severity**: Low
 
 ```typescript
@@ -93,11 +49,14 @@ The `as SerializedWorld` cast provides no runtime validation. Acceptable for a p
 ### Excellent ECS design
 The ECS implementation is clean and principled. Entities are plain numbers, components are data-only interfaces, systems are pure functions, and the world holds all state. The `ComponentRegistry` type mapping provides compile-time safety without runtime overhead. The `ComponentTypeId` mapping with its stability comment ("never change existing IDs, only add new ones") shows forward thinking about protocol compatibility.
 
+### Positive entity identification with `shipTag`
+The `isShip` function uses a positive `shipTag` component check rather than negative exclusion of projectiles and missiles. This is robust against new entity types being added to the game.
+
 ### Determinism-first architecture
 The separation of `prng` (simulation) and `renderPrng` (visual effects) on the World object shows disciplined thinking about multiplayer determinism. The `SystemState` documentation explicitly categorizes fields as "simulation-critical" vs "transient/local" with detailed comments. The seeded PRNG with its `deriveKey` function provides save-scum-proof randomness for campaign progression.
 
 ### Comprehensive and consistent serialization
-Every component type (all 26) has co-located `serialize*`/`deserialize*` functions with compact field names using numeric type IDs. The dispatch covers all types exhaustively with error handling for unknown types. The component hashers mirror the same complete coverage. The `WORLD_SERIALIZATION_VERSION` constant and version checking provide forward compatibility.
+Every component type (all 26) has co-located `serialize*`/`deserialize*` functions with compact field names using numeric type IDs. The dispatch covers all types exhaustively with specific type casts (e.g., `component as Transform`) preserving structural type checking. The component hashers mirror the same complete coverage. The `WORLD_SERIALIZATION_VERSION` constant and version checking provide forward compatibility.
 
 ### Well-ordered system pipeline
 The `SYSTEM_ORDER` array in `src/game.ts` with its 19-step rationale comment is exemplary engineering documentation. The separation of `SIMULATION_SYSTEMS` (for replay playback) from the full `SYSTEM_ORDER` (which prepends `inputSystem`) enables the replay system to reuse the exact simulation pipeline without duplication.

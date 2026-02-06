@@ -8,100 +8,50 @@
 
 The rendering system is built on Three.js and covers 3D scene management, visual effects (projectiles, beams, explosions, shields), a 2D canvas HUD overlay (radar, reticles, weapon display), and a procedural skybox. The architecture is consistent: each subsystem follows a create/update/reset/dispose lifecycle, entity state is synced from the ECS, and Hermite interpolation smooths rendering between fixed-timestep physics ticks.
 
-Overall code quality is high. The remaining issues are a small set of allocation patterns in infrequently-called code paths, a few unnecessary geometry clones, and minor design inconsistencies.
+Overall code quality is high. The remaining issues are a small set of allocation patterns in infrequently-called code paths and a minor design inconsistency.
 
 ---
 
 ## Issues
 
-### 1. `lightning-bolt.ts` allocates vectors in pulse functions
+### 1. `lightning-bolt.ts` allocates vectors in generation functions
 **Severity:** Low
 **Category:** Performance
 
-Several functions in `lightning-bolt.ts` allocate temporary `Vector3` objects inside functions called per-pulse:
+Several functions in `lightning-bolt.ts` allocate temporary `Vector3` objects inside generation functions:
 - Line 70: `tempVec.clone().cross(perpendicular).normalize()` - inside inner subdivision loop
 - Line 75: `midpoint.clone()` - inside inner subdivision loop
 - Line 126: `toEnd.clone().normalize()` - in `generateBranches`
 - Line 132-135: `branchStart.clone()` - branch endpoint calculation
 - Lines 167-168, 180-181: Multiple `.clone()` calls in `generateOffTargetEnd`
 
-Since lightning pulses only occur a few times per second (not every frame), the practical impact is low. But in battles with many lightning weapons active simultaneously, this could become measurable.
+These are called per lightning effect creation (a few times per second), not every frame. In battles with many lightning weapons active simultaneously, this could become measurable, but practical impact is low.
 
 ---
 
-### 2. `beam-glow.ts` clones geometry for each new glow
+### 2. Geometry cloning in nuclear lance and explosion effects
 **Severity:** Low
 **Category:** Performance
 
-`src/rendering/effects/beam-glow.ts:48` calls `glowGeometry.clone()` each time a new beam glow visual is created:
-```ts
-const mesh = new THREE.Mesh(glowGeometry.clone(), material);
-```
-Since the geometry is a simple `SphereGeometry` and each mesh has its own transform/scale, the geometry could be shared directly. Glow visuals are hidden (not disposed) when inactive (line 133-136), so there is no per-frame churn here, but the initial clone is unnecessary.
+Several effect files clone shared geometries per effect instance:
 
----
+- `src/rendering/beam-effects/nuclear-lance-impact.ts:44, :59` - clones `sphereGeometry` and `ringGeometry`
+- `src/rendering/beam-effects/nuclear-lance-origin.ts:32` - clones `sphereGeometry`
+- `src/rendering/effects/explosion-visual.ts:98, :138, :153` - clones `sphereGeometry` and `nukeRingGeometry`
 
-### 3. `nuclear-lance-impact.ts` clones shared geometries per shot
-**Severity:** Low
-**Category:** Performance
-
-`src/rendering/beam-effects/nuclear-lance-impact.ts:44` and `:59` both clone shared geometries from the renderer:
-```ts
-const flash = new THREE.Mesh(renderer.sphereGeometry.clone(), flashMaterial);
-// ...
-const ring = new THREE.Mesh(renderer.ringGeometry.clone(), ringMaterial);
-```
-Similarly `nuclear-lance-origin.ts:32`:
-```ts
-const flash = new THREE.Mesh(renderer.sphereGeometry.clone(), flashMaterial);
-```
-And `explosion-visual.ts:98`, `:138`, `:153` all clone shared geometries per explosion.
-
-These are all cloned per effect instance (not per frame), and the effects are relatively infrequent (nuclear lance fires rarely, explosions happen at ship death). The geometries are properly disposed when effects complete. However, since each mesh has its own `scale` and `position`, the underlying geometry could be shared.
+These are all cloned per effect instance (not per frame), and the effects are relatively infrequent (nuclear lance fires rarely, explosions happen at ship death). The geometries are properly disposed when effects complete. Since each mesh has its own `scale` and `position`, the underlying geometry could be shared.
 
 **Recommendation:** Low priority. The current pattern works correctly and effects are infrequent. If nuclear lance or explosions ever become more common (e.g., cluster weapons), consider sharing geometry.
 
 ---
 
-### 4. `shield-effects.ts` geometry cloning
-**Severity:** Low
-**Category:** Performance
-
-`shield-effects.ts:63` calls `renderer.geometry.clone()` for each shield hit flash. There is a shared `renderer.geometry` but each hit clones it. The geometry is simple enough that the clone is small, but the pattern is inconsistent with the rest of the codebase. Each clone is properly disposed when the hit expires (line 127), so there is no leak.
-
----
-
-### 5. Module-level mutable timing state in `lead-indicators.ts`
+### 3. Module-level mutable timing state in `lead-indicators.ts`
 **Severity:** Low
 **Category:** Design
 
-`src/rendering/reticle/lead-indicators.ts:44-45` uses module-level `lastFrameTime` and `cachedDt` to compute frame delta time via `performance.now()`. This wall-clock dependency means:
-1. The smoothing rate depends on real wall-clock time, not game time. During slow-motion or fast-forward scenarios, smoothing would behave differently.
-2. The module state is shared globally and would cause issues if used from multiple rendering contexts.
-
-The `getDeltaTime()` function at line 50 is called from `drawLinkModeLeadIndicators` (line 173) and `drawMissileLeadIndicator` (line 300).
+`src/rendering/reticle/lead-indicators.ts:37-41` uses module-level mutable state for smoothed lead indicator positions. The smoothing uses frame-rate-independent exponential smoothing, which is correct. The module state is shared globally and would cause issues if used from multiple rendering contexts.
 
 **Recommendation:** Pass `dt` as a parameter from the caller rather than computing it from wall-clock time. The render loop already has access to frame timing.
-
----
-
-### 6. Inconsistent disposal patterns in `disposeRenderer`
-**Severity:** Low
-**Category:** Design
-
-`src/rendering/renderer.ts:360-378` disposes beam lines and the WebGL renderer, but does not dispose entity mesh materials. The `entityMeshes` map is simply cleared at line 377 without disposing materials. This is only called on full cleanup (game exit), so the browser will reclaim resources anyway, but it is inconsistent with the disposal discipline shown in `syncScene` at lines 280-281.
-
----
-
-### 7. `new THREE.Color()` allocation on missile mesh creation
-**Severity:** Low
-**Category:** Maintenance
-
-`src/rendering/mesh-factory.ts:128` allocates a `new THREE.Color(visual.emissive)` inside `createMissileMesh`:
-```ts
-bodyMat.color.lerp(new THREE.Color(visual.emissive), 0.3);
-```
-This is called once per missile entity creation, not per frame, so the impact is minimal. However, it violates the codebase's general pattern of avoiding allocations where module-level objects can be reused.
 
 ---
 
@@ -131,6 +81,7 @@ Most files pre-allocate scratch vectors, quaternions, and matrices at module sco
 - `lead-indicators.ts:123` - Reusable `uniqueSpeeds` Map with object pool for values
 - `target-camera.ts` - Cached scene lights and reusable intensity array
 - `missile-warning.ts` - Module-level `_activeThreat` result object and per-tick missile cache
+- `mesh-factory.ts:14` - Reusable `_scratchColor` for missile mesh creation
 
 ### Hermite Interpolation
 The renderer uses cubic Hermite interpolation (not just linear) for smooth position transitions between physics ticks (`renderer.ts:57-79`). Previous position, current position, and velocity-derived tangents produce natural-looking motion without the lag of pure lerp.
@@ -160,14 +111,14 @@ Visual randomness uses the seeded `renderPrng` (e.g., `missile-exhaust.ts:90`, `
 ### Proper Resource Cleanup
 The reset/dispose lifecycle is consistently implemented across all renderers, with correct distinction between:
 - **Reset** (replay seeking): Hides/pools active visuals, keeps shared resources
-- **Dispose** (full cleanup): Disposes all GPU resources including shared geometries
+- **Dispose** (full cleanup): Disposes all GPU resources including shared geometries, entity mesh materials, and the WebGL renderer. Canvas is removed from DOM.
+
+### Consistent geometry sharing
+Beam glow and shield effect renderers share geometry directly without cloning, demonstrating the correct pattern for effects that use per-mesh transforms.
 
 ---
 
 ## Recommendations
 
-1. **Share geometry in beam-glow.ts** (Issue 2) - remove the `.clone()` at line 48.
-2. **Share geometry in shield-effects.ts** (Issue 4) - remove the `.clone()` at line 63.
-3. **Pass dt parameter to lead indicators** (Issue 5) - eliminate wall-clock dependency.
-4. **Dispose entity mesh materials in disposeRenderer** (Issue 6) - for completeness.
-5. **Use module-level Color in mesh-factory.ts:128** (Issue 7) - minor allocation cleanup.
+1. **Share geometry in nuclear lance and explosion effects** (Issue 2) - remove the `.clone()` calls where meshes use independent transforms.
+2. **Pass dt parameter to lead indicators** (Issue 3) - eliminate wall-clock dependency.
