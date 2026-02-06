@@ -48,12 +48,7 @@ import {
   renderShipViewerWithActions,
   sortShipsCommanderFirst,
 } from './render';
-import {
-  bindViewerTabs,
-  destroyViewerTabListeners,
-  renderViewerWithTabs,
-  type ViewerTab,
-} from './viewer';
+import { bindViewerTabs, renderViewerWithTabs, type ViewerTab } from './viewer';
 
 /** Squadron UI interface */
 export interface SquadronUI {
@@ -219,12 +214,12 @@ const SquadronScreenComponent: Screen<SquadronState, SquadronProps> = {
     bindNavBar(api, onNavigate);
 
     // Bind viewer tabs
-    bindViewerTabs(element, (tab) => {
+    bindViewerTabs(api, (tab) => {
       api.setState({ activeTab: tab });
     });
 
     // Bind all squadron screen events
-    bindSquadronEvents(api, props, element);
+    bindSquadronEvents(api, props);
   },
 };
 
@@ -260,7 +255,6 @@ export function createSquadronUI(
 ): SquadronUI {
   // Clean up previous screen to prevent stale closures
   destroyHardpointListeners();
-  destroyViewerTabListeners();
   screenHandle?.destroy();
 
   const initialState: SquadronState = {
@@ -317,7 +311,6 @@ export function createSquadronUI(
     },
     destroy() {
       destroyHardpointListeners();
-      destroyViewerTabListeners();
       unmountPopoverLayer();
       screenHandle?.destroy();
       currentProps = null;

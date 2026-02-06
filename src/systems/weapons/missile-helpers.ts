@@ -15,6 +15,7 @@ import {
   queryEntities,
 } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
+import { capitalize } from '../../ui/utils/text';
 
 const MISSILE_EXPLOSION_SIZE = 4;
 const MISSILE_EXPLOSION_COLOR = new THREE.Color(1.0, 0.5, 0.1);
@@ -124,7 +125,7 @@ export function findNearestDecoy(
 
 /** Capitalize missile type for display/stats (e.g., "rocket" -> "Rocket") */
 export function capitalizeMissileType(missileType: string): string {
-  return missileType.charAt(0).toUpperCase() + missileType.slice(1);
+  return capitalize(missileType);
 }
 
 /** Check if missile should detonate based on closest approach logic */

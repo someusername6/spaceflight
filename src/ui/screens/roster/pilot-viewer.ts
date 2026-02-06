@@ -16,6 +16,7 @@ import {
   isPlayerPilot,
 } from '../../../multiplayer/ship-assignment';
 import { getShipIconPath, iconErrorHandler } from '../../ship/viewer';
+import { escapeHtml } from '../../utils';
 import {
   canPilotFlyShip,
   formatShipClass,
@@ -289,7 +290,7 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
     ? `
           <button class="btn btn-danger btn-dismiss-pilot"
                   data-pilot-id="${pilot.id}"
-                  data-pilot-name="${pilot.name}">
+                  data-pilot-name="${escapeHtml(pilot.name)}">
             Dismiss
           </button>
       `
@@ -310,7 +311,7 @@ export function renderPilotViewer(pilot: Pilot, state: CampaignState): string {
     <div class="pilot-viewer">
       <div class="pilot-viewer-header">
         <div class="pilot-header-info">
-          <div class="pilot-viewer-name">${pilot.name}</div>
+          <div class="pilot-viewer-name">${escapeHtml(pilot.name)}</div>
           <div class="pilot-rank">${rankText}</div>
         </div>
       </div>

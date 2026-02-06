@@ -5,6 +5,8 @@
  */
 
 import type { CampaignState, OwnedShip, Pilot } from '../../../campaign/types';
+import type { ScreenAPI } from '../../framework/screen';
+import type { SquadronState } from './bind-events';
 
 /** Viewer tab types */
 export type ViewerTab = 'loadout' | 'pilot';
@@ -77,48 +79,15 @@ export function renderViewerWithTabs(
   `;
 }
 
-/** Tracked listener for cleanup */
-interface TrackedListener {
-  el: HTMLElement;
-  event: string;
-  handler: EventListener;
-}
-
-/** Cleanup function for previous tab listeners */
-let tabCleanup: (() => void) | null = null;
-
-/** Clean up tab listeners (call on screen destroy) */
-export function destroyViewerTabListeners(): void {
-  tabCleanup?.();
-  tabCleanup = null;
-}
-
-/** Bind tab click events */
+/** Bind tab click events using ScreenAPI delegation */
 export function bindViewerTabs(
-  container: HTMLElement,
+  api: ScreenAPI<SquadronState>,
   onTabChange: (tab: ViewerTab) => void,
 ): void {
-  // Clean up previous listeners to prevent duplicates
-  tabCleanup?.();
-
-  const listeners: TrackedListener[] = [];
-
-  container.querySelectorAll<HTMLElement>('.viewer-tab').forEach((tabEl) => {
-    const handler = () => {
-      const tabType = tabEl.dataset.tab as ViewerTab;
-      if (tabType) {
-        onTabChange(tabType);
-      }
-    };
-    tabEl.addEventListener('click', handler);
-    listeners.push({ el: tabEl, event: 'click', handler });
-  });
-
-  // Store cleanup function for next call
-  tabCleanup = () => {
-    for (const { el, event, handler } of listeners) {
-      el.removeEventListener(event, handler);
+  api.on('.viewer-tab', 'click', (_e, el) => {
+    const tabType = el.dataset.tab as ViewerTab;
+    if (tabType) {
+      onTabChange(tabType);
     }
-    listeners.length = 0;
-  };
+  });
 }

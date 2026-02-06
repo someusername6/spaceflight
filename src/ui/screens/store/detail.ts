@@ -14,6 +14,7 @@ import {
   canConvertScrap as hasCanConvertPermission,
   canSell as hasCanSellPermission,
 } from '../../../multiplayer/context-permissions';
+import { capitalize } from '../../utils/text';
 import {
   getItemPrice,
   getStorageCount,
@@ -61,7 +62,7 @@ function renderScrapDetail(
   const conversionFee = getScrapConversionFee(itemId);
   const canConvert = canConvertScrapToShip(state, itemId) && hasConvertPerm;
   const storageText = storageCount > 0 ? `In storage: ${storageCount}` : '';
-  const displayName = itemId.charAt(0).toUpperCase() + itemId.slice(1);
+  const displayName = capitalize(itemId);
   const previewHtml = renderItemPreview(category, itemId);
 
   return `

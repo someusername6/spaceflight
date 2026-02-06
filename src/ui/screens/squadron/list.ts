@@ -8,6 +8,7 @@ import {
 } from '../../../campaign/resupply/resupply-constrained';
 import type { HireablePilot, OwnedShip, Pilot } from '../../../campaign/types';
 import { renderShipItem, renderWeaponBadges } from '../../common/ship-item';
+import { escapeHtml } from '../../utils';
 import { getFallbackSvgUrl } from '../../utils/inline-svg';
 
 /** List selection types */
@@ -83,14 +84,14 @@ function renderAvailableItem(
       role="option"
       aria-selected="${isSelected}"
       tabindex="0"
-      aria-label="${pilot.name}, ${statusText}"
+      aria-label="${escapeHtml(pilot.name)}, ${statusText}"
     >
       <div class="ship-item-icon">
         <img src="${getFallbackSvgUrl()}" alt="No ship" class="ship-item-img ship-item-img-empty" />
       </div>
       <div class="ship-item-info">
         <div class="ship-item-name-row">
-          <span class="ship-item-pilot">${isCommander ? '<span class="commander-star" aria-label="Commander">★</span>' : ''}${pilot.name}${ejectionWarning}</span>
+          <span class="ship-item-pilot">${isCommander ? '<span class="commander-star" aria-label="Commander">★</span>' : ''}${escapeHtml(pilot.name)}${ejectionWarning}</span>
         </div>
         <span class="ship-item-status${isInjured ? ' injured' : ''}">${statusText}</span>
       </div>
@@ -115,11 +116,11 @@ function renderRecruitItem(
       role="option"
       aria-selected="${isSelected}"
       tabindex="0"
-      aria-label="${recruit.name}, ${recruit.skill} pilot, ${recruit.price} credits${canAfford ? '' : ', cannot afford'}"
+      aria-label="${escapeHtml(recruit.name)}, ${recruit.skill} pilot, ${recruit.price} credits${canAfford ? '' : ', cannot afford'}"
     >
       <div class="ship-item-info recruit-info">
         <div class="ship-item-name-row">
-          <span class="ship-item-pilot">${recruit.name}</span>
+          <span class="ship-item-pilot">${escapeHtml(recruit.name)}</span>
         </div>
         <span class="ship-item-status ${skillClass}">${recruit.skill}</span>
       </div>

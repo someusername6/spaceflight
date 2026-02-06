@@ -7,6 +7,7 @@ import { SHIP_CLASSES } from '../../../data/ships';
 import { PRIMARY_WEAPONS, type WeaponStats } from '../../../data/weapons';
 import { formatBankSizes, renderShipStatsRows } from '../../ship/stats';
 import { renderHullSchematic } from '../../ship/viewer';
+import { capitalize } from '../../utils/text';
 import { renderMissileIcon, renderWeaponIcon } from '../../utils/weapon-icon';
 import type { StoreCategory } from './render';
 
@@ -101,8 +102,7 @@ export function renderPrimaryStats(weaponType: string): string {
     stats.ammo !== undefined
       ? `${stats.ammo} ${stats.ammo === 1 ? 'round' : 'rounds'}`
       : 'Unlimited';
-  const categoryText =
-    stats.category.charAt(0).toUpperCase() + stats.category.slice(1);
+  const categoryText = capitalize(stats.category);
 
   // Beam weapon classification
   const isBeam = stats.category === 'beam';
@@ -262,7 +262,7 @@ export function renderScrapStats(shipClass: string): string {
   const ship = SHIP_CLASSES[shipClass];
   if (!ship) return '';
 
-  const displayName = shipClass.charAt(0).toUpperCase() + shipClass.slice(1);
+  const displayName = capitalize(shipClass);
   const primaryBankStr = formatBankSizes(
     ship.primaryBanks,
     'bank-dots-primary',

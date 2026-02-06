@@ -7,6 +7,7 @@ import {
   isHumanControlled,
   isPlayerPilot,
 } from '../../../multiplayer/ship-assignment';
+import { capitalize } from '../../utils/text';
 
 /** Skill levels in order */
 export const SKILL_LEVELS: SkillLevel[] = [
@@ -39,7 +40,7 @@ export function renderSkillBar(skill: SkillLevel | undefined): string {
 
 /** Format ship class name for display */
 export function formatShipClass(shipClass: string): string {
-  return shipClass.charAt(0).toUpperCase() + shipClass.slice(1);
+  return capitalize(shipClass);
 }
 
 /** Check if pilot can fly a ship class (has skill, is commander, or is player) */

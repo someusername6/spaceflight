@@ -7,6 +7,7 @@ import {
   getAmmoDisplayName,
   getWeaponDisplayName,
 } from '../../../data/weapons';
+import { capitalize } from '../../utils/text';
 
 /** Render salvage section within rewards */
 export function renderSalvageSection(salvage: SalvageResult | null): string {
@@ -48,7 +49,7 @@ export function renderSalvageSection(salvage: SalvageResult | null): string {
           .map(
             ([shipClass, count]) => `
           <div class="salvage-item">
-            <span class="item-name">${shipClass.charAt(0).toUpperCase() + shipClass.slice(1)} Scrap</span>
+            <span class="item-name">${capitalize(shipClass)} Scrap</span>
             <span class="item-count">×${count}</span>
           </div>
         `,

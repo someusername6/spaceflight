@@ -10,14 +10,8 @@ import {
 } from '../framework/screen';
 import { escapeHtml } from '../utils';
 
-/** Confirm modal state */
-interface ConfirmState {
-  title: string;
-  message: string;
-  confirmText: string;
-  cancelText: string;
-  danger: boolean;
-}
+/** Confirm modal state (empty - all data comes from props) */
+type ConfirmState = Record<string, never>;
 
 /** Confirm modal props */
 interface ConfirmProps extends ModalProps<boolean> {
@@ -30,22 +24,22 @@ interface ConfirmProps extends ModalProps<boolean> {
 
 /** Confirm modal screen component */
 const ConfirmModalScreen: Screen<ConfirmState, ConfirmProps> = {
-  render(state) {
-    const confirmBtnClass = state.danger
+  render(_state, props) {
+    const confirmBtnClass = props.danger
       ? 'btn btn-large btn-danger'
       : 'btn btn-large btn-primary';
 
     return `
       <div class="alert-overlay" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
         <div class="alert-modal">
-          <div class="alert-title" id="confirm-title">${escapeHtml(state.title)}</div>
-          <div class="alert-message">${escapeHtml(state.message)}</div>
+          <div class="alert-title" id="confirm-title">${escapeHtml(props.title)}</div>
+          <div class="alert-message">${escapeHtml(props.message)}</div>
           <div class="alert-buttons">
             <button class="btn btn-large" id="btn-confirm-cancel">
-              ${escapeHtml(state.cancelText)}
+              ${escapeHtml(props.cancelText)}
             </button>
             <button class="${confirmBtnClass}" id="btn-confirm-ok">
-              ${escapeHtml(state.confirmText)}
+              ${escapeHtml(props.confirmText)}
             </button>
           </div>
         </div>
@@ -98,11 +92,9 @@ export function showConfirm(
     danger = false,
   } = options;
 
-  const config = { title, message, confirmText, cancelText, danger };
-
   return showModal<ConfirmState, ConfirmProps, boolean>(
     ConfirmModalScreen,
-    config,
-    config as ConfirmProps,
+    {},
+    { title, message, confirmText, cancelText, danger },
   );
 }

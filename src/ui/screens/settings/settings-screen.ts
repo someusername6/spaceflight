@@ -29,6 +29,10 @@ import {
   type ScreenAPI,
   type ScreenHandle,
 } from '../../framework/screen';
+import {
+  clearBattleCanvas,
+  reattachBattleCanvas,
+} from '../../utils/battle-canvas';
 import { showError, showSuccess } from '../alert-modal';
 import { positionAutoaimPopover } from './gameplay';
 import { positionFpsPopover } from './graphics';
@@ -247,33 +251,9 @@ const SettingsScreenComponent: Screen<SettingsState, SettingsScreenCallbacks> =
       setupSettingsEscapeHandler(state.listeningAction, props.onBack);
 
       // Re-attach battle simulation canvas after re-render (if present)
-      reattachBattleCanvas();
+      reattachBattleCanvas('settings-battle-bg', '.settings-screen');
     },
   };
-
-/** Store canvas reference for re-attachment across re-renders */
-let battleCanvas: HTMLCanvasElement | null = null;
-
-/** Store the canvas when it's first attached */
-export function storeBattleCanvas(canvas: HTMLCanvasElement): void {
-  battleCanvas = canvas;
-}
-
-/** Re-attach battle canvas after re-render */
-function reattachBattleCanvas(): void {
-  if (battleCanvas) {
-    const bgContainer = document.getElementById('settings-battle-bg');
-    const settingsScreen = document.querySelector('.settings-screen');
-    if (bgContainer) {
-      // Re-attach canvas if needed
-      if (battleCanvas.parentElement !== bgContainer) {
-        bgContainer.appendChild(battleCanvas);
-      }
-      // Restore the with-battle-bg class (lost during re-render)
-      settingsScreen?.classList.add('with-battle-bg');
-    }
-  }
-}
 
 /** Screen handle for external control */
 let screenHandle: ScreenHandle<SettingsState, SettingsScreenCallbacks> | null =
@@ -346,7 +326,7 @@ export function cleanupSettingsScreen(): void {
   screenHandle?.destroy();
   screenHandle = null;
   // Clear stored canvas reference (canvas ownership returns to title screen)
-  battleCanvas = null;
+  clearBattleCanvas();
 }
 
 /** Reset settings screen state (for returning to screen) */

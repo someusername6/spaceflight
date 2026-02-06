@@ -31,7 +31,6 @@ import {
   cleanupLoadCampaignScreen,
   type LoadCampaignCallbacks,
   renderLoadCampaignScreen,
-  storeBattleCanvas as storeLoadCampaignBattleCanvas,
 } from '../../ui/screens/load-campaign';
 import {
   cleanupRoomCreatedScreen,
@@ -41,6 +40,7 @@ import {
   getBattleSimulationCanvas,
   hasBattleSimulation,
 } from '../../ui/screens/title';
+import { storeBattleCanvas as storeLoadCampaignBattleCanvas } from '../../ui/utils/battle-canvas';
 import type { CampaignController } from '../controller-types';
 import type { SlotId } from '../storage';
 import {

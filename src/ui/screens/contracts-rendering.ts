@@ -8,6 +8,7 @@ import {
   isMultiplayerMode,
 } from '../../multiplayer/multiplayer-context';
 import { escapeHtml } from '../utils';
+import { capitalize } from '../utils/text';
 
 /** Count total enemies across all waves */
 export function countTotalEnemies(contract: Contract): number {
@@ -165,7 +166,7 @@ export function renderStationDefenseInfo(contract: Contract): string {
 
   // Station type display name
   const stationType = defense.stationType ?? 'mining';
-  const stationName = `${stationType.charAt(0).toUpperCase()}${stationType.slice(1)} Station`;
+  const stationName = `${capitalize(stationType)} Station`;
 
   // Reinforcement info
   const reinforcementTypes = defense.reinforcementPool
@@ -219,7 +220,7 @@ export function renderAttackStationInfo(contract: Contract): string {
 
   // Station type display name
   const stationType = attack.stationType ?? 'mining';
-  const stationName = `${stationType.charAt(0).toUpperCase()}${stationType.slice(1)} Station`;
+  const stationName = `${capitalize(stationType)} Station`;
 
   // Overwhelming wave info
   const overwhelmingCount = attack.overwhelmingWave.reduce(

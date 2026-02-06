@@ -14,6 +14,7 @@ import type {
   Pilot,
   SkillLevel,
 } from '../campaign/types';
+import { capitalize } from '../ui/utils/text';
 import type { LobbyPlayer } from './lobby-state';
 
 // Re-export types for backward compatibility
@@ -332,8 +333,7 @@ export function getPlayerShip(
  * Get the ship name for display.
  */
 export function getShipDisplayName(ship: OwnedShip): string {
-  // Capitalize first letter of ship class
-  return ship.shipClass.charAt(0).toUpperCase() + ship.shipClass.slice(1);
+  return capitalize(ship.shipClass);
 }
 
 /**

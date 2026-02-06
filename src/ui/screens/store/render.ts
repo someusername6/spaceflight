@@ -19,6 +19,7 @@ import {
   getShipPrice,
 } from '../../../data/prices';
 import { PRIMARY_WEAPONS } from '../../../data/weapons';
+import { capitalize } from '../../utils/text';
 
 // Re-export stat renderers from item-stats module
 export {
@@ -57,7 +58,7 @@ export function getCategoryItems(
         .filter(({ shipClass }) => (storeStock.ships[shipClass] ?? 0) > 0)
         .map(({ shipClass }) => ({
           id: shipClass,
-          name: shipClass.charAt(0).toUpperCase() + shipClass.slice(1),
+          name: capitalize(shipClass),
           stock: storeStock.ships[shipClass] ?? 0,
         }));
     case 'primaries':
@@ -98,7 +99,7 @@ export function getCategoryItems(
         .filter(({ shipClass }) => (storedScrap?.[shipClass] ?? 0) > 0)
         .map(({ shipClass }) => ({
           id: shipClass,
-          name: `${shipClass.charAt(0).toUpperCase() + shipClass.slice(1)} Scrap`,
+          name: `${capitalize(shipClass)} Scrap`,
           stock: storedScrap?.[shipClass] ?? 0,
         }));
   }

@@ -31,7 +31,6 @@ export interface SquadronProps {
 export function bindSquadronEvents(
   api: ScreenAPI<SquadronState>,
   props: SquadronProps,
-  element: HTMLElement,
 ): void {
   const { onNavigate } = props;
 
@@ -90,8 +89,8 @@ export function bindSquadronEvents(
     onNavigate('store');
   });
 
-  // Hardpoint events (uses non-bubbling events, needs special handling)
-  bindHardpointEvents(element, props);
+  // Hardpoint events (uses non-bubbling events via api.onDirect)
+  bindHardpointEvents(api, props);
 
   // Weapon badge tooltip positioning (fixed positioning needs JS)
   const TOOLTIP_OFFSET = 12; // Matches --space-3

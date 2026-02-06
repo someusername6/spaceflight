@@ -10,12 +10,8 @@ import {
 } from '../framework/screen';
 import { escapeHtml } from '../utils';
 
-/** Alert modal state */
-interface AlertState {
-  title: string;
-  message: string;
-  buttonText: string;
-}
+/** Alert modal state (empty - all data comes from props) */
+type AlertState = Record<string, never>;
 
 /** Alert modal props */
 interface AlertProps extends ModalProps<void> {
@@ -26,15 +22,15 @@ interface AlertProps extends ModalProps<void> {
 
 /** Alert modal screen component */
 const AlertModalScreen: Screen<AlertState, AlertProps> = {
-  render(state) {
+  render(_state, props) {
     return `
       <div class="alert-overlay" role="dialog" aria-modal="true">
         <div class="alert-modal">
-          <div class="alert-title">${escapeHtml(state.title)}</div>
-          <div class="alert-message">${escapeHtml(state.message)}</div>
+          <div class="alert-title">${escapeHtml(props.title)}</div>
+          <div class="alert-message">${escapeHtml(props.message)}</div>
           <div class="alert-buttons">
             <button class="btn btn-large btn-primary" id="btn-alert-ok">
-              ${escapeHtml(state.buttonText)}
+              ${escapeHtml(props.buttonText)}
             </button>
           </div>
         </div>
@@ -70,7 +66,7 @@ export function showAlert(
 ): Promise<void> {
   return showModal<AlertState, AlertProps, void>(
     AlertModalScreen,
-    { title, message, buttonText },
+    {},
     { title, message, buttonText },
   );
 }

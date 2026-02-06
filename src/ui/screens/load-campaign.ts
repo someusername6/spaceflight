@@ -25,6 +25,10 @@ import {
   type ScreenHandle,
 } from '../framework/screen';
 import {
+  clearBattleCanvas,
+  reattachBattleCanvas,
+} from '../utils/battle-canvas';
+import {
   renderConfirmDeleteView,
   renderErrorView,
   renderLoadingView,
@@ -185,7 +189,7 @@ const LoadCampaignScreenComponent: Screen<
     });
 
     // Re-attach battle simulation canvas after re-render (if present)
-    reattachBattleCanvas();
+    reattachBattleCanvas('load-campaign-battle-bg', '.load-campaign-screen');
   },
 };
 
@@ -194,30 +198,6 @@ let screenHandle: ScreenHandle<
   LoadCampaignState,
   LoadCampaignCallbacks
 > | null = null;
-
-/** Store canvas reference for re-attachment across re-renders */
-let battleCanvas: HTMLCanvasElement | null = null;
-
-/** Store the canvas when it's first attached */
-export function storeBattleCanvas(canvas: HTMLCanvasElement): void {
-  battleCanvas = canvas;
-}
-
-/** Re-attach battle canvas after re-render */
-function reattachBattleCanvas(): void {
-  if (battleCanvas) {
-    const bgContainer = document.getElementById('load-campaign-battle-bg');
-    const loadCampaignScreen = document.querySelector('.load-campaign-screen');
-    if (bgContainer) {
-      // Re-attach canvas if needed
-      if (battleCanvas.parentElement !== bgContainer) {
-        bgContainer.appendChild(battleCanvas);
-      }
-      // Restore the with-battle-bg class (lost during re-render)
-      loadCampaignScreen?.classList.add('with-battle-bg');
-    }
-  }
-}
 
 /** Render the load campaign screen */
 export function renderLoadCampaignScreen(element: HTMLElement): void {
@@ -279,5 +259,5 @@ export function cleanupLoadCampaignScreen(): void {
   screenHandle?.destroy();
   screenHandle = null;
   // Clear stored canvas reference (canvas ownership returns to title screen)
-  battleCanvas = null;
+  clearBattleCanvas();
 }
