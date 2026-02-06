@@ -25,9 +25,6 @@ export {
   deserializeVector2,
   deserializeVector3,
   deserializeVector3Into,
-  isSerializedQuaternion,
-  // Type guards
-  isSerializedVector3,
   type SerializedColor,
   type SerializedQuaternion,
   type SerializedTransformPrimitive,
@@ -92,7 +89,6 @@ export {
 export {
   deserializeWorld,
   deserializeWorldFromBytes,
-  estimateWorldSize,
   type SerializedActiveBeam,
   type SerializedEntity,
   type SerializedSystemState,

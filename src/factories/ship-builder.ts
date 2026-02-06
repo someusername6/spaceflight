@@ -26,6 +26,7 @@ import {
 } from '../components/physics';
 import { createShieldHit } from '../components/shield-hit';
 import { createShields } from '../components/shields';
+import { createShipTag } from '../components/ship-tag';
 import { createTransform } from '../components/transform';
 import { addComponent, createEntity, getComponent } from '../core/ecs';
 import type { Entity, Faction, World } from '../core/types';
@@ -154,6 +155,9 @@ export function finalizeShip(config: ShipSpawnConfig, entity: Entity): void {
 
   // Hull collider (if geometry data exists)
   addHullColliderFromClass(world, entity, shipClassName, false);
+
+  // Ship tag (positive identification for isShip queries)
+  addComponent(world, entity, createShipTag());
 
   // Combat stats tracking
   addComponent(world, entity, createCombatStats());

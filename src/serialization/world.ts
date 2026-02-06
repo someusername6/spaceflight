@@ -163,12 +163,3 @@ export function deserializeWorldFromBytes(
   const serialized = JSON.parse(json) as SerializedWorld;
   deserializeWorld(serialized, world);
 }
-
-/**
- * Estimate the byte size of a serialized world.
- * Useful for monitoring snapshot sizes.
- */
-export function estimateWorldSize(world: World): number {
-  const serialized = serializeWorld(world);
-  return JSON.stringify(serialized).length;
-}

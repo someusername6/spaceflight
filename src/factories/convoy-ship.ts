@@ -15,6 +15,7 @@ import { createPhysics } from '../components/physics';
 import { createShieldHit } from '../components/shield-hit';
 import { createShields } from '../components/shields';
 import { createShipIdentity } from '../components/ship-identity';
+import { createShipTag } from '../components/ship-tag';
 import { createTransform } from '../components/transform';
 import { addComponent, createEntity } from '../core/ecs';
 import type { Entity, World } from '../core/types';
@@ -153,6 +154,9 @@ export function createConvoyShipEntity(
   const callsign =
     faction === Faction.Enemy ? `Target ${index + 1}` : `Convoy ${index + 1}`;
   addComponent(world, entity, createShipIdentity(shipType, callsign));
+
+  // Ship tag (positive identification for isShip queries)
+  addComponent(world, entity, createShipTag());
 
   addComponent(world, entity, createCollision(stats.collisionRadius));
 

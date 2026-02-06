@@ -351,6 +351,9 @@ export function hashComponent(hash: HashState, component: ComponentBase): void {
       // shieldHit is visual-only (hit flash effect). Unlike 'explosion' which affects
       // kill timing, shieldHit has zero simulation impact.
       break;
+    case 'shipTag':
+      // Tag component - no fields to hash; presence tracked by entity's component set.
+      break;
     case 'hyperspaceJump': {
       const c =
         component as import('../components/hyperspace-jump').HyperspaceJump;

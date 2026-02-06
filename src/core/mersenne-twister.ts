@@ -54,7 +54,7 @@ export class MersenneTwister {
 }
 
 /** Hash a string to a number */
-export function hashcode(str: string): number {
+function hashcode(str: string): number {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     hash += (i + 1) * str.charCodeAt(i);

@@ -32,7 +32,6 @@ import {
   deserializeComponent,
   deserializeWorld,
   deserializeWorldFromBytes,
-  estimateWorldSize,
   serializeComponent,
   serializeWorld,
   serializeWorldToBytes,
@@ -312,22 +311,6 @@ describe('World Serialization', () => {
       hashAfter,
       'Hash should match after round-trip',
     );
-  });
-
-  it('Estimate world size', () => {
-    const world = createWorld();
-
-    // Add some entities
-    for (let i = 0; i < 10; i++) {
-      const entity = createEntity(world);
-      addComponent(world, entity, createTransform(i * 100, 0, 0));
-      addComponent(world, entity, createPhysics({ maxSpeed: 250 }));
-      addComponent(world, entity, createHealth(80));
-    }
-
-    const size = estimateWorldSize(world);
-    assert.ok(size > 0, 'Size should be positive');
-    assert.ok(size < 100000, 'Size should be reasonable for 10 entities');
   });
 });
 

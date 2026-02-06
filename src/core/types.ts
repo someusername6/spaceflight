@@ -6,6 +6,7 @@
 import type { Color, Vector3 as Vec3 } from 'three';
 
 import type { ComponentType } from './component-registry';
+import type { PRNGState } from './prng';
 
 export { Euler, Quaternion, Vector3 } from 'three';
 
@@ -226,9 +227,9 @@ export interface World {
   /** System-specific state (replaces module-level variables) */
   systemState: SystemState;
   /** Seeded PRNG for deterministic randomness (simulation only) */
-  prng: import('../core/prng').PRNGState;
+  prng: PRNGState;
   /** Separate PRNG for rendering effects (does not affect simulation determinism) */
-  renderPrng: import('../core/prng').PRNGState;
+  renderPrng: PRNGState;
 }
 
 /** Team/faction identifiers */

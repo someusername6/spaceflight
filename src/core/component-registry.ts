@@ -33,6 +33,7 @@ import type { Projectile } from '../components/projectile';
 import type { ShieldHit } from '../components/shield-hit';
 import type { Shields } from '../components/shields';
 import type { ShipIdentity } from '../components/ship-identity';
+import type { ShipTag } from '../components/ship-tag';
 import type { Structure } from '../components/structure';
 import type { Targeting } from '../components/targeting';
 import type { Transform } from '../components/transform';
@@ -89,6 +90,9 @@ export interface ComponentRegistry {
 
   // Effect components
   hyperspaceJump: HyperspaceJump;
+
+  // Tag components
+  shipTag: ShipTag;
 }
 
 /** All valid component type strings (derived from registry keys) */
@@ -125,4 +129,5 @@ export const ComponentTypeId = {
   damageTracking: 23,
   structure: 24,
   hyperspaceJump: 25,
+  shipTag: 26,
 } as const;

@@ -230,13 +230,9 @@ export function findEntity(
 }
 
 /**
- * Check if entity is a ship (has collision but not projectile/missile).
+ * Check if entity is a ship (has the shipTag component).
  * Ships are the main combatants - player and AI controlled vessels.
  */
 export function isShip(world: World, entity: Entity): boolean {
-  return (
-    hasComponent(world, entity, 'collision') &&
-    !hasComponent(world, entity, 'projectile') &&
-    !hasComponent(world, entity, 'missile')
-  );
+  return hasComponent(world, entity, 'shipTag');
 }

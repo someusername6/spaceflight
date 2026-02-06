@@ -140,34 +140,3 @@ export function serializeTransformPrimitive(
     rotation: serializeQuaternion(rotation),
   };
 }
-
-/**
- * Check if an object looks like a SerializedVector3.
- * Useful for type guards when receiving network data.
- */
-export function isSerializedVector3(obj: unknown): obj is SerializedVector3 {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    typeof (obj as SerializedVector3).x === 'number' &&
-    typeof (obj as SerializedVector3).y === 'number' &&
-    typeof (obj as SerializedVector3).z === 'number'
-  );
-}
-
-/**
- * Check if an object looks like a SerializedQuaternion.
- * Useful for type guards when receiving network data.
- */
-export function isSerializedQuaternion(
-  obj: unknown,
-): obj is SerializedQuaternion {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    typeof (obj as SerializedQuaternion).x === 'number' &&
-    typeof (obj as SerializedQuaternion).y === 'number' &&
-    typeof (obj as SerializedQuaternion).z === 'number' &&
-    typeof (obj as SerializedQuaternion).w === 'number'
-  );
-}
