@@ -4,7 +4,7 @@
  * Extracted from mission-end-executor.ts to keep file sizes manageable.
  */
 
-import { logError } from '../../core/logger';
+import { logDebug, logError } from '../../core/logger';
 import type { World } from '../../core/types';
 import {
   broadcastMissionEnded,
@@ -183,7 +183,7 @@ export function handleMultiplayerResults(
 ): void {
   const { screenManager } = controller;
 
-  console.log('[EXECUTOR] Multiplayer path, showing results');
+  logDebug('[EXECUTOR] Multiplayer path, showing results');
   endMission(screenManager, missionEndState.victory);
 
   const outcomeData = buildOutcomeData(
