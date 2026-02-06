@@ -351,6 +351,6 @@ export { type AIPlaystyle, getProfileForPlaystyle } from './ai-playstyles';
  * These are separate from per-entity profiles.
  */
 export const AI_GLOBAL_SETTINGS = {
-  /** Maximum AI ships that can target the player simultaneously */
-  maxEngagingPlayer: 3,
+  /** Maximum AI ships that can engage any single target simultaneously */
+  maxEngagingTarget: 3,
 };

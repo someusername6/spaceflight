@@ -27,10 +27,8 @@ import { entityExists, getComponent, queryEntities } from '../../core/ecs';
 import { calculateInterceptPoint } from '../../core/lead-calculation';
 import type { Entity, World } from '../../core/types';
 import { selectOptimalMissile } from '../ai/ai-missile-selection';
-import {
-  calculateFiringAngle,
-  selectOptimalPrimaryWeapon,
-} from '../ai/ai-weapon-selection';
+import { calculateFiringAngle } from '../ai/ai-weapon-categories';
+import { selectOptimalPrimaryWeapon } from '../ai/ai-weapon-selection';
 import { spawnDecoy, spawnMissile } from './weapon-spawning';
 import { fireWeaponsByLinkMode } from './weapons';
 

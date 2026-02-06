@@ -124,26 +124,3 @@ export function findNearestEnemy(
 export function setAITarget(ai: AIControlled, target: Entity | null): void {
   ai.target = target;
 }
-
-// Re-export ambush mission utilities for backward compatibility
-export {
-  findNearestEnemyConvoyShip,
-  findNearestEnemyEscort,
-  getEnemyConvoyCentroid,
-} from './ai-ambush-utils';
-// Re-export convoy mission utilities for backward compatibility
-export {
-  findNearestConvoyShip,
-  findNearestThreatToConvoy,
-  getConvoyCentroid,
-} from './ai-convoy-utils';
-// Re-export station utilities for backward compatibility
-export {
-  findEnemyStation,
-  findNearestThreatToStation,
-  findStation,
-  findStationAttacker,
-  getEnemyStationPosition,
-  getStationPosition,
-  isTargetingStation,
-} from './ai-station-utils';

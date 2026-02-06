@@ -16,8 +16,8 @@ import {
   getDistanceCategory,
   getWeaponRangeCategory,
   RangeCategory,
-  selectOptimalPrimaryWeapon,
-} from '../../../src/systems/ai/ai-weapon-selection.ts';
+} from '../../../src/systems/ai/ai-weapon-categories.ts';
+import { selectOptimalPrimaryWeapon } from '../../../src/systems/ai/ai-weapon-selection.ts';
 
 describe('Distance Category', () => {
   it('short range (<400m)', () => {

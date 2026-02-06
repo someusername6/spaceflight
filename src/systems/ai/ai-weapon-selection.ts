@@ -11,7 +11,6 @@ import type { PrimaryWeapon, PrimaryWeapons } from '../../components/weapons';
 import { getEffectiveHeat } from '../../components/weapons';
 import type { AIProfile } from '../../data/ai-profiles';
 import {
-  calculateFiringAngle,
   getDistanceCategory,
   getWeaponRangeCategory,
   RangeCategory,
@@ -25,14 +24,6 @@ import {
   hasIonWeapon,
   isWeaponInRange,
 } from './ai-weapon-helpers';
-
-// Re-export for backwards compatibility
-export {
-  calculateFiringAngle,
-  getDistanceCategory,
-  getWeaponRangeCategory,
-  RangeCategory,
-};
 
 /** Result of weapon selection */
 export interface WeaponSelection {

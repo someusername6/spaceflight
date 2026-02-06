@@ -10,6 +10,7 @@ import type { SecondaryWeapons } from '../../components/weapons';
 import { entityExists, getComponent, queryEntities } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
 import { AI_GLOBAL_SETTINGS } from '../../data/ai-profiles';
+import { getEnemyConvoyCentroid } from './ai-ambush-utils';
 import {
   shouldEvade,
   shouldFleeDistance,
@@ -17,6 +18,7 @@ import {
   updateEvade,
   updateRegroup,
 } from './ai-behaviors';
+import { getConvoyCentroid } from './ai-convoy-utils';
 import {
   DEFENSIVE_DISENGAGE_DISTANCE,
   STATION_DEFENSE_DISENGAGE_DISTANCE,
@@ -33,19 +35,8 @@ import {
   shouldReposition,
   updateReposition,
 } from './ai-reposition';
-import {
-  countEngagingTarget,
-  findNearestEnemy,
-  getConvoyCentroid,
-  getEnemyConvoyCentroid,
-  getStationPosition,
-  isPlayer,
-  isTargetingStation,
-  setAITarget,
-} from './ai-utils';
-
-// Re-export for backwards compatibility
-export { findNearestEnemy, setAITarget, pursueTarget };
+import { getStationPosition, isTargetingStation } from './ai-station-utils';
+import { countEngagingTarget, isPlayer } from './ai-utils';
 
 /** AI system - updates AI state and movement */
 export function aiSystem(world: World, dt: number): void {
@@ -217,7 +208,7 @@ function updatePursue(
     const canEngage =
       !targetIsPlayer ||
       countEngagingTarget(world, ai.target) <
-        AI_GLOBAL_SETTINGS.maxEngagingPlayer;
+        AI_GLOBAL_SETTINGS.maxEngagingTarget;
 
     if (canEngage) {
       ai.state = AIState.Engage;

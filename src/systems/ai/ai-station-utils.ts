@@ -18,14 +18,25 @@ const _enemyStationPosition = new Vector3();
 /** Maximum distance from station for station-defense wingmen to engage */
 const MAX_STATION_DEFENSE_RANGE = 1000;
 
+// Reusable collections for findStationAttacker (avoids per-call allocation)
+const _targetCounts = new Map<Entity, number>();
+const _candidates: Array<{ entity: Entity; isAttackingStation: boolean }> = [];
+
 /**
  * Find the station entity (for station defense missions).
  * Stations are Player faction structures with structureType 'station'.
  */
 export function findStation(world: World): Entity | null {
-  for (const entity of queryEntities(world, ['structure', 'transform'])) {
+  for (const entity of queryEntities(world, [
+    'structure',
+    'transform',
+    'faction',
+  ])) {
     const structure = getComponent(world, entity, 'structure');
     if (structure?.structureType !== 'station') continue;
+
+    const faction = getComponent(world, entity, 'faction');
+    if (faction?.faction !== Faction.Player) continue;
 
     // Check it's not destroyed
     const health = getComponent(world, entity, 'health');
@@ -171,8 +182,8 @@ export function findStationAttacker(
   if (!selfTransform) return null;
 
   // Single pass: collect defender target counts and enemy candidates
-  const targetCounts = new Map<Entity, number>();
-  const candidates: Array<{ entity: Entity; isAttackingStation: boolean }> = [];
+  _targetCounts.clear();
+  _candidates.length = 0;
 
   for (const other of queryEntities(world, [
     'aiControlled',
@@ -188,9 +199,9 @@ export function findStationAttacker(
     if (otherFaction.faction === selfFaction) {
       // Same faction = fellow defender, count their target
       if (other !== self && otherAi.target) {
-        targetCounts.set(
+        _targetCounts.set(
           otherAi.target,
-          (targetCounts.get(otherAi.target) ?? 0) + 1,
+          (_targetCounts.get(otherAi.target) ?? 0) + 1,
         );
       }
     } else if (areEnemies(selfFaction, otherFaction.faction)) {
@@ -198,7 +209,7 @@ export function findStationAttacker(
       const health = getComponent(world, other, 'health');
       if (health && isDead(health)) continue;
 
-      candidates.push({
+      _candidates.push({
         entity: other,
         isAttackingStation: otherAi.target === stationEntity,
       });
@@ -209,8 +220,8 @@ export function findStationAttacker(
   let best: Entity | null = null;
   let bestScore = Infinity;
 
-  for (const { entity, isAttackingStation } of candidates) {
-    const defenderCount = targetCounts.get(entity) ?? 0;
+  for (const { entity, isAttackingStation } of _candidates) {
+    const defenderCount = _targetCounts.get(entity) ?? 0;
     const score = isAttackingStation
       ? defenderCount // 0, 1, 2, etc - lower is better
       : 1000 + defenderCount; // Non-attackers are lower priority

@@ -22,7 +22,7 @@ import {
 import { createEnemyShip } from '../../factories/ship';
 import { createWaypointEntity } from '../../factories/waypoint';
 import { type Game, TICK_SEC } from '../../game';
-import { getConvoyCentroid } from '../../systems/ai/ai-utils';
+import { getConvoyCentroid } from '../../systems/ai/ai-convoy-utils';
 import {
   createEscortMissionState,
   type EscortMissionState,

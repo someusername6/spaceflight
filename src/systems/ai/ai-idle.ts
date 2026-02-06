@@ -18,19 +18,22 @@ import { Faction } from '../../components/faction';
 import type { Transform } from '../../components/transform';
 import { entityExists, getComponent, queryEntities } from '../../core/ecs';
 import type { Entity, World } from '../../core/types';
+import {
+  findNearestEnemyConvoyShip,
+  findNearestEnemyEscort,
+} from './ai-ambush-utils';
+import {
+  findNearestConvoyShip,
+  findNearestThreatToConvoy,
+} from './ai-convoy-utils';
 import { setRotationInputs } from './ai-movement';
 import {
   findEnemyStation,
-  findNearestConvoyShip,
-  findNearestEnemy,
-  findNearestEnemyConvoyShip,
-  findNearestEnemyEscort,
-  findNearestThreatToConvoy,
-  findNearestThreatToPlayer,
   findNearestThreatToStation,
   findStation,
   findStationAttacker,
-} from './ai-utils';
+} from './ai-station-utils';
+import { findNearestEnemy, findNearestThreatToPlayer } from './ai-utils';
 
 // Reusable vector to avoid allocations in hot path
 const _tempDirection = new Vector3();
