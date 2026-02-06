@@ -1,174 +1,143 @@
 # Codebase Review Summary
 
-**Date:** February 2026
+**Date:** February 2026 (Post-Remediation)
 **Reviewer:** Claude Opus 4.6
 **Scope:** Full codebase (~35,000 lines across ~300 files)
 **Method:** 7 independent review agents, each covering a major subsystem
+**Context:** Regenerated after addressing ~72 issues from the initial review round
 
 ## Individual Reviews
 
-| Review | Files | Issues | Highest Severity |
-|--------|-------|--------|-----------------|
-| [Core Architecture & ECS](core-architecture.md) | ~40 | 11 | Medium |
-| [Combat & Weapon Systems](combat-weapons.md) | ~40 | 15 | Medium |
-| [AI Systems](ai-systems.md) | ~25 | 14 | Medium |
-| [Multiplayer & Networking](multiplayer-networking.md) | ~45 | 17 | Medium (Security) |
-| [Campaign & Progression](campaign-progression.md) | ~55 | 12 | Medium |
-| [Rendering & Visual Systems](rendering-visuals.md) | ~55 | 18 | **High** |
-| [UI Framework & Screens](ui-screens.md) | ~55 | 13 | Low |
+| Review | Remaining Issues | Resolved Issues | Highest Severity |
+|--------|-----------------|-----------------|-----------------|
+| [Core Architecture & ECS](core-architecture.md) | 8 | 5 | Medium |
+| [Combat & Weapon Systems](combat-weapons.md) | 10 | 9 | Medium |
+| [AI Systems](ai-systems.md) | 8 | 10 | Low |
+| [Multiplayer & Networking](multiplayer-networking.md) | 18 | 10 | Medium |
+| [Campaign & Progression](campaign-progression.md) | 10 | 8 | Medium |
+| [Rendering & Visual Systems](rendering-visuals.md) | 12 | 12 | Medium |
+| [UI Framework & Screens](ui-screens.md) | 11 | 7 | Low |
 
-**Total issues found: 100** (1 high, ~25 medium, ~74 low)
+**Total: 77 remaining issues, 61 resolved from previous round**
 
 ---
 
 ## Overall Assessment
 
-The codebase is in **good health**. All 7 reviews independently reached the same conclusion: the architecture is clean, well-decomposed, and consistently follows established patterns. The ECS design is principled, the multiplayer protocol is well-engineered, and the rendering system shows strong performance awareness. File sizes respect the 400-line limit. Code quality is uniform across all areas, which is notable for a codebase of this size.
+The remediation round was highly effective. Of the ~100 issues identified in the initial review, 61 have been fully resolved. The single High-severity issue (GPU memory leak in the renderer) is fixed. Both Medium-severity security issues in the multiplayer layer (host-authority bypass for dismissPilot/spendXP, and unchecked JSON.parse for guest action data) are fixed. The per-frame allocation campaign that spanned 16 sites across 4 subsystems has been largely addressed: Sets are now module-level with `.clear()`, beam vectors are hoisted, `HashState.addFloat64` uses static buffers, the O(N*M) missile scan uses a per-tick `Set<Entity>`, and `toRemove` arrays are at module scope. Code duplication was reduced through shared modules for autoaim, broadcastMessage, weapon property helpers, resupply shortage logic, and beam line functions. Four dead code items were removed. Multiple files that were at the 400-line limit have been split.
 
-The single high-severity issue is a GPU memory leak in the renderer. The medium-severity issues cluster into three categories: security gaps in the multiplayer host-authority model, per-frame allocation patterns that escaped an otherwise disciplined allocation-avoidance strategy, and maintenance concerns around code duplication.
+The remaining 77 issues are predominantly Low severity. Only 6 are Medium: beam hash omitting simulation-critical fields (Core), game loop accumulator cap (Core), AI single-weapon selection bug (Combat), PauseCoordinator stale state capture (Multiplayer), denormalized pilot data requiring dual updates (Campaign), and scene graph traversal every frame in the target camera (Rendering). Two subsystems -- AI and UI -- have no remaining Medium-or-higher issues, indicating those areas are in strong shape. The nature of remaining issues has shifted from bugs and security gaps toward design observations, minor allocation inconsistencies, and maintenance items like files approaching the 400-line limit. This is healthy: the high-impact issues have been addressed and what remains is polish.
+
+The multiplayer layer has the most remaining issues (18), though most are Low-severity design observations about protocol edge cases and minor state management concerns. The new PauseCoordinator stale state capture (Medium) is the most architecturally concerning new finding. The rendering layer has improved dramatically -- all 12 previously-identified issues from the initial round are resolved, and the 12 remaining are new findings that are less severe.
 
 ---
 
-## Critical Issues
+## Remaining High/Medium Issues
 
-### 1. GPU Memory Leak on Entity Destruction (HIGH)
+### Medium Severity
 
-**File:** `src/rendering/renderer.ts:278-284`
-**Review:** Rendering
+1. **Beam hash omits simulation-critical ActiveBeam fields** -- `src/serialization/hashing.ts:117-126` -- `lastInstantFireTime`, `pulseActive`, and `lastPulseTime` affect simulation outcomes but are not included in the beam hash, making multiplayer desync undetectable for these fields. *(Core Architecture)*
 
-When entities are destroyed, their meshes are removed from the scene but geometry and materials are never disposed. In long missions with many kills, this will degrade performance or exhaust GPU memory. This is the most impactful bug in the codebase.
+2. **Game loop has no accumulator cap (spiral of death)** -- `src/game.ts:170-177` -- If the browser tab is backgrounded and foregrounded, `requestAnimationFrame` delivers a large delta causing hundreds or thousands of ticks in one frame. *(Core Architecture)*
 
-**Fix:** Add `mesh.geometry.dispose()` and `mesh.material.dispose()` in the entity cleanup loop.
+3. **AI single-weapon selection silently fails due to linkMode mismatch** -- `src/systems/weapons/weapons-ai.ts:99-104` -- `setLinkModeByType` receives weapon display names but `linkModes` contains bank index strings, so AI "single weapon" selection always falls back to linked fire, undermining heat/ammo conservation and tactical weapon choice. *(Combat & Weapons)*
 
-### 2. Multiplayer Host-Authority Bypass (MEDIUM - Security)
+4. **PauseCoordinator captures `lobbyState` by reference at init time** -- `src/multiplayer/pause-coordinator.ts:67` -- The destructured `lobbyState` becomes stale after any lobby state update (immutable pattern replaces the object). Closures like `getLocalCallsign()` and `doPause()` read from the stale reference. *(Multiplayer & Networking)*
 
-**File:** `src/multiplayer/action-processing.ts:152-162`
-**Review:** Multiplayer
+5. **Denormalized pilot data requires fragile dual updates** -- `src/campaign/state-mission-results.ts:144-171` and `src/campaign/state-mission-stats.ts:117-148` -- Pilot data exists in both `state.pilots[]` and `state.ships[].pilot`, requiring every mutation to update both locations. *(Campaign & Progression)*
 
-`dismissPilot` and `spendXP` actions are documented as host-only but pass permission validation for any player. The UI hides the buttons for guests, but a crafted `ActionRequest` bypasses this. The host is the trust boundary -- UI-only enforcement is insufficient.
+6. **`showMultiplayerResults` still uses 12 positional parameters** -- `src/campaign/handlers/mission-results.ts:113-126` -- Unlike the singleplayer `showResults` which was refactored to use an options interface, the multiplayer variant still takes 12 positional arguments. *(Campaign & Progression)*
 
-**Fix:** Return an error in `validateActionPermission()` when a non-host player requests these actions.
+7. **Lobby re-bind code duplicated across handler files** -- `src/campaign/handlers/mission-results.ts:156-204` and `src/campaign/handlers/mission-handlers.ts:110-162` -- ~50 lines of `bindLobbyScreen` callback wiring duplicated nearly identically. *(Campaign & Progression)*
 
-### 3. Unchecked `JSON.parse` for Guest Action Data (MEDIUM - Security)
-
-**File:** `src/multiplayer/protocol/buffer-utils.ts:190-198`
-**Review:** Multiplayer
-
-`ActionRequestData` is deserialized via `JSON.parse(str) as T` with no runtime validation. A malicious guest could send unexpected field values (negative quantities, invalid indices). The host should validate critical fields before executing actions.
+8. **Scene graph traversal every frame in target camera** -- `src/rendering/hud/target-camera.ts:148-153` -- `scene.traverse()` walks the entire scene graph every frame just to find 2-3 lights for the PiP render. *(Rendering & Visuals)*
 
 ---
 
 ## Cross-Cutting Themes
 
-### Per-Frame Allocations (16 instances across 4 subsystems)
+### Files Approaching the 400-Line Limit
 
-The codebase generally follows excellent allocation discipline -- module-level reusable vectors, object pooling, pre-allocated arrays. However, several allocations escaped this pattern and are created every frame:
+Multiple files across subsystems are within 15 lines of the project maximum. The most urgent:
 
-| Subsystem | What | Count | Severity |
-|-----------|------|-------|----------|
-| Rendering | `new Set()` for entity tracking | 4 sites | Medium |
-| Rendering | `new THREE.Vector3()` in beam effects | 4 sites | Medium |
-| Rendering | `new THREE.Color()` in nuke colors | 1 site | Medium |
-| Rendering | `new ImageData()` in target camera | 1 site | Medium |
-| Combat | `toRemove: Entity[] = []` per system | 3 sites | Low |
-| Core | `ArrayBuffer(8)` in `HashState.addFloat64` | 1 site | Medium |
-| AI | `.clone()` in idle follow behaviors | 4 sites | Low |
-
-**Pattern fix:** Hoist to module-level and `.clear()` / `.length = 0` each frame, following the existing `seenMissiles` pattern in `missile-exhaust.ts`.
-
-### O(N*M) Entity Scans (flagged by 2 reviews independently)
-
-`hasIncomingMissiles()` iterates all missiles for every AI ship every frame. With 12 AI ships and 20 missiles, that's 240 iterations per frame. Flagged by both the **Combat** and **AI** reviews.
-
-**Fix:** Cache a `Set<Entity>` of missile targets once per tick, or add a reverse-lookup map updated when missiles spawn/die/retarget.
-
-### Code Duplication (8 instances)
-
-| Area | What | Files |
-|------|------|-------|
-| Combat | Autoaim cone-check logic | 3 files |
-| Combat | `dt` recovery from damage ratio | 2 sites in 1 file |
-| Campaign | Weapon property copying (15 fields) | 4 blocks in 1 file |
-| Campaign | Resupply shortage logic | 2 files |
-| Multiplayer | `broadcastMessage` helper | 3 files |
-| Rendering | Beam line update functions | 2 functions in 1 file |
-| UI | `capitalize()` utility | 4 files |
-| UI | Battle canvas re-attachment | 2 files |
-
-### Files at the 400-Line Limit (18 files)
-
-Multiple files across all subsystems are at or approaching the 400-line project limit. The most urgent:
-
-| File | Lines | Status |
+| File | Lines | Review |
 |------|-------|--------|
-| `src/campaign/state-mission.ts` | 398 | **At limit** |
-| `src/rendering/effects/projectile-hits.ts` | 398 | **At limit** |
-| `src/systems/weapons/missiles.ts` | 396 | At limit |
-| `src/multiplayer/protocol/router.ts` | 395 | At limit |
-| `src/systems/weapons/weapon-spawning.ts` | 392 | Near limit |
-| `src/ui/ship/connectors.ts` | 391 | Near limit |
-| `src/rendering/hud/hud.ts` | 390 | Near limit |
-| `src/ui/screens/lobby/lobby.ts` | 388 | Near limit |
+| `src/multiplayer/protocol/router.ts` | 395 | Multiplayer |
+| `src/ui/ship/connectors.ts` | 392 | UI |
+| `src/rendering/hud/hud.ts` | 389 | Rendering |
+| `src/replay/types.ts` | 387 | Campaign |
+| `src/ui/screens/lobby/lobby.ts` | 387 | UI |
+| `src/rendering/reticle/reticle-drawing.ts` | 385 | Rendering |
+| `src/rendering/hud/target-stats.ts` | 383 | Rendering |
 
-Any addition to files at 396+ lines will require a split.
+Adding any feature to `router.ts` (395 lines) will require a split. Several reviews independently flagged this theme.
 
-### Stale Module-Level State (3 instances)
+### Remaining Allocation Inconsistencies
 
-| File | State | Risk |
-|------|-------|------|
-| `action-client.ts` | `isResponseHandlerSetUp` never resets | Handler goes stale across sessions |
-| `lobby-state.ts` | `nextMessageId` never resets | Monotonic growth across sessions |
-| `ui/ship/connectors.ts` | `maskIdCounter` never resets | Unbounded SVG IDs |
+While the bulk of per-frame allocations have been fixed, a smaller set remains:
 
-### Dead or Vestigial Code (4 instances)
+- `getWeaponIndicesForCurrentMode` allocates an array per call, ~30-40 times/frame (Combat)
+- `getMissileThreatState` allocates a result object every frame during combat (Rendering)
+- `findStationAttacker` allocates a Map and Array per call (AI)
+- `lightning-bolt.ts` allocates vectors in pulse functions (Rendering)
+- Geometry `.clone()` calls on infrequent effects (Rendering: beam-glow, shield-effects, nuclear lance)
 
-- `src/ui/ship/actions.ts` -- exports an empty function, still called
-- `src/ui/common/tooltip.ts` -- permanent no-op, still imported
-- `src/multiplayer/networking/session-state.ts` -- "preparatory" code, never used
-- `src/data/missiles.ts:206-211` -- `DECOY_CONSTANTS` duplicates values from component, never consumed
+These are lower impact than the initial round's allocations (most fire infrequently or on small data), but they break the otherwise consistent allocation discipline.
+
+### Minor Code Duplication Remaining
+
+- `broadcastAndApply` still duplicated in `lobby-actions.ts` and `lobby-kick.ts` (Multiplayer)
+- Resupply message-building loops duplicated between two files (Campaign)
+- Inline `capitalize()` at 8 call sites despite shared utility existing (UI)
+- `createResultsUI` still takes 13 positional parameters with `undefined` placeholders (Campaign)
+- Battle canvas re-attachment pattern duplicated in settings and load-campaign screens (UI)
+
+### Hardcoded String Comparisons
+
+Weapon name string literals appear in beam type checks (`beam-continuous.ts:81-82` checks `weapon.name === 'Nuclear Lance'` and `weapon.name === 'Torch'`), beam glow color detection, and the AI weapon selection bug. Data-driven properties exist that could replace these checks.
 
 ---
 
-## Prioritized Action Plan
+## Previously Resolved (Summary)
 
-### Tier 1: Fix Now (high impact, low effort)
+The remediation round addressed 61 issues across all 7 subsystems:
 
-1. **Fix GPU memory leak** in `renderer.ts:278-284` -- add geometry/material dispose
-2. **Fix host-only action bypass** -- validate `playerId` in `validateActionPermission()` for `dismissPilot` and `spendXP`
-3. **Hoist per-frame Set/Vector allocations** -- 8 sites in rendering, follow existing `seenMissiles` pattern
-4. **Cache `hasIncomingMissiles` per tick** -- eliminates O(N*M) scan flagged by two reviews
-5. **Hoist `HashState.addFloat64` buffers** -- move `ArrayBuffer`/`DataView` to static class fields
-
-### Tier 2: Fix Soon (medium impact, moderate effort)
-
-6. **Pass `dt` explicitly to `applyBeamDamageAndEffects`** -- eliminates fragile `damage / weapon.damage` recovery pattern
-7. **Split files at 396+ lines** -- `state-mission.ts`, `projectile-hits.ts`, `missiles.ts`, `router.ts`
-8. **Extract shared weapon property helper** -- eliminates 4x duplication in `campaign-weapons.ts`
-9. **Fix campaign export version check** -- accept migratable versions, not strict equality
-10. **Reset `isResponseHandlerSetUp`** on lobby cleanup in `action-client.ts`
-
-### Tier 3: Improve Later (low impact, cleanup)
-
-11. Extract shared autoaim helper (3 implementations)
-12. Consolidate `broadcastMessage` helper (3 copies)
-13. Consolidate `capitalize()` utility (4 copies)
-14. Remove dead code (actions.ts, tooltip.ts, session-state.ts, DECOY_CONSTANTS)
-15. Document or fix Mersenne Twister initialization mask
-16. Add runtime validation for `ActionRequestData` on host
-17. Validate callsign in `handleCallsignAnnounce`
-18. Remove debug `console.log` statements in `mission-results.ts`
+- **Security fixes (3):** Host-authority bypass for dismissPilot/spendXP, unchecked JSON.parse for action data, CallsignAnnounce validation on host
+- **GPU/memory fixes (2):** Material disposal on entity destruction, jump-effect Uint16 index buffer check
+- **Per-frame allocation fixes (13):** Module-level Sets (4 sites), beam effect vectors (4 sites), HashState static buffers, getNukeColor scratch color, getMissilesTargetingPlayer caching, toRemove arrays (3 sites), idle follow behavior vectors
+- **O(N*M) scan elimination (1):** `hasIncomingMissiles` now uses per-tick `Set<Entity>`
+- **Code duplication reduction (8):** Autoaim shared module, beam dt explicit parameter, weapon property helpers, resupply shortage logic, broadcastMessage utility, beam line functions merged, action-processing split, capitalize utility created
+- **Dead code removal (4):** `actions.ts`, `tooltip.ts`, `session-state.ts`, `DECOY_CONSTANTS`
+- **File splits (3):** `state-mission.ts` into 3 sub-modules, `projectile-hits.ts` config extracted, `missiles.ts` shrapnel extracted
+- **Version handling fixes (2):** Campaign export and emergency save now accept older migratable versions
+- **API improvements (2):** `showResults` refactored to options object, `worldsEqual` renamed to `worldHashesMatch`
+- **Documentation/comments (5):** MT mask explanation, calculateInterceptPoint JSDoc, shieldHit hash skip rationale, evade heat comment, sendCallsignAnnounce broadcast comment
+- **Other fixes (18):** Stale byte range comments, protocol validation improvements, module state resets, geometry sharing, beam color copy, torch material cleanup, and miscellaneous cleanup
 
 ---
 
 ## Architectural Strengths
 
-Every review independently highlighted these qualities:
+Every review independently highlighted these qualities, which remain strong after the remediation round:
 
-- **Consistent ECS discipline** -- components are interfaces, systems are pure functions, world holds all state
-- **Determinism-first design** -- separate simulation/render PRNGs, seeded randomness, replay-safe architecture
-- **Allocation-conscious hot paths** -- module-level reusable vectors, object pooling for projectiles/explosions/bolts
-- **Strong file decomposition** -- all files under 400 lines, logical module boundaries, clear naming
-- **Well-engineered multiplayer protocol** -- binary encoding with size pre-calculation, symmetric encode/decode, exhaustive switch statements, host-authority model
-- **Comprehensive documentation** -- `@mp-*` annotations, calibration comments in AI profiles, CLAUDE.md matches reality
-- **Clean immutable state** -- campaign state, lobby state, and settings all use disciplined immutable updates
-- **Thoughtful AI design** -- playstyle system with skill inversion handling, per-role parameter tuning, well-calibrated difficulty profiles
+- **Principled ECS design** -- Entities are plain numbers, components are data-only interfaces, systems are pure `(world, dt) => void` functions. The `ComponentRegistry` type mapping provides compile-time safety with zero runtime overhead. 26 component types are perfectly consistent across the registry, serialization, and hashing layers.
+
+- **Determinism-first architecture** -- Separate `prng` (simulation) and `renderPrng` (visual) on the World object. `SystemState` fields explicitly categorized as "simulation-critical" vs "transient/local." Seeded PRNG with `deriveKey` for save-scum-proof campaign randomness. Visual effects correctly use `renderPrng` throughout.
+
+- **Strong allocation discipline** -- Module-level reusable vectors throughout all hot paths (30+ instances in weapon systems alone). Object pooling for projectile trails, explosions, muzzle flashes, lightning lines, and reticle target info. Per-tick caching for expensive lookups (missile target set, convoy centroid, station position, missile threat state).
+
+- **Excellent multiplayer protocol** -- Binary encoding with symmetric encode/decode, size pre-calculation, bounds checking, exhaustive switch statements with `never` type checks, `HOST_ONLY_MESSAGES` trust boundary, auto-derived message range detection. Comprehensive `@mp-*` JSDoc annotations document actor, permission, flow, and UI impact for every message type.
+
+- **Clean immutable state pattern** -- Campaign state, lobby state, and settings all use disciplined spread-operator updates. Auto-save leverages reference equality (`state === lastSavedState`) to skip no-op saves. Lobby state updater functions are consistent and predictable.
+
+- **Well-engineered replay system** -- Versioned format with forward-compatible migration (versions 1-6), RLE + gzip compression, separate metadata for efficient listing, per-player input streams for multiplayer, deterministic world reconstruction from seed + inputs, `crypto.getRandomValues` for ID generation.
+
+- **Thoughtful AI design** -- FSM with clean state boundaries, playstyle system with principled skill scaling and inversion handling, 12 mission-specific behavior modes, sophisticated weapon/missile selection scoring. Per-frame caching of expensive lookups. Well-calibrated 6-tier difficulty profiles with documented parameter rationales.
+
+- **Strong file decomposition** -- All files under 400 lines with logical module boundaries. Large subsystems are cleanly split: nuclear lance (6 files), weapon display (4 files), HUD (11 files), skybox (5 files), reticles (4 files). The Screen framework enforces clean render/bind separation.
+
+- **Consistent accessibility** -- ARIA roles, tablists, `aria-selected`, `aria-label`, `role="dialog"`, `aria-modal`, `role="status"`, `aria-hidden` used correctly throughout all UI screens.
+
+- **Thorough XSS protection** -- All network-facing screens (lobby, chat, notifications, contracts) consistently use `escapeHtml()` on user-supplied and network-received text.
+
+- **Robust error handling and cleanup** -- `fetchWithRetry` with exponential backoff, `ReconnectionManager` with jitter, `ProtocolError` for malformed messages, comprehensive `cleanupLobby()` chaining, three-layer save resilience (IndexedDB, localStorage emergency, pre-mission checkpoints), defensive settings loading with per-field validation and default fallback.

@@ -2,89 +2,71 @@
 
 ## Overview
 
-The Core Architecture & ECS layer provides the foundational infrastructure for the Spaceflight game: entity-component-system management, deterministic PRNG, component definitions, world serialization/hashing, simulation loop, and system ordering. The overall health is **good** -- the architecture is clean, well-documented, and follows ECS best practices. Components are plain interfaces (no classes), systems are pure functions, the fixed-timestep game loop is textbook-correct, and determinism concerns are handled with care (separate simulation/render PRNGs, seeded randomness throughout).
+This review covers the foundational infrastructure of the Spaceflight codebase: the ECS framework, deterministic PRNG, component registry, world serialization and hashing, and the game loop with system ordering. The scope is 16 files totaling approximately 2,880 lines across `src/core/` (8 files, 990 lines), `src/serialization/` (7 files, 1,651 lines), and `src/game.ts` (239 lines). All files are well under the 400-line limit, with the largest being `component-hashers.ts` at 368 lines.
 
-The review covers approximately 7,100 lines across 40 files. All files comply with the 400-line limit. The most significant findings are a bug in the Mersenne Twister initialization, a performance concern in the hashing hot path, and some architectural patterns worth tightening.
+Overall health is **good**. The ECS design is clean and principled, determinism concerns are handled carefully, and serialization coverage is comprehensive. The previous review identified 12 issues; 4 have been resolved. This review identifies 2 new issues (one Medium severity) and retains 6 issues from the previous review that remain relevant.
 
 ---
 
 ## Issues Found
 
-### Bug: Mersenne Twister initialization mask is incorrect
-**File**: `src/core/mersenne-twister.ts:22`
+### Beam hash omits simulation-critical ActiveBeam fields (NEW)
+**File**: `src/serialization/hashing.ts:117-126`
 **Severity**: Medium
 
-The initialization loop contains:
-```typescript
-this._state[i] = curr & ((curr << 32) - 1);
-```
+The beam hashing logic in `hashSystemState` only hashes `active`, `weaponIndex`, `origin`, and `direction` for each `ActiveBeam`. However, several other `ActiveBeam` fields are read by simulation systems and affect game outcomes:
 
-In JavaScript, bitwise shift operates modulo 32, so `curr << 32` is equivalent to `curr << 0` (a no-op). This means the expression evaluates to `curr & (curr - 1)`, which strips the lowest set bit -- not the intended 32-bit mask `curr & 0xFFFFFFFF`.
-
-The standard MT19937 initialization uses `MT[i] &= 0xFFFFFFFF` to ensure 32-bit values. The comment says this is "exact implementation matching 'rng' npm package", so this may be an intentional reproduction of a bug in that package for compatibility with the procedural generation system (`wwwtyro/space-2d`). If so, this should be documented with a comment explaining the deliberate deviation. If not, it should be fixed to `curr & 0xFFFFFFFF`.
-
-**Recommendation**: Add a comment like `// Intentionally reproduces rng@npm bug for space-2d compatibility` or fix to `this._state[i] = (this._state[i] as number) & 0xFFFFFFFF;`.
-
----
-
-### Bug: `calculateInterceptPoint` returns shared mutable vector
-**File**: `src/core/lead-calculation.ts:79`
-**Severity**: Medium
-
-The function returns `interceptResult`, a module-level reusable `Vector3`. The doc comment does not warn callers that the returned reference is ephemeral. While the function comment says nothing about this, a comment in `aim-error.ts:171` for a similar pattern says "returns reusable vector - clone if storing". Any caller that stores the result across frames without cloning will silently get overwritten data.
-
-This function is called from at least 6 locations (AI pursuit, weapon firing, lead indicators). If any two callers run in the same frame (which they do -- AI and weapon systems both run per-tick), they will clobber each other's result. However, since each call site likely consumes the result immediately before the next call, this is likely safe in practice. Still, this is a latent bug waiting to happen.
-
-**Recommendation**: Either (a) add a JSDoc `@returns` warning like the one in `aim-error.ts`, or (b) return a new `Vector3` and accept the allocation cost (this is not a per-entity hot path since it's only called for entities with targets).
-
----
-
-### Performance: `HashState.addFloat64` allocates `ArrayBuffer` per call
-**File**: `src/serialization/hashing.ts:47-54`
-**Severity**: Medium
-
-Every call to `addFloat64` creates a new `ArrayBuffer(8)`, `DataView`, and `Uint8Array`. In `computeWorldHash`, this is called hundreds of times per hash computation (once per float field of every component of every entity). For a world with 20 entities averaging 5 components each, with ~8 floats per component, that is ~800 allocations per hash.
+- **`lastInstantFireTime`**: Read at `src/systems/weapons/beam-instant.ts:84` to enforce weapon cooldowns. If this field diverges between clients, one client may allow firing while the other enforces cooldown.
+- **`pulseActive`**: Read at `src/systems/weapons/beam-continuous.ts:110,118,127` to control whether pulse beams deal damage in the current interval.
+- **`lastPulseTime`**: Read at `src/systems/weapons/beam-continuous.ts:107` to calculate time since last pulse for damage gating.
 
 ```typescript
-addFloat64(n: number): void {
-  const buffer = new ArrayBuffer(8);         // allocation
-  new DataView(buffer).setFloat64(0, n, true); // allocation
-  const bytes = new Uint8Array(buffer);      // allocation (view, not copy)
-  for (let i = 0; i < 8; i++) {
-    this.addByte(bytes[i] as number);
-  }
+// hashing.ts:117-126 - current beam hash (incomplete)
+for (const beam of beams) {
+  hash.addBool(beam.active);
+  hash.addInt32(beam.weaponIndex);
+  hash.addFloat64(beam.origin.x);
+  // ... origin and direction only
 }
 ```
 
-**Recommendation**: Hoist a single `ArrayBuffer(8)` + `DataView` + `Uint8Array` to module level or as class fields on `HashState`, and reuse them:
 ```typescript
-private static readonly _buf = new ArrayBuffer(8);
-private static readonly _view = new DataView(HashState._buf);
-private static readonly _bytes = new Uint8Array(HashState._buf);
+// beam-instant.ts:84 - simulation reads lastInstantFireTime
+const lastFire = beam.lastInstantFireTime ?? 0;
+if (gameTime - lastFire < weapon.fireRate) {
+  continue; // Still on cooldown, try next
+}
 ```
-This reduces `addFloat64` from 3 allocations to 0. Since `computeWorldHash` is called in the multiplayer game adapter, this matters for network tick performance.
+
+**Recommendation**: Add hashing for `lastInstantFireTime`, `pulseActive`, and `lastPulseTime` to the beam hash loop. These are simulation-critical and their divergence would represent a genuine desync that the current hash cannot detect. Fields like `fadeStartTime`, `lanceFireTime`, `isInstantBeam`, `isTorch`, and `beamWidth` are rendering-only or derived from weapon definitions and can remain excluded, but adding a brief comment explaining which beam fields are hashed and why would improve maintainability.
 
 ---
 
-### Performance: Multiple `processRemovals` calls per tick
-**File**: `src/systems/cleanup.ts:69`, `src/systems/explosions.ts:47`, `src/systems/hyperspace-jump.ts:35`
-**Severity**: Low
+### Game loop has no accumulator cap (spiral of death) (NEW)
+**File**: `src/game.ts:170-177`
+**Severity**: Medium
 
-`processRemovals` is called in three separate systems within a single tick (cleanup at step 16, explosions at step 17, hyperspace-jump at step 18). Each call iterates `world.toRemove` and does `Set.delete` + `Map.delete` operations. The work is duplicated if entities are only added to `toRemove` by one of these systems. After the first call, the subsequent calls iterate an empty set, which is cheap but unnecessary.
+The game loop accumulates `delta` time without any upper bound:
 
-**Recommendation**: Consider consolidating `processRemovals` to a single call at the end of the tick in `game.ts` after all systems run, or at least document why each system needs its own removal pass (e.g., "explosions system needs entities removed by cleanup to be gone before it runs").
+```typescript
+// game.ts:170-177
+game.accumulator += delta;
 
----
+// Fixed timestep updates (deterministic)
+while (game.accumulator >= TICK_MS) {
+  tick(game);
+  game.accumulator -= TICK_MS;
+}
+```
 
-### Performance: `queryEntities` generator iterates all entities for every query
-**File**: `src/core/ecs.ts:190-199`
-**Severity**: Low (design-level)
+If the browser tab is backgrounded and then foregrounded, `requestAnimationFrame` delivers a single large `delta` (potentially seconds or even minutes of accumulated time). With `TICK_MS` at ~16.67ms, a 10-second background period would cause 600 ticks in a single frame. A 60-second background period would cause 3,600 ticks, likely freezing the tab.
 
-Every `queryEntities` call iterates the full `world.entities` set and checks components via `hasComponents`. With 152 call sites across 58 files, and many systems running per tick, the total per-tick entity iteration count is significant. For a world with 50 entities and 20 system queries, that's 1,000 iterations just for matching.
-
-This is the standard "brute-force ECS" approach and is adequate for the current entity counts (space battles with ~20-40 entities). However, if entity counts grow (e.g., large fleet battles, many projectiles), this will become a bottleneck.
-
-**Recommendation**: No action needed now. If performance profiling shows entity iteration as a hotspot, consider adding archetype-based indexing or per-component entity sets. The current approach is correct and simple.
+**Recommendation**: Add a maximum accumulator cap, typically 3-10 ticks worth:
+```typescript
+const MAX_ACCUMULATOR = TICK_MS * 8; // Cap at 8 ticks (~133ms)
+game.accumulator = Math.min(game.accumulator + delta, MAX_ACCUMULATOR);
+```
+This means the simulation "drops" time when the system can't keep up, which is the standard approach for fixed-timestep game loops. For a single-player game this causes a brief slowdown instead of a freeze. For multiplayer, the desync detection will catch any resulting divergence.
 
 ---
 
@@ -102,11 +84,9 @@ export function isShip(world: World, entity: Entity): boolean {
 }
 ```
 
-A ship is defined as "has collision but is not a projectile or missile". This negative definition is fragile -- if a new entity type is added that has `collision` but is not a ship (e.g., an asteroid, a space mine, a deployable turret), it would incorrectly be classified as a ship. Structures are already excluded implicitly because they don't seem to have `collision` -- but this is implicit, not enforced.
+A ship is defined as "has collision but is not a projectile or missile". This negative definition is fragile -- if a new entity type is added that has `collision` but is not a ship (e.g., an asteroid, a space mine, a deployable turret), it would incorrectly be classified as a ship. Currently safe because structures use `hullCollider` without `collision`, but this is implicit rather than enforced. Used in 12+ files.
 
-Used in 12 files with 26 occurrences, this definition is load-bearing. The `structure` component exists but structures appear to use `hullCollider` without `collision`, so they're safe today.
-
-**Recommendation**: Consider adding a `ship` tag component (empty marker) to positively identify ships, or at least add a comment noting which entity types currently have `collision` and why this negative check is safe.
+**Recommendation**: Consider adding a `ship` tag component as a positive identifier, or document which entity types currently have `collision` and why this negative check remains safe.
 
 ---
 
@@ -114,11 +94,9 @@ Used in 12 files with 26 occurrences, this definition is load-bearing. The `stru
 **File**: `src/core/types.ts:79-218`
 **Severity**: Low
 
-`SystemState` aggregates state for many unrelated systems: weapons, targeting, flight assist, beams, mission, ship identity, projectile hits, muzzle flashes, pools, input recorder, combat stats, and match stats. At 140 lines just for the interface, it is approaching the complexity ceiling.
+`SystemState` aggregates state for many unrelated systems: weapons, targeting, flight assist, beams, mission, ship identity, projectile hits, muzzle flashes, pools, input recorder, combat stats, and match stats. At 140 lines for the interface definition alone, every new system that needs cross-frame state adds fields here, requiring parallel updates in `createWorld` (`ecs.ts`), serialization (`system-state.ts`), and hashing (`hashing.ts`).
 
-Every new system that needs cross-frame state adds fields here. The `createWorld` function in `ecs.ts` must initialize all of them. The serialization in `system-state.ts` must handle all of them. This is a maintenance scaling concern.
-
-**Recommendation**: The current approach works fine and avoids indirection overhead. If the number of systems continues to grow, consider grouping related fields into sub-objects with dedicated `create*` functions, or using a Map-based system state registry. Not urgent.
+**Recommendation**: Manageable at current scale. If the system count continues to grow, consider a Map-based system state registry with typed accessors to decouple state definitions from the core types.
 
 ---
 
@@ -126,32 +104,9 @@ Every new system that needs cross-frame state adds fields here. The `createWorld
 **File**: `src/core/types.ts:171, 210, 229-231`
 **Severity**: Low
 
-The `World` and `SystemState` interfaces use inline `import()` type syntax:
-```typescript
-inputRecorder: import('../input/input-recorder').InputRecorder | null;
-destroyedShips: import('../components/combat-stats').DestroyedShipRecord[];
-prng: import('../core/prng').PRNGState;
-```
+The `World` and `SystemState` interfaces use inline `import()` type syntax for `InputRecorder`, `DestroyedShipRecord`, `SalvageableShip`, and `PRNGState`. This avoids circular dependency issues but reduces readability. The `PRNGState` import from `../core/prng` is in the same directory and has no circular dependency risk.
 
-This avoids circular dependency issues but makes the type definitions harder to read at a glance. The `PRNGState` import from `../core/prng` is in the same directory, so there should be no circular dependency risk for that one.
-
-**Recommendation**: Where possible, use top-level imports instead of inline `import()`. The circular dependency risk is real for `InputRecorder` (input depending on core), so the inline approach is justified there.
-
----
-
-### Design: `worldsEqual` uses hash comparison only
-**File**: `src/serialization/hashing.ts:212-214`
-**Severity**: Low
-
-```typescript
-export function worldsEqual(world1: World, world2: World): boolean {
-  return computeWorldHash(world1) === computeWorldHash(world2);
-}
-```
-
-A 32-bit hash has a collision probability of ~1 in 4 billion per comparison. For desync detection during development this is fine, but the function name `worldsEqual` implies a definitive equality check. A hash collision would silently mask a desync in multiplayer.
-
-**Recommendation**: Rename to `worldHashesMatch` to signal the probabilistic nature, or document the collision risk. For production multiplayer, consider using a 64-bit hash (two independent FNV passes).
+**Recommendation**: Use top-level imports where there is no circular dependency risk (e.g., `PRNGState`). The inline approach is justified for cross-boundary imports like `InputRecorder`.
 
 ---
 
@@ -159,84 +114,105 @@ A 32-bit hash has a collision probability of ~1 in 4 billion per comparison. For
 **File**: `src/serialization/components.ts:226-278`
 **Severity**: Low
 
-The `serializeComponent` function uses `component as never` for every case in the switch:
-```typescript
-case 'transform':
-  return serializeTransform(component as never);
-```
+The `serializeComponent` function uses `component as never` for every case in the switch statement. While the comment explains the TypeScript limitation, this suppresses all type checking. If a component interface changes shape and the serializer signature no longer matches, the error will only surface at runtime.
 
-The comment explains why ("TypeScript doesn't propagate discriminated union narrowing"), but this suppresses all type checking. If a component's interface changes shape and the serializer signature doesn't match, the error will only surface at runtime.
-
-**Recommendation**: Consider casting to the specific type (e.g., `component as Transform`) instead of `as never`. This preserves some type safety -- structural mismatches would still be caught.
+**Recommendation**: Cast to the specific type (e.g., `component as Transform`) instead of `as never` to preserve structural type checking.
 
 ---
 
-### Maintenance: Component-hasher `shieldHit` silently skips
-**File**: `src/serialization/component-hashers.ts:350-351`
+### Maintenance: Dead exported functions
+**Files**: `src/serialization/world.ts:171`, `src/serialization/primitives.ts:148,162`, `src/core/mersenne-twister.ts:57`
 **Severity**: Low
 
+Several exported functions have no consumers outside their own module:
+- `estimateWorldSize` (`world.ts:171`) -- exported and re-exported from `index.ts` but never imported anywhere.
+- `isSerializedVector3` (`primitives.ts:148`) -- exported and re-exported from `index.ts` but never imported by any consumer.
+- `isSerializedQuaternion` (`primitives.ts:162`) -- same as above.
+- `hashcode` (`mersenne-twister.ts:57`) -- exported but only used internally by `createMT` in the same file.
+
+**Recommendation**: Either remove the exports (making them module-private or deleting entirely if unused) or document their intended use case. `estimateWorldSize` and the type guards may be intended for debugging/development tooling, in which case a comment noting that would suffice.
+
+---
+
+### Maintenance: `deserializeWorldFromBytes` uses unvalidated `JSON.parse`
+**File**: `src/serialization/world.ts:162-164`
+**Severity**: Low
+
+```typescript
+const json = new TextDecoder().decode(data);
+const serialized = JSON.parse(json) as SerializedWorld;
+deserializeWorld(serialized, world);
+```
+
+The `as SerializedWorld` cast provides no runtime validation. Malformed or corrupted data from the network would produce undefined behavior (likely cryptic property-access errors deep in deserialization). The `deserializeWorld` function does check the `version` field, which provides some protection, but the rest of the structure is trusted implicitly.
+
+**Recommendation**: This is acceptable for a peer-to-peer multiplayer context where both sides run the same code. If the game ever accepts world snapshots from untrusted sources, add schema validation. No action needed now.
+
+---
+
+## Previously Reported Issues -- Now Resolved
+
+### HashState.addFloat64 allocation (FIXED)
+**Previous**: `addFloat64` created a new `ArrayBuffer(8)`, `DataView`, and `Uint8Array` on every call.
+**Resolution**: Now uses static class fields (`hashing.ts:30-31`):
+```typescript
+private static readonly _f64Buf = new ArrayBuffer(8);
+private static readonly _f64View = new DataView(HashState._f64Buf);
+```
+This eliminates all per-call allocations. Well done.
+
+### Mersenne Twister mask comment (FIXED)
+**Previous**: The `curr & ((curr << 32) - 1)` expression in the MT initialization was undocumented.
+**Resolution**: Now has explanatory comments at `mersenne-twister.ts:22-23`:
+```typescript
+// In JS, (curr << 32) === curr (shift mod 32), so this computes curr & (curr - 1).
+// Matches rng@0.2.2 npm package. Do not "fix" or sequences will diverge.
+```
+This clearly documents the intentional deviation from standard MT19937.
+
+### `calculateInterceptPoint` shared vector warning (FIXED)
+**Previous**: The function returned a shared static vector with no JSDoc warning.
+**Resolution**: Now has a clear `@returns` annotation at `lead-calculation.ts:23`:
+```typescript
+* @returns Shared static vector - use immediately or copy. Do not store across frames.
+```
+
+### `worldsEqual` renamed to `worldHashesMatch` (FIXED)
+**Previous**: The function name `worldsEqual` implied definitive equality.
+**Resolution**: Renamed to `worldHashesMatch` at `hashing.ts:219`, accurately reflecting the probabilistic nature of hash comparison. The export in `index.ts:118` is also updated.
+
+### `shieldHit` hash skip comment (FIXED)
+**Previous**: The `shieldHit` case in the component hasher had a bare `break` with only `// Visual only`.
+**Resolution**: Now has an explanatory comment at `component-hashers.ts:351-352`:
 ```typescript
 case 'shieldHit':
-  break; // Visual only
+  // shieldHit is visual-only (hit flash effect). Unlike 'explosion' which affects
+  // kill timing, shieldHit has zero simulation impact.
+  break;
 ```
-
-`ShieldHit` is intentionally excluded from hashing because it's visual-only, which makes sense. However, if a future developer adds simulation-relevant data to `ShieldHit`, the hasher won't catch desync. Other visual components like `explosion` ARE hashed (age, maxAge, size, variant).
-
-**Recommendation**: Either hash the non-visual fields of `shieldHit` (writeIndex at minimum, for consistency), or add a comment explaining why it differs from `explosion` which IS hashed.
+This explains the distinction from `explosion` which IS hashed.
 
 ---
 
-### Maintenance: Dual PRNG systems without clear usage boundaries
-**File**: `src/core/prng.ts` and `src/core/mersenne-twister.ts`
-**Severity**: Low
-
-Two separate PRNG implementations exist:
-1. **mulberry32** (`prng.ts`) -- used for all game randomness
-2. **Mersenne Twister** (`mersenne-twister.ts`) -- used only for `wwwtyro/space-2d` procedural generation compatibility
-
-Both are legitimate, but a new developer might use the wrong one. The Mersenne Twister file has a comment explaining this, which is good.
-
-**Recommendation**: No change needed. The header comments adequately explain the distinction.
-
----
-
-## Strengths
+## Architectural Strengths
 
 ### Excellent ECS design
-The ECS implementation is clean and principled. Entities are plain numbers, components are data-only interfaces, systems are pure functions, and the world holds all state. The `ComponentRegistry` type mapping provides compile-time safety without runtime overhead -- `getComponent(world, entity, 'transform')` returns `Transform | undefined` with full type inference. This is one of the better TypeScript ECS designs I've seen.
+The ECS implementation is clean and principled. Entities are plain numbers, components are data-only interfaces, systems are pure functions, and the world holds all state. The `ComponentRegistry` type mapping at `src/core/component-registry.ts` provides compile-time safety without runtime overhead -- `getComponent(world, entity, 'transform')` returns `Transform | undefined` with full type inference and IDE auto-complete. The `ComponentTypeId` mapping with its stability comment ("never change existing IDs, only add new ones") shows forward thinking about protocol compatibility.
 
 ### Determinism-first architecture
-The separation of `prng` (simulation) and `renderPrng` (visual effects) on the World object shows disciplined thinking about multiplayer determinism. The `SystemState` documentation explicitly categorizes fields as "simulation-critical" vs "transient/local", which prevents accidental determinism violations.
+The separation of `prng` (simulation) and `renderPrng` (visual effects) on the World object (`src/core/ecs.ts:70-73`) shows disciplined thinking about multiplayer determinism. The `SystemState` documentation in `src/core/types.ts:66-78` explicitly categorizes fields as "simulation-critical" vs "transient/local" with detailed comments, which prevents accidental determinism violations. The seeded PRNG in `src/core/prng.ts` with its `deriveKey` function provides save-scum-proof randomness for campaign progression.
 
-### Comprehensive serialization
-Every component has co-located `serialize*`/`deserialize*` functions with compact field names. The pattern is remarkably consistent across all 26 component types. The `ComponentTypeId` mapping with the stability comment ("never change existing IDs, only add new ones") shows forward thinking about protocol compatibility.
+### Comprehensive and consistent serialization
+Every component type (all 26) has co-located `serialize*`/`deserialize*` functions with compact field names using numeric type IDs. The dispatch in `src/serialization/components.ts` covers all types exhaustively with error handling for unknown types. The component hashers in `src/serialization/component-hashers.ts` mirror the same complete coverage. The `WORLD_SERIALIZATION_VERSION` constant and version checking in `deserializeWorld` provide forward compatibility.
 
 ### Well-ordered system pipeline
-The `SYSTEM_ORDER` array in `game.ts` with its 19-step rationale comment is exemplary. The separation of `SIMULATION_SYSTEMS` (for replay playback) from the full `SYSTEM_ORDER` (which adds `inputSystem`) shows clean layering. The game loop's fixed timestep with accumulator and interpolation alpha is textbook correct.
+The `SYSTEM_ORDER` array in `src/game.ts:96-99` with its 19-step rationale comment is exemplary engineering documentation. The separation of `SIMULATION_SYSTEMS` (for replay playback, exported at line 73) from the full `SYSTEM_ORDER` (which prepends `inputSystem`) enables the replay system to reuse the exact simulation pipeline without duplication.
 
-### Consistent component patterns
-All components follow the same structure: interface extending `ComponentBase`, factory function `create*()`, helper functions, serialization types and functions. The discipline of never using classes for components, using `readonly type` discriminants, and handling optional fields with `exactOptionalPropertyTypes`-safe patterns is commendable.
+### Textbook game loop
+The fixed timestep with accumulator and interpolation alpha at `src/game.ts:157-193` is correctly implemented. The frame rate capping logic, the pause handling that preserves the alpha at 1.0, and the `lastTime = 0` reset on resume (to avoid accumulator spikes from paused time) all demonstrate careful attention to game loop correctness.
 
 ### Good use of pre-allocated vectors
-Files like `lead-calculation.ts` and `aim-error.ts` use module-level reusable vectors to avoid per-frame allocation. This is the right approach for hot-path game code.
+`src/core/lead-calculation.ts` uses module-level reusable vectors (`relPos`, `relVel`, `interceptResult`) to avoid per-frame allocation, now with a clear JSDoc warning about the shared return value. This is the correct approach for hot-path game code.
 
-### Clean separation of data and behavior
-Weapon definitions live in `data/weapons.ts`, weapon *components* live in `components/weapons.ts`, and weapon *systems* live in `systems/weapons/`. The "where to find things" table in CLAUDE.md matches the actual code organization.
-
----
-
-## Recommendations
-
-Prioritized from most impactful to least:
-
-1. **Fix or document the Mersenne Twister masking** (`mersenne-twister.ts:22`). If the `rng` npm package bug is intentional for compatibility, add a clear comment. If not, fix it.
-
-2. **Hoist `addFloat64` allocations in `HashState`** (`hashing.ts:47-54`). This is a straightforward performance win with no behavior change -- move the `ArrayBuffer`/`DataView`/`Uint8Array` to static class fields.
-
-3. **Document the shared-vector return pattern in `calculateInterceptPoint`** (`lead-calculation.ts:79`). Add a JSDoc warning matching the pattern in `aim-error.ts:171`.
-
-4. **Consider consolidating `processRemovals`** to a single end-of-tick call. This simplifies the mental model of when entities actually disappear.
-
-5. **Add a positive `ship` marker component** (optional, lower priority). Would make `isShip` checks O(1) map lookups instead of negative-check logic, and remove fragility as new entity types are added.
-
-6. **Rename `worldsEqual` to `worldHashesMatch`** to avoid implying definitive equality.
+### Clean component registry with numeric IDs
+The `ComponentTypeId` mapping at `src/core/component-registry.ts:101-128` provides stable numeric identifiers for binary serialization, completely decoupled from string-based runtime lookups. The 26 registry entries match exactly across the `ComponentRegistry` interface, `ComponentTypeId` constants, serialization dispatch, and component hashers -- an impressive level of consistency.

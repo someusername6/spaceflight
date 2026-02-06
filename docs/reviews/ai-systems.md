@@ -2,117 +2,124 @@
 
 ## Overview
 
-The AI layer spans approximately 4,700 lines across 25 files and implements a finite-state-machine (FSM) architecture for ship combat behavior. The system covers six states (Idle, Pursue, Engage, Evade, Regroup, Reposition), eleven behavior modes for mission-specific targeting, a sophisticated weapon/missile selection pipeline, and a playstyle system that modulates skill expression per-ship-role.
+The AI layer spans approximately 3,400 lines across 16 files (15 in `src/systems/ai/` plus `src/systems/weapons/weapons-ai.ts`) and implements a finite-state-machine (FSM) architecture for ship combat behavior. The system covers six states (Idle, Pursue, Engage, Evade, Regroup, Reposition), twelve behavior modes for mission-specific targeting, a sophisticated weapon/missile selection pipeline, and a playstyle system that modulates skill expression per-ship-role. Supporting data lives in `src/data/ai-profiles.ts` (357 lines) and `src/data/ai-playstyles.ts` (219 lines).
 
-Overall health: **Good**. The architecture is well-decomposed, the state machine is clear, and the playstyle system shows exceptional design maturity. There are a few correctness concerns, some performance opportunities, and a handful of maintainability issues, but no critical bugs that would affect gameplay at scale.
+Overall health: **Good**. The previous review identified 14 issues. Seven have been fully addressed: station utilities were extracted to a dedicated file, shared return vectors were split, idle follow behaviors use a reusable vector, kiting ships now return to Idle at 3x engage range, evade wobble is seeded per-entity, the Ion weapon check uses `weapon.ionize === true`, and the unused `_targetSpeed` parameter was removed. The remaining issues are either documented-by-convention or low-severity design tradeoffs. A few new issues have been identified, mostly minor.
 
 ---
 
-## Issues Found
+## Previous Issues: Verification
 
-### Bug: Shared `_returnPosition` vector used by both `getStationPosition` and `getEnemyStationPosition`
-**File**: `src/systems/ai/ai-utils.ts:14,165,268`
-**Severity**: Medium
+### FIXED: Shared `_returnPosition` vector in `ai-utils.ts`
+**Previous**: `getStationPosition()` and `getEnemyStationPosition()` shared a single module-level `_returnPosition` vector.
+**Current**: Station utilities were extracted to `src/systems/ai/ai-station-utils.ts`. The file declares two separate vectors at lines 15-16: `_stationPosition` and `_enemyStationPosition`. `getStationPosition` writes to `_stationPosition` (line 51) and `getEnemyStationPosition` writes to `_enemyStationPosition` (line 154). The two functions can now safely be called in the same frame.
 
-Both `getStationPosition()` (line 165) and `getEnemyStationPosition()` (line 268) write into the same module-level `_returnPosition` vector. If both functions are called in the same frame, the second call silently overwrites the first result. Currently this is safe because `getEnemyStationPosition` is not called from `aiSystem` (only `getStationPosition` is cached at line 56 of `ai.ts`), but this is a latent bug waiting for the next mission type that needs both positions in the same tick. The comment "Return a copy to avoid mutation issues" is misleading since both functions return the same object.
+### FIXED: Station utilities extracted to `ai-station-utils.ts`
+**Previous**: `ai-utils.ts` was 352 lines and approaching the 400-line limit, with seven station functions mixed in.
+**Current**: `ai-station-utils.ts` exists (225 lines) with all station-related functions: `findStation`, `getStationPosition`, `findNearestThreatToStation`, `isTargetingStation`, `findEnemyStation`, `getEnemyStationPosition`, `findStationAttacker`. The original `ai-utils.ts` is now 149 lines with clean re-exports at lines 141-149. No file in the AI directory exceeds 334 lines.
 
-**Recommendation**: Either give each function its own static vector, or document the mutual exclusion constraint prominently.
+### FIXED: Vector `.clone()` calls in idle follow behaviors
+**Previous**: Four `.clone()` calls in `ai-idle.ts:241-281` allocated new Vector3 objects in the hot path.
+**Current**: A module-level `_tempDirection` vector is declared at line 36 of `ai-idle.ts`. All three follow behaviors (defensive convoy at line 244, station-defense at lines 259/270, convoy-interceptor at line 284) reuse `_tempDirection` instead of cloning. Zero allocations in the idle path.
 
-### Bug: `convoy-guard-defensive` inner break only exits the for-loop, not the switch case
-**File**: `src/systems/ai/ai-idle.ts:155`
+### FIXED: Kiting ships never break off in Engage
+**Previous**: Kiting ships stayed in Engage indefinitely if their target flew away, becoming stationary turrets.
+**Current**: `ai.ts:267-271` adds a distance check: `if (isKitingShip(ai) && distance > ai.profile.engageRange * 3)` transitions kiting ships to Idle. This allows them to re-target when a target permanently disengages. The 3x multiplier is generous enough to avoid premature disengagement during normal combat.
+
+### FIXED: Evade wobble synchronization
+**Previous**: `Math.sin(ai.stateTimer * 8)` produced identical patterns for all ships entering evade on the same frame.
+**Current**: `ai-behaviors.ts:146` now reads `Math.sin((ai.stateTimer + entity * 1.7) * 8)`. The entity ID offset breaks visual synchronization while remaining deterministic for replay.
+
+### FIXED: Ion weapon name hardcoded in `scoreWeapon`
+**Previous**: Shield bonus checked `weapon.name === 'Ion'`.
+**Current**: `ai-weapon-selection.ts:112` now checks `weapon.ionize === true`, and `ai-weapon-helpers.ts:68` uses `w?.ionize === true`. Both use the data-driven property rather than a hardcoded name.
+
+### FIXED: Unused `_targetSpeed` parameter in `selectOptimalMissile`
+**Previous**: `selectOptimalMissile` had an unused `_targetSpeed` parameter.
+**Current**: `ai-missile-selection.ts:78-82` shows the function signature is `selectOptimalMissile(weapons, distance, isLocked)` -- the parameter has been removed.
+
+### FIXED: `hasIncomingMissiles` O(N*M) scan
+**Previous**: Every AI ship scanned all missiles every frame to check for incoming threats.
+**Current**: `weapons-ai.ts:42-53` implements `buildMissileTargetSet()` which builds a `Set<Entity>` once per tick. It is called from `weapons.ts:35` at the start of the weapon system. `hasIncomingMissiles` at line 251 is now a simple `_missileTargetSet.has(entity)` -- O(1) per AI ship.
+
+### DOCUMENTED: `convoy-guard-defensive` nested break
+**Previous**: Inner `break` exits for-loop, outer `break` exits switch case -- a readability trap.
+**Current**: Still present at `ai-idle.ts:179-184`. Now documented with a comment at line 179: "Break exits the for-loop (not the switch); outer break at line 184 exits switch case". The structure has not been refactored into a helper function, but the comment mitigates the readability concern.
+
+### DOCUMENTED: `updateEvade` unused `_heat` parameter
+**Previous**: The `_heat` parameter was unused, and the evade-to-regroup transition asymmetry was undocumented.
+**Current**: `ai-behaviors.ts:82-83` now has a comment: "Evade uses shield-based exit, not heat. Heat triggers Regroup from Pursue/Engage instead." The parameter name `_heat` with the leading underscore follows the project convention for intentionally unused parameters. The design rationale is clear.
+
+---
+
+## New Issues Found
+
+### Bug: `findStation` has no faction check despite doc claiming "Player faction"
+**File**: `src/systems/ai/ai-station-utils.ts:23-37`
 **Severity**: Low
 
-At line 155, `break` exits the `for` loop over convoy ships when a threat is found. This is actually correct behavior (it then falls through to the outer `break` at line 180 which exits the switch case). However, the code structure is confusing because the inner `break` at line 155 and the outer `break` at line 180 serve very different purposes. This is not a bug, but the nested break-from-for-inside-switch pattern is a well-known readability trap and could easily become a bug if refactored.
+The JSDoc at line 23 states "Stations are Player faction structures with structureType 'station'", but the implementation at lines 25-37 does not check the faction component. It returns the first living entity with `structure.structureType === 'station'` regardless of faction. By contrast, `findEnemyStation` (lines 121-140) explicitly filters for `Faction.Enemy`.
 
-**Recommendation**: Extract the convoy-damage-scan into a helper function returning `Entity | null` for clarity.
+In current usage this is safe: `findStation` is called by `station-hunter` enemies (in station-defense missions where only a Player station exists) and by `getStationPosition` (cached once per tick in `ai.ts:56`). Attack-station missions use `findEnemyStation` instead. However, the misleading comment could cause a bug if `findStation` is reused in a mission type where both Player and Enemy stations coexist.
 
-### Bug: `updateEvade` receives `_heat` parameter but never uses it for exit condition
-**File**: `src/systems/ai/ai-behaviors.ts:76,83`
+**Recommendation**: Either add a `Faction.Player` check to match the documentation, or update the comment to say "returns the first living station regardless of faction."
+
+### Performance: `findStationAttacker` allocates Map and Array per call
+**File**: `src/systems/ai/ai-station-utils.ts:174-175`
 **Severity**: Low
 
-`updateEvade` accepts a `heat` parameter (named `_heat` indicating it is intentionally unused) but the evade exit condition at line 107 only checks shields, not heat. Meanwhile, `shouldRegroup` (line 50-59) does check heat as a trigger. This means an AI ship can enter Evade due to shield damage, but if it then overheats during the evade maneuver (from afterburner), it will not transition to Regroup from within Evade -- it can only do so from Pursue/Engage (lines 94-131 in ai.ts). This is likely intentional (evading ships are already disengaging) but the asymmetry is worth documenting.
+`findStationAttacker` creates `new Map<Entity, number>()` and `new Array<...>()` on every invocation (lines 174-175). This function is called from `ai-idle.ts:214` for every `station-defender` AI ship in the Idle state. In attack-station missions with multiple enemy defenders, this creates per-frame allocations for each defender seeking a target.
 
-### Performance: `hasIncomingMissiles` does a full entity scan per AI ship per frame
-**File**: `src/systems/weapons/weapons-ai.ts:243-248`
-**Severity**: Medium
+The impact is mitigated by the fact that ships transition out of Idle quickly (typically within one frame), so the allocation rate is low during sustained combat. However, it is inconsistent with the otherwise allocation-conscious patterns in the AI codebase.
 
-`hasIncomingMissiles` iterates over all missile entities for every AI ship every frame. With N AI ships and M missiles, this is O(N*M) per frame. The function is called from `handleAIDecoys` which is called every frame for every AI ship with secondary weapons. In a battle with 12 AI ships and 20 missiles, that is 240 iterations per frame.
+**Recommendation**: Hoist the `Map` and `candidates` array to module scope and `.clear()` / `.length = 0` at the start of each call.
 
-The decoy cooldown check at line 262 mitigates this somewhat (most calls bail out early), but when multiple AI ships have their cooldown expire simultaneously, the missile scan stacks up.
-
-**Recommendation**: Cache a `Set<Entity>` of entities with incoming missiles once per tick, or add a `hasIncomingMissile` flag to the missile target's component.
-
-### Performance: `countEngagingTarget` iterates all AI entities to count engagers
-**File**: `src/systems/ai/ai-utils.ts:17-26`
+### Performance: `countEngagingTarget` iterates all AI entities
+**File**: `src/systems/ai/ai-utils.ts:13-22`
 **Severity**: Low
 
-Called during Pursue-to-Engage transition (line 219 in ai.ts) for player targets. This scans all AI entities to count how many are engaging. With the `maxEngagingPlayer` cap of 3, this fires frequently. The cost is O(A) where A is the number of AI entities per transition check.
+Called during the Pursue-to-Engage transition (`ai.ts:219`) for player targets. Scans all AI entities to count how many are in the Engage state targeting a specific entity. The cost is O(A) where A is the total number of AI entities.
 
-In practice, this is mitigated by only triggering when transitioning from Pursue and only for player targets. But if entity counts grow, a maintained counter would be cheaper.
+In practice, this is mitigated by only triggering when transitioning from Pursue and only for player targets. With typical battle sizes of 8-16 AI ships, the overhead is negligible. If entity counts scale significantly, a maintained counter would be cheaper.
 
-### Performance: Four vector `.clone()` calls in idle state follow-behavior
-**File**: `src/systems/ai/ai-idle.ts:241,256,267,281`
-**Severity**: Low
-
-The idle state's follow-convoy, follow-station, and approach-convoy behaviors each call `.clone()` on position vectors to compute direction. These allocate new Vector3 objects in the hot path. While only triggered when no target is found (relatively rare), the pattern is inconsistent with the rest of the AI codebase which carefully uses `tempVectors` to avoid allocations.
-
-**Recommendation**: Use a module-level reusable direction vector.
-
-### Design: `maxEngagingPlayer` cap of 3 applies globally, not per-player
+### Design: `maxEngagingPlayer` name is misleading
 **File**: `src/data/ai-profiles.ts:354`
-**Severity**: Medium (multiplayer context)
-
-`AI_GLOBAL_SETTINGS.maxEngagingPlayer = 3` means at most 3 AI ships can be in the Engage state targeting the player. In multiplayer, this is checked per-target (line 219 of ai.ts uses `countEngagingTarget(world, ai.target)`), so each player can have up to 3 engagers. This seems correct for multiplayer. However, the constant name "maxEngagingPlayer" is misleading since it also applies to AI-controlled wingmen being targeted.
-
-### Design: Kiting ships in Engage state never break off to Pursue
-**File**: `src/systems/ai/ai.ts:260`
 **Severity**: Low
 
-Line 260: `if (!isKitingShip(ai) && distance > ai.profile.breakOffRange)` means kiting ships never transition from Engage back to Pursue regardless of how far the target gets. The comment says "Kiting ships: NEVER break off to pursue - they wait at range." This is intentional, but it means if a target flies away from a kiting ship beyond breakOffRange, the kiter stays in Engage indefinitely, decelerating to zero (via `maintainDistanceEngage` which calls `setDecelerateInputs`). The kiter effectively becomes a stationary turret.
+`AI_GLOBAL_SETTINGS.maxEngagingPlayer = 3` caps how many AI ships can simultaneously be in the Engage state targeting any single entity. Despite the name, this applies to any target (including AI wingmen), not just the player. The name is misleading but the behavior is correct -- in multiplayer, each player gets up to 3 engagers (checked per-target at `ai.ts:219`).
 
-If the target permanently disengages, the kiter will never Idle and thus never re-target. The kiter depends on the target being destroyed or the target coming back into range to progress. This could cause kiting ships to stall in missions where targets flee (e.g., convoy ships escaping).
-
-**Recommendation**: Consider adding a maximum idle-in-engage timer for kiting ships, or a distance threshold that returns them to Idle for re-targeting.
-
-### Design: Evade wobble uses `Math.sin(ai.stateTimer * 8)` deterministically
-**File**: `src/systems/ai/ai-behaviors.ts:145`
-**Severity**: Low
-
-The barrel-roll wobble effect uses `Math.sin` with the state timer as input. This is deterministic (good for replays) but produces identical evasion patterns for all ships that enter evade at the same time. Since `stateTimer` resets to 0 on state entry, two ships entering evade on the same frame will roll in perfect sync. This is visually noticeable but not gameplay-breaking.
-
-**Recommendation**: Seed the wobble with the entity ID for visual variety: `Math.sin((ai.stateTimer + entity * 1.7) * 8)`.
+**Recommendation**: Rename to `maxEngagingTarget` for clarity.
 
 ### Design: No aggro switching during combat states
 **File**: `src/systems/ai/ai.ts:94-131`
 **Severity**: Low
 
-Once an AI enters Pursue or Engage, it commits to that target until the target dies, the AI evades, or the target breaks engagement range. There is no mechanism for target priority re-evaluation during combat. For example, if a convoy-hunter is engaging a player wingman and a convoy ship flies right past it, the hunter will not switch targets.
+Once an AI enters Pursue or Engage, it commits to that target until the target dies, the AI evades, or the target breaks engagement range. There is no mechanism for target priority re-evaluation during combat. For example, a `convoy-hunter` engaging a player wingman will not switch to a convoy ship that flies past.
 
-This is a deliberate simplicity tradeoff (target switching mid-combat creates erratic behavior), but it does mean behavior modes like `convoy-hunter` only affect target selection in the Idle state.
+This is a deliberate simplicity tradeoff. Target switching mid-combat creates erratic, unfun behavior. The design accepts that behavior modes only affect target selection in the Idle state. Defensive and station-defense modes handle this via disengage-distance checks that force ships back to Idle when they stray too far from their objective (lines 96-115 in `ai.ts`).
 
-### Design: `scoreWeapon` uses weapon name for Ion bonus
-**File**: `src/systems/ai/ai-weapon-selection.ts:112`
+### Design: Dumbfire missile aim error result requires `.clone()`
+**File**: `src/systems/weapons/weapons-ai.ts:217`
 **Severity**: Low
 
-The shield-targeting bonus is hardcoded as `weapon.name === 'Ion'`. If another shield-disrupting weapon is added, this check would need manual updating. A weapon property like `isShieldEffective` or a damage-type check would be more maintainable.
-
-### Maintenance: `selectOptimalMissile` has an unused `_targetSpeed` parameter
-**File**: `src/systems/ai/ai-missile-selection.ts:81`
-**Severity**: Low
-
-The `_targetSpeed` parameter is explicitly marked as reserved for future use. This is fine as documentation, but unused parameters add noise. Consider removing it until the feature is implemented to keep the interface clean.
+When firing dumbfire missiles with aim error, the code calls `applyAimError(tempAimDir, aimError).clone()`. The `.clone()` is necessary because `applyAimError` returns a module-level `tempResult` vector (in `aim-error.ts:176`) that would be overwritten by subsequent calls. While correct, this allocates a new `Vector3` in the hot path. The allocation only occurs when an AI with aim error fires a dumbfire missile, which is infrequent enough to be negligible.
 
 ### Maintenance: Re-export chains add indirection
-**File**: `src/systems/ai/ai.ts:48`, `src/systems/ai/ai-utils.ts:342-352`, `src/systems/ai/ai-weapon-selection.ts:30-35`
+**File**: `src/systems/ai/ai.ts:48`, `src/systems/ai/ai-utils.ts:128-149`, `src/systems/ai/ai-weapon-selection.ts:30-35`
 **Severity**: Low
 
-Multiple files re-export symbols "for backwards compatibility." For example, `ai.ts:48` re-exports `findNearestEnemy`, `setAITarget`, `pursueTarget`. And `ai-utils.ts` re-exports from both `ai-ambush-utils` and `ai-convoy-utils`. While this keeps imports stable for consumers, it creates a web of indirection that makes it harder to trace where functions are defined. As the module structure has stabilized, these re-exports may no longer be necessary.
+Multiple files re-export symbols "for backwards compatibility." Examples:
+- `ai.ts:48` re-exports `findNearestEnemy`, `setAITarget`, `pursueTarget`
+- `ai-utils.ts:128-149` re-exports from `ai-ambush-utils`, `ai-convoy-utils`, and `ai-station-utils`
+- `ai-weapon-selection.ts:30-35` re-exports from `ai-weapon-categories`
 
-### Maintenance: `ai-utils.ts` at 352 lines is approaching the 400-line limit
-**File**: `src/systems/ai/ai-utils.ts`
+While this keeps imports stable for consumers, it creates a web of indirection. The module structure has stabilized after the station-utils extraction, so these re-exports may no longer be necessary.
+
+### Maintenance: `ai.ts` at 334 lines is the largest AI file
+**File**: `src/systems/ai/ai.ts`
 **Severity**: Low
 
-At 352 lines, this file is the largest in the AI directory and approaching the project's 400-line limit. It contains target-finding functions, station utilities, and re-exports. The station-related functions (`findStation`, `getStationPosition`, `findNearestThreatToStation`, `isTargetingStation`, `findEnemyStation`, `getEnemyStationPosition`, `findStationAttacker`) could be extracted into a dedicated `ai-station-utils.ts` to create headroom.
+At 334 lines, `ai.ts` is the largest file in the AI directory. It is well under the 400-line limit and the structure is clean (one main loop + two state handlers). No action needed, but adding a new state would push it toward the limit. The `updatePursue` and `updateEngage` functions (lines 176-334) are the candidates for extraction if the file grows.
 
 ---
 
@@ -125,39 +132,41 @@ The `ai-playstyles.ts` file is outstanding. The insight that "flee earlier makes
 The state machine in `ai.ts` is well-structured. Input is reset at the top of each frame (lines 78-83), emergency transitions are checked before the state switch (lines 94-131), and each state handler is a pure function in its own file. The separation between the orchestrator (`ai.ts`) and individual state implementations (`ai-behaviors.ts`, `ai-pursuit.ts`, `ai-reposition.ts`, `ai-idle.ts`) is clean.
 
 ### Thorough per-frame caching of expensive lookups
-The main `aiSystem` function caches `convoyCentroid`, `stationPosition`, and `enemyConvoyCentroid` once per tick (lines 53-59) and passes them to state handlers. This avoids redundant entity scans for every AI ship.
+The main `aiSystem` function caches `convoyCentroid`, `stationPosition`, and `enemyConvoyCentroid` once per tick (lines 53-59 of `ai.ts`) and passes them to state handlers. This avoids redundant entity scans for every AI ship. The `buildMissileTargetSet` pre-computation in `weapons-ai.ts:45-53` follows the same pattern for missile threat detection.
 
 ### Allocation-conscious hot path code
-The use of `tempVectors` (module-level reusable THREE.js objects) throughout the movement code avoids per-frame garbage collection. The `_centroid` and `_returnCentroid` pattern in convoy/ambush utils follows the same principle. The code comments explicitly call out when allocations are acceptable vs. avoided.
+The use of `tempVectors` (module-level reusable THREE.js objects) throughout the movement code avoids per-frame garbage collection. The `_centroid`/`_returnCentroid` pattern in convoy/ambush utils, the `_stationPosition`/`_enemyStationPosition` split in station utils, and the `_tempDirection` vector in idle behavior all follow the same discipline. The codebase is consistent in this regard.
 
 ### Sophisticated weapon selection scoring
-The `scoreWeapon` function in `ai-weapon-selection.ts` balances multiple factors: range match, heat efficiency, ammo conservation, shield targeting, and weapon category. The linked-fire decision (lines 211-219) correctly checks projectile speed compatibility to avoid split lead points. The `getMinSafeDistance` functions for both primary and secondary weapons prevent self-damage from flak/nukes.
+The `scoreWeapon` function in `ai-weapon-selection.ts:67-130` balances multiple factors: range match, heat efficiency, ammo conservation, shield targeting (via `ionize` property), and weapon category. The linked-fire decision (lines 211-219) correctly checks projectile speed compatibility to avoid split lead points. The `getMinSafeDistance` functions for both primary (`ai-weapon-selection.ts:51-61`) and secondary (`ai-missile-selection.ts:35-40`) weapons prevent self-damage from flak/nukes.
+
+### Well-decomposed module structure
+The extraction of utilities into focused modules is mature:
+- `ai-station-utils.ts` (225 lines) -- all station-related AI helpers
+- `ai-convoy-utils.ts` (138 lines) -- convoy escort utilities
+- `ai-ambush-utils.ts` (147 lines) -- ambush mission interceptor utilities
+- `ai-dps-utils.ts` (71 lines) -- DPS calculation for station assault role assignment
+- `ai-weapon-helpers.ts` (127 lines) -- low-level weapon utility functions
+- `ai-weapon-categories.ts` (91 lines) -- range classification
+
+No file exceeds 357 lines (including data files). The module boundaries are logical and minimize coupling.
 
 ### Mission-specific behavior modes are extensible
-The eleven behavior modes in `ai-idle.ts` cover a wide range of mission scenarios. The `findStationAttacker` function (ai-utils.ts:276-338) shows particularly good design with its single-pass defender-count and priority scoring system.
-
-### Comprehensive test coverage
-The 11 test files in `scripts/tests/ai/` cover weapon selection, missile locks, aim error, behavior modes, convoy interception, station defense, and speed compatibility. This suggests the AI system is well-validated.
+The twelve behavior modes in `ai-idle.ts` cover all five mission types. The `findStationAttacker` function in `ai-station-utils.ts:162-225` shows particularly good design: a single-pass algorithm that simultaneously counts defender allocations and identifies enemy candidates, then scores by priority. The `convoy-guard-defensive` mode (lines 144-185 of `ai-idle.ts`) uses damage tracking for reactive-only engagement, creating distinct escort personalities.
 
 ### Well-calibrated AI profiles
-The progression from Green through Elite in `ai-profiles.ts` shows careful tuning. The profiles are meaningfully differentiated: a rookie fires at 45-degree angles and panics at 31% shields, while an ace is selective at 14 degrees and stays calm until 12% shields. The numeric ranges feel playtested.
+The progression from Green through Elite in `ai-profiles.ts` shows careful tuning. The profiles are meaningfully differentiated: a rookie fires at 45-degree angles and panics at 31% shields, while an ace is selective at 14 degrees and stays calm until 12% shields. The six tiers (green, rookie, regular, veteran, ace, elite) plus a player placeholder provide good granularity for campaign difficulty scaling.
 
 ---
 
 ## Recommendations
 
-1. **Extract station utilities from `ai-utils.ts`** (Maintenance) -- Move the seven station-related functions into `ai-station-utils.ts`. This brings `ai-utils.ts` well under the 400-line limit and creates a focused module for station AI behavior.
+1. **Fix `findStation` faction check or comment** (Bug, low risk) -- Either add a `Faction.Player` check to `ai-station-utils.ts:25-37` to match the JSDoc, or update the comment to reflect that it returns any faction's station. This prevents a subtle bug if the function is reused in mixed-station scenarios.
 
-2. **Fix the shared `_returnPosition` vector** (Bug) -- Give `getStationPosition` and `getEnemyStationPosition` their own static vectors, or consolidate into a single function with a faction parameter. This is low-risk but prevents a subtle future bug.
+2. **Hoist `findStationAttacker` allocations** (Performance, low priority) -- Move the `Map` and `candidates` array in `ai-station-utils.ts:174-175` to module scope and clear them per call. Follows the existing allocation-avoidance discipline.
 
-3. **Cache incoming-missile targets once per tick** (Performance) -- Replace the per-entity `hasIncomingMissiles` scan with a per-tick `Set<Entity>` computed once and shared across all AI. This is straightforward and eliminates the O(N*M) cost.
+3. **Rename `maxEngagingPlayer` to `maxEngagingTarget`** (Maintenance, cosmetic) -- The constant in `ai-profiles.ts:354` applies to any target, not just the player. Renaming clarifies the semantics.
 
-4. **Add a maximum engage-distance for kiting ships** (Design) -- Consider allowing kiting ships to return to Idle if their target exceeds some large threshold (e.g., 2x preferredCombatRange), so they can re-target in missions where targets flee permanently.
+4. **Clean up re-export chains** (Maintenance, low priority) -- Audit consumers of the backwards-compatibility re-exports in `ai.ts:48`, `ai-utils.ts:128-149`, and `ai-weapon-selection.ts:30-35`. Update imports to point directly to source modules where practical.
 
-5. **Eliminate `.clone()` calls in idle follow behaviors** (Performance) -- Replace the four vector allocations in `ai-idle.ts:241-281` with a reusable direction vector, consistent with the rest of the codebase.
-
-6. **Seed evade wobble per-entity** (Design, cosmetic) -- Add entity ID to the wobble calculation to break visual synchronization when multiple ships evade simultaneously.
-
-7. **Replace hardcoded Ion weapon name check** (Maintenance) -- Add a weapon property for shield effectiveness rather than checking `weapon.name === 'Ion'`.
-
-8. **Clean up re-export chains** (Maintenance, low priority) -- Audit consumers of the backwards-compatibility re-exports and update imports to point directly to source modules where practical.
+5. **Extract `updatePursue`/`updateEngage` if `ai.ts` grows** (Preventive) -- At 334 lines, `ai.ts` has headroom, but the two inline state handlers (lines 176-334) are the natural extraction candidates if a seventh AI state is added.

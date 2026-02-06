@@ -2,64 +2,116 @@
 
 ## Overview
 
-The combat and weapon systems form the core gameplay loop of Spaceflight. The layer spans approximately 8,800 lines across 40+ files, covering:
+The combat and weapon systems form the core gameplay loop of Spaceflight. The layer spans approximately 5,500 lines across 21 weapon system files plus supporting data, component, and stats files, covering:
 
-- **Data definitions**: Weapon stats (`weapons.ts`), missile stats (`missiles.ts`), ship chassis (`ships.ts`), AI profiles (`ai-profiles.ts`, `ai-playstyles.ts`), combat constants (`combat.ts`)
-- **Entity factories**: Ship creation (`ship.ts`, `ship-builder.ts`, `ship-archetypes.ts`), station, convoy, waypoint factories
-- **Weapon systems**: Projectile firing, beam weapons (continuous, instant, pulse), missile tracking, shrapnel, decoys
-- **Combat systems**: Damage pipeline, shields, heat, collision detection/response, targeting, aim error, explosions
-- **AI weapon logic**: Weapon selection scoring, missile selection, firing angle checks
+- **Data definitions**: Weapon stats (`data/weapons.ts`, 303 lines), missile stats (`data/missiles.ts`, 203 lines)
+- **Component layer**: Primary/secondary weapon components (`components/weapons.ts`, 345 lines), missile in-flight component (`components/missile.ts`, 233 lines)
+- **Weapon systems** (`systems/weapons/`): Projectile firing, beam weapons (continuous, instant, pulse), missile tracking, shrapnel, decoys, autoaim, hardpoint positions
+- **Support systems**: Decoy system (`systems/decoys.ts`, 72 lines), combat stats (`systems/stats.ts`, 295 lines)
 
-**Overall health**: Good. The codebase shows strong architectural discipline -- files are kept under 400 lines through thoughtful extraction, the ECS pattern is followed consistently, and performance-sensitive code uses object pooling and reusable vectors. The data-driven weapon system with a single source of truth is well-designed and extensible.
+**Overall health**: Good. Since the previous review, several structural improvements have been made: autoaim logic was consolidated into a shared module, shrapnel detonation was extracted from `missiles.ts`, the `weapon-spawn-types.ts` extraction was completed, `findBeamHit` now returns its reusable object, beam `dt` is now passed explicitly, `toRemove` arrays were hoisted to module scope, and the missile target set-based lookup was implemented. The `DECOY_CONSTANTS` duplicate was also removed.
 
-That said, there are several issues worth addressing, ranging from a genuine bug to performance concerns in hot paths and some game design observations.
+However, one new bug was introduced in the AI weapon selection path, and several lower-priority items from the previous review remain.
 
 ---
 
-## Issues Found
+## Verification of Previous Fixes
 
-### Bug: `findBeamHit` allocates a new result object despite having a reusable one
+### FIXED: `findBeamHit` now returns reusable `closestHitResult` directly
 
-**File**: `src/systems/weapons/beam-raycasting.ts:107-111`
-**Severity**: Low
+**File**: `src/systems/weapons/beam-raycasting.ts:107`
 
-The function declares `closestHitResult` as a reusable object (line 45) to "avoid per-frame allocations," but the return statement on lines 107-111 creates a brand-new object literal every call:
+The function now returns `closestHitResult` directly on line 107 instead of allocating a new object literal. This matches the intent of the module-level reusable object at line 45. Verified fixed.
 
-```typescript
-return {
-  hit: closestHitResult.hit,
-  entity: closestHitResult.entity,
-  distance: closestHitResult.distance,
-};
-```
+### FIXED: `toRemove` arrays are now module-level in all three systems
 
-This defeats the purpose of the reusable object. The function is called once per beam weapon per frame, so the allocation rate is modest. However, the code comment explicitly says it's trying to avoid allocations, so this is a correctness issue relative to intent. The fix would be to return `closestHitResult` directly (callers only read the result before the next call).
+**Files**: `src/systems/weapons/projectiles.ts:43`, `src/systems/weapons/missiles.ts:43`, `src/systems/decoys.ts:24`
 
-### Bug: `dt` recovery from damage ratio in `applyBeamDamageAndEffects` is fragile
+All three systems now declare `toRemove` at module scope and reset with `.length = 0` at the start of each frame. Verified fixed.
 
-**File**: `src/systems/weapons/beam-helpers.ts:251`
+### FIXED: `hasIncomingMissiles` now uses Set-based O(1) lookup
+
+**File**: `src/systems/weapons/weapons-ai.ts:42-53,251-253`
+
+The `buildMissileTargetSet` function (line 45) now builds a `Set<Entity>` of all missile targets once per frame, called from `weaponSystem` (line 35 of `weapons.ts`). The `hasIncomingMissiles` function (line 251) is now a simple `_missileTargetSet.has(entity)` O(1) lookup. Verified fixed.
+
+### FIXED: Beam `dt` is now passed explicitly via `BeamDamageParams`
+
+**File**: `src/systems/weapons/beam-helpers.ts:216-218,225,252,285`
+
+The `BeamDamageParams` interface now includes an explicit `dt` field (line 217). Callers pass the appropriate dt value:
+- `beam-continuous.ts:183`: passes `weapon.pulseInterval ?? dt` for pulse beams, `dt` for continuous
+- `beam-instant.ts:227`: passes `1.0` for instant beams
+
+Heat injection at line 252 correctly scales by `dt`, and beam hit tracking at line 285 uses `dt` directly. The fragile `damage / weapon.damage` recovery pattern is fully eliminated. Verified fixed.
+
+### FIXED: Autoaim logic uses shared `autoaim.ts` module
+
+**File**: `src/systems/weapons/autoaim.ts` (35 lines)
+
+All three consumers now import and call `applyAutoaimCorrection` from the shared module:
+- `beam-continuous.ts:62`
+- `beam-instant.ts:159`
+- `weapon-spawning.ts:312`
+
+The duplication across three files is eliminated. Verified fixed.
+
+### FIXED: Shrapnel detonation extracted to `missile-shrapnel.ts`
+
+**File**: `src/systems/weapons/missile-shrapnel.ts` (62 lines)
+
+The `handleShrapnelDetonation` function is now in its own module, called from `missiles.ts:191` (proximity detonation) and `missiles.ts:299` (collision detonation). This reduces `missiles.ts` from the previous 396 lines to 358 lines. Verified fixed.
+
+### FIXED: `weapon-spawn-types.ts` extracted
+
+**File**: `src/systems/weapons/weapon-spawn-types.ts` (72 lines)
+
+The `ProjectileWeaponInfo` interface and `buildProjectileOptions` helper are in their own module, reducing `weapon-spawning.ts` from the previous 392 lines to 340 lines. Verified fixed.
+
+### FIXED: `DECOY_CONSTANTS` removed from `data/missiles.ts`
+
+A search for `DECOY_CONSTANTS` across the entire `src/` directory returns no matches. The duplicate dead code has been removed. Verified fixed.
+
+### FIXED: `missiles.ts` reduced below danger zone
+
+**File**: `src/systems/weapons/missiles.ts` (358 lines)
+
+Down from 396 lines after shrapnel extraction. Now has 42 lines of headroom before the 400-line limit. Verified fixed.
+
+---
+
+## New Issues Found
+
+### Bug: AI single-weapon selection silently fails due to linkMode mismatch
+
+**File**: `src/systems/weapons/weapons-ai.ts:99-104`
 **Severity**: Medium
 
-The heat injection and beam hit stat tracking both "recover" the frame `dt` from `damage / weapon.damage`:
+When the AI weapon selection system picks a single weapon (e.g., to conserve heat or prioritize ion against shields), it calls:
 
 ```typescript
-const dt = damage / weapon.damage; // Recover dt from damage ratio
-injectExternalHeat(targetHeat, weapon.heatInjection * dt);
+const selectedWeapon = weapons.weapons[selection.index];
+if (selectedWeapon) {
+  setLinkModeByType(weapons, selectedWeapon.name);
+}
 ```
 
-And again at line 285:
-```typescript
-recordBeamHit(world, owner, weapon.name, damage / weapon.damage); // Recover dt
-```
+This passes the weapon's display name (e.g., `"Plasma"`, `"Red Laser"`, `"Ion"`) to `setLinkModeByType`. However, `weapons.linkModes` contains bank index strings (`"0"`, `"1"`, `"2"`, etc.) and `"all"` -- not weapon names. The `indexOf` at `components/weapons.ts:328` returns -1, so the mode is never changed.
 
-This works for continuous beams (where `damage = baseDamage * dt` or `damage = falloffDamage * dt`), but is incorrect for pulse beams and instant beams where `damage` is not `weapon.damage * dt`. For pulse beams, `damage` equals the per-pulse damage (possibly with falloff), so `damage / weapon.damage` gives a falloff ratio, not `dt`. The code at line 282 gates pulse beams to a separate stat path (`recordShotHit`), but the heat injection at line 246 does NOT have this guard -- meaning if a pulse beam weapon were given `heatInjection`, it would inject the wrong amount of heat. Currently no pulse beam has `heatInjection`, so this is a latent bug that would surface if a heat-injecting pulse beam is ever added. The fix: pass `dt` as an explicit parameter to `applyBeamDamageAndEffects` rather than recovering it.
+The result: when the AI selects `mode: 'single'`, the link mode stays at whatever it was previously (typically `"all"`), so `fireWeaponsByLinkMode` at line 109 fires all weapons instead of the intended single weapon. This undermines the AI's intelligent weapon selection for:
+- Heat conservation (coolest weapon selection becomes linked fire, causing more overheat)
+- Ammo conservation (finite ammo weapons fire when they should not)
+- Ion prioritization (all weapons fire instead of just the ion weapon against shields)
+- Minimum safe distance (flak could fire at close range through linked mode)
 
-### Performance: `findAllBeamHits` allocates per call (Nuclear Lance)
+The `mode: 'linked'` path works correctly because `"all"` is a valid entry in `linkModes`. The fix: `setLinkModeByType` should accept bank index as a string (e.g., `String(selection.index)`) rather than weapon name, or the AI code should pass the bank index string directly.
 
-**File**: `src/systems/weapons/beam-raycasting.ts:131`
+### Performance: `findAllBeamHits` allocates per call
+
+**File**: `src/systems/weapons/beam-raycasting.ts:127-165`
 **Severity**: Low
 
-Unlike `findBeamHit` which attempts to reuse objects, `findAllBeamHits` allocates a fresh `hits` array and fresh `{ entity, distance }` objects every call. Additionally, `beam-instant.ts:213` allocates a `new THREE.Vector3()` per hit target:
+Unlike `findBeamHit` which returns a reusable object, `findAllBeamHits` allocates a fresh `hits` array and fresh `{ entity, distance }` objects every call. Additionally, `beam-instant.ts:208` allocates a `new THREE.Vector3()` per hit target:
 
 ```typescript
 const hitPoint = new THREE.Vector3()
@@ -68,159 +120,120 @@ const hitPoint = new THREE.Vector3()
   .add(rayOrigin);
 ```
 
-Nuclear Lance fires infrequently (edge-triggered, limited ammo), so the real-world impact is negligible. However, this breaks the otherwise consistent allocation discipline in the beam system. If similar instant-fire weapons are added, pooling should be considered.
+Nuclear Lance fires infrequently (edge-triggered, 1 ammo), so real-world impact is negligible. However, this breaks the otherwise consistent allocation discipline. If similar instant-fire weapons are added in the future, pooling should be considered.
 
-### Performance: Per-frame `toRemove` array allocations in hot-path systems
+### Performance: `getWeaponIndicesForCurrentMode` allocates an array per call
 
-**File**: `src/systems/weapons/projectiles.ts:45`, `src/systems/weapons/missiles.ts:44`, `src/systems/decoys.ts:25`
+**File**: `src/components/weapons.ts:293-321`
 **Severity**: Low
 
-Each of these systems allocates a `const toRemove: Entity[] = []` array every frame. With many projectiles in flight (flak shrapnel can spawn 10-80 pieces per detonation), the projectile system processes many entities per frame. While the array itself is small, the pattern is inconsistent with the careful pooling discipline shown elsewhere. A module-level array that gets `.length = 0` each frame would be more consistent.
+This function creates a new `number[]` every call. It is invoked at least 3 times per frame per entity with beam weapons (from `beams.ts:92`, `beams.ts:157`, and `weapon-firing.ts:52`), plus once per frame from rendering code. For 10 entities, that is 30-40 small array allocations per frame. A module-level collector with `.length = 0` reuse would be more consistent with the allocation discipline elsewhere.
 
-### Performance: `hasIncomingMissiles` scans all missiles every frame for every AI ship
+### Performance: `destroyProjectilesInRadius` allocates a local array
 
-**File**: `src/systems/weapons/weapons-ai.ts:243-249`
-**Severity**: Medium
-
-Every AI ship with secondary weapons calls `hasIncomingMissiles` every frame during `handleAIDecoys`. This function iterates over ALL missile entities to check if any target the current entity:
-
-```typescript
-function hasIncomingMissiles(world: World, entity: Entity): boolean {
-  for (const missileEntity of queryEntities(world, ['missile'])) {
-    const missile = getComponent(world, missileEntity, 'missile');
-    if (missile?.target === entity) return true;
-  }
-  return false;
-}
-```
-
-With N AI ships and M missiles, this is O(N * M) per frame. In a typical battle with 8 AI ships and 20 missiles, that is 160 query-and-check operations every frame. The decoy cooldown provides some mitigation (the early-return at line 262 skips the check during cooldown), but when multiple AI ships have their cooldown expire simultaneously, all of them scan the full missile list. A reverse lookup (Map from target entity to missile count, updated when missiles spawn/die/retarget) would reduce this to O(1) per AI ship.
-
-### Performance: Beam system queries all entities including friendlies
-
-**File**: `src/systems/weapons/beam-raycasting.ts:73-105`
+**File**: `src/systems/weapons/missile-aoe.ts:246`
 **Severity**: Low
 
-`findBeamHit` iterates over ALL entities with `['transform', 'collision', 'health']` -- including friendlies. Since beams can damage friendlies (friendly fire is enabled), this is technically correct. However, the function does not check factions at all. This means beams hit friendly ships, which is consistent with projectile behavior but worth noting as a design choice. The performance cost is that beam raycasting checks against convoy ships, structures, and other non-combatants unnecessarily when they share the beam owner's faction.
-
-### Design: Recovering `dt` for beam stats is duplicated and error-prone
-
-**File**: `src/systems/weapons/beam-helpers.ts:251,285`
-**Severity**: Medium
-
-The pattern of recovering `dt` from `damage / weapon.damage` appears twice and relies on knowledge of how the caller computed `damage`. This is a coupling issue -- if any caller changes how damage is computed (e.g., adding armor reduction), both recovery sites silently break. The `BeamDamageParams` interface should include `dt` as an explicit field.
-
-### Design: Autoaim code is duplicated across three locations
-
-**File**: `src/systems/weapons/beam-continuous.ts:57-74`, `src/systems/weapons/beam-instant.ts:153-171`, `src/systems/weapons/weapon-spawning.ts:364-373`
-**Severity**: Low
-
-The autoaim cone-check logic (calculate direction to target, check angle, snap if within FOV) is implemented three times with slight variations:
-
-1. Continuous beams use `rayDirection.angleTo(targetDirection)` (Three.js built-in)
-2. Instant beams use the same `angleTo` approach
-3. Projectile spawning uses manual `Math.acos(dot)` and degree conversion
-
-All three work correctly but differ in style. Extracting a shared `applyAutoaimCorrection(direction, targetPos, origin, fovDegrees)` helper would reduce duplication and ensure consistent behavior.
-
-### Design: `DECOY_CONSTANTS` in `missiles.ts` duplicates values from component
-
-**File**: `src/data/missiles.ts:206-211`
-**Severity**: Low
-
-`DECOY_CONSTANTS` defines `speed: 50`, `seduceChance: 0.5`, `seduceRange: 200`, but the actual runtime values come from `src/components/decoy.ts` (`DECOY_SPEED`, `DECOY_SEDUCE_CHANCE`, `DECOY_SEDUCE_RANGE`). The data file constants are not imported or used by the game systems. If someone changes `DECOY_CONSTANTS` expecting gameplay impact, nothing would change. These should either be the single source consumed by the component, or be removed to avoid confusion.
-
-### Design: Gyrojet damage at point-blank is very low (33 damage from 200 base)
-
-**File**: `src/data/weapons.ts:186-197`
-**Severity**: Low (game balance)
-
-The Gyrojet has `initialSpeed: 200`, `projectileSpeed: 1200` (max), `damage: 200`, and `speedDamageScale: true`. At point-blank range, projectile speed is 200/1200 = 16.7% of max, giving only 33 damage -- less than a single Plasma shot (16 damage at 8 shots/sec). The weapon description says "lower damage up close, full damage at range," which is intentional. However, with `fireRate: 0.25` (4 shots/sec), the point-blank DPS is only 133 vs Plasma's 128. For a finite-ammo ballistic weapon, this creates a narrow viability window where the weapon only excels at medium-long range after acceleration. This may be intentional for niche kiting builds but could feel underwhelming to players who pick it up expecting a heavy hitter.
-
-### Design: Nuclear Lance has only 1 ammo and auto-cycles on empty
-
-**File**: `src/systems/weapons/beam-instant.ts:113-118`
-**Severity**: Low (game design observation)
-
-When the Nuclear Lance fires and depletes its 1 ammo, it calls `cycleNextLinkMode(weapons)`, which switches the player's primary weapon group. This is a reasonable quality-of-life feature but could surprise players if the auto-cycle switches to an unexpected weapon group mid-combat. The auto-cycle is specific to instant beams and not documented in the weapon data.
+The `toDestroy` array inside `destroyProjectilesInRadius` is allocated per call. This only fires on nuke detonation (rare), so impact is negligible. Noted for consistency.
 
 ### Design: `checkForEnemiesInRange` has asymmetric faction checking
 
 **File**: `src/systems/weapons/missile-aoe.ts:213-219`
 **Severity**: Low
 
-The function checks `if (missileFaction && entityFaction)` before calling `areEnemies`, but unlike `findClosestEnemyDistance` (which skips entities with no faction), this function proceeds to the distance check if EITHER faction is missing (lines 215-219). This means factionless entities could trigger a nuke to detonate. In practice, all combat entities have factions, so this is unlikely to cause issues, but the asymmetry is inconsistent.
+The function checks `if (missileFaction && entityFaction)` before calling `areEnemies`, but if either faction is undefined, the code falls through to the distance check without skipping the entity. In contrast, `findClosestEnemyDistance` at lines 156-158 uses `if (!ownerFaction || !entityFaction) continue;` to skip factionless entities. This means `checkForEnemiesInRange` could trigger a nuke detonation based on factionless entities (e.g., if any future entity lacks a faction). In practice all combat entities currently have factions, but the asymmetry is inconsistent.
 
-### Maintenance: `missiles.ts` is at 396 lines, approaching the 400-line limit
+### Design: Nuclear Lance auto-cycles link mode on empty
 
-**File**: `src/systems/weapons/missiles.ts`
-**Severity**: Medium
+**File**: `src/systems/weapons/beam-instant.ts:113-118`
+**Severity**: Low (game design observation)
 
-At 396 lines, this file is 4 lines from the project's 400-line hard limit. The missile system handles tracking, AoE proximity detonation, shrapnel detonation, expiration, nuke expiration logic, collision with direct damage, collision with AoE, collision with shrapnel, and stats tracking. The next feature addition (e.g., a new missile type or detonation mode) will require splitting this file. The shrapnel detonation logic (lines 167-222) and the direct collision logic (lines 269-389) are natural extraction points.
+When the Nuclear Lance depletes its 1 ammo, it calls `cycleNextLinkMode(weapons)` to switch the player's primary weapon group. This quality-of-life feature is not documented in the weapon data and could surprise players if the auto-cycle switches to an unexpected weapon group mid-combat. This behavior is specific to instant beams and not shared with other finite-ammo weapons (e.g., autocannon does not auto-cycle when empty).
 
-### Maintenance: `weapon-spawning.ts` is at 392 lines
+### Maintenance: `beam-continuous.ts` hardcodes weapon names for type checks
 
-**File**: `src/systems/weapons/weapon-spawning.ts`
+**File**: `src/systems/weapons/beam-continuous.ts:81-82`
 **Severity**: Low
 
-At 392 lines, also approaching the limit. The file handles projectile spawning, aim error application, autoaim correction, bank offset calculation, hardpoint position lookup, muzzle flash queuing, and stats tracking. The `ProjectileWeaponInfo` interface and `buildProjectileOptions` function could be extracted to a shared types/helpers file.
+```typescript
+const isLance = weapon.name === 'Nuclear Lance';
+const isTorch = weapon.name === 'Torch';
+```
 
-### Maintenance: `ship-archetypes.ts` defines both player and assault variants in one file
+These checks use string literals to determine beam subtypes. The weapon data already has boolean flags (`isInstantBeam`) and properties (`heatInjection`) that could serve the same purpose. If a weapon is renamed, these checks would silently break. The `isLance` check appears to only affect rendering (beam visual style), while `isTorch` propagates to the beam state. Using `weapon.heatInjection !== undefined` for torch detection and `weapon.isInstantBeam` for lance would be more robust.
 
-**File**: `src/factories/ship-archetypes.ts`
+### Maintenance: Continuous beams add heat redundantly
+
+**File**: `src/systems/weapons/beams.ts:190-196` and `src/systems/weapons/beam-continuous.ts:112-119`
 **Severity**: Low
 
-At 324 lines with 20+ archetypes, this file mixes standard player archetypes, variant archetypes (sniper, lancer), and assault archetypes (station-attack loadouts). As new archetypes are added, this will approach the limit. The assault archetypes (lines 244-323) are a natural extraction candidate.
+For continuous (non-pulse) beams, heat is added in `beams.ts:196` via `addHeat(heat, heatToAdd)` with the combined heat of all beams scaled by dt. This is correct. However, pulse beams add their own per-pulse heat in `beam-continuous.ts:115-116`:
+
+```typescript
+const heatPerPulse = getEffectiveHeat(weapon);
+if (!addHeat(heat, heatPerPulse)) {
+```
+
+This architecture is sound, but the split between "continuous beams add heat in the parent" and "pulse beams add heat in the child" makes the heat accounting difficult to follow. The comment at `beams.ts:188` says "total heat per second for all beams" but pulse beams are excluded from this total by the caller filtering in `beamWeaponsCollector` -- the correctness depends on pulse beams never appearing alongside continuous beams in `beamWeaponsCollector`, which is true but implicit.
+
+---
+
+## Carried Forward (unchanged from previous review)
+
+### Design: Gyrojet damage at point-blank is very low
+
+**File**: `src/data/weapons.ts:186-197`
+**Severity**: Low (game balance)
+
+The Gyrojet's `speedDamageScale` means point-blank damage is only 33 (200 * 200/1200) -- less than a single Plasma shot. With `fireRate: 0.25`, point-blank DPS is ~133 vs Plasma's ~128. For a finite-ammo weapon, this creates a narrow viability window. This may be intentional for niche kiting builds.
+
+### Design: Beam system raycasts against all entities including friendlies
+
+**File**: `src/systems/weapons/beam-raycasting.ts:73-105`
+**Severity**: Low
+
+`findBeamHit` iterates ALL entities with `['transform', 'collision', 'health']` including friendlies and non-combatants. Since friendly fire is enabled, this is correct. The performance cost is proportional to total entity count rather than enemy count.
 
 ---
 
 ## Strengths
 
 ### Excellent data-driven design
-The `PRIMARY_WEAPONS`, `MISSILES`, and `SHIP_CLASSES` dictionaries serve as single sources of truth with clear interfaces. The `WeaponStats` interface at `src/data/weapons.ts:12-91` is thoroughly documented with JSDoc comments explaining every field. The factory validation system (`archetype-validation.ts`) catches invalid loadouts at ship creation time, preventing silent failures.
+The `PRIMARY_WEAPONS` and `MISSILES` dictionaries at `src/data/weapons.ts` and `src/data/missiles.ts` serve as single sources of truth with clear interfaces. The `WeaponStats` interface (lines 12-91) is thoroughly documented with JSDoc comments explaining every field. Each stat flows cleanly from data definition through component creation to system consumption.
 
 ### Consistent ECS discipline
 Every system follows the `(world: World, dt: number) => void` signature. Components are pure data interfaces. The weapon system correctly separates concerns: `weapons.ts` orchestrates, `weapon-firing.ts` handles link modes, `weapon-spawning.ts` creates entities, and `beam-continuous.ts`/`beam-instant.ts` handle the two beam paradigms.
 
-### Thoughtful allocation patterns
-Module-level reusable vectors are used consistently throughout all weapon systems (over 30 instances). The object pooling pattern in `beam-helpers.ts` and `collision.ts` shows awareness of GC pressure. The `fireableWeaponsCollector` array in `weapon-firing.ts:31` is reused across frames.
+### Strong allocation discipline (improved since last review)
+Module-level reusable vectors are used consistently throughout all weapon systems (over 30 instances). The `toRemove` arrays, missile target set, and beam weapon pooling all demonstrate careful attention to GC pressure. The `fireableWeaponsCollector` array in `weapon-firing.ts:31` is reused across frames. The `closestHitResult` in `beam-raycasting.ts:45` now correctly avoids allocation.
 
-### Well-engineered AI playstyle system
-The `ai-playstyles.ts` system is impressive. Rather than just scaling difficulty linearly, it recognizes that different ship roles express skill differently. The analysis of "brave ace inversion" (where the ace's willingness to stay in combat longer actually hurts in beam duels) shows deep understanding of emergent behavior. The solution of using constant defensive thresholds per playstyle while varying aim error is elegant.
+### Clean shared autoaim module
+The `autoaim.ts` module (35 lines) provides a single `applyAutoaimCorrection` function used by all three weapon firing paths. The implementation is minimal and correct, using a module-level reusable vector for the target direction calculation.
 
 ### Robust missile tracking and seduction
-The missile system handles edge cases well: decoy seduction uses a per-(missile, decoy) resistance set to prevent re-rolling (`missile.resistedDecoys`), closest-approach detonation uses frame-to-frame distance comparison, and the owner safe-distance check prevents self-hits. The 100m safe distance is well-calibrated for torpedo turn radius.
+The missile system handles edge cases well: decoy seduction uses a per-(missile, decoy) resistance set (`missile.resistedDecoys`) to prevent re-rolling, closest-approach detonation uses frame-to-frame distance comparison, and the owner safe-distance check at `missiles.ts:36` (100m) prevents self-hits with slow-turning torpedoes.
 
-### Clean damage pipeline
-The `dealDamage` function at `src/systems/damage.ts:161-194` provides a single entry point for all weapon damage. Shield-first absorption with proper multiplier handling (shield damage converts back to base units for hull pass-through) is mathematically correct. Victory protection prevents frustrating post-win deaths.
+### Well-engineered shrapnel extraction
+The `missile-shrapnel.ts` module (62 lines) cleanly encapsulates shrapnel detonation logic with proper stats recording. The `shrapnel.ts` spawning module (80 lines) handles entity creation with configurable damage/speed/range. Both files are focused and small.
 
-### Swept collision detection
-The collision system at `src/systems/collision-check.ts` uses ray-based swept collision for fast projectiles (railgun at 2000 m/s, nuke lance) to prevent tunneling. The threshold check (`distanceTraveled > combinedRadius`) correctly determines when swept detection is needed.
+### Explicit dt in beam damage pipeline
+The `BeamDamageParams` interface now includes `dt` as an explicit field, making the beam damage pipeline self-documenting. The three beam modes (continuous, pulse, instant) each pass their appropriate dt value, eliminating the previous fragile recovery pattern.
 
 ### Comprehensive stats tracking
-The combat stats system tracks per-weapon, per-ship statistics including shots fired/hit, beam time on target, shrapnel hits, missile seduction, and damage attribution -- all without polluting the core combat logic. The separation into `stats.ts` and `stats-weapons.ts` keeps recording concerns isolated.
+The combat stats system tracks per-weapon, per-ship statistics including shots fired/hit, beam time on target, shrapnel hits, missile seduction, and damage attribution -- all without polluting the core combat logic.
 
 ---
 
 ## Recommendations
 
-### Priority 1: Fix the `dt` recovery pattern
-Extract `dt` as an explicit parameter in `BeamDamageParams` rather than recovering it from `damage / weapon.damage`. This eliminates a class of subtle bugs and makes the code self-documenting. The change is localized to `beam-helpers.ts`, `beam-continuous.ts`, and `beam-instant.ts`.
+### Priority 1: Fix AI single-weapon selection bug
+The `setLinkModeByType` call at `weapons-ai.ts:103` passes weapon display names but `linkModes` contains bank index strings. The AI should pass `String(selection.index)` instead, or `setLinkModeByType` should be updated to search by bank index. This bug silently causes all AI "single weapon" selections to fire linked instead, undermining heat conservation, ammo management, and tactical weapon choice.
 
-### Priority 2: Split `missiles.ts` before it hits 400 lines
-Extract shrapnel detonation logic (lines 167-222) into `missile-shrapnel-detonation.ts` and/or extract the direct collision handling (lines 269-389) into `missile-collision.ts`. This creates headroom for the next missile feature.
+### Priority 2: Fix `checkForEnemiesInRange` faction guard
+Add `if (!missileFaction || !entityFaction) continue;` to match the pattern in `findClosestEnemyDistance`. This is a one-line fix that prevents factionless entities from triggering nuke detonation.
 
-### Priority 3: Add a missile-target reverse index
-Replace `hasIncomingMissiles` linear scan with a `Map<Entity, number>` maintained by the missile system. Increment when a missile targets an entity, decrement when the missile is destroyed/retargets. This eliminates the O(N*M) decoy check.
+### Priority 3: Replace hardcoded weapon name strings in beam-continuous.ts
+Use `weapon.heatInjection !== undefined` instead of `weapon.name === 'Torch'` and `weapon.isInstantBeam` instead of `weapon.name === 'Nuclear Lance'` for robustness against weapon renames.
 
-### Priority 4: Extract shared autoaim helper
-Create `applyAutoaimCorrection(direction: Vector3, targetPos: Vector3, origin: Vector3, fovDegrees: number): Vector3` to deduplicate the three implementations.
-
-### Priority 5: Return reusable object from `findBeamHit`
-Change the return statement to return `closestHitResult` directly, matching the stated intent of the reusable object pattern.
-
-### Priority 6: Remove or wire up `DECOY_CONSTANTS`
-Either make `DECOY_CONSTANTS` the source consumed by `src/components/decoy.ts`, or remove it from `missiles.ts` to prevent confusion.
-
-### Priority 7: Move `toRemove` arrays to module scope
-For `projectiles.ts`, `missiles.ts`, and `decoys.ts`, use module-level arrays cleared with `.length = 0` each frame instead of per-frame allocations.
+### Priority 4: Pool `getWeaponIndicesForCurrentMode` return array
+Use a module-level array with `.length = 0` reuse to eliminate 30-40 small array allocations per frame. This is consistent with the allocation discipline established elsewhere.
