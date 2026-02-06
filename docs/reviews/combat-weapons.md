@@ -9,35 +9,11 @@ The combat and weapon systems form the core gameplay loop of Spaceflight. The la
 - **Weapon systems** (`systems/weapons/`): Projectile firing, beam weapons (continuous, instant, pulse), missile tracking, shrapnel, decoys, autoaim, hardpoint positions
 - **Support systems**: Decoy system (`systems/decoys.ts`, 72 lines), combat stats (`systems/stats.ts`, 295 lines)
 
-**Overall health**: Good. One bug exists in the AI weapon selection path where single-weapon mode silently falls back to linked fire. The remaining issues are low-priority allocation patterns and design observations.
+**Overall health**: Good. The remaining issues are low-priority allocation patterns and design observations.
 
 ---
 
 ## Issues
-
-### Bug: AI single-weapon selection silently fails due to linkMode mismatch
-
-**File**: `src/systems/weapons/weapons-ai.ts:99-104`
-**Severity**: Medium
-
-When the AI weapon selection system picks a single weapon (e.g., to conserve heat or prioritize ion against shields), it calls:
-
-```typescript
-const selectedWeapon = weapons.weapons[selection.index];
-if (selectedWeapon) {
-  setLinkModeByType(weapons, selectedWeapon.name);
-}
-```
-
-This passes the weapon's display name (e.g., `"Plasma"`, `"Red Laser"`, `"Ion"`) to `setLinkModeByType`. However, `weapons.linkModes` contains bank index strings (`"0"`, `"1"`, `"2"`, etc.) and `"all"` -- not weapon names. The `indexOf` at `components/weapons.ts:328` returns -1, so the mode is never changed.
-
-The result: when the AI selects `mode: 'single'`, the link mode stays at whatever it was previously (typically `"all"`), so `fireWeaponsByLinkMode` at line 109 fires all weapons instead of the intended single weapon. This undermines the AI's intelligent weapon selection for:
-- Heat conservation (coolest weapon selection becomes linked fire, causing more overheat)
-- Ammo conservation (finite ammo weapons fire when they should not)
-- Ion prioritization (all weapons fire instead of just the ion weapon against shields)
-- Minimum safe distance (flak could fire at close range through linked mode)
-
-The `mode: 'linked'` path works correctly because `"all"` is a valid entry in `linkModes`. The fix: `setLinkModeByType` should accept bank index as a string (e.g., `String(selection.index)`) rather than weapon name, or the AI code should pass the bank index string directly.
 
 ### Performance: `findAllBeamHits` allocates per call
 
@@ -148,14 +124,11 @@ The combat stats system tracks per-weapon, per-ship statistics including shots f
 
 ## Recommendations
 
-### Priority 1: Fix AI single-weapon selection bug
-The `setLinkModeByType` call at `weapons-ai.ts:103` passes weapon display names but `linkModes` contains bank index strings. The AI should pass `String(selection.index)` instead, or `setLinkModeByType` should be updated to search by bank index. This bug silently causes all AI "single weapon" selections to fire linked instead, undermining heat conservation, ammo management, and tactical weapon choice.
-
-### Priority 2: Fix `checkForEnemiesInRange` faction guard
+### Priority 1: Fix `checkForEnemiesInRange` faction guard
 Add `if (!missileFaction || !entityFaction) continue;` to match the pattern in `findClosestEnemyDistance`. This is a one-line fix that prevents factionless entities from triggering nuke detonation.
 
-### Priority 3: Replace hardcoded weapon name strings in beam-continuous.ts
+### Priority 2: Replace hardcoded weapon name strings in beam-continuous.ts
 Use `weapon.heatInjection !== undefined` instead of `weapon.name === 'Torch'` and `weapon.isInstantBeam` instead of `weapon.name === 'Nuclear Lance'` for robustness against weapon renames.
 
-### Priority 4: Pool `getWeaponIndicesForCurrentMode` return array
+### Priority 3: Pool `getWeaponIndicesForCurrentMode` return array
 Use a module-level array with `.length = 0` reuse to eliminate 30-40 small array allocations per frame. This is consistent with the allocation discipline established elsewhere.

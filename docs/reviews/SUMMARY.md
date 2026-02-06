@@ -9,41 +9,27 @@
 
 | Review | Issues | Highest Severity |
 |--------|--------|-----------------|
-| [Core Architecture & ECS](core-architecture.md) | 8 | Medium |
-| [Combat & Weapon Systems](combat-weapons.md) | 10 | Medium |
+| [Core Architecture & ECS](core-architecture.md) | 6 | Low |
+| [Combat & Weapon Systems](combat-weapons.md) | 9 | Low |
 | [AI Systems](ai-systems.md) | 3 | Low |
-| [Multiplayer & Networking](multiplayer-networking.md) | 17 | Medium |
-| [Campaign & Progression](campaign-progression.md) | 8 | Medium |
+| [Multiplayer & Networking](multiplayer-networking.md) | 6 | Low |
+| [Campaign & Progression](campaign-progression.md) | 5 | Low |
 | [Rendering & Visual Systems](rendering-visuals.md) | 7 | Low |
 | [UI Framework & Screens](ui-screens.md) | 10 | Low |
 
-**Total: 63 issues (7 medium, 56 low)**
+**Total: 46 issues, all low severity**
 
 ---
 
 ## Overall Assessment
 
-The codebase is in good shape. There are no high-severity issues. The 7 medium-severity issues span multiplayer state management, a combat system bug, campaign code organization, and core infrastructure concerns. Three subsystems -- AI, Rendering, and UI -- have no medium-or-higher issues, indicating those areas are particularly strong.
+The codebase is in strong shape. There are no high or medium severity issues. All 46 remaining issues are low-severity design observations, minor allocation inconsistencies, and maintenance items like code duplication and parameter style. Every subsystem has no medium-or-higher issues.
 
-The nature of remaining issues is predominantly design observations, minor allocation inconsistencies, and maintenance items like code duplication and parameter style. The multiplayer layer has the most issues (17), though most are low-severity design observations about protocol edge cases and minor state management concerns.
-
----
-
-## Medium-Severity Issues
-
-1. **Beam hash omits simulation-critical ActiveBeam fields** -- `src/serialization/hashing.ts:117-126` -- `lastInstantFireTime`, `pulseActive`, and `lastPulseTime` affect simulation outcomes but are not included in the beam hash, making multiplayer desync undetectable for these fields. *(Core Architecture)*
-
-2. **Game loop has no accumulator cap (spiral of death)** -- `src/game.ts:170-177` -- If the browser tab is backgrounded and foregrounded, `requestAnimationFrame` delivers a large delta causing hundreds or thousands of ticks in one frame. *(Core Architecture)*
-
-3. **AI single-weapon selection silently fails due to linkMode mismatch** -- `src/systems/weapons/weapons-ai.ts:99-104` -- `setLinkModeByType` receives weapon display names but `linkModes` contains bank index strings, so AI "single weapon" selection always falls back to linked fire, undermining heat/ammo conservation and tactical weapon choice. *(Combat & Weapons)*
-
-4. **PauseCoordinator captures `lobbyState` by reference at init time** -- `src/multiplayer/pause-coordinator.ts:67` -- The destructured `lobbyState` becomes stale after any lobby state update (immutable pattern replaces the object). Closures like `getLocalCallsign()` and `doPause()` read from the stale reference. *(Multiplayer & Networking)*
-
-5. **Denormalized pilot data requires fragile dual updates** -- `src/campaign/state-mission-results.ts:144-171` and `src/campaign/state-mission-stats.ts:117-148` -- Pilot data exists in both `state.pilots[]` and `state.ships[].pilot`, requiring every mutation to update both locations. *(Campaign & Progression)*
-
-6. **`showMultiplayerResults` still uses 12 positional parameters** -- `src/campaign/handlers/mission-results.ts:113-126` -- Unlike the singleplayer `showResults` which uses an options interface, the multiplayer variant still takes 12 positional arguments. *(Campaign & Progression)*
-
-7. **Lobby re-bind code duplicated across handler files** -- `src/campaign/handlers/mission-results.ts:156-204` and `src/campaign/handlers/mission-handlers.ts:110-162` -- ~50 lines of `bindLobbyScreen` callback wiring duplicated nearly identically. *(Campaign & Progression)*
+The nature of remaining issues is predominantly:
+- **Allocation patterns** (geometry clones, per-call array allocations) — individually negligible, noted for consistency
+- **Code duplication** (capitalize helpers, resupply messages, battle canvas re-attachment)
+- **Design observations** (negative component checks, god-object growth, message type reuse)
+- **Minor maintenance** (dead exports, hardcoded strings, positional parameters)
 
 ---
 
@@ -63,9 +49,8 @@ These are lower impact than typical per-frame allocations (most fire infrequentl
 
 ### Minor Code Duplication
 
-- `broadcastAndApply` duplicated in `lobby-actions.ts` and `lobby-kick.ts` (Multiplayer)
-- Resupply message-building loops duplicated between two files (Campaign)
 - Inline `capitalize()` at 8 call sites despite shared utility existing (UI)
+- Resupply message-building loops duplicated between two files (Campaign)
 - `createResultsUI` takes 13 positional parameters with `undefined` placeholders (Campaign)
 - Battle canvas re-attachment pattern duplicated in settings and load-campaign screens (UI)
 

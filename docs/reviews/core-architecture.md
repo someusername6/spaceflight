@@ -4,64 +4,13 @@
 
 This review covers the foundational infrastructure of the Spaceflight codebase: the ECS framework, deterministic PRNG, component registry, world serialization and hashing, and the game loop with system ordering. The scope is 16 files totaling approximately 2,880 lines across `src/core/` (8 files, 990 lines), `src/serialization/` (7 files, 1,651 lines), and `src/game.ts` (239 lines). All files are well under the 400-line limit, with the largest being `component-hashers.ts` at 368 lines.
 
-Overall health is **good**. The ECS design is clean and principled, determinism concerns are handled carefully, and serialization coverage is comprehensive.
+Overall health is **good**. The ECS design is clean and principled, determinism concerns are handled carefully, and serialization coverage is comprehensive. All remaining issues are low severity.
 
 ---
 
 ## Issues
 
-### 1. Beam hash omits simulation-critical ActiveBeam fields
-**File**: `src/serialization/hashing.ts:117-126`
-**Severity**: Medium
-
-The beam hashing logic in `hashSystemState` only hashes `active`, `weaponIndex`, `origin`, and `direction` for each `ActiveBeam`. However, several other `ActiveBeam` fields are read by simulation systems and affect game outcomes:
-
-- **`lastInstantFireTime`**: Read at `src/systems/weapons/beam-instant.ts:84` to enforce weapon cooldowns. If this field diverges between clients, one client may allow firing while the other enforces cooldown.
-- **`pulseActive`**: Read at `src/systems/weapons/beam-continuous.ts:110,118,127` to control whether pulse beams deal damage in the current interval.
-- **`lastPulseTime`**: Read at `src/systems/weapons/beam-continuous.ts:107` to calculate time since last pulse for damage gating.
-
-```typescript
-// hashing.ts:117-126 - current beam hash (incomplete)
-for (const beam of beams) {
-  hash.addBool(beam.active);
-  hash.addInt32(beam.weaponIndex);
-  hash.addFloat64(beam.origin.x);
-  // ... origin and direction only
-}
-```
-
-**Recommendation**: Add hashing for `lastInstantFireTime`, `pulseActive`, and `lastPulseTime` to the beam hash loop. These are simulation-critical and their divergence would represent a genuine desync that the current hash cannot detect. Fields like `fadeStartTime`, `lanceFireTime`, `isInstantBeam`, `isTorch`, and `beamWidth` are rendering-only or derived from weapon definitions and can remain excluded.
-
----
-
-### 2. Game loop has no accumulator cap (spiral of death)
-**File**: `src/game.ts:170-177`
-**Severity**: Medium
-
-The game loop accumulates `delta` time without any upper bound:
-
-```typescript
-// game.ts:170-177
-game.accumulator += delta;
-
-// Fixed timestep updates (deterministic)
-while (game.accumulator >= TICK_MS) {
-  tick(game);
-  game.accumulator -= TICK_MS;
-}
-```
-
-If the browser tab is backgrounded and then foregrounded, `requestAnimationFrame` delivers a single large `delta` (potentially seconds or even minutes of accumulated time). With `TICK_MS` at ~16.67ms, a 10-second background period would cause 600 ticks in a single frame.
-
-**Recommendation**: Add a maximum accumulator cap, typically 3-10 ticks worth:
-```typescript
-const MAX_ACCUMULATOR = TICK_MS * 8; // Cap at 8 ticks (~133ms)
-game.accumulator = Math.min(game.accumulator + delta, MAX_ACCUMULATOR);
-```
-
----
-
-### 3. `isShip` relies on negative component checks
+### 1. `isShip` relies on negative component checks
 **File**: `src/core/ecs.ts:236-242`
 **Severity**: Low
 
@@ -81,7 +30,7 @@ A ship is defined as "has collision but is not a projectile or missile". This ne
 
 ---
 
-### 4. `SystemState` is a growing god-object
+### 2. `SystemState` is a growing god-object
 **File**: `src/core/types.ts:79-218`
 **Severity**: Low
 
@@ -91,7 +40,7 @@ A ship is defined as "has collision but is not a projectile or missile". This ne
 
 ---
 
-### 5. `World` uses `import()` types inline
+### 3. `World` uses `import()` types inline
 **File**: `src/core/types.ts:171, 210, 229-231`
 **Severity**: Low
 
@@ -101,7 +50,7 @@ The `World` and `SystemState` interfaces use inline `import()` type syntax for `
 
 ---
 
-### 6. Serialization dispatch uses `as never` casts
+### 4. Serialization dispatch uses `as never` casts
 **File**: `src/serialization/components.ts:226-278`
 **Severity**: Low
 
@@ -111,7 +60,7 @@ The `serializeComponent` function uses `component as never` for every case in th
 
 ---
 
-### 7. Dead exported functions
+### 5. Dead exported functions
 **Files**: `src/serialization/world.ts:171`, `src/serialization/primitives.ts:148,162`, `src/core/mersenne-twister.ts:57`
 **Severity**: Low
 
@@ -125,7 +74,7 @@ Several exported functions have no consumers outside their own module:
 
 ---
 
-### 8. `deserializeWorldFromBytes` uses unvalidated `JSON.parse`
+### 6. `deserializeWorldFromBytes` uses unvalidated `JSON.parse`
 **File**: `src/serialization/world.ts:162-164`
 **Severity**: Low
 

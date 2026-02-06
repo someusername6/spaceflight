@@ -10,45 +10,13 @@
 
 The Campaign & Progression layer manages the roguelike core loop: squadron management, contract selection, mission launch, rewards, and persistence. The codebase is well-structured with clean separation between campaign state mutation, UI handlers, mission execution, and persistence. The immutable state pattern is applied consistently, and the replay system demonstrates thoughtful engineering with versioned formats, compression, and deterministic reconstruction.
 
-The remaining issues are maintenance concerns around code duplication, parameter style, and a design note about denormalized pilot data.
+The remaining issues are maintenance concerns around code duplication, parameter style, and minor design notes.
 
 ---
 
 ## Issues
 
-### 1. Denormalized pilot data requires fragile dual updates
-
-**File:** `src/campaign/state-mission-results.ts:144-171` and `src/campaign/state-mission-stats.ts:117-148`
-**Category:** Maintenance
-**Severity:** Medium
-
-Pilot data is stored in two locations: `state.pilots[]` (the roster) and `state.ships[].pilot` (the assigned pilot). Every mutation must update both. The pattern is correctly implemented but repeated in both `applyMissionResults` and `applyPilotStats`:
-
-```typescript
-// state-mission-results.ts:164-171
-const updatedShips = survivingShips.map((ship) => {
-  if (!ship.pilot) return ship;
-  const updatedPilot = updatePilotAfterMission(ship.pilot);
-  if (!updatedPilot || updatedPilot === ship.pilot) return ship;
-  return { ...ship, pilot: updatedPilot };
-});
-```
-
-```typescript
-// state-mission-stats.ts:142-148
-const updatedShips = state.ships.map((ship) => {
-  if (!ship.pilot) return ship;
-  const updatedPilot = applyStats(ship.pilot);
-  if (updatedPilot === ship.pilot) return ship;
-  return { ...ship, pilot: updatedPilot };
-});
-```
-
-If a new pilot mutation is added and the author forgets to update both locations, campaign state will silently desynchronize. Consider extracting a `syncPilotsToShips(state, updateFn)` utility that guarantees both are updated together.
-
----
-
-### 2. Emergency save may exceed localStorage quota
+### 1. Emergency save may exceed localStorage quota
 
 **File:** `src/campaign/storage/campaign-autosave.ts:118-131`
 **Category:** Performance
@@ -58,7 +26,7 @@ The emergency save serializes the entire `CampaignState` as uncompressed JSON in
 
 ---
 
-### 3. Salvage weapon drop probability design note
+### 2. Salvage weapon drop probability design note
 
 **File:** `src/campaign/salvage.ts:58-59`
 **Category:** Design
@@ -68,52 +36,7 @@ Each destroyed enemy ship rolls a 0-10% multiplier, and each weapon has a `(mult
 
 ---
 
-### 4. `showMultiplayerResults` still uses 12 positional parameters
-
-**File:** `src/campaign/handlers/mission-results.ts:113-126`
-**Category:** Maintenance
-**Severity:** Medium
-
-While `showResults` was refactored to use a `ShowResultsOptions` interface, `showMultiplayerResults` was not given the same treatment:
-
-```typescript
-export function showMultiplayerResults(
-  controller: CampaignController,
-  victory: boolean,
-  contract: Contract,
-  _setupContractsScreen: (controller: CampaignController) => void,
-  world?: World,
-  salvage?: SalvageResult | null,
-  earnedReward?: number,
-  escortResults?: EscortResultsDisplay,
-  ambushResults?: AmbushResultsDisplay,
-  stationDefenseResults?: StationDefenseResultsDisplay,
-  attackStationResults?: AttackStationResultsDisplay,
-  salaryInfo?: SalaryInfo,
-): void {
-```
-
-The call site in `mission-end-helpers.ts` still passes 12 positional arguments. This function should accept a `ShowMultiplayerResultsOptions` interface (or reuse `ShowResultsOptions` with an additional multiplayer flag) for consistency with the singleplayer path.
-
----
-
-### 5. Lobby re-bind code duplicated across three handler files
-
-**File:** `src/campaign/handlers/mission-results.ts:156-204`, `src/campaign/handlers/mission-handlers.ts:110-162`
-**Category:** Maintenance
-**Severity:** Medium
-
-The `bindLobbyScreen` invocation with its full set of callbacks (`onReady`, `onSendChat`, `onBack`, `onPermissionChange`, `onCallsignChange`, `onNavigate`, `isCountdownActive`) is duplicated nearly identically in:
-
-1. `mission-results.ts:156-204` (showMultiplayerResults returnToLobby)
-2. `mission-handlers.ts:110-162` (handleNonIronmanDefeat returnToLobby)
-3. `lobby-handlers.ts:202+` and `lobby-handlers.ts:328+` (initial lobby setup)
-
-The first two are virtually identical blocks (~50 lines each). A shared helper like `rebindLobbyAfterMission(controller, lobbyCtx, setupContractsScreen)` would eliminate this duplication and reduce the risk of callback inconsistencies when lobby bindings change.
-
----
-
-### 6. Unused `_setupContractsScreen` parameter in `showMultiplayerResults`
+### 3. Unused `_setupContractsScreen` parameter in `showMultiplayerResults`
 
 **File:** `src/campaign/handlers/mission-results.ts:118`
 **Category:** Bug (minor)
@@ -137,7 +60,7 @@ This works because the imported `setupContractsScreen` and the parameter would b
 
 ---
 
-### 7. Resupply message-building code still partially duplicated
+### 4. Resupply message-building code still partially duplicated
 
 **File:** `src/campaign/resupply/resupply-ship.ts:288-324` and `src/campaign/resupply/resupply-constrained.ts:117-168`
 **Category:** Maintenance
@@ -149,7 +72,7 @@ A shared `buildResupplyMessages(fromStorage, bought, shortages, storeStock, cred
 
 ---
 
-### 8. `createResultsUI` still takes many positional parameters
+### 5. `createResultsUI` still takes many positional parameters
 
 **File:** `src/campaign/handlers/mission-results.ts:83-103` and `mission-handlers.ts:174-193`
 **Category:** Maintenance
@@ -218,14 +141,6 @@ The auto-save coordinator correctly handles concurrent saves: it queues saves du
 
 ## Recommendations
 
-### Priority 1: Refactor `showMultiplayerResults` to use options object (Issue 4)
-Apply the same options-interface pattern used for `showResults` to `showMultiplayerResults`. This will also make the lobby re-bind duplication (Issue 5) easier to extract.
-
-### Priority 2: Extract shared lobby re-bind helper (Issue 5)
-Create a `rebindLobbyAfterMission(controller, lobbyCtx, setupContractsScreen)` utility to eliminate the ~50-line duplication between `mission-results.ts` and `mission-handlers.ts`.
-
-### Lower priority
-- Consider normalizing pilot data to eliminate dual-update requirement (Issue 1)
-- Extract resupply message building into shared helper (Issue 7)
-- Refactor `createResultsUI` to use options interface (Issue 8)
-- Monitor emergency save sizes in production (Issue 2)
+- Refactor `createResultsUI` to use options interface (Issue 5)
+- Extract resupply message building into shared helper (Issue 4)
+- Monitor emergency save sizes in production (Issue 1)
