@@ -2,6 +2,8 @@
 
 A space dogfight roguelike combining Freespace 2-style combat with FTL/Battletech campaign structure.
 
+[itch.io](https://sunlitgrove.itch.io/spaceflight)
+
 ## Quick Start
 
 ```bash
